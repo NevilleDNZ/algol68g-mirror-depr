@@ -1,0 +1,471 @@
+<html>
+<head>
+<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
+<meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
+<style type="text/css">
+a:link    {color: blue; text-decoration: underline;}
+a:visited {color: blue; text-decoration: underline;}
+a:active  {color: blue; text-decoration: underline;}
+p {font-size: 10pt; font-family: Arial,Helvetica;}
+u {font-size: 10pt; font-family: Arial,Helvetica;}
+dd {font-size: 10pt; font-family: Arial,Helvetica;}
+h1 {font-size: 16pt; font-family: Arial,Helvetica;}
+h2 {font-size: 14pt; font-family: Arial,Helvetica;}
+h3 {font-size: 12pt; font-family: Arial,Helvetica;}
+h4 {font-size: 10pt; font-family: Arial,Helvetica;}
+td {font-size: 8pt; font-family: Arial,Helvetica;}
+ul {font-size: 10pt; font-family: Arial,Helvetica;}
+body {font-size: 10pt; font-family: Arial,Helvetica;}
+code {font-size: 10pt; font-family: Courier;}
+pre {font-size: 10pt; font-family: Courier;}
+</style>
+</head>
+
+<body bgcolor="white">
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="100%" background="lines.gif">
+<img src="lines.gif" align=right>
+<small>Documentation for Algol 68 Genie Mark 9.2</small>
+</td>
+</table>
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<br>
+<h2>UNIX extensions</h2>
+<small>
+&middot;&nbsp;<a href="#unixgen">General definitions</a><br>
+&middot;&nbsp;<a href="#unixproc">Processes</a><br>
+&middot;&nbsp;<a href="#unixfetch">Fetching web page contents and sending requests</a><br>
+&middot;&nbsp;<a href="#unixregex">Regular expressions in string manipulation</a><br>
+&middot;&nbsp;<a href="#curses">Curses support</a><br>
+</small>
+</td>
+<td width="30%" bgcolor="white" valign=top align=center>
+<img src="logo.gif">
+</td>
+<td width="5%" valign=top bgcolor="white">
+</td>
+<td width="15%" valign=top bgcolor="white">
+<!-- Navigation bar -->
+<table border="0" cellspacing="0" width="100%">
+<tr>
+<td background="lines.gif">
+<small><b>Algol68G Mark 9.2</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="introduction.html"><small>Introduction</small></a><br>
+&nbsp;&middot;&nbsp;<a href="install.html"><small>Installation</small></a><br>
+&nbsp;&middot;&nbsp;<a href="description.html"><small>Description</small></a><br>
+&nbsp;&middot;&nbsp;<a href="examples.html"><small>Example&nbsp;programs</small></a><br>
+&nbsp;&middot;&nbsp;<a href="synopsis.html"><small>Synopsis</small></a><br>
+&nbsp;&middot;&nbsp;<a href="syntax.html"><small>Syntax</small></a><br>
+&nbsp;&middot;&nbsp;<a href="environ.html"><small>Environment</small></a><br>
+<br>
+<small><b>Extensions</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="extensions.html"><small>UNIX</small></a><br>
+&nbsp;&middot;&nbsp;<a href="postgresql.html"><small>PostgreSQL</small></a><br>
+&nbsp;&middot;&nbsp;<a href="drawing.html"><small>Drawing</small></a><br>
+&nbsp;&middot;&nbsp;<a href="numerical.html"><small>Numerical</small></a><br>
+<br>
+&nbsp;&middot;&nbsp;<a href="contents.html"><small>Contents</small></a><br>
+&nbsp;&middot;&nbsp;<a href="resources.html"><small>A68 Resources</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#obtaining"><small>Downloads</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#contact"><small>Contact</small></a>
+</td>
+</tr>
+</table>
+<!-- End navigation bar -->
+</td>
+</table>
+
+<p>
+Algol68G maps to UNIX/Linux as to provide basic means with which a program can
+<ul>
+<li>access command line arguments,
+<li>access environment variables, 
+<li>access system error information,
+<li>start child processes and communicate with them by means of pipes. Algol68G's transput procedures as <code>getf</code> or <code>putf</code> operate on pipes,
+<li>send a request to a HTTP server, fetch web page contents, and
+<lcode>match regular expressions in a string.
+</ul>
+
+<br>  
+<h3><a name="unixgen"></a>General definitions</h3>
+<dl>
+<dt><code>MODE PIPE = STRUCT (REF FILE read, write, INT pid)</code>
+<dd>Used to set up communication between processes. See for instance <code>execve child pipe</code>.
+<br>
+<br>
+<dt><code>PROC utc time = [] INT</code>
+<dd>Returns UTC calendar time, or an empty row if the function fails. Respective array elements are year, month, day, hours, minutes, seconds, day of week and daylight-saving-time flag. 
+<br>
+<br>
+<dt><code>PROC local time = [] INT</code>
+<dd>Returns local calendar time, or an empty row if the function fails. Respective array elements are year, month, day, hours, minutes, seconds, day of week and daylight-saving-time flag.
+<br>
+<br>
+<dt><code>PROC argc = INT</code>
+<dd>Returns the number of command-line arguments.
+<br>
+<br>
+<dt><code>PROC argv = (INT k) STRING</code>
+<dd>Returns command-line argument <code>k</code> or an empty string when <code>k</code> is not valid.
+<br>
+<br>
+<dt><code>PROC get env = (STRING var) STRING</code>
+<dd>Returns the value of environment variable <code>var</code>.
+</dl>
+
+Accessing system error information through <code>errno</code> is of limited interest since Algol 68 Genie may reset it:
+<dl>
+<dt><code>PROC reset errno = VOID</code>
+<dd>Resets the global error variable <code>errno</code>.
+<br>
+<br>
+<dt><code>PROC errno = INT</code>
+<dd>Returns the global error variable <code>errno</code>.
+<br>
+<br>
+<dt><code>PROC strerror = (INT errno) STRING</code>
+<dd>Returns a string describing the error code passed as <code>errno</code>.
+</dl>
+
+<br>  
+<h3><a name="unixproc"></a>Processes</h3>
+<dl>
+<dt><code>PROC fork = INT</code>
+<dd>Creates a child process that differs from the parent process only in its <code>PID</code> and <code>PPID</code>, and that resource utilisations are set to zero. File locks and pending signals are not inherited. Under Linux, fork is implemented using copy-on-write pages, so the only penalty incurred by fork is the time and memory required to duplicate the parent's page tables, and to create a unique task structure for the child. On success, the <code>PID</code> of the child process is returned in the parent's thread of execution, and a 0 is returned in the child's thread of execution. On failure, a -1 will be returned in the parent's context, no child process will be created, and <code>errno</code> will be set appropriately.
+<br>
+<br>
+<dt><code>PROC wait pid = (INT pid) VOID</code>
+<dd>Waits until child process <code>pid</code> ends. 
+<br>
+<br>
+<dt><code>PROC execve = (STRING filename, [] STRING argv, [] STRING envp) INT</code>
+<dd>Executes <code>filename</code> that must be either a binary executable, or a script starting with a line of the form
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black><tt>
+#! interpreter [argv]
+</tt></font>
+</td>
+</table>
+<p>
+In the latter case, the interpreter must be a valid path-name for an executable which is not itself a script, which will be invoked as <code>interpreter [arg] filename</code>. Argument <code>argv</code> is a row of argument strings that is passed to the new program. Argument <code>envp</code> is a row of strings, with elements conventionally of the form <code>KEY=VALUE</code>, which are passed as environment to the new program. The argument vector and environment can be accessed by the called program's <code>main</code> function, when it is defined as
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<tt>
+int main(int argc, char *argv[], char *envp[])
+</tt>
+</font>
+</td>
+</table>
+<p>
+The procedure does not return on success, and the text, data, bss, and stack of the calling process are overwritten by that of the program loaded. The program invoked inherits the calling process's <code>PID</code>, and any open file descriptors that are not set to close on exec. Signals pending on the calling process are cleared. Any signals set to be caught by the calling process are reset to their default behaviour. The <code>SIGCHLD</code> signal (when set to <code>SIG_IGN</code>) may or may not be reset to <code>SIG_DFL</code>.
+<br>
+<br>
+<dt><code>PROC execve child = (STRING filename, [] STRING argv, [] STRING envp) INT</code>
+<dd>Executes a command in a child process. Algol 68 Genie is not superseded by the new process. For details on arguments see <code>execve</code>.
+<br>
+<br>
+<dt><code>PROC execve child pipe = (STRING filename, [] STRING argv, [] STRING envp) PIPE</code>
+<dd>Executes a command in a child process. 
+For details on arguments see <code>execve</code>.
+The child process redirects standard input and standard output to the pipe that is delivered to the parent process.
+Therefore, the parent can write to the <code>write</code> field of the pipe, and this data can be read by the child from standard input.
+The child can write to standard output, and this data can be read by the parent process from the <code>read</code> field of the pipe.
+The files in the pipe are opened.
+The channels assigned to the read - and write end of the pipe are <code>standin channel</code> and <code>standout channel</code>, respectively.
+This procedure calls <code>execve</code> in the child process, for a description of the arguments refer to that procedure. For example:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black><pre>
+PROC eop handler = (REF FILE f) BOOL:
+     BEGIN put (stand error, ("end of pipe", new line));
+           GO TO end
+     END;
+
+PIPE p = execve child pipe ("/bin/cat", ("/bin/cat", program idf), "");
+
+IF pid OF p < 0
+THEN put (stand error, ("pipe not valid: ", strerror (errno)));
+     stop
+FI;
+
+on logical file end (read OF p, eop handler);
+
+DO STRING line;
+   get (read OF p, (line, newline));
+   put (stand out, ("From pipe: """, line, """", newline))
+OD;
+
+end: 
+close (read OF p);
+close (write OF p)
+</pre></font>
+</td>
+</table>
+</dl>
+
+<br>  
+<h3><a name="unixfetch"></a>Fetching web page contents and sending requests</h3>
+<dl>
+<dt><code>PROC http content = (REF STRING content, STRING domain, STRING path, INT port) INT</code>
+<dd>Gets content from web page specified by <code>domain</code> and <code>path</code>, and stores it in <code>content</code>. Both <code>domain</code> and <code>path</code> must be properly <code>MIME</code> encoded. The routine connects to server <code>domain</code> using TCP and sends a straightforward <code>GET</code> request for <code>path</code> using HTTP 1.0, and reads the reply from the server. If port number <code>port</code> is 0 the default port number (80) will be used. The procedure returns 0 on success or an appropriate error code upon failure. For example:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<pre>
+PROC good page = (REF STRING page) BOOL:
+     IF grep in string("^HTTP/[0-9.]* 200", page, NIL, NIL) = 0
+     THEN TRUE
+     ELSE IF INT start, end;
+             grep in string("^HTTP/[0-9.]* [0-9]+ [a-zA-Z ]*", page, start, end) = 0
+          THEN print (page[start : end])
+          ELSE print ("unknown error retrieving page")
+          FI;
+          FALSE
+     FI;
+
+IF STRING reply;
+   INT rc = http content (reply, "www.gnu.org", "http://www.gnu.org/", 0);
+   rc = 0 AND good page (reply)
+THEN print (reply)
+ELSE print (strerror (rc))
+FI
+
+</pre>
+</font>
+</td>
+</table>
+<p>
+<dt><code>PROC tcp request = (REF STRING reply, STRING domain, STRING request, INT port) INT</code>
+<dd>Send request <code>request</code> to server specified by <code>domain</code>, and stores the server's reply in <code>reply</code>. Both <code>domain</code> and <code>request</code> must be properly <code>MIME</code> encoded. The routine connects to server <code>domain</code> using TCP. If port number <code>port</code> is 0 the default port number (80) will be used. The procedure returns 0 on success or an appropriate error code upon failure. For example:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black><pre>
+STRING reply;
+IF INT rc = tcp request (reply, "www.kernel.org",
+            "GET / HTTP/1.0" + newline char + "Range: bytes=0-1023" + 2 * newline char, 0);
+   rc = 0
+THEN print (reply)
+ELSE print (strerror (rc))
+FI;
+</pre>
+</font>
+</td>
+</table></dl>
+
+<br>  
+<h3><a name="unixregex"></a>Regular expressions in string manipulation</h3>
+<dl>
+<dt><code>PROC grep in string = (STRING pattern, string, REF INT start, end) INT</code>
+<dd>Matches <code>pattern</code> with <code>string</code> and assigns first character position (counting from 1) and last character position of the widest leftmost matching substring to <code>start</code> and <code>end</code> when they are not <code>NIL</code>. 
+The routine yields 0 on match, 1 on no-match, 2 on out-of-memory error and 3 on other errors. If the string contains <code>newline character</code>, it is considered as end-of-line ("$") and the following character is considered as start-of-line ("^").
+Compare this function with AWK function <code>match</code>.
+<br>
+<br>
+<dt><code>PROC sub in string = (STRING pattern, replacement, REF STRING string) INT</code>
+<dd>Matches <code>pattern</code> with <code>string</code> and replaces the widest leftmost matching substring with <code>replacement</code>. 
+The routine yields 0 on match, 1 on no-match, 2 on out-of-memory error and 3 on other errors. If the string contains <code>newline character</code>, it is considered as end-of-line ("$") and the following character is considered as start-of-line ("^").
+Compare this function with AWK function <code>sub</code>.
+An equivalent to AWK function <code>gsub</code> can be programmed easily in Algol68G:
+<br>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<pre>
+PROC awk gsub = (STRING pattern, replacement, REF STRING string) INT:
+     BEGIN INT return code;
+           DO return code := sub in string (pattern, replacement, string);
+              UNTIL return code /= 0
+           OD;
+           return code
+     END
+</pre>
+</font>
+</td>
+</table>
+</dl>
+
+<p><code>grep in string</code> and <code>sub in string</code> employ extended POSIX syntax for regular expressions. Traditional UNIX regular expression syntax is obsoleted by POSIX (but is still widely used for the purposes of backwards compatibility). POSIX extended regular expressions are similar to traditional UNIX regular expressions. Most characters are treated as literals that match themselves: "a" matches "a", "(bc" matches "(bc", et cetera.  Metacharacters "(", ")", "[", "]", "{", "}", ".", "*", "?", "+", "^" and "$" are used as special symbols that have to be marked by a preceeding "\" when they are to be matched literally.
+
+<p>Definition of metacharacters</a>:</p>
+<dl compact>
+<dt><b>.</b>
+<dd>Matches any single character.
+<dt><b>*</b>
+<dd>Matches the preceeding expression zero or more times. Forexample, "[xyz]*" matches "", "x", "y", "zx", "zyx", and so on.
+<dt>+
+<dd>Matches the preceeding expression one or more times - "ba+" matches "ba", "baa", "baaa" etcetera.
+<dt>?
+<dd>Matches the preceeding expression zero or one times - "ba?" matches "b" or "ba".
+<dt>{<code>x</code>,<code>y</code>}
+<dd>Matches the preceeding expression at least <code>x</code> and not more than <code>y</code> times. For example, "a{3,5}" matches "aaa", "aaaa" or "aaaaa". Note that this is not implemented on all platforms.
+<dt>|
+<dd>The choice (or set union) operator: match either the expression before or the expression after the operator - "abc|def"
+matches "abc" or "def".
+<dt>[ ]
+<dd>Matches characters that contained within [ ]. For example, [abc] matches "a", "b", or "c", and [a-z] matches any lowercase letter. These can be mixed: [abcq-z] matches a, b, c, q, r, s, t, u, v, w, x, y, z, and so does [a-cq-z]. A "-" character is a literal only if it is the first or last character within the brackets: [abc-] or [-abc]. To match an "[" or "]" character, put the closing bracket first in the enclosing square brackets:
+[][ab] matches "]", "[", "a" or "b".
+<dt>[^ ]
+<dd>Matches a single character that is not contained within [ ]. For example, [^abc] matches any character other than "a", "b", or "c". [^a-z] matches any single character that is not a lowercase letter. As with [ ], these can be mixed.
+<dt>^
+<dd>Matches start of the line.
+<dt>$
+<dd>Matches end of the line.</td>
+<dt>( )
+<dd>Matches a subexpression. A subexpression followed by "*" is invalid on most platforms.
+</dl>
+
+<p>Since many ranges of charactes depends on the chosen locale setting (e.g., in some settings letters are organized as
+abc..yzABC..YZ while in some others as aAbBcC..yYzZ) the POSIX standard defines categories of characters as shown
+in the following table:</p>
+<table border=0 cellspacing=0 cellpadding=6>
+<td bgcolor=#e8e8e8><b>Category</b>&nbsp;</td>
+<td bgcolor=#e8e8e8><b>Compare to</b>&nbsp;</td>
+<td bgcolor=#e8e8e8><b>Matches</b>&nbsp;</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:upper:]</td>
+<td bgcolor=#e8e8e8>[A-Z]</td>
+<td bgcolor=#e8e8e8>Uppercase letters</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:lower:]</td>
+<td bgcolor=#e8e8e8>[a-z]</td>
+<td bgcolor=#e8e8e8>Lowercase letters</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:alpha:]</td>
+<td bgcolor=#e8e8e8>[A-Za-z]</td>
+<td bgcolor=#e8e8e8>Upper- and lowercase letters</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:alnum:]</td>
+<td bgcolor=#e8e8e8>[A-Za-z0-9]</td>
+<td bgcolor=#e8e8e8>Digits, upper- and lowercase letters</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:digit:]</td>
+<td bgcolor=#e8e8e8>[0-9]</td>
+<td bgcolor=#e8e8e8>Digits</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:xdigit:]</td>
+<td bgcolor=#e8e8e8>[0-9A-Fa-f]</td>
+<td bgcolor=#e8e8e8>Hexadecimal digits</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:punct:]</td>
+<td bgcolor=#e8e8e8>[.,!?:...]</td>
+<td bgcolor=#e8e8e8>Punctuation marks</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:blank:]</td>
+<td bgcolor=#e8e8e8>[ \t]</td>
+<td bgcolor=#e8e8e8>Space and Tab</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:space:]</td>
+<td bgcolor=#e8e8e8>[ \t\n\r\f\v]</td>
+<td bgcolor=#e8e8e8>Whitespace characters, typographical display features</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:cntrl:]</td>
+<td bgcolor=#e8e8e8>&nbsp;</td>
+<td bgcolor=#e8e8e8>Control characters</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:graph:]</td>
+<td bgcolor=#e8e8e8>[^ \t\n\r\f\v]</td>
+<td bgcolor=#e8e8e8>Printed characters</td>
+</tr>
+<tr>
+<td bgcolor=#e8e8e8>[:print:]</td>
+<td bgcolor=#e8e8e8>[^\t\n\r\f\v]</td>
+<td bgcolor=#e8e8e8>Printed characters and space</td>
+</tr>
+</table>
+
+<p><b>Examples:</b></p>
+<dl>
+<dd>".at" matches any three-character string ending with <code>at</code></dd>
+<dd>"[hc]at" matches <code>hat</code> and <code>cat</code></dd>
+<dd>"[^b]at" matches any three-character string ending with <code>at</code> and not beginning with <code>b</code>.</dd>
+<dd>"^[hc]at" matches <code>hat</code> and <code>cat</code> but only at the beginning of a line</dd>
+<dd>"[hc]at$" matches <code>hat</code> and <code>cat</code> but only at the end of a line</dd>
+<dd>"[hc]+at" matches with "hat", "cat", "hhat", "chat", "hcat", "ccchat" et cetera</dd>
+<dd>"[hc]?at" matches "hat", "cat" and "at"</dd>
+<dd>"([cC]at)|([dD]og)" matches "cat", "Cat", "dog" and "Dog"</dd>
+<dd>[[:upper:]ab] matches uppercase letters and "a", "b"</dd>
+</dl>
+</p>
+
+<br>
+<h3><a name="curses"></a>Curses support</h3>
+On systems that have installed the curses library, Algol68G can link with that library to extend the standard prelude. Curses support is very basic.
+<dl>
+<dt><code>PROC curses start = VOID</code>
+<dd>Starts curses support.
+<br>
+<br>
+<dt><code>PROC curses end = VOID</code>
+<dd>Stops curses support.
+<br>
+<br>
+<dt><code>PROC curses clear = VOID</code>
+<dd>Clears the screen.
+<br>
+<br>
+<dt><code>PROC curses refresh = VOID</code>
+<dd>Refreshes the screen (by writing all changes since the last call to this routine).
+<br>
+<br>
+<dt><code>PROC curses getchar = CHAR</code>
+<dd>Check if a key was pressed on the keyboard. If so, the routine returns the corresponding character, if not, on UNIX it returns <code>null char</code>.
+<br>
+<br>
+<dt><code>PROC curses putchar = (CHAR ch) VOID</code>
+<dd>Writes <code>ch</code> at the current cursor position.
+<br>
+<br>
+<dt><code>PROC curses move = (INT line, column) VOID</code>
+<dd>Sets the cursor position to <code>line</code> and <code>column</code>.
+<br>
+<br>
+<dt><code>PROC curses lines = INT</code>
+<dd>Returns the number of lines on the screen.
+<br>
+<br>
+<dt><code>PROC curses columns = INT</code>
+<dd>Returns the number of columns on the screen.
+</dl>
+
+<p>
+<br>
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<font color="black">
+<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
+</font>
+</td>
+<td width="50%" align=right valign=top bgcolor="white">
+<font color="black">
+<small>Documentation for Algol 68 Genie Mark 9.2 (July 2006)</small>
+</font>
+</td>
+</table>
+</p>
+
+</body>
+</html>

@@ -1,0 +1,154 @@
+<html>
+<head>
+<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
+<meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
+<style type="text/css">
+a:link    {color: blue; text-decoration: underline;}
+a:visited {color: blue; text-decoration: underline;}
+a:active  {color: blue; text-decoration: underline;}
+p {font-size: 10pt; font-family: Arial,Helvetica;}
+u {font-size: 10pt; font-family: Arial,Helvetica;}
+dd {font-size: 10pt; font-family: Arial,Helvetica;}
+h1 {font-size: 16pt; font-family: Arial,Helvetica;}
+h2 {font-size: 14pt; font-family: Arial,Helvetica;}
+h3 {font-size: 12pt; font-family: Arial,Helvetica;}
+h4 {font-size: 10pt; font-family: Arial,Helvetica;}
+td {font-size: 8pt; font-family: Arial,Helvetica;}
+ul {font-size: 10pt; font-family: Arial,Helvetica;}
+body {font-size: 10pt; font-family: Arial,Helvetica;}
+code {font-size: 10pt; font-family: Courier;}
+pre {font-size: 10pt; font-family: Courier;}
+</style>
+</head>
+
+<body bgcolor="white">
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="100%" background="lines.gif">
+<img src="lines.gif" align=right>
+<small>Documentation for Algol 68 Genie Mark 9.2</small>
+</td>
+</table>
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<br>
+<h2>Example: Quicksort</h2>
+</td>
+<td width="30%" valign=top bgcolor="white">
+<img src="logo.gif">
+</td>
+<td width="5%" valign=top bgcolor="white">
+</td>
+<td width="15%" valign=top bgcolor="white">
+<!-- Navigation bar -->
+<table border="0" cellspacing="0" width="100%">
+<tr>
+<td background="lines.gif">
+<small><b>Algol68G Mark 9.2</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="introduction.html"><small>Introduction</small></a><br>
+&nbsp;&middot;&nbsp;<a href="install.html"><small>Installation</small></a><br>
+&nbsp;&middot;&nbsp;<a href="description.html"><small>Description</small></a><br>
+&nbsp;&middot;&nbsp;<a href="examples.html"><small>Example&nbsp;programs</small></a><br>
+&nbsp;&middot;&nbsp;<a href="synopsis.html"><small>Synopsis</small></a><br>
+&nbsp;&middot;&nbsp;<a href="syntax.html"><small>Syntax</small></a><br>
+&nbsp;&middot;&nbsp;<a href="environ.html"><small>Environment</small></a><br>
+<br>
+<small><b>Extensions</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="extensions.html"><small>UNIX</small></a><br>
+&nbsp;&middot;&nbsp;<a href="postgresql.html"><small>PostgreSQL</small></a><br>
+&nbsp;&middot;&nbsp;<a href="drawing.html"><small>Drawing</small></a><br>
+&nbsp;&middot;&nbsp;<a href="numerical.html"><small>Numerical</small></a><br>
+<br>
+&nbsp;&middot;&nbsp;<a href="contents.html"><small>Contents</small></a><br>
+&nbsp;&middot;&nbsp;<a href="resources.html"><small>A68 Resources</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#obtaining"><small>Downloads</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#contact"><small>Contact</small></a>
+</td>
+</tr>
+</table>
+<!-- End navigation bar -->
+</td>
+</table>
+
+<font color=black>
+<pre>
+BEGIN MODE NODE = STRUCT (INT k, TREE smaller, larger),
+           TREE = REF NODE;
+
+      TREE empty tree = NIL;
+
+      PROC add = (REF TREE root, INT k) VOID:
+           IF root IS empty tree
+           THEN root := HEAP NODE := (k, NIL, NIL)
+           ELSE add ((k < k OF root | smaller OF root | larger OF root), k)
+           FI;
+
+      PROC write = (TREE root) VOID:
+           IF root ISNT NIL
+           THEN write (smaller OF root);
+                print ((whole (k OF root, 0), " "));
+                write (larger OF root)
+           FI;
+
+      TREE root := empty tree;
+      WHILE INT n = read int;
+            n > 0
+      DO add (root, n)
+      OD;
+      write (root)
+END
+</pre>
+<p>
+Compare the version above with next version, which is the so-called "triple-REF trick": 
+<p>
+<pre>
+MODE NODE = STRUCT (INT v, REF NODE less, more);
+REF NODE end = NIL;
+REF REF NODE start = LOC REF NODE := end;
+
+PROC insert = (INT v) VOID:
+     BEGIN REF REF REF NODE place = LOC REF REF NODE := start;
+           WHILE place ISNT end
+           DO place := (v < v OF place | less OF place | more OF place)
+           OD;
+           REF REF NODE (place) := HEAP NODE := (v, end, end)
+     END;
+
+PROC print tree = (REF NODE n) VOID:
+     IF n ISNT NIL
+     THEN print tree (less OF n);
+          print ((new line, whole (v OF n, 0)));
+          print tree (more OF n)
+     FI;
+
+WHILE INT n = read int;
+      n > 0
+DO insert (n)
+OD;
+
+print tree (start)
+</pre>
+</font>
+
+<p>
+<br>
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<font color="black">
+<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
+</font>
+</td>
+<td width="50%" align=right valign=top bgcolor="white">
+<font color="black">
+<small>Documentation for Algol 68 Genie Mark 9.2 (July 2006)</small>
+</font>
+</td>
+</table>
+</p>
+
+</body>
+</html>

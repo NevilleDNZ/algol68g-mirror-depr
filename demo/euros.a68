@@ -1,0 +1,20 @@
+# How many ways are there to split 5 euros in
+  2 euro, 1 euro, 50 ct, 20 ct, 10 ct, 5 ct?
+#
+
+PROC count = (INT rest, max) INT:
+   IF rest = 0
+   THEN 1 # Just right, combination found #
+   ELIF rest < 0
+   THEN 0 # Invalid, subtracted too much #
+   ELSE [] INT values = (5, 10, 20, 50, 100, 200);
+        INT combinations := 0;
+        FOR i TO UPB values
+	WHILE values[i] <= max
+        DO combinations +:= count (rest - values[i], values[i])
+        OD;
+        combinations
+   FI;
+
+INT amount = 500 # cts #;
+print (count (amount, amount))

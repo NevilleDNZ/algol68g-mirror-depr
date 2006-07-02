@@ -1,0 +1,27 @@
+ALGOL68G - ALGOL 68 GENIE (MARK 9)
+----------------------------------
+
+* A garbage collector cannot solve all memory allocation issues. It is 
+  therefore possible to get an unexpected "out of memory" diagnostic. Two
+  options in such case are (1) to increase heap size or (2) to call standard
+  prelude routine "sweep heap" or "preempive sweep heap" at strategic 
+  positions in the program.
+
+* The interpreter offers a method of checking the system stack (see the 
+  INSTALL file). When this check is not activated, or on systems where this 
+  method would not work, the following may result in a segment violation: 
+
+  - Deep recursion.
+  - Garbage collection of deeply recursive data structures.
+  - Using jumps to move between incarnations of recursive procedures.
+
+* When the stack overhead is set to a too small value, a segment violation may
+  occur. Refer to the documentation on option -overhead=value.
+
+* Algorithms for extended precision (LONG LONG INT, LONG LONG REAL and 
+  LONG LONG COMPLEX) are not really suited for precisions larger than about a 
+  thousand digits. State of the art in the field offers more efficient 
+  algorithms than implemented here.
+
+* Overflow- and underflow checks on REAL and COMPLEX are not implemented 
+  for non IEEE-754 hardware.

@@ -1,0 +1,410 @@
+<html>
+<head>
+<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
+<meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
+<style type="text/css">
+a:link    {color: blue; text-decoration: underline;}
+a:visited {color: blue; text-decoration: underline;}
+a:active  {color: blue; text-decoration: underline;}
+p {font-size: 10pt; font-family: Arial,Helvetica;}
+u {font-size: 10pt; font-family: Arial,Helvetica;}
+dd {font-size: 10pt; font-family: Arial,Helvetica;}
+h1 {font-size: 16pt; font-family: Arial,Helvetica;}
+h2 {font-size: 14pt; font-family: Arial,Helvetica;}
+h3 {font-size: 12pt; font-family: Arial,Helvetica;}
+h4 {font-size: 10pt; font-family: Arial,Helvetica;}
+td {font-size: 8pt; font-family: Arial,Helvetica;}
+ul {font-size: 10pt; font-family: Arial,Helvetica;}
+body {font-size: 10pt; font-family: Arial,Helvetica;}
+code {font-size: 10pt; font-family: Courier;}
+pre {font-size: 10pt; font-family: Courier;}
+</style>
+</head>
+
+<body bgcolor="white">
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="100%" background="lines.gif">
+<img src="lines.gif" align=right>
+<small>Documentation for Algol 68 Genie Mark 9.2</small>
+</td>
+</table>
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<br>
+<h2>Synopsis and options</h2>
+<small>
+&middot;&nbsp;<a href="synopsis.html#synopsis">Synopsis</a><br>
+&middot;&nbsp;<a href="synopsis.html#options">Options</a><br>
+&nbsp;&nbsp;&middot;&nbsp;<a href="synopsis.html#optionone">One-liners</a><br>
+&nbsp;&nbsp;&middot;&nbsp;<a href="synopsis.html#optionmem">Memory size</a><br>
+&nbsp;&nbsp;&middot;&nbsp;<a href="synopsis.html#optionlist">Listing options</a><br>
+&nbsp;&nbsp;&middot;&nbsp;<a href="synopsis.html#optionint">Interpreter options</a><br>
+&nbsp;&nbsp;&middot;&nbsp;<a href="synopsis.html#optionmisc">Miscellaneous options</a><br>
+&middot;&nbsp;<a href="synopsis.html#monitor">The monitor</a><br>
+&nbsp;&nbsp;&middot;&nbsp;<a href="synopsis.html#monexp">Monitor expressions</a>
+</small>
+</td>
+<td width="30%" bgcolor=white valign=top align=center>
+<img src="logo.gif">
+</td>
+<td width="5%" valign=top bgcolor="white">
+</td>
+<td  width="15%" valign=top bgcolor="white">
+<!-- Navigation bar -->
+<table border="0" cellspacing="0" width="100%">
+<tr>
+<td background="lines.gif">
+<small><b>Algol68G Mark 9.2</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="introduction.html"><small>Introduction</small></a><br>
+&nbsp;&middot;&nbsp;<a href="install.html"><small>Installation</small></a><br>
+&nbsp;&middot;&nbsp;<a href="description.html"><small>Description</small></a><br>
+&nbsp;&middot;&nbsp;<a href="examples.html"><small>Example&nbsp;programs</small></a><br>
+&nbsp;&middot;&nbsp;<a href="synopsis.html"><small>Synopsis</small></a><br>
+&nbsp;&middot;&nbsp;<a href="syntax.html"><small>Syntax</small></a><br>
+&nbsp;&middot;&nbsp;<a href="environ.html"><small>Environment</small></a><br>
+<br>
+<small><b>Extensions</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="extensions.html"><small>UNIX</small></a><br>
+&nbsp;&middot;&nbsp;<a href="postgresql.html"><small>PostgreSQL</small></a><br>
+&nbsp;&middot;&nbsp;<a href="drawing.html"><small>Drawing</small></a><br>
+&nbsp;&middot;&nbsp;<a href="numerical.html"><small>Numerical</small></a><br>
+<br>
+&nbsp;&middot;&nbsp;<a href="contents.html"><small>Contents</small></a><br>
+&nbsp;&middot;&nbsp;<a href="resources.html"><small>A68 Resources</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#obtaining"><small>Downloads</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#contact"><small>Contact</small></a>
+</td>
+</tr>
+</table>
+<!-- End navigation bar -->
+</td>
+</table>
+
+<h3><a name="synopsis"></a>Synopsis</h3>
+<p>
+From the command-line you would use:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<tt>
+a68g [options | filename]
+</tt>
+</font>
+</td>
+</table>
+<p>
+If Algol68G cannot open <code>filename</code>, it will try opening with extensions <code>.a68</code>, <code>.a68g</code>, <code>.algol68</code> or <code>.algol68g</code>. 
+<p>Alternatively, under UNIX or Linux an Algol 68 source file can be made a script by entering:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<tt>
+#! [path/]a68g [options]
+</tt>
+</font>
+</td>
+</table>
+<p>
+as the <b>first</b> line in the source file. 
+After making the script executable by typing:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<tt>
+chmod +x [path/]filename
+</tt>
+</font>
+</td>
+</table>
+<p>
+the script can be started from the command line by typing:
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<tt>
+[path/]filename
+</tt>
+</font>
+</td>
+</table>
+<p>
+On UNIX or Linux, Algol 68 Genie recognises next environment variables:
+<dl>
+<dt><code>A68G_STANDIN</code>
+<dd>The value will be the name of the file to which <code>stand in</code> will be redirected.
+<dt><code>A68G_STANDOUT</code>
+<dd>The value will be the name of the file to which <code>stand out</code> will be redirected.
+<dt><code>A68G_STANDERROR</code>
+<dd>The value will be the name of the file to which <code>stand error</code> will be redirected.
+<dt><code>A68G_OPTIONS</code>
+<dd>The value will be tokenised and processed as options. These options will supersede options set in file <code>.a68grc</code> (vide infra).
+</dl>
+</p>
+
+<br>
+<h3><a name="options"></a>Options</h3>
+<p>Options are passed to Algol68G either from the file <code>.a68grc</code> in the working directory, the <code>A68G_OPTIONS</code> environment variable, the command-line or through pragmats. Precedence is as follows: pragmats supersede command-line options, command-line options supersede options from <code>A68G_OPTIONS</code> that supersede options in <code>.a68grc</code>. 
+<p>
+Options have syntax <code>-option [[=] value[suffix]]</code>
+<p>
+Options are not case sensitive. In the list below, bold letters denote letters mandatory for recognition. Listing options, tracing options and pragmat, -nopragmat, take their effect when they are encountered in a left-to-right pass of the program text, and can thus be used, for example, to generate a cross reference for a particular part of the user program. In integral arguments, suffix "k", "M" or "G" is accepted to specify 2 ** 10, 2 ** 20 or 2 ** 30 respectively.
+</p>
+
+<h4><a name="optionone"></a>One-liners</h4>
+<dl compact>
+<dt><b>p</b>rint <i>unit</i>
+<dd><i>Command-line only</i>. Prints the value yielded by Algol 68 unit <i>unit</i>. In this way Algol68G can execute one-liners from the command-line. The one-liner is written in file <i>.a68g.x</i> in the working directory.
+<ul>
+<li><code>$ a68g -p "sqrt (2 * pi)"</code>
+</ul>
+<dt><b>e</b>xecute <i>unit</i>
+<dd><i>Command-line only</i>. Executes Algol 68 unit <i>unit</i>. In this way Algol68G can execute one-liners from the command-line. The one-liner is written in file <i>.a68g.x</i> in the working directory.
+<ul>
+<li><code>$ a68g -e "# Young Gauss # INT sum := 0; FOR i TO 99 DO sum +:= i OD; print (sum)"</code>
+</ul>
+</dl>
+
+<br>
+<h4><a name="optionmem"></a>Memory size</h4>
+<p>Algol 68 relieves the programmer from managing memory, hence Algol68G manages allocation and de-allocation of heap space. However, if memory size were not bounded, Algol68G might claim all available memory before the garbage collector is called. Since this could impede overall system performance, memory size is bounded. 
+</p>
+<dl compact>
+<dt><b>heap</b> <i>number</i>
+<dd>Sets heap size to <i>number</i> bytes. This is the size of the block that will actually hold data, not handles. At runtime Algol68G will use the heap to store temporary arrays, so even a program that has no heap generators requires heap space, and can invoke the garbage collector.
+<ul>
+<li><code>PR heap=32M PR
+</code></ul>
+<dt><b>handles</b> <i>number</i>
+<dd>Sets handle space size to <i>number</i> bytes. This is the size of the block that hold handles that point to data in the heap. A reference to the heap does not point to the heap, but to a handle as to make it possible for the garbage collector to compact the heap. 
+<ul>
+<li><code>PR handles=2M PR
+</code></ul>
+<dt><b>frame</b> <i>number</i>
+<dd>Sets frame stack size to <i>number</i> bytes. A deeply recursive program with many local variables may require a large frame stack space.
+<ul>
+<li><code>PR frame=1M PR
+</code></ul>
+<dt><b>stack</b> <i>number</i>
+<dd>Sets expression stack size to <i>number</i> bytes. A deeply recursive program may require a large expression stack space.
+<ul>
+<li><code>PR stack=512k PR
+</code></ul>
+<dt><b>overhead</b> <i>number</i>
+<dd>Sets the overhead, which is a safety margin, for the expression stack and the frame stack. Since stacks grow by relatively small amounts at a time, the interpreter checks stack sizes only where recursion may set in. It is checked whether stacks have grown into the overhead. For example, if the frame stack size is 512 kB and the overhead is set to 128 kB, the interpreter will signal an imminent stack overflow when the frame stack pointer exceeds 512&nbsp;-&nbsp;128&nbsp;=&nbsp;384 kB.
+<ul>
+<li><code>PR overhead=64k PR
+</code></ul>
+</dl>
+
+<br>
+<h4><a name="optionlist"></a>Listing options</h4>
+<dl compact>
+<dt><b>ext</b>ensive
+<dd>Generates extensive listing, including source listing, syntax tree, cross reference etcetera. This listing can be quite bulky.
+<dt><b>list</b>ing
+<dd>Generates concise listing.
+<dt><b>moids</b>
+<dd>Generates overview of moids in listing file.
+<dt><b>prelude</b>listing
+<dd>Generates a listing of preludes.
+<dt><b>source</b>, <b>nosource</b>
+<dd>Starts (or stops) listing of source lines in listing file.
+<dt><b>st</b>atistics
+<dd>Generates statistics in listing file.
+<dt><b>tree</b>, <b>notree</b>
+<dd>Generates syntax tree listing in listing file. This option can make the listing file bulky, so use considerately.
+<dt><b>unused</b>
+<dd>Generates an overview of unused tags in the listing file.
+<dt><b>x</b>ref, <b>nox</b>ref
+<dd>Starts (or stops) generating a cross reference in the listing file.
+</dl>
+
+<br>
+<h4><a name="optionint"></a>Interpreter options</h4>
+<dl compact>
+<dt><b>mon</b>itor, <b>debug</b>
+<dd>Upon encountering a runtime error, instead of terminating execution, the <a href="#monitor">monitor</a> will be entered.
+<dt><b>a</b>ssertions, <b>noa</b>ssertions
+<dd>Starts (or stops) elaboration of assertions.
+<dt><b>br</b>eakpoint, <b>nobr</b>eakpoint
+<dd>Starts (or stops) setting breakpoints on following program lines.
+<dt><b>tr</b>ace, <b>notr</b>ace
+<dd>Starts (or stops) tracing of a program.
+<dt><b>prec</b>ision <i>number</i>
+<dd>Sets precision for LONG LONG modes to <i>number</i> significant digits. The precision cannot be less than the precision of LONG modes.
+<ul><i>
+<li><code>$ a68g -prec=1000 -p "long long pi"
+</code></i></ul>
+<dt><b>ti</b>melimit <i>number</i>
+<dd>Interrupts the interpreter after <i>number</i> seconds; a <i>time limit exceeded</i> runtime error will be given.
+</dl>
+
+<br>
+<h4><a name="optionmisc"></a>Miscellaneous options</h4>
+<dl compact>
+<dt><b>upper</b>stropping, <b>quote</b>stropping
+<dd>Sets the stropping mode. Upper stropping is the default. Quote stropping is implemented to let Algol68G scan vintage source code.
+<dt><b>br</b>ackets
+<dd>Enables non-traditional use of brackets.
+<dt><b>check</b>, <b>norun</b>
+<dd>Check syntax only, interpreter does not start.
+<dt><b>run</b>
+<dd>Override <b>norun</b>.
+<dt><b>exit</b>, <b>--</b>
+<dd>Ignore further options from command line or current pragmat.
+<dt><b>f</b>ile <i>string</i>
+<dd>Accept argument as generic filename.
+<dt><b>gnud</b>iagnostics
+<dd>Generates GNU style diagnostics.
+<dt><b>h</b>elp
+<dd>Provides an overview of options.
+<dt><b>pedantic</b>
+<dd>Equivalent to <b>warnings portcheck</b>.
+<dt><b>port</b>check, <b>noport</b>check
+<dd>Enable or suppress portability warning messages.
+<dt><b>warnings</b>, <b>now</b>arnings
+<dd>Enable warning messages or suppresses suppressible warning messages.
+<dt><b>pr</b>agmats, <b>nopr</b>agmats
+<dd>Starts (or stops) elaboration of pragmat items. When disabled, pragmat items are ignored, except for pragmats.
+<dt><b>red</b>uctions
+<dd>Prints reductions made by the parser. Meant for parser debugging but can be instructive (and bulky).
+<dt><b>verb</b>ose
+<dd>Informs on actions.
+<dt><b>vers</b>ion
+<dd>States the version of the running copy of Algol68G.
+<dt><b>w</b>arnings
+<dd>Enables warning messages.
+</dl>
+
+<br>
+<h3><a name="monitor"></a>The monitor</h3>
+
+<p>
+Algol68G has a monitor for basic debugging of a running program. The monitor is invoked when Algol68G receives signal SIGINT (which usually comes from typing CTRL-C), when standard procedures <code>debug</code> or <code>break</code> are called, or when a runtime error occurs when option <code>monitor</code> is in effect. Breakpoints can be indicated a&nbsp;priori through pragmats as well.
+
+<p>
+Currently, the monitor recognises next commands:
+<p>
+<dl compact>
+
+<dt><b>b</b>reakpoint <i>n</i> <i>[expression]</i>
+<dd>Set breakpoints on units in line <i>n</i>. 
+If you supply <a href="#monexp"><i>expression</i></a> then interruption will only take place if this expression yields <code>TRUE</code>.
+The interpreter can only break units in serial-clauses and enquiry-clauses, collateral-clauses, and unit-lists in in-parts of integer-case-clauses and united-case-clauses.
+Units in other positions cannot trigger a breakpoint, unless they contain a call to <code>monitor</code> or <code>debug</code>.
+
+<dt><b>b</b>reakpoint
+<dd>Clear all breakpoints.
+
+<dt><b>ca</b>lls <i>n</i>
+<dd>Print <i>n</i> frames in the call stack
+(default <i>n</i>=3).
+
+<dt><b>c</b>ontinue, <b>r</b>esume
+<dd>Continue execution.
+
+<dt><b>do</b> <i>command</i>, <b>exec</b> <i>command</i>
+<dd>Pass <i>command</i> to the shell and print the return code.
+
+<dt><b>e</b>valuate <i>expression</i>, <b>x</b> <i>expression</i>
+<dd>Evaluate <a href="#monexp"><i>expression</i></a> and show its result.
+
+<dt><b>e</b>xamine <i>n</i>
+<dd>Print value of all identifiers named <i>n</i> in the call stack.
+
+<dt><b>exi</b>t, <b>hx</b>, <b>q</b>uit
+<dd>Terminates the program.
+
+<dt><b>f</b>rame
+<dd>Print contents of the current stack frame. This is equivalent to <code>stack 1</code>.
+
+<dt><b>hea</b>p <i>n</i>
+<dd>Print contents of the heap with address not greater than <i>n</i>.
+
+<dt><b>hel</b>p
+<dd>Print brief help text.
+
+<dt><b>ht</b>
+<dd>Suppress program output to standard output.
+
+<dt><b>l</b>ist <i>n</i> <i>m</i>
+<dd>If <i>m</i> is omitted, show <i>n</i> lines around the interrupted line 
+(default <i>n</i>=10).
+If <i>n</i> and <i>m</i> are supplied, show lines <i>n</i> upto <i>m</i>.
+
+<dt><b>n</b>ext, <b>ste</b>p
+<dd>Resume execution until the next unit in the program that can be a breakpoint (coarse single-stepping). 
+
+<dt><b>sta</b>ck <i>n</i>
+<dd>Print <i>n</i> frames in the stack
+(default <i>n</i>=3).
+
+<dt><b>w</b>here
+<dd>Show the line where interruption took place.
+
+</dl>
+
+<h4><a name="monexp"></a>Monitor expressions</h4>
+<p>
+Monitor expressions provide basic means to do arithmetic in the monitor, and to change stored values.
+Monitor expression syntax is similar to Algol 68 syntax.
+Important points are:
+<ul>
+<li>Expressions, assignment sources and assignment destinations are strictly evaluated from left to right.
+<li>Actual assignment is done from right to left.
+<pre>
+===> <b>x a[1] := 0</b>
+(REF INT) refers to heap(892000)
+(INT) +0
+===> <b>x a[2] := a[1] := 1</b>
+(REF INT) refers to heap(892016)
+(INT) +1
+</pre>
+<li>Only procedures and operators from standard environ can be called, and operator priorities are taken from standard environ.
+<li>Operands are denoters, identifiers, closed-clauses, calls and slices. Casts are also operands but can only be made to mode <code>[LONG][LONG] REAL</code> or to a (multiple) reference to an indicant:
+<pre>
+===> <b>x REAL (1)</b>
+(REAL) +1.00000000000000E  +0
+===> <b>x REF TREE (k) IS NIL</b>
+(BOOL) F
+===> <b>x REF TREE (k) := NIL</b>
+(REF REF STRUCT (INT f, REF SELF next)) refers to heap(600000)
+(REF STRUCT (INT f, REF SELF next)) NIL
+</pre>
+<li>Slicing does not support trimmers. Only <code>[</code> and <code>]</code>  are allowed as brackets for indexers.
+<li>Selections are allowed, but not multiple selections.
+<pre>
+===> <b>x im OF z</b>
+(REF LONG REAL) refers to frame(80)
+(LONG REAL) +3.1415926535897932384626433832795029
+</pre>
+<li>Dereferencing is the only coercion in arithmetic. Names can be compared through <code>IS</code> and <code>ISNT</code>, and <code>NIL</code> is supplied, but there is no soft coercion of operands.
+</ul>
+
+<p>
+<br>
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<font color="black">
+<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
+</font>
+</td>
+<td width="50%" align=right valign=top bgcolor="white">
+<font color="black">
+<small>Documentation for Algol 68 Genie Mark 9.2 (July 2006)</small>
+</font>
+</td>
+</table>
+</p>
+
+</body>
+</html>

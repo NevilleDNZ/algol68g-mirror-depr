@@ -1,0 +1,553 @@
+<html>
+<head>
+<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
+<meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
+<style type="text/css">
+a:link    {color: blue; text-decoration: underline;}
+a:visited {color: blue; text-decoration: underline;}
+a:active  {color: blue; text-decoration: underline;}
+p {font-size: 10pt; font-family: Arial,Helvetica;}
+u {font-size: 10pt; font-family: Arial,Helvetica;}
+dd {font-size: 10pt; font-family: Arial,Helvetica;}
+h1 {font-size: 16pt; font-family: Arial,Helvetica;}
+h2 {font-size: 14pt; font-family: Arial,Helvetica;}
+h3 {font-size: 12pt; font-family: Arial,Helvetica;}
+h4 {font-size: 10pt; font-family: Arial,Helvetica;}
+td {font-size: 8pt; font-family: Arial,Helvetica;}
+ul {font-size: 10pt; font-family: Arial,Helvetica;}
+body {font-size: 10pt; font-family: Arial,Helvetica;}
+code {font-size: 10pt; font-family: Courier;}
+pre {font-size: 10pt; font-family: Courier;}
+</style>
+</head>
+
+<body bgcolor="white">
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="100%" background="lines.gif">
+<img src="lines.gif" align=right>
+<small>Documentation for Algol 68 Genie Mark 9.2</small>
+</td>
+</table>
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<br>
+<h2>PostgreSQL client routines</h2>
+<p>
+<small>
+&middot;&nbsp;<a href="postgresql.html#pgconnect">Connecting to a server</a><br>
+&middot;&nbsp;<a href="postgresql.html#pgquery">Sending queries and retrieving results</a><br>
+&middot;&nbsp;<a href="postgresql.html#pgstatus">Connection status information</a><br>
+&middot;&nbsp;<a href="postgresql.html#pgthread">Behaviour in threaded programs</a><br>
+&middot;&nbsp;<a href="postgresql.html#pgexample">Example code</a><br>
+&middot;&nbsp;<a href="postgresql.html#pgcopyright">Copyright and license notice</a><br>
+<small>
+</td>
+<td width="30%" bgcolor="white" valign=top align=center>
+<img src="logo.gif">
+</td>
+<td width="5%" valign=top bgcolor="white">
+</td>
+<td width="15%" valign=top bgcolor="white">
+<!-- Navigation bar -->
+<table border="0" cellspacing="0" width="100%">
+<tr>
+<td background="lines.gif">
+<small><b>Algol68G Mark 9.2</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="introduction.html"><small>Introduction</small></a><br>
+&nbsp;&middot;&nbsp;<a href="install.html"><small>Installation</small></a><br>
+&nbsp;&middot;&nbsp;<a href="description.html"><small>Description</small></a><br>
+&nbsp;&middot;&nbsp;<a href="examples.html"><small>Example&nbsp;programs</small></a><br>
+&nbsp;&middot;&nbsp;<a href="synopsis.html"><small>Synopsis</small></a><br>
+&nbsp;&middot;&nbsp;<a href="syntax.html"><small>Syntax</small></a><br>
+&nbsp;&middot;&nbsp;<a href="environ.html"><small>Environment</small></a><br>
+<br>
+<small><b>Extensions</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="extensions.html"><small>UNIX</small></a><br>
+&nbsp;&middot;&nbsp;<a href="postgresql.html"><small>PostgreSQL</small></a><br>
+&nbsp;&middot;&nbsp;<a href="drawing.html"><small>Drawing</small></a><br>
+&nbsp;&middot;&nbsp;<a href="numerical.html"><small>Numerical</small></a><br>
+<br>
+&nbsp;&middot;&nbsp;<a href="contents.html"><small>Contents</small></a><br>
+&nbsp;&middot;&nbsp;<a href="resources.html"><small>A68 Resources</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#obtaining"><small>Downloads</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#contact"><small>Contact</small></a>
+</td>
+</tr>
+</table>
+<!-- End navigation bar -->
+</td>
+</table>
+
+<p>
+<a href="http://www.postgresql.org">PostgreSQL</a> is an object-relational database management system (ORDBMS) based on POSTGRES, Version 4.2, developed at the University of California at Berkeley Computer Science Department. 
+PostgreSQL is an open-source descendant of this original Berkeley code. It supports a large part of the SQL standard and offers many modern features.
+PostgreSQL uses a client/server model. A PostgreSQL session consists of the following cooperating processes (programs)
+<p>
+&nbsp;&middot;&nbsp;A server process, which manages the database files, accepts connections to the database from client applications, and performs actions on the database on behalf of the clients. The database server program is called postmaster. 
+<p>
+&nbsp;&middot;&nbsp;The user's client (frontend) application that wants to perform database operations. Client applications can be very diverse in nature: a client could be a text-oriented tool, a graphical application, a web server that accesses the database to display web pages, or a specialised database maintenance tool. 
+<p>
+As is typical of client/server applications, the client and the server can be on different hosts. In that case they communicate over a TCP/IP network connection. You should keep this in mind, because the files that can be accessed on a client machine might not be accessible (or might only be accessible using a different file name) on the database server machine. 
+<p>
+The PostgreSQL server can handle multiple concurrent connections from clients. For that purpose it starts ("forks") a new process for each connection. From that point on, the client and the new server process communicate without intervention by the original postmaster process. Thus, the postmaster is always running, waiting for client connections, whereas client and associated server processes come and go. 
+<p>
+The routines in this section enable basic client interactions from Algol 68 with a PostgreSQL backend server. These routines allow client programs to pass queries to a PostgreSQL backend server and to receive the results of these queries.
+<p>
+Algol 68 Genie uses <code><code>libpq</code></code>, the C application programmer's interface to PostgreSQL (version 8.1.4 or compatible). The <code><code>libpq</code></code> library is also used in other PostgreSQL application interfaces, including those for C++, Perl, Python, Tcl and ECPG.
+<p>
+Connection to a database server is established through a <code>REF FILE</code> variable. String results are communicated through a <code>REF STRING</code> buffer that is associated with the <code>REF FILE</code> variable upon establishing a connection with a PostgreSQL server. This allows for easy mode conversion of text-formatted data from tables using <code>get</code>. Currently, Algol 68 Genie does not support retrieving data in binary format.
+</p>
+
+<br>
+<a name="pgconnect"></a>
+<h3>Connecting to a server</h3>
+<p>
+Return values are 0 or positive on success, -1 when no connection was established, -2 when no result was available, or -3 on other errors.
+<dl>
+<dt><code>PROC pq connect db = (REF FILE f, STRING conninfo, REF STRING buffer) INT</code>
+<dd>Connect to a PostgreSQL backend server and open a new database connection in a way specified by <code>conninfo</code>, associate the connection with file <code>f</code> and associate <code>buffer</code> with file <code>f</code>. 
+<p>
+The passed string can be empty to use all default parameters, or it can contain one or more parameter settings separated by whitespace. Each parameter setting is in the form keyword = value. Spaces around the equal sign are optional. To write an empty value or a value containing spaces, surround it with single quotes, e.g., keyword = 'a value'. Single quotes and backslashes within the value must be escaped with a backslash, i.e., \' and \\. 
+<p>
+The currently recognised parameter keywords are: 
+<dl>
+<dt><code>host</code>
+<dd>Name of host to connect to. If this begins with a slash, it specifies Unix-domain communication rather than TCP/IP communication; the value is the name of the directory in which the socket file is stored. The default behaviour when host is not specified is to connect to a Unix-domain socket in /tmp (or whatever socket directory was specified when PostgreSQL was built). On machines without Unix-domain sockets, the default is to connect to localhost. 
+
+<dt><code>hostaddr</code>
+<dd>Numeric IP address of host to connect to. This should be in the standard IPv4 address format, e.g., 172.28.40.9. If your machine supports IPv6, you can also use those addresses. TCP/IP communication is always used when a nonempty string is specified for this parameter. 
+<p>
+Using hostaddr instead of host allows the application to avoid a host name look-up, which may be important in applications with time constraints. However, Kerberos authentication requires the host name. The following therefore applies: If host is specified without hostaddr, a host name lookup occurs. If hostaddr is specified without host, the value for hostaddr gives the remote address. When Kerberos is used, a reverse name query occurs to obtain the host name for Kerberos. If both host and hostaddr are specified, the value for hostaddr gives the remote address; the value for host is ignored, unless Kerberos is used, in which case that value is used for Kerberos authentication. (Note that authentication is likely to fail if <code><code>libpq</code></code> is passed a host name that is not the name of the machine at hostaddr.) Also, host rather than hostaddr is used to identify the connection in <code>~/.pgpass</code> (see Section 28.12). 
+<p>
+Without either a host name or host address, <code><code>libpq</code></code> will connect using a local Unix-domain socket; or on machines without Unix-domain sockets, it will attempt to connect to localhost. 
+
+<dt><code>port</code>
+<dd>Port number to connect to at the server host, or socket file name extension for Unix-domain connections. 
+
+<dt><code>dbname</code>
+<dd>The database name. Defaults to be the same as the user name. 
+
+<dt><code>user</code>
+<dd>PostgreSQL user name to connect as. Defaults to be the same as the operating system name of the user running the application. 
+
+<dt><code>password</code>
+<dd>Password to be used if the server demands password authentication. 
+
+<dt><code>connect_timeout</code>
+<dd>Maximum wait for connection, in seconds (write as a decimal integer string). Zero or not specified means wait indefinitely. It is not recommended to use a timeout of less than 2 seconds. 
+
+<dt><code>options</code>
+<dd>Command-line options to be sent to the server. 
+
+<dt><code>sslmode</code>
+<dd>This option determines whether or with what priority an SSL connection will be negotiated with the server. There are four modes: disable will attempt only an unencrypted SSL connection; allow will negotiate, trying first a non-SSL connection, then if that fails, trying an SSL connection; prefer (the default) will negotiate, trying first an SSL connection, then if that fails, trying a regular non-SSL connection; require will try only an SSL connection. 
+<p>
+If PostgreSQL is compiled without SSL support, using option require will cause an error, while options allow and prefer will be accepted but <code>libpq</code> will not in fact attempt an SSL connection. 
+
+<dt><code>requiressl</code>
+<dd>This option is deprecated in favor of the sslmode setting. 
+
+If set to 1, an SSL connection to the server is required (this is equivalent to sslmode require). <code>libpq</code> will then refuse to connect if the server does not accept an SSL connection. If set to 0 (default), <code>libpq</code> will negotiate the connection type with the server (equivalent to sslmode prefer). This option is only available if PostgreSQL is compiled with SSL support. 
+
+<dt><code>krbsrvname</code>
+<dd>Kerberos service name to use when authenticating with Kerberos 5. This must match the service name specified in the server configuration for Kerberos authentication to succeed. (See also Section 20.2.3.) 
+
+<dt><code>service</code>
+<dd>Service name to use for additional parameters. It specifies a service name in <code>pg_service.conf</code> that holds additional connection parameters. This allows applications to specify only a service name so connection parameters can be centrally maintained. See <code>share/pg_service.conf.sample</code> in the installation directory for information on how to set up the file. 
+<hr color=#e8e8e8>
+</dl>
+
+<p>
+If any parameter is unspecified, then the corresponding environment variable (see Section 28.11) is checked. If the environment variable is not set either, then the indicated built-in defaults are used. The following environment variables can be used to select default
+connection parameter values, which will be used by
+<code>PQconnectdb</code> if no value is directly specified by the calling
+code. These are useful to avoid hard-coding database connection
+information into simple client applications, for example.
+<p>
+<dl>
+<dt><code>PGHOST</code>
+<dd><code>PGHOST</code> sets the database server name.
+If this begins with a slash, it specifies Unix-domain communication
+rather than TCP/IP communication; the value is then the name of the
+directory in which the socket file is stored (in a default installation
+setup this would be <code>/tmp</code>).
+<br><br>
+<dt><code>PGHOSTADDR</code>
+<dd><code>PGHOSTADDR</code> specifies the numeric IP address of the database
+server. This can be set instead of or in addition to <code>PGHOST</code>
+to avoid DNS lookup overhead. See the documentation of
+these parameters, under <function>PQconnectdb</function> above, for details
+on their interaction.
+<p>
+When neither <code>PGHOST</code> nor <code>PGHOSTADDR</code> is set,
+the default behaviour is to connect using a local Unix-domain socket; or on
+machines without Unix-domain sockets, <code>libpq</code> will
+attempt to connect to localhost.
+<br><br>
+<dt><code>PGPORT</code>
+<dd><code>PGPORT</code> sets the TCP port number or Unix-domain socket file extension for communicating with the PostgreSQL server.
+<br><br>
+<dt><code>PGDATABASE</code>
+<dd><code>PGDATABASE</code> sets the PostgreSQL database name.
+<br><br>
+<dt><code>PGUSER</code>
+<dd><code>PGUSER</code> sets the user name used to connect to the database.
+<br><br>
+<dt><code>PGPASSWORD</code>
+<dd><code>PGPASSWORD</code> sets the password used if the server demands password authentication. Use of this environment variable is not recommended for security reasons (some operating systems allow non-root users to see process environment variables via <code>ps</code>); instead consider using the <code>~/.pgpass</code> file.
+<br><br>
+<dt><code>PGPASSFILE</code>
+<dd><code>PGPASSFILE</code> specifies the name of the password file to use for lookups.
+If not set, it defaults to <code>~/.pgpass</code>.
+<br><br>
+<dt><code>PGSERVICE</code>
+<dd><code>PGSERVICE</code> sets the service name to be looked up in <code>pg_service.conf</code>. This offers a shorthand way of setting all the parameters.
+<br><br>
+<dt><code>PGREALM</code>
+<dd><code>PGREALM</code> sets the Kerberos realm to use with PostgreSQL, if it is different from the local realm. If <code>PGREALM</code> is set, <code>libpq</code> applications will attempt authentication with servers for this realm and use separate ticket files to avoid conflicts with local ticket files. This environment variable is only
+used if Kerberos authentication is selected by the server.
+<br><br>
+<dt><code>PGOPTIONS</code>
+<dd><code>PGOPTIONS</code> sets additional run-time options for the PostgreSQL server.
+<br><br>
+<dt><code>PGSSLMODE</code>
+<dd><code>PGSSLMODE</code> determines whether and with what priority an SSL connection will be negotiated with the server. There are four modes: disable will attempt only an unencrypted SSL connection; allow will negotiate, trying first a non-SSL connection, then if that fails, trying an SSL connection; prefer (the default) will negotiate, trying first an SSL connection, then if that fails, trying a regular non-SSL connection; require will try only an SSL connection. If PostgreSQL is compiled without SSL support, using option require will cause an error, while options allow and prefer will be accepted but <code>libpq</code> will not in fact attempt an SSL connection.
+<br><br>
+<dt><code>PGREQUIRESSL</code>
+<dd><code>PGREQUIRESSL</code> sets whether or not the connection must be made over SSL. If set to <quote>1</quote>, <code>libpq</code> will refuse to connect if the server does not accept an SSL connection (equivalent to sslmode prefer). This option is deprecated in favor of the sslmode setting, and is only available if PostgreSQL is compiled with SSL support.
+<br><br>
+<dt><code>PGKRBSRVNAME</code>
+<dd><code>PGKRBSRVNAME</code> sets the Kerberos service name to use when authenticating with Kerberos 5.
+<br><br>
+<dt><code>PGCONNECT_TIMEOUT</code>
+<dd><code>PGCONNECT_TIMEOUT</code> sets the maximum number of seconds that <code>libpq</code> will wait when attempting to connect to the PostgreSQL server. If unset or set to zero, <code>libpq</code> will wait indefinitely. It is not recommended to set the timeout to less than 2 seconds.
+<hr color=#e8e8e8>
+</dl>
+
+<br>
+<br>
+<dt><code>PROC pq finish = (REF FILE f) INT</code>
+<dd>Closes the connection to the server. Also frees memory used. Note that even if the server connection attempt fails, the application should call <code>pq finish</code> to free memory used. The connection must not be used again after <code>pq finish</code> has been called. 
+
+<br>
+<br>
+<dt><code>PROC pq reset = (REF FILE f) INT</code>
+<dd>Resets the communication channel to the server.
+This function will close the connection to the server and attempt to reestablish a new connection to the same server, using all the same parameters previously used. This may be useful for error recovery if a working connection is lost. 
+
+<br>
+<br>
+<dt><code>PROC pq parameter status = (REF FILE f, STRING parameter) INT</code>
+<dd>Assigns current parameter value to the string associated with <code>f</code>. 
+<p>
+Certain parameter values are reported by the server automatically at
+connection startup or whenever their values change.
+<code>pq parameter status</code> can be used to interrogate these settings.
+It returns the current value of a parameter if known, or an empty string
+if the parameter is not known.
+<p>
+Parameters reported as of the current release include
+<code>server_version</code>,
+<code>server_encoding</code>,
+<code>client_encoding</code>,
+<code>is_superuser</code>,
+<code>session_authorization</code>,
+<code>DateStyle</code>,
+<code>TimeZone</code>,
+<code>integer_datetimes</code>, and
+<code>standard_conforming_strings</code>.
+(<code>server_encoding</code>, <code>TimeZone</code>, and
+<code>integer_datetimes</code> were not reported by releases before 8.0;
+<code>standard_conforming_strings</code> was not reported by releases
+before 8.1.)
+Note that
+<code>server_version</code>,
+<code>server_encoding</code> and
+<code>integer_datetimes</code>
+cannot change after startup.
+<p>
+Pre-3.0-protocol servers do not report parameter settings, but
+<code>libpq</code> includes logic to obtain values for
+<code>server_version</code> and <code>client_encoding</code> anyway.
+Note
+that on a pre-3.0 connection, changing <code>client_encoding</code> via
+<code>SET</code> after connection startup will not be reflected by
+<code>pq parameter status</code>. 
+<p>
+If no value for <code>standard_conforming_strings</code> is reported,
+applications may assume it is <code>false</code>, that is, backslashes
+are treated as escapes in string literals.  Also, the presence of this
+parameter may be taken as an indication that the escape string syntax
+(<code>E'...'</code>) is accepted.
+</dl>
+</p>
+
+<br>
+<a name="pgquery"></a>
+<h3>Sending queries and retrieving results</h3>
+<p>
+Return values are 0 or positive on success, -1 when no connection was established, -2 when no result was available, or -3 on other errors.
+<dl>
+<dt><code>PROC pq exec = (REF FILE f, STRING query) INT</code>
+<dd>Submits a command to the server and waits for the result.
+A zero result will generally be returned except in out-of-memory conditions or serious errors such as inability to send the command to the server. If a zero result is returned, it should be treated like a fatal error. Use <code>pq error message</code> to get more information about such errors.
+<p>
+It is allowed to include multiple SQL commands (separated by semicolons) in the command string. Multiple queries sent in a single <code>pq exec</code> call are processed in a single transaction, unless there are explicit BEGIN/COMMIT commands included in the query string to divide it into multiple transactions. Note however that the returned PGresult structure describes only the result of the last command executed from the string. Should one of the commands fail, processing of the string stops with it and the returned PGresult describes the error condition.
+<br>
+<br>
+<dt><code>PROC pq ntuples = (REF FILE f) INT</code>
+<dd>Returns the number of rows (tuples) in the query result.
+<br>
+<br>
+<dt><code>PROC pq nfields = (REF FILE f) INT</code>
+<dd>Returns the number of columns (fields) in each row of the query result.
+<br>
+<br>
+<dt><code>PROC pq fname = (REF FILE f, INT index) INT</code>
+<dd>Returns the column name associated with the given column number. 
+Column numbers start at 1 (which deviates from the <code>libpq</code> convention, where 0 subscripts the first element).
+<br>
+<br>
+<dt><code>PROC pq fnumber = (REF FILE f, INT index) INT</code>
+<dd>Returns the column number associated with the given column name.  Column numbers start at 1 (which deviates from the <code>libpq</code> convention, where 0 subscripts the first element).  The given name is treated like an identifier in an SQL command, that is, it is downcased unless quoted.
+<br>
+<br>
+<dt><code>PROC pq fformat = (REF FILE f, INT index) INT</code>
+<dd>Returns the format code indicating the format of the given column. Column numbers start at 1 (which deviates from the <code>libpq</code> convention, where 0 subscripts the first element). Format code zero indicates textual data representation, while format code one indicates binary representation.  (Other codes are reserved for future definition.)
+Column numbers start at 1 (which deviates from the <code>libpq</code> convention, where 0 subscripts the first element).
+<br>
+<br>
+<dt><code>PROC pq get is null = (REF FILE f, INT row, column) INT</code>
+<dd>Tests a field for a null value. Row and column numbers start at 1 (which deviates from the <code>libpq</code> convention, where 0 subscripts the first element). This function returns 1 if the field is null and 0 if it contains a non-null value. 
+<br>
+<br>
+<dt><code>PROC pq get value = (REF FILE f, INT row, column) INT</code>
+<dd>Assigns a single field value (in text format) of one row to the string associated with <code>f</code>. 
+Row and column numbers start at 1 (which deviates from the <code>libpq</code> convention, where 0 subscripts the first element).
+<p>
+Currently, <code>pq get value</code> does not support retrieving data in binary format.
+<p>
+An empty string is returned if the field value is null.
+<p>
+File <code>f</code> is reset, hence after a call to <code>pq get value</code>, conversion of text data to other data types than row-of-character can be easily accomplished using <code>get</code>.
+<br>
+<br>
+<dt><code>PROC pq cmd status = (REF FILE f) INT</code>
+<dd>Assigns the command status tag of the last SQL command sent to <code>f</code> to the string associated with <code>f</code>. Commonly this is just the name of the command, but it may include additional
+data such as the number of rows processed. 
+<br>
+<br>
+<dt><code>PROC pq cmd tuples = (REF FILE f) INT</code>
+<dd>Assigns the number of rows affected by the last SQL command sent to <code>f</code> to the string associated with <code>f</code>, following the execution of an <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>MOVE</code>, or <code>FETCH</code> statement.
+</dl>
+</p>
+
+<br>
+<a name="pgstatus"></a>
+<h3>Connection status information</h3>
+<p>
+Return values are 0 or positive on success, -1 when no connection was established, -2 when no result was available, or -3 on other errors.
+<dl>
+<dt><code>PROC pq error message = (REF FILE f) INT</code>
+<dd>Assigns the error message most recently generated by an operation on the connection to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq result error message = (REF FILE f) INT</code>
+<dd>Assigns the error message associated with the command (or an empty string if there was no error) to the string associated with <code>f</code>. 
+Immediately following a <code>pq exec call</code>, <code>pq error message</code> (on the connection) will return the same string as <code>pq result error message</code> (on the result). However, a query result will retain its error message until destroyed, whereas the connection's error message will change when subsequent operations are done.
+<br>
+<br>
+<dt><code>PROC pq db = (REF FILE f) INT</code>
+<dd>Assigns the database name of the connection to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq user = (REF FILE f) INT</code>
+<dd>Assigns the user name of the connection to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq pass(REF FILE f) INT</code>
+<dd>Assigns the password of the connection to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq host = (REF FILE f) INT</code>
+<dd>Assigns the server host name to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq port = (REF FILE f) INT</code>
+<dd>Assigns the port of the connection to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq options = (REF FILE f) INT</code>
+<dd>Assigns the command-line options passed in the connection request to the string associated with <code>f</code>.
+<br>
+<br>
+<dt><code>PROC pq protocol version = (REF FILE f) INT</code>
+<dd>Returns the frontend/backend protocol being used.
+Applications may wish to use this to determine whether certain features are supported. Currently, the possible values are 2 (2.0 protocol), 3 (3.0 protocol), or zero (connection bad). This will not change after connection startup is complete, but it could theoretically change during a connection reset. The 3.0 protocol will normally be used when communicating with PostgreSQL 7.4 or later servers; pre-7.4 servers support only protocol 2.0. (Protocol 1.0 is obsolete and not supported by libpq.)
+<br>
+<br>
+<dt><code>PROC pq server version = (REF FILE f) INT</code>
+<dd>Returns an integer representing the backend version.
+Applications may use this to determine the version of the database server they are connected to. The number is formed by converting the major, minor, and revision numbers into two-decimal-digit numbers and appending them together. For example, version 7.4.2 will be returned as 70402, and version 8.1 will be returned as 80100 (leading zeroes are not shown). Zero is returned if the connection is bad
+<br>
+<br>
+<dt><code>PROC pq socket = (REF FILE f) INT</code>
+<dd>Obtains the file descriptor number of the connection socket to the server. A valid descriptor will be greater than or equal to 0; a result of -1 indicates that no server connection is currently open. (This will not change during normal operation, but could change during connection setup or reset.)
+<br>
+<br>
+<dt><code>PROC pq backend pid = (REF FILE f) INT</code>
+<dd>Returns the process ID (PID) of the backend server process handling this connection. The backend PID is useful for debugging purposes and for comparison to NOTIFY messages (which include the PID of the notifying backend process). Note that the PID belongs to a process executing on the database server host, <code>not</code> the local host.
+</dl>
+</p>
+
+<br>
+<a name="pgthread"></a>
+<h3>Behaviour in threaded programs</h3>
+<p>
+<code>libpq</code> is re-entrant and thread-safe if the configure command-line option <code>--enable-thread-safety</code> was used when the PostgreSQL distribution was built.
+<p>
+One restriction is that no two threads attempt to manipulate the same PGconn object at the same time. In particular, you cannot issue concurrent commands from different threads through the same connection object. If you need to run concurrent commands, use multiple connections. PGresult objects are read-only after creation, and so can be passed around freely between threads.
+<p>
+In Algol 68 Genie, this means that in a parallel clause, two concurrent units should not manipulate a same <code>FILE</code> variable that is used to hold a connection to a database. Use multiple <code>FILE</code> variables to set up multiple connections.
+<p>
+For more information please refer to the PostgreSQL documentation.
+</p>
+
+<br>
+<a name="pgexample"></a>
+<h3>Example code</h3>
+<p>
+<table border=0 cellpadding=12>
+<td>
+<font color=black>
+<pre>
+#
+This example assumes a database "mydb" owned by postgres user "marcel",
+and a table "weather" constructed following the example in the 
+PostgreSQL 8.1 manual, chapter 2.
+#
+
+FILE z;     # Holds the connection # 
+STRING str; # The string associated with 'z' to do string IO with the server #
+
+# Connect to the server #
+
+IF pq connectdb (z, "dbname=mydb user=marcel", str) ~= 0
+THEN print ((pq result error message (z); str));
+     exit
+ELSE printf (($"protocol="g(0)x"server="g(0)x"socket="g(0)x"pid="g(0)/$, 
+              pq protocol version (z), pq server version (z), pq socket (z), pq backend pid (z)))
+FI;
+
+# Get the complete table #
+
+IF pq exec (z, "SELECT * FROM weather") ~= 0
+THEN print ((pq result error message (z); str));
+     exit
+FI;
+
+printf (($"tuples="g(0)x"fields="g(0)/$, pq ntuples (z), pq nfields (z)));
+
+# Print column names #
+
+FOR i TO pq nfields (z)
+DO IF pq fname (z, i) = 0
+   THEN print ((str, blank))
+   FI
+OD; 
+newline (standout);
+
+# Print row entries #
+
+FOR i TO pq ntuples (z)
+DO FOR k TO pq nfields (z)
+   DO IF pq getisnull (z, i, k) ~= 0
+      THEN print ("(null)")
+      ELIF pq getvalue (z, i, k) = 0
+      THEN print ((str, blank))
+      ELSE print ("error")
+      FI
+   OD;
+   newline (standout)
+OD;
+
+# Print average high temperature, convert mode as a demo #
+
+IF pq exec (z, "SELECT avg (temp_hi) FROM weather") ~= 0
+THEN print ((pq result error message (z); str));
+     exit
+FI;
+
+printf (($"tuples="g(0)x"fields="g(0)/$, pq ntuples (z), pq nfields (z)));
+
+IF pq getisnull (z, 1, 1) ~= 0
+THEN print ("(null)")
+ELIF pq getvalue (z, 1, 1) = 0
+THEN print ((REAL avg temp hi; get (z, avg temp hi); avg temp hi))
+ELSE print ("error")
+FI;
+
+# Close connection to the server #
+exit:
+pq finish (z)
+</pre>
+</font>
+</td>
+</table>
+</p>
+
+<br>
+<a name="pgcopyright"></a>
+<h3>Copyright and license notice</h3>
+Information on this page is in part based on PostgreSQL documentation that is released under the BSD license.
+
+<p>
+<hr color=#e8e8e8>
+<table width="100%">
+<td width="85%">
+<code>
+<small>
+PostgreSQL Database Management System
+(formerly known as Postgres, then as Postgres95).
+<br><br>
+Portions Copyright (c) 1996-2005, The PostgreSQL Global Development Group
+<br><br>
+Portions Copyright (c) 1994, The Regents of the University of California
+<br><br>
+Permission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without a written agreement is hereby granted, provided that the above copyright notice and this paragraph and the following two paragraphs appear in all copies.
+<br><br>
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+<br><br>
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+</small>
+</code>
+</td>
+<td width="15%">
+<a href="http://www.postgresql.org"><img src="pglogo.gif" border=0 align=right></a>
+</td>
+</table>
+<hr color=#e8e8e8>
+
+<p>
+<br>
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<font color="black">
+<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
+</font>
+</td>
+<td width="50%" align=right valign=top bgcolor="white">
+<font color="black">
+<small>Documentation for Algol 68 Genie Mark 9.2 (July 2006)</small>
+</font>
+</td>
+</table>
+</p>
+
+</body>
+</html>

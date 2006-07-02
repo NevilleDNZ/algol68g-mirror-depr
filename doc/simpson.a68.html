@@ -1,0 +1,146 @@
+<html>
+<head>
+<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
+<meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
+<style type="text/css">
+a:link    {color: blue; text-decoration: underline;}
+a:visited {color: blue; text-decoration: underline;}
+a:active  {color: blue; text-decoration: underline;}
+p {font-size: 10pt; font-family: Arial,Helvetica;}
+u {font-size: 10pt; font-family: Arial,Helvetica;}
+dd {font-size: 10pt; font-family: Arial,Helvetica;}
+h1 {font-size: 16pt; font-family: Arial,Helvetica;}
+h2 {font-size: 14pt; font-family: Arial,Helvetica;}
+h3 {font-size: 12pt; font-family: Arial,Helvetica;}
+h4 {font-size: 10pt; font-family: Arial,Helvetica;}
+td {font-size: 8pt; font-family: Arial,Helvetica;}
+ul {font-size: 10pt; font-family: Arial,Helvetica;}
+body {font-size: 10pt; font-family: Arial,Helvetica;}
+code {font-size: 10pt; font-family: Courier;}
+pre {font-size: 10pt; font-family: Courier;}
+</style>
+</head>
+
+<body bgcolor="white">
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="100%" background="lines.gif">
+<img src="lines.gif" align=right>
+<small>Documentation for Algol 68 Genie Mark 9.2</small>
+</td>
+</table>
+
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<br>
+<h2>Example: integration using Simpson's rule</h2>
+</td>
+<td width="30%" valign=top bgcolor="white">
+<img src="logo.gif">
+</td>
+<td width="5%" valign=top bgcolor="white">
+</td>
+<td width="15%" valign=top bgcolor="white">
+<!-- Navigation bar -->
+<table border="0" cellspacing="0" width="100%">
+<tr>
+<td background="lines.gif">
+<small><b>Algol68G Mark 9.2</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="introduction.html"><small>Introduction</small></a><br>
+&nbsp;&middot;&nbsp;<a href="install.html"><small>Installation</small></a><br>
+&nbsp;&middot;&nbsp;<a href="description.html"><small>Description</small></a><br>
+&nbsp;&middot;&nbsp;<a href="examples.html"><small>Example&nbsp;programs</small></a><br>
+&nbsp;&middot;&nbsp;<a href="synopsis.html"><small>Synopsis</small></a><br>
+&nbsp;&middot;&nbsp;<a href="syntax.html"><small>Syntax</small></a><br>
+&nbsp;&middot;&nbsp;<a href="environ.html"><small>Environment</small></a><br>
+<br>
+<small><b>Extensions</b></small>
+<br>
+&nbsp;&middot;&nbsp;<a href="extensions.html"><small>UNIX</small></a><br>
+&nbsp;&middot;&nbsp;<a href="postgresql.html"><small>PostgreSQL</small></a><br>
+&nbsp;&middot;&nbsp;<a href="drawing.html"><small>Drawing</small></a><br>
+&nbsp;&middot;&nbsp;<a href="numerical.html"><small>Numerical</small></a><br>
+<br>
+&nbsp;&middot;&nbsp;<a href="contents.html"><small>Contents</small></a><br>
+&nbsp;&middot;&nbsp;<a href="resources.html"><small>A68 Resources</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#obtaining"><small>Downloads</small></a><br>
+&nbsp;&middot;&nbsp;<a href="introduction.html#contact"><small>Contact</small></a>
+</td>
+</tr>
+</table>
+<!-- End navigation bar -->
+</td>
+</table>
+
+<font color=black>
+<pre>
+PR brackets PR # now ( .. ), { .. } and [ .. ] can be interchanged #
+
+PROC simpson = (DOUBLE a, b, PROC (DOUBLE) DOUBLE f, DOUBLE epsilon) DOUBLE:
+
+COMMENT Depending on Richardson's error term, integrate recursively with adapted intervals.
+COMMENT
+
+     BEGIN PROC adaptive = (DOUBLE a, m, b, f a, f m, f b, eps) DOUBLE:
+		IF DOUBLE l = (a + m) / 2, r = (m + b) / 2;
+		   DOUBLE f l = f(l), f r = f(r);
+		   ABS ((b - a) * (f a - 4 * f l + 6 * f m - 4 * f r + f b)) / 180 > eps
+		THEN adaptive (a, l, m, f a, f l, f m, eps / 2) + adaptive (m, r, b, f m, f r, f b, eps / 2)
+		ELSE (ABS (m - a) < eps # arbitrary # | print ("inaccurate!"));
+                     (b - a) * (f a + 4 * f l + 2 * f m + 4 * f r + f b) / 12
+                FI;
+           DOUBLE m = (a + b) / 2;
+	   adaptive (a, m, b, f(a), f(m), f(b), epsilon)
+     END;
+
+# Integrate for phi = pi / 4. Partial parametrisation is an Algol68G extension. #
+
+PROC p z = (DOUBLE r, phi) DOUBLE: long exp (- r) * long cos (phi);
+print ({SHORTEN simpson (0, 1, p z(, pi / 4), small real), space, {1 - exp (- 1)} * cos (pi / 4)})
+
+# ANW tests #
+
+print ((SHORTEN simpson (0, 1, long sqrt, small real), space, 2/3, newline));
+print ((SHORTEN simpson (1, 0, long sqrt, small real), space, -2/3, newline));
+
+# Second call below will give a wrong result! This is a limitation of this algorithm. #
+PROC difficult = (DOUBLE x) DOUBLE: x^2 * long sin (x);
+print ((SHORTEN simpson (0, 4 * pi, difficult, small real), space, -16*pi^2, newline));
+print ((SHORTEN simpson (0, 4 * long pi, difficult, small real), space, -16*pi^2, newline));
+
+INT n := 0;
+PROC counted root = (DOUBLE x) DOUBLE: (n +:= 1; long sqrt (x));
+
+print ((SHORTEN simpson (0, 1, counted root, small real), space, n, newline));
+
+# Uncomment next test at your peril - taken from SIAM 100-digit challenge. #
+
+#
+PROC siam = (DOUBLE x) DOUBLE: (x <= 0 | 0 | long cos (long ln (x) / x) / x );
+print ((SHORTEN simpson (0, 1, siam, small real), space, "+3.2336743167777876139937008795217044665E  -1", newline));
+#
+
+SKIP
+</pre>
+</font>
+
+<p>
+<br>
+<table width="100%" border=0 cellspacing=0 cellpadding=0>
+<td width="50%" valign=top bgcolor="white">
+<font color="black">
+<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
+</font>
+</td>
+<td width="50%" align=right valign=top bgcolor="white">
+<font color="black">
+<small>Documentation for Algol 68 Genie Mark 9.2 (July 2006)</small>
+</font>
+</td>
+</table>
+</p>
+
+</body>
+</html>
