@@ -5,33 +5,32 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2006 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
+Foundation; either version 3 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef A68G_TRANSPUT_H
+#if ! defined A68G_TRANSPUT_H
 #define A68G_TRANSPUT_H
 
-#define TRANSPUT_BUFFER_SIZE 	1024
+#define TRANSPUT_BUFFER_SIZE 	BUFFER_SIZE
 #define ITEM_NOT_USED		(-1)
-#define EMBEDDED_FORMAT 	A_TRUE
-#define NOT_EMBEDDED_FORMAT     A_FALSE
-#define WANT_PATTERN    	A_TRUE
-#define SKIP_PATTERN    	A_FALSE
+#define EMBEDDED_FORMAT 	A68_TRUE
+#define NOT_EMBEDDED_FORMAT     A68_FALSE
+#define WANT_PATTERN    	A68_TRUE
+#define SKIP_PATTERN    	A68_FALSE
 
-#define IS_NIL_FORMAT(f) ((f)->body == NULL && (f)->environ == 0)
+#define IS_NIL_FORMAT(f) (BODY (f) == NULL && ENVIRON (f) == 0)
 #define NON_TERM(p) (find_non_terminal (top_non_terminal, ATTRIBUTE (p)))
 
 #undef DEBUG
@@ -45,12 +44,16 @@ this program; if not, write to the Free Software Foundation, Inc.,
 #define MAX_TRANSPUT_BUFFER	64	/* Some OS's open only 64 files. */
 
 enum
-{ INPUT_BUFFER = 0, OUTPUT_BUFFER, EDIT_BUFFER, UNFORMATTED_BUFFER, FORMATTED_BUFFER, DOMAIN_BUFFER, PATH_BUFFER, REQUEST_BUFFER, CONTENT_BUFFER, STRING_BUFFER, PATTERN_BUFFER, REPLACE_BUFFER, FIXED_TRANSPUT_BUFFERS
+{ INPUT_BUFFER = 0, OUTPUT_BUFFER, EDIT_BUFFER, UNFORMATTED_BUFFER, 
+  FORMATTED_BUFFER, DOMAIN_BUFFER, PATH_BUFFER, REQUEST_BUFFER, 
+  CONTENT_BUFFER, STRING_BUFFER, PATTERN_BUFFER, REPLACE_BUFFER, 
+  READLINE_BUFFER, FIXED_TRANSPUT_BUFFERS
 };
 
 extern A68_CHANNEL stand_in_channel, stand_out_channel, stand_draw_channel, stand_back_channel, stand_error_channel, associate_channel;
 
 extern GENIE_PROCEDURE genie_associate;
+extern GENIE_PROCEDURE genie_backspace;
 extern GENIE_PROCEDURE genie_bin_possible;
 extern GENIE_PROCEDURE genie_blank_char;
 extern GENIE_PROCEDURE genie_close;
@@ -58,6 +61,7 @@ extern GENIE_PROCEDURE genie_compressible;
 extern GENIE_PROCEDURE genie_create;
 extern GENIE_PROCEDURE genie_draw_possible;
 extern GENIE_PROCEDURE genie_erase;
+extern GENIE_PROCEDURE genie_real;
 extern GENIE_PROCEDURE genie_error_char;
 extern GENIE_PROCEDURE genie_establish;
 extern GENIE_PROCEDURE genie_exp_char;
@@ -118,8 +122,10 @@ extern GENIE_PROCEDURE genie_read_longlong_int;
 extern GENIE_PROCEDURE genie_read_longlong_real;
 extern GENIE_PROCEDURE genie_read_real;
 extern GENIE_PROCEDURE genie_read_string;
+extern GENIE_PROCEDURE genie_reidf_possible;
 extern GENIE_PROCEDURE genie_reset;
 extern GENIE_PROCEDURE genie_reset_possible;
+extern GENIE_PROCEDURE genie_set;
 extern GENIE_PROCEDURE genie_set_possible;
 extern GENIE_PROCEDURE genie_space;
 extern GENIE_PROCEDURE genie_tab_char;
@@ -131,7 +137,7 @@ extern GENIE_PROCEDURE genie_write_file;
 extern GENIE_PROCEDURE genie_write_file_format;
 extern GENIE_PROCEDURE genie_write_format;
 
-#ifdef HAVE_PLOTUTILS
+#if defined ENABLE_GRAPHICS
 extern GENIE_PROCEDURE genie_draw_aspect;
 extern GENIE_PROCEDURE genie_draw_atom;
 extern GENIE_PROCEDURE genie_draw_background_colour;
@@ -169,9 +175,10 @@ extern char *sub_whole (NODE_T *, int, int);
 extern char *whole (NODE_T * p);
 extern char get_flip_char (void);
 extern char get_flop_char (void);
+extern char pop_char_transput_buffer (int);
 extern int char_scanner (A68_FILE *);
 extern int end_of_format (NODE_T *, A68_REF);
-extern int get_replicator_value (NODE_T *);
+extern int get_replicator_value (NODE_T *, BOOL_T);
 extern int get_transput_buffer_index (int);
 extern int get_transput_buffer_length (int);
 extern int get_transput_buffer_size (int);
@@ -182,10 +189,10 @@ extern void add_string_from_stack_transput_buffer (NODE_T *, int);
 extern void add_string_transput_buffer (NODE_T *, int, char *);
 extern void end_of_file_error (NODE_T * p, A68_REF ref_file);
 extern void enlarge_transput_buffer (NODE_T *, int, int);
-extern void format_error (NODE_T *, A68_REF);
+extern void format_error (NODE_T *, A68_REF, int);
 extern void genie_read_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
 extern void genie_string_to_value (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
-extern void genie_value_to_string (NODE_T *, MOID_T *, BYTE_T *);
+extern void genie_value_to_string (NODE_T *, MOID_T *, BYTE_T *, int);
 extern void genie_write_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
 extern void genie_write_string_from_stack (NODE_T * p, A68_REF);
 extern void on_event_handler (NODE_T *, A68_PROCEDURE, A68_REF);
@@ -204,5 +211,7 @@ extern void unchar_scanner (NODE_T *, A68_FILE *, char);
 extern void value_error (NODE_T *, MOID_T *, A68_REF);
 extern void write_insertion (NODE_T *, A68_REF, unsigned);
 extern void write_purge_buffer (NODE_T *, A68_REF, int);
+extern void read_sound (NODE_T *, A68_REF, A68_SOUND *);
+extern void write_sound (NODE_T *, A68_REF, A68_SOUND *);
 
 #endif

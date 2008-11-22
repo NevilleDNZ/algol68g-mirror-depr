@@ -1,0 +1,4 @@
+y_openpl.c
+
+File "y_openpl.c" can replace the file libplot/y_openpl.c to rebuild plotutils-2.5.
+This will enable Algol 68 Genie to alter the window title of X plotters.

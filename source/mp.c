@@ -5,20 +5,19 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2006 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
+Foundation; either version 3 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
@@ -124,6 +123,7 @@ using the source code provided. See the GNU General Public License for details.
 
 #include "algol68g.h"
 #include "genie.h"
+#include "inline.h"
 #include "gsl.h"
 #include "mp.h"
 
@@ -142,7 +142,7 @@ static int mp_ln_scale_size = -1;
 static MP_DIGIT_T *ref_mp_ln_10 = NULL;
 static int mp_ln_10_size = -1;
 
-int varying_mp_digits = 9;
+int varying_mp_digits = 10;
 
 static int _j1_, _j2_;
 #define MINIMUM(x, y) (_j1_ = (x), _j2_ = (y), _j1_ < _j2_ ? _j1_ : _j2_)
@@ -154,7 +154,7 @@ In calculations using intermediate results we will use guard digits.
 We follow D.M. Smith in his recommendations for precisions greater than LONG.
 */
 
-#ifdef DOUBLE_PRECISION
+#if defined DOUBLE_PRECISION
 #define GUARD_DIGITS(digits) (digits)
 #else
 #define GUARD_DIGITS(digits) (((digits) == LONG_MP_DIGITS) ? 2 : (LOG_MP_BASE <= 5) ? 3 : 2)
@@ -204,7 +204,7 @@ int longlong_mp_digits ()
 
 /*!
 \brief length in digits of mode
-\param m
+\param m mode
 \return length in digits of mode m
 **/
 
@@ -220,7 +220,7 @@ int get_mp_digits (MOID_T * m)
 
 /*!
 \brief length in bytes of mode
-\param m
+\param m mode
 \return length in bytes of mode m
 **/
 
@@ -236,7 +236,7 @@ int get_mp_size (MOID_T * m)
 
 /*!
 \brief length in bits of mode
-\param m
+\param m mode
 \return length in bits of mode m
 **/
 
@@ -252,7 +252,7 @@ int get_mp_bits_width (MOID_T * m)
 
 /*!
 \brief length in words of mode
-\param m
+\param m mode
 \return length in words of mode m
 **/
 
@@ -268,8 +268,8 @@ int get_mp_bits_words (MOID_T * m)
 
 /*!
 \brief whether z is a valid LONG INT
-\param z
-\return
+\param z mp number
+\return same
 **/
 
 BOOL_T check_long_int (MP_DIGIT_T * z)
@@ -279,8 +279,8 @@ BOOL_T check_long_int (MP_DIGIT_T * z)
 
 /*!
 \brief whether z is a valid LONG LONG INT
-\param z
-\return
+\param z mp number
+\return same
 **/
 
 BOOL_T check_longlong_int (MP_DIGIT_T * z)
@@ -290,9 +290,9 @@ BOOL_T check_longlong_int (MP_DIGIT_T * z)
 
 /*!
 \brief whether z is a valid representation for its mode
-\param z
-\param m
-\return
+\param z mp number
+\param m mode
+\return same
 **/
 
 BOOL_T check_mp_int (MP_DIGIT_T * z, MOID_T * m)
@@ -302,13 +302,13 @@ BOOL_T check_mp_int (MP_DIGIT_T * z, MOID_T * m)
   } else if (m == MODE (LONGLONG_INT) || m == MODE (LONGLONG_BITS)) {
     return (check_longlong_int (z));
   }
-  return (A_FALSE);
+  return (A68_FALSE);
 }
 
 /*!
 \brief convert precision to digits for long long number
-\param n
-\return
+\param n precision to convert
+\return same
 **/
 
 int int_to_mp_digits (int n)
@@ -318,7 +318,7 @@ int int_to_mp_digits (int n)
 
 /*!
 \brief set number of digits for long long numbers
-\param n
+\param n number of digits
 **/
 
 void set_longlong_mp_digits (int n)
@@ -327,12 +327,12 @@ void set_longlong_mp_digits (int n)
 }
 
 /*!
-\brief set z to short value x * MP_RADIX ** x_expo
-\param z
-\param x
-\param x_expo
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to short value x * MP_RADIX ** x_expo
+\param z mp number to set
+\param x most significant mp digit
+\param x_expo mp exponent
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *set_mp_short (MP_DIGIT_T * z, MP_DIGIT_T x, int x_expo, int digits)
@@ -349,11 +349,11 @@ MP_DIGIT_T *set_mp_short (MP_DIGIT_T * z, MP_DIGIT_T x, int x_expo, int digits)
 
 /*!
 \brief test whether x = y
-\param p position in syntax tree, should not be NULL
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return
+\param p position in tree
+\param x mp number 1
+\param y mp number 2
+\param digits precision in mp-digits
+\return same
 **/
 
 static BOOL_T same_mp (NODE_T * p, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -363,21 +363,20 @@ static BOOL_T same_mp (NODE_T * p, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
   if (MP_EXPONENT (x) == MP_EXPONENT (y)) {
     for (k = digits; k >= 1; k--) {
       if (MP_DIGIT (x, k) != MP_DIGIT (y, k)) {
-        return (A_FALSE);
+        return (A68_FALSE);
       }
     }
-    return (A_TRUE);
+    return (A68_TRUE);
   } else {
-    return (A_FALSE);
+    return (A68_FALSE);
   }
 }
 
 /*!
 \brief unformatted write of z to stdout
-\param str
-\param z
-\param digits precision as number of MP_DIGITs
-\return
+\param str prompt
+\param z mp number to print
+\param digits precision in mp-digits
 **/
 
 void raw_write_mp (char *str, MP_DIGIT_T * z, int digits)
@@ -394,10 +393,10 @@ void raw_write_mp (char *str, MP_DIGIT_T * z, int digits)
 
 /*!
 \brief align 10-base z in a MP_RADIX mantissa
-\param z
+\param z mp number
 \param expo
-\param digits precision as number of MP_DIGITs
-\return result z
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 static MP_DIGIT_T *align_mp (MP_DIGIT_T * z, int *expo, int digits)
@@ -425,18 +424,18 @@ static MP_DIGIT_T *align_mp (MP_DIGIT_T * z, int *expo, int digits)
 
 /*!
 \brief transform string into multi-precision number
-\param p position in syntax tree, should not be NULL
-\param z
-\param s
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param s string to convert
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
 {
   int i, j, sign, weight, sum, comma, power;
   int expo;
-  BOOL_T ok = A_TRUE;
+  BOOL_T ok = A68_TRUE;
   RESET_ERRNO;
   SET_MP_ZERO (z, digits);
   while (IS_SPACE (s[0])) {
@@ -501,11 +500,11 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
 
 /*!
 \brief convert integer to multi-precison number
-\param p position in syntax tree, should not be NULL
-\param z
-\param k
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param k integer to convert
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *int_to_mp (NODE_T * p, MP_DIGIT_T * z, int k, int digits)
@@ -531,11 +530,11 @@ MP_DIGIT_T *int_to_mp (NODE_T * p, MP_DIGIT_T * z, int k, int digits)
 
 /*!
 \brief convert unsigned to multi-precison number
-\param p position in syntax tree, should not be NULL
-\param z
-\param k
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param k unsigned to convert
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *unsigned_to_mp (NODE_T * p, MP_DIGIT_T * z, unsigned k, int digits)
@@ -557,24 +556,24 @@ MP_DIGIT_T *unsigned_to_mp (NODE_T * p, MP_DIGIT_T * z, unsigned k, int digits)
 
 /*!
 \brief convert multi-precision number to integer
-\param p position in syntax tree, should not be NULL
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 int mp_to_int (NODE_T * p, MP_DIGIT_T * z, int digits)
 {
 /*
-This routines looks a lot like "strtol". We do not use "mp_to_real" since int
-could be wider than 2 ** 52.
+This routines looks a lot like "strtol". 
+We do not use "mp_to_real" since int could be wider than 2 ** 52.
 */
   int j, expo = (int) MP_EXPONENT (z);
   int sum = 0, weight = 1;
   BOOL_T negative;
   if (expo >= digits) {
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MOID (p));
-    exit_genie (p, A_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MOID (p));
+    exit_genie (p, A68_RUNTIME_ERROR);
   }
   negative = MP_DIGIT (z, 1) < 0;
   if (negative) {
@@ -582,14 +581,14 @@ could be wider than 2 ** 52.
   }
   for (j = 1 + expo; j >= 1; j--) {
     int term;
-    if ((int) MP_DIGIT (z, j) > MAX_INT / weight) {
-      diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-      exit_genie (p, A_RUNTIME_ERROR);
+    if ((int) MP_DIGIT (z, j) > A68_MAX_INT / weight) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
+      exit_genie (p, A68_RUNTIME_ERROR);
     }
     term = (int) MP_DIGIT (z, j) * weight;
-    if (sum > MAX_INT - term) {
-      diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-      exit_genie (p, A_RUNTIME_ERROR);
+    if (sum > A68_MAX_INT - term) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
+      exit_genie (p, A68_RUNTIME_ERROR);
     }
     sum += term;
     weight *= MP_RADIX;
@@ -599,10 +598,10 @@ could be wider than 2 ** 52.
 
 /*!
 \brief convert multi-precision number to unsigned
-\param p position in syntax tree, should not be NULL
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 unsigned mp_to_unsigned (NODE_T * p, MP_DIGIT_T * z, int digits)
@@ -614,19 +613,19 @@ could be wider than 2 ** 52.
   int j, expo = (int) MP_EXPONENT (z);
   unsigned sum = 0, weight = 1;
   if (expo >= digits) {
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MOID (p));
-    exit_genie (p, A_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MOID (p));
+    exit_genie (p, A68_RUNTIME_ERROR);
   }
   for (j = 1 + expo; j >= 1; j--) {
     unsigned term;
-    if ((unsigned) MP_DIGIT (z, j) > MAX_UNT / weight) {
-      diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BITS));
-      exit_genie (p, A_RUNTIME_ERROR);
+    if ((unsigned) MP_DIGIT (z, j) > A68_MAX_UNT / weight) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BITS));
+      exit_genie (p, A68_RUNTIME_ERROR);
     }
     term = (unsigned) MP_DIGIT (z, j) * weight;
-    if (sum > MAX_UNT - term) {
-      diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BITS));
-      exit_genie (p, A_RUNTIME_ERROR);
+    if (sum > A68_MAX_UNT - term) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BITS));
+      exit_genie (p, A68_RUNTIME_ERROR);
     }
     sum += term;
     weight *= MP_RADIX;
@@ -636,11 +635,11 @@ could be wider than 2 ** 52.
 
 /*!
 \brief convert double to multi-precison number
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
@@ -661,7 +660,7 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
 /* Scale to [0, 0.1>. */
   a = x = ABS (x);
   expo = (int) log10 (a);
-  a /= ten_to_the_power (expo);
+  a /= ten_up (expo);
   expo--;
   if (a >= 1) {
     a /= 10;
@@ -699,10 +698,10 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
 
 /*!
 \brief convert multi-precision number to double
-\param p position in syntax tree, should not be NULL
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
@@ -714,7 +713,7 @@ double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
   } else {
     int j;
     double sum = 0, weight;
-    weight = ten_to_the_power ((int) (MP_EXPONENT (z) * LOG_MP_BASE));
+    weight = ten_up ((int) (MP_EXPONENT (z) * LOG_MP_BASE));
     for (j = 1; j <= digits && (j - 2) * LOG_MP_BASE <= DBL_DIG; j++) {
       sum += ABS (MP_DIGIT (z, j)) * weight;
       weight /= MP_RADIX;
@@ -726,10 +725,10 @@ double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
 
 /*!
 \brief convert z to a row of unsigned in the stack
-\param p position in syntax tree, should not be NULL
-\param z
-\param m
-\return result z
+\param p position in tree
+\param z mp number
+\param m mode of "z"
+\return result "z"
 **/
 
 unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
@@ -738,7 +737,7 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
   unsigned *row, mask;
   MP_DIGIT_T *u, *v, *w;
   row = (unsigned *) STACK_ADDRESS (stack_pointer);
-  INCREMENT_STACK_POINTER (p, words * SIZE_OF (unsigned));
+  INCREMENT_STACK_POINTER (p, words * ALIGNED_SIZE_OF (unsigned));
   STACK_MP (u, p, digits);
   STACK_MP (v, p, digits);
   STACK_MP (w, p, digits);
@@ -746,8 +745,8 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
 /* Argument check. */
   if (MP_DIGIT (u, 1) < 0.0) {
     errno = EDOM;
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (m == MODE (LONG_BITS) ? MODE (LONG_INT) : MODE (LONGLONG_INT)));
-    exit_genie (p, A_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (m == MODE (LONG_BITS) ? MODE (LONG_INT) : MODE (LONGLONG_INT)));
+    exit_genie (p, A68_RUNTIME_ERROR);
   }
 /* Convert radix MP_BITS_RADIX number. */
   for (k = words - 1; k >= 0; k--) {
@@ -766,8 +765,8 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
   }
   if ((row[0] & ~mask) != 0x0 || MP_DIGIT (u, 1) != 0.0) {
     errno = ERANGE;
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, m);
-    exit_genie (p, A_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, m);
+    exit_genie (p, A68_RUNTIME_ERROR);
   }
 /* Exit. */
   return (row);
@@ -775,9 +774,9 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
 
 /*!
 \brief whether LONG BITS value is in range
-\param p position in syntax tree, should not be NULL
-\param u
-\param m
+\param p position in tree
+\param u mp number
+\param m mode of "u"
 **/
 
 void check_long_bits_value (NODE_T * p, MP_DIGIT_T * u, MOID_T * m)
@@ -791,11 +790,11 @@ void check_long_bits_value (NODE_T * p, MP_DIGIT_T * u, MOID_T * m)
 
 /*!
 \brief convert row of unsigned to LONG BITS
-\param p position in syntax tree, should not be NULL
-\param u
+\param p position in tree
+\param u mp number
 \param row
-\param m
-\return result z
+\param m mode of "u"
+\return result "u"
 **/
 
 MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
@@ -830,15 +829,16 @@ MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
       mul_mp_digit (p, v, v, MP_BITS_RADIX, digits);
     }
   }
+  MP_STATUS (u) = INITIALISED_MASK;
   stack_pointer = pop_sp;
   return (u);
 }
 
 /*!
-\brief normalise positive intermediate
+\brief normalise positive intermediate, fast
 \param w argument
-\param k
-\param digits precision as number of MP_DIGITs
+\param k last digit to normalise
+\param digits precision in mp-digits
 **/
 
 static void norm_mp_light (MP_DIGIT_T * w, int k, int digits)
@@ -860,8 +860,8 @@ static void norm_mp_light (MP_DIGIT_T * w, int k, int digits)
 /*!
 \brief normalise positive intermediate
 \param w argument
-\param k
-\param digits precision as number of MP_DIGITs
+\param k last digit to normalise
+\param digits precision in mp-digits
 **/
 
 static void norm_mp (MP_DIGIT_T * w, int k, int digits)
@@ -886,7 +886,7 @@ static void norm_mp (MP_DIGIT_T * w, int k, int digits)
 \brief round multi-precision number
 \param z result
 \param w argument, must be positive
-\param digits precision as number of MP_DIGITs
+\param digits precision in mp-digits
 **/
 
 static void round_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
@@ -914,10 +914,10 @@ static void round_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
 
 /*!
 \brief truncate at decimal point
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 \param z result
 \param x argument
-\param digits precision as number of MP_DIGITs
+\param digits precision in mp-digits
 **/
 
 void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -926,8 +926,8 @@ void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     SET_MP_ZERO (z, digits);
   } else if (MP_EXPONENT (x) >= digits) {
     errno = EDOM;
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (WHETHER (MOID (p), PROC_SYMBOL) ? SUB (MOID (p)) : MOID (p)));
-    exit_genie (p, A_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (WHETHER (MOID (p), PROC_SYMBOL) ? SUB (MOID (p)) : MOID (p)));
+    exit_genie (p, A68_RUNTIME_ERROR);
   } else {
     int k;
     MOVE_MP (z, x, digits);
@@ -939,12 +939,12 @@ void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 
 /*!
 \brief shorten and round
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 \param z result
-\param digits precision as number of MP_DIGITs
-\param x
-\param digits precision as number of MP_DIGITs_x
-\return result z
+\param digits precision in mp-digits
+\param x mp number
+\param digits precision in mp-digits_x
+\return result "z"
 **/
 
 MP_DIGIT_T *shorten_mp (NODE_T * p, MP_DIGIT_T * z, int digits, MP_DIGIT_T * x, int digits_x)
@@ -976,12 +976,12 @@ MP_DIGIT_T *shorten_mp (NODE_T * p, MP_DIGIT_T * z, int digits, MP_DIGIT_T * x, 
 
 /*!
 \brief lengthen x and assign to z
-\param p position in syntax tree, should not be NULL
-\param z
-\param digits precision as number of MP_DIGITs_z
-\param x
-\param digits precision as number of MP_DIGITs_x
-\return result z
+\param p position in tree
+\param z mp number
+\param digits precision in mp-digits of "z"
+\param x mp number
+\param digits precision in mp-digits of "x"
+\return result "z"
 **/
 
 MP_DIGIT_T *lengthen_mp (NODE_T * p, MP_DIGIT_T * z, int digits_z, MP_DIGIT_T * x, int digits_x)
@@ -1002,13 +1002,13 @@ MP_DIGIT_T *lengthen_mp (NODE_T * p, MP_DIGIT_T * z, int digits_z, MP_DIGIT_T * 
 }
 
 /*!
-\brief set z to the sum of positive x and positive y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the sum of positive "x" and positive "y"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1077,13 +1077,13 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 }
 
 /*!
-\brief set z to the difference of positive x and positive y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the difference of positive "x" and positive "y"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1091,7 +1091,7 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   ADDR_T pop_sp = stack_pointer;
   int fnz, k;
   MP_DIGIT_T *w, z1, x1 = MP_DIGIT (x, 1), y1 = MP_DIGIT (y, 1);
-  BOOL_T negative = A_FALSE;
+  BOOL_T negative = A68_FALSE;
 /* Trivial cases. */
   if (MP_DIGIT (x, 1) == 0) {
     MOVE_MP (z, y, digits);
@@ -1189,110 +1189,13 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 }
 
 /*!
-\brief set z to the difference of positive x and positive y, FOR COMPILER ONLY
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
-**/
-
-MP_DIGIT_T *sub_pos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
-{
-  MP_DIGIT_T z1, x1 = MP_DIGIT (x, 1), y1 = MP_DIGIT (y, 1);
-  int fnz, j, k, digits_h = 2 + digits;
-  MP_DIGIT_T *w = (MP_DIGIT_T *) get_temp_heap_space (SIZE_MP (digits_h));
-  BOOL_T negative = A_FALSE;
-/* Trivial cases. */
-  if (MP_DIGIT (x, 1) == 0) {
-    MOVE_MP (z, y, digits);
-    MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
-    return (z);
-  } else if (MP_DIGIT (y, 1) == 0) {
-    MOVE_MP (z, x, digits);
-    return (z);
-  }
-/* Subtract. */
-  MP_DIGIT (w, 1) = 0;
-  if (MP_EXPONENT (x) == MP_EXPONENT (y)) {
-    MP_EXPONENT (w) = 1 + (int) MP_EXPONENT (x);
-    for (j = 1; j <= digits; j++) {
-      MP_DIGIT (w, j + 1) = MP_DIGIT (x, j) - MP_DIGIT (y, j);
-    }
-    MP_DIGIT (w, digits_h) = 0;
-  } else if (MP_EXPONENT (x) > MP_EXPONENT (y)) {
-    int shl_y = (int) MP_EXPONENT (x) - (int) MP_EXPONENT (y);
-    MP_EXPONENT (w) = 1 + (int) MP_EXPONENT (x);
-    for (j = 1; j < digits_h; j++) {
-      int i_y = j - (int) shl_y;
-      MP_DIGIT_T x_j = (j > digits ? 0 : MP_DIGIT (x, j));
-      MP_DIGIT_T y_j = (i_y <= 0 || i_y > digits ? 0 : MP_DIGIT (y, i_y));
-      MP_DIGIT (w, j + 1) = x_j - y_j;
-    }
-  } else {
-    int shl_x = (int) MP_EXPONENT (y) - (int) MP_EXPONENT (x);
-    MP_EXPONENT (w) = 1 + (int) MP_EXPONENT (y);
-    for (j = 1; j < digits_h; j++) {
-      int i_x = j - (int) shl_x;
-      MP_DIGIT_T x_j = (i_x <= 0 || i_x > digits ? 0 : MP_DIGIT (x, i_x));
-      MP_DIGIT_T y_j = (j > digits ? 0 : MP_DIGIT (y, j));
-      MP_DIGIT (w, j + 1) = x_j - y_j;
-    }
-  }
-/* Correct if we subtract large from small. */
-  if (MP_DIGIT (w, 2) <= 0) {
-    fnz = -1;
-    for (j = 2; j <= digits_h && fnz < 0; j++) {
-      if (MP_DIGIT (w, j) != 0) {
-        fnz = j;
-      }
-    }
-    negative = (MP_DIGIT (w, fnz) < 0);
-    if (negative) {
-      for (j = fnz; j <= digits_h; j++) {
-        MP_DIGIT (w, j) = -MP_DIGIT (w, j);
-      }
-    }
-  }
-/* Normalise. */
-  norm_mp_light (w, 2, digits_h);
-  fnz = -1;
-  for (j = 1; j <= digits_h && fnz < 0; j++) {
-    if (MP_DIGIT (w, j) != 0) {
-      fnz = j;
-    }
-  }
-  if (fnz > 1) {
-    int j = fnz - 1;
-    for (k = 1; k <= digits_h - j; k++) {
-      MP_DIGIT (w, k) = MP_DIGIT (w, k + j);
-      MP_DIGIT (w, k + j) = 0;
-    }
-    MP_EXPONENT (w) -= j;
-  }
-/* Round. */
-  round_mp (z, w, digits);
-  if (negative) {
-    MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
-  }
-  CHECK_MP_EXPONENT (p, z);
-/* Restore and exit. */
-  z1 = MP_DIGIT (z, 1);
-  MP_DIGIT (x, 1) = x1;
-  MP_DIGIT (y, 1) = y1;
-  MP_DIGIT (z, 1) = z1;         /* In case z IS x OR z IS y. */
-  return (z);
-}
-
-/*!
-\brief set z to the product of x and y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the product of "x" and "y"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1351,13 +1254,13 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 }
 
 /*!
-\brief set z to the quotient of x and y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the quotient of "x" and "y"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *div_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1451,13 +1354,13 @@ guesses without separate correction steps.
 }
 
 /*!
-\brief set z to the integer quotient of x and y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the integer quotient of "x" and "y"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *over_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1483,13 +1386,13 @@ MP_DIGIT_T *over_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y,
 }
 
 /*!
-\brief set z to x mod y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to x mod y
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *mod_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1517,13 +1420,13 @@ MP_DIGIT_T *mod_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 }
 
 /*!
-\brief set z to the product of x and digit y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the product of x and digit y
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *mul_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
@@ -1555,12 +1458,12 @@ MP_DIGIT_T *mul_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
 }
 
 /*!
-\brief set z to x/2
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to x/2
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *half_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -1591,13 +1494,13 @@ MP_DIGIT_T *half_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to the quotient of x and digit y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the quotient of x and digit y
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
@@ -1662,13 +1565,13 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
 }
 
 /*!
-\brief set z to the integer quotient of x and y
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the integer quotient of "x" and "y"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *over_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
@@ -1692,12 +1595,12 @@ MP_DIGIT_T *over_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_
 }
 
 /*!
-\brief set z to the reciprocal of x
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to the reciprocal of "x"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *rec_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -1717,13 +1620,13 @@ MP_DIGIT_T *rec_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to x ** n
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param n
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to "x" ** "n"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param n integer power
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *pow_mp_int (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int n, int digits)
@@ -1757,20 +1660,60 @@ MP_DIGIT_T *pow_mp_int (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int n, int d
 }
 
 /*!
-\brief test on |z| > 0.001 for argument reduction in "sin" and "exp"
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to 10 ** "n"
+\param p position in tree
+\param z mp number
+\param x mp number
+\param n integer power
+\param digits precision in mp-digits
+\return result "z"
+**/
+
+MP_DIGIT_T *mp_ten_up (NODE_T * p, MP_DIGIT_T * z, int n, int digits)
+{
+  int pop_sp = stack_pointer, bit, digits_g = FUN_DIGITS (digits);
+  BOOL_T negative;
+  MP_DIGIT_T *z_g, *x_g;
+  STACK_MP (z_g, p, digits_g);
+  STACK_MP (x_g, p, digits_g);
+  set_mp_short (x_g, (MP_DIGIT_T) 10, 0, digits_g);
+  set_mp_short (z_g, (MP_DIGIT_T) 1, 0, digits_g);
+  negative = (n < 0);
+  if (negative) {
+    n = -n;
+  }
+  bit = 1;
+  while ((unsigned) bit <= (unsigned) n) {
+    if (n & bit) {
+      mul_mp (p, z_g, z_g, x_g, digits_g);
+    }
+    mul_mp (p, x_g, x_g, x_g, digits_g);
+    bit *= 2;
+  }
+  shorten_mp (p, z, digits, z_g, digits_g);
+  stack_pointer = pop_sp;
+  if (negative) {
+    rec_mp (p, z, z, digits);
+  }
+  CHECK_MP_EXPONENT (p, z);
+  return (z);
+}
+
+/*!
+\brief test on |"z"| > 0.001 for argument reduction in "sin" and "exp"
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
 {
   if (MP_DIGIT (z, 1) == 0) {
-    return (A_FALSE);
+    return (A68_FALSE);
   } else if (MP_EXPONENT (z) > -1) {
-    return (A_TRUE);
+    return (A68_TRUE);
   } else if (MP_EXPONENT (z) < -1) {
-    return (A_FALSE);
+    return (A68_FALSE);
   } else {
 #if (MP_RADIX == DEFAULT_MP_RADIX)
 /* More or less optimised for LONG and default LONG LONG precisions. */
@@ -1795,8 +1738,8 @@ static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
       }
     default:
       {
-        ABNORMAL_END (A_TRUE, "unexpected mp base", "");
-        return (A_FALSE);
+        ABNORMAL_END (A68_TRUE, "unexpected mp base", "");
+        return (A68_FALSE);
       }
     }
 #endif
@@ -1804,19 +1747,19 @@ static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
 }
 
 /*!
-\brief set z to sqrt (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to sqrt ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits), digits_h;
   MP_DIGIT_T *tmp, *x_g, *z_g;
-  BOOL_T reciprocal = A_FALSE;
+  BOOL_T reciprocal = A68_FALSE;
   if (MP_DIGIT (x, 1) == 0) {
     stack_pointer = pop_sp;
     SET_MP_ZERO (z, digits);
@@ -1832,7 +1775,7 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (tmp, p, digits_g);
   lengthen_mp (p, x_g, digits_g, x, digits);
 /* Scaling for small x; sqrt (x) = 1 / sqrt (1 / x) */
-  if ((reciprocal = MP_EXPONENT (x_g) < 0) == A_TRUE) {
+  if ((reciprocal = MP_EXPONENT (x_g) < 0) == A68_TRUE) {
     rec_mp (p, x_g, x_g, digits_g);
   }
   if (ABS (MP_EXPONENT (x_g)) >= 2) {
@@ -1854,8 +1797,7 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       div_mp (p, tmp, x_g, z_g, digits_h);
       add_mp (p, tmp, z_g, tmp, digits_h);
       half_mp (p, z_g, tmp, digits_h);
-    }
-    while (decimals < 2 * digits_g * LOG_MP_BASE);
+    } while (decimals < 2 * digits_g * LOG_MP_BASE);
   }
   if (reciprocal) {
     rec_mp (p, z_g, z_g, digits);
@@ -1867,26 +1809,26 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to curt (x), the cube root
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to curt ("x"), the cube root
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits), digits_h;
   MP_DIGIT_T *tmp, *x_g, *z_g;
-  BOOL_T reciprocal = A_FALSE, change_sign = A_FALSE;
+  BOOL_T reciprocal = A68_FALSE, change_sign = A68_FALSE;
   if (MP_DIGIT (x, 1) == 0) {
     stack_pointer = pop_sp;
     SET_MP_ZERO (z, digits);
     return (z);
   }
   if (MP_DIGIT (x, 1) < 0) {
-    change_sign = A_TRUE;
+    change_sign = A68_TRUE;
     MP_DIGIT (x, 1) = -MP_DIGIT (x, 1);
   }
   STACK_MP (z_g, p, digits_g);
@@ -1894,7 +1836,7 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (tmp, p, digits_g);
   lengthen_mp (p, x_g, digits_g, x, digits);
 /* Scaling for small x; curt (x) = 1 / curt (1 / x) */
-  if ((reciprocal = MP_EXPONENT (x_g) < 0) == A_TRUE) {
+  if ((reciprocal = MP_EXPONENT (x_g) < 0) == A68_TRUE) {
     rec_mp (p, x_g, x_g, digits_g);
   }
   if (ABS (MP_EXPONENT (x_g)) >= 3) {
@@ -1917,8 +1859,7 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       add_mp (p, tmp, z_g, tmp, digits_h);
       add_mp (p, tmp, z_g, tmp, digits_h);
       div_mp_digit (p, z_g, tmp, (MP_DIGIT_T) 3, digits_h);
-    }
-    while (decimals < digits_g * LOG_MP_BASE);
+    } while (decimals < digits_g * LOG_MP_BASE);
   }
   if (reciprocal) {
     rec_mp (p, z_g, z_g, digits);
@@ -1933,13 +1874,13 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to sqrt (x^2 + y^2)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to sqrt ("x"^2 + "y"^2)
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *hypot_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -1979,12 +1920,12 @@ MP_DIGIT_T *hypot_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y
 }
 
 /*!
-\brief set z to exp (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to exp ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2049,7 +1990,7 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   while (iterate) {
     div_mp (p, tmp, pow, fac, digits_g);
     if (MP_EXPONENT (tmp) <= (MP_EXPONENT (sum) - digits_g)) {
-      iterate = A_FALSE;
+      iterate = A68_FALSE;
     } else {
       add_mp (p, sum, sum, tmp, digits_g);
       mul_mp (p, pow, pow, x_g, digits_g);
@@ -2068,12 +2009,12 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to exp (x) - 1, assuming x to be close to 0
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to exp ("x") - 1, assuming "x" to be close to 0
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2130,7 +2071,7 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   while (iterate) {
     div_mp (p, tmp, pow, fac, digits_g);
     if (MP_EXPONENT (tmp) <= (MP_EXPONENT (sum) - digits_g)) {
-      iterate = A_FALSE;
+      iterate = A68_FALSE;
     } else {
       add_mp (p, sum, sum, tmp, digits_g);
       mul_mp (p, pow, pow, x_g, digits_g);
@@ -2146,10 +2087,10 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 
 /*!
 \brief ln scale with digits precision
-\param p position in syntax tree, should not be NULL
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *mp_ln_scale (NODE_T * p, MP_DIGIT_T * z, int digits)
@@ -2175,10 +2116,10 @@ MP_DIGIT_T *mp_ln_scale (NODE_T * p, MP_DIGIT_T * z, int digits)
 
 /*!
 \brief ln 10 with digits precision
-\param p position in syntax tree, should not be NULL
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\param p position in tree
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *mp_ln_10 (NODE_T * p, MP_DIGIT_T * z, int digits)
@@ -2203,12 +2144,12 @@ MP_DIGIT_T *mp_ln_10 (NODE_T * p, MP_DIGIT_T * z, int digits)
 }
 
 /*!
-\brief set z to ln (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to ln ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2254,7 +2195,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     while (iterate) {
       div_mp_digit (p, tmp, pow, (MP_DIGIT_T) n, digits_g);
       if (MP_EXPONENT (tmp) <= (MP_EXPONENT (z_g) - digits_g)) {
-        iterate = A_FALSE;
+        iterate = A68_FALSE;
       } else {
         MP_DIGIT (tmp, 1) = (n % 2 == 0 ? -MP_DIGIT (tmp, 1) : MP_DIGIT (tmp, 1));
         add_mp (p, z_g, z_g, tmp, digits_g);
@@ -2282,8 +2223,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       div_mp (p, tmp, x_g, tmp, digits_h);
       sub_mp (p, z_g, z_g, one, digits_h);
       add_mp (p, z_g, z_g, tmp, digits_h);
-    }
-    while (decimals < digits_g * LOG_MP_BASE);
+    } while (decimals < digits_g * LOG_MP_BASE);
   }
 /* Inverse scaling. */
   if (scale) {
@@ -2304,12 +2244,12 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to log (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to log ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *log_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2328,13 +2268,13 @@ MP_DIGIT_T *log_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set sh and ch to sinh (z) and cosh (z) respectively
-\param p position in syntax tree, should not be NULL
-\param sh
-\param ch
-\param z
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "sh" and "ch" to sinh ("z") and cosh ("z") respectively
+\param p position in tree
+\param sh mp number
+\param ch mp number
+\param z mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *hyp_mp (NODE_T * p, MP_DIGIT_T * sh, MP_DIGIT_T * ch, MP_DIGIT_T * z, int digits)
@@ -2349,7 +2289,8 @@ MP_DIGIT_T *hyp_mp (NODE_T * p, MP_DIGIT_T * sh, MP_DIGIT_T * ch, MP_DIGIT_T * z
   rec_mp (p, y_g, x_g, digits);
   add_mp (p, ch, x_g, y_g, digits);
 /* Avoid cancellation for sinh. */
-  if ((MP_DIGIT (x_g, 1) == 1 && MP_DIGIT (x_g, 2) == 0) || (MP_DIGIT (y_g, 1) == 1 && MP_DIGIT (y_g, 2) == 0)) {
+  if ((MP_DIGIT (x_g, 1) == 1 && MP_DIGIT (x_g, 2) == 0)
+      || (MP_DIGIT (y_g, 1) == 1 && MP_DIGIT (y_g, 2) == 0)) {
     expm1_mp (p, x_g, z_g, digits);
     MP_DIGIT (z_g, 1) = -MP_DIGIT (z_g, 1);
     expm1_mp (p, y_g, z_g, digits);
@@ -2362,12 +2303,12 @@ MP_DIGIT_T *hyp_mp (NODE_T * p, MP_DIGIT_T * sh, MP_DIGIT_T * ch, MP_DIGIT_T * z
 }
 
 /*!
-\brief set z to sinh (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to sinh ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *sinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2386,12 +2327,12 @@ MP_DIGIT_T *sinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to asinh (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to asinh ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *asinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2430,12 +2371,12 @@ MP_DIGIT_T *asinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to cosh (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to cosh ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *cosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2454,12 +2395,12 @@ MP_DIGIT_T *cosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to acosh (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to acosh ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *acosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2489,12 +2430,12 @@ MP_DIGIT_T *acosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to tanh (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to tanh ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *tanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2514,12 +2455,12 @@ MP_DIGIT_T *tanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to atanh (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to atanh ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *atanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2543,12 +2484,12 @@ MP_DIGIT_T *atanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief return pi with digits precision, using Borwein & Borwein AGM
-\param p position in syntax tree, should not be NULL
-\param api
-\param mult
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief return "pi" with "digits" precision, using Borwein & Borwein AGM
+\param p position in tree
+\param api mp number
+\param mult small multiplier
+\param digits precision in mp-digits
+\return result "api"
 **/
 
 MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
@@ -2576,7 +2517,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
     sqrt_mp (p, x_g, x_g, digits_g);
     add_mp (p, pi_g, x_g, two, digits_g);
     sqrt_mp (p, y_g, x_g, digits_g);
-    iterate = A_TRUE;
+    iterate = A68_TRUE;
     while (iterate) {
 /* New x. */
       sqrt_mp (p, u_g, x_g, digits_g);
@@ -2590,7 +2531,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
       mul_mp (p, v_g, pi_g, u_g, digits_g);
 /* Done yet? */
       if (same_mp (p, v_g, pi_g, digits_g)) {
-        iterate = A_FALSE;
+        iterate = A68_FALSE;
       } else {
         MOVE_MP (pi_g, v_g, digits_g);
 /* New y. */
@@ -2629,12 +2570,12 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
 }
 
 /*!
-\brief set z to sin (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to sin ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2698,24 +2639,24 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   mul_mp (p, pow, pow, sqr, digits_g);
   set_mp_short (fac, (MP_DIGIT_T) 362880, 0, digits_g);
   n = 9;
-  even = A_TRUE;
+  even = A68_TRUE;
 #else
   set_mp_short (fac, (MP_DIGIT_T) 6, 0, digits_g);
   n = 3;
-  even = A_FALSE;
+  even = A68_FALSE;
 #endif
   iterate = MP_DIGIT (pow, 1) != 0;
   while (iterate) {
     div_mp (p, tmp, pow, fac, digits_g);
     if (MP_EXPONENT (tmp) <= (MP_EXPONENT (z_g) - digits_g)) {
-      iterate = A_FALSE;
+      iterate = A68_FALSE;
     } else {
       if (even) {
         add_mp (p, z_g, z_g, tmp, digits_g);
-        even = A_FALSE;
+        even = A68_FALSE;
       } else {
         sub_mp (p, z_g, z_g, tmp, digits_g);
-        even = A_TRUE;
+        even = A68_TRUE;
       }
       mul_mp (p, pow, pow, sqr, digits_g);
       mul_mp_digit (p, fac, fac, (MP_DIGIT_T) (++n), digits_g);
@@ -2741,12 +2682,12 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to cos (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to cos ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *cos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2773,12 +2714,12 @@ Compute x mod 2 pi before subtracting to avoid cancellation.
 }
 
 /*!
-\brief set z to tan (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to tan ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2826,12 +2767,12 @@ MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to arcsin (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to arcsin ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *asin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2869,12 +2810,12 @@ MP_DIGIT_T *asin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to arccos (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to arccos ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *acos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2916,12 +2857,12 @@ MP_DIGIT_T *acos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to arctan (x)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to arctan ("x")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
@@ -2943,7 +2884,9 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     MP_DIGIT (x_g, 1) = -MP_DIGIT (x_g, 1);
   }
 /* For larger arguments we use atan(x) = pi/2 - atan(1/x) */
-  flip = ((MP_EXPONENT (x_g) > 0) || (MP_EXPONENT (x_g) == 0 && MP_DIGIT (x_g, 1) > 1)) && (MP_DIGIT (x_g, 1) != 0);
+  flip = ((MP_EXPONENT (x_g) > 0)
+          || (MP_EXPONENT (x_g) == 0 && MP_DIGIT (x_g, 1) > 1))
+    && (MP_DIGIT (x_g, 1) != 0);
   if (flip) {
     rec_mp (p, x_g, x_g, digits_g);
   }
@@ -2960,19 +2903,19 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     mul_mp (p, sqr, x_g, x_g, digits_g);
     mul_mp (p, pow, sqr, x_g, digits_g);
     MOVE_MP (z_g, x_g, digits_g);
-    even = A_FALSE;
+    even = A68_FALSE;
     iterate = MP_DIGIT (pow, 1) != 0;
     while (iterate) {
       div_mp_digit (p, tmp, pow, (MP_DIGIT_T) n, digits_g);
       if (MP_EXPONENT (tmp) <= (MP_EXPONENT (z_g) - digits_g)) {
-        iterate = A_FALSE;
+        iterate = A68_FALSE;
       } else {
         if (even) {
           add_mp (p, z_g, z_g, tmp, digits_g);
-          even = A_FALSE;
+          even = A68_FALSE;
         } else {
           sub_mp (p, z_g, z_g, tmp, digits_g);
-          even = A_TRUE;
+          even = A68_TRUE;
         }
         mul_mp (p, pow, pow, sqr, digits_g);
         n += 2;
@@ -3003,8 +2946,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       sub_mp (p, tmp, sns, tmp, digits_h);
       mul_mp (p, tmp, tmp, cns, digits_h);
       sub_mp (p, z_g, z_g, tmp, digits_h);
-    }
-    while (decimals < digits_g * LOG_MP_BASE);
+    } while (decimals < digits_g * LOG_MP_BASE);
   }
   if (flip) {
     MP_DIGIT_T *hpi;
@@ -3019,13 +2961,13 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 }
 
 /*!
-\brief set z to atan2 (x, y)
-\param p position in syntax tree, should not be NULL
-\param z
-\param x
-\param y
-\param digits precision as number of MP_DIGITs
-\return result z
+\brief set "z" to atan2 ("x", "y")
+\param p position in tree
+\param z mp number
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return result "z"
 **/
 
 MP_DIGIT_T *atan2_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
@@ -3061,13 +3003,13 @@ MP_DIGIT_T *atan2_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y
 }
 
 /*!
-\brief set a I b to a I b * c I d
-\param p position in syntax tree, should not be NULL
-\param a
-\param b
-\param c
-\param d
-\param digits precision as number of MP_DIGITs
+\brief set "a" I "b" to "a" I "b" * "c" I "d"
+\param p position in tree
+\param a real mp number
+\param b imaginary mp number
+\param c real mp number
+\param d imaginary mp number
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3101,13 +3043,13 @@ MP_DIGIT_T *cmul_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c,
 }
 
 /*!
-\brief set a I b to a I b / c I d
-\param p position in syntax tree, should not be NULL
-\param a
-\param b
-\param c
-\param d
-\param digits precision as number of MP_DIGITs
+\brief set "a" I "b" to "a" I "b" / "c" I "d"
+\param p position in tree
+\param a real mp number
+\param b imaginary mp number
+\param c real mp number
+\param d imaginary mp number
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3156,11 +3098,11 @@ MP_DIGIT_T *cdiv_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c,
 }
 
 /*!
-\brief set r I i to sqrt (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to sqrt ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3232,11 +3174,11 @@ MP_DIGIT_T *csqrt_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to exp(r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to exp("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3262,11 +3204,11 @@ MP_DIGIT_T *cexp_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to ln (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to ln ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3298,11 +3240,11 @@ MP_DIGIT_T *cln_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to sin (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to sin ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3336,11 +3278,11 @@ MP_DIGIT_T *csin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to cos (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to cos ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3375,11 +3317,11 @@ MP_DIGIT_T *ccos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to tan (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to tan ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3408,11 +3350,11 @@ MP_DIGIT_T *ctan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to asin (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to asin ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3460,11 +3402,11 @@ MP_DIGIT_T *casin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to acos (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to acos ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 
@@ -3513,11 +3455,11 @@ MP_DIGIT_T *cacos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 }
 
 /*!
-\brief set r I i to atan (r I i)
-\param p position in syntax tree, should not be NULL
-\param r
-\param i
-\param digits precision as number of MP_DIGITs
+\brief set "r" I "i" to atan ("r" I "i")
+\param p position in tree
+\param r mp real part
+\param i mp imaginary part
+\param digits precision in mp-digits
 \return real part of result
 **/
 

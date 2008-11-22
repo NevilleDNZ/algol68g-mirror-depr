@@ -1,0 +1,13 @@
+# Greatest common divisor #
+
+BEGIN OP GCD = (INT a, b) INT:
+         IF b = 0 
+         THEN ABS a
+         ELSE b GCD (a MOD b)
+         FI;
+
+      PRIO GCD = 8;
+
+      print ((read int GCD read int, new line))
+  
+END

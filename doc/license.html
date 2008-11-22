@@ -1,24 +1,26 @@
+<!-- Header -->
 <html>
 <head>
-<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<title>Algol 68 Genie - An Algol 68 Interpreter</title>
 <meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
 <meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
 <style type="text/css">
 a:link    {color: blue; text-decoration: underline;}
 a:visited {color: blue; text-decoration: underline;}
 a:active  {color: blue; text-decoration: underline;}
-p {font-size: 10pt; font-family: Arial,Helvetica;}
-u {font-size: 10pt; font-family: Arial,Helvetica;}
-dd {font-size: 10pt; font-family: Arial,Helvetica;}
-h1 {font-size: 16pt; font-family: Arial,Helvetica;}
-h2 {font-size: 14pt; font-family: Arial,Helvetica;}
-h3 {font-size: 12pt; font-family: Arial,Helvetica;}
-h4 {font-size: 10pt; font-family: Arial,Helvetica;}
-td {font-size: 8pt; font-family: Arial,Helvetica;}
-ul {font-size: 10pt; font-family: Arial,Helvetica;}
-body {font-size: 10pt; font-family: Arial,Helvetica;}
-code {font-size: 10pt; font-family: Courier;}
-pre {font-size: 10pt; font-family: Courier;}
+p {font-size: 10pt; font-family: arial, sans-serif;}
+u {font-size: 10pt; font-family: arial, sans-serif;}
+dd {font-size: 10pt; font-family: arial, sans-serif;}
+h1 {font-size: 14pt; font-family: arial, sans-serif;}
+h2 {font-size: 12pt; font-family: arial, sans-serif;}
+h3 {font-size: 10pt; font-family: arial, sans-serif;}
+h4 {font-size: 10pt; font-family: arial, sans-serif;}
+td {font-size: 10pt; font-family: arial, sans-serif;}
+ul {font-size: 10pt; font-family: arial, sans-serif;}
+body {font-size: 10pt; font-family: arial, sans-serif;}
+tt {font-size: 10pt; font-family: "courier new", monospace;}
+code {font-size: 10pt; font-family: "courier new", monospace;}
+pre {font-size: 10pt; font-family: "courier new", monospace;}
 </style>
 </head>
 
@@ -27,46 +29,34 @@ pre {font-size: 10pt; font-family: Courier;}
 <table width="100%" border=0 cellspacing=0 cellpadding=0>
 <td width="100%" background="lines.gif">
 <img src="lines.gif" align=right>
-<small>Documentation for Algol 68 Genie Mark 9.2</small>
+<small>
+<b>Documentation for Algol 68 Genie Mark 14.1</b>
+</small>
 </td>
 </table>
+
 
 <table width="100%" border=0 cellspacing=0 cellpadding=0>
 <td width="50%" valign=top bgcolor="white">
 <br>
 <h2>GNU Free Documentation License</h2>
 </td>
-<td width="30%" bgcolor="white" valign=top align=center>
-<img src="logo.gif" align=center>
+<td width="30%" valign=top bgcolor="white">
+<img src="algol68.gif">
 </td>
 <td width="5%" valign=top bgcolor="white">
 </td>
-<td width="15%" bgcolor=white>
+<td width="15%" valign=top bgcolor="white">
 <!-- Navigation bar -->
 <table border="0" cellspacing="0" width="100%">
 <tr>
 <td background="lines.gif">
-<small><b>Algol68G Mark 9.2</b></small>
-<br>
-&nbsp;&middot;&nbsp;<a href="introduction.html"><small>Introduction</small></a><br>
-&nbsp;&middot;&nbsp;<a href="install.html"><small>Installation</small></a><br>
-&nbsp;&middot;&nbsp;<a href="description.html"><small>Description</small></a><br>
-&nbsp;&middot;&nbsp;<a href="examples.html"><small>Example&nbsp;programs</small></a><br>
-&nbsp;&middot;&nbsp;<a href="synopsis.html"><small>Synopsis</small></a><br>
-&nbsp;&middot;&nbsp;<a href="syntax.html"><small>Syntax</small></a><br>
-&nbsp;&middot;&nbsp;<a href="environ.html"><small>Environment</small></a><br>
-<br>
-<small><b>Extensions</b></small>
-<br>
-&nbsp;&middot;&nbsp;<a href="extensions.html"><small>UNIX</small></a><br>
-&nbsp;&middot;&nbsp;<a href="postgresql.html"><small>PostgreSQL</small></a><br>
-&nbsp;&middot;&nbsp;<a href="drawing.html"><small>Drawing</small></a><br>
-&nbsp;&middot;&nbsp;<a href="numerical.html"><small>Numerical</small></a><br>
-<br>
-&nbsp;&middot;&nbsp;<a href="contents.html"><small>Contents</small></a><br>
-&nbsp;&middot;&nbsp;<a href="resources.html"><small>A68 Resources</small></a><br>
-&nbsp;&middot;&nbsp;<a href="introduction.html#obtaining"><small>Downloads</small></a><br>
-&nbsp;&middot;&nbsp;<a href="introduction.html#contact"><small>Contact</small></a>
+<p>
+<a href="algol.html"><small><b>A68G Home</b></small></a>
+<p>
+<a href="report_contents.html"><small><b>Revised Report</b></small></a>
+<p>
+<a href="algol.html#obtaining"><small><b>Downloads</b></small></a>
 </td>
 </tr>
 </table>
@@ -87,7 +77,7 @@ Copyright (C) 2000,2001,2002  Free Software Foundation, Inc.
 Everyone is permitted to copy and distribute verbatim copies
 of this license document, but changing it is not allowed.
 <P>
-<STRONG>0. PREAMBLE</STRONG>
+<STRONG>0. Preamble</STRONG>
 <P>
 The purpose of this License is to make a manual, textbook, or other
 functional and useful document "free" in the sense of freedom: to
@@ -111,7 +101,7 @@ whether it is published as a printed book.  We recommend this License
 principally for works whose purpose is instruction or reference.
 <P>
 
-<STRONG>1. APPLICABILITY AND DEFINITIONS</STRONG>
+<STRONG>1. Applicability and definitions</STRONG>
 <P>
 This License applies to any manual or other work, in any medium, that
 contains a notice placed by the copyright holder saying it can be
@@ -197,7 +187,7 @@ License, but only as regards disclaiming warranties: any other
 implication that these Warranty Disclaimers may have is void and has
 no effect on the meaning of this License.
 <P>
-<STRONG>2. VERBATIM COPYING</STRONG>
+<STRONG>2. Verbatim copying</STRONG>
 <P>
 You may copy and distribute the Document in any medium, either
 commercially or noncommercially, provided that this License, the
@@ -213,7 +203,7 @@ You may also lend copies, under the same conditions stated above, and
 you may publicly display copies.
 <P>
 
-<STRONG>3. COPYING IN QUANTITY</STRONG>
+<STRONG>3. Copying in quantity</STRONG>
 <P>
 If you publish printed copies (or copies in media that commonly have
 printed covers) of the Document, numbering more than 100, and the
@@ -251,7 +241,7 @@ Document well before redistributing any large number of copies, to give
 them a chance to provide you with an updated version of the Document.
 <P>
 
-<STRONG>4. MODIFICATIONS</STRONG>
+<STRONG>4. Modifications</STRONG>
 <P>
 You may copy and distribute a Modified Version of the Document under
 the conditions of sections 2 and 3 above, provided that you release
@@ -338,7 +328,7 @@ give permission to use their names for publicity for or to assert or
 imply endorsement of any Modified Version.
 <P>
 
-<STRONG>5. COMBINING DOCUMENTS</STRONG>
+<STRONG>5. Combining documents</STRONG>
 <P>
 You may combine the Document with other documents released under this
 License, under the terms defined in section 4 above for modified
@@ -363,7 +353,7 @@ and any sections Entitled "Dedications".  You must delete all sections
 Entitled "Endorsements."
 <P>
 
-<STRONG>6. COLLECTIONS OF DOCUMENTS</STRONG>
+<STRONG>6. Collections of documents</STRONG>
 <P>
 You may make a collection consisting of the Document and other documents
 released under this License, and replace the individual copies of this
@@ -378,7 +368,7 @@ other respects regarding verbatim copying of that document.
 <P>
 
 
-<STRONG>7. AGGREGATION WITH INDEPENDENT WORKS</STRONG>
+<STRONG>7. Aggregation with independent works</STRONG>
 <P>
 A compilation of the Document or its derivatives with other separate
 and independent documents or works, in or on a volume of a storage or
@@ -398,7 +388,7 @@ Otherwise they must appear on printed covers that bracket the whole
 aggregate.
 <P>
 
-<STRONG>8. TRANSLATION</STRONG>
+<STRONG>8. Translation</STRONG>
 <P>
 Translation is considered a kind of modification, so you may
 distribute translations of the Document under the terms of section 4.
@@ -419,7 +409,7 @@ its Title (section 1) will typically require changing the actual
 title.
 <P>
 
-<STRONG>9. TERMINATION</STRONG>
+<STRONG>9. Termination</STRONG>
 <P>
 You may not copy, modify, sublicense, or distribute the Document except
 as expressly provided for under this License.  Any other attempt to
@@ -430,7 +420,7 @@ License will not have their licenses terminated so long as such
 parties remain in full compliance.
 <P>
 
-<STRONG>10. FUTURE Mark 9.2S OF THIS LICENSE</STRONG>
+<STRONG>10. Future revisions of this license</STRONG>
 <P>
 The Free Software Foundation may publish new, revised versions
 of the GNU Free Documentation License from time to time.  Such new
@@ -483,21 +473,20 @@ free software license, such as the GNU General Public License,
 to permit their use in free software.
 <P>
 
+<!-- Footer -->
 <p>
-<br>
-<table width="100%" border=0 cellspacing=0 cellpadding=0>
-<td width="50%" valign=top bgcolor="white">
-<font color="black">
-<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
-</font>
+<div style="border: 1px solid red">
+<table cellpadding=6>
+<tr>
+<td>
+<small>
+Copyright &copy; 2001-2008 J. Marcel van der Veer.<br>
+Algol 68 Genie Mark 14.1 (November 2008)
+</small>
 </td>
-<td width="50%" align=right valign=top bgcolor="white">
-<font color="black">
-<small>Documentation for Algol 68 Genie Mark 9.2 (July 2006)</small>
-</font>
-</td>
+</tr>
 </table>
-</p>
-
+</div>
 </body>
 </html>
+

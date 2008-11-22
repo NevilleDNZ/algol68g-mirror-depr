@@ -5,57 +5,67 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2006 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
+Foundation; either version 3 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
 This code implements a parallel clause for Algol68G. This parallel clause has
 been included for educational purposes, and this implementation just emulates
 a multi-processor machine. It cannot make use of actual multiple processors.
-Since the interpreter is recursive, POSIX threads are used to have separate
-registers and stack for each concurrent unit.
+
+POSIX threads are used to have separate registers and stack for each concurrent 
+unit. Algol68G parallel units behave as POSIX threads - they have private stacks.
+Hence an assignation to an object in another thread, does not change that object
+in that other thread. Also jumps between threads are forbidden.
 */
+
+#if defined ENABLE_PAR_CLAUSE
 
 #include "algol68g.h"
 #include "genie.h"
+#include "inline.h"
 #include "mp.h"
 
-#ifdef HAVE_POSIX_THREADS
+typedef struct A68_STACK_DESCRIPTOR A68_STACK_DESCRIPTOR;
+typedef struct A68_THREAD_CONTEXT A68_THREAD_CONTEXT;
 
-typedef struct STACK STACK;
-
-struct STACK {
+struct A68_STACK_DESCRIPTOR
+{
   ADDR_T cur_ptr, ini_ptr;
   BYTE_T *swap, *start;
   int bytes;
 };
 
-int parallel_clauses = 0;
-pthread_t main_thread_id = 0;
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static ADDR_T fp0, sp0;
+struct A68_THREAD_CONTEXT
+{
+  pthread_t parent, id;
+  A68_STACK_DESCRIPTOR stack, frame;
+  NODE_T *unit;
+  int stack_used;
+  BYTE_T *thread_stack_offset;
+  BOOL_T active;
+};
 
 /*
-Set an upper limit for threads.
+Set an upper limit for number of threads.
 Don't copy POSIX_THREAD_THREADS_MAX since it may be ULONG_MAX.
 */
 
 #define THREAD_LIMIT   256
 
-#ifndef _POSIX_THREAD_THREADS_MAX
+#if ! defined _POSIX_THREAD_THREADS_MAX
 #define _POSIX_THREAD_THREADS_MAX	(THREAD_LIMIT)
 #endif
 
@@ -65,265 +75,71 @@ Don't copy POSIX_THREAD_THREADS_MAX since it may be ULONG_MAX.
 #define THREAD_MAX     (THREAD_LIMIT)
 #endif
 
-typedef struct A68_CONTEXT A68_CONTEXT;
-
-struct A68_CONTEXT {
-  pthread_t id;
-  STACK stack, frame;
-  NODE_T *unit;
-  int stack_used;
-  BYTE_T *thread_stack_offset;
-};
-
-static A68_CONTEXT context[THREAD_MAX];
-static int condex = 0;
+pthread_t main_thread_id = 0;
+static A68_THREAD_CONTEXT context[THREAD_MAX];
+static ADDR_T fp0, sp0;
+static BOOL_T abend_all_threads = A68_FALSE, exit_from_threads = A68_FALSE;
+static int context_index = 0;
+static int par_return_code = 0;
+static jmp_buf *jump_buffer;
+static NODE_T *jump_label;
+static pthread_mutex_t unit_sema = PTHREAD_MUTEX_INITIALIZER;
+static pthread_t parent_thread_id = 0;
 
 static void save_stacks (pthread_t);
 static void restore_stacks (pthread_t);
-#else
-#define pthread_t int
-#endif
 
-BOOL_T in_par_clause = A_FALSE;
+#define SAVE_STACK(stk, st, si) {\
+  A68_STACK_DESCRIPTOR *s = (stk);\
+  BYTE_T *start = (st);\
+  int size = (si);\
+  if (size > 0) {\
+    if (!((s != NULL) && (s->bytes > 0) && (size <= s->bytes))) {\
+      if (s->swap != NULL) {\
+        free (s->swap);\
+      }\
+      s->swap = (BYTE_T *) malloc ((size_t) size);\
+      ABNORMAL_END (s->swap == NULL, ERROR_OUT_OF_CORE, NULL);\
+    }\
+    s->start = start;\
+    s->bytes = size;\
+    COPY (s->swap, start, size);\
+  } else {\
+    s->start = start;\
+    s->bytes = 0;\
+    if (s->swap != NULL) {\
+      free (s->swap);\
+    }\
+    s->swap = NULL;\
+  }}
 
-static BOOL_T zapped = A_FALSE;
-static jmp_buf *jump_buffer;
-static NODE_T *jump_label;
+#define RESTORE_STACK(stk) {\
+  A68_STACK_DESCRIPTOR *s = (stk);\
+  if (s != NULL && s->bytes > 0) {\
+    COPY (s->start, s->swap, s->bytes);\
+  }}
 
-/*!
-\brief count parallel_clauses
-**/
-
-void count_parallel_clauses (NODE_T * p)
-{
-#ifdef HAVE_POSIX_THREADS
-  for (; p != NULL; FORWARD (p)) {
-    if (WHETHER (p, PARALLEL_CLAUSE)) {
-      parallel_clauses++;
-    }
-    count_parallel_clauses (SUB (p));
+#define GET_THREAD_INDEX(z, ptid) {\
+  int _k_;\
+  pthread_t _tid_ = (ptid);\
+  (z) = -1;\
+  for (_k_ = 0; _k_ < context_index && (z) == -1; _k_++) {\
+    if (pthread_equal (_tid_, context[_k_].id)) {\
+      (z) = _k_;\
+    }\
+  }\
+  ABNORMAL_END ((z) == -1, "thread id not registered", NULL);\
   }
-#else
-  (void) p;
-  ABNORMAL_END (A_TRUE, ERROR_REQUIRE_THREADS, NULL);
-#endif
-}
 
-/*!
-\brief whether we are in the main thread
-\return TRUE if in main thread or FALSE otherwise
-**/
+#define ERROR_THREAD_FAULT "thread fault"
 
-BOOL_T is_main_thread (void)
-{
-#ifdef HAVE_POSIX_THREADS
-  return (main_thread_id == pthread_self ());
-#else
-  ABNORMAL_END (A_TRUE, ERROR_REQUIRE_THREADS, NULL);
-  return (A_FALSE);
-#endif
-}
-
-/*!
-\brief end a thread, beit normally or not
-**/
-
-void genie_abend_thread (void)
-{
-#ifdef HAVE_POSIX_THREADS
-  save_stacks (pthread_self ());
-  pthread_mutex_unlock (&mutex);
-  pthread_exit (NULL);
-#else
-  ABNORMAL_END (A_TRUE, ERROR_REQUIRE_THREADS, NULL);
-#endif
-}
-
-
-/*!
-\brief when we jump out of a parallel clause we zap all threads
-\param p position in syntax tree, should not be NULL
-\param jump_stat
-\param label
-**/
-
-void zap_all_threads (NODE_T * p, jmp_buf * jump_stat, NODE_T * label)
-{
-  (void) p;
-  zapped = A_TRUE;
-  jump_buffer = jump_stat;
-  jump_label = label;
-  if (!is_main_thread ()) {
-    genie_abend_thread ();
+#define LOCK_THREAD {\
+  ABNORMAL_END (pthread_mutex_lock (&unit_sema) != 0, ERROR_THREAD_FAULT, NULL);\
   }
-}
 
-/*!
-\brief fill in tree what level of parallel clause we are in
-\param p position in syntax tree, should not be NULL
-\param n level counter
-**/
-
-void set_par_level (NODE_T * p, int n)
-{
-  for (; p != NULL; p = NEXT (p)) {
-    if (WHETHER (p, PARALLEL_CLAUSE)) {
-      PAR_LEVEL (p) = n + 1;
-      set_par_level (SUB (p), PAR_LEVEL (p));
-    } else {
-      PAR_LEVEL (p) = n;
-      set_par_level (SUB (p), PAR_LEVEL (p));
-    }
+#define UNLOCK_THREAD {\
+  ABNORMAL_END (pthread_mutex_unlock (&unit_sema) != 0, ERROR_THREAD_FAULT, NULL);\
   }
-}
-
-#ifdef HAVE_POSIX_THREADS
-
-/*!
-\brief save this thread and try to start another
-\param p position in syntax tree, should not be NULL
-**/
-
-static void try_change_thread (NODE_T * p)
-{
-  if (!in_par_clause) {
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_PARALLEL_OUTSIDE);
-    exit_genie (p, A_RUNTIME_ERROR);
-  }
-  save_stacks (pthread_self ());
-  pthread_mutex_unlock (&mutex);
-  pthread_mutex_lock (&mutex);
-  restore_stacks (pthread_self ());
-}
-#endif
-
-#ifdef HAVE_POSIX_THREADS
-
-/*!
-\brief thread id to context index
-\param id thread id
-\return context index or -1 if thread id is not found
-**/
-
-static int get_index (pthread_t id)
-{
-  int k;
-  for (k = 0; k < condex; k++) {
-    if (pthread_equal (id, context[k].id)) {
-      return (k);
-    }
-  }
-  ABNORMAL_END (A_TRUE, "thread id not registered", NULL);
-  return (-1);
-}
-#endif
-
-#ifdef HAVE_POSIX_THREADS
-
-/*!
-\brief save a stack, only allocate if a block is too small
-\param s stack where to store, should not be NULL
-\param start first BYTE to copy, should not be NULL
-\param size number of bytes to copy
-**/
-
-static void save (STACK * s, BYTE_T * start, int size)
-{
-  if (size > 0) {
-    BYTE_T *z = NULL;
-    if ((s != NULL) && (s->bytes > 0) && (size <= s->bytes)) {
-      z = s->swap;
-    } else {
-      if (s->swap != NULL) {
-        free (s->swap);
-      }
-      z = (BYTE_T *) malloc ((size_t) size);
-      ABNORMAL_END (z == NULL, ERROR_OUT_OF_CORE, NULL);
-    }
-    s->start = start;
-    s->bytes = size;
-    COPY (z, start, size);
-    s->swap = z;
-  } else {
-    s->bytes = 0;
-    if (s->swap != NULL) {
-      free (s->swap);
-    }
-    s->swap = NULL;
-  }
-}
-#endif
-
-#ifdef HAVE_POSIX_THREADS
-
-/*!
-\brief restore a stack
-\param s stack from which to restore, should not be NULL
-**/
-
-static void restore (STACK * s)
-{
-  if (s != NULL && s->bytes > 0) {
-    COPY (s->start, s->swap, s->bytes);
-  }
-}
-#endif
-
-#ifdef HAVE_POSIX_THREADS
-
-/*!
-\brief store the stacks of threads
-\param t
-\return
-**/
-
-static void save_stacks (pthread_t t)
-{
-  ADDR_T p, q, u, v;
-  int k = get_index (t);
-/* Store stack pointers.						*/
-  context[k].frame.cur_ptr = frame_pointer;
-  context[k].stack.cur_ptr = stack_pointer;
-/* Swap out evaluation stack.   					*/
-  p = context[k].stack.cur_ptr;
-  q = context[k].stack.ini_ptr;
-  save (&(context[k].stack), STACK_ADDRESS (q), p - q);
-/* Swap out frame stack.						*/
-  p = context[k].frame.cur_ptr;
-  q = context[k].frame.ini_ptr;
-  u = p + FRAME_SIZE (p);
-  v = q + FRAME_SIZE (q);
-  save (&(context[k].frame), FRAME_ADDRESS (v), u - v);
-/* Consider the embedding thread.       				*/
-}
-#endif
-
-#ifdef HAVE_POSIX_THREADS
-
-/*!
-\brief restore stacks of thread
-\param t thread
-**/
-
-static void restore_stacks (pthread_t t)
-{
-  if (error_count > 0 || zapped) {
-    genie_abend_thread ();
-  } else {
-    int k = get_index (t);
-/* Restore stack pointers.      					*/
-    get_stack_size ();
-    system_stack_offset = context[k].thread_stack_offset;
-    frame_pointer = context[k].frame.cur_ptr;
-    stack_pointer = context[k].stack.cur_ptr;
-/* Restore stacks.      						*/
-    restore (&(context[k].stack));
-    restore (&(context[k].frame));
-  }
-}
-#endif
-
-#ifdef HAVE_POSIX_THREADS
 
 /*!
 \brief does system stack grow up or down?
@@ -342,9 +158,163 @@ static int stack_direction (BYTE_T * lwb)
     return (0);
   }
 }
-#endif
 
-#ifdef HAVE_POSIX_THREADS
+/*!
+\brief fill in tree what level of parallel clause we are in
+\param p position in tree
+\param n level counter
+**/
+
+void set_par_level (NODE_T * p, int n)
+{
+  for (; p != NULL; p = NEXT (p)) {
+    if (WHETHER (p, PARALLEL_CLAUSE)) {
+      PAR_LEVEL (p) = n + 1;
+    } else {
+      PAR_LEVEL (p) = n;
+    }
+    set_par_level (SUB (p), PAR_LEVEL (p));
+  }
+}
+
+/*!
+\brief whether we are in the main thread
+\return same
+**/
+
+BOOL_T whether_main_thread (void)
+{
+  return (main_thread_id == pthread_self ());
+}
+
+/*!
+\brief end a thread, beit normally or not
+**/
+
+void genie_abend_thread (void)
+{
+  int k;
+  GET_THREAD_INDEX (k, pthread_self ());
+  context[k].active = A68_FALSE;
+  UNLOCK_THREAD;
+  pthread_exit (NULL);
+}
+
+/*!
+\brief when we end execution in a parallel clause we zap all threads
+**/
+
+void genie_set_exit_from_threads (int ret)
+{
+  abend_all_threads = A68_TRUE;
+  exit_from_threads = A68_TRUE;
+  par_return_code = ret;
+  genie_abend_thread ();
+}
+
+/*!
+\brief when we jump out of a parallel clause we zap all threads
+\param p position in tree
+\param jump_stat jump buffer
+\param label node where label is at
+**/
+
+void genie_abend_all_threads (NODE_T * p, jmp_buf * jump_stat, NODE_T * label)
+{
+  (void) p;
+  abend_all_threads = A68_TRUE;
+  exit_from_threads = A68_FALSE;
+  jump_buffer = jump_stat;
+  jump_label = label;
+  if (!whether_main_thread ()) {
+    genie_abend_thread ();
+  }
+}
+
+/*!
+\brief save this thread and try to start another
+\param p position in tree
+**/
+
+static void try_change_thread (NODE_T * p)
+{
+  if (whether_main_thread ()) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_OUTSIDE);
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else {
+/* Release the unit_sema so another thread can take it up ... */
+    save_stacks (pthread_self ());
+    UNLOCK_THREAD;
+/* ... and take it up again! */
+    LOCK_THREAD;
+    restore_stacks (pthread_self ());
+  }
+}
+
+/*!
+\brief store the stacks of threads
+\param t thread number
+**/
+
+static void save_stacks (pthread_t t)
+{
+  ADDR_T p, q, u, v;
+  int k;
+  GET_THREAD_INDEX (k, t);
+/* Store stack pointers. */
+  context[k].frame.cur_ptr = frame_pointer;
+  context[k].stack.cur_ptr = stack_pointer;
+/* Swap out evaluation stack. */
+  p = stack_pointer;
+  q = context[k].stack.ini_ptr;
+  SAVE_STACK (&(context[k].stack), STACK_ADDRESS (q), p - q);
+/* Swap out frame stack. */
+  p = frame_pointer;
+  q = context[k].frame.ini_ptr;
+  u = p + FRAME_SIZE (p);
+  v = q + FRAME_SIZE (q);
+/* Consider the embedding thread. */
+  SAVE_STACK (&(context[k].frame), FRAME_ADDRESS (v), u - v);
+}
+
+/*!
+\brief restore stacks of thread
+\param t thread number
+**/
+
+static void restore_stacks (pthread_t t)
+{
+  if (a68_prog.error_count > 0 || abend_all_threads) {
+    genie_abend_thread ();
+  } else {
+    int k;
+    GET_THREAD_INDEX (k, t);
+/* Restore stack pointers. */
+    get_stack_size ();
+    system_stack_offset = context[k].thread_stack_offset;
+    frame_pointer = context[k].frame.cur_ptr;
+    stack_pointer = context[k].stack.cur_ptr;
+/* Restore stacks. */
+    RESTORE_STACK (&(context[k].stack));
+    RESTORE_STACK (&(context[k].frame));
+  }
+}
+
+/*!
+\brief check whether parallel units have terminated
+\param active checks whether there are still active threads
+\param parent parent thread number
+**/
+
+static void check_parallel_units (BOOL_T * active, pthread_t parent)
+{
+  int k;
+  for (k = 0; k < context_index; k++) {
+    if (parent == context[k].parent) {
+      (*active) |= context[k].active;
+    }
+  }
+}
 
 /*!
 \brief execute one unit from a PAR clause
@@ -356,243 +326,330 @@ static void *start_unit (void *arg)
   pthread_t t;
   int k;
   BYTE_T stack_offset;
+  NODE_T *p;
   (void) arg;
-  pthread_mutex_lock (&mutex);
+  LOCK_THREAD;
   t = pthread_self ();
-  k = get_index (t);
+  GET_THREAD_INDEX (k, t);
   context[k].thread_stack_offset = (BYTE_T *) ((int) &stack_offset - stack_direction (&stack_offset) * context[k].stack_used);
   restore_stacks (t);
-  EXECUTE_UNIT_TRACE ((NODE_T *) context[get_index (t)].unit);
+  p = (NODE_T *) (context[k].unit);
+  EXECUTE_UNIT_TRACE (p);
   genie_abend_thread ();
   return ((void *) NULL);
 }
-#endif
-
-#ifdef HAVE_POSIX_THREADS
 
 /*!
 \brief execute parallel units
-\param p position in syntax tree, should not be NULL
+\param p position in tree
+\param parent parent thread number
 **/
 
-static void genie_parallel_units (NODE_T * p)
+static void start_parallel_units (NODE_T * p, pthread_t parent)
 {
   for (; p != NULL; FORWARD (p)) {
     if (WHETHER (p, UNIT)) {
       pthread_t new_id;
       pthread_attr_t new_at;
-      ssize_t ss;
+      size_t ss;
       BYTE_T stack_offset;
-/* Set up a thread for this unit.       				*/
-      if (condex >= THREAD_MAX) {
-        diagnostic_node (A_RUNTIME_ERROR, p, ERROR_PARALLEL_OVERFLOW);
-        exit_genie (p, A_RUNTIME_ERROR);
+      A68_THREAD_CONTEXT *u;
+/* Set up a thread for this unit. */
+      if (context_index >= THREAD_MAX) {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_OVERFLOW);
+        exit_genie (p, A68_RUNTIME_ERROR);
       }
-/* Fill out a context for this thread.  				*/
-      context[condex].unit = p;
-      context[condex].stack_used = SYSTEM_STACK_USED;
-      context[condex].thread_stack_offset = NULL;
-      context[condex].stack.cur_ptr = stack_pointer;
-      context[condex].frame.cur_ptr = frame_pointer;
-      context[condex].stack.ini_ptr = sp0;
-      context[condex].frame.ini_ptr = fp0;
-      context[condex].stack.swap = NULL;
-      context[condex].frame.swap = NULL;
-      context[condex].stack.start = NULL;
-      context[condex].frame.start = NULL;
-      context[condex].stack.bytes = 0;
-      context[condex].frame.bytes = 0;
-/* Create the actual thread.    					*/
+/* Fill out a context for this thread. */
+      u = &(context[context_index]);
+      u->unit = p;
+      u->stack_used = SYSTEM_STACK_USED;
+      u->thread_stack_offset = NULL;
+      u->stack.cur_ptr = stack_pointer;
+      u->frame.cur_ptr = frame_pointer;
+      u->stack.ini_ptr = sp0;
+      u->frame.ini_ptr = fp0;
+      u->stack.swap = NULL;
+      u->frame.swap = NULL;
+      u->stack.start = NULL;
+      u->frame.start = NULL;
+      u->stack.bytes = 0;
+      u->frame.bytes = 0;
+      u->active = A68_TRUE;
+/* Create the thread. */
       RESET_ERRNO;
-      pthread_attr_init (&new_at);
-      pthread_attr_setstacksize (&new_at, stack_size);
-      pthread_attr_getstacksize (&new_at, &ss);
-      ABNORMAL_END (ss != stack_size, "cannot set thread stack size", NULL);
-      pthread_create (&new_id, &new_at, start_unit, NULL);
-      if (errno != 0) {
-        diagnostic_node (A_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
-        exit_genie (p, A_RUNTIME_ERROR);
+      if (pthread_attr_init (&new_at) != 0) {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+        exit_genie (p, A68_RUNTIME_ERROR);
       }
-      context[condex].id = new_id;
-      condex++;
+      if (pthread_attr_setstacksize (&new_at, stack_size) != 0) {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+        exit_genie (p, A68_RUNTIME_ERROR);
+      }
+      if (pthread_attr_getstacksize (&new_at, &ss) != 0) {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+        exit_genie (p, A68_RUNTIME_ERROR);
+      }
+      ABNORMAL_END ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NULL);
+      if (pthread_create (&new_id, &new_at, start_unit, NULL) != 0) {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
+        exit_genie (p, A68_RUNTIME_ERROR);
+      }
+      u->parent = parent;
+      u->id = new_id;
+      context_index++;
       save_stacks (new_id);
     } else {
-      genie_parallel_units (SUB (p));
+      start_parallel_units (SUB (p), parent);
     }
   }
 }
-#endif
+
+/*!
+\brief execute one unit from a PAR clause
+\param arg dummy argument
+**/
+
+static void *start_genie_parallel (void *arg)
+{
+  pthread_t t;
+  int k;
+  BYTE_T stack_offset;
+  NODE_T *p;
+  BOOL_T units_active;
+  (void) arg;
+  UP_SWEEP_SEMA;
+  LOCK_THREAD;
+  t = pthread_self ();
+  GET_THREAD_INDEX (k, t);
+  context[k].thread_stack_offset = (BYTE_T *) ((int) &stack_offset - stack_direction (&stack_offset) * context[k].stack_used);
+  restore_stacks (t);
+  p = (NODE_T *) (context[k].unit);
+/* This is the thread spawned by the main thread, we spawn parallel units and await their completion. */
+  start_parallel_units (SUB (p), t);
+  do {
+    CHECK_TIME_LIMIT (p);
+    units_active = A68_FALSE;
+    check_parallel_units (&units_active, pthread_self ());
+    if (units_active) {
+      try_change_thread (p);
+    }
+  } while (units_active);
+  DOWN_SWEEP_SEMA;
+  genie_abend_thread ();
+  return ((void *) NULL);
+}
 
 /*!
 \brief execute parallel clause
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 \return propagator for this routine
 **/
 
 PROPAGATOR_T genie_parallel (NODE_T * p)
 {
-#ifdef HAVE_POSIX_THREADS
-  PROPAGATOR_T self;
   int j;
   ADDR_T stack_s = 0, frame_s = 0;
   BYTE_T *system_stack_offset_s = NULL;
-  BOOL_T save_in_par_clause = in_par_clause;
-  UP_SWEEP_SEMA;
-  self.unit = genie_parallel;
-  self.source = p;
-  in_par_clause = A_TRUE;
-  if (!save_in_par_clause) {
-    zapped = A_FALSE;
+  if (whether_main_thread ()) {
+/* Here we are not in the main thread, spawn first thread and await its completion. */
+    pthread_attr_t new_at;
+    size_t ss;
+    BYTE_T stack_offset;
+    A68_THREAD_CONTEXT *u;
+    LOCK_THREAD;
+    abend_all_threads = A68_FALSE;
+    exit_from_threads = A68_FALSE;
+    par_return_code = 0;
     sp0 = stack_s = stack_pointer;
     fp0 = frame_s = frame_pointer;
     system_stack_offset_s = system_stack_offset;
-  }
-/* Claim the engine if in the outermost PAR level.      		*/
-  if (!save_in_par_clause) {
-    pthread_mutex_lock (&mutex);
-    condex = 0;
-  }
-/* Spawn the units (they remain inactive when we blocked the engine).*/
-  genie_parallel_units (SUB (p));
-/* Free the engine if in the outermost PAR level.       		*/
-  if (!save_in_par_clause) {
-    pthread_mutex_unlock (&mutex);
-  }
-/* Join the other threads if in the outermost PAR level.		*/
-  if (!save_in_par_clause) {
-    for (j = 0; j < condex; j++) {
-      RESET_ERRNO;
-      pthread_join (context[j].id, NULL);
-      if (errno != 0) {
-        diagnostic_node (A_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_JOIN);
-        exit_genie (p, A_RUNTIME_ERROR);
+    context_index = 0;
+/* Set up a thread for this unit. */
+    u = &(context[context_index]);
+    u->unit = p;
+    u->stack_used = SYSTEM_STACK_USED;
+    u->thread_stack_offset = NULL;
+    u->stack.cur_ptr = stack_pointer;
+    u->frame.cur_ptr = frame_pointer;
+    u->stack.ini_ptr = sp0;
+    u->frame.ini_ptr = fp0;
+    u->stack.swap = NULL;
+    u->frame.swap = NULL;
+    u->stack.start = NULL;
+    u->frame.start = NULL;
+    u->stack.bytes = 0;
+    u->frame.bytes = 0;
+    u->active = A68_TRUE;
+/* Spawn the first thread and join it to await its completion. */
+    RESET_ERRNO;
+    if (pthread_attr_init (&new_at) != 0) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+    if (pthread_attr_setstacksize (&new_at, stack_size) != 0) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+    if (pthread_attr_getstacksize (&new_at, &ss) != 0) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+    ABNORMAL_END ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NULL);
+    if (pthread_create (&parent_thread_id, &new_at, start_genie_parallel, NULL) != 0) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+    if (errno != 0) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+    u->parent = main_thread_id;
+    u->id = parent_thread_id;
+    context_index++;
+    save_stacks (parent_thread_id);
+    UNLOCK_THREAD;
+    if (pthread_join (parent_thread_id, NULL) != 0) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+/* The first spawned thread has completed, now clean up. */
+    for (j = 0; j < context_index; j++) {
+      if (context[j].active && context[j].id != main_thread_id && context[j].id != parent_thread_id) {
+/* If threads are being zapped it is possible that some are still active at this point! */
+        if (pthread_join (context[j].id, NULL) != 0) {
+          diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+          exit_genie (p, A68_RUNTIME_ERROR);
+        }
+      }
+      if (context[j].stack.swap != NULL) {
+        free (context[j].stack.swap);
+        context[j].stack.swap = NULL;
+      }
+      if (context[j].frame.swap != NULL) {
+        free (context[j].frame.swap);
+        context[j].frame.swap = NULL;
       }
     }
-/* Restore state for the outermost PAR level that is now exiting. */
+/* Now every thread should have ended. */
+    context_index = 0;
     stack_pointer = stack_s;
     frame_pointer = frame_s;
     get_stack_size ();
     system_stack_offset = system_stack_offset_s;
-    for (j = 0; j < condex; j++) {
-      if (context[j].stack.swap != NULL) {
-        free (context[j].stack.swap);
-      }
-      if (context[j].frame.swap != NULL) {
-        free (context[j].frame.swap);
-      }
+/* See if we ended execution in parallel clause. */
+    if (whether_main_thread () && exit_from_threads) {
+      exit_genie (p, par_return_code);
     }
-    condex = 0;
-    if (error_count > 0) {
-      exit_genie (p, A_RUNTIME_ERROR);
+    if (whether_main_thread () && a68_prog.error_count > 0) {
+      exit_genie (p, A68_RUNTIME_ERROR);
     }
+/* See if we jumped out of the parallel clause(s). */
+    if (whether_main_thread () && abend_all_threads) {
+      SYMBOL_TABLE (TAX (jump_label))->jump_to = TAX (jump_label)->unit;
+      longjmp (*(jump_buffer), 1);
+    }
+  } else {
+/* Here we are not in the main thread, we spawn parallel units and await their completion. */
+    BOOL_T units_active;
+    pthread_t t = pthread_self ();
+/* Spawn parallel units. */
+    start_parallel_units (SUB (p), t);
+    do {
+      CHECK_TIME_LIMIT (p);
+      units_active = A68_FALSE;
+      check_parallel_units (&units_active, t);
+      if (units_active) {
+        try_change_thread (p);
+      }
+    } while (units_active);
   }
-  DOWN_SWEEP_SEMA;
-  in_par_clause = save_in_par_clause;
-  if (is_main_thread () && zapped) {
-/* Beam us up, Scotty!  						*/
-    SYMBOL_TABLE (TAX (jump_label))->jump_to = TAX (jump_label)->unit;
-    longjmp (*(jump_buffer), 1);
-  }
-  return (self);
-#else
-  PROPAGATOR_T self;
-  self.unit = genie_parallel;
-  self.source = p;
-  diagnostic_node (A_RUNTIME_ERROR, p, ERROR_REQUIRE_THREADS);
-  exit_genie (p, A_RUNTIME_ERROR);
-  return (self);
-#endif
+  return (PROPAGATOR (p));
 }
-
-#define CHECK_INIT(p, c, q)\
-  if (!(c)) {\
-    diagnostic_node (A_RUNTIME_ERROR, (p), ERROR_EMPTY_VALUE_FROM, (q));\
-    exit_genie ((p), A_RUNTIME_ERROR);\
-  }
 
 /*!
 \brief OP LEVEL = (INT) SEMA
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 **/
 
 void genie_level_sema_int (NODE_T * p)
 {
-#ifdef HAVE_POSIX_THREADS
   A68_INT k;
   A68_REF s;
-  POP_INT (p, &k);
-  s = heap_generator (p, MODE (INT), SIZE_OF (A68_INT));
+  POP_OBJECT (p, &k, A68_INT);
+  s = heap_generator (p, MODE (INT), ALIGNED_SIZE_OF (A68_INT));
   *(A68_INT *) ADDRESS (&s) = k;
   PUSH_REF (p, s);
-#else
-  diagnostic_node (A_RUNTIME_ERROR, p, ERROR_REQUIRE_THREADS);
-  exit_genie (p, A_RUNTIME_ERROR);
-#endif
 }
-
 
 /*!
 \brief OP LEVEL = (SEMA) INT
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 **/
 
 void genie_level_int_sema (NODE_T * p)
 {
-#ifdef HAVE_POSIX_THREADS
   A68_REF s;
   POP_REF (p, &s);
-  CHECK_INIT (p, s.status & INITIALISED_MASK, MODE (SEMA));
-  PUSH_INT (p, ((A68_INT *) ADDRESS (&s))->value);
-#else
-  diagnostic_node (A_RUNTIME_ERROR, p, ERROR_REQUIRE_THREADS);
-  exit_genie (p, A_RUNTIME_ERROR);
-#endif
+  CHECK_INIT (p, INITIALISED (&s), MODE (SEMA));
+  PUSH_PRIMITIVE (p, VALUE ((A68_INT *) ADDRESS (&s)), A68_INT);
 }
 
 /*!
 \brief OP UP = (SEMA) VOID
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 **/
 
 void genie_up_sema (NODE_T * p)
 {
-#ifdef HAVE_POSIX_THREADS
   A68_REF s;
+  if (whether_main_thread ()) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_OUTSIDE);
+    exit_genie (p, A68_RUNTIME_ERROR);
+  }
   POP_REF (p, &s);
-  CHECK_INIT (p, s.status & INITIALISED_MASK, MODE (SEMA));
-  ((A68_INT *) ADDRESS (&s))->value++;
-#else
-  diagnostic_node (A_RUNTIME_ERROR, p, ERROR_REQUIRE_THREADS);
-  exit_genie (p, A_RUNTIME_ERROR);
-#endif
+  CHECK_INIT (p, INITIALISED (&s), MODE (SEMA));
+  VALUE ((A68_INT *) ADDRESS (&s))++;
 }
 
 /*!
 \brief OP DOWN = (SEMA) VOID
-\param p position in syntax tree, should not be NULL
+\param p position in tree
 **/
 
 void genie_down_sema (NODE_T * p)
 {
-#ifdef HAVE_POSIX_THREADS
   A68_REF s;
   A68_INT *k;
-  BOOL_T cont = A_TRUE;
+  if (whether_main_thread ()) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_OUTSIDE);
+    exit_genie (p, A68_RUNTIME_ERROR);
+  }
+  BOOL_T cont = A68_TRUE;
   POP_REF (p, &s);
-  CHECK_INIT (p, s.status & INITIALISED_MASK, MODE (SEMA));
+  CHECK_INIT (p, INITIALISED (&s), MODE (SEMA));
   while (cont) {
     k = (A68_INT *) ADDRESS (&s);
-    if (k->value <= 0) {
-      CHECK_TIME_LIMIT (p);
-      try_change_thread (p);
-      cont = A_TRUE;
+    if (VALUE (k) <= 0) {
+      save_stacks (pthread_self ());
+      while (VALUE (k) <= 0) {
+        if (a68_prog.error_count > 0 || abend_all_threads) {
+          genie_abend_thread ();
+        }
+        CHECK_TIME_LIMIT (p);
+        UNLOCK_THREAD;
+/* Waiting a bit relaxes overhead. */
+        usleep (10);
+        LOCK_THREAD;
+/* Garbage may be collected, so recalculate 'k'. */
+        k = (A68_INT *) ADDRESS (&s);
+      }
+      restore_stacks (pthread_self ());
+      cont = A68_TRUE;
     } else {
-      k->value--;
-      cont = A_FALSE;
+      VALUE (k)--;
+      cont = A68_FALSE;
     }
   }
-#else
-  diagnostic_node (A_RUNTIME_ERROR, p, ERROR_REQUIRE_THREADS);
-  exit_genie (p, A_RUNTIME_ERROR);
-#endif
 }
+
+#endif

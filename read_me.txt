@@ -1,5 +1,4 @@
-ALGOL68G - ALGOL 68 GENIE (MARK 9.X)
-------------------------------------
+ALGOL68G - ALGOL 68 GENIE (MARK 14.1)
 
 Algol68G is a nearly fully featured implementation of Algol 68 as defined by 
 the Revised Report.
@@ -21,16 +20,4 @@ using it or for whether it serves any particular purpose or works at all. See
 the GNU General Public License for more details. The GNU General Public License 
 does not permit this software to be redistributed in proprietary programs.
 
-This distribution contains following files and directories:
-
-* AUTHOR                      Author and contact information.
-* CHANGE_LOG                  Revision history.
-* COPYING                     License information (GNU GPL).
-* INSTALL                     How to build and install Algol68G.
-* LIMITATIONS                 Known limitations.
-* THANKS                      Credits.
-* configure                   Shell script to generate a makefile.
-* demo                        Sample Algol 68 programs.
-* doc                         Directory with documentation.
-* foreign	              Directory with third party source code.
-* source                      Directory with source files.
+Point your browser at doc/algol.html to start reading the documentation.

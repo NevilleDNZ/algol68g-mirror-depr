@@ -1,24 +1,26 @@
+<!-- Header -->
 <html>
 <head>
-<title>Algol 68 Genie - An Algol 68 interpreter</title>
+<title>Algol 68 Genie - An Algol 68 Interpreter</title>
 <meta name="Keywords" content="algol,algol68,68,algol-68,algol68g,algol68-g,a68g,a68-g,68g,genie,interpreter">
 <meta http-equiv="Content-Style-Type" content="text/css"; charset=ISO-8859-1">
 <style type="text/css">
 a:link    {color: blue; text-decoration: underline;}
 a:visited {color: blue; text-decoration: underline;}
 a:active  {color: blue; text-decoration: underline;}
-p {font-size: 10pt; font-family: Arial,Helvetica;}
-u {font-size: 10pt; font-family: Arial,Helvetica;}
-dd {font-size: 10pt; font-family: Arial,Helvetica;}
-h1 {font-size: 16pt; font-family: Arial,Helvetica;}
-h2 {font-size: 14pt; font-family: Arial,Helvetica;}
-h3 {font-size: 12pt; font-family: Arial,Helvetica;}
-h4 {font-size: 10pt; font-family: Arial,Helvetica;}
-td {font-size: 8pt; font-family: Arial,Helvetica;}
-ul {font-size: 10pt; font-family: Arial,Helvetica;}
-body {font-size: 10pt; font-family: Arial,Helvetica;}
-code {font-size: 10pt; font-family: Courier;}
-pre {font-size: 10pt; font-family: Courier;}
+p {font-size: 10pt; font-family: arial, sans-serif;}
+u {font-size: 10pt; font-family: arial, sans-serif;}
+dd {font-size: 10pt; font-family: arial, sans-serif;}
+h1 {font-size: 14pt; font-family: arial, sans-serif;}
+h2 {font-size: 12pt; font-family: arial, sans-serif;}
+h3 {font-size: 10pt; font-family: arial, sans-serif;}
+h4 {font-size: 10pt; font-family: arial, sans-serif;}
+td {font-size: 10pt; font-family: arial, sans-serif;}
+ul {font-size: 10pt; font-family: arial, sans-serif;}
+body {font-size: 10pt; font-family: arial, sans-serif;}
+tt {font-size: 10pt; font-family: "courier new", monospace;}
+code {font-size: 10pt; font-family: "courier new", monospace;}
+pre {font-size: 10pt; font-family: "courier new", monospace;}
 </style>
 </head>
 
@@ -27,44 +29,38 @@ pre {font-size: 10pt; font-family: Courier;}
 <table width="100%" border=0 cellspacing=0 cellpadding=0>
 <td width="100%" background="lines.gif">
 <img src="lines.gif" align=right>
-<small>Documentation for Algol 68 Genie Mark 9.2</small>
+<small>
+<b>Documentation for Algol 68 Genie Mark 14.1</b>
+</small>
 </td>
 </table>
+
 
 <table width="100%" border=0 cellspacing=0 cellpadding=0>
 <td width="50%" valign=top bgcolor="white">
 <br>
-<h2>Algol 68 Genie</h2>
+<h2>Algol 68 Genie Mark 14.1</h2>
 <h3>An Algol 68 interpreter</h3>
 &middot;&nbsp;<a href="#whatis">What is Algol 68 Genie?</a><br>
-&middot;&nbsp;<a href="#obtaining">Available Algol 68 Genie releases</a><br>
-&middot;&nbsp;<a href="#linkto">What libraries can Algol 68 Genie link to?</a><br>
-&middot;&nbsp;<a href="#texts">On-line books on Algol 68</a><br>
+&middot;&nbsp;<a href="#obtaining">Obtaining Algol 68 Genie</a><br>
 &middot;&nbsp;<a href="#contact">Author and contact information</a><br>
 </td>
 <td width="30%" valign=top bgcolor="white">
-<img src="logo.gif">
-<p>
-<div align=right>
-{&nbsp;<i>... 'Lisp and Algol, are built around a kernel that&nbsp;<br>
-seems as natural as a branch of mathematics.'</i>&nbsp;<br>
-<small>D. R. Hofstadter, Metamagical Themas.</small> }&nbsp;
-</div>
+<img src="algol68.gif">
 </td>
 <td width="5%" valign=top bgcolor="white">
 </td>
 <td width="15%" valign=top bgcolor="white">
-<!-- Releases -->
+<!-- Navigation bar -->
 <table border="0" cellspacing="0" width="100%">
+<tr>
 <td background="lines.gif">
-&nbsp;&nbsp;<b>Releases</b>
-<br>
-<br>
-&nbsp;&middot;&nbsp;<a href="algol68g-mk9.2/doc/introduction.html"><small><b>Mark 9.2</b></small></a>
-<br>
-&nbsp;&middot;&nbsp;<a href="algol69g-mk9.1/doc/introduction.html"><small><b>Mark 9.1</b></small></a>
-<br>
-&nbsp;&middot;&nbsp;<a href="algol68g-mk9/doc/introduction.html"><small><b>Mark 9</b></small></a>
+<p>
+<a href="algol.html"><small><b>A68G Home</b></small></a>
+<p>
+<a href="report_contents.html"><small><b>Revised Report</b></small></a>
+<p>
+<a href="algol.html#obtaining"><small><b>Downloads</b></small></a>
 </td>
 </tr>
 </table>
@@ -72,76 +68,140 @@ seems as natural as a branch of mathematics.'</i>&nbsp;<br>
 </td>
 </table>
 
+<p>
+<table width=100% cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<p>
+<div align=right>
+{&nbsp;... 'Lisp and Algol, are built around a kernel that&nbsp;<br>
+seems as natural as a branch of mathematics.'&nbsp;<br>
+Metamagical Themas. Douglas Hofstadter. }&nbsp;
+</div>
+
 <h3><a name="whatis"></a>What is Algol 68 Genie?</h3>
+
 <p>
-Algol 68 is a rather lean, orthogonal general-purpose programming language, that is a beautiful means for denoting algorithms.
+<i>Algol 68 Genie</i> (Algol68G) is an Algol 68 interpreter. It can be used for executing Algol 68 programs or scripts. Algol 68 is a rather lean orthogonal general-purpose language that is a beautiful means for denoting algorithms. Algol 68 was designed as a general-purpose programming language by <a href="http://web.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/wg21/">IFIP Working Group 2.1</a> (Algorithmic Languages and Calculi) that has continuing responsibility for Algol 60 and Algol 68. 
+
 <p>
-<i>Algol 68 Genie</i> (Algol68G) is an Algol 68 interpreter.
-It can be used for executing Algol 68 programs or scripts when execution time is not of primary importance; Algol68G is pedantic rather than fast.
+Since Algol 68 Genie became available on the Internet, it has become clear that there still are many people who are interested in an Algol 68 implementation, the majority of them being mathematicians or computer scientists. The language is nowadays still referred to in teaching material, discussions and publications. Because of the exceptional rigour and precision of its definition, one could argue that a student reading computer science should, at an appropriate moment, study Algol 68, irrespective of whether the language did or did not spread widely at the time it was presented. 
 <p>
-Algol68G is free software under the GNU General Public License.
-The current version is
-<a href="algol68g-mk9.2/doc/introduction.html">Algol 68 Genie Mark 9.2</a>, released in July 2006.
+For programmers, the world has of course moved on, but the reactions on Algol 68 Genie suggest that many people who have seriously programmed in Algol 68 in the past, only moved to other programming languages because the Algol 68 implementations they were using were phased out. 
+
+<p>
+The observations mentioned here are believed to be sufficient ground to preserve Algol 68, both by making available its defining document as well as an implementation as to enable those interested in the language to both study it, and use it.
+
 </p>
+</td>
+<td width=10%>
+</td>
+<td valign=centre>
+<img src=pooh_a68g.gif width=400 align=right>
+</td>
+</tr>
+</table>
 
-<br>
-<h3><a name="obtaining"></a>Available Algol 68 Genie releases</h3>
+<hr color=#e0e0e8>
+
+<h3><a name="obtaining"></a>Obtaining Algol 68 Genie</h3>
 <p>
-<ul> 
-<li><a href="algol68g-mk9.2/doc/introduction.html">Algol 68 Genie Mark 9.2</a></li>
-<li><a href="algol68g-mk9.1/doc/introduction.html">Algol 68 Genie Mark 9.1</a></li>
-<li><a href="algol68g-mk9/doc/introduction.html">Algol 68 Genie Mark 9</a></li>
-</ul>
-</p>
-
-<br>
-<h3><a name="linkto"></a>What libraries can Algol 68 Genie link to?</h3>
+The current version of Algol 68 Genie is Mark 14.1, released in November 2008. You can download it from this page. Algol 68 Genie (Algol68G) is free software, distributed under GNU General Public License. Consult the <a href="http://www.gnu.org/licenses/">GNU General Public License</a> for details. The distribution of Algol 68 Genie Mark 14.1 contains revision 1.2 of the HTML translation of the Algol 68 Revised Report. The user manual contains a release history.
 <p>
-<ul>
-<li><a href="http://www.gnu.org/software/plotutils/">GNU plotutils</a> for drawing from Algol 68
-<li><a href="http://www.gnu.org/software/gsl/">GNU scientific library</a> to extend the mathematical capabilities of the standard environ
-<li><a href="http://www.postgresql.org/">PostgreSQL</a> for writing PostgreSQL database client applications
-</ul>
+<table border=1 cellspacing=6 cellpadding=6>
+<tr>
+<td width=15% valign=top>
+<center>
+<img valign=top src="tgz.png">
+</center>
+</td>
+<td>
+Download <a href="http://www.xs4all.nl/~jmvdveer/algol68g-mk14.1.tar.gz">Algol68G Mark 14.1</a>, a gzipped tar archive containing C source code and revision 1.2 of the HTML translation of the Algol 68 Revised Report.
+</td>
+</tr>
+<tr>
+<td width=15% valign=top>
+<center>
+<img valign=top src="doc.png">
+</center>
+</td>
+<td>
+Download the <a href="http://www.xs4all.nl/~jmvdveer/a68g-manual.pdf"><i>Algol 68 Genie User Manual</i></a>
+which is an informal introduction to Algol 68 and a manual for Algol68G Mark 14.1.
+</td>
+</tr>
+<tr>
+<td width=15% valign=top>
+<center>
+<img valign=top src="doc.png">
+</center>
+</td>
+<td>
+Read the on-line <a href="report_contents.html">Algol 68 Revised Report</a>.
+</td>
+</tr>
+<tr>
+<td width=15% valign=top>
+<center>
+<img valign=top src="tgz.png">
+</center>
+</td>
+<td>
+Download a WIN32 executable for <a href="http://www.xs4all.nl/~jmvdveer/algol68g-mk14.1.win32.tar.gz">Algol68G Mark 14.1</a>.
+</td>
+</tr>
+<tr>
+<td width=15% valign=top>
+<center>
+<img valign=top src="tgz.png">
+</center>
+</td>
+<td>
+Link to the Fedora RPM repository at the <a href="http://math.ifi.uzh.ch/fedora/">University of Zurich</a>
+that includes Algol 68 Genie.
+</td>
+</tr></table>
 
-<br>
-<h3><a name="texts"></a>On-line books on Algol 68</h3>
-<p>
-<ul>
-<li>
-<a href="http://members.dokom.net/w.kloke/RR/rr.pdf">
-Revised Report</a>. 
-The formal defining document, in pdf format. Made available by Wilhelm Kloke.<br>
-<li><a href="http://www.algol68.org/">
-Programming Algol 68 Made Easy</a>.
-An informal textbook by Sian Leitch; T<sub>E</sub>X source files are in the <code>a68toc</code> distribution.<br> 
-</ul>
-For more on-line information on Algol 68 refer to the "resources" page of the Algol 68 Genie manual that comes with the distribution.
-</p>
+<hr color=#e0e0e8>
 
-<br>
 <h3><a name="contact"></a>Author and contact information</h3>
 <p>
-Author of Algol68G is <a href="http://www.xs4all.nl/~jmvdveer">Marcel van der Veer</a>.
+Author of Algol68G is <a href="http://www.xs4all.nl/~jmvdveer/">Marcel van der Veer</a>.
 If you have a question or remark, or have found a bug, please send a note to 
 <a href="mailto:algol68g@xs4all.nl">algol68g@xs4all.nl</a>.
 </p>
 
-<br>
-<p>
-<table width="100%" border=0 cellspacing=0 cellpadding=0>
-<td width="50%" valign=top bgcolor="white">
-<font color="black">
-<small>Copyright &copy; 2001-2006 J. Marcel van der Veer.</small>
-</font>
-</td>
-<td width="50%" align=right valign=top bgcolor="white">
-<font color="black">
-<small>Algol 68 Genie Mark 9.2 (July 2006)</small>
-</font>
-</td>
-</table>
-</p>
+<hr color=#e0e0e8>
 
+<h3>
+Copyright notice
+</h3>
+
+<p style="font-size: 8pt; font-color: black;">
+The <i>Documentation for Algol 68 Genie Mark 14.1</i> is covered by the GNU Free Documentation License:
+<p style="font-size: 8pt; font-color: black;">
+<i>
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.2 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is included 
+in the section entitled <a href="license.html">GNU Free Documentation License</a>.
+</i>
+<p style="font-size: 8pt; font-color: black;">
+The copy of the <i>Revised Report on the Algorithmic Language Algol 68</i> that is in the distribution of Algol 68 Genie Mark 14.1 is <b>not</b> covered by the GNU Free Documentation License: <i>The Algol 68 Revised Report has been accepted by Working Group 2.1, reviewed by Technical Committee 2 on Programming and approved for publication by the General Assembly of The International Federation for Information Processing. Reproduction of the Report, for any purpose, but only of the whole text, is explicitly permitted without formality.</i>
+</i>
+
+<!-- Footer -->
+<p>
+<div style="border: 1px solid red">
+<table cellpadding=6>
+<tr>
+<td>
+<small>
+Copyright &copy; 2001-2008 J. Marcel van der Veer.<br>
+Algol 68 Genie Mark 14.1 (November 2008)
+</small>
+</td>
+</tr>
+</table>
+</div>
 </body>
 </html>
 

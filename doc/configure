@@ -1,0 +1,5 @@
+for f in `echo *.html`
+do
+	echo "$f"
+	sed "s/http:\/\/vestein.arb-phys.uni-dortmund.de\/%7Ewb\/RR\///" < $f > `echo "./RR/$f"`
+done

@@ -1,0 +1,18 @@
+PR heap=256M PR # ... to play BIG audio tracks #
+
+PROC play sound = (SOUND s) VOID:
+     IF PIPE p = execve child pipe ("/usr/bin/play", ("play", "-t", "wav", "-q", "-"), "");
+        pid OF p < 0
+     THEN put (stand error, ("pipe not valid: ", strerror (errno)));
+     ELSE put (write OF p, s);
+          close (read OF p);
+          close (write OF p)
+     FI;
+
+print ("File: ");
+STRING name = read string;
+SOUND s;
+open (standin, name + ".wav", standin channel);
+read (s);
+close (standin);
+play sound (s)

@@ -5,23 +5,22 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2006 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
+Foundation; either version 3 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef A68G_MP_H
+#if ! defined A68G_MP_H
 #define A68G_MP_H
 
 /* Definitions for the multi-precision library. */
@@ -33,7 +32,7 @@ typedef double MP_DIGIT_T;
 
 #define MP_RADIX      	DEFAULT_MP_RADIX
 #define LOG_MP_BASE    	7
-#define MP_BITS_RADIX	8388608
+#define MP_BITS_RADIX	8388608 /* Max power of two smaller than MP_RADIX */
 #define MP_BITS_BITS	23
 
 /* 28-35 decimal digits for LONG REAL. */
@@ -78,7 +77,7 @@ enum
 #define MP_EXPONENT(z) ((z)[1])
 #define MP_DIGIT(z, n) ((z)[(n) + 1])
 
-#define SIZE_MP(digits) ((2 + digits) * SIZE_OF (MP_DIGIT_T))
+#define SIZE_MP(digits) ((2 + digits) * ALIGNED_SIZE_OF (MP_DIGIT_T))
 
 #define IS_ZERO_MP(z) (MP_DIGIT (z, 1) == (MP_DIGIT_T) 0)
 
@@ -94,16 +93,16 @@ enum
 
 #define TEST_MP_INIT(p, z, m) {\
   if (! ((int) z[0] & INITIALISED_MASK)) {\
-    diagnostic_node (A_RUNTIME_ERROR, (p), ERROR_EMPTY_VALUE, (m));\
-    exit_genie ((p), 1);\
+    diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_EMPTY_VALUE, (m));\
+    exit_genie ((p), A68_RUNTIME_ERROR);\
   }}
 
 #define CHECK_MP_EXPONENT(p, z) {\
   MP_DIGIT_T expo = fabs (MP_EXPONENT (z));\
   if (expo > MAX_MP_EXPONENT || (expo == MAX_MP_EXPONENT && ABS (MP_DIGIT (z, 1)) > 1.0)) {\
       errno = ERANGE;\
-      diagnostic_node (A_RUNTIME_ERROR, p, ERROR_MP_OUT_OF_BOUNDS, NULL);\
-      exit_genie (p, 1);\
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MP_OUT_OF_BOUNDS, NULL);\
+      exit_genie (p, A68_RUNTIME_ERROR);\
   }}
 
 #define SET_MP_ZERO(z, digits) {\
@@ -117,8 +116,8 @@ enum
 #define STACK_MP(dest, p, digits) {\
   ADDR_T stack_mp_sp = stack_pointer;\
   if ((stack_pointer += SIZE_MP (digits)) > expr_stack_limit) {\
-    diagnostic_node (A_RUNTIME_ERROR, p, ERROR_STACK_OVERFLOW);\
-    exit_genie (p, A_RUNTIME_ERROR);\
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_STACK_OVERFLOW);\
+    exit_genie (p, A68_RUNTIME_ERROR);\
   }\
   dest = (MP_DIGIT_T *) STACK_ADDRESS (stack_mp_sp);\
 }
@@ -162,6 +161,7 @@ extern MP_DIGIT_T *ln_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *log_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *mod_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *mp_pi (NODE_T *, MP_DIGIT_T *, int, int);
+extern MP_DIGIT_T *mp_ten_up (NODE_T *, MP_DIGIT_T *, int, int);
 extern MP_DIGIT_T *mul_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *mul_mp_digit (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, MP_DIGIT_T, int);
 extern MP_DIGIT_T *over_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
@@ -176,7 +176,6 @@ extern MP_DIGIT_T *sinh_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *sqrt_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *string_to_mp (NODE_T *, MP_DIGIT_T *, char *, int);
 extern MP_DIGIT_T *sub_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
-extern MP_DIGIT_T *sub_pos_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *tan_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *tanh_mp (NODE_T *, MP_DIGIT_T *, MP_DIGIT_T *, int);
 extern MP_DIGIT_T *unsigned_to_mp (NODE_T *, MP_DIGIT_T *, unsigned, int);

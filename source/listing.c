@@ -5,72 +5,73 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2006 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
+Foundation; either version 3 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+You should have received a copy of the GNU General Public License along with 
+this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
 #include "algol68g.h"
 #include "genie.h"
 
-#define SHOW_EQ A_FALSE
+#define SHOW_EQ A68_TRUE
+
+char *bar[BUFFER_SIZE];
 
 /*!
 \brief brief_mode_string
-\param p
-\return
+\param p moid to print
+\return pointer to string
 **/
 
 static char *brief_mode_string (MOID_T * p)
 {
   static char q[BUFFER_SIZE];
-  snprintf (q, BUFFER_SIZE, "MODE#%X", p->number);
+  snprintf (q, BUFFER_SIZE, "mode (%d)", NUMBER (p));
   return (new_string (q));
 }
 
 /*!
 \brief brief_mode_flat
-\param f
-\param z
+\param f file number
+\param z moid to print
 **/
 
 static void brief_mode_flat (FILE_T f, MOID_T * z)
 {
   if (WHETHER (z, STANDARD) || WHETHER (z, INDICANT)) {
-    int i = z->dimensions;
+    int i = DIM (z);
     if (i > 0) {
       while (i--) {
-        io_write_string (f, "LONG ");
+        WRITE (f, "LONG ");
       }
     } else if (i < 0) {
       while (i++) {
-        io_write_string (f, "SHORT ");
+        WRITE (f, "SHORT ");
       }
     }
     snprintf (output_line, BUFFER_SIZE, "%s", SYMBOL (NODE (z)));
-    io_write_string (f, output_line);
+    WRITE (f, output_line);
   } else {
     snprintf (output_line, BUFFER_SIZE, "%s", brief_mode_string (z));
-    io_write_string (f, output_line);
+    WRITE (f, output_line);
   }
 }
 
 /*!
 \brief brief_fields_flat
-\param f
-\param pack
+\param f file number
+\param pack pack to print
 **/
 
 static void brief_fields_flat (FILE_T f, PACK_T * pack)
@@ -79,7 +80,7 @@ static void brief_fields_flat (FILE_T f, PACK_T * pack)
     brief_mode_flat (f, MOID (pack));
     if (NEXT (pack) != NULL) {
       snprintf (output_line, BUFFER_SIZE, ", ");
-      io_write_string (f, output_line);
+      WRITE (f, output_line);
       brief_fields_flat (f, NEXT (pack));
     }
   }
@@ -87,8 +88,8 @@ static void brief_fields_flat (FILE_T f, PACK_T * pack)
 
 /*!
 \brief brief_moid_flat
-\param f
-\param z
+\param f file number
+\param z moid to print
 **/
 
 static void brief_moid_flat (FILE_T f, MOID_T * z)
@@ -97,103 +98,107 @@ static void brief_moid_flat (FILE_T f, MOID_T * z)
     if (WHETHER (z, STANDARD) || WHETHER (z, INDICANT)) {
       brief_mode_flat (f, z);
     } else if (z == MODE (COLLITEM)) {
-      io_write_string (f, "\"COLLITEM\"");
+      WRITE (f, "\"COLLITEM\"");
     } else if (WHETHER (z, REF_SYMBOL)) {
-      io_write_string (f, "REF ");
+      WRITE (f, "REF ");
       brief_mode_flat (f, SUB (z));
     } else if (WHETHER (z, FLEX_SYMBOL)) {
-      io_write_string (f, "FLEX ");
+      WRITE (f, "FLEX ");
       brief_mode_flat (f, SUB (z));
     } else if (WHETHER (z, ROW_SYMBOL)) {
-      int i = z->dimensions;
-      io_write_string (f, "[");
+      int i = DIM (z);
+      WRITE (f, "[");
       while (--i) {
-        io_write_string (f, ", ");
+        WRITE (f, ", ");
       }
-      io_write_string (f, "] ");
+      WRITE (f, "] ");
       brief_mode_flat (f, SUB (z));
     } else if (WHETHER (z, STRUCT_SYMBOL)) {
-      io_write_string (f, "STRUCT (");
+      WRITE (f, "STRUCT (");
       brief_fields_flat (f, PACK (z));
-      io_write_string (f, ")");
+      WRITE (f, ")");
     } else if (WHETHER (z, UNION_SYMBOL)) {
-      io_write_string (f, "UNION (");
+      WRITE (f, "UNION (");
       brief_fields_flat (f, PACK (z));
-      io_write_string (f, ")");
+      WRITE (f, ")");
     } else if (WHETHER (z, PROC_SYMBOL)) {
-      io_write_string (f, "PROC ");
+      WRITE (f, "PROC ");
       if (PACK (z) != NULL) {
-        io_write_string (f, "(");
+        WRITE (f, "(");
         brief_fields_flat (f, PACK (z));
-        io_write_string (f, ") ");
+        WRITE (f, ") ");
       }
       brief_mode_flat (f, SUB (z));
     } else if (WHETHER (z, IN_TYPE_MODE)) {
-      io_write_string (f, "\"SIMPLIN\"");
+      WRITE (f, "\"SIMPLIN\"");
     } else if (WHETHER (z, OUT_TYPE_MODE)) {
-      io_write_string (f, "\"SIMPLOUT\"");
+      WRITE (f, "\"SIMPLOUT\"");
     } else if (WHETHER (z, ROWS_SYMBOL)) {
-      io_write_string (f, "\"ROWS\"");
+      WRITE (f, "\"ROWS\"");
     } else if (WHETHER (z, SERIES_MODE)) {
-      io_write_string (f, "\"SERIES\" (");
+      WRITE (f, "\"SERIES\" (");
       brief_fields_flat (f, PACK (z));
-      io_write_string (f, ")");
+      WRITE (f, ")");
     } else if (WHETHER (z, STOWED_MODE)) {
-      io_write_string (f, "\"STOWED\" (");
+      WRITE (f, "\"STOWED\" (");
       brief_fields_flat (f, PACK (z));
-      io_write_string (f, ")");
+      WRITE (f, ")");
     }
   }
 }
 
 /*!
 \brief print_mode_flat
-\param f
-\param m
+\param f file number
+\param m moid to print
 **/
 
 static void print_mode_flat (FILE_T f, MOID_T * m)
 {
   if (m != NULL) {
     brief_moid_flat (f, m);
-    snprintf (output_line, BUFFER_SIZE, " ");
-    io_write_string (f, output_line);
     if (m->equivalent_mode != NULL) {
-      snprintf (output_line, BUFFER_SIZE, " equi: %s", brief_mode_string (EQUIVALENT (m)));
-      io_write_string (f, output_line);
+      snprintf (output_line, BUFFER_SIZE, ", equi: %s", brief_mode_string (EQUIVALENT (m)));
+      WRITE (f, output_line);
     }
-    if (m->slice != NULL) {
-      snprintf (output_line, BUFFER_SIZE, " slice: %s", brief_mode_string (m->slice));
-      io_write_string (f, output_line);
+    if (SLICE (m) != NULL) {
+      snprintf (output_line, BUFFER_SIZE, ", slice: %s", brief_mode_string (SLICE (m)));
+      WRITE (f, output_line);
     }
-    if (m->deflexed_mode != NULL) {
-      snprintf (output_line, BUFFER_SIZE, " deflex: %s", brief_mode_string (m->deflexed_mode));
-      io_write_string (f, output_line);
+    if (ROWED (m) != NULL) {
+      snprintf (output_line, BUFFER_SIZE, ", rowed: %s", brief_mode_string (ROWED (m)));
+      WRITE (f, output_line);
     }
-    if (m->multiple_mode != NULL) {
-      snprintf (output_line, BUFFER_SIZE, " multiple: %s", brief_mode_string (m->multiple_mode));
-      io_write_string (f, output_line);
+    if (DEFLEXED (m) != NULL) {
+      snprintf (output_line, BUFFER_SIZE, ", deflex: %s", brief_mode_string (DEFLEXED (m)));
+      WRITE (f, output_line);
     }
-    if (m->name != NULL) {
-      snprintf (output_line, BUFFER_SIZE, " name: %s", brief_mode_string (m->name));
-      io_write_string (f, output_line);
+    if (MULTIPLE (m) != NULL) {
+      snprintf (output_line, BUFFER_SIZE, ", multiple: %s", brief_mode_string (MULTIPLE (m)));
+      WRITE (f, output_line);
     }
-    if (m->trim != NULL) {
-      snprintf (output_line, BUFFER_SIZE, " trim: %s", brief_mode_string (m->trim));
-      io_write_string (f, output_line);
+    if (NAME (m) != NULL) {
+      snprintf (output_line, BUFFER_SIZE, ", name: %s", brief_mode_string (NAME (m)));
+      WRITE (f, output_line);
     }
-    if (m->use == A_FALSE) {
-      snprintf (output_line, BUFFER_SIZE, " unused");
-      io_write_string (f, output_line);
+    if (TRIM (m) != NULL) {
+      snprintf (output_line, BUFFER_SIZE, ", trim: %s", brief_mode_string (TRIM (m)));
+      WRITE (f, output_line);
     }
+    if (m->use == A68_FALSE) {
+      snprintf (output_line, BUFFER_SIZE, ", unused");
+      WRITE (f, output_line);
+    }
+    snprintf (output_line, BUFFER_SIZE, ", size: %d", MOID_SIZE (m));
+    WRITE (f, output_line);
   }
 }
 
 /*!
 \brief xref_tags
-\param f
-\param s
-\param a
+\param f file number
+\param s tag to print
+\param a attribute
 **/
 
 static void xref_tags (FILE_T f, TAG_T * s, int a)
@@ -201,39 +206,39 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
   for (; s != NULL; FORWARD (s)) {
     NODE_T *where = NODE (s);
     if (where != NULL && ((MASK (where) & CROSS_REFERENCE_MASK))) {
-      io_write_string (f, "\n     ");
+      WRITE (f, "\n     ");
       switch (a) {
       case IDENTIFIER:
         {
           snprintf (output_line, BUFFER_SIZE, "Identifier %s ", SYMBOL (NODE (s)));
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       case INDICANT:
         {
           snprintf (output_line, BUFFER_SIZE, "Indicant %s ", SYMBOL (NODE (s)));
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       case PRIO_SYMBOL:
         {
           snprintf (output_line, BUFFER_SIZE, "Priority %s %d", SYMBOL (NODE (s)), PRIO (s));
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           break;
         }
       case OP_SYMBOL:
         {
           snprintf (output_line, BUFFER_SIZE, "Operator %s ", SYMBOL (NODE (s)));
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       case LABEL:
         {
           snprintf (output_line, BUFFER_SIZE, "Label %s", SYMBOL (NODE (s)));
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           break;
         }
       case ANONYMOUS:
@@ -266,25 +271,31 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
             }
           case PROTECT_FROM_SWEEP:
             {
-              snprintf (output_line, BUFFER_SIZE, "Sweep protect %p ", NODE (s));
+              snprintf (output_line, BUFFER_SIZE, "Sweep protect ");
               break;
             }
           }
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       default:
         {
           snprintf (output_line, BUFFER_SIZE, "Internal %d ", a);
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       }
+      if (NODE (s) != NULL) {
+        snprintf (output_line, BUFFER_SIZE, " N%d", NUMBER (NODE (s)));
+        WRITE (f, output_line);
+      }
+      snprintf (output_line, BUFFER_SIZE, " #%04x", NUMBER (s));
+      WRITE (f, output_line);
       if (where != NULL && where->info != NULL && where->info->line != NULL) {
-        snprintf (output_line, BUFFER_SIZE, " line %d", where->info->line->number);
-        io_write_string (f, output_line);
+        snprintf (output_line, BUFFER_SIZE, " line %d", LINE_NUMBER (where));
+        WRITE (f, output_line);
       }
     }
   }
@@ -292,51 +303,54 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
 
 /*!
 \brief xref_decs
-\param f
-\param next
+\param f file number
+\param t symbol table
 **/
 
-static void xref_decs (FILE_T f, SYMBOL_TABLE_T * next)
+static void xref_decs (FILE_T f, SYMBOL_TABLE_T * t)
 {
-  if (next->indicants != NULL) {
-    xref_tags (f, next->indicants, INDICANT);
+  if (t->indicants != NULL) {
+    xref_tags (f, t->indicants, INDICANT);
   }
-  if (next->operators != NULL) {
-    xref_tags (f, next->operators, OP_SYMBOL);
+  if (t->operators != NULL) {
+    xref_tags (f, t->operators, OP_SYMBOL);
   }
-  if (PRIO (next) != NULL) {
-    xref_tags (f, PRIO (next), PRIO_SYMBOL);
+  if (PRIO (t) != NULL) {
+    xref_tags (f, PRIO (t), PRIO_SYMBOL);
   }
-  if (next->identifiers != NULL) {
-    xref_tags (f, next->identifiers, IDENTIFIER);
+  if (t->identifiers != NULL) {
+    xref_tags (f, t->identifiers, IDENTIFIER);
   }
-  if (next->labels != NULL) {
-    xref_tags (f, next->labels, LABEL);
+  if (t->labels != NULL) {
+    xref_tags (f, t->labels, LABEL);
   }
-  if (next->anonymous != NULL) {
-    xref_tags (f, next->anonymous, ANONYMOUS);
+  if (t->anonymous != NULL) {
+    xref_tags (f, t->anonymous, ANONYMOUS);
   }
 }
 
 /*!
 \brief xref1_moid
-\param f
-\param p
+\param f file number
+\param p moid to xref
 **/
 
 static void xref1_moid (FILE_T f, MOID_T * p)
 {
   if (EQUIVALENT (p) == NULL || SHOW_EQ) {
+    snprintf (output_line, BUFFER_SIZE, "\n     %s %s ", brief_mode_string (p), moid_to_string (p, 132));
+    WRITE (f, output_line);
     snprintf (output_line, BUFFER_SIZE, "\n     %s ", brief_mode_string (p));
-    io_write_string (f, output_line);
+    WRITE (f, output_line);
     print_mode_flat (f, p);
+    WRITE (f, NEWLINE_STRING);
   }
 }
 
 /*!
 \brief xref_moids
-\param f
-\param p
+\param f file number
+\param p moid chain to xref
 **/
 
 static void xref_moids (FILE_T f, MOID_T * p)
@@ -348,8 +362,8 @@ static void xref_moids (FILE_T f, MOID_T * p)
 
 /*!
 \brief moid_listing
-\param f
-\param m
+\param f file number
+\param m moid list to xref
 **/
 
 static void moid_listing (FILE_T f, MOID_LIST_T * m)
@@ -361,25 +375,25 @@ static void moid_listing (FILE_T f, MOID_LIST_T * m)
 
 /*!
 \brief cross_reference
-\param f
-\param p
-\param l
+\param file number
+\param p top node
+\param l source line
 **/
 
 static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
 {
-  if (cross_reference_safe) {
+  if (MODULE (INFO (p))->cross_reference_safe) {
     for (; p != NULL; FORWARD (p)) {
       if (whether_new_lexical_level (p) && l == LINE (p)) {
         SYMBOL_TABLE_T *c = SYMBOL_TABLE (SUB (p));
-        snprintf (output_line, BUFFER_SIZE, "\n++++ [level %d", c->level);
-        io_write_string (f, output_line);
+        snprintf (output_line, BUFFER_SIZE, "\n[level %d", c->level);
+        WRITE (f, output_line);
         if (PREVIOUS (c) == stand_env) {
           snprintf (output_line, BUFFER_SIZE, ", in standard environ]");
         } else {
           snprintf (output_line, BUFFER_SIZE, ", in level %d]", PREVIOUS (c)->level);
         }
-        io_write_string (f, output_line);
+        WRITE (f, output_line);
         if (c->moids != NULL) {
           xref_moids (f, c->moids);
         }
@@ -393,99 +407,171 @@ static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
 }
 
 /*!
-\brief low_level
-\param p
-\param x
-\param y
-\param l
+\brief write_symbols
+\param file number
+\param p top node
+\param count symbols written
 **/
 
-static void low_level (NODE_T * p, int x, int *y, SOURCE_LINE_T * l)
+static void write_symbols (FILE_T f, NODE_T * p, int *count)
 {
-  for (; p != NULL; FORWARD (p)) {
-    if ((MASK (p) & TREE_MASK) && l == LINE (p)) {
-      if (x < *y) {
-        *y = x;
+  for (; p != NULL && (*count) < 5; FORWARD (p)) {
+    if (SUB (p) != NULL) {
+      write_symbols (f, SUB (p), count);
+    } else {
+      if (*count > 0) {
+        WRITE (f, " ");
+      }
+      (*count)++;
+      if (*count == 5) {
+        WRITE (f, "...");
+      } else {
+        snprintf (output_line, BUFFER_SIZE, "%s", SYMBOL (p));
+        WRITE (f, output_line);
       }
     }
-    low_level (SUB (p), x + 1, y, l);
   }
 }
 
 /*!
 \brief tree_listing
-\param f
-\param p
-\param x
-\param y
-\param l
+\param f file number
+\param q top node
+\param x current level
+\param l source line
+\param quick_form quick form of listing
+\param ld index for indenting and drawing bars connecting nodes
 **/
 
-static void tree_listing (FILE_T f, NODE_T * p, int x, int *y, SOURCE_LINE_T * l)
+static void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, BOOL_T quick_form, int *ld)
 {
-  if (tree_listing_safe) {
-    for (; p != NULL; FORWARD (p)) {
-      if ((MASK (p) & TREE_MASK) && l == LINE (p)) {
-        if (MASK (p) & TREE_MASK) {
-          snprintf (output_line, BUFFER_SIZE, "\n     %p %-3x ", p, x);
-          io_write_string (f, output_line);
-          if (p->protect_sweep == NULL) {
-            snprintf (output_line, BUFFER_SIZE, " ");
-          } else {
-            snprintf (output_line, BUFFER_SIZE, "*");
-          }
-          io_write_string (f, output_line);
-          if (SYMBOL_TABLE (p) != NULL) {
-            snprintf (output_line, BUFFER_SIZE, "%c ", digit_to_char (LEX_LEVEL (p)));
-          } else {
-            snprintf (output_line, BUFFER_SIZE, "  ");
-          }
-          io_write_string (f, output_line);
-          snprintf (output_line, BUFFER_SIZE, "%c %c %c ", digit_to_char (p->info->PROCEDURE_NUMBER), digit_to_char (p->info->PROCEDURE_LEVEL), digit_to_char (PAR_LEVEL (p)));
-          io_write_string (f, output_line);
-/* Print grammatical stuff. */
-          snprintf (output_line, BUFFER_SIZE, "%-24s ", non_terminal_string (edit_line, ATTRIBUTE (p)));
-          io_write_string (f, output_line);
-          if (SUB (p) == NULL) {
-            snprintf (output_line, BUFFER_SIZE, "%-24s ", SYMBOL (p));
-          } else {
-            snprintf (output_line, BUFFER_SIZE, "%-24s ", " ");
-          }
-          io_write_string (f, output_line);
-          if (MOID (p) != NULL) {
-            snprintf (output_line, BUFFER_SIZE, "#%03X %s ", MOID (p)->number, moid_to_string (MOID (p), MOID_WIDTH));
-            io_write_string (f, output_line);
+  for (; q != NULL; FORWARD (q)) {
+    NODE_T *p = q;
+    int k, dist;
+    if (((MASK (p) & TREE_MASK) || quick_form) && l == LINE (p)) {
+      if (*ld < 0) {
+        *ld = x;
+      }
+/* Indent. */
+      WRITE (f, "\n     ");
+      snprintf (output_line, BUFFER_SIZE, "%08x %02x %02x %02x", NUMBER (p), x, (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1), INFO (p)->PROCEDURE_LEVEL);
+      WRITE (f, output_line);
+      for (k = 0; k < (x - *ld); k++) {
+        WRITE (f, bar[k]);
+      }
+      if (MOID (p) == NULL) {
+        snprintf (output_line, BUFFER_SIZE, "(%d)", NUMBER (p));
+      } else {
+        snprintf (output_line, BUFFER_SIZE, "(%d, %d)", NUMBER (p), NUMBER (MOID (p)));
+      }
+      WRITE (f, output_line);
+      if (MOID (p) != NULL) {
+        snprintf (output_line, BUFFER_SIZE, " %s", moid_to_string (MOID (p), MOID_WIDTH));
+        WRITE (f, output_line);
+      }
+      snprintf (output_line, BUFFER_SIZE, " %s", non_terminal_string (edit_line, ATTRIBUTE (p)));
+      WRITE (f, output_line);
+      WRITE (f, ", \"");
+      if (SUB (p) != NULL) {
+        int count = 0;
+        write_symbols (f, SUB (p), &count);
+      } else {
+        snprintf (output_line, BUFFER_SIZE, "%s", SYMBOL (p));
+        WRITE (f, output_line);
+      }
+      WRITE (f, "\"");
+      if (TAX (p) != NULL) {
+        snprintf (output_line, BUFFER_SIZE, " #%04x", NUMBER (TAX (p)));
+        WRITE (f, output_line);
+      }
+      if (quick_form == A68_FALSE && propagator_name (PROPAGATOR (p).unit) != NULL) {
+        snprintf (output_line, BUFFER_SIZE, ", %s", propagator_name (PROPAGATOR (p).unit));
+        WRITE (f, output_line);
+      }
+      if (SEQUENCE (q) != NULL) {
+        NODE_T *s = SEQUENCE (q);
+        WRITE (f, ", seq=");
+        for (; s != NULL; s = SEQUENCE (s)) {
+          snprintf (output_line, BUFFER_SIZE, "%d", NUMBER (s));
+          WRITE (f, output_line);
+          if (SEQUENCE (s) != NULL) {
+            WRITE (f, "+");
           }
         }
       }
-      tree_listing (f, SUB (p), x + 1, y, l);
+    }
+    dist = x - (*ld);
+    if (dist >= 0 && dist < BUFFER_SIZE) {
+      bar[x - *ld] = (NEXT (p) != NULL && l == LINE (NEXT (p)) ? "|" : " ");
+    }
+    tree_listing (f, SUB (p), x + 1, l, quick_form, ld);
+    dist = x - (*ld);
+    if (dist >= 0 && dist < BUFFER_SIZE) {
+      bar[x - *ld] = " ";
     }
   }
 }
 
 /*!
 \brief leaves_to_print
-\param p
-\param l
-\return
+\param p top node
+\param l source line
+\return number of nodes to be printed in tree listing
 **/
 
-static int leaves_to_print (NODE_T * p, SOURCE_LINE_T * l)
+static int leaves_to_print (NODE_T * p, SOURCE_LINE_T * l, BOOL_T quick_form)
 {
   int z = 0;
   for (; p != NULL && z == 0; FORWARD (p)) {
-    if (l == LINE (p) && (MASK (p) & TREE_MASK)) {
+    if (l == LINE (p) && ((MASK (p) & TREE_MASK) || quick_form)) {
       z++;
     } else {
-      z += leaves_to_print (SUB (p), l);
+      z += leaves_to_print (SUB (p), l, quick_form);
     }
   }
   return (z);
 }
 
 /*!
+\brief list_source_line
+\param f file number
+\param module current module
+\param line source line
+\param quick_form quick form of listing
+**/
+
+void list_source_line (FILE_T f, MODULE_T * module, SOURCE_LINE_T * line, BOOL_T quick_form)
+{
+  int k = strlen (line->string) - 1;
+  if (NUMBER (line) <= 0) {
+/* Mask the prelude and postlude. */
+    return;
+  }
+  if ((line->string)[k] == NEWLINE_CHAR) {
+    (line->string)[k] = NULL_CHAR;
+  }
+/* Print source line. */
+  write_source_line (f, line, NULL, A68_ALL_DIAGNOSTICS);
+/* Cross reference for lexical levels starting at this line. */
+  if (module->options.cross_reference) {
+    cross_reference (f, MODULE (line)->top_node, line);
+  }
+/* Syntax tree listing connected with this line. */
+  if (module->options.tree_listing || quick_form) {
+    if (module->tree_listing_safe && leaves_to_print (module->top_node, line, quick_form)) {
+      int ld = -1, k;
+      WRITE (f, "\nSyntax tree");
+      for (k = 0; k < BUFFER_SIZE; k++) {
+        bar[k] = " ";
+      }
+      tree_listing (f, module->top_node, 1, line, quick_form, &ld);
+    }
+  }
+}
+
+/*!
 \brief source_listing
-\param module
+\param module current module
 **/
 
 void source_listing (MODULE_T * module)
@@ -494,49 +580,25 @@ void source_listing (MODULE_T * module)
   FILE_T f = module->files.listing.fd;
   int listed = 0;
   if (module->files.listing.opened == 0) {
-    diagnostic_node (A_ERROR, NULL, ERROR_CANNOT_WRITE_LISTING, NULL);
+    diagnostic_node (A68_ERROR, NULL, ERROR_CANNOT_WRITE_LISTING, NULL);
     return;
   }
-  for (; line != NULL; line = NEXT (line)) {
-    int k = strlen (line->string) - 1;
-    if (line->number <= 0) {
-/* Mask the prelude and postlude. */
-      continue;
-    }
-    if ((line->string)[k] == NEWLINE_CHAR) {
-      (line->string)[k] = NULL_CHAR;
-    }
-/*
-X "ABCD.A68" 0001 01 01 # Source line #
-*/
-    if (line->list) {
+  for (; line != NULL; FORWARD (line)) {
+    if (NUMBER (line) > 0 && line->list) {
       listed++;
-/* Print source line. */
-      write_source_line (f, line, NULL, A_TRUE);
-/* Cross reference for lexical levels starting at this line. */
-      if (module->options.cross_reference) {
-        cross_reference (f, line->top_node, line);
-      }
-/* Syntax tree listing connected with this line. */
-      if (module->options.tree_listing && leaves_to_print (module->top_node, line)) {
-        int y = INT_MAX;
-        snprintf (output_line, BUFFER_SIZE, "\n++++ Syntax tree for line %d", line->number);
-        io_write_string (f, output_line);
-        low_level (module->top_node, 1, &y, line);
-        tree_listing (f, module->top_node, 1, &y, line);
-      }
     }
+    list_source_line (f, module, line, A68_FALSE);
   }
 /* Warn if there was no source at all. */
   if (listed == 0) {
     snprintf (output_line, BUFFER_SIZE, "\n     No lines to list");
-    io_write_string (f, output_line);
+    WRITE (f, output_line);
   }
 }
 
 /*!
 \brief write_listing
-\param module
+\param module current module
 **/
 
 void write_listing (MODULE_T * module)
@@ -544,70 +606,87 @@ void write_listing (MODULE_T * module)
   SOURCE_LINE_T *z;
   FILE_T f = module->files.listing.fd;
   if (module->options.moid_listing && top_moid_list != NULL) {
-    snprintf (output_line, BUFFER_SIZE, "\n++++ Moid listing");
-    io_write_string (f, output_line);
+    snprintf (output_line, BUFFER_SIZE, "\nMoid listing");
+    WRITE (f, output_line);
     moid_listing (f, top_moid_list);
   }
   if (module->options.standard_prelude_listing && stand_env != NULL) {
-    snprintf (output_line, BUFFER_SIZE, "\n++++ Standard prelude listing");
-    io_write_string (f, output_line);
+    snprintf (output_line, BUFFER_SIZE, "\nStandard prelude listing");
+    WRITE (f, output_line);
     xref_decs (f, stand_env);
   }
   if (module->top_refinement != NULL) {
     REFINEMENT_T *x = module->top_refinement;
-    snprintf (output_line, BUFFER_SIZE, "\n++++ Refinements");
-    io_write_string (f, output_line);
+    snprintf (output_line, BUFFER_SIZE, "\nRefinements");
+    WRITE (f, output_line);
     while (x != NULL) {
       snprintf (output_line, BUFFER_SIZE, "\n  \"%s\"", x->name);
-      io_write_string (f, output_line);
+      WRITE (f, output_line);
       if (x->line_defined != NULL) {
-        snprintf (output_line, BUFFER_SIZE, ", defined in line %d", x->line_defined->number);
-        io_write_string (f, output_line);
+        snprintf (output_line, BUFFER_SIZE, ", defined in line %d", NUMBER (x->line_defined));
+        WRITE (f, output_line);
       }
       if (x->line_applied != NULL) {
-        snprintf (output_line, BUFFER_SIZE, ", applied in line %d", x->line_applied->number);
-        io_write_string (f, output_line);
+        snprintf (output_line, BUFFER_SIZE, ", applied in line %d", NUMBER (x->line_applied));
+        WRITE (f, output_line);
       }
       switch (x->applications) {
-      case 0:{
+      case 0:
+        {
           snprintf (output_line, BUFFER_SIZE, ", not applied");
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           break;
         }
-      case 1:{
+      case 1:
+        {
           break;
         }
-      default:{
+      default:
+        {
           snprintf (output_line, BUFFER_SIZE, ", applied more than once");
-          io_write_string (f, output_line);
+          WRITE (f, output_line);
           break;
         }
       }
-      x = NEXT (x);
+      FORWARD (x);
     }
   }
   if (module->options.list != NULL) {
     OPTION_LIST_T *i;
     int k = 1;
-    snprintf (output_line, BUFFER_SIZE, "\n++++ Options and pragmat items");
-    io_write_string (f, output_line);
-    for (i = module->options.list; i != NULL; i = NEXT (i)) {
+    snprintf (output_line, BUFFER_SIZE, "\nOptions and pragmat items");
+    WRITE (f, output_line);
+    for (i = module->options.list; i != NULL; FORWARD (i)) {
       snprintf (output_line, BUFFER_SIZE, "\n     %-4d %s", k++, i->str);
-      io_write_string (f, output_line);
+      WRITE (f, output_line);
     }
   }
   if (module->options.statistics_listing) {
-    if (error_count + warning_count > 0) {
-      snprintf (output_line, BUFFER_SIZE, "\n++++ Diagnostics: %d error(s), %d warning(s)", error_count, warning_count);
-      io_write_string (f, output_line);
-      for (z = module->top_line; z != NULL; z = NEXT (z)) {
+    if (a68_prog.error_count + a68_prog.warning_count > 0) {
+      snprintf (output_line, BUFFER_SIZE, "\nDiagnostics: %d error(s), %d warning(s)", a68_prog.error_count, a68_prog.warning_count);
+      WRITE (f, output_line);
+      for (z = module->top_line; z != NULL; FORWARD (z)) {
         if (z->diagnostics != NULL) {
-          write_source_line (f, z, NULL, A_TRUE);
+          write_source_line (f, z, NULL, A68_TRUE);
         }
       }
     }
-    snprintf (output_line, BUFFER_SIZE, "\n++++ Garbage collections: %d", garbage_collects);
-    io_write_string (f, output_line);
+    snprintf (output_line, BUFFER_SIZE, "\nGarbage collections: %d", garbage_collects);
+    WRITE (f, output_line);
   }
-  io_write_string (f, NEWLINE_STRING);
+  WRITE (f, NEWLINE_STRING);
+}
+
+/*!
+\brief write_listing_header
+\param module current module
+**/
+
+void write_listing_header (MODULE_T * module)
+{
+  state_version (module->files.listing.fd);
+  WRITE (module->files.listing.fd, "\nFile \"");
+  WRITE (module->files.listing.fd, a68_prog.files.source.name);
+  WRITE (module->files.listing.fd, "\"");
+  WRITE (module->files.listing.fd, "\nSource listing");
 }
