@@ -24,7 +24,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include "algol68g.h"
 #include "genie.h"
 
-#define SHOW_EQ A68_TRUE
+#define SHOW_EQ A68_FALSE
 
 char *bar[BUFFER_SIZE];
 
@@ -60,7 +60,7 @@ static void brief_mode_flat (FILE_T f, MOID_T * z)
         WRITE (f, "SHORT ");
       }
     }
-    snprintf (output_line, BUFFER_SIZE, "%s", SYMBOL (NODE (z)));
+    snprintf (output_line, BUFFER_SIZE, "%s (%d)", SYMBOL (NODE (z)), NUMBER (z));
     WRITE (f, output_line);
   } else {
     snprintf (output_line, BUFFER_SIZE, "%s", brief_mode_string (z));
@@ -92,7 +92,7 @@ static void brief_fields_flat (FILE_T f, PACK_T * pack)
 \param z moid to print
 **/
 
-static void brief_moid_flat (FILE_T f, MOID_T * z)
+void brief_moid_flat (FILE_T f, MOID_T * z)
 {
   if (z != NULL) {
     if (WHETHER (z, STANDARD) || WHETHER (z, INDICANT)) {
@@ -153,7 +153,7 @@ static void brief_moid_flat (FILE_T f, MOID_T * z)
 \param m moid to print
 **/
 
-static void print_mode_flat (FILE_T f, MOID_T * m)
+void print_mode_flat (FILE_T f, MOID_T * m)
 {
   if (m != NULL) {
     brief_moid_flat (f, m);
@@ -338,7 +338,7 @@ static void xref_decs (FILE_T f, SYMBOL_TABLE_T * t)
 static void xref1_moid (FILE_T f, MOID_T * p)
 {
   if (EQUIVALENT (p) == NULL || SHOW_EQ) {
-    snprintf (output_line, BUFFER_SIZE, "\n     %s %s ", brief_mode_string (p), moid_to_string (p, 132));
+    snprintf (output_line, BUFFER_SIZE, "\n     %s %s ", brief_mode_string (p), moid_to_string (p, 132, NULL));
     WRITE (f, output_line);
     snprintf (output_line, BUFFER_SIZE, "\n     %s ", brief_mode_string (p));
     WRITE (f, output_line);
@@ -466,7 +466,7 @@ static void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, BOOL_T
       }
       WRITE (f, output_line);
       if (MOID (p) != NULL) {
-        snprintf (output_line, BUFFER_SIZE, " %s", moid_to_string (MOID (p), MOID_WIDTH));
+        snprintf (output_line, BUFFER_SIZE, " %s", moid_to_string (MOID (p), MOID_WIDTH, NULL));
         WRITE (f, output_line);
       }
       snprintf (output_line, BUFFER_SIZE, " %s", non_terminal_string (edit_line, ATTRIBUTE (p)));

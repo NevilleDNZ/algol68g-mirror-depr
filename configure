@@ -21,10 +21,10 @@
 
 A68G_NAME="a68g"
 MAKEFILE=makefile
-VERSION_NUMBER="14.1"
+VERSION_NUMBER="15"
 REVISION="Mark $VERSION_NUMBER"
 RR_NUMBER="1.2"
-MONTH="November"
+MONTH="December"
 YEAR="2008"
 DATE=`date +"%e %B %Y %H:%M"`
 TIME_STAMP="$MONTH $YEAR"
@@ -82,6 +82,10 @@ CONFIGURE_OPTIONS=
 #
 #
 #
+SKIP(){
+  echo "Note: Ignoring option $arg" 1>&2
+}
+
 for arg in "$@"
 do
 	CONFIGURE_OPTIONS=`echo $CONFIGURE_OPTIONS $arg`
@@ -103,6 +107,20 @@ do
 # Process current option
 	case "$arg"
 	in
+ # Note: ignore these for the moment....
+        (--build=*)SKIP;;          # --build=i686-pc-linux-gnu
+        (--host=*)SKIP;;           # --host=i686-pc-linux-gnu
+        (--target=*)SKIP;;         # --target=i386-redhat-linux-gnu
+        (--program-prefix=*)SKIP;; # --program-prefix=
+        (--prefix=*)SKIP;;         # --prefix=/usr
+        (--exec-prefix=*)SKIP;;    # --exec-prefix=/usr
+        (--sbindir=*)SKIP;;        # --sbindir=/usr/sbin
+        (--sysconfdir=*)SKIP;;     # --sysconfdir=/etc
+        (--datadir=*)SKIP;;        # --datadir=/usr/share
+        (--libexecdir=*)SKIP;;     # --libexecdir=/usr/libexec
+        (--localstatedir=*)SKIP;;  # --localstatedir=/var
+        (--sharedstatedir=*)SKIP;; # --sharedstatedir=/usr/com
+        (--infodir=*)SKIP;;        # --infodir=/usr/share/info
 	-anonymous | --anonymous)
 		anonymous=;;
 	-b | --build)
@@ -130,7 +148,7 @@ do
 		ld_opt=`echo $ld_opt "-pg"` ;;
 	-incdir | --incdir)
 		prev_arg=USR_INC ;;
-	-incdir=* | --incdir=*)
+	-incdir=* | --incdir=*|--includedir=*)
 		USR_INC=$val_arg ;;
 	-libdir | --libdir)
 		prev_arg=USR_LIB ;;
@@ -227,6 +245,7 @@ then
 	popd
 	man a68g -M doc/ -t > a68g.ps
 	ps2pdf a68g.ps a68g.pdf
+	rm a68g.ps
 	echo "generated documentation"
 	echo "$0 done"
 	exit

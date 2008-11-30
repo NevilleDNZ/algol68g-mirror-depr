@@ -520,9 +520,9 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
         } else {
           if (MOID (n) != NULL) {
             if (NUMBER (LINE (n)) == NUMBER (line)) {
-              snprintf (nst, BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in this line", moid_to_string (MOID (n), MOID_ERROR_WIDTH), nt, SYMBOL (n));
+              snprintf (nst, BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in this line", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n));
             } else {
-              snprintf (nst, BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in line %d", moid_to_string (MOID (n), MOID_ERROR_WIDTH), nt, SYMBOL (n), NUMBER (LINE (n)));
+              snprintf (nst, BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in line %d", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n), NUMBER (LINE (n)));
             }
           } else {
             if (NUMBER (LINE (n)) == NUMBER (line)) {
@@ -667,18 +667,18 @@ Z quoted string literal.
       }\
       if (WHETHER (moid, SERIES_MODE)) {\
 	if (PACK (moid) != NULL && NEXT (PACK (moid)) == NULL) {\
-	  bufcat (b, moid_to_string (MOID (PACK (moid)), MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	  bufcat (b, moid_to_string (MOID (PACK (moid)), MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
 	} else {\
-	  bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	  bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
 	}\
       } else {\
-	bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
       }\
     } else if (t[0] == 'N') {\
       bufcat (b, "NIL name of mode ", BUFFER_SIZE);\
       moid = va_arg (args, MOID_T *);\
       if (moid != NULL) {\
-	bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
       }\
     } else if (t[0] == 'O') {\
       moid = va_arg (args, MOID_T *);\
@@ -689,12 +689,12 @@ Z quoted string literal.
 	bufcat (b, "UNION (VOID, ..)", BUFFER_SIZE);\
       } else if (WHETHER (moid, SERIES_MODE)) {\
 	if (PACK (moid) != NULL && NEXT (PACK (moid)) == NULL) {\
-	  bufcat (b, moid_to_string (MOID (PACK (moid)), MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	  bufcat (b, moid_to_string (MOID (PACK (moid)), MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
 	} else {\
-	  bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	  bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
 	}\
       } else {\
-	bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH), BUFFER_SIZE);\
+	bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
       }\
     } else if (t[0] == 'S') {\
       if (p != NULL && SYMBOL (p) != NULL) {\

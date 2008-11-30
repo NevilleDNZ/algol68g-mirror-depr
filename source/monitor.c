@@ -84,11 +84,11 @@ static void parse (FILE_T, NODE_T *, int);
 
 #define CHECK_MON_REF(p, z, m)\
   if (! INITIALISED (&z)) {\
-    snprintf (edit_line, BUFFER_SIZE, "%s", moid_to_string ((m), MOID_WIDTH));\
+    snprintf (edit_line, BUFFER_SIZE, "%s", moid_to_string ((m), MOID_WIDTH, NULL));\
     monitor_error (NO_VALUE, edit_line);\
     QUIT_ON_ERROR;\
   } else if (IS_NIL (z)) {\
-    snprintf (edit_line, BUFFER_SIZE, "%s", moid_to_string ((m), MOID_WIDTH));\
+    snprintf (edit_line, BUFFER_SIZE, "%s", moid_to_string ((m), MOID_WIDTH, NULL));\
     monitor_error ("accessing NIL name", edit_line);\
     QUIT_ON_ERROR;\
   }
@@ -520,9 +520,9 @@ static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
   }
 /* Not found. Grrrr. Give a message. */
   if (y == NULL) {
-    snprintf (edit_line, BUFFER_SIZE, "%s %s", sym, moid_to_string (x, MOID_WIDTH));
+    snprintf (edit_line, BUFFER_SIZE, "%s %s", sym, moid_to_string (x, MOID_WIDTH, NULL));
   } else {
-    snprintf (edit_line, BUFFER_SIZE, "%s %s %s", moid_to_string (x, MOID_WIDTH), sym, moid_to_string (y, MOID_WIDTH));
+    snprintf (edit_line, BUFFER_SIZE, "%s %s %s", moid_to_string (x, MOID_WIDTH, NULL), sym, moid_to_string (y, MOID_WIDTH, NULL));
   }
   monitor_error ("cannot find operator in standard environ", edit_line);
   return (NULL);
@@ -607,11 +607,11 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
       sp_2 += ALIGNED_SIZE_OF (A68_REF);
       deref (p, k, STRONG);
       if (m_stack[k] != MOID (u)) {
-        snprintf (edit_line, BUFFER_SIZE, "%s to %s", moid_to_string (m_stack[k], MOID_WIDTH), moid_to_string (MOID (u), MOID_WIDTH));
+        snprintf (edit_line, BUFFER_SIZE, "%s to %s", moid_to_string (m_stack[k], MOID_WIDTH, NULL), moid_to_string (MOID (u), MOID_WIDTH, NULL));
         monitor_error ("invalid argument mode", edit_line);
       }
     } else {
-      snprintf (edit_line, BUFFER_SIZE, "%s to %s", moid_to_string (m_stack[k], MOID_WIDTH), moid_to_string (MOID (u), MOID_WIDTH));
+      snprintf (edit_line, BUFFER_SIZE, "%s to %s", moid_to_string (m_stack[k], MOID_WIDTH, NULL), moid_to_string (MOID (u), MOID_WIDTH, NULL));
       monitor_error ("cannot coerce argument", edit_line);
     }
     QUIT_ON_ERROR;
@@ -651,7 +651,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
     v = PACK (moid);
   }
   if (WHETHER_NOT (moid, STRUCT_SYMBOL)) {
-    monitor_error ("invalid selection mode", moid_to_string (moid, MOID_WIDTH));
+    monitor_error ("invalid selection mode", moid_to_string (moid, MOID_WIDTH, NULL));
   }
   QUIT_ON_ERROR;
   for (; u != NULL; FORWARD (u), FORWARD (v)) {
@@ -692,7 +692,7 @@ static void call (FILE_T f, NODE_T * p, int depth)
   proc = m_stack[--m_sp];
   old_m_sp = m_sp;
   if (WHETHER_NOT (proc, PROC_SYMBOL)) {
-    monitor_error ("invalid procedure mode", moid_to_string (proc, MOID_WIDTH));
+    monitor_error ("invalid procedure mode", moid_to_string (proc, MOID_WIDTH, NULL));
   }
   QUIT_ON_ERROR;
   POP_PROCEDURE (p, &z);
@@ -751,7 +751,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
     res = SUB (moid);
   }
   if (WHETHER_NOT (moid, ROW_SYMBOL) && WHETHER_NOT (moid, FLEX_SYMBOL)) {
-    monitor_error ("invalid row mode", moid_to_string (moid, MOID_WIDTH));
+    monitor_error ("invalid row mode", moid_to_string (moid, MOID_WIDTH, NULL));
   }
   QUIT_ON_ERROR;
 /* Get descriptor. */
@@ -784,7 +784,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
     A68_INT i;
     deref (p, m_sp - 1, MEEK);
     if (TOP_MODE != MODE (INT)) {
-      monitor_error ("invalid indexer mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+      monitor_error ("invalid indexer mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
     }
     QUIT_ON_ERROR;
     POP_OBJECT (p, &i, A68_INT);
@@ -847,13 +847,13 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         int op = attr;
         if (TOP_MODE != MODE (HIP)
             && WHETHER_NOT (TOP_MODE, REF_SYMBOL)) {
-          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH));
+          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
         }
         SCAN_CHECK (f, p);
         PARSE_CHECK (f, p, 1);
         if (TOP_MODE != MODE (HIP)
             && WHETHER_NOT (TOP_MODE, REF_SYMBOL)) {
-          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH));
+          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
         }
         QUIT_ON_ERROR;
         if (TOP_MODE != MODE (HIP) && m_stack[m_sp - 2] != MODE (HIP)) {
@@ -949,7 +949,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       TOP_MODE = sub;
     }
     if (TOP_MODE != m) {
-      monitor_error ("invalid cast mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+      monitor_error ("invalid cast mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
     }
   } else if (attr == LONG_SYMBOL) {
     int length = 0;
@@ -973,7 +973,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       }
       SCAN_CHECK (f, p);
       if (TOP_MODE != i) {
-        monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+        monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
       }
       QUIT_ON_ERROR;
       TOP_MODE = r;
@@ -1071,7 +1071,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     }
     SCAN_CHECK (f, p);
     if (TOP_MODE != MODE (INT)) {
-      monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+      monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
     }
     QUIT_ON_ERROR;
     POP_OBJECT (p, &k, A68_INT);
@@ -1098,7 +1098,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         monitor_error (NO_VALUE, name);
       }
     } else {
-      monitor_error ("cannot process value of mode", moid_to_string (moid, MOID_WIDTH));
+      monitor_error ("cannot process value of mode", moid_to_string (moid, MOID_WIDTH, NULL));
     }
   } else if (attr == OPEN_SYMBOL) {
     do {
@@ -1129,7 +1129,7 @@ static void assign (FILE_T f, NODE_T * p)
     MOID_T *m = m_stack[--m_sp];
     A68_REF z;
     if (WHETHER_NOT (m, REF_SYMBOL)) {
-      monitor_error ("invalid destination mode", moid_to_string (m, MOID_WIDTH));
+      monitor_error ("invalid destination mode", moid_to_string (m, MOID_WIDTH, NULL));
     }
     QUIT_ON_ERROR;
     POP_REF (p, &z);
@@ -1146,7 +1146,7 @@ static void assign (FILE_T f, NODE_T * p)
       TOP_MODE = sub;
     }
     if (TOP_MODE != SUB (m) && TOP_MODE != MODE (HIP)) {
-      monitor_error ("invalid source mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+      monitor_error ("invalid source mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
     }
     QUIT_ON_ERROR;
     POP (p, ADDRESS (&z), MOID_SIZE (TOP_MODE));
@@ -1508,23 +1508,23 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
     for (; q != NULL; FORWARD (q)) {
       BYTE_T *elem = &item[q->offset];
       indent_crlf (f);
-      snprintf (output_line, BUFFER_SIZE, "     %s \"%s\"", moid_to_string (MOID (q), MOID_WIDTH), TEXT (q));
+      snprintf (output_line, BUFFER_SIZE, "     %s \"%s\"", moid_to_string (MOID (q), MOID_WIDTH, NULL), TEXT (q));
       WRITE (STDOUT_FILENO, output_line);
       show_item (f, p, elem, MOID (q));
     }
     tabs--;
   } else if (WHETHER (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
-    snprintf (output_line, BUFFER_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH));
+    snprintf (output_line, BUFFER_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NULL));
     WRITE (STDOUT_FILENO, output_line);
     show_item (f, p, &item[ALIGNED_SIZE_OF (A68_UNION)], (MOID_T *) (VALUE (z)));
   } else if (mode == MODE (SIMPLIN)) {
     A68_UNION *z = (A68_UNION *) item;
-    snprintf (output_line, BUFFER_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH));
+    snprintf (output_line, BUFFER_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NULL));
     WRITE (STDOUT_FILENO, output_line);
   } else if (mode == MODE (SIMPLOUT)) {
     A68_UNION *z = (A68_UNION *) item;
-    snprintf (output_line, BUFFER_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH));
+    snprintf (output_line, BUFFER_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NULL));
     WRITE (STDOUT_FILENO, output_line);
   } else {
     BOOL_T init;
@@ -1572,7 +1572,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
         WRITE (STDOUT_FILENO, NO_VALUE);
       }
     } else {
-      snprintf (output_line, BUFFER_SIZE, " mode %s, %s", moid_to_string (mode, MOID_WIDTH), CANNOT_SHOW);
+      snprintf (output_line, BUFFER_SIZE, " mode %s, %s", moid_to_string (mode, MOID_WIDTH, NULL), CANNOT_SHOW);
       WRITE (STDOUT_FILENO, output_line);
     }
   }
@@ -1594,20 +1594,20 @@ static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T link, TAG_T * q, int m
   (void) p;
   indent_crlf (STDOUT_FILENO);
   if (modif != ANONYMOUS) {
-    snprintf (output_line, BUFFER_SIZE, "     frame(%d=%d+%d) %s \"%s\"", addr, link, loc, moid_to_string (MOID (q), MOID_WIDTH), SYMBOL (NODE (q)));
+    snprintf (output_line, BUFFER_SIZE, "     frame(%d=%d+%d) %s \"%s\"", addr, link, loc, moid_to_string (MOID (q), MOID_WIDTH, NULL), SYMBOL (NODE (q)));
     WRITE (STDOUT_FILENO, output_line);
     show_item (f, p, FRAME_ADDRESS (addr), MOID (q));
   } else {
     switch (PRIO (q)) {
     case GENERATOR:
       {
-        snprintf (output_line, BUFFER_SIZE, "     frame(%d=%d+%d) LOC %s", addr, link, loc, moid_to_string (MOID (q), MOID_WIDTH));
+        snprintf (output_line, BUFFER_SIZE, "     frame(%d=%d+%d) LOC %s", addr, link, loc, moid_to_string (MOID (q), MOID_WIDTH, NULL));
         WRITE (STDOUT_FILENO, output_line);
         break;
       }
     default:
       {
-        snprintf (output_line, BUFFER_SIZE, "     frame(%d=%d+%d) internal %s", addr, link, loc, moid_to_string (MOID (q), MOID_WIDTH));
+        snprintf (output_line, BUFFER_SIZE, "     frame(%d=%d+%d) internal %s", addr, link, loc, moid_to_string (MOID (q), MOID_WIDTH, NULL));
         WRITE (STDOUT_FILENO, output_line);
         break;
       }
@@ -1741,7 +1741,7 @@ void show_heap (FILE_T f, NODE_T * p, A68_HANDLE * z, int top, int n)
     if (n > 0 && sum <= top) {
       n--;
       indent_crlf (f);
-      snprintf (output_line, BUFFER_SIZE, "heap(%p+%d) %s", POINTER (z), SIZE (z), moid_to_string (MOID (z), MOID_WIDTH));
+      snprintf (output_line, BUFFER_SIZE, "heap(%p+%d) %s", POINTER (z), SIZE (z), moid_to_string (MOID (z), MOID_WIDTH, NULL));
       WRITE (f, output_line);
       sum += SIZE (z);
     }
@@ -1997,7 +1997,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         while (cont) {
           res = m_stack[0];
           WRITELN (STDOUT_FILENO, "(");
-          WRITE (STDOUT_FILENO, moid_to_string (res, MOID_WIDTH));
+          WRITE (STDOUT_FILENO, moid_to_string (res, MOID_WIDTH, NULL));
           WRITE (STDOUT_FILENO, ")");
           show_item (STDOUT_FILENO, p, STACK_ADDRESS (old_sp), res);
           cont = (WHETHER (res, REF_SYMBOL)
@@ -2340,7 +2340,7 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
       POP_OBJECT (p, &z, A68_BOOL);
       res = (STATUS (&z) == INITIALISED_MASK && VALUE (&z) == A68_TRUE);
     } else {
-      monitor_error ("deleted invalid breakpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+      monitor_error ("deleted invalid breakpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
       if (INFO (p)->expr != NULL) {
         free (INFO (p)->expr);
       }
@@ -2380,7 +2380,7 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
       POP_OBJECT (p, &z, A68_BOOL);
       res = (STATUS (&z) == INITIALISED_MASK && VALUE (&z) == A68_TRUE);
     } else {
-      monitor_error ("deleted invalid watchpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH));
+      monitor_error ("deleted invalid watchpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
       if (watchpoint_expression != NULL) {
         free (watchpoint_expression);
         watchpoint_expression = NULL;

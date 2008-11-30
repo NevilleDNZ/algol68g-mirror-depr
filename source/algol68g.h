@@ -173,6 +173,7 @@ typedef unsigned STATUS_MASK;
 #define NIL_MASK			0x00400000
 #define SKIP_PROCEDURE_MASK	  	0x00800000
 #define SKIP_FORMAT_MASK	  	0x00800000
+#define SKIP_UNION_MASK		  	0x00800000
 #define INTERRUPTIBLE_MASK		0x01000000
 #define BREAKPOINT_MASK 		0x02000000
 #define BREAKPOINT_TEMPORARY_MASK 	0x04000000
@@ -1181,7 +1182,7 @@ extern char *a68g_strchr (char *, int);
 extern char *a68g_strrchr (char *, int);
 extern char *ctrl_char (int);
 extern char digit_to_char (int);
-extern char *moid_to_string (MOID_T *, int);
+extern char *moid_to_string (MOID_T *, int, NODE_T *);
 extern char *new_fixed_string (char *);
 extern char *new_string (char *);
 extern char *non_terminal_string (char *, int);
@@ -1240,6 +1241,7 @@ extern void bind_routine_tags_to_tree (NODE_T *);
 extern void bind_tag (TAG_T **, TAG_T *);
 extern void bottom_up_error_check (NODE_T *);
 extern void bottom_up_parser (NODE_T *);
+extern void brief_moid_flat (FILE_T, MOID_T *);
 extern void bufcat (char *, char *, int);
 extern void bufcpy (char *, char *, int);
 extern void check_parenthesis (NODE_T *);
@@ -1294,6 +1296,7 @@ extern void portcheck (NODE_T *);
 extern void preliminary_symbol_table_setup (NODE_T *);
 extern void print_internal_index (FILE_T, A68_TUPLE *, int);
 extern void print_item (NODE_T *, FILE_T, BYTE_T *, MOID_T *);
+extern void print_mode_flat (FILE_T, MOID_T *);
 extern void protect_from_sweep (NODE_T *);
 extern void PROTECT_SWEEP_HANDLE (A68_REF *);
 extern void prune_echoes (MODULE_T *, OPTION_LIST_T *);

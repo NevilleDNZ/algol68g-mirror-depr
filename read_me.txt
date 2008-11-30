@@ -1,4 +1,4 @@
-ALGOL68G - ALGOL 68 GENIE (MARK 14.1)
+ALGOL68G - ALGOL 68 GENIE (MARK 15)
 
 Algol68G is a nearly fully featured implementation of Algol 68 as defined by 
 the Revised Report.

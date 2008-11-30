@@ -3164,9 +3164,15 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
     io_read (f->fd, z, get_mp_size (mode));
     MP_STATUS (z) = INITIALISED_MASK;
   } else if (mode == MODE (ROW_CHAR) || mode == MODE (STRING)) {
-    char *term = (char *) ADDRESS (&f->terminator);
-    scan_string (p, term, ref_file);
-    genie_string_to_value (p, mode, item, ref_file);
+    int len, k;
+    io_read (f->fd, &(len), sizeof (len));
+    reset_transput_buffer (UNFORMATTED_BUFFER);
+    for (k = 0; k < len; k++) {
+      A68_CHAR z;
+      io_read (f->fd, &(VALUE (&z)), sizeof (VALUE (&z)));
+      add_char_transput_buffer (p, UNFORMATTED_BUFFER, VALUE (&z));
+    }
+    *(A68_REF *) item = c_to_a_string (p, get_transput_buffer (UNFORMATTED_BUFFER));
   } else if (WHETHER (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
     if (!(STATUS (z) | INITIALISED_MASK) || VALUE (z) == NULL) {
@@ -3391,8 +3397,11 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
     io_write (f->fd, (MP_DIGIT_T *) item, get_mp_size (mode));
   } else if (mode == MODE (ROW_CHAR) || mode == MODE (STRING)) {
+    int len;
     reset_transput_buffer (UNFORMATTED_BUFFER);
     add_a_string_transput_buffer (p, UNFORMATTED_BUFFER, item);
+    len = get_transput_buffer_index (UNFORMATTED_BUFFER);
+    io_write (f->fd, &(len), sizeof (len));
     WRITE (f->fd, get_transput_buffer (UNFORMATTED_BUFFER));
   } else if (WHETHER (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
@@ -4896,7 +4905,7 @@ format text is at in the syntax tree.
 \param ref_file fat pointer to A68 file
 **/
 
-void format_error (NODE_T * p, A68_REF ref_file, int diag)
+void format_error (NODE_T * p, A68_REF ref_file, char * diag)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   A68_BOOL z;

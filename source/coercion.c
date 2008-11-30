@@ -95,7 +95,7 @@ static void coerce_unit (NODE_T *, SOID_T *);
 \return error text
 **/
 
-static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, int depth)
+static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, int deflex, int depth)
 {
 #define TAIL(z) (&(z)[strlen (z)])
   static char txt[BUFFER_SIZE];
@@ -110,7 +110,7 @@ static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, i
       for (; u != NULL; FORWARD (u)) {
         if (MOID (u) != NULL) {
           if (WHETHER (MOID (u), SERIES_MODE)) {
-            mode_error_text (MOID (u), q, context, deflex, depth + 1);
+            mode_error_text (n, MOID (u), q, context, deflex, depth + 1);
           } else if (!whether_coercible (MOID (u), q, context, deflex)) {
             int len = strlen (txt);
             if (len > BUFFER_SIZE / 2) {
@@ -119,14 +119,14 @@ static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, i
               if (strlen (txt) > 0) {
                 snprintf (TAIL (txt), BUFFER_SIZE, " and ");
               }
-              snprintf (TAIL (txt), BUFFER_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH));
+              snprintf (TAIL (txt), BUFFER_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH, n));
             }
           }
         }
       }
     }
     if (depth == 1) {
-      snprintf (TAIL (txt), BUFFER_SIZE, " cannot be coerced to %s", moid_to_string (q, MOID_ERROR_WIDTH));
+      snprintf (TAIL (txt), BUFFER_SIZE, " cannot be coerced to %s", moid_to_string (q, MOID_ERROR_WIDTH, n));
     }
   } else if (WHETHER (p, STOWED_MODE) && WHETHER (q, FLEX_SYMBOL)) {
     PACK_T *u = PACK (p);
@@ -142,11 +142,11 @@ static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, i
             if (strlen (txt) > 0) {
               snprintf (TAIL (txt), BUFFER_SIZE, " and ");
             }
-            snprintf (TAIL (txt), BUFFER_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH));
+            snprintf (TAIL (txt), BUFFER_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH, n));
           }
         }
       }
-      snprintf (TAIL (txt), BUFFER_SIZE, " cannot be coerced to %s", moid_to_string (SLICE (SUB (q)), MOID_ERROR_WIDTH));
+      snprintf (TAIL (txt), BUFFER_SIZE, " cannot be coerced to %s", moid_to_string (SLICE (SUB (q)), MOID_ERROR_WIDTH, n));
     }
   } else if (WHETHER (p, STOWED_MODE) && WHETHER (q, ROW_SYMBOL)) {
     PACK_T *u = PACK (p);
@@ -162,11 +162,11 @@ static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, i
             if (strlen (txt) > 0) {
               snprintf (TAIL (txt), BUFFER_SIZE, " and ");
             }
-            snprintf (TAIL (txt), BUFFER_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH));
+            snprintf (TAIL (txt), BUFFER_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH, n));
           }
         }
       }
-      snprintf (TAIL (txt), BUFFER_SIZE, " cannot be coerced to %s", moid_to_string (SLICE (q), MOID_ERROR_WIDTH));
+      snprintf (TAIL (txt), BUFFER_SIZE, " cannot be coerced to %s", moid_to_string (SLICE (q), MOID_ERROR_WIDTH, n));
     }
   } else if (WHETHER (p, STOWED_MODE) && (WHETHER (q, PROC_SYMBOL) || WHETHER (q, STRUCT_SYMBOL))) {
     PACK_T *u = PACK (p), *v = PACK (q);
@@ -182,7 +182,7 @@ static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, i
             if (strlen (txt) > 0) {
               snprintf (TAIL (txt), BUFFER_SIZE, " and ");
             }
-            snprintf (TAIL (txt), BUFFER_SIZE, "%s cannot be coerced to %s", moid_to_string (MOID (u), MOID_ERROR_WIDTH), moid_to_string (MOID (v), MOID_ERROR_WIDTH));
+            snprintf (TAIL (txt), BUFFER_SIZE, "%s cannot be coerced to %s", moid_to_string (MOID (u), MOID_ERROR_WIDTH, n), moid_to_string (MOID (v), MOID_ERROR_WIDTH, n));
           }
         }
       }
@@ -204,7 +204,7 @@ static char *mode_error_text (MOID_T * p, MOID_T * q, int context, int deflex, i
 
 static void cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, int deflex, int att)
 {
-  char *txt = mode_error_text (from, to, context, deflex, 1);
+  char *txt = mode_error_text (p, from, to, context, deflex, 1);
   if (att == NULL_ATTRIBUTE) {
     if (strlen (txt) == 0) {
       diagnostic_node (A68_ERROR, p, "M cannot be coerced to M in C context", from, to, context);
@@ -1692,7 +1692,7 @@ static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
   } else if (WHETHER (q, FLEX_SYMBOL) && whether_strong_slice (p, q)) {
     make_rowing_coercion (n, p, q);
   } else if (WHETHER (p, REF_SYMBOL)) {
-    MOID_T *r = DEFLEX (SUB (p));
+    MOID_T *r = /* DEFLEX */ (SUB (p));
     make_coercion (n, DEREFERENCING, r);
     make_depreffing_coercion (n, r, q);
   } else if (WHETHER (p, PROC_SYMBOL) && PACK (p) == NULL) {

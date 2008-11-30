@@ -1066,7 +1066,7 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
   int span, k;
   char buf[BUFFER_SIZE];
   INDENT (level);
-  snprintf (buf, BUFFER_SIZE, "%s at %p pointing at %p", moid_to_string (m, 80), w, (void *) ADDRESS ((A68_ROW *) w));
+  snprintf (buf, BUFFER_SIZE, "%s at %p pointing at %p", moid_to_string (m, 80, NULL), w, (void *) ADDRESS ((A68_ROW *) w));
   WRITE (f, buf);
   if (IS_NIL (*(A68_REF *) w)) {
     INDENT (level);
@@ -1081,7 +1081,7 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
         dump_stowed (p, f, &((BYTE_T *) w)[fields->offset], MOID (fields), level + 1);
       } else {
         INDENT (level);
-        snprintf (buf, BUFFER_SIZE, "%s %s at %p", moid_to_string (MOID (fields), 80), fields->text, &((BYTE_T *) w)[fields->offset]);
+        snprintf (buf, BUFFER_SIZE, "%s %s at %p", moid_to_string (MOID (fields), 80, NULL), fields->text, &((BYTE_T *) w)[fields->offset]);
         WRITE (f, buf);
       }
     }
@@ -1092,7 +1092,7 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
       if (um->has_rows) {
         dump_stowed (p, f, &((BYTE_T *) w)[UNION_OFFSET], um, level + 1);
       } else {
-        (void) snprintf (buf, BUFFER_SIZE, " holds %s at %p", moid_to_string (um, 80), &((BYTE_T *) w)[UNION_OFFSET]);
+        (void) snprintf (buf, BUFFER_SIZE, " holds %s at %p", moid_to_string (um, 80, NULL), &((BYTE_T *) w)[UNION_OFFSET]);
         WRITE (f, buf);
       }
     }
@@ -1125,7 +1125,7 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
           dump_stowed (p, f, elem_p, elem_mode, level + 3);
         } else {
           INDENT (level);
-          snprintf (buf, BUFFER_SIZE, "%s [%d] at %p", moid_to_string (elem_mode, 80), index, elem_p);
+          snprintf (buf, BUFFER_SIZE, "%s [%d] at %p", moid_to_string (elem_mode, 80, NULL), index, elem_p);
           WRITE (f, buf);
           print_item (p, f, elem_p, elem_mode);
         }

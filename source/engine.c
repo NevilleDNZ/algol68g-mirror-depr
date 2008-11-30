@@ -2426,13 +2426,25 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
     LOCALE (&z) = NULL;
     MOID (&z) = u;
     PUSH_PROCEDURE (p, z);
-  } else {
-/* FORMAT etc. - what arbitrary FORMAT would mean anything at all? */
+  } else if (u == MODE (FORMAT)) {
+/* FORMAT etc. - what arbitrary FORMAT could mean anything at all? */
     A68_FORMAT z;
     STATUS (&z) = INITIALISED_MASK | SKIP_FORMAT_MASK;
     BODY (&z) = NULL;
     ENVIRON (&z) = 0;
     PUSH_FORMAT (p, z);
+  } else if (u == MODE (SIMPLOUT)) {
+    ADDR_T sp = stack_pointer;
+    PUSH_UNION (p, MODE (STRING));
+    PUSH_REF (p, c_to_a_string (p, "SKIP"));
+    stack_pointer = sp + MOID_SIZE (u);
+  } else if (u == MODE (SIMPLIN)) {
+    ADDR_T sp = stack_pointer;
+    PUSH_UNION (p, MODE (REF_STRING));
+    genie_push_undefined (p, MODE (REF_STRING));
+    stack_pointer = sp + MOID_SIZE (u);
+  } else {
+    ABNORMAL_END (A68_TRUE, "cannot generate undefined value", NULL);
   }
 }
 

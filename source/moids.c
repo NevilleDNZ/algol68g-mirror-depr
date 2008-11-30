@@ -24,12 +24,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include "genie.h"
 #include "mp.h"
 
-enum
-{ PUT_IN_THIS_LEVEL, PUT_IN_PARENT_LEVEL };
-
-static MOID_T *get_mode_from_declarer (NODE_T *, int);
+static MOID_T *get_mode_from_declarer (NODE_T *);
 BOOL_T check_yin_yang (NODE_T *, MOID_T *, BOOL_T, BOOL_T);
-static void moid_to_string_2 (char *, MOID_T *, int);
+static void moid_to_string_2 (char *, MOID_T *, int, NODE_T *);
 static MOID_T *make_deflexed (MOID_T *, MOID_T **);
 
 MOID_LIST_T *top_moid_list, *old_moid_list = NULL;
@@ -352,7 +349,7 @@ static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
       }
     case DECLARER:
       {
-        MOID_T *new_one = get_mode_from_declarer (p, PUT_IN_THIS_LEVEL);
+        MOID_T *new_one = get_mode_from_declarer (p);
         PACK_T *t;
         get_mode_from_struct_field (NEXT (p), u);
         for (t = *u; t && MOID (t) == NULL; FORWARD (t)) {
@@ -385,7 +382,7 @@ static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
       {
         MOID_T *z;
         get_mode_from_formal_pack (NEXT (p), u);
-        z = get_mode_from_declarer (p, PUT_IN_THIS_LEVEL);
+        z = get_mode_from_declarer (p);
         add_mode_to_pack (u, z, NULL, p);
         break;
       }
@@ -414,7 +411,7 @@ static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
       {
         MOID_T *z;
         get_mode_from_union_pack (NEXT (p), u);
-        z = get_mode_from_declarer (p, PUT_IN_THIS_LEVEL);
+        z = get_mode_from_declarer (p);
         add_mode_to_pack (u, z, NULL, p);
         break;
       }
@@ -445,7 +442,7 @@ static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
       }
     case DECLARER:
       {
-        MOID_T *z = get_mode_from_declarer (p, PUT_IN_PARENT_LEVEL);
+        MOID_T *z = get_mode_from_declarer (p);
         PACK_T *t = *u;
         for (; t != NULL && MOID (t) == NULL; FORWARD (t)) {
           MOID (t) = z;
@@ -471,7 +468,7 @@ static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
 \return mode table entry or NULL on error
 **/
 
-static MOID_T *get_mode_from_declarer (NODE_T * p, int put_where)
+static MOID_T *get_mode_from_declarer (NODE_T * p)
 {
   if (p == NULL) {
     return (NULL);
@@ -480,15 +477,10 @@ static MOID_T *get_mode_from_declarer (NODE_T * p, int put_where)
       if (MOID (p) != NULL) {
         return (MOID (p));
       } else {
-        return (MOID (p) = get_mode_from_declarer (SUB (p), put_where));
+        return (MOID (p) = get_mode_from_declarer (SUB (p)));
       }
     } else {
-      MOID_T **m = NULL;
-      if (put_where == PUT_IN_THIS_LEVEL) {
-        m = &(SYMBOL_TABLE (p)->moids);
-      } else if (put_where == PUT_IN_PARENT_LEVEL) {
-        m = &(PREVIOUS (SYMBOL_TABLE (p))->moids);
-      }
+      MOID_T **m = &(SYMBOL_TABLE (p)->moids);
       if (WHETHER (p, VOID_SYMBOL)) {
         MOID (p) = MODE (VOID);
         return (MOID (p));
@@ -517,20 +509,20 @@ static MOID_T *get_mode_from_declarer (NODE_T * p, int put_where)
         }
         return (MOID (p));
       } else if (WHETHER (p, REF_SYMBOL)) {
-        MOID_T *new_one = get_mode_from_declarer (NEXT (p), put_where);
+        MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_mode (m, REF_SYMBOL, 0, p, new_one, NULL);
         return (MOID (p));
       } else if (WHETHER (p, FLEX_SYMBOL)) {
-        MOID_T *new_one = get_mode_from_declarer (NEXT (p), put_where);
+        MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_mode (m, FLEX_SYMBOL, 0, NULL, new_one, NULL);
         SLICE (MOID (p)) = SLICE (new_one);
         return (MOID (p));
       } else if (WHETHER (p, FORMAL_BOUNDS)) {
-        MOID_T *new_one = get_mode_from_declarer (NEXT (p), put_where);
+        MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_row (m, 1 + count_formal_bounds (SUB (p)), new_one, p);
         return (MOID (p));
       } else if (WHETHER (p, BOUNDS)) {
-        MOID_T *new_one = get_mode_from_declarer (NEXT (p), put_where);
+        MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_row (m, count_bounds (SUB (p)), new_one, p);
         return (MOID (p));
       } else if (WHETHER (p, STRUCT_SYMBOL)) {
@@ -551,7 +543,7 @@ static MOID_T *get_mode_from_declarer (NODE_T * p, int put_where)
           get_mode_from_formal_pack (SUB (NEXT (p)), &u);
           FORWARD (p);
         }
-        new_one = get_mode_from_declarer (NEXT (p), put_where);
+        new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_mode (m, PROC_SYMBOL, count_pack_members (u), save, new_one, u);
         MOID (save) = MOID (p);
         return (MOID (p));
@@ -578,7 +570,7 @@ static MOID_T *get_mode_from_routine_text (NODE_T * p)
     get_mode_from_routine_pack (SUB (p), &u);
     FORWARD (p);
   }
-  n = get_mode_from_declarer (p, PUT_IN_PARENT_LEVEL);
+  n = get_mode_from_declarer (p);
   return (add_mode (m, PROC_SYMBOL, count_pack_members (u), q, n, u));
 }
 
@@ -597,7 +589,7 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
     get_mode_from_formal_pack (SUB (NEXT (p)), &u);
     FORWARD (p);
   }
-  new_one = get_mode_from_declarer (NEXT (p), PUT_IN_THIS_LEVEL);
+  new_one = get_mode_from_declarer (NEXT (p));
   MOID (p) = add_mode (m, PROC_SYMBOL, count_pack_members (u), save, new_one, u);
   return (MOID (p));
 }
@@ -705,17 +697,17 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
 
 static void get_modes_from_tree (NODE_T * p, int attribute)
 {
-  NODE_T *q = p;
-  BOOL_T z = A68_TRUE;
-  for (; q != NULL; FORWARD (q)) {
+  NODE_T *q;
+  for (q = p; q != NULL; FORWARD (q)) {
     if (WHETHER (q, VOID_SYMBOL)) {
       MOID (q) = MODE (VOID);
     } else if (WHETHER (q, DECLARER)) {
-      if (attribute != VARIABLE_DECLARATION) {
-        MOID (q) = get_mode_from_declarer (q, PUT_IN_THIS_LEVEL);
-      } else {
-        MOID_T **m = &(SYMBOL_TABLE (q)->moids), *new_one = get_mode_from_declarer (q, PUT_IN_THIS_LEVEL);
+      if (attribute == VARIABLE_DECLARATION) {
+        MOID_T **m = &(SYMBOL_TABLE (q)->moids);
+        MOID_T *new_one = get_mode_from_declarer (q);
         MOID (q) = add_mode (m, REF_SYMBOL, 0, NULL, new_one, NULL);
+      } else {
+        MOID (q) = get_mode_from_declarer (q);
       }
     } else if (WHETHER (q, ROUTINE_TEXT)) {
       MOID (q) = get_mode_from_routine_text (SUB (q));
@@ -723,18 +715,18 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
       MOID (q) = get_mode_from_operator (SUB (q));
     } else if (WHETHER (q, LOC_SYMBOL) || WHETHER (q, HEAP_SYMBOL)) {
       if (attribute == GENERATOR) {
-        MOID_T **m = &(SYMBOL_TABLE (q)->moids), *new_one = get_mode_from_declarer (NEXT (q), PUT_IN_THIS_LEVEL);
+        MOID_T **m = &(SYMBOL_TABLE (q)->moids);
+        MOID_T *new_one = get_mode_from_declarer (NEXT (q));
         MOID (NEXT (q)) = new_one;
         MOID (q) = add_mode (m, REF_SYMBOL, 0, NULL, new_one, NULL);
       }
     } else {
       if (attribute == DENOTATION) {
         get_mode_from_denotation (q, 0);
-        z = A68_FALSE;
       }
     }
   }
-  if (z) {
+  if (attribute != DENOTATION) {
     for (q = p; q != NULL; FORWARD (q)) {
       if (SUB (q) != NULL) {
         get_modes_from_tree (SUB (q), ATTRIBUTE (q));
@@ -1244,11 +1236,12 @@ static BOOL_T prove_moid_equivalence (MOID_T * p, MOID_T * q)
 static void find_equivalent_moids (MOID_LIST_T * start, MOID_LIST_T * stop)
 {
   for (; start != stop; FORWARD (start)) {
-    MOID_LIST_T *p = NEXT (start);
-    BOOL_T z = A68_TRUE;
-    for (; p != NULL && z; FORWARD (p)) {
-      if (EQUIVALENT (MOID (p)) != MOID (start)) {
-        z = !prove_moid_equivalence (MOID (p), MOID (start));
+    MOID_LIST_T *p;
+    MOID_T *master = MOID (start);
+    for (p = NEXT (start); (p != NULL) && (EQUIVALENT (master) == NULL); FORWARD (p)) {
+      MOID_T *slave = MOID (p);
+      if ((EQUIVALENT (slave) == NULL) && (ATTRIBUTE (master) == ATTRIBUTE (slave)) && (DIM (master) == DIM (slave))) {
+        (void) prove_moid_equivalence (slave, master);
       }
     }
   }
@@ -1889,7 +1882,7 @@ static void make_deflexed_modes_tree (NODE_T * p, int *mods)
         if (m->has_flex && DEFLEXED (m) == NULL) {
           (*mods)++;
           DEFLEXED (m) = make_deflexed (m, top);
-          ABNORMAL_END (whether_mode_has_flex (DEFLEXED (m)), "deflexing failed", moid_to_string (DEFLEXED (m), MOID_WIDTH));
+          ABNORMAL_END (whether_mode_has_flex (DEFLEXED (m)), "deflexing failed", moid_to_string (DEFLEXED (m), MOID_WIDTH, NULL));
         }
 /* 'Light' deflexing needed for trims. */
         if (TRIM (m) == NULL && WHETHER (m, FLEX_SYMBOL)) {
@@ -2155,7 +2148,7 @@ void maintain_mode_table (NODE_T * p)
 void set_up_mode_table (NODE_T * top_node)
 {
   reset_moid_tree (top_node);
-  get_modes_from_tree (top_node, 0);
+  get_modes_from_tree (top_node, NULL_ATTRIBUTE);
   get_mode_from_proc_var_declarations_tree (top_node);
   make_extra_rows_local (stand_env);
   make_extra_rows_tree (top_node);
@@ -2397,9 +2390,10 @@ int moid_size (MOID_T * p)
 \param dst text buffer
 \param str string to concatenate
 \param w estimated width
+\param idf print indicants if one exists in this range
 **/
 
-static void moid_to_string_3 (char *dst, char *str, int w)
+static void moid_to_string_3 (char *dst, char *str, int w, NODE_T * idf)
 {
   if (w > (int) strlen (str)) {
     bufcat (dst, str, BUFFER_SIZE);
@@ -2414,9 +2408,10 @@ static void moid_to_string_3 (char *dst, char *str, int w)
 \param p pack
 \param w estimated width
 \param text include field names
+\param idf print indicants if one exists in this range
 **/
 
-static void pack_to_string (char *b, PACK_T * p, int w, BOOL_T text)
+static void pack_to_string (char *b, PACK_T * p, int w, BOOL_T text, NODE_T * idf)
 {
   MOID_T *last = NULL;
   if (w > (int) strlen ("..")) {
@@ -2427,7 +2422,7 @@ static void pack_to_string (char *b, PACK_T * p, int w, BOOL_T text)
         w -= (int) strlen (b) - l;
       } else {
         if (w > (int) strlen ("..")) {
-          moid_to_string_2 (b, MOID (p), w);
+          moid_to_string_2 (b, MOID (p), w, idf);
           if (text && TEXT (p) != NULL) {
             bufcat (b, " ", BUFFER_SIZE);
             bufcat (b, TEXT (p), BUFFER_SIZE);
@@ -2453,14 +2448,38 @@ static void pack_to_string (char *b, PACK_T * p, int w, BOOL_T text)
   }
 }
 
+
+/*!
+\brief find a tag, searching symbol tables towards the root
+\param table symbol table to search
+\param mode mode of the tag
+\return entry in symbol table
+**/
+
+TAG_T *find_indicant_global (SYMBOL_TABLE_T * table, MOID_T * mode)
+{
+  if (table != NULL) {
+    TAG_T *s;
+    for (s = table->indicants; s != NULL; FORWARD (s)) {
+      if (MOID (s) == mode) {
+        return (s);
+      }
+    }
+    return (find_indicant_global (PREVIOUS (table), mode));
+  } else {
+    return (NULL);
+  }
+}
+
 /*!
 \brief moid to string 2
 \param b text buffer
 \param n moid
 \param w estimated width
+\param idf print indicants if one exists in this range
 **/
 
-static void moid_to_string_2 (char *b, MOID_T * n, int w)
+static void moid_to_string_2 (char *b, MOID_T * n, int w, NODE_T * idf)
 {
   if (n == NULL) {
     bufcat (b, "NULL", BUFFER_SIZE);
@@ -2468,36 +2487,45 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
   }
   if (whether_postulated (postulates, n)) {
     bufcat (b, "\"SELF\"", BUFFER_SIZE);
-  } else if (n == MODE (HIP)) {
-    moid_to_string_3 (b, "HIP", w);
+    return;
+  }
+  if (idf != NULL) {
+    TAG_T *indy = find_indicant_global (SYMBOL_TABLE (idf), n);
+    if (indy != NULL) {
+      bufcat (b, SYMBOL (NODE (indy)), BUFFER_SIZE);
+      return;
+    }
+  }
+  if (n == MODE (HIP)) {
+    moid_to_string_3 (b, "HIP", w, idf);
   } else if (n == MODE (ERROR)) {
-    moid_to_string_3 (b, "ERROR", w);
+    moid_to_string_3 (b, "ERROR", w, idf);
   } else if (n == MODE (UNDEFINED)) {
-    moid_to_string_3 (b, "UNDEFINED", w);
+    moid_to_string_3 (b, "UNDEFINED", w, idf);
   } else if (n == MODE (C_STRING)) {
-    moid_to_string_3 (b, "C-STRING", w);
+    moid_to_string_3 (b, "C-STRING", w, idf);
   } else if (n == MODE (COMPLEX) || n == MODE (COMPL)) {
-    moid_to_string_3 (b, "COMPLEX", w);
+    moid_to_string_3 (b, "COMPLEX", w, idf);
   } else if (n == MODE (LONG_COMPLEX) || n == MODE (LONG_COMPL)) {
-    moid_to_string_3 (b, "LONG COMPLEX", w);
+    moid_to_string_3 (b, "LONG COMPLEX", w, idf);
   } else if (n == MODE (LONGLONG_COMPLEX) || n == MODE (LONGLONG_COMPL)) {
-    moid_to_string_3 (b, "LONG LONG COMPLEX", w);
+    moid_to_string_3 (b, "LONG LONG COMPLEX", w, idf);
   } else if (n == MODE (STRING)) {
-    moid_to_string_3 (b, "STRING", w);
+    moid_to_string_3 (b, "STRING", w, idf);
   } else if (n == MODE (PIPE)) {
-    moid_to_string_3 (b, "PIPE", w);
+    moid_to_string_3 (b, "PIPE", w, idf);
   } else if (n == MODE (SOUND)) {
-    moid_to_string_3 (b, "SOUND", w);
+    moid_to_string_3 (b, "SOUND", w, idf);
   } else if (n == MODE (COLLITEM)) {
-    moid_to_string_3 (b, "COLLITEM", w);
+    moid_to_string_3 (b, "COLLITEM", w, idf);
   } else if (WHETHER (n, IN_TYPE_MODE)) {
-    moid_to_string_3 (b, "\"SIMPLIN\"", w);
+    moid_to_string_3 (b, "\"SIMPLIN\"", w, idf);
   } else if (WHETHER (n, OUT_TYPE_MODE)) {
-    moid_to_string_3 (b, "\"SIMPLOUT\"", w);
+    moid_to_string_3 (b, "\"SIMPLOUT\"", w, idf);
   } else if (WHETHER (n, ROWS_SYMBOL)) {
-    moid_to_string_3 (b, "\"ROWS\"", w);
+    moid_to_string_3 (b, "\"ROWS\"", w, idf);
   } else if (n == MODE (VACUUM)) {
-    moid_to_string_3 (b, "\"VACUUM\"", w);
+    moid_to_string_3 (b, "\"VACUUM\"", w, idf);
   } else if (WHETHER (n, VOID_SYMBOL) || WHETHER (n, STANDARD)
              || WHETHER (n, INDICANT)) {
     int i = 1;
@@ -2518,18 +2546,18 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
         w = 0;
       }
     }
-    moid_to_string_3 (b, SYMBOL (NODE (n)), w);
+    moid_to_string_3 (b, SYMBOL (NODE (n)), w, idf);
   } else if (WHETHER (n, REF_SYMBOL)) {
     if (w > (int) strlen ("REF ..")) {
       bufcat (b, "REF ", BUFFER_SIZE);
-      moid_to_string_2 (b, SUB (n), w - (int) strlen ("REF .."));
+      moid_to_string_2 (b, SUB (n), w - (int) strlen ("REF .."), idf);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
     }
   } else if (WHETHER (n, FLEX_SYMBOL)) {
     if (w > (int) strlen ("FLEX ..")) {
       bufcat (b, "FLEX ", BUFFER_SIZE);
-      moid_to_string_2 (b, SUB (n), w - (int) strlen ("FLEX .."));
+      moid_to_string_2 (b, SUB (n), w - (int) strlen ("FLEX .."), idf);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
     }
@@ -2542,7 +2570,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
         bufcat (b, ", ", BUFFER_SIZE);
       }
       bufcat (b, "] ", BUFFER_SIZE);
-      moid_to_string_2 (b, SUB (n), w - j);
+      moid_to_string_2 (b, SUB (n), w - j, idf);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
     }
@@ -2551,7 +2579,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
     make_postulate (&postulates, n, NULL);
     if (w > (int) strlen ("STRUCT (..)")) {
       bufcat (b, "STRUCT (", BUFFER_SIZE);
-      pack_to_string (b, PACK (n), w - (int) strlen ("STRUCT (..)"), A68_TRUE);
+      pack_to_string (b, PACK (n), w - (int) strlen ("STRUCT (..)"), A68_TRUE, idf);
       bufcat (b, ")", BUFFER_SIZE);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
@@ -2562,7 +2590,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
     make_postulate (&postulates, n, NULL);
     if (w > (int) strlen ("UNION (..)")) {
       bufcat (b, "UNION (", BUFFER_SIZE);
-      pack_to_string (b, PACK (n), w - (int) strlen ("UNION (..)"), A68_FALSE);
+      pack_to_string (b, PACK (n), w - (int) strlen ("UNION (..)"), A68_FALSE, idf);
       bufcat (b, ")", BUFFER_SIZE);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
@@ -2574,16 +2602,16 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
     if (PACK (n) != NULL) {
       if (w > (int) strlen ("PROC (..) ..")) {
         bufcat (b, "PROC (", BUFFER_SIZE);
-        pack_to_string (b, PACK (n), w - (int) strlen ("PROC (..) .."), A68_FALSE);
+        pack_to_string (b, PACK (n), w - (int) strlen ("PROC (..) .."), A68_FALSE, idf);
         bufcat (b, ") ", BUFFER_SIZE);
-        moid_to_string_2 (b, SUB (n), w - (int) strlen (b));
+        moid_to_string_2 (b, SUB (n), w - (int) strlen (b), idf);
       } else {
         bufcat (b, "..", BUFFER_SIZE);
       }
     } else {
       if (w > (int) strlen ("PROC ..")) {
         bufcat (b, "PROC ", BUFFER_SIZE);
-        moid_to_string_2 (b, SUB (n), w - (int) strlen ("PROC .."));
+        moid_to_string_2 (b, SUB (n), w - (int) strlen ("PROC .."), idf);
       } else {
         bufcat (b, "..", BUFFER_SIZE);
       }
@@ -2592,7 +2620,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
   } else if (WHETHER (n, SERIES_MODE)) {
     if (w > (int) strlen ("(..)")) {
       bufcat (b, "(", BUFFER_SIZE);
-      pack_to_string (b, PACK (n), w - (int) strlen ("(..)"), A68_FALSE);
+      pack_to_string (b, PACK (n), w - (int) strlen ("(..)"), A68_FALSE, idf);
       bufcat (b, ")", BUFFER_SIZE);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
@@ -2600,7 +2628,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
   } else if (WHETHER (n, STOWED_MODE)) {
     if (w > (int) strlen ("(..)")) {
       bufcat (b, "(", BUFFER_SIZE);
-      pack_to_string (b, PACK (n), w - (int) strlen ("(..)"), A68_FALSE);
+      pack_to_string (b, PACK (n), w - (int) strlen ("(..)"), A68_FALSE, idf);
       bufcat (b, ")", BUFFER_SIZE);
     } else {
       bufcat (b, "..", BUFFER_SIZE);
@@ -2619,7 +2647,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w)
 \return text buffer
 **/
 
-char *moid_to_string (MOID_T * n, int w)
+char *moid_to_string (MOID_T * n, int w, NODE_T * idf)
 {
   char a[BUFFER_SIZE];
   a[0] = NULL_CHAR;
@@ -2628,7 +2656,7 @@ char *moid_to_string (MOID_T * n, int w)
   }
   postulates = NULL;
   if (n != NULL) {
-    moid_to_string_2 (a, n, w);
+    moid_to_string_2 (a, n, w, idf);
   } else {
     bufcat (a, "NULL", BUFFER_SIZE);
   }

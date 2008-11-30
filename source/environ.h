@@ -24,10 +24,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define A68G_ENVIRON_H
 
 char bold_prelude_start[] = "\
-BEGIN MODE DOUBLE = LONG REAL,!\
-           QUAD = LONG LONG REAL,!\
-           DEVICE = FILE,!\
-           TEXT = STRING;!\
+BEGIN MODE DOUBLE = LONG REAL;!\
       start: commence:!\
       BEGIN!";
 
