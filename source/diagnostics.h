@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -102,6 +102,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define ERROR_LABEL_BEFORE_DECLARATION "declaration cannot follow a labeled unit"
 #define ERROR_LABELED_UNIT_MUST_FOLLOW "S must be followed by a labeled unit"
 #define ERROR_LABEL_IN_PAR_CLAUSE "target label is in another parallel unit"
+#define ERROR_LAPLACE "laplace transform error; U; U"
 #define ERROR_LONG_STRING "string exceeds end of line"
 #define ERROR_MATH_EXCEPTION "math exception E"
 #define ERROR_MATH_INFO "M math error (Y)"

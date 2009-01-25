@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -403,30 +403,31 @@ void sweep_heap (NODE_T * p, ADDR_T fp)
 /* Must start with fp = current frame_pointer. */
   A68_HANDLE *z;
   double t0, t1;
-  if (block_heap_compacter > 0) {
-    return;
-  }
   t0 = seconds ();
+  if (block_heap_compacter == 0) {
 /* Unfree handles are subject to inspection. */
-  for (z = busy_handles; z != NULL; FORWARD (z)) {
-    STATUS (z) &= ~(COLOUR_MASK | COOKIE_MASK);
-  }
+    for (z = busy_handles; z != NULL; FORWARD (z)) {
+      STATUS (z) &= ~(COLOUR_MASK | COOKIE_MASK);
+    }
 /* Pour paint into the heap to reveal active objects. */
-  colour_heap (fp);
+    colour_heap (fp);
 /* Start freeing and compacting. */
-  garbage_bytes_freed = 0;
-  defragment_heap ();
+    garbage_bytes_freed = 0;
+    defragment_heap ();
 /* Stats and logging. */
-  garbage_collects++;
-  int_to_mp (p, garbage_freed, (int) garbage_bytes_freed, LONG_MP_DIGITS);
-  add_mp (p, garbage_total_freed, garbage_total_freed, garbage_freed, LONG_MP_DIGITS);
+    garbage_collects++;
+    int_to_mp (p, garbage_freed, (int) garbage_bytes_freed, LONG_MP_DIGITS);
+    add_mp (p, garbage_total_freed, garbage_total_freed, garbage_freed, LONG_MP_DIGITS);
+  }
   t1 = seconds ();
   if (t1 > t0) {
     garbage_seconds += (t1 - t0);
-#if defined CLK_TCK
   } else {
 /* Add average value in case of slow clock. */
+#if defined CLK_TCK
     garbage_seconds += ((1.0 / CLK_TCK) / 2.0);
+#elif defined CLOCKS_PER_SEC
+    garbage_seconds += ((1.0 / CLOCKS_PER_SEC) / 2.0);
 #endif
   }
 }

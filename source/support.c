@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -971,7 +971,24 @@ double ten_up (int expo)
 }
 
 /*!
+\brief protected exp
+\param x
+\return same
+**/
+
+double a68g_exp (double x)
+{
+  if (x < log (DBL_MIN)) {
+    return (0.0);
+  } else {
+    return (exp (x));
+  }
+}
+
+/*!
 \brief atan2 consistent with atan2_mp
+\param x
+\param y
 \return same
 **/
 

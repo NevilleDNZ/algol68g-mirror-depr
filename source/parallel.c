@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

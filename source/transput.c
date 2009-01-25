@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -1629,7 +1629,7 @@ void on_event_handler (NODE_T * p, A68_PROCEDURE z, A68_REF ref_file)
     ADDR_T pop_sp = stack_pointer, pop_fp = frame_pointer;
     MOID_T *u = MODE (PROC_REF_FILE_BOOL);
     PUSH_REF (p, ref_file);
-    genie_call_procedure (p, u, u, u, &z, pop_sp, pop_fp);
+    genie_call_procedure (p, MOID (&z), u, u, &z, pop_sp, pop_fp);
   }
 }
 
@@ -2245,7 +2245,7 @@ void genie_call_proc_ref_file_void (NODE_T * p, A68_REF ref_file, A68_PROCEDURE 
   ADDR_T pop_sp = stack_pointer, pop_fp = frame_pointer;
   MOID_T *u = MODE (PROC_REF_FILE_VOID);
   PUSH_REF (p, ref_file);
-  genie_call_procedure (p, u, u, u, &z, pop_sp, pop_fp);
+  genie_call_procedure (p, MOID (&z), u, u, &z, pop_sp, pop_fp);
   stack_pointer = pop_sp;       /* VOIDING. */
 }
 
@@ -4905,7 +4905,7 @@ format text is at in the syntax tree.
 \param ref_file fat pointer to A68 file
 **/
 
-void format_error (NODE_T * p, A68_REF ref_file, char * diag)
+void format_error (NODE_T * p, A68_REF ref_file, char *diag)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   A68_BOOL z;

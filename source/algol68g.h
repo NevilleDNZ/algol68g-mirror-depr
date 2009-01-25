@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -464,7 +464,7 @@ struct MODES_T
     *C_STRING, *ERROR, *FILE, *FORMAT, *HIP, *INT, *LONG_BITS, *LONG_BYTES,
     *LONG_COMPL, *LONG_COMPLEX, *LONG_INT, *LONGLONG_BITS, *LONGLONG_COMPL,
     *LONGLONG_COMPLEX, *LONGLONG_INT, *LONGLONG_REAL, *LONG_REAL, *NUMBER,
-    *PIPE, *PROC_REF_FILE_BOOL, *PROC_REF_FILE_VOID, *PROC_ROW_CHAR,
+    *PIPE, *PROC_REAL_REAL, *PROC_REF_FILE_BOOL, *PROC_REF_FILE_VOID, *PROC_ROW_CHAR,
     *PROC_STRING, *PROC_VOID, *REAL, *REF_BITS, *REF_BOOL, *REF_BYTES,
     *REF_CHAR, *REF_COMPL, *REF_COMPLEX, *REF_FILE, *REF_FORMAT, *REF_INT,
     *REF_LONG_BITS, *REF_LONG_BYTES, *REF_LONG_COMPL, *REF_LONG_COMPLEX,
@@ -1140,6 +1140,7 @@ extern double a68g_acosh (double);
 extern double a68g_asinh (double);
 extern double a68g_atan2 (double, double);
 extern double a68g_atanh (double);
+extern double a68g_exp (double);
 extern double a68g_hypot (double, double);
 extern double a68g_log1p (double);
 extern double begin_of_time;

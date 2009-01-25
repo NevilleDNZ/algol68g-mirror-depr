@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -3141,7 +3141,7 @@ static void mode_check_trimmer (NODE_T * p)
 \brief mode check indexer
 \param p position in tree
 \param subs subscript counter
-\param trims trimeer counter
+\param trims trimmer counter
 **/
 
 static void mode_check_indexer (NODE_T * p, int *subs, int *trims)
@@ -3190,7 +3190,8 @@ static void mode_check_call_2 (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
   p->partial_locale = register_extra_mode (p->partial_locale);
   if (DIM (MOID (&d)) != DIM (n)) {
     diagnostic_node (A68_ERROR, p, ERROR_ARGUMENT_NUMBER, n);
-    make_soid (y, SORT (x), MODE (ERROR), 0);
+    make_soid (y, SORT (x), SUB (n), 0);
+/*  make_soid (y, SORT (x), MODE (ERROR), 0); */
   } else {
     if (!whether_coercible (MOID (&d), n, STRONG, ALIAS_DEFLEXING)) {
       cannot_coerce (p, MOID (&d), n, STRONG, ALIAS_DEFLEXING, ARGUMENT);

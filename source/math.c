@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -39,6 +39,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_permutation.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_integration.h>
 
 /*
 #include <gsl/gsl_blas.h>
@@ -2767,6 +2768,99 @@ void genie_fft_inverse (NODE_T * p)
   if (data != NULL) {
     free (data);
   }
+  (void) gsl_set_error_handler (save_handler);
+}
+
+/*!
+\brief map GSL error handler onto a68g error handler
+\param reason error text
+\param file gsl file where error occured
+\param line line in above file
+\param int gsl error number
+**/
+
+void laplace_error_handler (const char *reason, const char *file, int line, int gsl_errno)
+{
+  if (line != 0) {
+    snprintf (edit_line, BUFFER_SIZE, "%s in line %d of file %s", reason, line, file);
+  } else {
+    snprintf (edit_line, BUFFER_SIZE, "%s", reason);
+  }
+  diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_LAPLACE, edit_line, gsl_strerror (gsl_errno), NULL);
+  exit_genie (error_node, A68_RUNTIME_ERROR);
+}
+
+/*!
+\brief detect math errors
+\param rc return code from function
+**/
+
+static void laplace_test_error (int rc)
+{
+  if (rc != 0) {
+    laplace_error_handler ("math error", "", 0, rc);
+  }
+}
+
+/*!
+\brief PROC (PROC (REAL) REAL, REAL, REF REAL) REAL laplace
+\param p position in tree
+**/
+
+#define LAPLACE_DIVISIONS 1024
+
+typedef struct A68_LAPLACE A68_LAPLACE;
+
+struct A68_LAPLACE
+{
+  NODE_T *p;
+  A68_PROCEDURE f;
+  double s;
+};
+
+double laplace_f (double t, void *z)
+{
+  A68_LAPLACE *l = (A68_LAPLACE *) z;
+  ADDR_T pop_sp = stack_pointer, pop_fp = frame_pointer;
+  MOID_T *u = MODE (PROC_REAL_REAL);
+  A68_REAL *ft = (A68_REAL *) STACK_TOP;
+  PUSH_PRIMITIVE (l->p, t, A68_REAL);
+  genie_call_procedure (l->p, MOID (&(l->f)), u, u, &(l->f), pop_sp, pop_fp);
+  stack_pointer = pop_sp;
+  return (VALUE (ft) * a68g_exp (-(l->s) * t));
+}
+
+void genie_laplace (NODE_T * p)
+{
+  A68_REF ref_error;
+  A68_REAL s, *error;
+  A68_PROCEDURE f;
+  A68_LAPLACE l;
+  gsl_function g;
+  gsl_integration_workspace *w;
+  double result, estimated_error;
+  int rc;
+  gsl_error_handler_t *save_handler = gsl_set_error_handler (laplace_error_handler);
+  POP_REF (p, &ref_error);
+  CHECK_REF (p, ref_error, MODE (REF_REAL));
+  error = (A68_REAL *) ADDRESS (&ref_error);
+  POP_OBJECT (p, &s, A68_REAL);
+  POP_PROCEDURE (p, &f);
+  l.p = p;
+  l.f = f;
+  l.s = VALUE (&s);
+  g.function = &laplace_f;
+  g.params = &l;
+  w = gsl_integration_workspace_alloc (LAPLACE_DIVISIONS);
+  if (VALUE (error) >= 0.0) {
+    rc = gsl_integration_qagiu (&g, 0.0, VALUE (error), 0.0, LAPLACE_DIVISIONS, w, &result, &estimated_error);
+  } else {
+    rc = gsl_integration_qagiu (&g, 0.0, 0.0, -VALUE (error), LAPLACE_DIVISIONS, w, &result, &estimated_error);
+  }
+  laplace_test_error (rc);
+  VALUE (error) = estimated_error;
+  PUSH_PRIMITIVE (p, result, A68_REAL);
+  gsl_integration_workspace_free (w);
   (void) gsl_set_error_handler (save_handler);
 }
 

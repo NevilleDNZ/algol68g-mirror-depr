@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -123,9 +123,13 @@ A68_ENV_INT (genie_longlong_exp_width, LONGLONG_EXP_WIDTH);
 A68_ENV_INT (genie_bits_width, BITS_WIDTH);
 A68_ENV_INT (genie_long_bits_width, get_mp_bits_width (MODE (LONG_BITS)));
 A68_ENV_INT (genie_longlong_bits_width, get_mp_bits_width (MODE (LONGLONG_BITS)));
-A68_ENV_INT (genie_bytes_width, BYTES_WIDTH) A68_ENV_INT (genie_long_bytes_width, LONG_BYTES_WIDTH);
-A68_ENV_INT (genie_max_abs_char, UCHAR_MAX) A68_ENV_INT (genie_max_int, A68_MAX_INT);
-A68_ENV_REAL (genie_max_real, DBL_MAX) A68_ENV_REAL (genie_small_real, DBL_EPSILON);
+A68_ENV_INT (genie_bytes_width, BYTES_WIDTH);
+A68_ENV_INT (genie_long_bytes_width, LONG_BYTES_WIDTH);
+A68_ENV_INT (genie_max_abs_char, UCHAR_MAX);
+A68_ENV_INT (genie_max_int, A68_MAX_INT);
+A68_ENV_REAL (genie_max_real, DBL_MAX);
+A68_ENV_REAL (genie_min_real, DBL_MIN);
+A68_ENV_REAL (genie_small_real, DBL_EPSILON);
 A68_ENV_REAL (genie_pi, A68G_PI);
 A68_ENV_REAL (genie_seconds, seconds ());
 A68_ENV_REAL (genie_cputime, seconds () - cputime_0);
@@ -137,7 +141,7 @@ A68_ENV_INT (genie_system_stack_size, stack_size);
 \param p position in tree
 **/
 
-     void genie_system_stack_pointer (NODE_T * p)
+void genie_system_stack_pointer (NODE_T * p)
 {
   BYTE_T stack_offset;
   PUSH_PRIMITIVE (p, (int) system_stack_offset - (int) &stack_offset, A68_INT);
@@ -211,6 +215,38 @@ void genie_longlong_max_real (NODE_T * p)
   for (j = 2; j <= 1 + digits; j++) {
     z[j] = MP_RADIX - 1;
   }
+}
+
+/*!
+\brief LONG REAL min long real
+\param p position in tree
+**/
+
+void genie_long_min_real (NODE_T * p)
+{
+  int digits = get_mp_digits (MODE (LONG_REAL));
+  MP_DIGIT_T *z;
+  STACK_MP (z, p, digits);
+  SET_MP_ZERO (z, digits);
+  MP_STATUS (z) = INITIALISED_MASK;
+  MP_EXPONENT (z) = -(MAX_MP_EXPONENT);
+  MP_DIGIT (z, 1) = 1.0;
+}
+
+/*!
+\brief LONG LONG REAL min long long real
+\param p position in tree
+**/
+
+void genie_longlong_min_real (NODE_T * p)
+{
+  int digits = get_mp_digits (MODE (LONGLONG_REAL));
+  MP_DIGIT_T *z;
+  STACK_MP (z, p, digits);
+  SET_MP_ZERO (z, digits);
+  MP_STATUS (z) = INITIALISED_MASK;
+  MP_EXPONENT (z) = -(MAX_MP_EXPONENT);
+  MP_DIGIT (z, 1) = 1.0;
 }
 
 /*!
@@ -3504,7 +3540,7 @@ void genie_curt_real (NODE_T * p)
 
 void genie_exp_real (NODE_T * p)
 {
-  C_FUNCTION (p, exp);
+  C_FUNCTION (p, a68g_exp);
 }
 
 /*!

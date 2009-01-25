@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -300,11 +300,13 @@ extern GENIE_PROCEDURE genie_longlong_int_width;
 extern GENIE_PROCEDURE genie_longlong_max_bits;
 extern GENIE_PROCEDURE genie_longlong_max_int;
 extern GENIE_PROCEDURE genie_longlong_max_real;
+extern GENIE_PROCEDURE genie_longlong_min_real;
 extern GENIE_PROCEDURE genie_longlong_real_width;
 extern GENIE_PROCEDURE genie_longlong_small_real;
 extern GENIE_PROCEDURE genie_long_max_bits;
 extern GENIE_PROCEDURE genie_long_max_int;
 extern GENIE_PROCEDURE genie_long_max_real;
+extern GENIE_PROCEDURE genie_long_min_real;
 extern GENIE_PROCEDURE genie_long_next_random;
 extern GENIE_PROCEDURE genie_long_real_width;
 extern GENIE_PROCEDURE genie_long_small_real;
@@ -320,6 +322,7 @@ extern GENIE_PROCEDURE genie_max_abs_char;
 extern GENIE_PROCEDURE genie_max_bits;
 extern GENIE_PROCEDURE genie_max_int;
 extern GENIE_PROCEDURE genie_max_real;
+extern GENIE_PROCEDURE genie_min_real;
 extern GENIE_PROCEDURE genie_minusab_complex;
 extern GENIE_PROCEDURE genie_minusab_int;
 extern GENIE_PROCEDURE genie_minusab_long_complex;

@@ -1,7 +1,7 @@
 #! /bin/sh
 #
 # This file is part of Algol 68 Genie - an Algol 68 interpreter.
-# Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+# Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -21,11 +21,12 @@
 
 A68G_NAME="a68g"
 MAKEFILE=makefile
-VERSION_NUMBER="15"
+VERSION_NUMBER="15.1"
 REVISION="Mark $VERSION_NUMBER"
 RR_NUMBER="1.2"
-MONTH="December"
-YEAR="2008"
+MAN_NUMBER="3.1"
+MONTH="January"
+YEAR="2009"
 DATE=`date +"%e %B %Y %H:%M"`
 TIME_STAMP="$MONTH $YEAR"
 RELEASE_DATE="released $TIME_STAMP"
@@ -35,6 +36,7 @@ libplot=
 libgsl=
 libpostgresql=
 # Where does the system store things
+PWD=`pwd`
 SYS_INC=/usr/include
 SYS_LIB=/usr/lib
 SYS_BIN=/usr/bin
@@ -82,10 +84,6 @@ CONFIGURE_OPTIONS=
 #
 #
 #
-SKIP(){
-  echo "Note: Ignoring option $arg" 1>&2
-}
-
 for arg in "$@"
 do
 	CONFIGURE_OPTIONS=`echo $CONFIGURE_OPTIONS $arg`
@@ -107,20 +105,6 @@ do
 # Process current option
 	case "$arg"
 	in
- # Note: ignore these for the moment....
-        (--build=*)SKIP;;          # --build=i686-pc-linux-gnu
-        (--host=*)SKIP;;           # --host=i686-pc-linux-gnu
-        (--target=*)SKIP;;         # --target=i386-redhat-linux-gnu
-        (--program-prefix=*)SKIP;; # --program-prefix=
-        (--prefix=*)SKIP;;         # --prefix=/usr
-        (--exec-prefix=*)SKIP;;    # --exec-prefix=/usr
-        (--sbindir=*)SKIP;;        # --sbindir=/usr/sbin
-        (--sysconfdir=*)SKIP;;     # --sysconfdir=/etc
-        (--datadir=*)SKIP;;        # --datadir=/usr/share
-        (--libexecdir=*)SKIP;;     # --libexecdir=/usr/libexec
-        (--localstatedir=*)SKIP;;  # --localstatedir=/var
-        (--sharedstatedir=*)SKIP;; # --sharedstatedir=/usr/com
-        (--infodir=*)SKIP;;        # --infodir=/usr/share/info
 	-anonymous | --anonymous)
 		anonymous=;;
 	-b | --build)
@@ -148,7 +132,7 @@ do
 		ld_opt=`echo $ld_opt "-pg"` ;;
 	-incdir | --incdir)
 		prev_arg=USR_INC ;;
-	-incdir=* | --incdir=*|--includedir=*)
+	-incdir=* | --incdir=*)
 		USR_INC=$val_arg ;;
 	-libdir | --libdir)
 		prev_arg=USR_LIB ;;
@@ -225,7 +209,7 @@ fi
 if [ -z $dist_opt ]
 then
 	cd ..
-	tar -czf $PACKAGE.tar.gz $PACKAGE
+	tar -czf $PACKAGE.tgz $PACKAGE
 	echo "generated distribution"
 	echo "$0 done"
 	exit
@@ -258,13 +242,13 @@ then
 	pushd .
 	cd $USR_MANUAL_TEMPLATES
 	echo "\Chapter{Manual page}{manpage}">a68g.man.tex
-	echo "\begin{Verbatim}[fontsize=\relsize{-1}, frame=single, numbers=left]">>a68g.man.tex
+	echo "\begin{lstlisting}">>a68g.man.tex
 	man a68g | col -bx >>a68g.man.tex
-	echo "\end{Verbatim}">>a68g.man.tex
+	echo "\end{lstlisting}">>a68g.man.tex
 	for f in `echo *.tex`
 	do
 		echo $f
-		sed "s/REVISION/$REVISION/g" <$f | sed "s/VERSION_NUMBER/$VERSION_NUMBER/" | sed "s/TIME_STAMP/$TIME_STAMP/g" | sed "s/PACKAGE/$PACKAGE/g" | sed "s/RR_NUMBER/$RR_NUMBER/g" | sed "s/OS_VERSION/`uname -mrs`/g" | sed "s/GCC_VERSION/`gcc -dumpversion | sed '2,$d'`/g" > ../$f
+		sed "s/REVISION/$REVISION/g" <$f | sed "s/MAN_NUMBER/$MAN_NUMBER/" | sed "s/VERSION_NUMBER/$VERSION_NUMBER/" | sed "s/TIME_STAMP/$TIME_STAMP/g" | sed "s/PACKAGE/$PACKAGE/g" | sed "s/RR_NUMBER/$RR_NUMBER/g" | sed "s/OS_VERSION/`uname -mrs`/g" | sed "s/GCC_VERSION/`gcc -dumpversion | sed '2,$d'`/g" > ../$f
 	done
 	popd
 	pushd .
@@ -436,12 +420,12 @@ fi
 #
 if ! [ -w $USR_BIN ]
 then
-	echo "warning: $USERID cannot write to $USR_BIN, set to `pwd`"
+	warn1=`echo "warning: $USERID cannot write to $USR_BIN, set to $PWD"`
 	if [ -f $USR_BIN/a68g ]
 	then
-		echo "warning: $USR_BIN/a68g already exists which may cause confusion"
-		warnings=yes
+		warn2=`echo "warning: $USR_BIN/a68g already exists which may cause confusion"`
 	fi
+	warnings=yes
 	USR_BIN=`pwd`
 fi
 # Find default man_dir if none was given
@@ -472,7 +456,8 @@ fi
 #
 if ! [ -w $man_dir ]
 then
-	echo "warning: $USERID cannot write to $man_dir, set to `pwd`"
+	warn3=`echo "warning: $USERID cannot write to $man_dir, set to $PWD"`
+	warnings=yes
 	man_dir=`pwd`
 fi
 #
@@ -544,6 +529,7 @@ echo "SHELL=/bin/sh" 1>>$BUILD_FILE
 echo "USR_BIN=$USR_BIN" 1>>$BUILD_FILE
 echo "USR_LIB=$USR_LIB" 1>>$BUILD_FILE
 echo "USR_INC=$USR_INC" 1>>$BUILD_FILE
+echo "SYS_INC=$SYS_INC" 1>>$BUILD_FILE
 echo "CC=$cc" 1>>$BUILD_FILE
 #
 # Shared libraries are called .so (Linux etcetera) or .dylib (BSD).
@@ -729,7 +715,7 @@ then
         then
 		echo "-I\$(USR_INC) -I\$(SYS_INC) $warn $opt" 1>>$BUILD_FILE
 	else
-		echo "-I\$(USR_INC) -I\$(SYS_INC) -I\$SQL_DIR/include $warn $opt" 1>>$BUILD_FILE
+		echo "-I\$(USR_INC) -I\$(SYS_INC) -I\$(SQL_DIR)/include $warn $opt" 1>>$BUILD_FILE
 	fi
 else
 	echo "-I\$(USR_INC)" 1>>$BUILD_FILE
@@ -747,7 +733,7 @@ then
         then
 		echo "-L\$(USR_LIB) $ld_opt" 1>>$BUILD_FILE
 	else
-		echo "-L\$(USR_LIB) -L\$SQL_DIR/lib $ld_opt" 1>>$BUILD_FILE
+		echo "-L\$(USR_LIB) -L\$(SQL_DIR)/lib $ld_opt" 1>>$BUILD_FILE
 	fi
 else
 	echo "-L\$(USR_LIB)" 1>>$BUILD_FILE
@@ -1003,7 +989,7 @@ int main (int argc, char **argv) {
 	printf ("%s", PACKAGE_VERSION);
 }
 _ACEOF
-		gcc pgvers.c -o pgvers
+		gcc pgvers.c -I$SQL_DIR/include -o pgvers
 		echo "#define A68_PG_VERSION \"`./pgvers`\"" 1>>$VERSION_FILE
 		rm pgvers*
 	else
@@ -1057,9 +1043,20 @@ then
 	echo "$PACKAGE will compile with support for Postgresql"
 fi
 #
-echo "now type 'make' or 'make install'"
-echo ""
+if [ -n "$warn1" ]
+then
+	echo $warn1
+fi
+if [ -n "$warn2" ]
+then
+	echo $warn2
+fi
+if [ -n "$warn3" ]
+then
+	echo $warn3
+fi
 #
+echo ""
 if [ -z $warnings ]
 then
 	echo "$0 done"
@@ -1067,4 +1064,5 @@ else
 	echo "$0 done, with warnings"
 fi
 #
+echo "now type 'make' or 'make install'"
 exit

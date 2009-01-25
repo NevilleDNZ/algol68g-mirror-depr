@@ -1,13 +1,19 @@
-/* ./source/version.h generated on Sun Nov 30 23:57:35 EST 2008 by nevilled. */
+/* ./source/version.h generated on Sun Jan 25 23:49:00 CET 2009 by marcel. */
+
+#if ! defined A68G_VERSION_H
+#define A68G_VERSION_H
+
 #define A68G_NAME "a68g"
-#define REVISION "Mark 15"
-#define RELEASE_DATE "released December 2008"
-#define RELEASE_YEAR "2008"
-#define OS_NAME "Linux 2.6.27.5-41.fc9.i686"
-#define CONFIGURE_DATE "30 November 2008 23:57"
-#define CONFIGURE_OPTIONS "--bindir=/usr/bin --libdir=/usr/lib --mandir=/usr/share/man --incdir=/usr/include --threads"
-#define USERID "nevilled"
-#define GCC_VERSION "4.3.0"
-#define A68_LIBPLOT_VERSION "4.2"
-#define A68_GSL_VERSION "1.10"
-#define A68_PG_VERSION "8.3.5"
+#define REVISION "Mark 15.1"
+#define RELEASE_DATE "released January 2009"
+#define RELEASE_YEAR "2009"
+#define OS_NAME "Linux 2.6.28"
+#define CONFIGURE_DATE ""
+#define CONFIGURE_OPTIONS ""
+#define USERID ""
+#define GCC_VERSION ""
+#define A68_LIBPLOT_VERSION ""
+#define A68_GSL_VERSION ""
+#define A68_PG_VERSION ""
+
+#endif

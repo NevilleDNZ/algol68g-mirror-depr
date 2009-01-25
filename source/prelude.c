@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -392,6 +392,11 @@ static void stand_moids (void)
   z = NULL;
   add_mode (&stand_env->moids, PROC_SYMBOL, count_pack_members (z), NULL, MODE (VOID), z);
   MODE (PROC_VOID) = stand_env->moids;
+/* PROC (REAL) REAL. */
+  z = NULL;
+  add_mode_to_pack (&z, MODE (REAL), NULL, NULL);
+  add_mode (&stand_env->moids, PROC_SYMBOL, count_pack_members (z), NULL, MODE (REAL), z);
+  MODE (PROC_REAL_REAL) = stand_env->moids;
 /* IO: PROC (REF FILE) BOOL. */
   z = NULL;
   add_mode_to_pack (&z, MODE (REF_FILE), NULL, NULL);
@@ -441,6 +446,7 @@ static void stand_prelude (void)
   a68_idf (A68_TRUE, "intshorths", MODE (INT), genie_int_shorths);
   a68_idf (A68_TRUE, "maxint", MODE (INT), genie_max_int);
   a68_idf (A68_TRUE, "maxreal", MODE (REAL), genie_max_real);
+  a68_idf (A68_TRUE, "minreal", MODE (REAL), genie_min_real);
   a68_idf (A68_TRUE, "smallreal", MODE (REAL), genie_small_real);
   a68_idf (A68_TRUE, "reallengths", MODE (INT), genie_real_lengths);
   a68_idf (A68_TRUE, "realshorths", MODE (INT), genie_real_shorths);
@@ -477,7 +483,9 @@ static void stand_prelude (void)
   a68_idf (A68_TRUE, "longsmallreal", MODE (LONG_REAL), genie_long_small_real);
   a68_idf (A68_TRUE, "longlongsmallreal", MODE (LONGLONG_REAL), genie_longlong_small_real);
   a68_idf (A68_TRUE, "longmaxreal", MODE (LONG_REAL), genie_long_max_real);
+  a68_idf (A68_TRUE, "longminreal", MODE (LONG_REAL), genie_long_min_real);
   a68_idf (A68_TRUE, "longlongmaxreal", MODE (LONGLONG_REAL), genie_longlong_max_real);
+  a68_idf (A68_TRUE, "longlongminreal", MODE (LONGLONG_REAL), genie_longlong_min_real);
   a68_idf (A68_TRUE, "longbyteswidth", MODE (INT), genie_long_bytes_width);
   a68_idf (A68_FALSE, "seconds", MODE (REAL), genie_seconds);
   a68_idf (A68_FALSE, "clock", MODE (REAL), genie_cputime);
@@ -1504,6 +1512,8 @@ static void stand_prelude (void)
   a68_idf (A68_FALSE, "carccosh", m, genie_arccosh_complex);
   a68_idf (A68_FALSE, "complexarctanh", m, genie_arctanh_complex);
   a68_idf (A68_FALSE, "carctanh", m, genie_arctanh_complex);
+  m = a68_proc (MODE (REAL), proc_real_real, MODE (REAL), MODE (REF_REAL), NULL);
+  a68_idf (A68_FALSE, "laplace", m, genie_laplace);
 #endif
   m = a68_proc (MODE (LONG_COMPLEX), MODE (LONG_COMPLEX), NULL);
   a68_idf (A68_FALSE, "longcomplexsqrt", m, genie_sqrt_long_complex);
@@ -2347,7 +2357,7 @@ void make_standard_environ (void)
   stand_moids ();
   proc_int = a68_proc (MODE (INT), NULL);
   proc_real = a68_proc (MODE (REAL), NULL);
-  proc_real_real = a68_proc (MODE (REAL), MODE (REAL), NULL);
+  proc_real_real = MODE (PROC_REAL_REAL);
   proc_real_real_real = a68_proc (MODE (REAL), MODE (REAL), MODE (REAL), NULL);
   proc_real_real_real_real = a68_proc (MODE (REAL), MODE (REAL), MODE (REAL), MODE (REAL), NULL);
   proc_complex_complex = a68_proc (MODE (COMPLEX), MODE (COMPLEX), NULL);

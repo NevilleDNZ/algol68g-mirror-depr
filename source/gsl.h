@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -47,6 +47,7 @@ extern GENIE_PROCEDURE genie_tanh_complex;
 #if defined ENABLE_NUMERICAL
 extern GENIE_PROCEDURE genie_complex_scale_matrix_complex;
 extern GENIE_PROCEDURE genie_complex_scale_vector_complex;
+extern GENIE_PROCEDURE genie_laplace;
 extern GENIE_PROCEDURE genie_matrix_add;
 extern GENIE_PROCEDURE genie_matrix_ch;
 extern GENIE_PROCEDURE genie_matrix_ch_solve;

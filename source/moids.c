@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -2393,7 +2393,7 @@ int moid_size (MOID_T * p)
 \param idf print indicants if one exists in this range
 **/
 
-static void moid_to_string_3 (char *dst, char *str, int w, NODE_T * idf)
+static void moid_to_string_3 (char *dst, char *str, int w)
 {
   if (w > (int) strlen (str)) {
     bufcat (dst, str, BUFFER_SIZE);
@@ -2497,37 +2497,36 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w, NODE_T * idf)
     }
   }
   if (n == MODE (HIP)) {
-    moid_to_string_3 (b, "HIP", w, idf);
+    moid_to_string_3 (b, "HIP", w);
   } else if (n == MODE (ERROR)) {
-    moid_to_string_3 (b, "ERROR", w, idf);
+    moid_to_string_3 (b, "ERROR", w);
   } else if (n == MODE (UNDEFINED)) {
-    moid_to_string_3 (b, "UNDEFINED", w, idf);
+    moid_to_string_3 (b, "unresolved", w);
   } else if (n == MODE (C_STRING)) {
-    moid_to_string_3 (b, "C-STRING", w, idf);
+    moid_to_string_3 (b, "C-STRING", w);
   } else if (n == MODE (COMPLEX) || n == MODE (COMPL)) {
-    moid_to_string_3 (b, "COMPLEX", w, idf);
+    moid_to_string_3 (b, "COMPLEX", w);
   } else if (n == MODE (LONG_COMPLEX) || n == MODE (LONG_COMPL)) {
-    moid_to_string_3 (b, "LONG COMPLEX", w, idf);
+    moid_to_string_3 (b, "LONG COMPLEX", w);
   } else if (n == MODE (LONGLONG_COMPLEX) || n == MODE (LONGLONG_COMPL)) {
-    moid_to_string_3 (b, "LONG LONG COMPLEX", w, idf);
+    moid_to_string_3 (b, "LONG LONG COMPLEX", w);
   } else if (n == MODE (STRING)) {
-    moid_to_string_3 (b, "STRING", w, idf);
+    moid_to_string_3 (b, "STRING", w);
   } else if (n == MODE (PIPE)) {
-    moid_to_string_3 (b, "PIPE", w, idf);
+    moid_to_string_3 (b, "PIPE", w);
   } else if (n == MODE (SOUND)) {
-    moid_to_string_3 (b, "SOUND", w, idf);
+    moid_to_string_3 (b, "SOUND", w);
   } else if (n == MODE (COLLITEM)) {
-    moid_to_string_3 (b, "COLLITEM", w, idf);
+    moid_to_string_3 (b, "COLLITEM", w);
   } else if (WHETHER (n, IN_TYPE_MODE)) {
-    moid_to_string_3 (b, "\"SIMPLIN\"", w, idf);
+    moid_to_string_3 (b, "\"SIMPLIN\"", w);
   } else if (WHETHER (n, OUT_TYPE_MODE)) {
-    moid_to_string_3 (b, "\"SIMPLOUT\"", w, idf);
+    moid_to_string_3 (b, "\"SIMPLOUT\"", w);
   } else if (WHETHER (n, ROWS_SYMBOL)) {
-    moid_to_string_3 (b, "\"ROWS\"", w, idf);
+    moid_to_string_3 (b, "\"ROWS\"", w);
   } else if (n == MODE (VACUUM)) {
-    moid_to_string_3 (b, "\"VACUUM\"", w, idf);
-  } else if (WHETHER (n, VOID_SYMBOL) || WHETHER (n, STANDARD)
-             || WHETHER (n, INDICANT)) {
+    moid_to_string_3 (b, "\"VACUUM\"", w);
+  } else if (WHETHER (n, VOID_SYMBOL) || WHETHER (n, STANDARD) || WHETHER (n, INDICANT)) {
     int i = 1;
     for (; i <= abs (DIM (n)) && w > 0; i++) {
       if (DIM (n) < 0) {
@@ -2546,7 +2545,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int w, NODE_T * idf)
         w = 0;
       }
     }
-    moid_to_string_3 (b, SYMBOL (NODE (n)), w, idf);
+    moid_to_string_3 (b, SYMBOL (NODE (n)), w);
   } else if (WHETHER (n, REF_SYMBOL)) {
     if (w > (int) strlen ("REF ..")) {
       bufcat (b, "REF ", BUFFER_SIZE);

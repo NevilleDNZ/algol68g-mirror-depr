@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2008 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -189,7 +189,7 @@ extern void add_string_from_stack_transput_buffer (NODE_T *, int);
 extern void add_string_transput_buffer (NODE_T *, int, char *);
 extern void end_of_file_error (NODE_T * p, A68_REF ref_file);
 extern void enlarge_transput_buffer (NODE_T *, int, int);
-extern void format_error (NODE_T *, A68_REF, char*);
+extern void format_error (NODE_T *, A68_REF, char *);
 extern void genie_read_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
 extern void genie_string_to_value (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
 extern void genie_value_to_string (NODE_T *, MOID_T *, BYTE_T *, int);
