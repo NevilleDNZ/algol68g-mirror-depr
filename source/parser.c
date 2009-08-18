@@ -121,6 +121,9 @@ static void insert_node (NODE_T * p, int att)
 {
   NODE_T *q = new_node ();
   *q = *p;
+  if (GENIE (p) != NULL) {
+    GENIE (q) = new_genie_info ();
+  }
   ATTRIBUTE (q) = att;
   NEXT (p) = q;
   PREVIOUS (q) = p;
@@ -217,11 +220,11 @@ static BOOL_T whether_loop_keyword (NODE_T * p)
   case WHILE_SYMBOL:
   case DO_SYMBOL:
     {
-      return (ATTRIBUTE (p));
+      return (A68_TRUE);
     }
   default:
     {
-      return (NULL_ATTRIBUTE);
+      return (A68_FALSE);
     }
   }
 }
@@ -450,7 +453,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
 /* Attribute or symbol. */
       if (z != NULL && SUB (p) != NULL) {
         if (gatt == IDENTIFIER || gatt == OPERATOR || gatt == DENOTATION) {
-          snprintf (edit_line, BUFFER_SIZE, " \"%s\"", SYMBOL (p));
+          CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
           bufcat (buffer, edit_line, BUFFER_SIZE);
         } else {
           if (strchr ("aeio", z[0]) != NULL) {
@@ -458,14 +461,14 @@ diagnostic is not as important as accurately indicating *were* the problem is!
           } else {
             bufcat (buffer, " a", BUFFER_SIZE);
           }
-          snprintf (edit_line, BUFFER_SIZE, " %s", z);
+          CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " %s", z) >= 0);
           bufcat (buffer, edit_line, BUFFER_SIZE);
         }
       } else if (z != NULL && SUB (p) == NULL) {
-        snprintf (edit_line, BUFFER_SIZE, " \"%s\"", SYMBOL (p));
+        CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       } else if (SYMBOL (p) != NULL) {
-        snprintf (edit_line, BUFFER_SIZE, " \"%s\"", SYMBOL (p));
+        CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       }
 /* Add "starting in line nn". */
@@ -474,7 +477,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
         if (gatt == SERIAL_CLAUSE || gatt == ENQUIRY_CLAUSE || gatt == INITIALISER_SERIES) {
           bufcat (buffer, " starting", BUFFER_SIZE);
         }
-        snprintf (edit_line, BUFFER_SIZE, " in line %d", line);
+        CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " in line %d", line) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       }
       count++;
@@ -507,7 +510,7 @@ static void bracket_check_error (char *txt, int n, char *bra, char *ket)
 {
   if (n != 0) {
     char b[BUFFER_SIZE];
-    snprintf (b, BUFFER_SIZE, "\"%s\" without matching \"%s\"", (n > 0 ? bra : ket), (n > 0 ? ket : bra));
+    CHECK_RETVAL (snprintf (b, (size_t) BUFFER_SIZE, "\"%s\" without matching \"%s\"", (n > 0 ? bra : ket), (n > 0 ? ket : bra)) >= 0);
     if (strlen (txt) > 0) {
       bufcat (txt, " and ", BUFFER_SIZE);
     }
@@ -748,14 +751,14 @@ After this we can assign symbol tables to basic blocks.
 /*!
 \brief give diagnose from top-down parser
 \param start embedding clause starts here
-\param where error issued at this point
+\param posit error issued at this point
 \param clause type of clause being processed
 \param expected token expected
 **/
 
-static void top_down_diagnose (NODE_T * start, NODE_T * where, int clause, int expected)
+static void top_down_diagnose (NODE_T * start, NODE_T * posit, int clause, int expected)
 {
-  NODE_T *issue = (where != NULL ? where : start);
+  NODE_T *issue = (posit != NULL ? posit : start);
   if (expected != 0) {
     diagnostic_node (A68_SYNTAX_ERROR, issue, ERROR_EXPECTED_NEAR, expected, clause, SYMBOL (start), start->info->line, NULL);
   } else {
@@ -817,7 +820,7 @@ static int whether_loop_cast_formula (NODE_T * p)
 static NODE_T *top_down_skip_loop_unit (NODE_T * p)
 {
 /* Unit may start with, or consist of, a loop. */
-  if (whether_loop_keyword (p) != NULL_ATTRIBUTE) {
+  if (whether_loop_keyword (p)) {
     p = top_down_loop (p);
   }
 /* Skip rest of unit. */
@@ -833,16 +836,16 @@ static NODE_T *top_down_skip_loop_unit (NODE_T * p)
         k = whether_loop_cast_formula (p);
       }
 /* ... may be followed by a loop clause. */
-      if (whether_loop_keyword (p) != NULL_ATTRIBUTE) {
+      if (whether_loop_keyword (p)) {
         p = top_down_loop (p);
       }
-    } else if (whether_loop_keyword (p) != NULL_ATTRIBUTE || WHETHER (p, OD_SYMBOL)) {
+    } else if (whether_loop_keyword (p) || WHETHER (p, OD_SYMBOL)) {
 /* new loop or end-of-loop. */
       return (p);
     } else if (WHETHER (p, COLON_SYMBOL)) {
       FORWARD (p);
 /* skip routine header: loop clause. */
-      if (p != NULL && whether_loop_keyword (p) != NULL_ATTRIBUTE) {
+      if (p != NULL && whether_loop_keyword (p)) {
         p = top_down_loop (p);
       }
     } else if (whether_one_of (p, SEMI_SYMBOL, COMMA_SYMBOL, NULL_ATTRIBUTE)
@@ -867,7 +870,7 @@ static NODE_T *top_down_skip_loop_series (NODE_T * p)
   BOOL_T z;
   do {
     p = top_down_skip_loop_unit (p);
-    z = (p != NULL && (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, COLON_SYMBOL, NULL_ATTRIBUTE)));
+    z = (BOOL_T) (p != NULL && (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, COLON_SYMBOL, NULL_ATTRIBUTE)));
     if (z) {
       FORWARD (p);
     }
@@ -1372,7 +1375,7 @@ void top_down_parser (NODE_T * p)
 {
   if (p != NULL) {
     if (!setjmp (top_down_crash_exit)) {
-      top_down_series (p);
+      (void) top_down_series (p);
       top_down_loops (p);
       top_down_untils (p);
       top_down_formats (p);
@@ -1459,6 +1462,9 @@ Filling in gives one format for such construct; this helps later passes.
 */
   NODE_T *z = new_node ();
   *z = *p;
+  if (GENIE (p) != NULL) {
+    GENIE (z) = new_genie_info ();
+  }
   PREVIOUS (z) = p;
   SUB (z) = NULL;
   ATTRIBUTE (z) = a;
@@ -1476,7 +1482,11 @@ Filling in gives one format for such construct; this helps later passes.
 
 static void a68_extension (NODE_T * p)
 {
-  diagnostic_node (A68_WARNING, p, WARNING_EXTENSION, NULL);
+  if (MODULE (INFO (p))->options.portcheck) {
+    diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION, NULL);
+  } else {
+    diagnostic_node (A68_WARNING, p, WARNING_EXTENSION, NULL);
+  }
 }
 
 /*!
@@ -1557,12 +1567,12 @@ static void try_reduction (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
       keep_matching = A68_FALSE;
     } else if (arg == WILDCARD) {
 /* WILDCARD matches any Algol68G non terminal, but no keyword. */
-      keep_matching = (non_terminal_string (edit_line, ATTRIBUTE (p)) != NULL);
+      keep_matching = (BOOL_T) (non_terminal_string (edit_line, ATTRIBUTE (p)) != NULL);
     } else {
       if (arg >= 0) {
-        keep_matching = (arg == ATTRIBUTE (p));
+        keep_matching = (BOOL_T) (arg == ATTRIBUTE (p));
       } else {
-        keep_matching = (arg != ATTRIBUTE (p));
+        keep_matching = (BOOL_T) (arg != ATTRIBUTE (p));
       }
     }
     if (keep_matching) {
@@ -1578,22 +1588,19 @@ static void try_reduction (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
     NODE_T *q;
     int count = 0;
     reductions++;
-    if (!((reductions == head->reduction + 1) && NEXT (head) == NULL)) {
-      where (STDOUT_FILENO, head);
-    }
-    head->reduction = reductions;
-    snprintf (output_line, BUFFER_SIZE, "\nReduction %d: %s<-", reductions, non_terminal_string (edit_line, result));
+    where (STDOUT_FILENO, head);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nReduction %d: %s<-", reductions, non_terminal_string (edit_line, result)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
     for (q = head; q != NULL && tail != NULL && q != NEXT (tail); FORWARD (q), count++) {
       int gatt = ATTRIBUTE (q);
-      char *z = non_terminal_string (input_line, gatt);
+      char *str = non_terminal_string (input_line, gatt);
       if (count > 0) {
         WRITE (STDOUT_FILENO, ", ");
       }
-      if (z != NULL) {
-        WRITE (STDOUT_FILENO, z);
+      if (str != NULL) {
+        WRITE (STDOUT_FILENO, str);
         if (gatt == IDENTIFIER || gatt == OPERATOR || gatt == DENOTATION || gatt == INDICANT) {
-          snprintf (output_line, BUFFER_SIZE, " \"%s\"", SYMBOL (q));
+          CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (q)) >= 0);
           WRITE (STDOUT_FILENO, output_line);
         }
       } else {
@@ -1671,7 +1678,7 @@ static void reduce_particular_program (NODE_T * p)
   try_reduction (q, NULL, NULL, PARTICULAR_PROGRAM, LABEL, ENCLOSED_CLAUSE, NULL_ATTRIBUTE);
   try_reduction (q, NULL, NULL, PARTICULAR_PROGRAM, ENCLOSED_CLAUSE, NULL_ATTRIBUTE);
   if (SUB (p) == NULL || NEXT (p) != NULL) {
-    recover_from_error (p, PARTICULAR_PROGRAM, (a68_prog.error_count - error_count_0) > MAX_ERRORS);
+    recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((a68_prog.error_count - error_count_0) > MAX_ERRORS));
   }
 }
 
@@ -1708,7 +1715,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
 BOOL_T reduce_phrase (NODE_T * p, int expect)
 {
   int error_count_0 = a68_prog.error_count, error_count_02;
-  BOOL_T declarer_pack = (expect == STRUCTURE_PACK || expect == PARAMETER_PACK || expect == FORMAL_DECLARERS || expect == UNION_PACK || expect == SPECIFIER);
+  BOOL_T declarer_pack = (BOOL_T) (expect == STRUCTURE_PACK || expect == PARAMETER_PACK || expect == FORMAL_DECLARERS || expect == UNION_PACK || expect == SPECIFIER);
 /* Sample all info needed to decide whether a bold tag is operator or indicant. */
   extract_indicants (p);
   if (!declarer_pack) {
@@ -1738,7 +1745,7 @@ BOOL_T reduce_phrase (NODE_T * p, int expect)
   }
 /* Do something intelligible if parsing failed. */
   if (SUB (p) == NULL || NEXT (p) != NULL) {
-    recover_from_error (p, expect, (a68_prog.error_count - error_count_0) > MAX_ERRORS);
+    recover_from_error (p, expect, (BOOL_T) ((a68_prog.error_count - error_count_0) > MAX_ERRORS));
     return (A68_FALSE);
   } else {
     return (A68_TRUE);
@@ -2083,7 +2090,7 @@ static BOOL_T whether_formal_bounds (NODE_T * p)
     case IDENTIFIER:
     case OPERATOR:
       {
-        return (whether_formal_bounds (SUB (p)) && whether_formal_bounds (NEXT (p)));
+        return ((BOOL_T) (whether_formal_bounds (SUB (p)) && whether_formal_bounds (NEXT (p))));
       }
     default:
       {
@@ -2434,17 +2441,12 @@ static void reduce_primaries (NODE_T * p, int expect)
       if (WHETHER (q, PRIMARY) && x != NULL) {
         if (WHETHER (x, OPEN_SYMBOL)) {
           reduce_subordinate (NEXT (q), GENERIC_ARGUMENT);
-          try_reduction (q, NULL, &z, SLICE, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, PRIMARY, SLICE, NULL_ATTRIBUTE);
-/*
-	  reduce_subordinate (NEXT (q), ARGUMENT);
-	  try_reduction (q, NULL, &z, CALL, PRIMARY, ARGUMENT, NULL_ATTRIBUTE);
-	  try_reduction (q, NULL, &z, PRIMARY, CALL, NULL_ATTRIBUTE);
-*/
+          try_reduction (q, NULL, &z, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &z, PRIMARY, SPECIFICATION, NULL_ATTRIBUTE);
         } else if (WHETHER (x, SUB_SYMBOL)) {
           reduce_subordinate (NEXT (q), GENERIC_ARGUMENT);
-          try_reduction (q, NULL, &z, SLICE, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, PRIMARY, SLICE, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &z, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &z, PRIMARY, SPECIFICATION, NULL_ATTRIBUTE);
         }
       }
     }
@@ -2522,6 +2524,34 @@ routines for implementing formatted transput. This is a pragmatic system.
 \param p position in tree
 **/
 
+void reduce_c_pattern (NODE_T * p, int pr, int let)
+{
+  NODE_T *q;
+  for (q = p; q != NULL; FORWARD (q)) {
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_PLUS, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_PLUS, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_PLUS, REPLICATOR, let, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, pr, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, let, NULL_ATTRIBUTE);
+  }
+}
+
+/*!
+\brief reduce format texts completely
+\param p position in tree
+**/
+
 static void reduce_format_texts (NODE_T * p)
 {
   NODE_T *q;
@@ -2531,48 +2561,16 @@ static void reduce_format_texts (NODE_T * p)
     try_reduction (q, NULL, NULL, REPLICATOR, DYNAMIC_REPLICATOR, NULL_ATTRIBUTE);
   }
 /* "OTHER" patterns. */
-  for (q = p; q != NULL; FORWARD (q)) {
-    try_reduction (q, NULL, NULL, STRING_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_S, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, STRING_C_PATTERN, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_S, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, STRING_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_S, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, STRING_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_S, NULL_ATTRIBUTE);
-  }
-  for (q = p; q != NULL; FORWARD (q)) {
-    try_reduction (q, NULL, NULL, INTEGRAL_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_D, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, INTEGRAL_C_PATTERN, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_D, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, INTEGRAL_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, FORMAT_ITEM_D, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, INTEGRAL_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_D, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, INTEGRAL_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_D, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, INTEGRAL_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_D, NULL_ATTRIBUTE);
-  }
-  for (q = p; q != NULL; FORWARD (q)) {
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FIXED_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_F, NULL_ATTRIBUTE);
-  }
-  for (q = p; q != NULL; FORWARD (q)) {
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_PLUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, FLOAT_C_PATTERN, FORMAT_ITEM_ESCAPE, FORMAT_ITEM_MINUS, REPLICATOR, FORMAT_ITEM_POINT, REPLICATOR, FORMAT_ITEM_E, NULL_ATTRIBUTE);
-  }
+  reduce_c_pattern (p, BITS_C_PATTERN, FORMAT_ITEM_B);
+  reduce_c_pattern (p, BITS_C_PATTERN, FORMAT_ITEM_O);
+  reduce_c_pattern (p, BITS_C_PATTERN, FORMAT_ITEM_X);
+  reduce_c_pattern (p, CHAR_C_PATTERN, FORMAT_ITEM_C);
+  reduce_c_pattern (p, FIXED_C_PATTERN, FORMAT_ITEM_F);
+  reduce_c_pattern (p, FLOAT_C_PATTERN, FORMAT_ITEM_E);
+  reduce_c_pattern (p, GENERAL_C_PATTERN, FORMAT_ITEM_G);
+  reduce_c_pattern (p, INTEGRAL_C_PATTERN, FORMAT_ITEM_D);
+  reduce_c_pattern (p, INTEGRAL_C_PATTERN, FORMAT_ITEM_I);
+  reduce_c_pattern (p, STRING_C_PATTERN, FORMAT_ITEM_S);
 /* Radix frames. */
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, RADIX_FRAME, REPLICATOR, FORMAT_ITEM_R, NULL_ATTRIBUTE);
@@ -2728,19 +2726,22 @@ static void reduce_format_texts (NODE_T * p)
   }
   ambiguous_patterns (p);
   for (q = p; q != NULL; FORWARD (q)) {
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, BITS_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, CHAR_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, FIXED_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, FLOAT_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, GENERAL_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, INTEGRAL_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, A68_PATTERN, STRING_C_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, A68_PATTERN, BITS_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, A68_PATTERN, BOOLEAN_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, A68_PATTERN, CHOICE_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, A68_PATTERN, COMPLEX_PATTERN, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, A68_PATTERN, FORMAT_PATTERN, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, A68_PATTERN, GENERAL_PATTERN, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, A68_PATTERN, INTEGRAL_PATTERN, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, A68_PATTERN, REAL_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, COMPLEX_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, BITS_PATTERN, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, A68_PATTERN, STRING_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, BOOLEAN_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, CHOICE_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, FORMAT_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, STRING_C_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, INTEGRAL_C_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, FIXED_C_PATTERN, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, A68_PATTERN, FLOAT_C_PATTERN, NULL_ATTRIBUTE);
   }
 /* Pictures. */
   for (q = p; q != NULL; FORWARD (q)) {
@@ -2777,6 +2778,7 @@ static void reduce_secondaries (NODE_T * p)
     try_reduction (q, NULL, NULL, SECONDARY, PRIMARY, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, GENERATOR, LOC_SYMBOL, DECLARER, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, GENERATOR, HEAP_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, GENERATOR, NEW_SYMBOL, DECLARER, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, SECONDARY, GENERATOR, NULL_ATTRIBUTE);
   }
   z = A68_TRUE;
@@ -2840,7 +2842,7 @@ static void reduce_formulae (NODE_T * p)
         }
         z = A68_TRUE;
         while (z) {
-          NODE_T *op = NEXT (q);
+          NODE_T *op2 = NEXT (q);
           z = A68_FALSE;
           if (operator_with_priority (q, priority)) {
             try_reduction (q, NULL, &z, FORMULA, FORMULA, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
@@ -2852,7 +2854,7 @@ static void reduce_formulae (NODE_T * p)
             try_reduction (q, NULL, &z, FORMULA, FORMULA, OPERATOR, FORMULA, NULL_ATTRIBUTE);
           }
           if (priority == 0 && z) {
-            diagnostic_node (A68_SYNTAX_ERROR, op, ERROR_NO_PRIORITY, NULL);
+            diagnostic_node (A68_SYNTAX_ERROR, op2, ERROR_NO_PRIORITY, NULL);
           }
         }
       }
@@ -2875,12 +2877,11 @@ static NODE_T *reduce_dyadic (NODE_T * p, int u)
       return (NULL);
     } else if (WHETHER (p, OPERATOR)) {
 /* Reduce monadic formulas. */
-      NODE_T *q;
+      NODE_T *q = p;
       BOOL_T z;
-      q = p;
       do {
         PRIO (INFO (q)) = 10;
-        z = (NEXT (q) != NULL) && (WHETHER (NEXT (q), OPERATOR));
+        z = (BOOL_T) ((NEXT (q) != NULL) && (WHETHER (NEXT (q), OPERATOR)));
         if (z) {
           FORWARD (q);
         }
@@ -2941,8 +2942,8 @@ static void reduce_tertiaries (NODE_T * p)
     try_reduction (q, NULL, NULL, IDENTITY_RELATION, TERTIARY, ISNT_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    try_reduction (q, a68_extension, NULL, AND_FUNCTION, TERTIARY, ANDF_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-    try_reduction (q, a68_extension, NULL, OR_FUNCTION, TERTIARY, ORF_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, AND_FUNCTION, TERTIARY, ANDF_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, NULL, OR_FUNCTION, TERTIARY, ORF_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
   }
 }
 
@@ -3008,8 +3009,8 @@ static void reduce_units (NODE_T * p)
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, UNIT, ASSIGNATION, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, UNIT, IDENTITY_RELATION, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, UNIT, AND_FUNCTION, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, NULL, UNIT, OR_FUNCTION, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, UNIT, AND_FUNCTION, NULL_ATTRIBUTE);
+    try_reduction (q, a68_extension, NULL, UNIT, OR_FUNCTION, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, UNIT, ROUTINE_TEXT, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, UNIT, JUMP, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, UNIT, SKIP, NULL_ATTRIBUTE);
@@ -3797,7 +3798,7 @@ static void extract_indicants (NODE_T * p)
         FORWARD (q);
         detect_redefined_keyword (q, MODE_DECLARATION);
         if (whether (q, BOLD_TAG, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
-          add_tag (SYMBOL_TABLE (p), INDICANT, q, NULL, NULL_ATTRIBUTE);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), INDICANT, q, NULL, NULL_ATTRIBUTE) != NULL);
           ATTRIBUTE (q) = DEFINING_INDICANT;
           FORWARD (q);
           q->attribute = ALT_EQUALS_SYMBOL;
@@ -3852,7 +3853,7 @@ static void extract_priorities (NODE_T * p)
           FORWARD (q);
           GET_PRIORITY (q, k);
           ATTRIBUTE (q) = PRIORITY;
-          add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
           FORWARD (q);
         } else if (whether (q, BOLD_TAG, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, OPERATOR, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
           int k;
@@ -3863,7 +3864,7 @@ static void extract_priorities (NODE_T * p)
           FORWARD (q);
           GET_PRIORITY (q, k);
           ATTRIBUTE (q) = PRIORITY;
-          add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
           FORWARD (q);
         } else if (whether (q, BOLD_TAG, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, OPERATOR, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
 /* The scanner cannot separate operator and "=" sign so we do this here. */
@@ -3871,7 +3872,7 @@ static void extract_priorities (NODE_T * p)
           if (len > 1 && SYMBOL (q)[len - 1] == '=') {
             int k;
             NODE_T *y = q;
-            char *sym = (char *) get_temp_heap_space (len + 1);
+            char *sym = (char *) get_temp_heap_space ((size_t) (len + 1));
             bufcpy (sym, SYMBOL (q), len + 1);
             sym[len - 1] = NULL_CHAR;
             SYMBOL (q) = TEXT (add_token (&top_token, sym));
@@ -3880,7 +3881,7 @@ static void extract_priorities (NODE_T * p)
             q = NEXT_NEXT (q);
             GET_PRIORITY (q, k);
             ATTRIBUTE (q) = PRIORITY;
-            add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k);
+            CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
             FORWARD (q);
           } else {
             diagnostic_node (A68_SYNTAX_ERROR, (q != NULL ? q : p), ERROR_SYNTAX_EXPECTED, EQUALS_SYMBOL, NULL);
@@ -3921,7 +3922,7 @@ static void extract_operators (NODE_T * p)
           if (whether (q, OPERATOR, OPERATOR, NULL_ATTRIBUTE)) {
             diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG, NULL);
             ATTRIBUTE (q) = DEFINING_OPERATOR;
-            add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE);
+            CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
             NEXT (q) = NEXT_NEXT (q);   /* Remove one superfluous operator, and hope it was only one. */
             PREVIOUS (NEXT (q)) = q;
             FORWARD (q);
@@ -3929,7 +3930,7 @@ static void extract_operators (NODE_T * p)
             q = skip_unit (q);
           } else if (whether (q, OPERATOR, EQUALS_SYMBOL, NULL_ATTRIBUTE) || whether (q, BOLD_TAG, EQUALS_SYMBOL, NULL_ATTRIBUTE) || whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
             ATTRIBUTE (q) = DEFINING_OPERATOR;
-            add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE);
+            CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
             FORWARD (q);
             q->attribute = ALT_EQUALS_SYMBOL;
             q = skip_unit (q);
@@ -3937,13 +3938,13 @@ static void extract_operators (NODE_T * p)
 /* The scanner cannot separate operator and "=" sign so we do this here. */
             int len = (int) strlen (SYMBOL (q));
             if (len > 1 && SYMBOL (q)[len - 1] == '=') {
-              char *sym = (char *) get_temp_heap_space (len + 1);
+              char *sym = (char *) get_temp_heap_space ((size_t) (len + 1));
               bufcpy (sym, SYMBOL (q), len + 1);
               sym[len - 1] = NULL_CHAR;
               SYMBOL (q) = TEXT (add_token (&top_token, sym));
               ATTRIBUTE (q) = DEFINING_OPERATOR;
               insert_node (q, ALT_EQUALS_SYMBOL);
-              add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE);
+              CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
               FORWARD (q);
               q = skip_unit (q);
             } else {
@@ -3992,7 +3993,7 @@ static void extract_identities (NODE_T * p)
       BOOL_T z = A68_TRUE;
       do {
         if (whether ((FORWARD (q)), IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
-          add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           FORWARD (q);
           q->attribute = ALT_EQUALS_SYMBOL;
@@ -4000,7 +4001,7 @@ static void extract_identities (NODE_T * p)
         } else if (whether (q, IDENTIFIER, ASSIGN_SYMBOL, NULL_ATTRIBUTE)) {
 /* Handle common error in ALGOL 68 programs. */
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
-          add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ALT_EQUALS_SYMBOL;
           q = skip_unit (q);
@@ -4033,7 +4034,7 @@ static void extract_variables (NODE_T * p)
             diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
             ATTRIBUTE (NEXT (q)) = ASSIGN_SYMBOL;
           }
-          add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           q = skip_unit (q);
         } else {
@@ -4068,7 +4069,7 @@ static void extract_proc_identities (NODE_T * p)
         } else if (whether (q, IDENTIFIER, ASSIGN_SYMBOL, NULL_ATTRIBUTE)) {
 /* Handle common error in ALGOL 68 programs. */
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
-          add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ALT_EQUALS_SYMBOL;
           q = skip_unit (q);
@@ -4096,13 +4097,13 @@ static void extract_proc_variables (NODE_T * p)
       do {
         FORWARD (q);
         if (whether (q, IDENTIFIER, ASSIGN_SYMBOL, NULL_ATTRIBUTE)) {
-          add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           q = skip_unit (FORWARD (q));
         } else if (whether (q, IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
 /* Handle common error in ALGOL 68 programs. */
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
-          add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER);
+          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ASSIGN_SYMBOL;
           q = skip_unit (q);
@@ -4145,10 +4146,16 @@ static void extract_declarations (NODE_T * p)
     if (whether (q, HEAP_SYMBOL, DECLARER, DEFINING_IDENTIFIER, NULL_ATTRIBUTE)) {
       make_sub (q, q, QUALIFIER);
     }
+    if (whether (q, NEW_SYMBOL, DECLARER, DEFINING_IDENTIFIER, NULL_ATTRIBUTE)) {
+      make_sub (q, q, QUALIFIER);
+    }
     if (whether (q, LOC_SYMBOL, PROC_SYMBOL, DEFINING_IDENTIFIER, NULL_ATTRIBUTE)) {
       make_sub (q, q, QUALIFIER);
     }
     if (whether (q, HEAP_SYMBOL, PROC_SYMBOL, DEFINING_IDENTIFIER, NULL_ATTRIBUTE)) {
+      make_sub (q, q, QUALIFIER);
+    }
+    if (whether (q, NEW_SYMBOL, PROC_SYMBOL, DEFINING_IDENTIFIER, NULL_ATTRIBUTE)) {
       make_sub (q, q, QUALIFIER);
     }
   }
@@ -4519,11 +4526,11 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
     victal_checker (SUB (p));
     if (x == FORMAL_DECLARER_MARK) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "formal bounds");
-      victal_check_declarer (NEXT (p), x);
+      (void) victal_check_declarer (NEXT (p), x);
       return (A68_TRUE);
     } else if (x == VIRTUAL_DECLARER_MARK) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "virtual bounds");
-      victal_check_declarer (NEXT (p), x);
+      (void) victal_check_declarer (NEXT (p), x);
       return (A68_TRUE);
     } else {
       return (victal_check_declarer (NEXT (p), x));
@@ -4532,7 +4539,7 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
     victal_checker (SUB (p));
     if (x == ACTUAL_DECLARER_MARK) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "actual bounds");
-      victal_check_declarer (NEXT (p), x);
+      (void) victal_check_declarer (NEXT (p), x);
       return (A68_TRUE);
     } else {
       return (victal_check_declarer (NEXT (p), x));

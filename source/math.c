@@ -65,7 +65,7 @@ static NODE_T *error_node = NULL;
 /*!
 \brief set permutation vector element - function fails in gsl
 \param p permutation vector
-\param i element index
+\param i element iindex
 \param j element value
 **/
 
@@ -85,9 +85,9 @@ void gsl_permutation_set (const gsl_permutation * p, const size_t i, const size_
 void torrix_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    snprintf (edit_line, BUFFER_SIZE, "%s in line %d of file %s", reason, line, file);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    snprintf (edit_line, BUFFER_SIZE, "%s", reason);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_TORRIX, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -117,7 +117,7 @@ static gsl_permutation *pop_permutation (NODE_T * p, BOOL_T get)
   A68_REF desc;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
   gsl_permutation *v;
 /* Pop arguments. */
@@ -125,15 +125,15 @@ static gsl_permutation *pop_permutation (NODE_T * p, BOOL_T get)
   CHECK_REF (p, desc, MODE (ROW_INT));
   GET_DESCRIPTOR (arr, tup, &desc);
   len = ROW_SIZE (tup);
-  v = gsl_permutation_alloc (len);
+  v = gsl_permutation_alloc ((size_t) len);
   if (get) {
     base = DEREF (BYTE_T, &(ARRAY (arr)));
-    index = VECTOR_OFFSET (arr, tup);
+    iindex = VECTOR_OFFSET (arr, tup);
     inc = tup->span * arr->elem_size;
-    for (k = 0; k < len; k++, index += inc) {
-      A68_INT *x = (A68_INT *) (base + index);
+    for (k = 0; k < len; k++, iindex += inc) {
+      A68_INT *x = (A68_INT *) (base + iindex);
       CHECK_INIT (p, INITIALISED (x), MODE (INT));
-      gsl_permutation_set (v, k, VALUE (x));
+      gsl_permutation_set (v, (size_t) k, (size_t) VALUE (x));
     }
   }
   return (v);
@@ -149,9 +149,9 @@ static void push_permutation (NODE_T * p, gsl_permutation * v)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
-  len = v->size;
+  len = (int) (v->size);
   desc = heap_generator (p, MODE (ROW_INT), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_INT), len * ALIGNED_SIZE_OF (A68_INT));
@@ -168,12 +168,12 @@ static void push_permutation (NODE_T * p, gsl_permutation * v)
   tup.k = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index = VECTOR_OFFSET (&arr, &tup);
+  iindex = VECTOR_OFFSET (&arr, &tup);
   inc = tup.span * arr.elem_size;
-  for (k = 0; k < len; k++, index += inc) {
-    A68_INT *x = (A68_INT *) (base + index);
+  for (k = 0; k < len; k++, iindex += inc) {
+    A68_INT *x = (A68_INT *) (base + iindex);
     STATUS (x) = INITIALISED_MASK;
-    VALUE (x) = gsl_permutation_get (v, k);
+    VALUE (x) = (int) gsl_permutation_get (v, (size_t) k);
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
   UNPROTECT_SWEEP_HANDLE (&row);
@@ -192,7 +192,7 @@ static gsl_vector *pop_vector (NODE_T * p, BOOL_T get)
   A68_REF desc;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
   gsl_vector *v;
 /* Pop arguments. */
@@ -200,15 +200,15 @@ static gsl_vector *pop_vector (NODE_T * p, BOOL_T get)
   CHECK_REF (p, desc, MODE (ROW_REAL));
   GET_DESCRIPTOR (arr, tup, &desc);
   len = ROW_SIZE (tup);
-  v = gsl_vector_alloc (len);
+  v = gsl_vector_alloc ((size_t) len);
   if (get) {
     base = DEREF (BYTE_T, &(ARRAY (arr)));
-    index = VECTOR_OFFSET (arr, tup);
+    iindex = VECTOR_OFFSET (arr, tup);
     inc = tup->span * arr->elem_size;
-    for (k = 0; k < len; k++, index += inc) {
-      A68_REAL *x = (A68_REAL *) (base + index);
+    for (k = 0; k < len; k++, iindex += inc) {
+      A68_REAL *x = (A68_REAL *) (base + iindex);
       CHECK_INIT (p, INITIALISED (x), MODE (REAL));
-      gsl_vector_set (v, k, VALUE (x));
+      gsl_vector_set (v, (size_t) k, VALUE (x));
     }
   }
   return (v);
@@ -224,9 +224,9 @@ static void push_vector (NODE_T * p, gsl_vector * v)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
-  len = v->size;
+  len = (int) (v->size);
   desc = heap_generator (p, MODE (ROW_REAL), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_REAL), len * ALIGNED_SIZE_OF (A68_REAL));
@@ -243,12 +243,12 @@ static void push_vector (NODE_T * p, gsl_vector * v)
   tup.k = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index = VECTOR_OFFSET (&arr, &tup);
+  iindex = VECTOR_OFFSET (&arr, &tup);
   inc = tup.span * arr.elem_size;
-  for (k = 0; k < len; k++, index += inc) {
-    A68_REAL *x = (A68_REAL *) (base + index);
+  for (k = 0; k < len; k++, iindex += inc) {
+    A68_REAL *x = (A68_REAL *) (base + iindex);
     STATUS (x) = INITIALISED_MASK;
-    VALUE (x) = gsl_vector_get (v, k);
+    VALUE (x) = gsl_vector_get (v, (size_t) k);
     TEST_REAL_REPRESENTATION (p, VALUE (x));
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
@@ -268,7 +268,7 @@ static gsl_matrix *pop_matrix (NODE_T * p, BOOL_T get)
   A68_REF desc;
   A68_ARRAY *arr;
   A68_TUPLE *tup1, *tup2;
-  int len1, len2, inc1, inc2, index1, index2, k1, k2;
+  int len1, len2, inc1, inc2, iindex1, iindex2, k1, k2;
   BYTE_T *base;
   gsl_matrix *a;
 /* Pop arguments. */
@@ -278,17 +278,17 @@ static gsl_matrix *pop_matrix (NODE_T * p, BOOL_T get)
   tup2 = &(tup1[1]);
   len1 = ROW_SIZE (tup1);
   len2 = ROW_SIZE (tup2);
-  a = gsl_matrix_alloc (len1, len2);
+  a = gsl_matrix_alloc ((size_t) len1, (size_t) len2);
   if (get) {
     base = DEREF (BYTE_T, &(ARRAY (arr)));
-    index1 = MATRIX_OFFSET (arr, tup1, tup2);
+    iindex1 = MATRIX_OFFSET (arr, tup1, tup2);
     inc1 = tup1->span * arr->elem_size;
     inc2 = tup2->span * arr->elem_size;
-    for (k1 = 0; k1 < len1; k1++, index1 += inc1) {
-      for (k2 = 0, index2 = index1; k2 < len2; k2++, index2 += inc2) {
-        A68_REAL *x = (A68_REAL *) (base + index2);
+    for (k1 = 0; k1 < len1; k1++, iindex1 += inc1) {
+      for (k2 = 0, iindex2 = iindex1; k2 < len2; k2++, iindex2 += inc2) {
+        A68_REAL *x = (A68_REAL *) (base + iindex2);
         CHECK_INIT (p, INITIALISED (x), MODE (REAL));
-        gsl_matrix_set (a, k1, k2, VALUE (x));
+        gsl_matrix_set (a, (size_t) k1, (size_t) k2, VALUE (x));
       }
     }
   }
@@ -305,10 +305,10 @@ static void push_matrix (NODE_T * p, gsl_matrix * a)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup1, tup2;
-  int len1, len2, inc1, inc2, index1, index2, k1, k2;
+  int len1, len2, inc1, inc2, iindex1, iindex2, k1, k2;
   BYTE_T *base;
-  len1 = a->size1;
-  len2 = a->size2;
+  len1 = (int) (a->size1);
+  len2 = (int) (a->size2);
   desc = heap_generator (p, MODE (ROWROW_REAL), ALIGNED_SIZE_OF (A68_ARRAY) + 2 * ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&desc);
   row = heap_generator (p, MODE (ROWROW_REAL), len1 * len2 * ALIGNED_SIZE_OF (A68_REAL));
@@ -330,14 +330,14 @@ static void push_matrix (NODE_T * p, gsl_matrix * a)
   tup2.k = 0;
   PUT_DESCRIPTOR2 (arr, tup1, tup2, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index1 = MATRIX_OFFSET (&arr, &tup1, &tup2);
+  iindex1 = MATRIX_OFFSET (&arr, &tup1, &tup2);
   inc1 = tup1.span * arr.elem_size;
   inc2 = tup2.span * arr.elem_size;
-  for (k1 = 0; k1 < len1; k1++, index1 += inc1) {
-    for (k2 = 0, index2 = index1; k2 < len2; k2++, index2 += inc2) {
-      A68_REAL *x = (A68_REAL *) (base + index2);
+  for (k1 = 0; k1 < len1; k1++, iindex1 += inc1) {
+    for (k2 = 0, iindex2 = iindex1; k2 < len2; k2++, iindex2 += inc2) {
+      A68_REAL *x = (A68_REAL *) (base + iindex2);
       STATUS (x) = INITIALISED_MASK;
-      VALUE (x) = gsl_matrix_get (a, k1, k2);
+      VALUE (x) = gsl_matrix_get (a, (size_t) k1, (size_t) k2);
       TEST_REAL_REPRESENTATION (p, VALUE (x));
     }
   }
@@ -358,7 +358,7 @@ static gsl_vector_complex *pop_vector_complex (NODE_T * p, BOOL_T get)
   A68_REF desc;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
   gsl_vector_complex *v;
 /* Pop arguments. */
@@ -366,19 +366,19 @@ static gsl_vector_complex *pop_vector_complex (NODE_T * p, BOOL_T get)
   CHECK_REF (p, desc, MODE (ROW_COMPLEX));
   GET_DESCRIPTOR (arr, tup, &desc);
   len = ROW_SIZE (tup);
-  v = gsl_vector_complex_alloc (len);
+  v = gsl_vector_complex_alloc ((size_t) len);
   if (get) {
     base = DEREF (BYTE_T, &(ARRAY (arr)));
-    index = VECTOR_OFFSET (arr, tup);
+    iindex = VECTOR_OFFSET (arr, tup);
     inc = tup->span * arr->elem_size;
-    for (k = 0; k < len; k++, index += inc) {
-      A68_REAL *re = (A68_REAL *) (base + index);
-      A68_REAL *im = (A68_REAL *) (base + index + ALIGNED_SIZE_OF (A68_REAL));
+    for (k = 0; k < len; k++, iindex += inc) {
+      A68_REAL *re = (A68_REAL *) (base + iindex);
+      A68_REAL *im = (A68_REAL *) (base + iindex + ALIGNED_SIZE_OF (A68_REAL));
       gsl_complex z;
       CHECK_INIT (p, INITIALISED (re), MODE (COMPLEX));
       CHECK_INIT (p, INITIALISED (im), MODE (COMPLEX));
       GSL_SET_COMPLEX (&z, VALUE (re), VALUE (im));
-      gsl_vector_complex_set (v, k, z);
+      gsl_vector_complex_set (v, (size_t) k, z);
     }
   }
   return (v);
@@ -394,9 +394,9 @@ static void push_vector_complex (NODE_T * p, gsl_vector_complex * v)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
-  len = v->size;
+  len = (int) (v->size);
   desc = heap_generator (p, MODE (ROW_COMPLEX), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_COMPLEX), len * 2 * ALIGNED_SIZE_OF (A68_REAL));
@@ -413,12 +413,12 @@ static void push_vector_complex (NODE_T * p, gsl_vector_complex * v)
   tup.k = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index = VECTOR_OFFSET (&arr, &tup);
+  iindex = VECTOR_OFFSET (&arr, &tup);
   inc = tup.span * arr.elem_size;
-  for (k = 0; k < len; k++, index += inc) {
-    A68_REAL *re = (A68_REAL *) (base + index);
-    A68_REAL *im = (A68_REAL *) (base + index + ALIGNED_SIZE_OF (A68_REAL));
-    gsl_complex z = gsl_vector_complex_get (v, k);
+  for (k = 0; k < len; k++, iindex += inc) {
+    A68_REAL *re = (A68_REAL *) (base + iindex);
+    A68_REAL *im = (A68_REAL *) (base + iindex + ALIGNED_SIZE_OF (A68_REAL));
+    gsl_complex z = gsl_vector_complex_get (v, (size_t) k);
     STATUS (re) = INITIALISED_MASK;
     VALUE (re) = GSL_REAL (z);
     STATUS (im) = INITIALISED_MASK;
@@ -451,21 +451,21 @@ static gsl_matrix_complex *pop_matrix_complex (NODE_T * p, BOOL_T get)
   tup2 = &(tup1[1]);
   len1 = ROW_SIZE (tup1);
   len2 = ROW_SIZE (tup2);
-  a = gsl_matrix_complex_alloc (len1, len2);
+  a = gsl_matrix_complex_alloc ((size_t) len1, (size_t) len2);
   if (get) {
     BYTE_T *base = DEREF (BYTE_T, &(ARRAY (arr)));
-    int index1 = MATRIX_OFFSET (arr, tup1, tup2);
+    int iindex1 = MATRIX_OFFSET (arr, tup1, tup2);
     int inc1 = tup1->span * arr->elem_size, inc2 = tup2->span * arr->elem_size, k1;
-    for (k1 = 0; k1 < len1; k1++, index1 += inc1) {
-      int index2, k2;
-      for (k2 = 0, index2 = index1; k2 < len2; k2++, index2 += inc2) {
-        A68_REAL *re = (A68_REAL *) (base + index2);
-        A68_REAL *im = (A68_REAL *) (base + index2 + ALIGNED_SIZE_OF (A68_REAL));
+    for (k1 = 0; k1 < len1; k1++, iindex1 += inc1) {
+      int iindex2, k2;
+      for (k2 = 0, iindex2 = iindex1; k2 < len2; k2++, iindex2 += inc2) {
+        A68_REAL *re = (A68_REAL *) (base + iindex2);
+        A68_REAL *im = (A68_REAL *) (base + iindex2 + ALIGNED_SIZE_OF (A68_REAL));
         gsl_complex z;
         CHECK_INIT (p, INITIALISED (re), MODE (COMPLEX));
         CHECK_INIT (p, INITIALISED (im), MODE (COMPLEX));
         GSL_SET_COMPLEX (&z, VALUE (re), VALUE (im));
-        gsl_matrix_complex_set (a, k1, k2, z);
+        gsl_matrix_complex_set (a, (size_t) k1, (size_t) k2, z);
       }
     }
   }
@@ -482,10 +482,10 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup1, tup2;
-  int len1, len2, inc1, inc2, index1, index2, k1, k2;
+  int len1, len2, inc1, inc2, iindex1, iindex2, k1, k2;
   BYTE_T *base;
-  len1 = a->size1;
-  len2 = a->size2;
+  len1 = (int) (a->size1);
+  len2 = (int) (a->size2);
   desc = heap_generator (p, MODE (ROWROW_COMPLEX), ALIGNED_SIZE_OF (A68_ARRAY) + 2 * ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&desc);
   row = heap_generator (p, MODE (ROWROW_COMPLEX), len1 * len2 * 2 * ALIGNED_SIZE_OF (A68_REAL));
@@ -507,14 +507,14 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
   tup2.k = 0;
   PUT_DESCRIPTOR2 (arr, tup1, tup2, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index1 = MATRIX_OFFSET (&arr, &tup1, &tup2);
+  iindex1 = MATRIX_OFFSET (&arr, &tup1, &tup2);
   inc1 = tup1.span * arr.elem_size;
   inc2 = tup2.span * arr.elem_size;
-  for (k1 = 0; k1 < len1; k1++, index1 += inc1) {
-    for (k2 = 0, index2 = index1; k2 < len2; k2++, index2 += inc2) {
-      A68_REAL *re = (A68_REAL *) (base + index2);
-      A68_REAL *im = (A68_REAL *) (base + index2 + ALIGNED_SIZE_OF (A68_REAL));
-      gsl_complex z = gsl_matrix_complex_get (a, k1, k2);
+  for (k1 = 0; k1 < len1; k1++, iindex1 += inc1) {
+    for (k2 = 0, iindex2 = iindex1; k2 < len2; k2++, iindex2 += inc2) {
+      A68_REAL *re = (A68_REAL *) (base + iindex2);
+      A68_REAL *im = (A68_REAL *) (base + iindex2 + ALIGNED_SIZE_OF (A68_REAL));
+      gsl_complex z = gsl_matrix_complex_get (a, (size_t) k1, (size_t) k2);
       STATUS (re) = INITIALISED_MASK;
       VALUE (re) = GSL_REAL (z);
       STATUS (im) = INITIALISED_MASK;
@@ -555,12 +555,12 @@ static A68_REF dereference_ref_row (NODE_T * p, MOID_T * m, ADDR_T par_size)
 
 static void op_ab (NODE_T * p, MOID_T * m, MOID_T * n, GENIE_PROCEDURE * op)
 {
-  unsigned par_size = MOID_SIZE (m) + MOID_SIZE (n);
+  ADDR_T par_size = MOID_SIZE (m) + MOID_SIZE (n);
   A68_REF u, *v;
   error_node = p;
   u = dereference_ref_row (p, m, par_size);
   v = (A68_REF *) STACK_OFFSET (-par_size);
-  op (p);
+  (*op) (p);
   *DEREF (A68_ROW, &u) = *v;
   *v = u;
 }
@@ -817,14 +817,14 @@ void genie_matrix_trace (NODE_T * p)
   int len1, len2, k;
   error_node = p;
   a = pop_matrix (p, A68_TRUE);
-  len1 = a->size1;
-  len2 = a->size2;
+  len1 = (int) (a->size1);
+  len2 = (int) (a->size2);
   if (len1 != len2) {
     torrix_error_handler ("cannot calculate trace", __FILE__, __LINE__, GSL_ENOTSQR);
   }
   sum = 0.0;
   for (k = 0; k < len1; k++) {
-    sum += gsl_matrix_get (a, k, k);
+    sum += gsl_matrix_get (a, (size_t) k, (size_t) k);
   }
   PUSH_PRIMITIVE (p, sum, A68_REAL);
   gsl_matrix_free (a);
@@ -844,14 +844,14 @@ void genie_matrix_complex_trace (NODE_T * p)
   int len1, len2, k;
   error_node = p;
   a = pop_matrix_complex (p, A68_TRUE);
-  len1 = a->size1;
-  len2 = a->size2;
+  len1 = (int) (a->size1);
+  len2 = (int) (a->size2);
   if (len1 != len2) {
     torrix_error_handler ("cannot calculate trace", __FILE__, __LINE__, GSL_ENOTSQR);
   }
   GSL_SET_COMPLEX (&sum, 0.0, 0.0);
   for (k = 0; k < len1; k++) {
-    sum = gsl_complex_add (sum, gsl_matrix_complex_get (a, k, k));
+    sum = gsl_complex_add (sum, gsl_matrix_complex_get (a, (size_t) k, (size_t) k));
   }
   PUSH_PRIMITIVE (p, GSL_REAL (sum), A68_REAL);
   PUSH_PRIMITIVE (p, GSL_IMAG (sum), A68_REAL);
@@ -954,7 +954,7 @@ void genie_vector_eq (NODE_T * p)
   u = pop_vector (p, A68_TRUE);
   rc = gsl_vector_sub (u, v);
   torrix_test_error (rc);
-  PUSH_PRIMITIVE (p, (gsl_vector_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (gsl_vector_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
   gsl_vector_free (u);
   gsl_vector_free (v);
   (void) gsl_set_error_handler (save_handler);
@@ -1048,7 +1048,7 @@ void genie_matrix_eq (NODE_T * p)
   u = pop_matrix (p, A68_TRUE);
   rc = gsl_matrix_sub (u, v);
   torrix_test_error (rc);
-  PUSH_PRIMITIVE (p, (gsl_matrix_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (gsl_matrix_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
   gsl_matrix_free (u);
   gsl_matrix_free (v);
   (void) gsl_set_error_handler (save_handler);
@@ -1148,7 +1148,7 @@ void genie_vector_complex_eq (NODE_T * p)
   u = pop_vector_complex (p, A68_TRUE);
   rc = gsl_blas_zaxpy (one, v, u);
   torrix_test_error (rc);
-  PUSH_PRIMITIVE (p, (gsl_vector_complex_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (gsl_vector_complex_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
   gsl_vector_complex_free (u);
   gsl_vector_complex_free (v);
   (void) gsl_set_error_handler (save_handler);
@@ -1242,7 +1242,7 @@ void genie_matrix_complex_eq (NODE_T * p)
   u = pop_matrix_complex (p, A68_TRUE);
   rc = gsl_matrix_complex_sub (u, v);
   torrix_test_error (rc);
-  PUSH_PRIMITIVE (p, (gsl_matrix_complex_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (gsl_matrix_complex_isnull (u) ? A68_TRUE : A68_FALSE), A68_BOOL);
   gsl_matrix_complex_free (u);
   gsl_matrix_complex_free (v);
   (void) gsl_set_error_handler (save_handler);
@@ -1732,14 +1732,14 @@ void genie_vector_dyad (NODE_T * p)
   error_node = p;
   v = pop_vector (p, A68_TRUE);
   u = pop_vector (p, A68_TRUE);
-  len1 = u->size;
-  len2 = v->size;
-  w = gsl_matrix_alloc (len1, len2);
+  len1 = (int) (u->size);
+  len2 = (int) (v->size);
+  w = gsl_matrix_alloc ((size_t) len1, (size_t) len2);
   for (j = 0; j < len1; j++) {
-    double uj = gsl_vector_get (u, j);
+    double uj = gsl_vector_get (u, (size_t) j);
     for (k = 0; k < len2; k++) {
-      double vk = gsl_vector_get (v, k);
-      gsl_matrix_set (w, j, k, uj * vk);
+      double vk = gsl_vector_get (v, (size_t) k);
+      gsl_matrix_set (w, (size_t) j, (size_t) k, uj * vk);
     }
   }
   push_matrix (p, w);
@@ -1763,14 +1763,14 @@ void genie_vector_complex_dyad (NODE_T * p)
   error_node = p;
   v = pop_vector_complex (p, A68_TRUE);
   u = pop_vector_complex (p, A68_TRUE);
-  len1 = u->size;
-  len2 = v->size;
-  w = gsl_matrix_complex_alloc (len1, len2);
+  len1 = (int) (u->size);
+  len2 = (int) (v->size);
+  w = gsl_matrix_complex_alloc ((size_t) len1, (size_t) len2);
   for (j = 0; j < len1; j++) {
-    gsl_complex uj = gsl_vector_complex_get (u, j);
+    gsl_complex uj = gsl_vector_complex_get (u, (size_t) j);
     for (k = 0; k < len2; k++) {
-      gsl_complex vk = gsl_vector_complex_get (u, k);
-      gsl_matrix_complex_set (w, j, k, gsl_complex_mul (uj, vk));
+      gsl_complex vk = gsl_vector_complex_get (u, (size_t) k);
+      gsl_matrix_complex_set (w, (size_t) j, (size_t) k, gsl_complex_mul (uj, vk));
     }
   }
   push_matrix_complex (p, w);
@@ -1795,8 +1795,8 @@ void genie_matrix_times_vector (NODE_T * p)
   error_node = p;
   u = pop_vector (p, A68_TRUE);
   w = pop_matrix (p, A68_TRUE);
-  len = u->size;
-  v = gsl_vector_alloc (len);
+  len = (int) (u->size);
+  v = gsl_vector_alloc ((size_t) len);
   gsl_vector_set_zero (v);
   rc = gsl_blas_dgemv (CblasNoTrans, 1.0, w, u, 0.0, v);
   torrix_test_error (rc);
@@ -1824,8 +1824,8 @@ void genie_vector_times_matrix (NODE_T * p)
   rc = gsl_matrix_transpose (w);
   torrix_test_error (rc);
   u = pop_vector (p, A68_TRUE);
-  len = u->size;
-  v = gsl_vector_alloc (len);
+  len = (int) (u->size);
+  v = gsl_vector_alloc ((size_t) len);
   gsl_vector_set_zero (v);
   rc = gsl_blas_dgemv (CblasNoTrans, 1.0, w, u, 0.0, v);
   torrix_test_error (rc);
@@ -1850,9 +1850,9 @@ void genie_matrix_times_matrix (NODE_T * p)
   error_node = p;
   v = pop_matrix (p, A68_TRUE);
   u = pop_matrix (p, A68_TRUE);
-  len1 = v->size2;
-  len2 = u->size1;
-  w = gsl_matrix_alloc (len1, len2);
+  len2 = (int) (v->size2);
+  len1 = (int) (u->size1);
+  w = gsl_matrix_alloc ((size_t) len1, (size_t) len2);
   gsl_matrix_set_zero (w);
   rc = gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, u, v, 0.0, w);
   torrix_test_error (rc);
@@ -1880,8 +1880,8 @@ void genie_matrix_complex_times_vector (NODE_T * p)
   GSL_SET_COMPLEX (&one, 1.0, 0.0);
   u = pop_vector_complex (p, A68_TRUE);
   w = pop_matrix_complex (p, A68_TRUE);
-  len = u->size;
-  v = gsl_vector_complex_alloc (len);
+  len = (int) (u->size);
+  v = gsl_vector_complex_alloc ((size_t) len);
   gsl_vector_complex_set_zero (v);
   rc = gsl_blas_zgemv (CblasNoTrans, one, w, u, zero, v);
   torrix_test_error (rc);
@@ -1911,8 +1911,8 @@ void genie_vector_complex_times_matrix (NODE_T * p)
   rc = gsl_matrix_complex_transpose (w);
   torrix_test_error (rc);
   u = pop_vector_complex (p, A68_TRUE);
-  len = u->size;
-  v = gsl_vector_complex_alloc (len);
+  len = (int) (u->size);
+  v = gsl_vector_complex_alloc ((size_t) len);
   gsl_vector_complex_set_zero (v);
   rc = gsl_blas_zgemv (CblasNoTrans, one, w, u, zero, v);
   torrix_test_error (rc);
@@ -1939,9 +1939,9 @@ void genie_matrix_complex_times_matrix (NODE_T * p)
   GSL_SET_COMPLEX (&one, 1.0, 0.0);
   v = pop_matrix_complex (p, A68_TRUE);
   u = pop_matrix_complex (p, A68_TRUE);
-  len1 = v->size2;
-  len2 = u->size1;
-  w = gsl_matrix_complex_alloc (len1, len2);
+  len1 = (int) (v->size2);
+  len2 = (int) (u->size1);
+  w = gsl_matrix_complex_alloc ((size_t) len1, (size_t) len2);
   gsl_matrix_complex_set_zero (w);
   rc = gsl_blas_zgemm (CblasNoTrans, CblasNoTrans, one, u, v, zero, w);
   torrix_test_error (rc);
@@ -2368,9 +2368,9 @@ void genie_matrix_ch_solve (NODE_T * p)
 void fft_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    snprintf (edit_line, BUFFER_SIZE, "%s in line %d of file %s", reason, line, file);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    snprintf (edit_line, BUFFER_SIZE, "%s", reason);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_FFT, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -2400,7 +2400,7 @@ static double *pop_array_real (NODE_T * p, int *len)
   A68_REF desc;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
-  int inc, index, k;
+  int inc, iindex, k;
   BYTE_T *base;
   double *v;
   error_node = p;
@@ -2412,13 +2412,13 @@ static double *pop_array_real (NODE_T * p, int *len)
   if ((*len) == 0) {
     return (NULL);
   }
-  v = malloc (2 * (*len) * sizeof (double));
+  v = malloc (2 * (size_t) (*len) * sizeof (double));
   fft_test_error (v == NULL ? GSL_ENOMEM : GSL_SUCCESS);
   base = DEREF (BYTE_T, &(ARRAY (arr)));
-  index = VECTOR_OFFSET (arr, tup);
+  iindex = VECTOR_OFFSET (arr, tup);
   inc = tup->span * arr->elem_size;
-  for (k = 0; k < (*len); k++, index += inc) {
-    A68_REAL *x = (A68_REAL *) (base + index);
+  for (k = 0; k < (*len); k++, iindex += inc) {
+    A68_REAL *x = (A68_REAL *) (base + iindex);
     CHECK_INIT (p, INITIALISED (x), MODE (REAL));
     v[2 * k] = VALUE (x);
     v[2 * k + 1] = 0.0;
@@ -2436,7 +2436,7 @@ static void push_array_real (NODE_T * p, double *v, int len)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup;
-  int inc, index, k;
+  int inc, iindex, k;
   BYTE_T *base;
   error_node = p;
   desc = heap_generator (p, MODE (ROW_REAL), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
@@ -2455,10 +2455,10 @@ static void push_array_real (NODE_T * p, double *v, int len)
   tup.k = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index = VECTOR_OFFSET (&arr, &tup);
+  iindex = VECTOR_OFFSET (&arr, &tup);
   inc = tup.span * arr.elem_size;
-  for (k = 0; k < len; k++, index += inc) {
-    A68_REAL *x = (A68_REAL *) (base + index);
+  for (k = 0; k < len; k++, iindex += inc) {
+    A68_REAL *x = (A68_REAL *) (base + iindex);
     STATUS (x) = INITIALISED_MASK;
     VALUE (x) = v[2 * k];
     TEST_REAL_REPRESENTATION (p, VALUE (x));
@@ -2480,7 +2480,7 @@ static double *pop_array_complex (NODE_T * p, int *len)
   A68_REF desc;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
-  int inc, index, k;
+  int inc, iindex, k;
   BYTE_T *base;
   double *v;
   error_node = p;
@@ -2492,14 +2492,14 @@ static double *pop_array_complex (NODE_T * p, int *len)
   if ((*len) == 0) {
     return (NULL);
   }
-  v = malloc (2 * (*len) * sizeof (double));
+  v = malloc (2 * (size_t) (*len) * sizeof (double));
   fft_test_error (v == NULL ? GSL_ENOMEM : GSL_SUCCESS);
   base = DEREF (BYTE_T, &(ARRAY (arr)));
-  index = VECTOR_OFFSET (arr, tup);
+  iindex = VECTOR_OFFSET (arr, tup);
   inc = tup->span * arr->elem_size;
-  for (k = 0; k < (*len); k++, index += inc) {
-    A68_REAL *re = (A68_REAL *) (base + index);
-    A68_REAL *im = (A68_REAL *) (base + index + ALIGNED_SIZE_OF (A68_REAL));
+  for (k = 0; k < (*len); k++, iindex += inc) {
+    A68_REAL *re = (A68_REAL *) (base + iindex);
+    A68_REAL *im = (A68_REAL *) (base + iindex + ALIGNED_SIZE_OF (A68_REAL));
     CHECK_INIT (p, INITIALISED (re), MODE (COMPLEX));
     CHECK_INIT (p, INITIALISED (im), MODE (COMPLEX));
     v[2 * k] = VALUE (re);
@@ -2518,7 +2518,7 @@ static void push_array_complex (NODE_T * p, double *v, int len)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup;
-  int inc, index, k;
+  int inc, iindex, k;
   BYTE_T *base;
   error_node = p;
   desc = heap_generator (p, MODE (ROW_COMPLEX), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
@@ -2537,11 +2537,11 @@ static void push_array_complex (NODE_T * p, double *v, int len)
   tup.k = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index = VECTOR_OFFSET (&arr, &tup);
+  iindex = VECTOR_OFFSET (&arr, &tup);
   inc = tup.span * arr.elem_size;
-  for (k = 0; k < len; k++, index += inc) {
-    A68_REAL *re = (A68_REAL *) (base + index);
-    A68_REAL *im = (A68_REAL *) (base + index + ALIGNED_SIZE_OF (A68_REAL));
+  for (k = 0; k < len; k++, iindex += inc) {
+    A68_REAL *re = (A68_REAL *) (base + iindex);
+    A68_REAL *im = (A68_REAL *) (base + iindex + ALIGNED_SIZE_OF (A68_REAL));
     STATUS (re) = INITIALISED_MASK;
     VALUE (re) = v[2 * k];
     STATUS (im) = INITIALISED_MASK;
@@ -2565,14 +2565,14 @@ void genie_prime_factors (NODE_T * p)
   A68_REF desc, row;
   A68_ARRAY arr;
   A68_TUPLE tup;
-  int len, inc, index, k;
+  int len, inc, iindex, k;
   BYTE_T *base;
   gsl_fft_complex_wavetable *wt;
   error_node = p;
   POP_OBJECT (p, &n, A68_INT);
   CHECK_INIT (p, INITIALISED (&n), MODE (INT));
-  wt = gsl_fft_complex_wavetable_alloc (VALUE (&n));
-  len = wt->nf;
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) (VALUE (&n)));
+  len = (int) (wt->nf);
   desc = heap_generator (p, MODE (ROW_INT), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_INT), len * ALIGNED_SIZE_OF (A68_INT));
@@ -2589,12 +2589,12 @@ void genie_prime_factors (NODE_T * p)
   tup.k = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
   base = DEREF (BYTE_T, &(ARRAY (&arr)));
-  index = VECTOR_OFFSET (&arr, &tup);
+  iindex = VECTOR_OFFSET (&arr, &tup);
   inc = tup.span * arr.elem_size;
-  for (k = 0; k < len; k++, index += inc) {
-    A68_INT *x = (A68_INT *) (base + index);
+  for (k = 0; k < len; k++, iindex += inc) {
+    A68_INT *x = (A68_INT *) (base + iindex);
     STATUS (x) = INITIALISED_MASK;
-    VALUE (x) = (wt->factor)[k];
+    VALUE (x) = (int) ((wt->factor)[k]);
   }
   gsl_fft_complex_wavetable_free (wt);
   UNPROTECT_SWEEP_HANDLE (&desc);
@@ -2618,9 +2618,9 @@ void genie_fft_complex_forward (NODE_T * p)
   error_node = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
-  wt = gsl_fft_complex_wavetable_alloc (len);
-  ws = gsl_fft_complex_workspace_alloc (len);
-  rc = gsl_fft_complex_forward (data, 1, len, wt, ws);
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
+  ws = gsl_fft_complex_workspace_alloc ((size_t) len);
+  rc = gsl_fft_complex_forward (data, 1, (size_t) len, wt, ws);
   fft_test_error (rc);
   push_array_complex (p, data, len);
   gsl_fft_complex_wavetable_free (wt);
@@ -2646,9 +2646,9 @@ void genie_fft_complex_backward (NODE_T * p)
   error_node = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
-  wt = gsl_fft_complex_wavetable_alloc (len);
-  ws = gsl_fft_complex_workspace_alloc (len);
-  rc = gsl_fft_complex_backward (data, 1, len, wt, ws);
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
+  ws = gsl_fft_complex_workspace_alloc ((size_t) len);
+  rc = gsl_fft_complex_backward (data, 1, (size_t) len, wt, ws);
   fft_test_error (rc);
   push_array_complex (p, data, len);
   gsl_fft_complex_wavetable_free (wt);
@@ -2674,9 +2674,9 @@ void genie_fft_complex_inverse (NODE_T * p)
   error_node = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
-  wt = gsl_fft_complex_wavetable_alloc (len);
-  ws = gsl_fft_complex_workspace_alloc (len);
-  rc = gsl_fft_complex_inverse (data, 1, len, wt, ws);
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
+  ws = gsl_fft_complex_workspace_alloc ((size_t) len);
+  rc = gsl_fft_complex_inverse (data, 1, (size_t) len, wt, ws);
   fft_test_error (rc);
   push_array_complex (p, data, len);
   gsl_fft_complex_wavetable_free (wt);
@@ -2702,9 +2702,9 @@ void genie_fft_forward (NODE_T * p)
   error_node = p;
   data = pop_array_real (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
-  wt = gsl_fft_complex_wavetable_alloc (len);
-  ws = gsl_fft_complex_workspace_alloc (len);
-  rc = gsl_fft_complex_forward (data, 1, len, wt, ws);
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
+  ws = gsl_fft_complex_workspace_alloc ((size_t) len);
+  rc = gsl_fft_complex_forward (data, 1, (size_t) len, wt, ws);
   fft_test_error (rc);
   push_array_complex (p, data, len);
   gsl_fft_complex_wavetable_free (wt);
@@ -2730,9 +2730,9 @@ void genie_fft_backward (NODE_T * p)
   error_node = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
-  wt = gsl_fft_complex_wavetable_alloc (len);
-  ws = gsl_fft_complex_workspace_alloc (len);
-  rc = gsl_fft_complex_backward (data, 1, len, wt, ws);
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
+  ws = gsl_fft_complex_workspace_alloc ((size_t) len);
+  rc = gsl_fft_complex_backward (data, 1, (size_t) len, wt, ws);
   fft_test_error (rc);
   push_array_real (p, data, len);
   gsl_fft_complex_wavetable_free (wt);
@@ -2758,9 +2758,9 @@ void genie_fft_inverse (NODE_T * p)
   error_node = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
-  wt = gsl_fft_complex_wavetable_alloc (len);
-  ws = gsl_fft_complex_workspace_alloc (len);
-  rc = gsl_fft_complex_inverse (data, 1, len, wt, ws);
+  wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
+  ws = gsl_fft_complex_workspace_alloc ((size_t) len);
+  rc = gsl_fft_complex_inverse (data, 1, (size_t) len, wt, ws);
   fft_test_error (rc);
   push_array_real (p, data, len);
   gsl_fft_complex_wavetable_free (wt);
@@ -2782,9 +2782,9 @@ void genie_fft_inverse (NODE_T * p)
 void laplace_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    snprintf (edit_line, BUFFER_SIZE, "%s in line %d of file %s", reason, line, file);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    snprintf (edit_line, BUFFER_SIZE, "%s", reason);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_LAPLACE, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);

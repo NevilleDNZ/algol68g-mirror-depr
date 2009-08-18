@@ -59,7 +59,7 @@ PROPAGATOR_T genie_formula_plus_int_constant (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   UP_SWEEP_SEMA;
   GENIE_GET_UNIT_ADDRESS (u, A68_INT, i);
-  j = (A68_INT *) (((((v->genie).propagator).source)->genie).constant);
+  j = (A68_INT *) (GENIE (((GENIE (v)->propagator).source))->constant);
   TEST_INT_ADDITION (op, VALUE (i), VALUE (j));
   stack_pointer = pop_sp;
   PUSH_PRIMITIVE (p, VALUE (i) + VALUE (j), A68_INT);
@@ -101,7 +101,7 @@ PROPAGATOR_T genie_formula_minus_int_constant (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   UP_SWEEP_SEMA;
   GENIE_GET_UNIT_ADDRESS (u, A68_INT, i);
-  j = (A68_INT *) (((((v->genie).propagator).source)->genie).constant);
+  j = (A68_INT *) (GENIE (((GENIE (v)->propagator).source))->constant);
   TEST_INT_ADDITION (op, VALUE (i), -VALUE (j));
   stack_pointer = pop_sp;
   PUSH_PRIMITIVE (p, VALUE (i) - VALUE (j), A68_INT);
@@ -282,7 +282,7 @@ PROPAGATOR_T genie_identity_relation_isnt_nil (NODE_T * p)
   UP_SWEEP_SEMA;
   GENIE_GET_UNIT_ADDRESS (lhs, A68_REF, x);
   stack_pointer = pop_sp;
-  PUSH_PRIMITIVE (p, !IS_NIL (*x), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (!IS_NIL (*x)), A68_BOOL);
   DOWN_SWEEP_SEMA;
   return (PROPAGATOR (p));
 }
@@ -297,20 +297,20 @@ PROPAGATOR_T NAME (NODE_T * p)\
   GENIE_GET_UNIT_ADDRESS (u, TYPE, x);\
   GENIE_GET_UNIT_ADDRESS (v, TYPE, y);\
   stack_pointer = pop_sp;\
-  PUSH_PRIMITIVE (p, VALUE (x) OP VALUE (y), A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (VALUE (x) OP VALUE (y)), A68_BOOL);\
   DOWN_SWEEP_SEMA;\
   return (PROPAGATOR (p));\
 }
 
-COMPARE (genie_formula_eq_int, A68_INT, ==);
-COMPARE (genie_formula_ne_int, A68_INT, !=);
-COMPARE (genie_formula_lt_int, A68_INT, <);
-COMPARE (genie_formula_le_int, A68_INT, <=);
-COMPARE (genie_formula_gt_int, A68_INT, >);
-COMPARE (genie_formula_ge_int, A68_INT, >=);
-COMPARE (genie_formula_eq_real, A68_REAL, ==);
-COMPARE (genie_formula_ne_real, A68_REAL, !=);
-COMPARE (genie_formula_lt_real, A68_REAL, <);
-COMPARE (genie_formula_le_real, A68_REAL, <=);
-COMPARE (genie_formula_gt_real, A68_REAL, >);
+COMPARE (genie_formula_eq_int, A68_INT, ==)
+COMPARE (genie_formula_ne_int, A68_INT, !=)
+COMPARE (genie_formula_lt_int, A68_INT, <)
+COMPARE (genie_formula_le_int, A68_INT, <=)
+COMPARE (genie_formula_gt_int, A68_INT, >)
+COMPARE (genie_formula_ge_int, A68_INT, >=)
+COMPARE (genie_formula_eq_real, A68_REAL, ==)
+COMPARE (genie_formula_ne_real, A68_REAL, !=)
+COMPARE (genie_formula_lt_real, A68_REAL, <)
+COMPARE (genie_formula_le_real, A68_REAL, <=)
+COMPARE (genie_formula_gt_real, A68_REAL, >)
 COMPARE (genie_formula_ge_real, A68_REAL, >=)

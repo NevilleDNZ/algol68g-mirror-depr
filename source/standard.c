@@ -53,7 +53,7 @@ double cputime_0;
 void n (NODE_T * p) {\
   MODE *i;\
   POP_OPERAND_ADDRESS (p, i, MODE);\
-  VALUE (i) = OP VALUE (i);\
+  VALUE (i) = OP (VALUE (i));\
 }
 
 /*!
@@ -64,17 +64,18 @@ void n (NODE_T * p) {\
 \param t info text
 **/
 
-void math_rte (NODE_T * p, BOOL_T z, MOID_T * m, const char *t)
-{
-  if (z) {
-    if (t == NULL) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, m, NULL);
-    } else {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH_INFO, m, t);
-    }
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-}
+/*
+void math_rte (NODE_T * p, z, MOID_T * m, const char *t)
+*/
+#define math_rte(p, z, m, t) {\
+  if (z) {\
+    if ((t) == NULL) {\
+      diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_MATH, (m), NULL);\
+    } else {\
+      diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_MATH_INFO, (m), (t));\
+    }\
+    exit_genie ((p), A68_RUNTIME_ERROR);\
+  }}
 
 /*!
 \brief generic procedure for OP AND BECOMES (+:=, -:=, ...)
@@ -94,47 +95,47 @@ void genie_f_and_becomes (NODE_T * p, MOID_T * ref, GENIE_PROCEDURE * f)
   PUSH (p, addr, size);
   CHECK_INIT_GENERIC (p, STACK_OFFSET (-size), mode);
   PUSH (p, src, size);
-  f (p);
+  (*f) (p);
   POP (p, addr, size);
   DECREMENT_STACK_POINTER (p, size);
 }
 
 /* Environment enquiries. */
 
-A68_ENV_INT (genie_int_lengths, 3);
-A68_ENV_INT (genie_int_shorths, 1);
-A68_ENV_INT (genie_real_lengths, 3);
-A68_ENV_INT (genie_real_shorths, 1);
-A68_ENV_INT (genie_complex_lengths, 3);
-A68_ENV_INT (genie_complex_shorths, 1);
-A68_ENV_INT (genie_bits_lengths, 3);
-A68_ENV_INT (genie_bits_shorths, 1);
-A68_ENV_INT (genie_bytes_lengths, 2);
-A68_ENV_INT (genie_bytes_shorths, 1);
-A68_ENV_INT (genie_int_width, INT_WIDTH);
-A68_ENV_INT (genie_long_int_width, LONG_INT_WIDTH);
-A68_ENV_INT (genie_longlong_int_width, LONGLONG_INT_WIDTH);
-A68_ENV_INT (genie_real_width, REAL_WIDTH);
-A68_ENV_INT (genie_long_real_width, LONG_REAL_WIDTH);
-A68_ENV_INT (genie_longlong_real_width, LONGLONG_REAL_WIDTH);
-A68_ENV_INT (genie_exp_width, EXP_WIDTH);
-A68_ENV_INT (genie_long_exp_width, LONG_EXP_WIDTH);
-A68_ENV_INT (genie_longlong_exp_width, LONGLONG_EXP_WIDTH);
-A68_ENV_INT (genie_bits_width, BITS_WIDTH);
-A68_ENV_INT (genie_long_bits_width, get_mp_bits_width (MODE (LONG_BITS)));
-A68_ENV_INT (genie_longlong_bits_width, get_mp_bits_width (MODE (LONGLONG_BITS)));
-A68_ENV_INT (genie_bytes_width, BYTES_WIDTH);
-A68_ENV_INT (genie_long_bytes_width, LONG_BYTES_WIDTH);
-A68_ENV_INT (genie_max_abs_char, UCHAR_MAX);
-A68_ENV_INT (genie_max_int, A68_MAX_INT);
-A68_ENV_REAL (genie_max_real, DBL_MAX);
-A68_ENV_REAL (genie_min_real, DBL_MIN);
-A68_ENV_REAL (genie_small_real, DBL_EPSILON);
-A68_ENV_REAL (genie_pi, A68G_PI);
-A68_ENV_REAL (genie_seconds, seconds ());
-A68_ENV_REAL (genie_cputime, seconds () - cputime_0);
-A68_ENV_INT (genie_stack_pointer, stack_pointer);
-A68_ENV_INT (genie_system_stack_size, stack_size);
+A68_ENV_INT (genie_int_lengths, 3)
+A68_ENV_INT (genie_int_shorths, 1)
+A68_ENV_INT (genie_real_lengths, 3)
+A68_ENV_INT (genie_real_shorths, 1)
+A68_ENV_INT (genie_complex_lengths, 3)
+A68_ENV_INT (genie_complex_shorths, 1)
+A68_ENV_INT (genie_bits_lengths, 3)
+A68_ENV_INT (genie_bits_shorths, 1)
+A68_ENV_INT (genie_bytes_lengths, 2)
+A68_ENV_INT (genie_bytes_shorths, 1)
+A68_ENV_INT (genie_int_width, INT_WIDTH)
+A68_ENV_INT (genie_long_int_width, LONG_INT_WIDTH)
+A68_ENV_INT (genie_longlong_int_width, LONGLONG_INT_WIDTH)
+A68_ENV_INT (genie_real_width, REAL_WIDTH)
+A68_ENV_INT (genie_long_real_width, LONG_REAL_WIDTH)
+A68_ENV_INT (genie_longlong_real_width, LONGLONG_REAL_WIDTH)
+A68_ENV_INT (genie_exp_width, EXP_WIDTH)
+A68_ENV_INT (genie_long_exp_width, LONG_EXP_WIDTH)
+A68_ENV_INT (genie_longlong_exp_width, LONGLONG_EXP_WIDTH)
+A68_ENV_INT (genie_bits_width, BITS_WIDTH)
+A68_ENV_INT (genie_long_bits_width, get_mp_bits_width (MODE (LONG_BITS)))
+A68_ENV_INT (genie_longlong_bits_width, get_mp_bits_width (MODE (LONGLONG_BITS)))
+A68_ENV_INT (genie_bytes_width, BYTES_WIDTH)
+A68_ENV_INT (genie_long_bytes_width, LONG_BYTES_WIDTH)
+A68_ENV_INT (genie_max_abs_char, UCHAR_MAX)
+A68_ENV_INT (genie_max_int, A68_MAX_INT)
+A68_ENV_REAL (genie_max_real, DBL_MAX)
+A68_ENV_REAL (genie_min_real, DBL_MIN)
+A68_ENV_REAL (genie_small_real, DBL_EPSILON)
+A68_ENV_REAL (genie_pi, A68G_PI)
+A68_ENV_REAL (genie_seconds, seconds ())
+A68_ENV_REAL (genie_cputime, seconds () - cputime_0)
+A68_ENV_INT (genie_stack_pointer, stack_pointer)
+A68_ENV_INT (genie_system_stack_size, stack_size)
 
 /*!
 \brief INT system stack pointer
@@ -158,10 +159,10 @@ void genie_long_max_int (NODE_T * p)
   MP_DIGIT_T *z;
   int k, j = 1 + digits;
   STACK_MP (z, p, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = digits - 1;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) (digits - 1);
   for (k = 2; k <= j; k++) {
-    z[k] = MP_RADIX - 1;
+    z[k] = (MP_DIGIT_T) (MP_RADIX - 1);
   }
 }
 
@@ -176,10 +177,10 @@ void genie_longlong_max_int (NODE_T * p)
   MP_DIGIT_T *z;
   int k, j = 1 + digits;
   STACK_MP (z, p, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = digits - 1;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) (digits - 1);
   for (k = 2; k <= j; k++) {
-    z[k] = MP_RADIX - 1;
+    z[k] = (MP_DIGIT_T) (MP_RADIX - 1);
   }
 }
 
@@ -193,10 +194,10 @@ void genie_long_max_real (NODE_T * p)
   int j, digits = get_mp_digits (MODE (LONG_REAL));
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = MAX_MP_EXPONENT - 1;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) (MAX_MP_EXPONENT - 1);
   for (j = 2; j <= 1 + digits; j++) {
-    z[j] = MP_RADIX - 1;
+    z[j] = (MP_DIGIT_T) (MP_RADIX - 1);
   }
 }
 
@@ -210,10 +211,10 @@ void genie_longlong_max_real (NODE_T * p)
   int j, digits = get_mp_digits (MODE (LONGLONG_REAL));
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = MAX_MP_EXPONENT - 1;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) (MAX_MP_EXPONENT - 1);
   for (j = 2; j <= 1 + digits; j++) {
-    z[j] = MP_RADIX - 1;
+    z[j] = (MP_DIGIT_T) (MP_RADIX - 1);
   }
 }
 
@@ -228,9 +229,9 @@ void genie_long_min_real (NODE_T * p)
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
   SET_MP_ZERO (z, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = -(MAX_MP_EXPONENT);
-  MP_DIGIT (z, 1) = 1.0;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) -(MAX_MP_EXPONENT);
+  MP_DIGIT (z, 1) = (MP_DIGIT_T) 1;
 }
 
 /*!
@@ -244,9 +245,9 @@ void genie_longlong_min_real (NODE_T * p)
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
   SET_MP_ZERO (z, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = -(MAX_MP_EXPONENT);
-  MP_DIGIT (z, 1) = 1.0;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) -(MAX_MP_EXPONENT);
+  MP_DIGIT (z, 1) = (MP_DIGIT_T) 1;
 }
 
 /*!
@@ -259,11 +260,11 @@ void genie_long_small_real (NODE_T * p)
   int j, digits = get_mp_digits (MODE (LONG_REAL));
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = -(digits - 1);
-  MP_DIGIT (z, 1) = 1;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) -(digits - 1);
+  MP_DIGIT (z, 1) = (MP_DIGIT_T) 1;
   for (j = 3; j <= 1 + digits; j++) {
-    z[j] = 0;
+    z[j] = (MP_DIGIT_T) 0;
   }
 }
 
@@ -277,11 +278,11 @@ void genie_longlong_small_real (NODE_T * p)
   int j, digits = get_mp_digits (MODE (LONGLONG_REAL));
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
-  MP_EXPONENT (z) = -(digits - 1);
-  MP_DIGIT (z, 1) = 1;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) -(digits - 1);
+  MP_DIGIT (z, 1) = (MP_DIGIT_T) 1;
   for (j = 3; j <= 1 + digits; j++) {
-    z[j] = 0;
+    z[j] = (MP_DIGIT_T) 0;
   }
 }
 
@@ -309,10 +310,10 @@ void genie_long_max_bits (NODE_T * p)
   STACK_MP (z, p, digits);
   pop_sp = stack_pointer;
   STACK_MP (one, p, digits);
-  set_mp_short (z, (MP_DIGIT_T) 2, 0, digits);
-  set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
-  pow_mp_int (p, z, z, width, digits);
-  sub_mp (p, z, z, one, digits);
+ (void) set_mp_short (z, (MP_DIGIT_T) 2, 0, digits);
+ (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
+  (void) pow_mp_int (p, z, z, width, digits);
+ (void) sub_mp (p, z, z, one, digits);
   stack_pointer = pop_sp;
 }
 
@@ -330,10 +331,10 @@ void genie_longlong_max_bits (NODE_T * p)
   STACK_MP (z, p, digits);
   pop_sp = stack_pointer;
   STACK_MP (one, p, digits);
-  set_mp_short (z, (MP_DIGIT_T) 2, 0, digits);
-  set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
-  pow_mp_int (p, z, z, width, digits);
-  sub_mp (p, z, z, one, digits);
+ (void) set_mp_short (z, (MP_DIGIT_T) 2, 0, digits);
+ (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
+  (void) pow_mp_int (p, z, z, width, digits);
+ (void) sub_mp (p, z, z, one, digits);
   stack_pointer = pop_sp;
 }
 
@@ -347,15 +348,15 @@ void genie_pi_long_mp (NODE_T * p)
   int digits = get_mp_digits (MOID (p));
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  mp_pi (p, z, MP_PI, digits);
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) mp_pi (p, z, MP_PI, digits);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /* BOOL operations. */
 
 /* OP NOT = (BOOL) BOOL. */
 
-A68_MONAD (genie_not_bool, A68_BOOL, !);
+A68_MONAD (genie_not_bool, A68_BOOL, (BOOL_T) !)
 
 /*!
 \brief OP ABS = (BOOL) INT
@@ -373,19 +374,19 @@ void genie_abs_bool (NODE_T * p)
 void n (NODE_T * p) {\
   A68_BOOL *i, *j;\
   POP_OPERAND_ADDRESSES (p, i, j, A68_BOOL);\
-  VALUE (i) = VALUE (i) OP VALUE (j);\
+  VALUE (i) = (BOOL_T) (VALUE (i) OP VALUE (j));\
 }
 
-A68_BOOL_DYAD (genie_and_bool, &);
-A68_BOOL_DYAD (genie_or_bool, |);
-A68_BOOL_DYAD (genie_xor_bool, ^);
-A68_BOOL_DYAD (genie_eq_bool, ==);
-A68_BOOL_DYAD (genie_ne_bool, !=);
+A68_BOOL_DYAD (genie_and_bool, &)
+A68_BOOL_DYAD (genie_or_bool, |)
+A68_BOOL_DYAD (genie_xor_bool, ^)
+A68_BOOL_DYAD (genie_eq_bool, ==)
+A68_BOOL_DYAD (genie_ne_bool, !=)
 
 /* INT operations. */
 /* OP - = (INT) INT. */
 
-A68_MONAD (genie_minus_int, A68_INT, -);
+A68_MONAD (genie_minus_int, A68_INT, -)
 
 /*!
 \brief OP ABS = (INT) INT
@@ -419,7 +420,7 @@ void genie_odd_int (NODE_T * p)
 {
   A68_INT j;
   POP_OBJECT (p, &j, A68_INT);
-  PUSH_PRIMITIVE (p, (VALUE (&j) >= 0 ? VALUE (&j) : -VALUE (&j)) % 2 == 1, A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&j) >= 0 ? VALUE (&j) : -VALUE (&j)) % 2 == 1), A68_BOOL);
 }
 
 /*!
@@ -554,15 +555,15 @@ void n (NODE_T * p) {\
   A68_INT i, j;\
   POP_OBJECT (p, &j, A68_INT);\
   POP_OBJECT (p, &i, A68_INT);\
-  PUSH_PRIMITIVE (p, VALUE (&i) OP VALUE (&j), A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (VALUE (&i) OP VALUE (&j)), A68_BOOL);\
   }
 
-A68_CMP_INT (genie_eq_int, ==);
-A68_CMP_INT (genie_ne_int, !=);
-A68_CMP_INT (genie_lt_int, <);
-A68_CMP_INT (genie_gt_int, >);
-A68_CMP_INT (genie_le_int, <=);
-A68_CMP_INT (genie_ge_int, >=);
+A68_CMP_INT (genie_eq_int, ==)
+A68_CMP_INT (genie_ne_int, !=)
+A68_CMP_INT (genie_lt_int, <)
+A68_CMP_INT (genie_gt_int, >)
+A68_CMP_INT (genie_le_int, <=)
+A68_CMP_INT (genie_ge_int, >=)
 
 /*!
 \brief OP +:= = (REF INT, INT) REF INT
@@ -626,8 +627,8 @@ void genie_lengthen_int_to_long_mp (NODE_T * p)
   A68_INT k;
   POP_OBJECT (p, &k, A68_INT);
   STACK_MP (z, p, digits);
-  int_to_mp (p, z, VALUE (&k), digits);
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) int_to_mp (p, z, VALUE (&k), digits);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -642,8 +643,8 @@ void genie_lengthen_unsigned_to_long_mp (NODE_T * p)
   A68_BITS k;
   POP_OBJECT (p, &k, A68_BITS);
   STACK_MP (z, p, digits);
-  unsigned_to_mp (p, z, (unsigned) VALUE (&k), digits);
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) unsigned_to_mp (p, z, (unsigned) VALUE (&k), digits);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -658,7 +659,7 @@ void genie_shorten_long_mp_to_int (NODE_T * p)
   MP_DIGIT_T *z;
   DECREMENT_STACK_POINTER (p, size);
   z = (MP_DIGIT_T *) STACK_TOP;
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   PUSH_PRIMITIVE (p, mp_to_int (p, z, digits), A68_INT);
 }
 
@@ -673,8 +674,8 @@ void genie_odd_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   DECREMENT_STACK_POINTER (p, size);
-  if (MP_EXPONENT (z) <= digits - 1) {
-    PUSH_PRIMITIVE (p, (int) (z[(int) (2 + MP_EXPONENT (z))]) % 2 != 0, A68_BOOL);
+  if (MP_EXPONENT (z) <= (MP_DIGIT_T) (digits - 1)) {
+    PUSH_PRIMITIVE (p, (BOOL_T) ((int) (z[(int) (2 + MP_EXPONENT (z))]) % 2 != 0), A68_BOOL);
   } else {
     PUSH_PRIMITIVE (p, A68_FALSE, A68_BOOL);
   }
@@ -706,9 +707,9 @@ void genie_add_long_int (NODE_T * p)
   int digits = get_mp_digits (m), size = get_mp_size (m);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  add_mp (p, x, x, y, digits);
+ (void) add_mp (p, x, x, y, digits);
   test_long_int_range (p, x, m);
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -723,9 +724,9 @@ void genie_minus_long_int (NODE_T * p)
   int digits = get_mp_digits (m), size = get_mp_size (m);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  sub_mp (p, x, x, y, digits);
+ (void) sub_mp (p, x, x, y, digits);
   test_long_int_range (p, x, m);
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -740,9 +741,9 @@ void genie_mul_long_int (NODE_T * p)
   int digits = get_mp_digits (m), size = get_mp_size (m);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  mul_mp (p, x, x, y, digits);
+ (void) mul_mp (p, x, x, y, digits);
   test_long_int_range (p, x, m);
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -759,9 +760,9 @@ void genie_pow_long_mp_int_int (NODE_T * p)
   MP_DIGIT_T *x;
   POP_OBJECT (p, &k, A68_INT);
   x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  pow_mp_int (p, x, x, VALUE (&k), digits);
+  (void) pow_mp_int (p, x, x, VALUE (&k), digits);
   test_long_int_range (p, x, m);
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -801,7 +802,7 @@ void genie_timesab_long_int (NODE_T * p)
 
 /* OP - = (REAL) REAL. */
 
-A68_MONAD (genie_minus_real, A68_REAL, -);
+A68_MONAD (genie_minus_real, A68_REAL, -)
 
 /*!
 \brief OP ABS = (REAL) REAL
@@ -825,7 +826,7 @@ void genie_round_real (NODE_T * p)
   A68_REAL x;
   int j;
   POP_OBJECT (p, &x, A68_REAL);
-  if (VALUE (&x) < -A68_MAX_INT || VALUE (&x) > A68_MAX_INT) {
+  if (VALUE (&x) < -(double)A68_MAX_INT || VALUE (&x) > (double) A68_MAX_INT) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
@@ -846,7 +847,7 @@ void genie_entier_real (NODE_T * p)
 {
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
-  if (VALUE (&x) < -A68_MAX_INT || VALUE (&x) > A68_MAX_INT) {
+  if (VALUE (&x) < -(double)A68_MAX_INT || VALUE (&x) > (double)A68_MAX_INT) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
@@ -937,7 +938,7 @@ void genie_pow_real_int (NODE_T * p)
   double mult, prod;
   BOOL_T negative;
   POP_OBJECT (p, &j, A68_INT);
-  negative = VALUE (&j) < 0;
+  negative = (BOOL_T) (VALUE (&j) < 0);
   VALUE (&j) = (VALUE (&j) >= 0 ? VALUE (&j) : -VALUE (&j));
   POP_OBJECT (p, &x, A68_REAL);
   prod = 1;
@@ -989,15 +990,15 @@ void n (NODE_T * p) {\
   A68_REAL i, j;\
   POP_OBJECT (p, &j, A68_REAL);\
   POP_OBJECT (p, &i, A68_REAL);\
-  PUSH_PRIMITIVE (p, VALUE (&i) OP VALUE (&j), A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (VALUE (&i) OP VALUE (&j)), A68_BOOL);\
   }
 
-A68_CMP_REAL (genie_eq_real, ==);
-A68_CMP_REAL (genie_ne_real, !=);
-A68_CMP_REAL (genie_lt_real, <);
-A68_CMP_REAL (genie_gt_real, >);
-A68_CMP_REAL (genie_le_real, <=);
-A68_CMP_REAL (genie_ge_real, >=);
+A68_CMP_REAL (genie_eq_real, ==)
+A68_CMP_REAL (genie_ne_real, !=)
+A68_CMP_REAL (genie_lt_real, <)
+A68_CMP_REAL (genie_gt_real, >)
+A68_CMP_REAL (genie_le_real, <=)
+A68_CMP_REAL (genie_ge_real, >=)
 
 /*!
 \brief OP +:= = (REF REAL, REAL) REF REAL
@@ -1051,8 +1052,8 @@ void genie_lengthen_real_to_long_mp (NODE_T * p)
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
   STACK_MP (z, p, digits);
-  real_to_mp (p, z, VALUE (&x), digits);
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) real_to_mp (p, z, VALUE (&x), digits);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1067,7 +1068,7 @@ void genie_shorten_long_mp_to_real (NODE_T * p)
   MP_DIGIT_T *z;
   DECREMENT_STACK_POINTER (p, size);
   z = (MP_DIGIT_T *) STACK_TOP;
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   PUSH_PRIMITIVE (p, mp_to_real (p, z, digits), A68_REAL);
 }
 
@@ -1084,15 +1085,15 @@ void genie_round_long_mp (NODE_T * p)
   MP_DIGIT_T *z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *y;
   STACK_MP (y, p, digits);
-  set_mp_short (y, (MP_DIGIT_T) (MP_RADIX / 2), -1, digits);
+ (void) set_mp_short (y, (MP_DIGIT_T) (MP_RADIX / 2), -1, digits);
   if (MP_DIGIT (z, 1) >= 0) {
-    add_mp (p, z, z, y, digits);
-    trunc_mp (p, z, z, digits);
+   (void) add_mp (p, z, z, y, digits);
+    (void) trunc_mp (p, z, z, digits);
   } else {
-    sub_mp (p, z, z, y, digits);
-    trunc_mp (p, z, z, digits);
+   (void) sub_mp (p, z, z, y, digits);
+    (void) trunc_mp (p, z, z, digits);
   }
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
 
@@ -1107,19 +1108,19 @@ void genie_entier_long_mp (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   if (MP_DIGIT (z, 1) >= 0) {
-    trunc_mp (p, z, z, digits);
+    (void) trunc_mp (p, z, z, digits);
   } else {
     MP_DIGIT_T *y;
     STACK_MP (y, p, digits);
     MOVE_MP (y, z, digits);
-    trunc_mp (p, z, z, digits);
-    sub_mp (p, y, y, z, digits);
+    (void) trunc_mp (p, z, z, digits);
+   (void) sub_mp (p, y, y, z, digits);
     if (MP_DIGIT (y, 1) != 0) {
-      set_mp_short (y, (MP_DIGIT_T) 1, 0, digits);
-      sub_mp (p, z, z, y, digits);
+     (void) set_mp_short (y, (MP_DIGIT_T) 1, 0, digits);
+     (void) sub_mp (p, z, z, y, digits);
     }
   }
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
 
@@ -1136,7 +1137,7 @@ void genie_sqrt_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longsqrt");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1152,7 +1153,7 @@ void genie_curt_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longcurt");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1165,8 +1166,8 @@ void genie_exp_long_mp (NODE_T * p)
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  exp_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) exp_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
 
@@ -1184,7 +1185,7 @@ void genie_ln_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longln");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
 
@@ -1202,10 +1203,9 @@ void genie_log_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longlog");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
-
 
 /*!
 \brief PROC long sinh = (LONG REAL) LONG REAL
@@ -1216,8 +1216,8 @@ void genie_sinh_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  sinh_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) sinh_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1229,8 +1229,8 @@ void genie_cosh_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  cosh_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) cosh_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1242,8 +1242,8 @@ void genie_tanh_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  tanh_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) tanh_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1255,8 +1255,8 @@ void genie_arcsinh_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  asinh_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) asinh_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1268,8 +1268,8 @@ void genie_arccosh_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  acosh_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) acosh_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1281,8 +1281,8 @@ void genie_arctanh_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  atanh_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) atanh_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1294,8 +1294,8 @@ void genie_sin_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  sin_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) sin_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1307,8 +1307,8 @@ void genie_cos_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  cos_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) cos_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1324,7 +1324,7 @@ void genie_tan_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longtan");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1340,7 +1340,7 @@ void genie_asin_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longarcsin");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1356,7 +1356,7 @@ void genie_acos_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longarcsin");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1368,8 +1368,8 @@ void genie_atan_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  atan_mp (p, x, x, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) atan_mp (p, x, x, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1387,7 +1387,7 @@ void genie_atan2_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longarctan2");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /* Arithmetic operations. */
@@ -1402,8 +1402,8 @@ void genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
   MP_DIGIT_T *z;
   DECREMENT_STACK_POINTER (p, (int) size_long_mp ());
   STACK_MP (z, p, longlong_mp_digits ());
-  lengthen_mp (p, z, longlong_mp_digits (), z, long_mp_digits ());
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) lengthen_mp (p, z, longlong_mp_digits (), z, long_mp_digits ());
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1423,8 +1423,8 @@ void genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
       exit_genie (p, A68_RUNTIME_ERROR);
     }
   }
-  shorten_mp (p, z, long_mp_digits (), z, longlong_mp_digits ());
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) shorten_mp (p, z, long_mp_digits (), z, longlong_mp_digits ());
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1436,7 +1436,7 @@ void genie_minus_long_mp (NODE_T * p)
 {
   int size = get_mp_size (LHS_MODE (p));
   MP_DIGIT_T *z = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
 }
 
@@ -1449,7 +1449,7 @@ void genie_abs_long_mp (NODE_T * p)
 {
   int size = get_mp_size (LHS_MODE (p));
   MP_DIGIT_T *z = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   MP_DIGIT (z, 1) = ABS (MP_DIGIT (z, 1));
 }
 
@@ -1477,8 +1477,8 @@ void genie_add_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  add_mp (p, x, x, y, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+ (void) add_mp (p, x, x, y, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -1493,8 +1493,8 @@ void genie_sub_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  sub_mp (p, x, x, y, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+ (void) sub_mp (p, x, x, y, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -1509,8 +1509,8 @@ void genie_mul_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  mul_mp (p, x, x, y, digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+ (void) mul_mp (p, x, x, y, digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -1529,7 +1529,7 @@ void genie_div_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_REAL));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -1548,7 +1548,7 @@ void genie_over_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -1569,9 +1569,9 @@ void genie_mod_long_mp (NODE_T * p)
   }
   if (MP_DIGIT (x, 1) < 0) {
     MP_DIGIT (y, 1) = ABS (MP_DIGIT (y, 1));
-    add_mp (p, x, x, y, digits);
+   (void) add_mp (p, x, x, y, digits);
   }
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
@@ -1649,17 +1649,17 @@ void n (NODE_T * p) {\
   int digits = get_mp_digits (mode), size = get_mp_size (mode);\
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);\
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);\
-  sub_mp (p, x, x, y, digits);\
+ (void) sub_mp (p, x, x, y, digits);\
   DECREMENT_STACK_POINTER (p, 2 * size);\
-  PUSH_PRIMITIVE (p, MP_DIGIT (x, 1) OP 0, A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (x, 1) OP 0), A68_BOOL);\
 }
 
-A68_CMP_LONG (genie_eq_long_mp, ==);
-A68_CMP_LONG (genie_ne_long_mp, !=);
-A68_CMP_LONG (genie_lt_long_mp, <);
-A68_CMP_LONG (genie_gt_long_mp, >);
-A68_CMP_LONG (genie_le_long_mp, <=);
-A68_CMP_LONG (genie_ge_long_mp, >=);
+A68_CMP_LONG (genie_eq_long_mp, ==)
+A68_CMP_LONG (genie_ne_long_mp, !=)
+A68_CMP_LONG (genie_lt_long_mp, <)
+A68_CMP_LONG (genie_gt_long_mp, >)
+A68_CMP_LONG (genie_le_long_mp, <=)
+A68_CMP_LONG (genie_ge_long_mp, >=)
 
 /*!
 \brief OP ** = (LONG MODE, INT) LONG MODE
@@ -1674,8 +1674,8 @@ void genie_pow_long_mp_int (NODE_T * p)
   MP_DIGIT_T *x;
   POP_OBJECT (p, &k, A68_INT);
   x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  pow_mp_int (p, x, x, VALUE (&k), digits);
-  MP_STATUS (x) = INITIALISED_MASK;
+  (void) pow_mp_int (p, x, x, VALUE (&k), digits);
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -1696,10 +1696,10 @@ void genie_pow_long_mp (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, SYMBOL (p));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  mul_mp (p, z, y, z, digits);
-  exp_mp (p, x, z, digits);
+ (void) mul_mp (p, z, y, z, digits);
+  (void) exp_mp (p, x, z, digits);
   stack_pointer = pop_sp - size;
-  MP_STATUS (x) = INITIALISED_MASK;
+  MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /* Character operations. */
@@ -1711,15 +1711,15 @@ void n (NODE_T * p) {\
   A68_CHAR i, j;\
   POP_OBJECT (p, &j, A68_CHAR);\
   POP_OBJECT (p, &i, A68_CHAR);\
-  PUSH_PRIMITIVE (p, TO_UCHAR (VALUE (&i)) OP TO_UCHAR (VALUE (&j)), A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (TO_UCHAR (VALUE (&i)) OP TO_UCHAR (VALUE (&j))), A68_BOOL);\
   }
 
-A68_CMP_CHAR (genie_eq_char, ==);
-A68_CMP_CHAR (genie_ne_char, !=);
-A68_CMP_CHAR (genie_lt_char, <);
-A68_CMP_CHAR (genie_gt_char, >);
-A68_CMP_CHAR (genie_le_char, <=);
-A68_CMP_CHAR (genie_ge_char, >=);
+A68_CMP_CHAR (genie_eq_char, ==)
+A68_CMP_CHAR (genie_ne_char, !=)
+A68_CMP_CHAR (genie_lt_char, <)
+A68_CMP_CHAR (genie_gt_char, >)
+A68_CMP_CHAR (genie_le_char, <=)
+A68_CMP_CHAR (genie_ge_char, >=)
 
 /*!
 \brief OP ABS = (CHAR) INT
@@ -1755,30 +1755,30 @@ void genie_repr_char (NODE_T * p)
 void n (NODE_T * p) {\
   A68_CHAR ch;\
   POP_OBJECT (p, &ch, A68_CHAR);\
-  PUSH_PRIMITIVE (p, (OP (VALUE (&ch)) == 0 ? A68_FALSE : A68_TRUE), A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (OP (VALUE (&ch)) == 0 ? A68_FALSE : A68_TRUE), A68_BOOL);\
   }
 
-A68_CHAR_BOOL (genie_is_alnum, IS_ALNUM);
-A68_CHAR_BOOL (genie_is_alpha, IS_ALPHA);
-A68_CHAR_BOOL (genie_is_cntrl, IS_CNTRL);
-A68_CHAR_BOOL (genie_is_digit, IS_DIGIT);
-A68_CHAR_BOOL (genie_is_graph, IS_GRAPH);
-A68_CHAR_BOOL (genie_is_lower, IS_LOWER);
-A68_CHAR_BOOL (genie_is_print, IS_PRINT);
-A68_CHAR_BOOL (genie_is_punct, IS_PUNCT);
-A68_CHAR_BOOL (genie_is_space, IS_SPACE);
-A68_CHAR_BOOL (genie_is_upper, IS_UPPER);
-A68_CHAR_BOOL (genie_is_xdigit, IS_XDIGIT);
+A68_CHAR_BOOL (genie_is_alnum, IS_ALNUM)
+A68_CHAR_BOOL (genie_is_alpha, IS_ALPHA)
+A68_CHAR_BOOL (genie_is_cntrl, IS_CNTRL)
+A68_CHAR_BOOL (genie_is_digit, IS_DIGIT)
+A68_CHAR_BOOL (genie_is_graph, IS_GRAPH)
+A68_CHAR_BOOL (genie_is_lower, IS_LOWER)
+A68_CHAR_BOOL (genie_is_print, IS_PRINT)
+A68_CHAR_BOOL (genie_is_punct, IS_PUNCT)
+A68_CHAR_BOOL (genie_is_space, IS_SPACE)
+A68_CHAR_BOOL (genie_is_upper, IS_UPPER)
+A68_CHAR_BOOL (genie_is_xdigit, IS_XDIGIT)
 
 #define A68_CHAR_CHAR(n, OP)\
 void n (NODE_T * p) {\
   A68_CHAR *ch;\
   POP_OPERAND_ADDRESS (p, ch, A68_CHAR);\
-  VALUE (ch) = OP (TO_UCHAR (VALUE (ch)));\
+  VALUE (ch) = (char) (OP (TO_UCHAR (VALUE (ch))));\
 }
 
-A68_CHAR_CHAR (genie_to_lower, TO_LOWER);
-A68_CHAR_CHAR (genie_to_upper, TO_UPPER);
+A68_CHAR_CHAR (genie_to_lower, TO_LOWER)
+A68_CHAR_CHAR (genie_to_upper, TO_UPPER)
 
 /*!
 \brief OP + = (CHAR, CHAR) STRING
@@ -2131,15 +2131,15 @@ static int string_difference (NODE_T * p)
 #define A68_CMP_STRING(n, OP)\
 void n (NODE_T * p) {\
   int k = string_difference (p);\
-  PUSH_PRIMITIVE (p, k OP 0, A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (k OP 0), A68_BOOL);\
 }
 
-A68_CMP_STRING (genie_eq_string, ==);
-A68_CMP_STRING (genie_ne_string, !=);
-A68_CMP_STRING (genie_lt_string, <);
-A68_CMP_STRING (genie_gt_string, >);
-A68_CMP_STRING (genie_le_string, <=);
-A68_CMP_STRING (genie_ge_string, >=);
+A68_CMP_STRING (genie_eq_string, ==)
+A68_CMP_STRING (genie_ne_string, !=)
+A68_CMP_STRING (genie_lt_string, <)
+A68_CMP_STRING (genie_gt_string, >)
+A68_CMP_STRING (genie_le_string, <=)
+A68_CMP_STRING (genie_ge_string, >=)
 
 /* RNG functions are in gsl.c.*/
 
@@ -2176,10 +2176,10 @@ void genie_long_next_random (NODE_T * p)
   int k = 2 + digits;
   STACK_MP (z, p, digits);
   while (--k > 1) {
-    z[k] = (int) (rng_53_bit () * MP_RADIX);
+    z[k] = (MP_DIGIT_T) (int) (rng_53_bit () * MP_RADIX);
   }
-  MP_EXPONENT (z) = -1;
-  MP_STATUS (z) = INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_DIGIT_T) (-1);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /* BYTES operations. */
@@ -2222,7 +2222,7 @@ void genie_bytespack (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   STATUS (&b) = INITIALISED_MASK;
-  a_to_c_string (p, VALUE (&b), z);
+  CHECK_RETVAL (a_to_c_string (p, VALUE (&b), z) != NULL);
   PUSH_BYTES (p, VALUE (&b));
 }
 
@@ -2295,15 +2295,15 @@ static int compare_bytes (NODE_T * p)
 #define A68_CMP_BYTES(n, OP)\
 void n (NODE_T * p) {\
   int k = compare_bytes (p);\
-  PUSH_PRIMITIVE (p, k OP 0, A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (k OP 0), A68_BOOL);\
 }
 
-A68_CMP_BYTES (genie_eq_bytes, ==);
-A68_CMP_BYTES (genie_ne_bytes, !=);
-A68_CMP_BYTES (genie_lt_bytes, <);
-A68_CMP_BYTES (genie_gt_bytes, >);
-A68_CMP_BYTES (genie_le_bytes, <=);
-A68_CMP_BYTES (genie_ge_bytes, >=);
+A68_CMP_BYTES (genie_eq_bytes, ==)
+A68_CMP_BYTES (genie_ne_bytes, !=)
+A68_CMP_BYTES (genie_lt_bytes, <)
+A68_CMP_BYTES (genie_gt_bytes, >)
+A68_CMP_BYTES (genie_le_bytes, <=)
+A68_CMP_BYTES (genie_ge_bytes, >=)
 
 /*!
 \brief OP LENG = (BYTES) LONG BYTES
@@ -2371,7 +2371,7 @@ void genie_long_bytespack (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   STATUS (&b) = INITIALISED_MASK;
-  a_to_c_string (p, VALUE (&b), z);
+  CHECK_RETVAL (a_to_c_string (p, VALUE (&b), z) != NULL);
   PUSH_LONG_BYTES (p, VALUE (&b));
 }
 
@@ -2444,21 +2444,21 @@ static int compare_long_bytes (NODE_T * p)
 #define A68_CMP_LONG_BYTES(n, OP)\
 void n (NODE_T * p) {\
   int k = compare_long_bytes (p);\
-  PUSH_PRIMITIVE (p, k OP 0, A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (k OP 0), A68_BOOL);\
 }
 
-A68_CMP_LONG_BYTES (genie_eq_long_bytes, ==);
-A68_CMP_LONG_BYTES (genie_ne_long_bytes, !=);
-A68_CMP_LONG_BYTES (genie_lt_long_bytes, <);
-A68_CMP_LONG_BYTES (genie_gt_long_bytes, >);
-A68_CMP_LONG_BYTES (genie_le_long_bytes, <=);
-A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=);
+A68_CMP_LONG_BYTES (genie_eq_long_bytes, ==)
+A68_CMP_LONG_BYTES (genie_ne_long_bytes, !=)
+A68_CMP_LONG_BYTES (genie_lt_long_bytes, <)
+A68_CMP_LONG_BYTES (genie_gt_long_bytes, >)
+A68_CMP_LONG_BYTES (genie_le_long_bytes, <=)
+A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=)
 
 /* BITS operations. */
 
 /* OP NOT = (BITS) BITS. */
 
-A68_MONAD (genie_not_bits, A68_BITS, ~);
+A68_MONAD (genie_not_bits, A68_BITS, ~)
 
 /*!
 \brief OP AND = (BITS, BITS) BITS
@@ -2503,11 +2503,11 @@ void n (NODE_T * p) {\
   A68_BITS i, j;\
   POP_OBJECT (p, &j, A68_BITS);\
   POP_OBJECT (p, &i, A68_BITS);\
-  PUSH_PRIMITIVE (p, VALUE (&i) OP VALUE (&j), A68_BOOL);\
+  PUSH_PRIMITIVE (p, (BOOL_T) (VALUE (&i) OP VALUE (&j)), A68_BOOL);\
   }
 
-A68_CMP_BITS (genie_eq_bits, ==);
-A68_CMP_BITS (genie_ne_bits, !=);
+A68_CMP_BITS (genie_eq_bits, ==)
+A68_CMP_BITS (genie_ne_bits, !=)
 
 /*!
 \brief OP <= = (BITS, BITS) BOOL
@@ -2519,7 +2519,7 @@ void genie_le_bits (NODE_T * p)
   A68_BITS i, j;
   POP_OBJECT (p, &j, A68_BITS);
   POP_OBJECT (p, &i, A68_BITS);
-  PUSH_PRIMITIVE (p, (VALUE (&i) | VALUE (&j)) == VALUE (&j), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&i) | VALUE (&j)) == VALUE (&j)), A68_BOOL);
 }
 
 /*!
@@ -2532,7 +2532,7 @@ void genie_ge_bits (NODE_T * p)
   A68_BITS i, j;
   POP_OBJECT (p, &j, A68_BITS);
   POP_OBJECT (p, &i, A68_BITS);
-  PUSH_PRIMITIVE (p, (VALUE (&i) | VALUE (&j)) == VALUE (&i), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&i) | VALUE (&j)) == VALUE (&i)), A68_BOOL);
 }
 
 /*!
@@ -2592,7 +2592,7 @@ void genie_elem_bits (NODE_T * p)
   for (n = 0; n < (BITS_WIDTH - VALUE (&i)); n++) {
     mask = mask << 1;
   }
-  PUSH_PRIMITIVE (p, ((VALUE (&j) & mask) != 0 ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&j) & mask) != 0 ? A68_TRUE : A68_FALSE), A68_BOOL);
 }
 
 /*!
@@ -2651,7 +2651,7 @@ void genie_bin_int (NODE_T * p)
   A68_INT i;
   POP_OBJECT (p, &i, A68_INT);
 /* RR does not convert negative numbers. Algol68G does. */
-  PUSH_PRIMITIVE (p, VALUE (&i), A68_BITS);
+  PUSH_PRIMITIVE (p, (unsigned) (VALUE (&i)), A68_BITS);
 }
 
 /*!
@@ -2667,7 +2667,7 @@ void genie_bin_long_mp (NODE_T * p)
   MP_DIGIT_T *u = (MP_DIGIT_T *) STACK_OFFSET (-size);
 /* We convert just for the operand check. */
   (void) stack_mp_bits (p, u, mode);
-  MP_STATUS (u) = INITIALISED_MASK;
+  MP_STATUS (u) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
 
@@ -2687,7 +2687,7 @@ void genie_not_long_mp (NODE_T * p)
   for (k = 0; k < words; k++) {
     row[k] = ~row[k];
   }
-  pack_mp_bits (p, u, row, mode);
+  (void) pack_mp_bits (p, u, row, mode);
   stack_pointer = pop_sp;
 }
 
@@ -2746,7 +2746,7 @@ void genie_elem_long_bits (NODE_T * p)
   }
   w = elem_long_bits (p, VALUE (i), z, MODE (LONG_BITS));
   DECREMENT_STACK_POINTER (p, size + ALIGNED_SIZE_OF (A68_INT));
-  PUSH_PRIMITIVE (p, w != 0, A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (w != 0), A68_BOOL);
 }
 
 /*!
@@ -2768,7 +2768,7 @@ void genie_elem_longlong_bits (NODE_T * p)
   }
   w = elem_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS));
   DECREMENT_STACK_POINTER (p, size + ALIGNED_SIZE_OF (A68_INT));
-  PUSH_PRIMITIVE (p, w != 0, A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (w != 0), A68_BOOL);
 }
 
 /*!
@@ -2814,7 +2814,7 @@ void genie_set_long_bits (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   w = set_long_bits (p, VALUE (i), z, MODE (LONG_BITS), 0x1);
-  pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
+  (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
 }
@@ -2838,7 +2838,7 @@ void genie_set_longlong_bits (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   w = set_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS), 0x1);
-  pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
+  (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
 }
@@ -2862,7 +2862,7 @@ void genie_clear_long_bits (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   w = set_long_bits (p, VALUE (i), z, MODE (LONG_BITS), 0x0);
-  pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
+  (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
 }
@@ -2886,7 +2886,7 @@ void genie_clear_longlong_bits (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   w = set_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS), 0x0);
-  pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
+  (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
 }
@@ -2913,14 +2913,9 @@ void genie_bits_pack (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-/* Convert so that LWB goes to MSB, so ELEM gives same order. */
   base = ADDRESS (&ARRAY (arr));
-  VALUE (&b) = 0;
-/* Set bit mask. */
+  VALUE (&b) = 0x0;
   bit = 0x1;
-  for (k = 0; k < BITS_WIDTH - size; k++) {
-    bit <<= 1;
-  }
   for (k = UPB (tup); k >= LWB (tup); k--) {
     int addr = INDEX_1_DIM (arr, tup, k);
     A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
@@ -2966,21 +2961,18 @@ void genie_long_bits_pack (NODE_T * p)
   pop_sp = stack_pointer;
 /* Set bit mask. */
   STACK_MP (fact, p, digits);
-  set_mp_short (fact, (MP_DIGIT_T) 1, 0, digits);
-  for (k = 0; k < bits - size; k++) {
-    mul_mp_digit (p, fact, fact, (MP_DIGIT_T) 2, digits);
-  }
+ (void) set_mp_short (fact, (MP_DIGIT_T) 1, 0, digits);
   for (k = UPB (tup); k >= LWB (tup); k--) {
     int addr = INDEX_1_DIM (arr, tup, k);
     A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
     CHECK_INIT (p, INITIALISED (boo), MODE (BOOL));
     if (VALUE (boo)) {
-      add_mp (p, sum, sum, fact, digits);
+     (void) add_mp (p, sum, sum, fact, digits);
     }
-    mul_mp_digit (p, fact, fact, (MP_DIGIT_T) 2, digits);
+   (void) mul_mp_digit (p, fact, fact, (MP_DIGIT_T) 2, digits);
   }
   stack_pointer = pop_sp;
-  MP_STATUS (sum) = INITIALISED_MASK;
+  MP_STATUS (sum) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -3009,7 +3001,7 @@ void genie_shl_long_mp (NODE_T * p)
         if (carry) {
           row_u[k] |= 0x1;
         }
-        carry = ((row_u[k] & MP_BITS_RADIX) != 0);
+        carry = (BOOL_T) ((row_u[k] & MP_BITS_RADIX) != 0);
         row_u[k] &= ~(MP_BITS_RADIX);
       }
     }
@@ -3020,12 +3012,12 @@ void genie_shl_long_mp (NODE_T * p)
         if (carry) {
           row_u[k] |= MP_BITS_RADIX;
         }
-        carry = ((row_u[k] & 0x1) != 0);
+        carry = (BOOL_T) ((row_u[k] & 0x1) != 0);
         row_u[k] >>= 1;
       }
     }
   }
-  pack_mp_bits (p, u, row_u, mode);
+  (void) pack_mp_bits (p, u, row_u, mode);
   stack_pointer = pop_sp;
 }
 
@@ -3039,7 +3031,7 @@ void genie_shr_long_mp (NODE_T * p)
   A68_INT *j;
   POP_OPERAND_ADDRESS (p, j, A68_INT);
   VALUE (j) = -VALUE (j);
-  genie_shl_long_mp (p);        /* Conform RR. */
+  (void) genie_shl_long_mp (p);        /* Conform RR. */
 }
 
 /*!
@@ -3056,11 +3048,11 @@ void genie_le_long_bits (NODE_T * p)
   MP_DIGIT_T *u = (MP_DIGIT_T *) STACK_OFFSET (-2 * size), *v = (MP_DIGIT_T *) STACK_OFFSET (-size);
   unsigned *row_u = stack_mp_bits (p, u, mode), *row_v = stack_mp_bits (p, v, mode);
   for (k = 0; (k < words) && result; k++) {
-    result &= ((row_u[k] | row_v[k]) == row_v[k]);
+    result = (BOOL_T) (result & ((row_u[k] | row_v[k]) == row_v[k]));
   }
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, 2 * size);
-  PUSH_PRIMITIVE (p, (result ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (result ? A68_TRUE : A68_FALSE), A68_BOOL);
 }
 
 /*!
@@ -3077,11 +3069,11 @@ void genie_ge_long_bits (NODE_T * p)
   MP_DIGIT_T *u = (MP_DIGIT_T *) STACK_OFFSET (-2 * size), *v = (MP_DIGIT_T *) STACK_OFFSET (-size);
   unsigned *row_u = stack_mp_bits (p, u, mode), *row_v = stack_mp_bits (p, v, mode);
   for (k = 0; (k < words) && result; k++) {
-    result &= ((row_u[k] | row_v[k]) == row_u[k]);
+    result = (BOOL_T) (result & ((row_u[k] | row_v[k]) == row_u[k]));
   }
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, 2 * size);
-  PUSH_PRIMITIVE (p, (result ? A68_TRUE : A68_FALSE), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (result ? A68_TRUE : A68_FALSE), A68_BOOL);
 }
 
 /*!
@@ -3099,7 +3091,7 @@ void genie_and_long_mp (NODE_T * p)
   for (k = 0; k < words; k++) {
     row_u[k] &= row_v[k];
   }
-  pack_mp_bits (p, u, row_u, mode);
+  (void) pack_mp_bits (p, u, row_u, mode);
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, size);
 }
@@ -3119,7 +3111,7 @@ void genie_or_long_mp (NODE_T * p)
   for (k = 0; k < words; k++) {
     row_u[k] |= row_v[k];
   }
-  pack_mp_bits (p, u, row_u, mode);
+  (void) pack_mp_bits (p, u, row_u, mode);
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, size);
 }
@@ -3139,141 +3131,141 @@ void genie_xor_long_mp (NODE_T * p)
   for (k = 0; k < words; k++) {
     row_u[k] ^= row_v[k];
   }
-  pack_mp_bits (p, u, row_u, mode);
+  (void) pack_mp_bits (p, u, row_u, mode);
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, size);
 }
 
 #if defined ENABLE_NUMERICAL
-A68_ENV_REAL (genie_cgs_acre, GSL_CONST_CGS_ACRE);
-A68_ENV_REAL (genie_cgs_angstrom, GSL_CONST_CGS_ANGSTROM);
-A68_ENV_REAL (genie_cgs_astronomical_unit, GSL_CONST_CGS_ASTRONOMICAL_UNIT);
-A68_ENV_REAL (genie_cgs_bar, GSL_CONST_CGS_BAR);
-A68_ENV_REAL (genie_cgs_barn, GSL_CONST_CGS_BARN);
-A68_ENV_REAL (genie_cgs_bohr_magneton, GSL_CONST_CGS_BOHR_MAGNETON);
-A68_ENV_REAL (genie_cgs_bohr_radius, GSL_CONST_CGS_BOHR_RADIUS);
-A68_ENV_REAL (genie_cgs_boltzmann, GSL_CONST_CGS_BOLTZMANN);
-A68_ENV_REAL (genie_cgs_btu, GSL_CONST_CGS_BTU);
-A68_ENV_REAL (genie_cgs_calorie, GSL_CONST_CGS_CALORIE);
-A68_ENV_REAL (genie_cgs_canadian_gallon, GSL_CONST_CGS_CANADIAN_GALLON);
-A68_ENV_REAL (genie_cgs_carat, GSL_CONST_CGS_CARAT);
-A68_ENV_REAL (genie_cgs_cup, GSL_CONST_CGS_CUP);
-A68_ENV_REAL (genie_cgs_curie, GSL_CONST_CGS_CURIE);
-A68_ENV_REAL (genie_cgs_day, GSL_CONST_CGS_DAY);
-A68_ENV_REAL (genie_cgs_dyne, GSL_CONST_CGS_DYNE);
-A68_ENV_REAL (genie_cgs_electron_charge, GSL_CONST_CGS_ELECTRON_CHARGE);
-A68_ENV_REAL (genie_cgs_electron_magnetic_moment, GSL_CONST_CGS_ELECTRON_MAGNETIC_MOMENT);
-A68_ENV_REAL (genie_cgs_electron_volt, GSL_CONST_CGS_ELECTRON_VOLT) A68_ENV_REAL (genie_cgs_erg, GSL_CONST_CGS_ERG);
-A68_ENV_REAL (genie_cgs_faraday, GSL_CONST_CGS_FARADAY) A68_ENV_REAL (genie_cgs_fathom, GSL_CONST_CGS_FATHOM);
-A68_ENV_REAL (genie_cgs_fluid_ounce, GSL_CONST_CGS_FLUID_OUNCE) A68_ENV_REAL (genie_cgs_foot, GSL_CONST_CGS_FOOT);
-A68_ENV_REAL (genie_cgs_footcandle, GSL_CONST_CGS_FOOTCANDLE) A68_ENV_REAL (genie_cgs_footlambert, GSL_CONST_CGS_FOOTLAMBERT);
-A68_ENV_REAL (genie_cgs_gauss, GSL_CONST_CGS_GAUSS) A68_ENV_REAL (genie_cgs_gram_force, GSL_CONST_CGS_GRAM_FORCE);
-A68_ENV_REAL (genie_cgs_grav_accel, GSL_CONST_CGS_GRAV_ACCEL);
-A68_ENV_REAL (genie_cgs_gravitational_constant, GSL_CONST_CGS_GRAVITATIONAL_CONSTANT);
-A68_ENV_REAL (genie_cgs_hectare, GSL_CONST_CGS_HECTARE) A68_ENV_REAL (genie_cgs_horsepower, GSL_CONST_CGS_HORSEPOWER);
-A68_ENV_REAL (genie_cgs_hour, GSL_CONST_CGS_HOUR) A68_ENV_REAL (genie_cgs_inch, GSL_CONST_CGS_INCH);
-A68_ENV_REAL (genie_cgs_inch_of_mercury, GSL_CONST_CGS_INCH_OF_MERCURY);
-A68_ENV_REAL (genie_cgs_inch_of_water, GSL_CONST_CGS_INCH_OF_WATER) A68_ENV_REAL (genie_cgs_joule, GSL_CONST_CGS_JOULE);
-A68_ENV_REAL (genie_cgs_kilometers_per_hour, GSL_CONST_CGS_KILOMETERS_PER_HOUR);
-A68_ENV_REAL (genie_cgs_kilopound_force, GSL_CONST_CGS_KILOPOUND_FORCE) A68_ENV_REAL (genie_cgs_knot, GSL_CONST_CGS_KNOT);
-A68_ENV_REAL (genie_cgs_lambert, GSL_CONST_CGS_LAMBERT) A68_ENV_REAL (genie_cgs_light_year, GSL_CONST_CGS_LIGHT_YEAR);
-A68_ENV_REAL (genie_cgs_liter, GSL_CONST_CGS_LITER) A68_ENV_REAL (genie_cgs_lumen, GSL_CONST_CGS_LUMEN);
-A68_ENV_REAL (genie_cgs_lux, GSL_CONST_CGS_LUX) A68_ENV_REAL (genie_cgs_mass_electron, GSL_CONST_CGS_MASS_ELECTRON);
-A68_ENV_REAL (genie_cgs_mass_muon, GSL_CONST_CGS_MASS_MUON) A68_ENV_REAL (genie_cgs_mass_neutron, GSL_CONST_CGS_MASS_NEUTRON);
-A68_ENV_REAL (genie_cgs_mass_proton, GSL_CONST_CGS_MASS_PROTON);
-A68_ENV_REAL (genie_cgs_meter_of_mercury, GSL_CONST_CGS_METER_OF_MERCURY);
-A68_ENV_REAL (genie_cgs_metric_ton, GSL_CONST_CGS_METRIC_TON) A68_ENV_REAL (genie_cgs_micron, GSL_CONST_CGS_MICRON);
-A68_ENV_REAL (genie_cgs_mil, GSL_CONST_CGS_MIL) A68_ENV_REAL (genie_cgs_mile, GSL_CONST_CGS_MILE);
-A68_ENV_REAL (genie_cgs_miles_per_hour, GSL_CONST_CGS_MILES_PER_HOUR) A68_ENV_REAL (genie_cgs_minute, GSL_CONST_CGS_MINUTE);
-A68_ENV_REAL (genie_cgs_molar_gas, GSL_CONST_CGS_MOLAR_GAS) A68_ENV_REAL (genie_cgs_nautical_mile, GSL_CONST_CGS_NAUTICAL_MILE);
-A68_ENV_REAL (genie_cgs_newton, GSL_CONST_CGS_NEWTON) A68_ENV_REAL (genie_cgs_nuclear_magneton, GSL_CONST_CGS_NUCLEAR_MAGNETON);
-A68_ENV_REAL (genie_cgs_ounce_mass, GSL_CONST_CGS_OUNCE_MASS) A68_ENV_REAL (genie_cgs_parsec, GSL_CONST_CGS_PARSEC);
-A68_ENV_REAL (genie_cgs_phot, GSL_CONST_CGS_PHOT) A68_ENV_REAL (genie_cgs_pint, GSL_CONST_CGS_PINT);
-A68_ENV_REAL (genie_cgs_planck_constant_h, 6.6260693e-27) A68_ENV_REAL (genie_cgs_planck_constant_hbar, 6.6260693e-27 / (2 * A68G_PI));
-A68_ENV_REAL (genie_cgs_point, GSL_CONST_CGS_POINT) A68_ENV_REAL (genie_cgs_poise, GSL_CONST_CGS_POISE);
-A68_ENV_REAL (genie_cgs_pound_force, GSL_CONST_CGS_POUND_FORCE) A68_ENV_REAL (genie_cgs_pound_mass, GSL_CONST_CGS_POUND_MASS);
-A68_ENV_REAL (genie_cgs_poundal, GSL_CONST_CGS_POUNDAL);
-A68_ENV_REAL (genie_cgs_proton_magnetic_moment, GSL_CONST_CGS_PROTON_MAGNETIC_MOMENT);
-A68_ENV_REAL (genie_cgs_psi, GSL_CONST_CGS_PSI) A68_ENV_REAL (genie_cgs_quart, GSL_CONST_CGS_QUART);
-A68_ENV_REAL (genie_cgs_rad, GSL_CONST_CGS_RAD) A68_ENV_REAL (genie_cgs_roentgen, GSL_CONST_CGS_ROENTGEN);
-A68_ENV_REAL (genie_cgs_rydberg, GSL_CONST_CGS_RYDBERG) A68_ENV_REAL (genie_cgs_solar_mass, GSL_CONST_CGS_SOLAR_MASS);
-A68_ENV_REAL (genie_cgs_speed_of_light, GSL_CONST_CGS_SPEED_OF_LIGHT);
-A68_ENV_REAL (genie_cgs_standard_gas_volume, GSL_CONST_CGS_STANDARD_GAS_VOLUME);
-A68_ENV_REAL (genie_cgs_std_atmosphere, GSL_CONST_CGS_STD_ATMOSPHERE) A68_ENV_REAL (genie_cgs_stilb, GSL_CONST_CGS_STILB);
-A68_ENV_REAL (genie_cgs_stokes, GSL_CONST_CGS_STOKES) A68_ENV_REAL (genie_cgs_tablespoon, GSL_CONST_CGS_TABLESPOON);
-A68_ENV_REAL (genie_cgs_teaspoon, GSL_CONST_CGS_TEASPOON) A68_ENV_REAL (genie_cgs_texpoint, GSL_CONST_CGS_TEXPOINT);
-A68_ENV_REAL (genie_cgs_therm, GSL_CONST_CGS_THERM) A68_ENV_REAL (genie_cgs_ton, GSL_CONST_CGS_TON);
-A68_ENV_REAL (genie_cgs_torr, GSL_CONST_CGS_TORR) A68_ENV_REAL (genie_cgs_troy_ounce, GSL_CONST_CGS_TROY_OUNCE);
-A68_ENV_REAL (genie_cgs_uk_gallon, GSL_CONST_CGS_UK_GALLON) A68_ENV_REAL (genie_cgs_uk_ton, GSL_CONST_CGS_UK_TON);
-A68_ENV_REAL (genie_cgs_unified_atomic_mass, GSL_CONST_CGS_UNIFIED_ATOMIC_MASS);
-A68_ENV_REAL (genie_cgs_us_gallon, GSL_CONST_CGS_US_GALLON) A68_ENV_REAL (genie_cgs_week, GSL_CONST_CGS_WEEK);
-A68_ENV_REAL (genie_cgs_yard, GSL_CONST_CGS_YARD) A68_ENV_REAL (genie_mks_acre, GSL_CONST_MKS_ACRE);
-A68_ENV_REAL (genie_mks_angstrom, GSL_CONST_MKS_ANGSTROM);
-A68_ENV_REAL (genie_mks_astronomical_unit, GSL_CONST_MKS_ASTRONOMICAL_UNIT) A68_ENV_REAL (genie_mks_bar, GSL_CONST_MKS_BAR);
-A68_ENV_REAL (genie_mks_barn, GSL_CONST_MKS_BARN) A68_ENV_REAL (genie_mks_bohr_magneton, GSL_CONST_MKS_BOHR_MAGNETON);
-A68_ENV_REAL (genie_mks_bohr_radius, GSL_CONST_MKS_BOHR_RADIUS) A68_ENV_REAL (genie_mks_boltzmann, GSL_CONST_MKS_BOLTZMANN);
-A68_ENV_REAL (genie_mks_btu, GSL_CONST_MKS_BTU) A68_ENV_REAL (genie_mks_calorie, GSL_CONST_MKS_CALORIE);
-A68_ENV_REAL (genie_mks_canadian_gallon, GSL_CONST_MKS_CANADIAN_GALLON) A68_ENV_REAL (genie_mks_carat, GSL_CONST_MKS_CARAT);
-A68_ENV_REAL (genie_mks_cup, GSL_CONST_MKS_CUP) A68_ENV_REAL (genie_mks_curie, GSL_CONST_MKS_CURIE);
-A68_ENV_REAL (genie_mks_day, GSL_CONST_MKS_DAY) A68_ENV_REAL (genie_mks_dyne, GSL_CONST_MKS_DYNE);
-A68_ENV_REAL (genie_mks_electron_charge, GSL_CONST_MKS_ELECTRON_CHARGE);
-A68_ENV_REAL (genie_mks_electron_magnetic_moment, GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT);
-A68_ENV_REAL (genie_mks_electron_volt, GSL_CONST_MKS_ELECTRON_VOLT) A68_ENV_REAL (genie_mks_erg, GSL_CONST_MKS_ERG);
-A68_ENV_REAL (genie_mks_faraday, GSL_CONST_MKS_FARADAY) A68_ENV_REAL (genie_mks_fathom, GSL_CONST_MKS_FATHOM);
-A68_ENV_REAL (genie_mks_fluid_ounce, GSL_CONST_MKS_FLUID_OUNCE) A68_ENV_REAL (genie_mks_foot, GSL_CONST_MKS_FOOT);
-A68_ENV_REAL (genie_mks_footcandle, GSL_CONST_MKS_FOOTCANDLE) A68_ENV_REAL (genie_mks_footlambert, GSL_CONST_MKS_FOOTLAMBERT);
-A68_ENV_REAL (genie_mks_gauss, GSL_CONST_MKS_GAUSS) A68_ENV_REAL (genie_mks_gram_force, GSL_CONST_MKS_GRAM_FORCE);
-A68_ENV_REAL (genie_mks_grav_accel, GSL_CONST_MKS_GRAV_ACCEL);
-A68_ENV_REAL (genie_mks_gravitational_constant, GSL_CONST_MKS_GRAVITATIONAL_CONSTANT);
-A68_ENV_REAL (genie_mks_hectare, GSL_CONST_MKS_HECTARE) A68_ENV_REAL (genie_mks_horsepower, GSL_CONST_MKS_HORSEPOWER);
-A68_ENV_REAL (genie_mks_hour, GSL_CONST_MKS_HOUR) A68_ENV_REAL (genie_mks_inch, GSL_CONST_MKS_INCH);
-A68_ENV_REAL (genie_mks_inch_of_mercury, GSL_CONST_MKS_INCH_OF_MERCURY);
-A68_ENV_REAL (genie_mks_inch_of_water, GSL_CONST_MKS_INCH_OF_WATER) A68_ENV_REAL (genie_mks_joule, GSL_CONST_MKS_JOULE);
-A68_ENV_REAL (genie_mks_kilometers_per_hour, GSL_CONST_MKS_KILOMETERS_PER_HOUR);
-A68_ENV_REAL (genie_mks_kilopound_force, GSL_CONST_MKS_KILOPOUND_FORCE) A68_ENV_REAL (genie_mks_knot, GSL_CONST_MKS_KNOT);
-A68_ENV_REAL (genie_mks_lambert, GSL_CONST_MKS_LAMBERT) A68_ENV_REAL (genie_mks_light_year, GSL_CONST_MKS_LIGHT_YEAR);
-A68_ENV_REAL (genie_mks_liter, GSL_CONST_MKS_LITER) A68_ENV_REAL (genie_mks_lumen, GSL_CONST_MKS_LUMEN);
-A68_ENV_REAL (genie_mks_lux, GSL_CONST_MKS_LUX) A68_ENV_REAL (genie_mks_mass_electron, GSL_CONST_MKS_MASS_ELECTRON);
-A68_ENV_REAL (genie_mks_mass_muon, GSL_CONST_MKS_MASS_MUON) A68_ENV_REAL (genie_mks_mass_neutron, GSL_CONST_MKS_MASS_NEUTRON);
-A68_ENV_REAL (genie_mks_mass_proton, GSL_CONST_MKS_MASS_PROTON);
-A68_ENV_REAL (genie_mks_meter_of_mercury, GSL_CONST_MKS_METER_OF_MERCURY);
-A68_ENV_REAL (genie_mks_metric_ton, GSL_CONST_MKS_METRIC_TON) A68_ENV_REAL (genie_mks_micron, GSL_CONST_MKS_MICRON);
-A68_ENV_REAL (genie_mks_mil, GSL_CONST_MKS_MIL) A68_ENV_REAL (genie_mks_mile, GSL_CONST_MKS_MILE);
-A68_ENV_REAL (genie_mks_miles_per_hour, GSL_CONST_MKS_MILES_PER_HOUR) A68_ENV_REAL (genie_mks_minute, GSL_CONST_MKS_MINUTE);
-A68_ENV_REAL (genie_mks_molar_gas, GSL_CONST_MKS_MOLAR_GAS) A68_ENV_REAL (genie_mks_nautical_mile, GSL_CONST_MKS_NAUTICAL_MILE);
-A68_ENV_REAL (genie_mks_newton, GSL_CONST_MKS_NEWTON) A68_ENV_REAL (genie_mks_nuclear_magneton, GSL_CONST_MKS_NUCLEAR_MAGNETON);
-A68_ENV_REAL (genie_mks_ounce_mass, GSL_CONST_MKS_OUNCE_MASS) A68_ENV_REAL (genie_mks_parsec, GSL_CONST_MKS_PARSEC);
-A68_ENV_REAL (genie_mks_phot, GSL_CONST_MKS_PHOT) A68_ENV_REAL (genie_mks_pint, GSL_CONST_MKS_PINT);
-A68_ENV_REAL (genie_mks_planck_constant_h, 6.6260693e-34) A68_ENV_REAL (genie_mks_planck_constant_hbar, 6.6260693e-34 / (2 * A68G_PI));
-A68_ENV_REAL (genie_mks_point, GSL_CONST_MKS_POINT) A68_ENV_REAL (genie_mks_poise, GSL_CONST_MKS_POISE);
-A68_ENV_REAL (genie_mks_pound_force, GSL_CONST_MKS_POUND_FORCE) A68_ENV_REAL (genie_mks_pound_mass, GSL_CONST_MKS_POUND_MASS);
-A68_ENV_REAL (genie_mks_poundal, GSL_CONST_MKS_POUNDAL);
-A68_ENV_REAL (genie_mks_proton_magnetic_moment, GSL_CONST_MKS_PROTON_MAGNETIC_MOMENT);
-A68_ENV_REAL (genie_mks_psi, GSL_CONST_MKS_PSI) A68_ENV_REAL (genie_mks_quart, GSL_CONST_MKS_QUART);
-A68_ENV_REAL (genie_mks_rad, GSL_CONST_MKS_RAD) A68_ENV_REAL (genie_mks_roentgen, GSL_CONST_MKS_ROENTGEN);
-A68_ENV_REAL (genie_mks_rydberg, GSL_CONST_MKS_RYDBERG) A68_ENV_REAL (genie_mks_solar_mass, GSL_CONST_MKS_SOLAR_MASS);
-A68_ENV_REAL (genie_mks_speed_of_light, GSL_CONST_MKS_SPEED_OF_LIGHT);
-A68_ENV_REAL (genie_mks_standard_gas_volume, GSL_CONST_MKS_STANDARD_GAS_VOLUME);
-A68_ENV_REAL (genie_mks_std_atmosphere, GSL_CONST_MKS_STD_ATMOSPHERE) A68_ENV_REAL (genie_mks_stilb, GSL_CONST_MKS_STILB);
-A68_ENV_REAL (genie_mks_stokes, GSL_CONST_MKS_STOKES) A68_ENV_REAL (genie_mks_tablespoon, GSL_CONST_MKS_TABLESPOON);
-A68_ENV_REAL (genie_mks_teaspoon, GSL_CONST_MKS_TEASPOON) A68_ENV_REAL (genie_mks_texpoint, GSL_CONST_MKS_TEXPOINT);
-A68_ENV_REAL (genie_mks_therm, GSL_CONST_MKS_THERM) A68_ENV_REAL (genie_mks_ton, GSL_CONST_MKS_TON);
-A68_ENV_REAL (genie_mks_torr, GSL_CONST_MKS_TORR) A68_ENV_REAL (genie_mks_troy_ounce, GSL_CONST_MKS_TROY_OUNCE);
-A68_ENV_REAL (genie_mks_uk_gallon, GSL_CONST_MKS_UK_GALLON) A68_ENV_REAL (genie_mks_uk_ton, GSL_CONST_MKS_UK_TON);
-A68_ENV_REAL (genie_mks_unified_atomic_mass, GSL_CONST_MKS_UNIFIED_ATOMIC_MASS);
-A68_ENV_REAL (genie_mks_us_gallon, GSL_CONST_MKS_US_GALLON);
-A68_ENV_REAL (genie_mks_vacuum_permeability, GSL_CONST_MKS_VACUUM_PERMEABILITY);
-A68_ENV_REAL (genie_mks_vacuum_permittivity, GSL_CONST_MKS_VACUUM_PERMITTIVITY) A68_ENV_REAL (genie_mks_week, GSL_CONST_MKS_WEEK);
-A68_ENV_REAL (genie_mks_yard, GSL_CONST_MKS_YARD) A68_ENV_REAL (genie_num_atto, GSL_CONST_NUM_ATTO);
-A68_ENV_REAL (genie_num_avogadro, GSL_CONST_NUM_AVOGADRO) A68_ENV_REAL (genie_num_exa, GSL_CONST_NUM_EXA);
-A68_ENV_REAL (genie_num_femto, GSL_CONST_NUM_FEMTO) A68_ENV_REAL (genie_num_fine_structure, GSL_CONST_NUM_FINE_STRUCTURE);
-A68_ENV_REAL (genie_num_giga, GSL_CONST_NUM_GIGA) A68_ENV_REAL (genie_num_kilo, GSL_CONST_NUM_KILO);
-A68_ENV_REAL (genie_num_mega, GSL_CONST_NUM_MEGA) A68_ENV_REAL (genie_num_micro, GSL_CONST_NUM_MICRO);
-A68_ENV_REAL (genie_num_milli, GSL_CONST_NUM_MILLI) A68_ENV_REAL (genie_num_nano, GSL_CONST_NUM_NANO);
-A68_ENV_REAL (genie_num_peta, GSL_CONST_NUM_PETA) A68_ENV_REAL (genie_num_pico, GSL_CONST_NUM_PICO);
-A68_ENV_REAL (genie_num_tera, GSL_CONST_NUM_TERA) A68_ENV_REAL (genie_num_yocto, GSL_CONST_NUM_YOCTO);
-A68_ENV_REAL (genie_num_yotta, GSL_CONST_NUM_YOTTA) A68_ENV_REAL (genie_num_zepto, GSL_CONST_NUM_ZEPTO);
-A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA);
+A68_ENV_REAL (genie_cgs_acre, GSL_CONST_CGS_ACRE)
+A68_ENV_REAL (genie_cgs_angstrom, GSL_CONST_CGS_ANGSTROM)
+A68_ENV_REAL (genie_cgs_astronomical_unit, GSL_CONST_CGS_ASTRONOMICAL_UNIT)
+A68_ENV_REAL (genie_cgs_bar, GSL_CONST_CGS_BAR)
+A68_ENV_REAL (genie_cgs_barn, GSL_CONST_CGS_BARN)
+A68_ENV_REAL (genie_cgs_bohr_magneton, GSL_CONST_CGS_BOHR_MAGNETON)
+A68_ENV_REAL (genie_cgs_bohr_radius, GSL_CONST_CGS_BOHR_RADIUS)
+A68_ENV_REAL (genie_cgs_boltzmann, GSL_CONST_CGS_BOLTZMANN)
+A68_ENV_REAL (genie_cgs_btu, GSL_CONST_CGS_BTU)
+A68_ENV_REAL (genie_cgs_calorie, GSL_CONST_CGS_CALORIE)
+A68_ENV_REAL (genie_cgs_canadian_gallon, GSL_CONST_CGS_CANADIAN_GALLON)
+A68_ENV_REAL (genie_cgs_carat, GSL_CONST_CGS_CARAT)
+A68_ENV_REAL (genie_cgs_cup, GSL_CONST_CGS_CUP)
+A68_ENV_REAL (genie_cgs_curie, GSL_CONST_CGS_CURIE)
+A68_ENV_REAL (genie_cgs_day, GSL_CONST_CGS_DAY)
+A68_ENV_REAL (genie_cgs_dyne, GSL_CONST_CGS_DYNE)
+A68_ENV_REAL (genie_cgs_electron_charge, GSL_CONST_CGS_ELECTRON_CHARGE)
+A68_ENV_REAL (genie_cgs_electron_magnetic_moment, GSL_CONST_CGS_ELECTRON_MAGNETIC_MOMENT)
+A68_ENV_REAL (genie_cgs_electron_volt, GSL_CONST_CGS_ELECTRON_VOLT) A68_ENV_REAL (genie_cgs_erg, GSL_CONST_CGS_ERG)
+A68_ENV_REAL (genie_cgs_faraday, GSL_CONST_CGS_FARADAY) A68_ENV_REAL (genie_cgs_fathom, GSL_CONST_CGS_FATHOM)
+A68_ENV_REAL (genie_cgs_fluid_ounce, GSL_CONST_CGS_FLUID_OUNCE) A68_ENV_REAL (genie_cgs_foot, GSL_CONST_CGS_FOOT)
+A68_ENV_REAL (genie_cgs_footcandle, GSL_CONST_CGS_FOOTCANDLE) A68_ENV_REAL (genie_cgs_footlambert, GSL_CONST_CGS_FOOTLAMBERT)
+A68_ENV_REAL (genie_cgs_gauss, GSL_CONST_CGS_GAUSS) A68_ENV_REAL (genie_cgs_gram_force, GSL_CONST_CGS_GRAM_FORCE)
+A68_ENV_REAL (genie_cgs_grav_accel, GSL_CONST_CGS_GRAV_ACCEL)
+A68_ENV_REAL (genie_cgs_gravitational_constant, GSL_CONST_CGS_GRAVITATIONAL_CONSTANT)
+A68_ENV_REAL (genie_cgs_hectare, GSL_CONST_CGS_HECTARE) A68_ENV_REAL (genie_cgs_horsepower, GSL_CONST_CGS_HORSEPOWER)
+A68_ENV_REAL (genie_cgs_hour, GSL_CONST_CGS_HOUR) A68_ENV_REAL (genie_cgs_inch, GSL_CONST_CGS_INCH)
+A68_ENV_REAL (genie_cgs_inch_of_mercury, GSL_CONST_CGS_INCH_OF_MERCURY)
+A68_ENV_REAL (genie_cgs_inch_of_water, GSL_CONST_CGS_INCH_OF_WATER) A68_ENV_REAL (genie_cgs_joule, GSL_CONST_CGS_JOULE)
+A68_ENV_REAL (genie_cgs_kilometers_per_hour, GSL_CONST_CGS_KILOMETERS_PER_HOUR)
+A68_ENV_REAL (genie_cgs_kilopound_force, GSL_CONST_CGS_KILOPOUND_FORCE) A68_ENV_REAL (genie_cgs_knot, GSL_CONST_CGS_KNOT)
+A68_ENV_REAL (genie_cgs_lambert, GSL_CONST_CGS_LAMBERT) A68_ENV_REAL (genie_cgs_light_year, GSL_CONST_CGS_LIGHT_YEAR)
+A68_ENV_REAL (genie_cgs_liter, GSL_CONST_CGS_LITER) A68_ENV_REAL (genie_cgs_lumen, GSL_CONST_CGS_LUMEN)
+A68_ENV_REAL (genie_cgs_lux, GSL_CONST_CGS_LUX) A68_ENV_REAL (genie_cgs_mass_electron, GSL_CONST_CGS_MASS_ELECTRON)
+A68_ENV_REAL (genie_cgs_mass_muon, GSL_CONST_CGS_MASS_MUON) A68_ENV_REAL (genie_cgs_mass_neutron, GSL_CONST_CGS_MASS_NEUTRON)
+A68_ENV_REAL (genie_cgs_mass_proton, GSL_CONST_CGS_MASS_PROTON)
+A68_ENV_REAL (genie_cgs_meter_of_mercury, GSL_CONST_CGS_METER_OF_MERCURY)
+A68_ENV_REAL (genie_cgs_metric_ton, GSL_CONST_CGS_METRIC_TON) A68_ENV_REAL (genie_cgs_micron, GSL_CONST_CGS_MICRON)
+A68_ENV_REAL (genie_cgs_mil, GSL_CONST_CGS_MIL) A68_ENV_REAL (genie_cgs_mile, GSL_CONST_CGS_MILE)
+A68_ENV_REAL (genie_cgs_miles_per_hour, GSL_CONST_CGS_MILES_PER_HOUR) A68_ENV_REAL (genie_cgs_minute, GSL_CONST_CGS_MINUTE)
+A68_ENV_REAL (genie_cgs_molar_gas, GSL_CONST_CGS_MOLAR_GAS) A68_ENV_REAL (genie_cgs_nautical_mile, GSL_CONST_CGS_NAUTICAL_MILE)
+A68_ENV_REAL (genie_cgs_newton, GSL_CONST_CGS_NEWTON) A68_ENV_REAL (genie_cgs_nuclear_magneton, GSL_CONST_CGS_NUCLEAR_MAGNETON)
+A68_ENV_REAL (genie_cgs_ounce_mass, GSL_CONST_CGS_OUNCE_MASS) A68_ENV_REAL (genie_cgs_parsec, GSL_CONST_CGS_PARSEC)
+A68_ENV_REAL (genie_cgs_phot, GSL_CONST_CGS_PHOT) A68_ENV_REAL (genie_cgs_pint, GSL_CONST_CGS_PINT)
+A68_ENV_REAL (genie_cgs_planck_constant_h, 6.6260693e-27) A68_ENV_REAL (genie_cgs_planck_constant_hbar, 6.6260693e-27 / (2 * A68G_PI))
+A68_ENV_REAL (genie_cgs_point, GSL_CONST_CGS_POINT) A68_ENV_REAL (genie_cgs_poise, GSL_CONST_CGS_POISE)
+A68_ENV_REAL (genie_cgs_pound_force, GSL_CONST_CGS_POUND_FORCE) A68_ENV_REAL (genie_cgs_pound_mass, GSL_CONST_CGS_POUND_MASS)
+A68_ENV_REAL (genie_cgs_poundal, GSL_CONST_CGS_POUNDAL)
+A68_ENV_REAL (genie_cgs_proton_magnetic_moment, GSL_CONST_CGS_PROTON_MAGNETIC_MOMENT)
+A68_ENV_REAL (genie_cgs_psi, GSL_CONST_CGS_PSI) A68_ENV_REAL (genie_cgs_quart, GSL_CONST_CGS_QUART)
+A68_ENV_REAL (genie_cgs_rad, GSL_CONST_CGS_RAD) A68_ENV_REAL (genie_cgs_roentgen, GSL_CONST_CGS_ROENTGEN)
+A68_ENV_REAL (genie_cgs_rydberg, GSL_CONST_CGS_RYDBERG) A68_ENV_REAL (genie_cgs_solar_mass, GSL_CONST_CGS_SOLAR_MASS)
+A68_ENV_REAL (genie_cgs_speed_of_light, GSL_CONST_CGS_SPEED_OF_LIGHT)
+A68_ENV_REAL (genie_cgs_standard_gas_volume, GSL_CONST_CGS_STANDARD_GAS_VOLUME)
+A68_ENV_REAL (genie_cgs_std_atmosphere, GSL_CONST_CGS_STD_ATMOSPHERE) A68_ENV_REAL (genie_cgs_stilb, GSL_CONST_CGS_STILB)
+A68_ENV_REAL (genie_cgs_stokes, GSL_CONST_CGS_STOKES) A68_ENV_REAL (genie_cgs_tablespoon, GSL_CONST_CGS_TABLESPOON)
+A68_ENV_REAL (genie_cgs_teaspoon, GSL_CONST_CGS_TEASPOON) A68_ENV_REAL (genie_cgs_texpoint, GSL_CONST_CGS_TEXPOINT)
+A68_ENV_REAL (genie_cgs_therm, GSL_CONST_CGS_THERM) A68_ENV_REAL (genie_cgs_ton, GSL_CONST_CGS_TON)
+A68_ENV_REAL (genie_cgs_torr, GSL_CONST_CGS_TORR) A68_ENV_REAL (genie_cgs_troy_ounce, GSL_CONST_CGS_TROY_OUNCE)
+A68_ENV_REAL (genie_cgs_uk_gallon, GSL_CONST_CGS_UK_GALLON) A68_ENV_REAL (genie_cgs_uk_ton, GSL_CONST_CGS_UK_TON)
+A68_ENV_REAL (genie_cgs_unified_atomic_mass, GSL_CONST_CGS_UNIFIED_ATOMIC_MASS)
+A68_ENV_REAL (genie_cgs_us_gallon, GSL_CONST_CGS_US_GALLON) A68_ENV_REAL (genie_cgs_week, GSL_CONST_CGS_WEEK)
+A68_ENV_REAL (genie_cgs_yard, GSL_CONST_CGS_YARD) A68_ENV_REAL (genie_mks_acre, GSL_CONST_MKS_ACRE)
+A68_ENV_REAL (genie_mks_angstrom, GSL_CONST_MKS_ANGSTROM)
+A68_ENV_REAL (genie_mks_astronomical_unit, GSL_CONST_MKS_ASTRONOMICAL_UNIT) A68_ENV_REAL (genie_mks_bar, GSL_CONST_MKS_BAR)
+A68_ENV_REAL (genie_mks_barn, GSL_CONST_MKS_BARN) A68_ENV_REAL (genie_mks_bohr_magneton, GSL_CONST_MKS_BOHR_MAGNETON)
+A68_ENV_REAL (genie_mks_bohr_radius, GSL_CONST_MKS_BOHR_RADIUS) A68_ENV_REAL (genie_mks_boltzmann, GSL_CONST_MKS_BOLTZMANN)
+A68_ENV_REAL (genie_mks_btu, GSL_CONST_MKS_BTU) A68_ENV_REAL (genie_mks_calorie, GSL_CONST_MKS_CALORIE)
+A68_ENV_REAL (genie_mks_canadian_gallon, GSL_CONST_MKS_CANADIAN_GALLON) A68_ENV_REAL (genie_mks_carat, GSL_CONST_MKS_CARAT)
+A68_ENV_REAL (genie_mks_cup, GSL_CONST_MKS_CUP) A68_ENV_REAL (genie_mks_curie, GSL_CONST_MKS_CURIE)
+A68_ENV_REAL (genie_mks_day, GSL_CONST_MKS_DAY) A68_ENV_REAL (genie_mks_dyne, GSL_CONST_MKS_DYNE)
+A68_ENV_REAL (genie_mks_electron_charge, GSL_CONST_MKS_ELECTRON_CHARGE)
+A68_ENV_REAL (genie_mks_electron_magnetic_moment, GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT)
+A68_ENV_REAL (genie_mks_electron_volt, GSL_CONST_MKS_ELECTRON_VOLT) A68_ENV_REAL (genie_mks_erg, GSL_CONST_MKS_ERG)
+A68_ENV_REAL (genie_mks_faraday, GSL_CONST_MKS_FARADAY) A68_ENV_REAL (genie_mks_fathom, GSL_CONST_MKS_FATHOM)
+A68_ENV_REAL (genie_mks_fluid_ounce, GSL_CONST_MKS_FLUID_OUNCE) A68_ENV_REAL (genie_mks_foot, GSL_CONST_MKS_FOOT)
+A68_ENV_REAL (genie_mks_footcandle, GSL_CONST_MKS_FOOTCANDLE) A68_ENV_REAL (genie_mks_footlambert, GSL_CONST_MKS_FOOTLAMBERT)
+A68_ENV_REAL (genie_mks_gauss, GSL_CONST_MKS_GAUSS) A68_ENV_REAL (genie_mks_gram_force, GSL_CONST_MKS_GRAM_FORCE)
+A68_ENV_REAL (genie_mks_grav_accel, GSL_CONST_MKS_GRAV_ACCEL)
+A68_ENV_REAL (genie_mks_gravitational_constant, GSL_CONST_MKS_GRAVITATIONAL_CONSTANT)
+A68_ENV_REAL (genie_mks_hectare, GSL_CONST_MKS_HECTARE) A68_ENV_REAL (genie_mks_horsepower, GSL_CONST_MKS_HORSEPOWER)
+A68_ENV_REAL (genie_mks_hour, GSL_CONST_MKS_HOUR) A68_ENV_REAL (genie_mks_inch, GSL_CONST_MKS_INCH)
+A68_ENV_REAL (genie_mks_inch_of_mercury, GSL_CONST_MKS_INCH_OF_MERCURY)
+A68_ENV_REAL (genie_mks_inch_of_water, GSL_CONST_MKS_INCH_OF_WATER) A68_ENV_REAL (genie_mks_joule, GSL_CONST_MKS_JOULE)
+A68_ENV_REAL (genie_mks_kilometers_per_hour, GSL_CONST_MKS_KILOMETERS_PER_HOUR)
+A68_ENV_REAL (genie_mks_kilopound_force, GSL_CONST_MKS_KILOPOUND_FORCE) A68_ENV_REAL (genie_mks_knot, GSL_CONST_MKS_KNOT)
+A68_ENV_REAL (genie_mks_lambert, GSL_CONST_MKS_LAMBERT) A68_ENV_REAL (genie_mks_light_year, GSL_CONST_MKS_LIGHT_YEAR)
+A68_ENV_REAL (genie_mks_liter, GSL_CONST_MKS_LITER) A68_ENV_REAL (genie_mks_lumen, GSL_CONST_MKS_LUMEN)
+A68_ENV_REAL (genie_mks_lux, GSL_CONST_MKS_LUX) A68_ENV_REAL (genie_mks_mass_electron, GSL_CONST_MKS_MASS_ELECTRON)
+A68_ENV_REAL (genie_mks_mass_muon, GSL_CONST_MKS_MASS_MUON) A68_ENV_REAL (genie_mks_mass_neutron, GSL_CONST_MKS_MASS_NEUTRON)
+A68_ENV_REAL (genie_mks_mass_proton, GSL_CONST_MKS_MASS_PROTON)
+A68_ENV_REAL (genie_mks_meter_of_mercury, GSL_CONST_MKS_METER_OF_MERCURY)
+A68_ENV_REAL (genie_mks_metric_ton, GSL_CONST_MKS_METRIC_TON) A68_ENV_REAL (genie_mks_micron, GSL_CONST_MKS_MICRON)
+A68_ENV_REAL (genie_mks_mil, GSL_CONST_MKS_MIL) A68_ENV_REAL (genie_mks_mile, GSL_CONST_MKS_MILE)
+A68_ENV_REAL (genie_mks_miles_per_hour, GSL_CONST_MKS_MILES_PER_HOUR) A68_ENV_REAL (genie_mks_minute, GSL_CONST_MKS_MINUTE)
+A68_ENV_REAL (genie_mks_molar_gas, GSL_CONST_MKS_MOLAR_GAS) A68_ENV_REAL (genie_mks_nautical_mile, GSL_CONST_MKS_NAUTICAL_MILE)
+A68_ENV_REAL (genie_mks_newton, GSL_CONST_MKS_NEWTON) A68_ENV_REAL (genie_mks_nuclear_magneton, GSL_CONST_MKS_NUCLEAR_MAGNETON)
+A68_ENV_REAL (genie_mks_ounce_mass, GSL_CONST_MKS_OUNCE_MASS) A68_ENV_REAL (genie_mks_parsec, GSL_CONST_MKS_PARSEC)
+A68_ENV_REAL (genie_mks_phot, GSL_CONST_MKS_PHOT) A68_ENV_REAL (genie_mks_pint, GSL_CONST_MKS_PINT)
+A68_ENV_REAL (genie_mks_planck_constant_h, 6.6260693e-34) A68_ENV_REAL (genie_mks_planck_constant_hbar, 6.6260693e-34 / (2 * A68G_PI))
+A68_ENV_REAL (genie_mks_point, GSL_CONST_MKS_POINT) A68_ENV_REAL (genie_mks_poise, GSL_CONST_MKS_POISE)
+A68_ENV_REAL (genie_mks_pound_force, GSL_CONST_MKS_POUND_FORCE) A68_ENV_REAL (genie_mks_pound_mass, GSL_CONST_MKS_POUND_MASS)
+A68_ENV_REAL (genie_mks_poundal, GSL_CONST_MKS_POUNDAL)
+A68_ENV_REAL (genie_mks_proton_magnetic_moment, GSL_CONST_MKS_PROTON_MAGNETIC_MOMENT)
+A68_ENV_REAL (genie_mks_psi, GSL_CONST_MKS_PSI) A68_ENV_REAL (genie_mks_quart, GSL_CONST_MKS_QUART)
+A68_ENV_REAL (genie_mks_rad, GSL_CONST_MKS_RAD) A68_ENV_REAL (genie_mks_roentgen, GSL_CONST_MKS_ROENTGEN)
+A68_ENV_REAL (genie_mks_rydberg, GSL_CONST_MKS_RYDBERG) A68_ENV_REAL (genie_mks_solar_mass, GSL_CONST_MKS_SOLAR_MASS)
+A68_ENV_REAL (genie_mks_speed_of_light, GSL_CONST_MKS_SPEED_OF_LIGHT)
+A68_ENV_REAL (genie_mks_standard_gas_volume, GSL_CONST_MKS_STANDARD_GAS_VOLUME)
+A68_ENV_REAL (genie_mks_std_atmosphere, GSL_CONST_MKS_STD_ATMOSPHERE) A68_ENV_REAL (genie_mks_stilb, GSL_CONST_MKS_STILB)
+A68_ENV_REAL (genie_mks_stokes, GSL_CONST_MKS_STOKES) A68_ENV_REAL (genie_mks_tablespoon, GSL_CONST_MKS_TABLESPOON)
+A68_ENV_REAL (genie_mks_teaspoon, GSL_CONST_MKS_TEASPOON) A68_ENV_REAL (genie_mks_texpoint, GSL_CONST_MKS_TEXPOINT)
+A68_ENV_REAL (genie_mks_therm, GSL_CONST_MKS_THERM) A68_ENV_REAL (genie_mks_ton, GSL_CONST_MKS_TON)
+A68_ENV_REAL (genie_mks_torr, GSL_CONST_MKS_TORR) A68_ENV_REAL (genie_mks_troy_ounce, GSL_CONST_MKS_TROY_OUNCE)
+A68_ENV_REAL (genie_mks_uk_gallon, GSL_CONST_MKS_UK_GALLON) A68_ENV_REAL (genie_mks_uk_ton, GSL_CONST_MKS_UK_TON)
+A68_ENV_REAL (genie_mks_unified_atomic_mass, GSL_CONST_MKS_UNIFIED_ATOMIC_MASS)
+A68_ENV_REAL (genie_mks_us_gallon, GSL_CONST_MKS_US_GALLON)
+A68_ENV_REAL (genie_mks_vacuum_permeability, GSL_CONST_MKS_VACUUM_PERMEABILITY)
+A68_ENV_REAL (genie_mks_vacuum_permittivity, GSL_CONST_MKS_VACUUM_PERMITTIVITY) A68_ENV_REAL (genie_mks_week, GSL_CONST_MKS_WEEK)
+A68_ENV_REAL (genie_mks_yard, GSL_CONST_MKS_YARD) A68_ENV_REAL (genie_num_atto, GSL_CONST_NUM_ATTO)
+A68_ENV_REAL (genie_num_avogadro, GSL_CONST_NUM_AVOGADRO) A68_ENV_REAL (genie_num_exa, GSL_CONST_NUM_EXA)
+A68_ENV_REAL (genie_num_femto, GSL_CONST_NUM_FEMTO) A68_ENV_REAL (genie_num_fine_structure, GSL_CONST_NUM_FINE_STRUCTURE)
+A68_ENV_REAL (genie_num_giga, GSL_CONST_NUM_GIGA) A68_ENV_REAL (genie_num_kilo, GSL_CONST_NUM_KILO)
+A68_ENV_REAL (genie_num_mega, GSL_CONST_NUM_MEGA) A68_ENV_REAL (genie_num_micro, GSL_CONST_NUM_MICRO)
+A68_ENV_REAL (genie_num_milli, GSL_CONST_NUM_MILLI) A68_ENV_REAL (genie_num_nano, GSL_CONST_NUM_NANO)
+A68_ENV_REAL (genie_num_peta, GSL_CONST_NUM_PETA) A68_ENV_REAL (genie_num_pico, GSL_CONST_NUM_PICO)
+A68_ENV_REAL (genie_num_tera, GSL_CONST_NUM_TERA) A68_ENV_REAL (genie_num_yocto, GSL_CONST_NUM_YOCTO)
+A68_ENV_REAL (genie_num_yotta, GSL_CONST_NUM_YOTTA) A68_ENV_REAL (genie_num_zepto, GSL_CONST_NUM_ZEPTO)
+A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
 #endif
 
 /* Macros. */
@@ -3822,8 +3814,8 @@ void genie_lngamma_real (NODE_T * p)
 void genie_factorial_real (NODE_T * p)
 {
 /* gsl_sf_fact reduces argument to int, hence we do gamma (x + 1) */
-  A68_REAL *x = (A68_REAL *) STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL));
-  VALUE (x) += 1.0;
+  A68_REAL *z = (A68_REAL *) STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL));
+  VALUE (z) += 1.0;
   {
     GSL_1_FUNCTION (p, gsl_sf_gamma_e);
   }
@@ -4220,16 +4212,16 @@ static void taus113_set (taus113_state_t * state, unsigned long int s)
     state->z4 += 128UL;
   }
 /* Calling RNG ten times to satify recurrence condition. */
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
-  taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
+  (void) taus113_get (state);
 }
 
 /*!
@@ -4506,7 +4498,7 @@ void genie_pow_complex_int (NODE_T * p)
   re_y = VALUE (&re_x);
   im_y = VALUE (&im_x);
   expo = 1;
-  negative = (VALUE (&j) < 0.0);
+  negative = (BOOL_T) (VALUE (&j) < 0);
   if (negative) {
     VALUE (&j) = -VALUE (&j);
   }
@@ -4544,7 +4536,7 @@ void genie_eq_complex (NODE_T * p)
   A68_REAL re_x, im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
   POP_COMPLEX (p, &re_x, &im_x);
-  PUSH_PRIMITIVE (p, (VALUE (&re_x) == VALUE (&re_y)) && (VALUE (&im_x) == VALUE (&im_y)), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&re_x) == VALUE (&re_y)) && (VALUE (&im_x) == VALUE (&im_y))), A68_BOOL);
 }
 
 /*!
@@ -4557,8 +4549,7 @@ void genie_ne_complex (NODE_T * p)
   A68_REAL re_x, im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
   POP_COMPLEX (p, &re_x, &im_x);
-  PUSH_PRIMITIVE (p, !((VALUE (&re_x) == VALUE (&re_y))
-                       && (VALUE (&im_x) == VALUE (&im_y))), A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) ! ((VALUE (&re_x) == VALUE (&re_y)) && (VALUE (&im_x) == VALUE (&im_y))), A68_BOOL);
 }
 
 /*!
@@ -4614,11 +4605,11 @@ void genie_lengthen_complex_to_long_complex (NODE_T * p)
   POP_OBJECT (p, &b, A68_REAL);
   POP_OBJECT (p, &a, A68_REAL);
   STACK_MP (z, p, digits);
-  real_to_mp (p, z, VALUE (&a), digits);
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) real_to_mp (p, z, VALUE (&a), digits);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   STACK_MP (z, p, digits);
-  real_to_mp (p, z, VALUE (&b), digits);
-  MP_STATUS (z) = INITIALISED_MASK;
+  (void) real_to_mp (p, z, VALUE (&b), digits);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -4651,13 +4642,13 @@ void genie_lengthen_long_complex_to_longlong_complex (NODE_T * p)
   a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   STACK_MP (c, p, digs_long);
   STACK_MP (d, p, digs_long);
-  lengthen_mp (p, c, digs_long, a, digits);
-  lengthen_mp (p, d, digs_long, b, digits);
+  (void) lengthen_mp (p, c, digs_long, a, digits);
+  (void) lengthen_mp (p, d, digs_long, b, digits);
   MOVE_MP (a, c, digs_long);
   MOVE_MP (&a[2 + digs_long], d, digs_long);
   stack_pointer = pop_sp;
-  MP_STATUS (a) = INITIALISED_MASK;
-  (&a[2 + digs_long])[0] = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  (&a[2 + digs_long])[0] = (MP_DIGIT_T) INITIALISED_MASK;
   INCREMENT_STACK_POINTER (p, 2 * (size_long - size));
 }
 
@@ -4674,11 +4665,11 @@ void genie_shorten_longlong_complex_to_long_complex (NODE_T * p)
   MP_DIGIT_T *a, *b;
   b = (MP_DIGIT_T *) STACK_OFFSET (-size_long);
   a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size_long);
-  shorten_mp (p, a, digits, a, digs_long);
-  shorten_mp (p, &a[2 + digits], digits, b, digs_long);
+  (void) shorten_mp (p, a, digits, a, digs_long);
+  (void) shorten_mp (p, &a[2 + digits], digits, b, digs_long);
   stack_pointer = pop_sp;
-  MP_STATUS (a) = INITIALISED_MASK;
-  (&a[2 + digits])[0] = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  (&a[2 + digits])[0] = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, 2 * (size_long - size));
 }
 
@@ -4691,7 +4682,7 @@ void genie_re_long_complex (NODE_T * p)
 {
   int size = get_mp_size (LHS_MODE (p));
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
-  MP_STATUS (a) = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, (int) size_long_mp ());
 }
 
@@ -4706,7 +4697,7 @@ void genie_im_long_complex (NODE_T * p)
   MP_DIGIT_T *b = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MOVE_MP (a, b, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, (int) size_long_mp ());
 }
 
@@ -4722,8 +4713,8 @@ void genie_minus_long_complex (NODE_T * p)
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT (a, 1) = -MP_DIGIT (a, 1);
   MP_DIGIT (b, 1) = -MP_DIGIT (b, 1);
-  MP_STATUS (a) = INITIALISED_MASK;
-  MP_STATUS (b) = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (b) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -4737,8 +4728,8 @@ void genie_conj_long_complex (NODE_T * p)
   MP_DIGIT_T *b = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT (b, 1) = -MP_DIGIT (b, 1);
-  MP_STATUS (a) = INITIALISED_MASK;
-  MP_STATUS (b) = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (b) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -4755,11 +4746,11 @@ void genie_abs_long_complex (NODE_T * p)
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  hypot_mp (p, z, a, b, digits);
+  (void) hypot_mp (p, z, a, b, digits);
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, size);
   MOVE_MP (a, z, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -4777,11 +4768,11 @@ void genie_arg_long_complex (NODE_T * p)
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  atan2_mp (p, z, a, b, digits);
+  (void) atan2_mp (p, z, a, b, digits);
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, size);
   MOVE_MP (a, z, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -4799,10 +4790,10 @@ void genie_add_long_complex (NODE_T * p)
   MP_DIGIT_T *c = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *b = (MP_DIGIT_T *) STACK_OFFSET (-3 * size);
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-4 * size);
-  add_mp (p, b, b, d, digits);
-  add_mp (p, a, a, c, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
-  MP_STATUS (b) = INITIALISED_MASK;
+ (void) add_mp (p, b, b, d, digits);
+ (void) add_mp (p, a, a, c, digits);
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (b) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
@@ -4821,10 +4812,10 @@ void genie_sub_long_complex (NODE_T * p)
   MP_DIGIT_T *c = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *b = (MP_DIGIT_T *) STACK_OFFSET (-3 * size);
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-4 * size);
-  sub_mp (p, b, b, d, digits);
-  sub_mp (p, a, a, c, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
-  MP_STATUS (b) = INITIALISED_MASK;
+ (void) sub_mp (p, b, b, d, digits);
+ (void) sub_mp (p, a, a, c, digits);
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (b) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
@@ -4843,9 +4834,9 @@ void genie_mul_long_complex (NODE_T * p)
   MP_DIGIT_T *c = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *b = (MP_DIGIT_T *) STACK_OFFSET (-3 * size);
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-4 * size);
-  cmul_mp (p, a, b, c, d, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
-  MP_STATUS (b) = INITIALISED_MASK;
+  (void) cmul_mp (p, a, b, c, d, digits);
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (b) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
@@ -4864,9 +4855,9 @@ void genie_div_long_complex (NODE_T * p)
   MP_DIGIT_T *c = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *b = (MP_DIGIT_T *) STACK_OFFSET (-3 * size);
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-4 * size);
-  cdiv_mp (p, a, b, c, d, digits);
-  MP_STATUS (a) = INITIALISED_MASK;
-  MP_STATUS (b) = INITIALISED_MASK;
+  (void) cdiv_mp (p, a, b, c, d, digits);
+  MP_STATUS (a) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (b) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
@@ -4890,7 +4881,7 @@ void genie_pow_long_complex_int (NODE_T * p)
   im_x = (MP_DIGIT_T *) STACK_OFFSET (-size);
   re_x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   STACK_MP (re_z, p, digits);
-  set_mp_short (re_z, (MP_DIGIT_T) 1, 0, digits);
+ (void) set_mp_short (re_z, (MP_DIGIT_T) 1, 0, digits);
   STACK_MP (im_z, p, digits);
   SET_MP_ZERO (im_z, digits);
   STACK_MP (re_y, p, digits);
@@ -4900,32 +4891,32 @@ void genie_pow_long_complex_int (NODE_T * p)
   STACK_MP (rea, p, digits);
   STACK_MP (acc, p, digits);
   expo = 1;
-  negative = (VALUE (&j) < 0.0);
+  negative = (BOOL_T) (VALUE (&j) < 0);
   if (negative) {
     VALUE (&j) = -VALUE (&j);
   }
   while ((unsigned) expo <= (unsigned) (VALUE (&j))) {
     if (expo & VALUE (&j)) {
-      mul_mp (p, acc, im_z, im_y, digits);
-      mul_mp (p, rea, re_z, re_y, digits);
-      sub_mp (p, rea, rea, acc, digits);
-      mul_mp (p, acc, im_z, re_y, digits);
-      mul_mp (p, im_z, re_z, im_y, digits);
-      add_mp (p, im_z, im_z, acc, digits);
+     (void) mul_mp (p, acc, im_z, im_y, digits);
+     (void) mul_mp (p, rea, re_z, re_y, digits);
+     (void) sub_mp (p, rea, rea, acc, digits);
+     (void) mul_mp (p, acc, im_z, re_y, digits);
+     (void) mul_mp (p, im_z, re_z, im_y, digits);
+     (void) add_mp (p, im_z, im_z, acc, digits);
       MOVE_MP (re_z, rea, digits);
     }
-    mul_mp (p, acc, im_y, im_y, digits);
-    mul_mp (p, rea, re_y, re_y, digits);
-    sub_mp (p, rea, rea, acc, digits);
-    mul_mp (p, acc, im_y, re_y, digits);
-    mul_mp (p, im_y, re_y, im_y, digits);
-    add_mp (p, im_y, im_y, acc, digits);
+   (void) mul_mp (p, acc, im_y, im_y, digits);
+   (void) mul_mp (p, rea, re_y, re_y, digits);
+   (void) sub_mp (p, rea, rea, acc, digits);
+   (void) mul_mp (p, acc, im_y, re_y, digits);
+   (void) mul_mp (p, im_y, re_y, im_y, digits);
+   (void) add_mp (p, im_y, im_y, acc, digits);
     MOVE_MP (re_y, rea, digits);
     expo <<= 1;
   }
   stack_pointer = pop_sp;
   if (negative) {
-    set_mp_short (re_x, (MP_DIGIT_T) 1, 0, digits);
+   (void) set_mp_short (re_x, (MP_DIGIT_T) 1, 0, digits);
     SET_MP_ZERO (im_x, digits);
     INCREMENT_STACK_POINTER (p, 2 * size);
     genie_div_long_complex (p);
@@ -4933,8 +4924,8 @@ void genie_pow_long_complex_int (NODE_T * p)
     MOVE_MP (re_x, re_z, digits);
     MOVE_MP (im_x, im_z, digits);
   }
-  MP_STATUS (re_x) = INITIALISED_MASK;
-  MP_STATUS (im_x) = INITIALISED_MASK;
+  MP_STATUS (re_x) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im_x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
 /*!
@@ -4949,7 +4940,7 @@ void genie_eq_long_complex (NODE_T * p)
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-4 * size);
   genie_sub_long_complex (p);
   DECREMENT_STACK_POINTER (p, 2 * size);
-  PUSH_PRIMITIVE (p, MP_DIGIT (a, 1) == 0 && MP_DIGIT (b, 1) == 0, A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (a, 1) == 0 && MP_DIGIT (b, 1) == 0), A68_BOOL);
 }
 
 /*!
@@ -4964,7 +4955,7 @@ void genie_ne_long_complex (NODE_T * p)
   MP_DIGIT_T *a = (MP_DIGIT_T *) STACK_OFFSET (-4 * size);
   genie_sub_long_complex (p);
   DECREMENT_STACK_POINTER (p, 2 * size);
-  PUSH_PRIMITIVE (p, MP_DIGIT (a, 1) != 0 || MP_DIGIT (b, 1) != 0, A68_BOOL);
+  PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (a, 1) != 0 || MP_DIGIT (b, 1) != 0), A68_BOOL);
 }
 
 /*!
@@ -5060,10 +5051,10 @@ void genie_sqrt_long_complex (NODE_T * p)
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   RESET_ERRNO;
-  csqrt_mp (p, re, im, digits);
+  (void) csqrt_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5097,10 +5088,10 @@ void genie_exp_long_complex (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
-  cexp_mp (p, re, im, digits);
+  (void) cexp_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5138,10 +5129,10 @@ void genie_ln_long_complex (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
-  cln_mp (p, re, im, digits);
+  (void) cln_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5179,10 +5170,10 @@ void genie_sin_long_complex (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
-  csin_mp (p, re, im, digits);
+  (void) csin_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5220,10 +5211,10 @@ void genie_cos_long_complex (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
-  ccos_mp (p, re, im, digits);
+  (void) ccos_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5267,10 +5258,10 @@ void genie_tan_long_complex (NODE_T * p)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  ctan_mp (p, re, im, digits);
+  (void) ctan_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5309,10 +5300,10 @@ void genie_asin_long_complex (NODE_T * p)
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   RESET_ERRNO;
-  casin_mp (p, re, im, digits);
+  (void) casin_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5351,10 +5342,10 @@ void genie_acos_long_complex (NODE_T * p)
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   RESET_ERRNO;
-  cacos_mp (p, re, im, digits);
+  (void) cacos_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 
@@ -5392,10 +5383,10 @@ void genie_atan_long_complex (NODE_T * p)
   MP_DIGIT_T *re = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *im = (MP_DIGIT_T *) STACK_OFFSET (-size);
   RESET_ERRNO;
-  catan_mp (p, re, im, digits);
+  (void) catan_mp (p, re, im, digits);
   stack_pointer = pop_sp;
-  MP_STATUS (re) = INITIALISED_MASK;
-  MP_STATUS (im) = INITIALISED_MASK;
+  MP_STATUS (re) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (im) = (MP_DIGIT_T) INITIALISED_MASK;
   math_rte (p, errno != 0, mode, NULL);
 }
 

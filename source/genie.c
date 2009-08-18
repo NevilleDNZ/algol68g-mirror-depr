@@ -32,8 +32,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 void genie_preprocess (NODE_T *, int *);
 
-A68_HANDLE nil_handle = { INITIALISED_MASK, 0, 0, NULL, NULL, NULL };
-A68_REF nil_ref = { INITIALISED_MASK | NIL_MASK, 0, {NULL} };
+A68_HANDLE nil_handle = { INITIALISED_MASK, NULL, 0, NULL, NULL, NULL };
+A68_REF nil_ref = { (STATUS_MASK) (INITIALISED_MASK | NIL_MASK), 0, {NULL} };
 
 ADDR_T frame_pointer = 0, stack_pointer = 0, heap_pointer = 0, handle_pointer = 0, global_pointer = 0, frame_start, frame_end, stack_start, stack_end;
 BOOL_T do_confirm_exit = A68_TRUE;
@@ -76,15 +76,15 @@ void genie_unimplemented (NODE_T * p)
 
 void genie_system (NODE_T * p)
 {
-  int ret_code, size;
+  int sys_ret_code, size;
   A68_REF cmd;
   A68_REF ref_z;
   POP_REF (p, &cmd);
   CHECK_INIT (p, INITIALISED (&cmd), MODE (STRING));
   size = 1 + a68_string_size (p, cmd);
   ref_z = heap_generator (p, MODE (C_STRING), 1 + size);
-  ret_code = system (a_to_c_string (p, (char *) ADDRESS (&ref_z), cmd));
-  PUSH_PRIMITIVE (p, ret_code, A68_INT);
+  sys_ret_code = system (a_to_c_string (p, (char *) ADDRESS (&ref_z), cmd));
+  PUSH_PRIMITIVE (p, sys_ret_code, A68_INT);
 }
 
 /*!
@@ -98,9 +98,9 @@ void change_masks (NODE_T * p, unsigned mask, BOOL_T set)
     change_masks (SUB (p), mask, set);
     if (LINE_NUMBER (p) > 0) {
       if (set == A68_TRUE) {
-        MASK (p) |= mask;
+        STATUS_SET (p, mask);
       } else {
-        MASK (p) &= ~mask;
+        STATUS_CLEAR (p, mask);
       }
     }
   }
@@ -114,11 +114,14 @@ void change_masks (NODE_T * p, unsigned mask, BOOL_T set)
 
 void exit_genie (NODE_T * p, int ret)
 {
+#ifdef ENABLE_CURSES
+  genie_curses_end (p);
+#endif
   if (ret == A68_RUNTIME_ERROR && in_monitor) {
     return;
   } else if (ret == A68_RUNTIME_ERROR && MODULE (INFO (p))->options.debug) {
     diagnostics_to_terminal (MODULE (INFO (p))->top_line, A68_RUNTIME_ERROR);
-    single_step (p, BREAKPOINT_ERROR_MASK);
+    single_step (p, (unsigned) BREAKPOINT_ERROR_MASK);
     ret_line_number = LINE_NUMBER (p);
     ret_code = ret;
     longjmp (genie_exit_label, 1);
@@ -152,7 +155,7 @@ void genie_init_rng (void)
   if (time (&t) != -1) {
     struct tm *u = localtime (&t);
     int seed = u->tm_sec + 60 * (u->tm_min + 60 * u->tm_hour);
-    init_rng (seed);
+    init_rng ((long unsigned) seed);
   }
 }
 
@@ -233,7 +236,9 @@ become prone to the heap sweeper.
 */
   for (; p != NULL; FORWARD (p)) {
     protect_from_sweep (SUB (p));
-    p->protect_sweep = NULL;
+    if (GENIE (p) != NULL) {
+      GENIE (p)->protect_sweep = NULL;
+    }
 /*
 Catch all constructs that give vulnerable intermediate results on the stack.
 Units do not apply, casts work through their enclosed-clauses, denotations are
@@ -244,7 +249,7 @@ protected and identifiers protect themselves.
     case MONADIC_FORMULA:
     case GENERATOR:
 /*  case ENCLOSED_CLAUSE: */
-    case PARALLEL_CLAUSE:
+/*  case PARALLEL_CLAUSE: */
     case CLOSED_CLAUSE:
     case COLLATERAL_CLAUSE:
     case CONDITIONAL_CLAUSE:
@@ -255,6 +260,7 @@ protected and identifiers protect themselves.
     case CALL:
     case SLICE:
     case SELECTION:
+    case FIELD_SELECTION:
     case DEPROCEDURING:
     case ROWING:
     case WIDENING:
@@ -262,7 +268,7 @@ protected and identifiers protect themselves.
         MOID_T *m = MOID (p);
         if (m != NULL && (WHETHER (m, REF_SYMBOL) || WHETHER (DEFLEX (m), ROW_SYMBOL))) {
           TAG_T *z = add_tag (SYMBOL_TABLE (p), ANONYMOUS, p, m, PROTECT_FROM_SWEEP);
-          p->protect_sweep = z;
+          GENIE (p)->protect_sweep = z;
           HEAP (z) = HEAP_SYMBOL;
           USE (z) = A68_TRUE;
         }
@@ -338,7 +344,7 @@ static int mode_attribute (MOID_T * p)
 
 BOOL_T genie_no_user_symbols (SYMBOL_TABLE_T * t)
 {
-  return (t->identifiers == NULL && t->operators == NULL && PRIO (t) == NULL && t->indicants == NULL && t->labels == NULL);
+  return ((BOOL_T) (t->identifiers == NULL && t->operators == NULL && PRIO (t) == NULL && t->indicants == NULL && t->labels == NULL));
 }
 
 /*!
@@ -349,7 +355,7 @@ BOOL_T genie_no_user_symbols (SYMBOL_TABLE_T * t)
 
 static BOOL_T genie_empty_table (SYMBOL_TABLE_T * t)
 {
-  return (t->identifiers == NULL && t->operators == NULL && PRIO (t) == NULL && t->indicants == NULL && t->labels == NULL);
+  return ((BOOL_T) (t->identifiers == NULL && t->operators == NULL && PRIO (t) == NULL && t->indicants == NULL && t->labels == NULL));
 }
 
 /*!
@@ -361,26 +367,30 @@ static BOOL_T genie_empty_table (SYMBOL_TABLE_T * t)
 void genie_preprocess (NODE_T * p, int *max_lev)
 {
   for (; p != NULL; FORWARD (p)) {
-    if (MASK (p) & BREAKPOINT_MASK) {
-      if (!(MASK (p) & INTERRUPTIBLE_MASK)) {
-        MASK (p) &= ~BREAKPOINT_MASK;
+    if (STATUS_TEST (p, BREAKPOINT_MASK)) {
+      if (!(STATUS_TEST (p, INTERRUPTIBLE_MASK))) {
+        STATUS_CLEAR (p, BREAKPOINT_MASK);
       }
     }
-    p->genie.whether_coercion = whether_coercion (p);
-    p->genie.whether_new_lexical_level = whether_new_lexical_level (p);
-    PROPAGATOR (p).unit = genie_unit;
-    PROPAGATOR (p).source = p;
+    if (GENIE (p) != NULL) {
+      GENIE (p)->whether_coercion = whether_coercion (p);
+      GENIE (p)->whether_new_lexical_level = whether_new_lexical_level (p);
+      PROPAGATOR (p).unit = genie_unit;
+      PROPAGATOR (p).source = p;
+    }
     if (MOID (p) != NULL) {
       MOID (p)->size = moid_size (MOID (p));
       MOID (p)->short_id = mode_attribute (MOID (p));
-      if (WHETHER (MOID (p), REF_SYMBOL)) {
-        p->need_dns = A68_TRUE;
-      } else if (WHETHER (MOID (p), PROC_SYMBOL)) {
-        p->need_dns = A68_TRUE;
-      } else if (WHETHER (MOID (p), UNION_SYMBOL)) {
-        p->need_dns = A68_TRUE;
-      } else if (WHETHER (MOID (p), FORMAT_SYMBOL)) {
-        p->need_dns = A68_TRUE;
+      if (GENIE (p) != NULL) {
+        if (WHETHER (MOID (p), REF_SYMBOL)) {
+          GENIE (p)->need_dns = A68_TRUE;
+        } else if (WHETHER (MOID (p), PROC_SYMBOL)) {
+          GENIE (p)->need_dns = A68_TRUE;
+        } else if (WHETHER (MOID (p), UNION_SYMBOL)) {
+          GENIE (p)->need_dns = A68_TRUE;
+        } else if (WHETHER (MOID (p), FORMAT_SYMBOL)) {
+          GENIE (p)->need_dns = A68_TRUE;
+        }
       }
     }
     if (SYMBOL_TABLE (p) != NULL) {
@@ -397,23 +407,25 @@ void genie_preprocess (NODE_T * p, int *max_lev)
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
       TAG_T *q = TAX (p);
       if (q != NULL && NODE (q) != NULL && SYMBOL_TABLE (NODE (q)) != NULL) {
-        p->genie.level = LEX_LEVEL (NODE (q));
+        LEVEL (GENIE (p)) = LEX_LEVEL (NODE (q));
       }
     } else if (WHETHER (p, IDENTIFIER)) {
       TAG_T *q = TAX (p);
       if (q != NULL && NODE (q) != NULL && SYMBOL_TABLE (NODE (q)) != NULL) {
-        p->genie.level = LEX_LEVEL (NODE (q));
-        p->genie.offset = &stack_segment[FRAME_INFO_SIZE + q->offset];
+        LEVEL (GENIE (p)) = LEX_LEVEL (NODE (q));
+        OFFSET (GENIE (p)) = &stack_segment[FRAME_INFO_SIZE + OFFSET (q)];
       }
     } else if (WHETHER (p, OPERATOR)) {
       TAG_T *q = TAX (p);
       if (q != NULL && NODE (q) != NULL && SYMBOL_TABLE (NODE (q)) != NULL) {
-        p->genie.level = LEX_LEVEL (NODE (q));
-        p->genie.offset = &stack_segment[FRAME_INFO_SIZE + q->offset];
+        LEVEL (GENIE (p)) = LEX_LEVEL (NODE (q));
+        OFFSET (GENIE (p)) = &stack_segment[FRAME_INFO_SIZE + OFFSET (q)];
       }
     }
     if (SUB (p) != NULL) {
-      PARENT (SUB (p)) = p;
+      if (GENIE (p) != NULL) {
+        PARENT (SUB (p)) = p;
+      }
       genie_preprocess (SUB (p), max_lev);
     }
   }
@@ -445,9 +457,9 @@ void free_genie_heap (NODE_T * p)
 {
   for (; p != NULL; FORWARD (p)) {
     free_genie_heap (SUB (p));
-    if (p->genie.constant != NULL) {
-      free (p->genie.constant);
-      p->genie.constant = NULL;
+    if (GENIE (p) != NULL && GENIE (p)->constant != NULL) {
+      free (GENIE (p)->constant);
+      GENIE (p)->constant = NULL;
     }
   }
 }
@@ -481,7 +493,7 @@ void genie (MODULE_T * module)
   }
   io_close_tty_line ();
   if (module->options.trace) {
-    snprintf (output_line, BUFFER_SIZE, "genie: frame stack %uk, expression stack %uk, heap %uk, handles %uk\n", frame_stack_size / 1024, expr_stack_size / 1024, heap_size / 1024, handle_pool_size / 1024);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "genie: frame stack %uk, expression stack %uk, heap %uk, handles %uk\n", (unsigned) (frame_stack_size / 1024), (unsigned) (expr_stack_size / 1024), (unsigned) (heap_size / 1024), (unsigned) (handle_pool_size / 1024)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
   }
   install_signal_handlers ();
@@ -526,14 +538,14 @@ void genie (MODULE_T * module)
     } else if (ret_code == A68_RUNTIME_ERROR) {
       if (module->options.backtrace) {
         int printed = 0;
-        snprintf (output_line, BUFFER_SIZE, "\nStack backtrace");
+        CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nStack backtrace") >= 0);
         WRITE (STDOUT_FILENO, output_line);
         stack_dump (STDOUT_FILENO, frame_pointer, 16, &printed);
         WRITE (STDOUT_FILENO, "\n");
       }
       if (module->files.listing.opened) {
         int printed = 0;
-        snprintf (output_line, BUFFER_SIZE, "\nStack backtrace");
+        CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nStack backtrace") >= 0);
         WRITE (module->files.listing.fd, output_line);
         stack_dump (module->files.listing.fd, frame_pointer, 32, &printed);
       }

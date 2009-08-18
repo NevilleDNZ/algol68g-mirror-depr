@@ -58,9 +58,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
   }}
 
 #define FRAME_GET(dest, cast, p) {\
-  ADDR_T m_z;\
-  FOLLOW_STATIC_LINK (m_z, (p)->genie.level);\
-  (dest) = (cast *) & ((p)->genie.offset[m_z]);\
+  ADDR_T _m_z;\
+  FOLLOW_STATIC_LINK (_m_z, GENIE (p)->level);\
+  (dest) = (cast *) & ((GENIE (p)->offset)[_m_z]);\
   }
 
 /* Macros for row-handling. */
@@ -100,37 +100,35 @@ extern unsigned check_time_limit_count;
 
 #define CHECK_TIME_LIMIT(p) {\
   if (check_time_limit_count++ > 10000) {\
-    double m_t = MODULE (INFO (p))->options.time_limit;\
+    double _m_t = (double) MODULE (INFO (p))->options.time_limit;\
     check_time_limit_count = 0;\
-    if (m_t > 0 && (seconds () - cputime_0) > m_t) {\
+    if (_m_t > 0 && (seconds () - cputime_0) > _m_t) {\
       diagnostic_node (A68_RUNTIME_ERROR, (NODE_T *) p, ERROR_TIME_LIMIT_EXCEEDED);\
       exit_genie ((NODE_T *) p, A68_RUNTIME_ERROR);\
     }\
   }}
 
 #define EXECUTE_UNIT_2(p, dest) {\
-  PROPAGATOR_T *prop = &PROPAGATOR (p);\
+  PROPAGATOR_T *_prop_ = &PROPAGATOR (p);\
   last_unit = p;\
-  dest = prop->unit (prop->source);\
+  dest = (*(_prop_->unit)) (_prop_->source);\
   }
 
 #define EXECUTE_UNIT(p) {\
-  PROPAGATOR_T *prop = &PROPAGATOR (p);\
+  PROPAGATOR_T *_prop_ = &PROPAGATOR (p);\
   last_unit = p;\
-  (void) prop->unit (prop->source);\
+  (void) (*(_prop_->unit)) (_prop_->source);\
   }
 
 #define EXECUTE_UNIT_TRACE(p) {\
-  PROPAGATOR_T *prop = &PROPAGATOR (p);\
-  if (MASK (p) & (BREAKPOINT_MASK | \
-                  BREAKPOINT_TEMPORARY_MASK | \
-                  BREAKPOINT_INTERRUPT_MASK | \
-                  BREAKPOINT_WATCH_MASK | \
-                  BREAKPOINT_TRACE_MASK)) {\
-    single_step ((p), MASK (p));\
+  PROPAGATOR_T *_prop_ = &PROPAGATOR (p);\
+  if (STATUS_TEST (p, (BREAKPOINT_MASK | BREAKPOINT_TEMPORARY_MASK | \
+      BREAKPOINT_INTERRUPT_MASK | BREAKPOINT_WATCH_MASK | \
+      BREAKPOINT_TRACE_MASK))) {\
+    single_step ((p), STATUS (p));\
   }\
   last_unit = p;\
-  (void) (prop->unit (prop->source));\
+  (void) (*(_prop_->unit)) (_prop_->source);\
   }
 
 /* 
@@ -139,10 +137,10 @@ This saves a push/pop pair.
 */
 
 #define GENIE_GET_OPR(p, CAST_T, z, u) {\
-  PROPAGATOR_T *prop = &PROPAGATOR (p);\
-  NODE_T *src2 = prop->source;\
+  PROPAGATOR_T *_prop_go_ = &PROPAGATOR (p);\
+  NODE_T *src2 = _prop_go_->source;\
   last_unit = (p);\
-  if (prop->unit == genie_loc_identifier) {\
+  if (_prop_go_->unit == genie_frame_identifier) {\
     BYTE_T *x;\
     FRAME_GET (x, BYTE_T, src2);\
     (z) = (CAST_T *) x;\
@@ -153,42 +151,55 @@ This saves a push/pop pair.
   }}
 
 #define EXECUTE_UNIT_INLINE(p) {\
-  PROPAGATOR_T *prop = &PROPAGATOR (p);\
-  NODE_T *src1 = prop->source;\
+  PROPAGATOR_T *_prop_eui_ = &PROPAGATOR (p);\
+  NODE_T *src1 = _prop_eui_->source;\
   last_unit = (p);\
-  if (prop->unit == genie_dereference_loc_identifier) {\
-    A68_REF *z;\
+  if (_prop_eui_->unit == genie_dereference_frame_identifier) {\
+    A68_REF *_z_eui_;\
     MOID_T *deref = SUB (MOID (src1));\
-    unsigned size = MOID_SIZE (deref);\
-    FRAME_GET (z, A68_REF, src1);\
-    CHECK_REF ((p), *z, MOID (src1));\
-    PUSH_ALIGNED (p, ADDRESS (z), size);\
-    CHECK_INIT_GENERIC ((p), STACK_OFFSET (-size), deref);\
-  } else if (prop->unit == genie_loc_identifier) {\
+    int _size_eui_ = MOID_SIZE (deref);\
+    FRAME_GET (_z_eui_, A68_REF, src1);\
+    PUSH_ALIGNED (p, ADDRESS (_z_eui_), _size_eui_);\
+    CHECK_INIT_GENERIC ((p), STACK_OFFSET (-_size_eui_), deref);\
+  } else if (_prop_eui_->unit == genie_frame_identifier) {\
     BYTE_T *x;\
     FRAME_GET (x, BYTE_T, src1);\
     PUSH_ALIGNED ((p), x, MOID_SIZE (MOID (src1)));\
-  } else if (prop->unit == genie_constant) {\
-    PUSH_ALIGNED ((p), src1->genie.constant, src1->genie.size);\
+  } else if (_prop_eui_->unit == genie_constant) {\
+    PUSH_ALIGNED ((p), GENIE (src1)->constant, GENIE (src1)->size);\
+  } else if (_prop_eui_->unit == genie_dereference_generic_identifier) {\
+    A68_REF *_z_eui_;\
+    MOID_T *deref = SUB (MOID (src1));\
+    int _size_eui_ = MOID_SIZE (deref);\
+    FRAME_GET (_z_eui_, A68_REF, src1);\
+    CHECK_REF (p, *_z_eui_, MOID (src1));\
+    PUSH_ALIGNED ((p), ADDRESS (_z_eui_), _size_eui_);\
+    CHECK_INIT_GENERIC ((p), STACK_OFFSET (-_size_eui_), deref);\
   } else {\
     EXECUTE_UNIT (p);\
   }}
 
 #define GENIE_GET_UNIT_ADDRESS(p, cast, dst) {\
-  PROPAGATOR_T *prop = &PROPAGATOR (p);\
-  NODE_T *src0 = prop->source;\
+  PROPAGATOR_T *_prop_gua_ = &PROPAGATOR (p);\
+  NODE_T *src0 = _prop_gua_->source;\
   last_unit = (p);\
-  if (prop->unit == genie_dereference_loc_identifier) {\
-    A68_REF *z;\
+  if (_prop_gua_->unit == genie_dereference_frame_identifier) {\
+    A68_REF *_z_gua_;\
     MOID_T *deref = SUB (MOID (src0));\
-    FRAME_GET (z, A68_REF, src0);\
-    CHECK_REF ((p), *z, MOID (src0));\
-    dst = (cast *) (ADDRESS (z));\
+    FRAME_GET (_z_gua_, A68_REF, src0);\
+    dst = (cast *) (ADDRESS (_z_gua_));\
     CHECK_INIT_GENERIC ((p), dst, deref);\
-  } else if (prop->unit == genie_loc_identifier) {\
+  } else if (_prop_gua_->unit == genie_frame_identifier) {\
     FRAME_GET (dst, cast, src0);\
-  } else if (prop->unit == genie_constant) {\
-    dst = (cast *) (src0->genie.constant);\
+  } else if (_prop_gua_->unit == genie_constant) {\
+    dst = (cast *) (GENIE (src0)->constant);\
+  } else if (_prop_gua_->unit == genie_dereference_generic_identifier) {\
+    A68_REF *_z_gua_;\
+    MOID_T *deref = SUB (MOID (src0));\
+    FRAME_GET (_z_gua_, A68_REF, src0);\
+    CHECK_REF ((p), *_z_gua_, MOID (src0));\
+    dst = (cast *) (ADDRESS (_z_gua_));\
+    CHECK_INIT_GENERIC ((p), dst, deref);\
   } else {\
     dst = (cast *) (STACK_TOP);\
     EXECUTE_UNIT (p);\
@@ -204,8 +215,8 @@ This saves a push/pop pair.
   }
 
 #define PROTECT_FROM_SWEEP_STACK(p)\
-  if ((p)->protect_sweep != NULL) {\
-    *(A68_REF *) FRAME_LOCAL (frame_pointer, (p)->protect_sweep->offset) =\
+  if (GENIE (p)->protect_sweep != NULL) {\
+    *(A68_REF *) FRAME_LOCAL (frame_pointer, GENIE (p)->protect_sweep->offset) =\
     *(A68_REF *) (STACK_OFFSET (- ALIGNED_SIZE_OF (A68_REF)));\
   }
 
@@ -221,8 +232,8 @@ extern int block_heap_compacter;
 #define UP_SWEEP_SEMA {block_heap_compacter++;}
 #define DOWN_SWEEP_SEMA {block_heap_compacter--;}
 
-#define PROTECT_SWEEP_HANDLE(z) { if (IS_IN_HEAP (z)) {(REF_HANDLE(z))->status |= NO_SWEEP_MASK;} }
-#define UNPROTECT_SWEEP_HANDLE(z) { if (IS_IN_HEAP (z)) {(REF_HANDLE (z))->status &= ~NO_SWEEP_MASK;} }
+#define PROTECT_SWEEP_HANDLE(z) { if (IS_IN_HEAP (z)) {STATUS_SET (REF_HANDLE(z), NO_SWEEP_MASK);} }
+#define UNPROTECT_SWEEP_HANDLE(z) { if (IS_IN_HEAP (z)) {STATUS_CLEAR (REF_HANDLE (z), NO_SWEEP_MASK);} }
 
 /* Tests for objects of mode INT. */
 
@@ -230,7 +241,7 @@ extern int block_heap_compacter;
 #if INT_MAX == 2147483647
 #define TEST_INT_ADDITION(p, i, j) {\
   double _sum_ = (double) (i) + (double) (j);\
-  if (ABS (_sum_) > INT_MAX) {\
+  if (ABS (_sum_) > (double) INT_MAX) {\
     errno = ERANGE;\
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (INT), NULL);\
     exit_genie (p, A68_RUNTIME_ERROR);\
@@ -245,14 +256,14 @@ extern int block_heap_compacter;
 #endif
 #define TEST_INT_MULTIPLICATION(p, i, j) {\
   double _prod_ = (double ) (i) * (double) (j);\
-  if (ABS (_prod_) > A68_MAX_INT) {\
+  if (ABS (_prod_) > (double) A68_MAX_INT) {\
     errno = ERANGE;\
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (INT), NULL);\
     exit_genie (p, A68_RUNTIME_ERROR);\
   }}
 #else
 #define TEST_INT_ADDITION(p, i, j) {;}
-#define TEST_TIMES_OVERFLOW_INT(p, i, j) {;}
+#define TEST_INT_MULTIPLICATION(p, i, j) {;}
 #endif
 
 /* Tests for objects of mode REAL. */
@@ -344,15 +355,15 @@ returns: static link for stack frame at 'new_lex_lvl'.
 */
 
 #define STATIC_LINK_FOR_FRAME(dest, new_lex_lvl) {\
-  int m_cur_lex_lvl = FRAME_LEXICAL_LEVEL (frame_pointer);\
-  if (m_cur_lex_lvl == (new_lex_lvl)) {\
+  int _m_cur_lex_lvl = FRAME_LEXICAL_LEVEL (frame_pointer);\
+  if (_m_cur_lex_lvl == (new_lex_lvl)) {\
     (dest) = FRAME_STATIC_LINK (frame_pointer);\
-  } else if (m_cur_lex_lvl > (new_lex_lvl)) {\
-    ADDR_T m_static_link = frame_pointer;\
-    while (FRAME_LEXICAL_LEVEL (m_static_link) >= (new_lex_lvl)) {\
-      m_static_link = FRAME_STATIC_LINK (m_static_link);\
+  } else if (_m_cur_lex_lvl > (new_lex_lvl)) {\
+    ADDR_T _m_static_link = frame_pointer;\
+    while (FRAME_LEXICAL_LEVEL (_m_static_link) >= (new_lex_lvl)) {\
+      _m_static_link = FRAME_STATIC_LINK (_m_static_link);\
     }\
-    (dest) = m_static_link;\
+    (dest) = _m_static_link;\
   } else {\
     (dest) = frame_pointer;\
   }}
@@ -526,15 +537,15 @@ returns: static link for stack frame at 'new_lex_lvl'.
   if (scope > limit) {\
     char txt[BUFFER_SIZE];\
     if (info == NULL) {\
-      snprintf (txt, BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_1);\
+      CHECK_RETVAL (snprintf (txt, (size_t) BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_1) >= 0);\
     } else {\
-      snprintf (txt, BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_2, info);\
+      CHECK_RETVAL (snprintf (txt, (size_t) BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_2, info) >= 0);\
     }\
     diagnostic_node (A68_RUNTIME_ERROR, p, txt, mode);\
     exit_genie (p, A68_RUNTIME_ERROR);\
   }
 
-#define INCREMENT_STACK_POINTER(err, i) {stack_pointer += A68_ALIGN (i); (void) (err);}
+#define INCREMENT_STACK_POINTER(err, i) {stack_pointer += (ADDR_T) A68_ALIGN (i); (void) (err);}
 
 #define DECREMENT_STACK_POINTER(err, i) {\
   stack_pointer -= A68_ALIGN (i);\
@@ -542,29 +553,29 @@ returns: static link for stack frame at 'new_lex_lvl'.
   }
 
 #define PUSH(p, addr, size) {\
-  BYTE_T *sp = STACK_TOP;\
-  INCREMENT_STACK_POINTER ((p), (size));\
-  COPY (sp, (BYTE_T *) (addr), (unsigned) (size));\
+  BYTE_T *_sp_ = STACK_TOP;\
+  INCREMENT_STACK_POINTER ((p), (int) (size));\
+  COPY (_sp_, (BYTE_T *) (addr), (int) (size));\
   }
 
 #define PUSH_ALIGNED(p, addr, size) {\
-  BYTE_T *sp = STACK_TOP;\
-  INCREMENT_STACK_POINTER ((p), (size));\
-  COPY_ALIGNED (sp, (BYTE_T *) (addr), (unsigned) (size));\
+  BYTE_T *_sp_ = STACK_TOP;\
+  INCREMENT_STACK_POINTER ((p), (int) (size));\
+  COPY_ALIGNED (_sp_, (BYTE_T *) (addr), (int) (size));\
   }
 
 #define POP(p, addr, size) {\
-  DECREMENT_STACK_POINTER((p), (size));\
-  COPY ((BYTE_T *) (addr), STACK_TOP, (unsigned) (size));\
+  DECREMENT_STACK_POINTER((p), (int) (size));\
+  COPY ((BYTE_T *) (addr), STACK_TOP, (int) (size));\
   }
 
 #define POP_ALIGNED(p, addr, size) {\
-  DECREMENT_STACK_POINTER((p), (size));\
-  COPY_ALIGNED ((BYTE_T *) (addr), STACK_TOP, (unsigned) (size));\
+  DECREMENT_STACK_POINTER((p), (int) (size));\
+  COPY_ALIGNED ((BYTE_T *) (addr), STACK_TOP, (int) (size));\
   }
 
 #define POP_ADDRESS(p, addr, type) {\
-  DECREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (type));\
+  DECREMENT_STACK_POINTER((p), (int) ALIGNED_SIZE_OF (type));\
   (addr) = (type *) STACK_TOP;\
   }
 
@@ -574,13 +585,13 @@ returns: static link for stack frame at 'new_lex_lvl'.
   }
 
 #define POP_OPERAND_ADDRESSES(p, i, j, type) {\
-  DECREMENT_STACK_POINTER ((p), ALIGNED_SIZE_OF (type));\
+  DECREMENT_STACK_POINTER ((p), (int) ALIGNED_SIZE_OF (type));\
   (j) = (type *) STACK_TOP;\
   (i) = (type *) (STACK_OFFSET (-ALIGNED_SIZE_OF (type)));\
   }
 
 #define POP_3_OPERAND_ADDRESSES(p, i, j, k, type) {\
-  DECREMENT_STACK_POINTER ((p), 2 * ALIGNED_SIZE_OF (type));\
+  DECREMENT_STACK_POINTER ((p), (int) (2 * ALIGNED_SIZE_OF (type)));\
   (k) = (type *) (STACK_OFFSET (ALIGNED_SIZE_OF (type)));\
   (j) = (type *) STACK_TOP;\
   (i) = (type *) (STACK_OFFSET (-ALIGNED_SIZE_OF (type)));\

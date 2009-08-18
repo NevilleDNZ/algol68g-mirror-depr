@@ -37,7 +37,7 @@ Options come from:
 #include "mp.h"
 
 OPTIONS_T *options;
-BOOL_T no_warnings;
+BOOL_T no_warnings = A68_TRUE;
 
 /*!
 \brief error handler for options
@@ -49,14 +49,14 @@ BOOL_T no_warnings;
 static void option_error (SOURCE_LINE_T * l, char *option, char *info)
 {
   int k;
-  snprintf (output_line, BUFFER_SIZE, "%s", option);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", option) >= 0);
   for (k = 0; output_line[k] != NULL_CHAR; k++) {
-    output_line[k] = TO_LOWER (output_line[k]);
+    output_line[k] = (char) TO_LOWER (output_line[k]);
   }
   if (info != NULL) {
-    snprintf (edit_line, BUFFER_SIZE, "%s option \"%s\"", info, output_line);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s option \"%s\"", info, output_line) >= 0);
   } else {
-    snprintf (edit_line, BUFFER_SIZE, "error in option \"%s\"", output_line);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "error in option \"%s\"", output_line) >= 0);
   }
   scan_error (l, NULL, edit_line);
 }
@@ -85,7 +85,7 @@ static char *strip_sign (char *p)
 void add_option_list (OPTION_LIST_T ** l, char *str, SOURCE_LINE_T * line)
 {
   if (*l == NULL) {
-    *l = (OPTION_LIST_T *) get_heap_space (ALIGNED_SIZE_OF (OPTION_LIST_T));
+    *l = (OPTION_LIST_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (OPTION_LIST_T));
     (*l)->scan = a68_prog.source_scan;
     (*l)->str = new_string (str);
     (*l)->processed = A68_FALSE;
@@ -142,7 +142,7 @@ void prune_echoes (MODULE_T * module, OPTION_LIST_T * i)
           char *car = a68g_strchr (p, '=');
           if (car != NULL) {
             io_close_tty_line ();
-            snprintf (output_line, BUFFER_SIZE, "%s", &car[1]);
+            CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", &car[1]) >= 0);
             WRITE (STDOUT_FILENO, output_line);
           } else {
             FORWARD (i);
@@ -152,7 +152,7 @@ void prune_echoes (MODULE_T * module, OPTION_LIST_T * i)
               }
               if (i != NULL) {
                 io_close_tty_line ();
-                snprintf (output_line, BUFFER_SIZE, "%s", i->str);
+                CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", i->str) >= 0);
                 WRITE (STDOUT_FILENO, output_line);
               }
             }
@@ -183,10 +183,10 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
   car = a68g_strchr (p, '=');
   if (car == NULL) {
     FORWARD (*i);
-    *error = (*i == NULL);
+    *error = (BOOL_T) (*i == NULL);
     if (!error && strcmp ((*i)->str, "=") == 0) {
       FORWARD (*i);
-      *error = ((*i) == NULL);
+      *error = (BOOL_T) ((*i) == NULL);
     }
     if (!*error) {
       num = (*i)->str;
@@ -202,7 +202,7 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
     char *postfix;
     RESET_ERRNO;
     k = strtol (num, &postfix, 0);      /* Accept also octal and hex. */
-    *error = (postfix == num);
+    *error = (BOOL_T) (postfix == num);
     if (errno != 0 || *error) {
       option_error (start_l, start_c, NULL);
       *error = A68_TRUE;
@@ -275,7 +275,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
     char *start_c = i->str;
     if (!(i->processed)) {
 /* Accept UNIX '-option [=] value' */
-      BOOL_T minus_sign = ((i->str)[0] == '-');
+      BOOL_T minus_sign = (BOOL_T) ((i->str)[0] == '-');
       char *p = strip_sign (i->str);
       if (!minus_sign && cmd_line) {
 /* Item without '-'s is generic filename. */
@@ -352,7 +352,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if ((FORWARD (i)) != NULL) {
           BOOL_T error = A68_FALSE;
           if (strcmp (i->str, "=") == 0) {
-            error = (FORWARD (i)) == NULL;
+            error = (BOOL_T) ((FORWARD (i)) == NULL);
           }
           if (!error) {
             char name[BUFFER_SIZE];
@@ -367,7 +367,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
             } else {
               fprintf (f, "(print ((%s)))\n", i->str);
             }
-            fclose (f);
+            CHECK_RETVAL (fclose (f) == 0);
             module->files.generic_name = new_string (name);
           } else {
             option_error (start_l, start_c, NULL);
@@ -439,6 +439,8 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
       }
 /* REGRESSION is an option that sets preferences when running the Algol68G test suite. */
       else if (eq (module, p, "REGRESSION")) {
+        no_warnings = A68_FALSE;
+        module->options.portcheck = A68_TRUE;
         module->options.regression_test = A68_TRUE;
         module->options.time_limit = 30;
         term_width = MAX_LINE_WIDTH;
@@ -611,7 +613,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
   for (; j != NULL; FORWARD (j)) {
     j->processed = A68_TRUE;
   }
-  return (errno == 0);
+  return ((BOOL_T) (errno == 0));
 }
 
 /*!
@@ -634,14 +636,14 @@ void default_mem_sizes (void)
 
 void default_options (MODULE_T * module)
 {
-  no_warnings = A68_FALSE;
+  no_warnings = A68_TRUE;
   module->options.backtrace = A68_FALSE;
   module->options.brackets = A68_FALSE;
   module->options.check_only = A68_FALSE;
   module->options.cross_reference = A68_FALSE;
   module->options.debug = A68_FALSE;
   module->options.moid_listing = A68_FALSE;
-  module->options.nodemask = ASSERT_MASK | SOURCE_MASK;
+  module->options.nodemask = (STATUS_MASK) (ASSERT_MASK | SOURCE_MASK);
   module->options.optimise = A68_FALSE;
   module->options.portcheck = A68_FALSE;
   module->options.pragmat_sema = A68_TRUE;
@@ -668,8 +670,8 @@ void default_options (MODULE_T * module)
 void read_rc_options (MODULE_T * module)
 {
   FILE *f;
-  int len = 2 + strlen (a68g_cmd_name) + strlen ("rc");
-  char *name = (char *) get_heap_space (len);
+  int len = 2 + (int) strlen (a68g_cmd_name) + (int) strlen ("rc");
+  char *name = (char *) get_heap_space ((size_t) len);
   bufcpy (name, ".", len);
   bufcat (name, a68g_cmd_name, len);
   bufcat (name, "rc", len);
@@ -683,8 +685,8 @@ void read_rc_options (MODULE_T * module)
         isolate_options (module, input_line, NULL);
       }
     }
-    fclose (f);
-    set_options (module, module->options.list, A68_FALSE);
+    CHECK_RETVAL (fclose (f) == 0);
+    (void) set_options (module, module->options.list, A68_FALSE);
   } else {
     errno = 0;
   }
@@ -699,7 +701,7 @@ void read_env_options (MODULE_T * module)
 {
   if (getenv ("A68G_OPTIONS") != NULL) {
     isolate_options (module, getenv ("A68G_OPTIONS"), NULL);
-    set_options (module, module->options.list, A68_FALSE);
+    (void) set_options (module, module->options.list, A68_FALSE);
     errno = 0;
   }
 }

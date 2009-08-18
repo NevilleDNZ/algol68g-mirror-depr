@@ -25,10 +25,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 /* Macros. */
 
-#define INITIALISED(z) ((z)->status & INITIALISED_MASK)
+#define INITIALISED(z) ((BOOL_T) ((z)->status & INITIALISED_MASK))
 
-#define BITS_WIDTH ((int) (1 + ceil (log (A68_MAX_INT) / log(2))))
-#define INT_WIDTH ((int) (1 + floor (log (A68_MAX_INT) / log (10))))
+#define BITS_WIDTH ((int) (1 + ceil (log ((double) A68_MAX_INT) / log((double) 2))))
+#define INT_WIDTH ((int) (1 + floor (log ((double) A68_MAX_INT) / log ((double) 10))))
 
 #define CHAR_WIDTH (1 + (int) log10 ((double) SCHAR_MAX))
 #define REAL_WIDTH (DBL_DIG)
@@ -83,7 +83,7 @@ struct ACTIVATION_RECORD
 /* Stack manipulation. */
 
 #define STACK_ADDRESS(n) ((BYTE_T *) &(stack_segment[(n)]))
-#define STACK_OFFSET(n) (STACK_ADDRESS (stack_pointer + (n)))
+#define STACK_OFFSET(n) (STACK_ADDRESS (stack_pointer + (int) (n)))
 #define STACK_TOP (STACK_ADDRESS (stack_pointer))
 
 /* External symbols. */
@@ -92,7 +92,6 @@ extern ADDR_T frame_pointer, stack_pointer, heap_pointer, handle_pointer, global
 extern A68_FORMAT nil_format;
 extern A68_HANDLE nil_handle, *free_handles, *busy_handles;
 extern A68_REF nil_ref;
-extern A68_REF stand_in, stand_out;
 extern BOOL_T in_monitor, do_confirm_exit;
 extern BYTE_T *stack_segment, *heap_segment, *handle_segment;
 extern MOID_T *top_expr_moid;
@@ -497,7 +496,8 @@ extern PROPAGATOR_T genie_conditional (volatile NODE_T *p);
 extern PROPAGATOR_T genie_constant (NODE_T *p);
 extern PROPAGATOR_T genie_denotation (NODE_T *p);
 extern PROPAGATOR_T genie_deproceduring (NODE_T *p);
-extern PROPAGATOR_T genie_dereference_loc_identifier (NODE_T *p);
+extern PROPAGATOR_T genie_dereference_frame_identifier (NODE_T *p);
+extern PROPAGATOR_T genie_dereference_generic_identifier (NODE_T *p);
 extern PROPAGATOR_T genie_dereference_selection_name_quick (NODE_T *p);
 extern PROPAGATOR_T genie_dereference_slice_name_quick (NODE_T *p);
 extern PROPAGATOR_T genie_dereferencing (NODE_T *p);
@@ -506,6 +506,7 @@ extern PROPAGATOR_T genie_diagonal_function (NODE_T *p);
 extern PROPAGATOR_T genie_dyadic (NODE_T *p);
 extern PROPAGATOR_T genie_dyadic_quick (NODE_T *p);
 extern PROPAGATOR_T genie_enclosed (volatile NODE_T *p);
+extern PROPAGATOR_T genie_field_selection (NODE_T *p);
 extern PROPAGATOR_T genie_format_text (NODE_T *p);
 extern PROPAGATOR_T genie_formula_div_real (NODE_T *p);
 extern PROPAGATOR_T genie_formula_eq_int (NODE_T *p);
@@ -538,7 +539,7 @@ extern PROPAGATOR_T genie_identity_relation_is_nil (NODE_T *p);
 extern PROPAGATOR_T genie_identity_relation_isnt_nil (NODE_T *p);
 extern PROPAGATOR_T genie_identity_relation (NODE_T *p);
 extern PROPAGATOR_T genie_int_case (volatile NODE_T *p);
-extern PROPAGATOR_T genie_loc_identifier (NODE_T *p);
+extern PROPAGATOR_T genie_frame_identifier (NODE_T *p);
 extern PROPAGATOR_T genie_loop (volatile NODE_T *p);
 extern PROPAGATOR_T genie_monadic (NODE_T *p);
 extern PROPAGATOR_T genie_nihil (NODE_T *p);
@@ -603,7 +604,7 @@ extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PR
 extern void genie_check_initialisation (NODE_T *, BYTE_T *, MOID_T *);
 extern void genie_copy_sound (NODE_T *, BYTE_T *, BYTE_T *);
 extern void genie_declaration (NODE_T *);
-extern void genie_dump_frames ();
+extern void genie_dump_frames (void);
 extern void genie_enquiry_clause (NODE_T *);
 extern void genie_f_and_becomes (NODE_T *, MOID_T *, GENIE_PROCEDURE *);
 extern void genie_generator_bounds (NODE_T *);

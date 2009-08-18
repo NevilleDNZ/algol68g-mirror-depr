@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "algol68g.h"
 #include "genie.h"
 #include "transput.h"
@@ -66,7 +65,7 @@ char get_stdin_char (void)
   RESET_ERRNO;
   j = io_read_conv (STDIN_FILENO, &(ch[0]), 1);
   ABNORMAL_END (j < 0, "cannot read char from stdin", NULL);
-  return (j == 1 ? ch[0] : EOF_CHAR);
+  return ((char) (j == 1 ? ch[0] : EOF_CHAR));
 }
 
 /*!
@@ -90,12 +89,12 @@ char *read_string_from_tty (char *prompt)
       chars_in_tty_line = 1;
       return (input_line);
     } else {
-      input_line[k++] = ch;
+      input_line[k++] = (char) ch;
       ch = get_stdin_char ();
     }
   }
   input_line[k] = NULL_CHAR;
-  n = strlen (input_line);
+  n = (int) strlen (input_line);
   chars_in_tty_line = (ch == NEWLINE_CHAR ? 0 : (n > 0 ? n : 1));
   return (input_line);
 }
@@ -128,7 +127,7 @@ void io_write_string (FILE_T f, const char *z)
       if (k > first) {
 /* Write these characters. */
         int n = k - first;
-        j = io_write_conv (f, &(z[first]), n);
+        j = io_write_conv (f, &(z[first]), (size_t) n);
         ABNORMAL_END (j < 0, "cannot write", NULL);
         chars_in_tty_line += n;
       }
@@ -179,10 +178,10 @@ ssize_t io_read (FILE_T fd, void *buf, size_t n)
     } else if (bytes_read == 0) {
       break;                    /* EOF_CHAR. */
     }
-    to_do -= bytes_read;
+    to_do -= (size_t) bytes_read;
     z += bytes_read;
   }
-  return (n - to_do);           /* return >= 0 */
+  return ((ssize_t) n - (ssize_t) to_do);       /* return >= 0 */
 }
 
 /*!
@@ -214,10 +213,10 @@ ssize_t io_write (FILE_T fd, const void *buf, size_t n)
         return (-1);
       }
     }
-    to_do -= bytes_written;
+    to_do -= (size_t) bytes_written;
     z += bytes_written;
   }
-  return (n);
+  return ((ssize_t) n);
 }
 
 /*!
@@ -255,10 +254,10 @@ ssize_t io_read_conv (FILE_T fd, void *buf, size_t n)
     } else if (bytes_read == 0) {
       break;                    /* EOF_CHAR. */
     }
-    to_do -= bytes_read;
+    to_do -= (size_t) bytes_read;
     z += bytes_read;
   }
-  return (n - to_do);
+  return ((ssize_t) n - (ssize_t) to_do);
 }
 
 /*!
@@ -290,8 +289,8 @@ ssize_t io_write_conv (FILE_T fd, const void *buf, size_t n)
         return (-1);
       }
     }
-    to_do -= bytes_written;
+    to_do -= (size_t) bytes_written;
     z += bytes_written;
   }
-  return (n);
+  return ((ssize_t) n);
 }

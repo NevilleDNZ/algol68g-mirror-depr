@@ -81,7 +81,6 @@ ENABLE_IEEE_754 is ok for Pentiums.
 #endif
 
 #if defined ENABLE_WIN32
-#define ENABLE_CURSES 1
 #define ENABLE_GRAPHICS 1
 #define ENABLE_IEEE_754 1
 #define ENABLE_NUMERICAL 1
@@ -90,6 +89,7 @@ ENABLE_IEEE_754 is ok for Pentiums.
 #define X_DISPLAY_MISSING 1
 #define POSTSCRIPT_MISSING 1
 #endif
+#undef ENABLE_CURSES
 #undef ENABLE_HTTP
 #undef ENABLE_PAR_CLAUSE
 #undef ENABLE_POSTGRESQL
@@ -99,7 +99,7 @@ ENABLE_IEEE_754 is ok for Pentiums.
 #endif
 
 /*
-OS_2_VERSION and PRE_MACOS_X_VERSION have been decommitted since Mark 9.1.
+OS_2_VERSION and PRE_MACOS_X_VERSION have been decommitted since version 1.9.1.
 */
 
 #endif

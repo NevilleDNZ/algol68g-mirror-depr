@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "algol68g.h"
 #include "genie.h"
 
@@ -66,7 +65,7 @@ static TUPLE_T scope_make_tuple (int e, int t)
 {
   static TUPLE_T z;
   z.level = e;
-  z.transient = t;
+  z.transient = (BOOL_T) t;
   return (z);
 }
 
@@ -105,24 +104,24 @@ static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
     for (s = top; s != NULL; FORWARD (s)) {
       if (s->tuple.transient & TRANSIENT) {
         diagnostic_node (A68_ERROR, s->where, ERROR_TRANSIENT_NAME);
-        s->where->error = A68_TRUE;
+        STATUS_SET (s->where, SCOPE_ERROR_MASK);
         errors++;
       }
     }
   }
   for (s = top; s != NULL; FORWARD (s)) {
-    if (dest < s->tuple.level && !s->where->error) {
+    if (dest < s->tuple.level && ! STATUS_TEST (s->where, SCOPE_ERROR_MASK)) {
 /* Potential scope violations. */
       if (MOID (s->where) == NULL) {
         diagnostic_node (A68_WARNING, s->where, WARNING_SCOPE_STATIC_1, ATTRIBUTE (s->where));
       } else {
         diagnostic_node (A68_WARNING, s->where, WARNING_SCOPE_STATIC_2, MOID (s->where), ATTRIBUTE (s->where));
       }
-      s->where->error = A68_TRUE;
+      STATUS_SET (s->where, SCOPE_ERROR_MASK);
       errors++;
     }
   }
-  return (errors == 0);
+  return ((BOOL_T) (errors == 0));
 }
 
 /*!
@@ -203,7 +202,7 @@ static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
       gather_scopes_for_youngest (SUB (p), r);
     } else if (WHETHER (p, INDICANT)) {
       if (MOID (p) != NULL && TAX (p) != NULL && MOID (p)->has_rows && no_ref) {
-        scope_add (r, p, scope_make_tuple (LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
+        scope_add (r, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
       }
     } else if (WHETHER (p, REF_SYMBOL)) {
       get_declarer_elements (NEXT (p), r, A68_FALSE);
@@ -240,8 +239,8 @@ static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
         (*s) = t;
       }
     } else if (whether_one_of (p, IDENTIFIER, OPERATOR, NULL_ATTRIBUTE)) {
-      if (TAX (p) != NULL && LEX_LEVEL (TAX (p)) != PRIMAL_SCOPE) {
-        scope_add (s, p, scope_make_tuple (LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
+      if (TAX (p) != NULL && TAG_LEX_LEVEL (TAX (p)) != PRIMAL_SCOPE) {
+        scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
       }
     } else if (WHETHER (p, DECLARER)) {
       get_declarer_elements (p, s, A68_TRUE);
@@ -367,13 +366,13 @@ static void scope_identity_declaration (NODE_T * p)
         check_identifier_usage (TAX (p), unit);
       }
       scope_statement (unit, &s);
-      scope_check (s, TRANSIENT, LEX_LEVEL (p));
+      (void) scope_check (s, TRANSIENT, LEX_LEVEL (p));
       z = scope_find_youngest (s).level;
       if (z < LEX_LEVEL (p)) {
         TAX (p)->scope = z;
         TAX (p)->scope_assigned = A68_TRUE;
       }
-      MASK (unit) |= INTERRUPTIBLE_MASK;
+      STATUS_SET (unit, INTERRUPTIBLE_MASK);
       return;
     }
   }
@@ -396,8 +395,8 @@ static void scope_variable_declaration (NODE_T * p)
         SCOPE_T *s = NULL;
         check_identifier_usage (TAX (p), unit);
         scope_statement (unit, &s);
-        scope_check (s, TRANSIENT, LEX_LEVEL (p));
-        MASK (unit) |= INTERRUPTIBLE_MASK;
+        (void) scope_check (s, TRANSIENT, LEX_LEVEL (p));
+        STATUS_SET (unit, INTERRUPTIBLE_MASK);
         return;
       }
     }
@@ -417,8 +416,8 @@ static void scope_procedure_declaration (NODE_T * p)
       NODE_T *unit = NEXT_NEXT (p);
       SCOPE_T *s = NULL;
       scope_statement (unit, &s);
-      scope_check (s, NOT_TRANSIENT, LEX_LEVEL (p));
-      MASK (unit) |= INTERRUPTIBLE_MASK;
+      (void) scope_check (s, NOT_TRANSIENT, LEX_LEVEL (p));
+      STATUS_SET (unit, INTERRUPTIBLE_MASK);
       return;
     }
   }
@@ -464,7 +463,7 @@ static void scope_arguments (NODE_T * p)
     if (WHETHER (p, UNIT)) {
       SCOPE_T *s = NULL;
       scope_statement (p, &s);
-      scope_check (s, TRANSIENT, LEX_LEVEL (p));
+      (void) scope_check (s, TRANSIENT, LEX_LEVEL (p));
     } else {
       scope_arguments (SUB (p));
     }
@@ -480,7 +479,7 @@ static void scope_arguments (NODE_T * p)
 static BOOL_T whether_transient_row (MOID_T * m)
 {
   if (WHETHER (m, REF_SYMBOL)) {
-    return (WHETHER (SUB (m), FLEX_SYMBOL));
+    return ((BOOL_T) (WHETHER (SUB (m), FLEX_SYMBOL)));
   } else {
     return (A68_FALSE);
   }
@@ -542,7 +541,7 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
       if (WHETHER (q, GOTO_SYMBOL)) {
         FORWARD (q);
       }
-      scope_add (s, q, scope_make_tuple (LEX_LEVEL (TAX (q)), NOT_TRANSIENT));
+      scope_add (s, q, scope_make_tuple (TAG_LEX_LEVEL (TAX (q)), NOT_TRANSIENT));
     } else {
       scope_coercion (SUB (p), s);
     }
@@ -583,7 +582,7 @@ static BOOL_T whether_transient_selection (MOID_T * m)
   if (WHETHER (m, REF_SYMBOL)) {
     return (whether_transient_selection (SUB (m)));
   } else {
-    return (WHETHER (m, FLEX_SYMBOL));
+    return ((BOOL_T) (WHETHER (m, FLEX_SYMBOL)));
   }
 }
 
@@ -615,11 +614,11 @@ static void scope_formula (NODE_T * p, SCOPE_T ** s)
   NODE_T *q = SUB (p);
   SCOPE_T *s2 = NULL;
   scope_operand (q, &s2);
-  scope_check (s2, TRANSIENT, LEX_LEVEL (p));
+  (void) scope_check (s2, TRANSIENT, LEX_LEVEL (p));
   if (NEXT (q) != NULL) {
     SCOPE_T *s3 = NULL;
     scope_operand (NEXT_NEXT (q), &s3);
-    scope_check (s3, TRANSIENT, LEX_LEVEL (p));
+    (void) scope_check (s3, TRANSIENT, LEX_LEVEL (p));
   }
   (void) s;
 }
@@ -636,7 +635,7 @@ static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
   SCOPE_T *x = NULL;
   TUPLE_T routine_tuple;
   scope_statement (NEXT_NEXT (routine), &x);
-  scope_check (x, TRANSIENT, LEX_LEVEL (p));
+  (void) scope_check (x, TRANSIENT, LEX_LEVEL (p));
   routine_tuple = scope_make_tuple (TAX (p)->youngest_environ, NOT_TRANSIENT);
   scope_add (s, p, routine_tuple);
 }
@@ -658,14 +657,14 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
   } else if (WHETHER (p, IDENTIFIER)) {
     if (WHETHER (MOID (p), REF_SYMBOL)) {
       if (PRIO (TAX (p)) == PARAMETER_IDENTIFIER) {
-        scope_add (s, p, scope_make_tuple (LEX_LEVEL (TAX (p)) - 1, NOT_TRANSIENT));
+        scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)) - 1, NOT_TRANSIENT));
       } else {
         if (HEAP (TAX (p)) == HEAP_SYMBOL) {
           scope_add (s, p, scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT));
         } else if (TAX (p)->scope_assigned) {
           scope_add (s, p, scope_make_tuple (TAX (p)->scope, NOT_TRANSIENT));
         } else {
-          scope_add (s, p, scope_make_tuple (LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
+          scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
         }
       }
     } else if (ATTRIBUTE (MOID (p)) == PROC_SYMBOL && TAX (p)->scope_assigned == A68_TRUE) {
@@ -678,7 +677,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
   } else if (WHETHER (p, CALL)) {
     SCOPE_T *x = NULL;
     scope_statement (SUB (p), &x);
-    scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
+    (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
     scope_arguments (NEXT_SUB (p));
   } else if (WHETHER (p, SLICE)) {
     SCOPE_T *x = NULL;
@@ -688,7 +687,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
         scope_statement (SUB (p), s);
       } else {
         scope_statement (SUB (p), &x);
-        scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
+        (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
       }
       if (WHETHER (SUB (m), FLEX_SYMBOL)) {
         scope_add (s, SUB (p), scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
@@ -703,15 +702,22 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     scope_format_text (SUB (p), &x);
     scope_add (s, p, scope_find_youngest (x));
   } else if (WHETHER (p, CAST)) {
-/*    scope_enclosed_clause (SUB (NEXT_SUB (p)), &s); */
     SCOPE_T *x = NULL;
     scope_enclosed_clause (SUB (NEXT_SUB (p)), &x);
-    scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
+    (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
     scope_add (s, p, scope_find_youngest (x));
+  } else if (WHETHER (p, FIELD_SELECTION)) {
+    SCOPE_T *ns = NULL;
+    scope_statement (SUB (p), &ns);
+    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (p));
+    if (whether_transient_selection (MOID (SUB (p)))) {
+      scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
+    }
+    scope_add (s, p, scope_find_youngest (ns));
   } else if (WHETHER (p, SELECTION)) {
     SCOPE_T *ns = NULL;
     scope_statement (NEXT_SUB (p), &ns);
-    scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (p));
+    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (p));
     if (whether_transient_selection (MOID (NEXT_SUB (p)))) {
       scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
     }
@@ -728,42 +734,42 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     SCOPE_T *ns = NULL;
     if (WHETHER (q, TERTIARY)) {
       scope_statement (SUB (q), &ns);
-      scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+      (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
       ns = NULL;
       FORWARD (q);
     }
     scope_statement (SUB_NEXT (q), &ns);
-    scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
   } else if (WHETHER (p, TRANSPOSE_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NULL;
     scope_statement (SUB_NEXT (q), &ns);
-    scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
   } else if (WHETHER (p, ROW_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NULL;
     if (WHETHER (q, TERTIARY)) {
       scope_statement (SUB (q), &ns);
-      scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+      (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
       ns = NULL;
       FORWARD (q);
     }
     scope_statement (SUB_NEXT (q), &ns);
-    scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
   } else if (WHETHER (p, COLUMN_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NULL;
     if (WHETHER (q, TERTIARY)) {
       scope_statement (SUB (q), &ns);
-      scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+      (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
       ns = NULL;
       FORWARD (q);
     }
     scope_statement (SUB_NEXT (q), &ns);
-    scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
+    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
   } else if (WHETHER (p, FORMULA)) {
     scope_formula (p, s);
@@ -772,7 +778,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     SCOPE_T *ns = NULL, *nd = NULL;
     scope_statement (SUB (SUB (p)), &nd);
     scope_statement (unit, &ns);
-    scope_check_multiple (ns, TRANSIENT, nd);
+    (void) scope_check_multiple (ns, TRANSIENT, nd);
     scope_add (s, p, scope_make_tuple (scope_find_youngest (nd).level, NOT_TRANSIENT));
   } else if (WHETHER (p, ROUTINE_TEXT)) {
     scope_routine_text (p, s);
@@ -780,11 +786,11 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     SCOPE_T *n = NULL;
     scope_statement (SUB (p), &n);
     scope_statement (NEXT (NEXT_SUB (p)), &n);
-    scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
+    (void) scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
   } else if (WHETHER (p, ASSERTION)) {
     SCOPE_T *n = NULL;
     scope_enclosed_clause (SUB (NEXT_SUB (p)), &n);
-    scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
+    (void) scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
   } else if (whether_one_of (p, JUMP, SKIP, NULL_ATTRIBUTE)) {
     ;
   }
@@ -800,7 +806,7 @@ static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NULL; FORWARD (p)) {
     if (WHETHER (p, UNIT)) {
-      MASK (p) |= INTERRUPTIBLE_MASK;
+      STATUS_SET (p, INTERRUPTIBLE_MASK);
       scope_statement (p, s);
     } else {
       scope_statement_list (SUB (p), s);
@@ -840,7 +846,7 @@ static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
     } else if (WHETHER (p, LABELED_UNIT)) {
       scope_serial_clause (SUB (p), s, terminator);
     } else if (WHETHER (p, UNIT)) {
-      MASK (p) |= INTERRUPTIBLE_MASK;
+      STATUS_SET (p, INTERRUPTIBLE_MASK);
       if (terminator) {
         scope_statement (p, s);
       } else {
@@ -913,7 +919,7 @@ static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
 {
   SCOPE_T *n = NULL;
   scope_serial_clause (NEXT_SUB (p), &n, A68_TRUE);
-  scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
+  (void) scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
   FORWARD (p);
   scope_statement_list (NEXT_SUB (p), s);
   if ((FORWARD (p)) != NULL) {

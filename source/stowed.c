@@ -84,13 +84,13 @@ void initialise_internal_index (A68_TUPLE * tup, int dim)
 
 ADDR_T calculate_internal_index (A68_TUPLE * tup, int dim)
 {
-  ADDR_T index = 0;
+  ADDR_T iindex = 0;
   int k;
   for (k = 0; k < dim; k++) {
     A68_TUPLE *ref = &tup[k];
-    index += (ref->span * ref->k - ref->shift);
+    iindex += (ref->span * ref->k - ref->shift);
   }
-  return (index);
+  return (iindex);
 }
 
 /*!
@@ -128,7 +128,7 @@ void print_internal_index (FILE_T f, A68_TUPLE * tup, int dim)
   for (k = 0; k < dim; k++) {
     A68_TUPLE *ref = &tup[k];
     char buf[BUFFER_SIZE];
-    snprintf (buf, BUFFER_SIZE, "%d", ref->k);
+    CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "%d", ref->k) >= 0);
     WRITE (f, buf);
     if (k < dim - 1) {
       WRITE (f, ", ");
@@ -151,7 +151,7 @@ A68_REF c_string_to_row_char (NODE_T * p, char *str, int width)
   A68_TUPLE tup;
   BYTE_T *base;
   int str_size, k;
-  str_size = strlen (str);
+  str_size = (int) strlen (str);
   z = heap_generator (p, MODE (ROW_CHAR), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&z);
   row = heap_generator (p, MODE (ROW_CHAR), width * ALIGNED_SIZE_OF (A68_CHAR));
@@ -191,7 +191,7 @@ A68_REF c_to_a_string (NODE_T * p, char *str)
   if (str == NULL) {
     return (empty_string (p));
   } else {
-    return (c_string_to_row_char (p, str, strlen (str)));
+    return (c_string_to_row_char (p, str, (int) strlen (str)));
   }
 }
 
@@ -274,7 +274,7 @@ A68_REF empty_row (NODE_T * p, MOID_T * u)
   arr->elem_size = moid_size (SLICE (u));
   arr->slice_offset = 0;
   arr->field_offset = 0;
-  STATUS (&ARRAY (arr)) = INITIALISED_MASK | IN_HEAP_MASK;
+  STATUS (&ARRAY (arr)) = (STATUS_MASK) (INITIALISED_MASK | IN_HEAP_MASK);
   ARRAY (arr).offset = 0;
   REF_HANDLE (&(ARRAY (arr))) = &nil_handle;
   for (k = 0; k < dim; k++) {
@@ -440,7 +440,7 @@ A68_REF genie_make_row (NODE_T * p, MOID_T * elem_mode, int elems_in_stack, ADDR
     BYTE_T *src_a, *dst_a;
     A68_REF dst = new_arr, src;
     dst.offset += offset;
-    STATUS (&src) = INITIALISED_MASK | IN_STACK_MASK;
+    STATUS (&src) = (STATUS_MASK) (INITIALISED_MASK | IN_STACK_MASK);
     src.offset = sp + offset;
     REF_HANDLE (&src) = &nil_handle;
     dst_a = ADDRESS (&dst);
@@ -449,8 +449,7 @@ A68_REF genie_make_row (NODE_T * p, MOID_T * elem_mode, int elems_in_stack, ADDR
       if (WHETHER (elem_mode, STRUCT_SYMBOL)) {
         A68_REF new_one = genie_copy_stowed (src, p, elem_mode);
         MOVE (dst_a, ADDRESS (&new_one), MOID_SIZE (elem_mode));
-      } else if (WHETHER (elem_mode, FLEX_SYMBOL)
-                 || elem_mode == MODE (STRING)) {
+      } else if (WHETHER (elem_mode, FLEX_SYMBOL) || elem_mode == MODE (STRING)) {
         *(A68_REF *) dst_a = genie_copy_stowed (*(A68_REF *) src_a, p, DEFLEX (elem_mode));
       } else if (WHETHER (elem_mode, ROW_SYMBOL)) {
         *(A68_REF *) dst_a = genie_copy_stowed (*(A68_REF *) src_a, p, elem_mode);
@@ -646,22 +645,22 @@ PROPAGATOR_T genie_rowing (NODE_T * p)
 /* REF ROW, decide whether we want A->[] A or [] A->[,] A. */
     MOID_T *mode = SUB (MOID (p));
     if (DIM (DEFLEX (mode)) >= 2) {
-      genie_rowing_ref_row_row (p);
+      (void) genie_rowing_ref_row_row (p);
       self.unit = genie_rowing_ref_row_row;
       self.source = p;
     } else {
-      genie_rowing_ref_row_of_row (p);
+      (void) genie_rowing_ref_row_of_row (p);
       self.unit = genie_rowing_ref_row_of_row;
       self.source = p;
     }
   } else {
 /* ROW, decide whether we want A->[] A or [] A->[,] A. */
     if (DIM (DEFLEX (MOID (p))) >= 2) {
-      genie_rowing_row_row (p);
+      (void) genie_rowing_row_row (p);
       self.unit = genie_rowing_row_row;
       self.source = p;
     } else {
-      genie_rowing_row_of_row (p);
+      (void) genie_rowing_row_of_row (p);
       self.unit = genie_rowing_row_of_row;
       self.source = p;
     }
@@ -713,7 +712,7 @@ static void genie_copy_union (NODE_T * p, BYTE_T * dst_a, BYTE_T * src_a, A68_RE
 
 A68_REF genie_copy_row (A68_REF old_row, NODE_T * p, MOID_T * m)
 {
-/* We need this complex routine ARRAY(&since)s are not always contiguous (trims). */
+/* We need this complex routine since arrays are not always contiguous (trims). */
   A68_REF new_row;
   A68_ARRAY *old_arr, *new_arr;
   A68_TUPLE *old_tup, *new_tup, *old_p, *new_p;
@@ -940,7 +939,7 @@ static A68_REF genie_assign_row (A68_REF old_row, A68_REF * dst, NODE_T * p, MOI
         src_a = ADDRESS (&new_old);
         dst_a = ADDRESS (&new_dst);
         if (WHETHER (elem_mode, STRUCT_SYMBOL)) {
-          genie_assign_stowed (new_old, &new_dst, p, elem_mode);
+          (void) genie_assign_stowed (new_old, &new_dst, p, elem_mode);
         } else if (WHETHER (elem_mode, FLEX_SYMBOL) || elem_mode == MODE (STRING)) {
 /* Algol68G does not know ghost elements. NIL means an initially empty row. */
           A68_REF dst_addr = *(A68_REF *) dst_a;
@@ -955,7 +954,7 @@ static A68_REF genie_assign_row (A68_REF old_row, A68_REF * dst, NODE_T * p, MOI
           if (IS_NIL (dst_addr)) {
             *(A68_REF *) dst_a = *(A68_REF *) src_a;
           } else {
-            genie_assign_stowed (*(A68_REF *) src_a, &dst_addr, p, elem_mode);
+            (void) genie_assign_stowed (*(A68_REF *) src_a, &dst_addr, p, elem_mode);
           }
         } else if (WHETHER (elem_mode, UNION_SYMBOL)) {
           genie_copy_union (p, dst_a, src_a, new_old);
@@ -1001,16 +1000,15 @@ A68_REF genie_assign_stowed (A68_REF old, A68_REF * dst, NODE_T * p, MOID_T * m)
       if (MOID (fields)->has_rows) {
         if (WHETHER (MOID (fields), STRUCT_SYMBOL)) {
 /* STRUCT (STRUCT (..) ..) */
-          genie_assign_stowed (old_field, &new_field, p, MOID (fields));
-        } else if (WHETHER (MOID (fields), FLEX_SYMBOL)
-                   || MOID (fields) == MODE (STRING)) {
+          (void) genie_assign_stowed (old_field, &new_field, p, MOID (fields));
+        } else if (WHETHER (MOID (fields), FLEX_SYMBOL) || MOID (fields) == MODE (STRING)) {
 /* STRUCT (FLEX [] A ..) */
           *(A68_REF *) dst_a = genie_copy_row (*(A68_REF *) src_a, p, MOID (fields));
         } else if (WHETHER (MOID (fields), ROW_SYMBOL)) {
 /* STRUCT ([] A ..) */
           A68_REF arr_src = *(A68_REF *) src_a;
           A68_REF arr_dst = *(A68_REF *) dst_a;
-          genie_assign_row (arr_src, &arr_dst, p, MOID (fields));
+          (void) genie_assign_row (arr_src, &arr_dst, p, MOID (fields));
         } else if (WHETHER (MOID (fields), UNION_SYMBOL)) {
 /* UNION (..) */
           genie_copy_union (p, dst_a, src_a, old_field);
@@ -1066,11 +1064,11 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
   int span, k;
   char buf[BUFFER_SIZE];
   INDENT (level);
-  snprintf (buf, BUFFER_SIZE, "%s at %p pointing at %p", moid_to_string (m, 80, NULL), w, (void *) ADDRESS ((A68_ROW *) w));
+  CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "%s at %p pointing at %p", moid_to_string (m, 80, NULL), w, (void *) ADDRESS ((A68_ROW *) w)) >= 0);
   WRITE (f, buf);
   if (IS_NIL (*(A68_REF *) w)) {
     INDENT (level);
-    snprintf (buf, BUFFER_SIZE, "NIL - returning");
+    CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "NIL - returning") >= 0);
     WRITE (f, buf);
     return;
   }
@@ -1081,7 +1079,7 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
         dump_stowed (p, f, &((BYTE_T *) w)[fields->offset], MOID (fields), level + 1);
       } else {
         INDENT (level);
-        snprintf (buf, BUFFER_SIZE, "%s %s at %p", moid_to_string (MOID (fields), 80, NULL), fields->text, &((BYTE_T *) w)[fields->offset]);
+        CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "%s %s at %p", moid_to_string (MOID (fields), 80, NULL), fields->text, &((BYTE_T *) w)[fields->offset]) >= 0);
         WRITE (f, buf);
       }
     }
@@ -1092,7 +1090,7 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
       if (um->has_rows) {
         dump_stowed (p, f, &((BYTE_T *) w)[UNION_OFFSET], um, level + 1);
       } else {
-        (void) snprintf (buf, BUFFER_SIZE, " holds %s at %p", moid_to_string (um, 80, NULL), &((BYTE_T *) w)[UNION_OFFSET]);
+        CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, " holds %s at %p", moid_to_string (um, 80, NULL), &((BYTE_T *) w)[UNION_OFFSET]) >= 0);
         WRITE (f, buf);
       }
     }
@@ -1104,12 +1102,12 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
     for (k = 0, span = 1; k < DIM (arr); k++) {
       A68_TUPLE *z = &tup[k];
       INDENT (level);
-      snprintf (buf, BUFFER_SIZE, "tuple %d has lwb=%d and upb=%d", k, LWB (z), UPB (z));
+      CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "tuple %d has lwb=%d and upb=%d", k, LWB (z), UPB (z)) >= 0);
       WRITE (f, buf);
       span *= ROW_SIZE (z);
     }
     INDENT (level);
-    snprintf (buf, BUFFER_SIZE, "elems=%d, elem size=%d, slice_offset=%d, field_offset=%d", span, arr->elem_size, arr->slice_offset, arr->field_offset);
+    CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "elems=%d, elem size=%d, slice_offset=%d, field_offset=%d", span, arr->elem_size, arr->slice_offset, arr->field_offset) >= 0);
     WRITE (f, buf);
     if (span > 0) {
       initialise_internal_index (tup, DIM (arr));
@@ -1117,15 +1115,15 @@ void dump_stowed (NODE_T * p, FILE_T f, void *w, MOID_T * m, int level)
         A68_REF elem = ARRAY (arr);
         BYTE_T *elem_p;
         MOID_T *elem_mode = SUB (m);
-        ADDR_T index = calculate_internal_index (tup, DIM (arr));
-        ADDR_T addr = ROW_ELEMENT (arr, index);
+        ADDR_T iindex = calculate_internal_index (tup, DIM (arr));
+        ADDR_T addr = ROW_ELEMENT (arr, iindex);
         elem.offset += addr;
         elem_p = ADDRESS (&elem);
         if (elem_mode->has_rows) {
           dump_stowed (p, f, elem_p, elem_mode, level + 3);
         } else {
           INDENT (level);
-          snprintf (buf, BUFFER_SIZE, "%s [%d] at %p", moid_to_string (elem_mode, 80, NULL), index, elem_p);
+          CHECK_RETVAL (snprintf (buf, (size_t) BUFFER_SIZE, "%s [%d] at %p", moid_to_string (elem_mode, 80, NULL), iindex, elem_p) >= 0);
           WRITE (f, buf);
           print_item (p, f, elem_p, elem_mode);
         }
@@ -1280,7 +1278,7 @@ PROPAGATOR_T genie_diagonal_function (NODE_T * p)
   PROPAGATOR_T self;
   A68_ROW row, new_row;
   int k = 0;
-  BOOL_T name = WHETHER (MOID (p), REF_SYMBOL);
+  BOOL_T name = (BOOL_T) (WHETHER (MOID (p), REF_SYMBOL));
   A68_ARRAY *arr, new_arr;
   A68_TUPLE *tup1, *tup2, new_tup;
   MOID_T *m;
@@ -1344,7 +1342,7 @@ PROPAGATOR_T genie_diagonal_function (NODE_T * p)
 }
 
 /*!
-\brief push description for transpose of square matrix
+\brief push description for transpose of matrix
 \param p position in tree
 \return a propagator for this action
 **/
@@ -1355,7 +1353,7 @@ PROPAGATOR_T genie_transpose_function (NODE_T * p)
   ADDR_T scope = PRIMAL_SCOPE;
   PROPAGATOR_T self;
   A68_ROW row, new_row;
-  BOOL_T name = WHETHER (MOID (p), REF_SYMBOL);
+  BOOL_T name = (BOOL_T) (WHETHER (MOID (p), REF_SYMBOL));
   A68_ARRAY *arr, new_arr;
   A68_TUPLE *tup1, *tup2, new_tup1, new_tup2;
   MOID_T *m;
@@ -1372,10 +1370,6 @@ PROPAGATOR_T genie_transpose_function (NODE_T * p)
   }
   POP_OBJECT (p, &row, A68_ROW);
   GET_DESCRIPTOR2 (arr, tup1, tup2, &row);
-  if (ROW_SIZE (tup1) != ROW_SIZE (tup2)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_NO_SQUARE_MATRIX, m, NULL);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
   new_row = heap_generator (p, m, ALIGNED_SIZE_OF (A68_ARRAY) + 2 * ALIGNED_SIZE_OF (A68_TUPLE));
   new_arr = *arr;
   new_tup1 = *tup2;
@@ -1408,7 +1402,7 @@ PROPAGATOR_T genie_row_function (NODE_T * p)
   PROPAGATOR_T self;
   A68_ROW row, new_row;
   int k = 1;
-  BOOL_T name = WHETHER (MOID (p), REF_SYMBOL);
+  BOOL_T name = (BOOL_T) (WHETHER (MOID (p), REF_SYMBOL));
   A68_ARRAY *arr, new_arr;
   A68_TUPLE tup1, tup2, *tup;
   MOID_T *m;
@@ -1469,7 +1463,6 @@ PROPAGATOR_T genie_row_function (NODE_T * p)
   return (self);
 }
 
-
 /*!
 \brief push description for column vector
 \param p position in tree
@@ -1483,7 +1476,7 @@ PROPAGATOR_T genie_column_function (NODE_T * p)
   PROPAGATOR_T self;
   A68_ROW row, new_row;
   int k = 1;
-  BOOL_T name = WHETHER (MOID (p), REF_SYMBOL);
+  BOOL_T name = (BOOL_T) (WHETHER (MOID (p), REF_SYMBOL));
   A68_ARRAY *arr, new_arr;
   A68_TUPLE tup1, tup2, *tup;
   MOID_T *m;
@@ -1575,7 +1568,7 @@ void genie_sort_row_string (NODE_T * p)
     A68_TUPLE tupn;
     int j, k;
     BYTE_T *base = ADDRESS (&ARRAY (arr));
-    char **ptrs = (char **) malloc (size * sizeof (char *));
+    char **ptrs = (char **) malloc ((size_t) (size * (int) sizeof (char *)));
     if (ptrs == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_CORE);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -1592,10 +1585,10 @@ void genie_sort_row_string (NODE_T * p)
         exit_genie (p, A68_RUNTIME_ERROR);
       }
       ptrs[j] = (char *) STACK_TOP;
-      a_to_c_string (p, (char *) STACK_TOP, ref);
+      CHECK_RETVAL (a_to_c_string (p, (char *) STACK_TOP, ref) != NULL);
       INCREMENT_STACK_POINTER (p, len);
     }
-    qsort (ptrs, size, sizeof (char *), qstrcmp);
+    qsort (ptrs, (size_t) size, sizeof (char *), qstrcmp);
 /* Construct an array of sorted strings. */
     z = heap_generator (p, MODE (ROW_STRING), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
     PROTECT_SWEEP_HANDLE (&z);

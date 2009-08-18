@@ -20,22 +20,23 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "algol68g.h"
 #include "genie.h"
 #include "gsl.h"
 #include "transput.h"
 
 static char *attribute_names[WILDCARD + 1] = {
-  NULL,
+  "NULL",
   "A68_PATTERN",
   "ACCO_SYMBOL",
+  "ACTUAL_DECLARER_MARK",
   "ALT_DO_PART",
   "ALT_DO_SYMBOL",
   "ALT_EQUALS_SYMBOL",
   "ALT_FORMAL_BOUNDS_LIST",
   "ANDF_SYMBOL",
   "AND_FUNCTION",
+  "ANONYMOUS",
   "ARGUMENT",
   "ARGUMENT_LIST",
   "ASSERTION",
@@ -45,6 +46,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "ASSIGN_TO_SYMBOL",
   "AT_SYMBOL",
   "BEGIN_SYMBOL",
+  "BITS_C_PATTERN",
   "BITS_DENOTATION",
   "BITS_PATTERN",
   "BITS_SYMBOL",
@@ -69,10 +71,12 @@ static char *attribute_names[WILDCARD + 1] = {
   "CASE_SYMBOL",
   "CAST",
   "CHANNEL_SYMBOL",
+  "CHAR_C_PATTERN",
   "CHAR_DENOTATION",
   "CHAR_SYMBOL",
   "CHOICE",
   "CHOICE_PATTERN",
+  "CLASS_SYMBOL",
   "CLOSED_CLAUSE",
   "CLOSE_SYMBOL",
   "CODE_CLAUSE",
@@ -87,6 +91,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "COMPLEX_SYMBOL",
   "COMPL_SYMBOL",
   "CONDITIONAL_CLAUSE",
+  "CONSTRUCT",
   "DECLARATION_LIST",
   "DECLARER",
   "DEFINING_IDENTIFIER",
@@ -118,29 +123,35 @@ static char *attribute_names[WILDCARD + 1] = {
   "ENVIRON_SYMBOL",
   "EQUALS_SYMBOL",
   "ERROR",
+  "ERROR_IDENTIFIER",
   "ESAC_SYMBOL",
   "EXIT_SYMBOL",
   "EXPONENT_FRAME",
   "FALSE_SYMBOL",
+  "FIELD",
   "FIELD_IDENTIFIER",
+  "FIELD_SELECTION",
   "FILE_SYMBOL",
+  "FIRM",
   "FI_SYMBOL",
   "FIXED_C_PATTERN",
   "FLEX_SYMBOL",
   "FLOAT_C_PATTERN",
   "FORMAL_BOUNDS",
   "FORMAL_BOUNDS_LIST",
+  "FORMAL_DECLARER_MARK",
   "FORMAL_DECLARERS",
   "FORMAL_DECLARERS_LIST",
   "FORMAT_A_FRAME",
+  "FORMAT_CLOSE_SYMBOL",
   "FORMAT_DELIMITER_SYMBOL",
   "FORMAT_D_FRAME",
   "FORMAT_E_FRAME",
+  "FORMAT_IDENTIFIER",
   "FORMAT_I_FRAME",
   "FORMAT_ITEM_A",
   "FORMAT_ITEM_B",
   "FORMAT_ITEM_C",
-  "FORMAT_CLOSE_SYMBOL",
   "FORMAT_ITEM_D",
   "FORMAT_ITEM_E",
   "FORMAT_ITEM_ESCAPE",
@@ -155,7 +166,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "FORMAT_ITEM_MINUS",
   "FORMAT_ITEM_N",
   "FORMAT_ITEM_O",
-  "FORMAT_OPEN_SYMBOL",
   "FORMAT_ITEM_P",
   "FORMAT_ITEM_PLUS",
   "FORMAT_ITEM_POINT",
@@ -169,6 +179,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "FORMAT_ITEM_X",
   "FORMAT_ITEM_Y",
   "FORMAT_ITEM_Z",
+  "FORMAT_OPEN_SYMBOL",
   "FORMAT_PATTERN",
   "FORMAT_POINT_FRAME",
   "FORMAT_SYMBOL",
@@ -179,6 +190,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "FOR_SYMBOL",
   "FROM_PART",
   "FROM_SYMBOL",
+  "GENERAL_C_PATTERN",
   "GENERAL_PATTERN",
   "GENERATOR",
   "GENERIC_ARGUMENT",
@@ -214,17 +226,44 @@ static char *attribute_names[WILDCARD + 1] = {
   "LABEL_IDENTIFIER",
   "LABEL_SEQUENCE",
   "LITERAL",
+  "LOCAL_LABEL",
   "LOC_SYMBOL",
   "LONGETY",
   "LONG_SYMBOL",
   "LOOP_CLAUSE",
+  "LOOP_IDENTIFIER",
   "MAIN_SYMBOL",
+  "MEEK",
+  "MODE_BITS",
+  "MODE_BOOL",
+  "MODE_BYTES",
+  "MODE_CHAR",
+  "MODE_COMPLEX",
   "MODE_DECLARATION",
+  "MODE_FILE",
+  "MODE_FORMAT",
+  "MODE_INT",
+  "MODE_LONG_BITS",
+  "MODE_LONG_BYTES",
+  "MODE_LONG_COMPLEX",
+  "MODE_LONG_INT",
+  "MODE_LONGLONG_BITS",
+  "MODE_LONGLONG_COMPLEX",
+  "MODE_LONGLONG_INT",
+  "MODE_LONGLONG_REAL",
+  "MODE_LONG_REAL",
+  "MODE_NO_CHECK",
+  "MODE_PIPE",
+  "MODE_REAL",
+  "MODE_SOUND",
   "MODE_SYMBOL",
   "MONADIC_FORMULA",
   "MONAD_SEQUENCE",
+  "NEW_SYMBOL",
   "NIHIL",
   "NIL_SYMBOL",
+  "NORMAL_IDENTIFIER",
+  "NO_SORT",
   "OCCA_SYMBOL",
   "OD_SYMBOL",
   "OF_SYMBOL",
@@ -243,6 +282,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "OUT_TYPE_MODE",
   "PARALLEL_CLAUSE",
   "PARAMETER",
+  "PARAMETER_IDENTIFIER",
   "PARAMETER_LIST",
   "PARAMETER_PACK",
   "PAR_SYMBOL",
@@ -259,6 +299,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "PROCEDURE_VARIABLE_DECLARATION",
   "PROCEDURING",
   "PROC_SYMBOL",
+  "PROTECT_FROM_SWEEP",
   "QUALIFIER",
   "RADIX_FRAME",
   "REAL_DENOTATION",
@@ -287,19 +328,23 @@ static char *attribute_names[WILDCARD + 1] = {
   "SIGN_MOULD",
   "SKIP",
   "SKIP_SYMBOL",
-  "SLICE_OR_CALL",
+  "SLICE",
+  "SOFT",
   "SOME_CLAUSE",
   "SOUND_SYMBOL",
+  "SPECIFICATION",
   "SPECIFIED_UNIT",
   "SPECIFIED_UNIT_LIST",
   "SPECIFIED_UNIT_UNIT",
   "SPECIFIER",
+  "SPECIFIER_IDENTIFIER",
   "STANDARD",
   "STATIC_REPLICATOR",
   "STOWED_MODE",
   "STRING_C_PATTERN",
   "STRING_PATTERN",
   "STRING_SYMBOL",
+  "STRONG",
   "STRUCT_SYMBOL",
   "STRUCTURED_FIELD",
   "STRUCTURED_FIELD_LIST",
@@ -333,8 +378,10 @@ static char *attribute_names[WILDCARD + 1] = {
   "UNTIL_PART",
   "UNTIL_SYMBOL",
   "VARIABLE_DECLARATION",
+  "VIRTUAL_DECLARER_MARK",
   "VOIDING",
   "VOID_SYMBOL",
+  "WEAK",
   "WHILE_PART",
   "WHILE_SYMBOL",
   "WIDENING",
@@ -358,7 +405,7 @@ char *non_terminal_string (char *buf, int att)
         if (q[0] == '_') {
           q[0] = '-';
         } else {
-          q[0] = TO_LOWER (q[0]);
+          q[0] = (char) TO_LOWER (q[0]);
         }
         q++;
       }
@@ -414,7 +461,7 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_cast) {
     return ("genie_cast");
   }
-  if ((void *) p == (void *) genie_closed) {
+  if (p == (PROPAGATOR_PROCEDURE *) genie_closed) {
     return ("genie_closed");
   }
   if (p == genie_coercion) {
@@ -426,7 +473,7 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_column_function) {
     return ("genie_column_function");
   }
-  if ((void *) p == (void *) genie_conditional) {
+  if (p == (PROPAGATOR_PROCEDURE *) genie_conditional) {
     return ("genie_conditional");
   }
   if (p == genie_constant) {
@@ -438,8 +485,8 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_deproceduring) {
     return ("genie_deproceduring");
   }
-  if (p == genie_dereference_loc_identifier) {
-    return ("genie_dereference_loc_identifier");
+  if (p == genie_dereference_frame_identifier) {
+    return ("genie_dereference_frame_identifier");
   }
   if (p == genie_dereference_selection_name_quick) {
     return ("genie_dereference_selection_name_quick");
@@ -462,7 +509,7 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_dyadic_quick) {
     return ("genie_dyadic_quick");
   }
-  if ((void *) p == (void *) genie_enclosed) {
+  if (p == (PROPAGATOR_PROCEDURE *) genie_enclosed) {
     return ("genie_enclosed");
   }
   if (p == genie_format_text) {
@@ -558,13 +605,16 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_identity_relation_isnt_nil) {
     return ("genie_identity_relation_isnt_nil");
   }
-  if ((void *) p == (void *) genie_int_case) {
+  if (p == (PROPAGATOR_PROCEDURE *) genie_int_case) {
     return ("genie_int_case");
   }
-  if (p == genie_loc_identifier) {
-    return ("genie_loc_identifier");
+  if (p == genie_field_selection) {
+    return ("genie_field_selection");
   }
-  if ((void *) p == (void *) genie_loop) {
+  if (p == genie_frame_identifier) {
+    return ("genie_frame_identifier");
+  }
+  if (p == (PROPAGATOR_PROCEDURE *) genie_loop) {
     return ("genie_loop");
   }
   if (p == genie_monadic) {
@@ -626,7 +676,7 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_unit) {
     return ("genie_unit");
   }
-  if ((void *) p == (void *) genie_united_case) {
+  if (p == (PROPAGATOR_PROCEDURE *) genie_united_case) {
     return ("genie_united_case");
   }
   if (p == genie_uniting) {
@@ -647,5 +697,5 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_widening_int_to_real) {
     return ("genie_widening_int_to_real");
   }
-  return ("unknown propagator");
+  return (NULL);
 }

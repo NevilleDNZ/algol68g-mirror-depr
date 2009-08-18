@@ -61,6 +61,141 @@ static char *scan_buf;
 static int max_scan_buf_length, source_file_size;
 static BOOL_T stop_scanner = A68_FALSE, read_error = A68_FALSE, no_preprocessing = A68_FALSE;
 
+
+/*!
+\brief add keyword to the tree
+\param p top keyword
+\param a attribute
+\param t keyword text
+**/
+
+static void add_keyword (KEYWORD_T ** p, int a, char *t)
+{
+  while (*p != NULL) {
+    int k = strcmp (t, TEXT (*p));
+    if (k < 0) {
+      p = &LESS (*p);
+    } else {
+      p = &MORE (*p);
+    }
+  }
+  *p = (KEYWORD_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (KEYWORD_T));
+  ATTRIBUTE (*p) = a;
+  TEXT (*p) = t;
+  LESS (*p) = MORE (*p) = NULL;
+}
+
+/*!
+\brief make tables of keywords and non-terminals
+**/
+
+void set_up_tables (void)
+{
+/* Entries are randomised to balance the tree. */
+  add_keyword (&top_keyword, CLASS_SYMBOL, "CLASS");
+  add_keyword (&top_keyword, NEW_SYMBOL, "NEW");
+  add_keyword (&top_keyword, DIAGONAL_SYMBOL, "DIAG");
+  add_keyword (&top_keyword, TRANSPOSE_SYMBOL, "TRNSP");
+  add_keyword (&top_keyword, ROW_SYMBOL, "ROW");
+  add_keyword (&top_keyword, COLUMN_SYMBOL, "COL");
+  add_keyword (&top_keyword, ROW_ASSIGN_SYMBOL, "::=");
+  add_keyword (&top_keyword, SOUND_SYMBOL, "SOUND");
+  add_keyword (&top_keyword, ANDF_SYMBOL, "THEF");
+  add_keyword (&top_keyword, ORF_SYMBOL, "ELSF");
+  add_keyword (&top_keyword, POINT_SYMBOL, ".");
+  add_keyword (&top_keyword, ACCO_SYMBOL, "{");
+  add_keyword (&top_keyword, OCCA_SYMBOL, "}");
+  add_keyword (&top_keyword, CODE_SYMBOL, "CODE");
+  add_keyword (&top_keyword, EDOC_SYMBOL, "EDOC");
+  add_keyword (&top_keyword, ENVIRON_SYMBOL, "ENVIRON");
+  add_keyword (&top_keyword, COLON_SYMBOL, ":");
+  add_keyword (&top_keyword, THEN_BAR_SYMBOL, "|");
+  add_keyword (&top_keyword, SUB_SYMBOL, "[");
+  add_keyword (&top_keyword, BY_SYMBOL, "BY");
+  add_keyword (&top_keyword, OP_SYMBOL, "OP");
+  add_keyword (&top_keyword, COMMA_SYMBOL, ",");
+  add_keyword (&top_keyword, AT_SYMBOL, "AT");
+  add_keyword (&top_keyword, PRIO_SYMBOL, "PRIO");
+  add_keyword (&top_keyword, STYLE_I_COMMENT_SYMBOL, "CO");
+  add_keyword (&top_keyword, END_SYMBOL, "END");
+  add_keyword (&top_keyword, GO_SYMBOL, "GO");
+  add_keyword (&top_keyword, TO_SYMBOL, "TO");
+  add_keyword (&top_keyword, ELSE_BAR_SYMBOL, "|:");
+  add_keyword (&top_keyword, THEN_SYMBOL, "THEN");
+  add_keyword (&top_keyword, TRUE_SYMBOL, "TRUE");
+  add_keyword (&top_keyword, PROC_SYMBOL, "PROC");
+  add_keyword (&top_keyword, FOR_SYMBOL, "FOR");
+  add_keyword (&top_keyword, GOTO_SYMBOL, "GOTO");
+  add_keyword (&top_keyword, ANDF_SYMBOL, "ANDTH");
+  add_keyword (&top_keyword, ORF_SYMBOL, "OREL");
+  add_keyword (&top_keyword, WHILE_SYMBOL, "WHILE");
+  add_keyword (&top_keyword, IS_SYMBOL, ":=:");
+  add_keyword (&top_keyword, ASSIGN_TO_SYMBOL, "=:");
+  add_keyword (&top_keyword, COMPLEX_SYMBOL, "COMPLEX");
+  add_keyword (&top_keyword, COMPL_SYMBOL, "COMPL");
+  add_keyword (&top_keyword, FROM_SYMBOL, "FROM");
+  add_keyword (&top_keyword, BOLD_PRAGMAT_SYMBOL, "PRAGMAT");
+  add_keyword (&top_keyword, BOLD_COMMENT_SYMBOL, "COMMENT");
+  add_keyword (&top_keyword, DO_SYMBOL, "DO");
+  add_keyword (&top_keyword, STYLE_II_COMMENT_SYMBOL, "#");
+  add_keyword (&top_keyword, CASE_SYMBOL, "CASE");
+  add_keyword (&top_keyword, LOC_SYMBOL, "LOC");
+  add_keyword (&top_keyword, CHAR_SYMBOL, "CHAR");
+  add_keyword (&top_keyword, ISNT_SYMBOL, ":/=:");
+  add_keyword (&top_keyword, REF_SYMBOL, "REF");
+  add_keyword (&top_keyword, NIL_SYMBOL, "NIL");
+  add_keyword (&top_keyword, ASSIGN_SYMBOL, ":=");
+  add_keyword (&top_keyword, FI_SYMBOL, "FI");
+  add_keyword (&top_keyword, FILE_SYMBOL, "FILE");
+  add_keyword (&top_keyword, PAR_SYMBOL, "PAR");
+  add_keyword (&top_keyword, ASSERT_SYMBOL, "ASSERT");
+  add_keyword (&top_keyword, OUSE_SYMBOL, "OUSE");
+  add_keyword (&top_keyword, IN_SYMBOL, "IN");
+  add_keyword (&top_keyword, LONG_SYMBOL, "LONG");
+  add_keyword (&top_keyword, SEMI_SYMBOL, ";");
+  add_keyword (&top_keyword, EMPTY_SYMBOL, "EMPTY");
+  add_keyword (&top_keyword, MODE_SYMBOL, "MODE");
+  add_keyword (&top_keyword, IF_SYMBOL, "IF");
+  add_keyword (&top_keyword, OD_SYMBOL, "OD");
+  add_keyword (&top_keyword, OF_SYMBOL, "OF");
+  add_keyword (&top_keyword, STRUCT_SYMBOL, "STRUCT");
+  add_keyword (&top_keyword, STYLE_I_PRAGMAT_SYMBOL, "PR");
+  add_keyword (&top_keyword, BUS_SYMBOL, "]");
+  add_keyword (&top_keyword, SKIP_SYMBOL, "SKIP");
+  add_keyword (&top_keyword, SHORT_SYMBOL, "SHORT");
+  add_keyword (&top_keyword, IS_SYMBOL, "IS");
+  add_keyword (&top_keyword, ESAC_SYMBOL, "ESAC");
+  add_keyword (&top_keyword, CHANNEL_SYMBOL, "CHANNEL");
+  add_keyword (&top_keyword, ANDF_SYMBOL, "ANDF");
+  add_keyword (&top_keyword, ORF_SYMBOL, "ORF");
+  add_keyword (&top_keyword, REAL_SYMBOL, "REAL");
+  add_keyword (&top_keyword, STRING_SYMBOL, "STRING");
+  add_keyword (&top_keyword, BOOL_SYMBOL, "BOOL");
+  add_keyword (&top_keyword, ISNT_SYMBOL, "ISNT");
+  add_keyword (&top_keyword, FALSE_SYMBOL, "FALSE");
+  add_keyword (&top_keyword, UNION_SYMBOL, "UNION");
+  add_keyword (&top_keyword, OUT_SYMBOL, "OUT");
+  add_keyword (&top_keyword, OPEN_SYMBOL, "(");
+  add_keyword (&top_keyword, BEGIN_SYMBOL, "BEGIN");
+  add_keyword (&top_keyword, FLEX_SYMBOL, "FLEX");
+  add_keyword (&top_keyword, VOID_SYMBOL, "VOID");
+  add_keyword (&top_keyword, BITS_SYMBOL, "BITS");
+  add_keyword (&top_keyword, ELSE_SYMBOL, "ELSE");
+  add_keyword (&top_keyword, DOWNTO_SYMBOL, "DOWNTO");
+  add_keyword (&top_keyword, UNTIL_SYMBOL, "UNTIL");
+  add_keyword (&top_keyword, EXIT_SYMBOL, "EXIT");
+  add_keyword (&top_keyword, HEAP_SYMBOL, "HEAP");
+  add_keyword (&top_keyword, INT_SYMBOL, "INT");
+  add_keyword (&top_keyword, BYTES_SYMBOL, "BYTES");
+  add_keyword (&top_keyword, PIPE_SYMBOL, "PIPE");
+  add_keyword (&top_keyword, FORMAT_SYMBOL, "FORMAT");
+  add_keyword (&top_keyword, SEMA_SYMBOL, "SEMA");
+  add_keyword (&top_keyword, CLOSE_SYMBOL, ")");
+  add_keyword (&top_keyword, AT_SYMBOL, "@");
+  add_keyword (&top_keyword, ELIF_SYMBOL, "ELIF");
+  add_keyword (&top_keyword, FORMAT_DELIMITER_SYMBOL, "$");
+}
+
 /*!
 \brief save scanner state, for character look-ahead
 \param module
@@ -100,7 +235,11 @@ static void restore_state (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref
 
 static void unworthy (SOURCE_LINE_T * u, char *v, char ch)
 {
-  snprintf (edit_line, BUFFER_SIZE, ERROR_UNWORTHY_CHARACTER, ctrl_char (ch));
+  if (IS_PRINT (ch)) {
+    CHECK_RETVAL (snprintf (edit_line, BUFFER_SIZE, "%s", ERROR_UNWORTHY_CHARACTER) >= 0);
+  } else {
+    CHECK_RETVAL (snprintf (edit_line, BUFFER_SIZE, "%s %s", ERROR_UNWORTHY_CHARACTER, ctrl_char (ch)) >= 0);
+  }
   scan_error (u, v, edit_line);
 }
 
@@ -118,11 +257,11 @@ static void concatenate_lines (SOURCE_LINE_T * top)
   }
   for (; q != NULL; q = PREVIOUS (q)) {
     char *z = q->string;
-    int len = strlen (z);
+    int len = (int) strlen (z);
     if (len >= 2 && z[len - 2] == ESCAPE_CHAR && z[len - 1] == NEWLINE_CHAR && NEXT (q) != NULL && NEXT (q)->string != NULL) {
       z[len - 2] = NULL_CHAR;
-      len += strlen (NEXT (q)->string);
-      z = (char *) get_fixed_heap_space (len + 1);
+      len += (int) strlen (NEXT (q)->string);
+      z = (char *) get_fixed_heap_space ((size_t) (len + 1));
       bufcpy (z, q->string, len + 1);
       bufcat (z, NEXT (q)->string, len + 1);
       NEXT (q)->string[0] = NULL_CHAR;
@@ -141,15 +280,15 @@ static void concatenate_lines (SOURCE_LINE_T * top)
 
 static BOOL_T whether_bold (SOURCE_LINE_T * z, char *u, char *v)
 {
-  int len = strlen (v);
+  unsigned len = (unsigned) strlen (v);
   if (MODULE (z)->options.stropping == QUOTE_STROPPING) {
     if (u[0] == '\'') {
-      return (strncmp (++u, v, len) == 0 && u[len] == '\'');
+      return ((BOOL_T) (strncmp (++u, v, len) == 0 && u[len] == '\''));
     } else {
       return (A68_FALSE);
     }
   } else {
-    return (strncmp (u, v, len) == 0 && !IS_UPPER (u[len]));
+    return ((BOOL_T) (strncmp (u, v, len) == 0 && !IS_UPPER (u[len])));
   }
 }
 
@@ -414,7 +553,6 @@ static char *next_preprocessor_item (SOURCE_LINE_T ** top, char **ch, int *delim
   return (NULL);
 }
 
-
 /*!
 \brief include files
 \param top top source line
@@ -486,8 +624,8 @@ been included will not be included a second time - it will be ignored.
         SCAN_ERROR (!skip_pragmat (&u, &v, pr_lim, A68_TRUE), start_l, start_c, ERROR_UNTERMINATED_PRAGMAT);
 /* Filename valid? */
         SCAN_ERROR (n == 0, start_l, start_c, ERROR_INCORRECT_FILENAME);
-        fnwid = strlen (MODULE (u)->files.path) + strlen (fnb) + 1;
-        fn = (char *) get_fixed_heap_space (fnwid);
+        fnwid = (int) strlen (MODULE (u)->files.path) + (int) strlen (fnb) + 1;
+        fn = (char *) get_fixed_heap_space ((size_t) fnwid);
         bufcpy (fn, MODULE (u)->files.path, fnwid);
         bufcat (fn, fnb, fnwid);
 /* Recursive include? Then *ignore* the file. */
@@ -502,14 +640,15 @@ been included will not be included a second time - it will be ignored.
         SCAN_ERROR (fd == -1, start_l, start_c, ERROR_SOURCE_FILE_OPEN);
 /* Access the file. */
         RESET_ERRNO;
-        fsize = lseek (fd, 0, SEEK_END);
+        fsize = (int) lseek (fd, 0, SEEK_END);
+        CHECK_RETVAL (fsize >= 0);
         SCAN_ERROR (errno != 0, start_l, start_c, ERROR_FILE_READ);
         fbuf = (char *) get_temp_heap_space ((unsigned) (8 + fsize));
         RESET_ERRNO;
-        lseek (fd, 0, SEEK_SET);
+        CHECK_RETVAL (lseek (fd, 0, SEEK_SET) >= 0);
         SCAN_ERROR (errno != 0, start_l, start_c, ERROR_FILE_READ);
         RESET_ERRNO;
-        bytes_read = io_read (fd, fbuf, fsize);
+        bytes_read = (int) io_read (fd, fbuf, (size_t) fsize);
         SCAN_ERROR (errno != 0 || bytes_read != fsize, start_l, start_c, ERROR_FILE_READ);
 /* Buffer still usable? */
         if (fsize > max_scan_buf_length) {
@@ -543,7 +682,7 @@ been included will not be included a second time - it will be ignored.
         NEXT (t) = s;
         PREVIOUS (s) = t;
         concatenate_lines (top);
-        close (fd);
+        CHECK_RETVAL (close (fd) == 0);
         make_pass = A68_TRUE;
       }
     search_next_pragmat:       /* skip. */ ;
@@ -604,7 +743,7 @@ static int get_source_size (MODULE_T * module)
 {
   FILE_T f = module->files.source.fd;
 /* This is why WIN32 must open as "read binary". */
-  return (lseek (f, 0, SEEK_END));
+  return ((int) lseek (f, 0, SEEK_END));
 }
 
 /*!
@@ -626,7 +765,7 @@ static void append_environ (MODULE_T * module, char *str, SOURCE_LINE_T ** ref_l
     cdr[0] = NULL_CHAR;
     text = &cdr[1];
     (*line_num)++;
-    snprintf (edit_line, BUFFER_SIZE, "%s\n", car);
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s\n", car) >= 0);
     append_source_line (module, edit_line, ref_l, &zero_line_num, name);
   }
 }
@@ -660,10 +799,10 @@ static BOOL_T read_source_file (MODULE_T * module)
   line_num = 1;
   buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
   RESET_ERRNO;
-  lseek (f, 0, SEEK_SET);
+  CHECK_RETVAL (lseek (f, 0, SEEK_SET) >= 0);
   ABNORMAL_END (errno != 0, "error while reading source file", NULL);
   RESET_ERRNO;
-  bytes_read = io_read (f, buffer, source_file_size);
+  bytes_read = (int) io_read (f, buffer, (size_t) source_file_size);
   ABNORMAL_END (errno != 0 || bytes_read != source_file_size, "error while reading source file", NULL);
 /* Link all lines into the list. */
   k = 0;
@@ -714,7 +853,7 @@ static char next_char (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref_s, 
   if (*ref_l == NULL) {
     return (STOP_CHAR);
   } else {
-    (*ref_l)->list = (module->options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+    (*ref_l)->list = (BOOL_T) (module->options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
 /* Take new line? */
     if ((*ref_s)[0] == NEWLINE_CHAR || (*ref_s)[0] == NULL_CHAR) {
       *ref_l = NEXT (*ref_l);
@@ -745,7 +884,7 @@ static void get_good_char (MODULE_T * module, char *ref_c, SOURCE_LINE_T ** ref_
 {
   while (*ref_c != STOP_CHAR && (IS_SPACE (*ref_c) || (*ref_c == NULL_CHAR))) {
     if (*ref_l != NULL) {
-      (*ref_l)->list = (module->options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+      (*ref_l)->list = (BOOL_T) (module->options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
     }
     *ref_c = next_char (module, ref_l, ref_s, A68_FALSE);
   }
@@ -793,7 +932,7 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
       term_s = "'PRAGMAT'";
     }
   }
-  term_s_length = strlen (term_s);
+  term_s_length = (int) strlen (term_s);
 /* Scan for terminator, and process pragmat items. */
   INIT_BUFFER;
   get_good_char (module, &c, ref_l, ref_c);
@@ -838,7 +977,7 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
     }
     if (chars_in_buf >= term_s_length) {
 /* Check whether we encountered the terminator. */
-      stop = (strcmp (term_s, &(scan_buf[chars_in_buf - term_s_length])) == 0);
+      stop = (BOOL_T) (strcmp (term_s, &(scan_buf[chars_in_buf - term_s_length])) == 0);
     }
     c = next_char (module, ref_l, ref_c, A68_FALSE);
   }
@@ -1017,17 +1156,17 @@ static BOOL_T whether_exp_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **ref
   char exp_syms[3];
   if (m->options.stropping == UPPER_STROPPING) {
     exp_syms[0] = EXPONENT_CHAR;
-    exp_syms[1] = TO_UPPER (EXPONENT_CHAR);
+    exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
     exp_syms[2] = NULL_CHAR;
   } else {
-    exp_syms[0] = TO_UPPER (EXPONENT_CHAR);
+    exp_syms[0] = (char) TO_UPPER (EXPONENT_CHAR);
     exp_syms[1] = ESCAPE_CHAR;
     exp_syms[2] = NULL_CHAR;
   }
   save_state (m, *ref_l, *ref_s, *ch);
   if (strchr (exp_syms, *ch) != NULL) {
     *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-    res = (strchr ("+-0123456789", *ch) != NULL);
+    res = (BOOL_T) (strchr ("+-0123456789", *ch) != NULL);
   }
   restore_state (m, ref_l, ref_s, ch);
   return (res);
@@ -1048,12 +1187,12 @@ static BOOL_T whether_radix_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **r
   if (m->options.stropping == QUOTE_STROPPING) {
     if (*ch == TO_UPPER (RADIX_CHAR)) {
       *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-      res = (strchr ("0123456789ABCDEF", *ch) != NULL);
+      res = (BOOL_T) (strchr ("0123456789ABCDEF", *ch) != NULL);
     }
   } else {
     if (*ch == RADIX_CHAR) {
       *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-      res = (strchr ("0123456789abcdef", *ch) != NULL);
+      res = (BOOL_T) (strchr ("0123456789abcdef", *ch) != NULL);
     }
   }
   restore_state (m, ref_l, ref_s, ch);
@@ -1076,19 +1215,19 @@ static BOOL_T whether_decimal_point (MODULE_T * m, SOURCE_LINE_T ** ref_l, char 
     char exp_syms[3];
     if (m->options.stropping == UPPER_STROPPING) {
       exp_syms[0] = EXPONENT_CHAR;
-      exp_syms[1] = TO_UPPER (EXPONENT_CHAR);
+      exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
       exp_syms[2] = NULL_CHAR;
     } else {
-      exp_syms[0] = TO_UPPER (EXPONENT_CHAR);
+      exp_syms[0] = (char) TO_UPPER (EXPONENT_CHAR);
       exp_syms[1] = ESCAPE_CHAR;
       exp_syms[2] = NULL_CHAR;
     }
     *ch = next_char (m, ref_l, ref_s, A68_TRUE);
     if (strchr (exp_syms, *ch) != NULL) {
       *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-      res = (strchr ("+-0123456789", *ch) != NULL);
+      res = (BOOL_T) (strchr ("+-0123456789", *ch) != NULL);
     } else {
-      res = (strchr ("0123456789", *ch) != NULL);
+      res = (BOOL_T) (strchr ("0123456789", *ch) != NULL);
     }
   }
   restore_state (m, ref_l, ref_s, ch);
@@ -1134,7 +1273,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
       (sym++)[0] = c;
       sym[0] = NULL_CHAR;
       *att = get_format_item (c);
-      next_char (module, ref_l, ref_s, A68_FALSE);
+      (void) next_char (module, ref_l, ref_s, A68_FALSE);
       return;
     }
     if (IS_DIGIT (c)) {
@@ -1277,7 +1416,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
   } else if (a68g_strchr ("#$()[]{},;@", c) != NULL) {
 /* Single character symbols. */
     (sym++)[0] = c;
-    next_char (module, ref_l, ref_s, A68_FALSE);
+    (void) next_char (module, ref_l, ref_s, A68_FALSE);
     sym[0] = NULL_CHAR;
     *att = 0;
   } else if (c == '|') {
@@ -1286,7 +1425,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
     c = next_char (module, ref_l, ref_s, A68_FALSE);
     if (c == ':') {
       (sym++)[0] = c;
-      next_char (module, ref_l, ref_s, A68_FALSE);
+      (void) next_char (module, ref_l, ref_s, A68_FALSE);
     }
     sym[0] = NULL_CHAR;
     *att = 0;
@@ -1297,7 +1436,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
     c = next_char (module, ref_l, ref_s, A68_FALSE);
     if (c == ':') {
       (sym++)[0] = c;
-      next_char (module, ref_l, ref_s, A68_FALSE);
+      (void) next_char (module, ref_l, ref_s, A68_FALSE);
     }
     sym[0] = NULL_CHAR;
     *att = 0;
@@ -1344,7 +1483,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
         c = next_char (module, ref_l, ref_s, A68_FALSE);
         if (strlen (sym) < 4 && c == '=') {
           (sym++)[0] = '=';
-          next_char (module, ref_l, ref_s, A68_FALSE);
+          (void) next_char (module, ref_l, ref_s, A68_FALSE);
         }
       }
     } else if (c == ':') {
@@ -1352,7 +1491,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
       sym[0] = NULL_CHAR;
       if (next_char (module, ref_l, ref_s, A68_FALSE) == '=') {
         (sym++)[0] = '=';
-        next_char (module, ref_l, ref_s, A68_FALSE);
+        (void) next_char (module, ref_l, ref_s, A68_FALSE);
       } else {
         SCAN_ERROR (!(strcmp (scanned, "=:") == 0 || strcmp (scanned, "==:") == 0), *start_l, *start_c, ERROR_INVALID_OPERATOR_TAG);
       }
@@ -1379,7 +1518,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
         c = next_char (module, ref_l, ref_s, A68_FALSE);
         if (strlen (scanned) < 4 && c == '=') {
           (sym++)[0] = '=';
-          next_char (module, ref_l, ref_s, A68_FALSE);
+          (void) next_char (module, ref_l, ref_s, A68_FALSE);
         }
       }
     } else if (c == ':') {
@@ -1388,7 +1527,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
       if (next_char (module, ref_l, ref_s, A68_FALSE) == '=') {
         (sym++)[0] = '=';
         sym[0] = NULL_CHAR;
-        next_char (module, ref_l, ref_s, A68_FALSE);
+        (void) next_char (module, ref_l, ref_s, A68_FALSE);
       } else {
         SCAN_ERROR (strcmp (&(scanned[1]), "=:") != 0, *start_l, *start_c, ERROR_INVALID_OPERATOR_TAG);
       }
@@ -1468,7 +1607,7 @@ static BOOL_T close_embedded_clause (int att)
 static void make_lower_case (char *p)
 {
   for (; p != NULL && p[0] != NULL_CHAR; p++) {
-    p[0] = TO_LOWER (p[0]);
+    p[0] = (char) TO_LOWER (p[0]);
   }
 }
 
@@ -1495,9 +1634,18 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
       KEYWORD_T *kw = find_keyword (top_keyword, scan_buf);
       char *c = NULL;
       BOOL_T make_node = A68_TRUE;
+      char *trailing = NULL;
       if (!(kw != NULL && att != ROW_CHAR_DENOTATION)) {
         if (att == IDENTIFIER) {
           make_lower_case (scan_buf);
+        }
+        if (att != ROW_CHAR_DENOTATION && att != LITERAL) {
+          int len = (int) strlen (scan_buf);
+          while (len >= 1 && scan_buf[len - 1] == '_') {
+            trailing = "_";
+            scan_buf[len - 1] = NULL_CHAR;
+            len--;
+          }
         }
         c = add_token (&top_token, scan_buf)->text;
       } else {
@@ -1524,7 +1672,7 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
             pragment (module, ATTRIBUTE (kw), l, s);
             if (!stop_scanner) {
               isolate_options (module, scan_buf, *start_l);
-              set_options (module, module->options.list, A68_FALSE);
+              (void) set_options (module, module->options.list, A68_FALSE);
               make_node = A68_FALSE;
             }
           }
@@ -1533,7 +1681,30 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
 /* Add token to the tree. */
       if (make_node) {
         NODE_T *q = new_node ();
-        MASK (q) = module->options.nodemask;
+        INFO (q) = new_node_info ();
+        switch (att) {
+          case ASSIGN_SYMBOL:
+          case END_SYMBOL:
+          case ESAC_SYMBOL:
+          case OD_SYMBOL:
+          case OF_SYMBOL:
+          case FI_SYMBOL:
+          case CLOSE_SYMBOL:
+          case BUS_SYMBOL:
+          case COLON_SYMBOL:
+          case COMMA_SYMBOL:
+          case DOTDOT_SYMBOL:
+          case SEMI_SYMBOL: 
+          {
+            GENIE (q) = NULL;
+            break;
+          }
+          default: {
+            GENIE (q) = new_genie_info ();
+            break;
+          }
+        }
+        STATUS (q) = module->options.nodemask;
         LINE (q) = *start_l;
         INFO (q)->char_in_line = *start_c;
         PRIO (INFO (q)) = 0;
@@ -1558,6 +1729,9 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
           module->top_node = q;
         }
         *root = q;
+        if (trailing != NULL) {
+          diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, q, WARNING_TRAILING, trailing, att);
+        }
       }
 /* 
 Redirection in tokenising formats. The scanner is a recursive-descent type as
@@ -1569,9 +1743,7 @@ to know when it scans a format text and when not.
         tokenise_source (module, root, level + 1, A68_TRUE, l, s, start_l, start_c);
       } else if (in_format && open_embedded_clause (att)) {
         NODE_T *z = PREVIOUS (*root);
-        if (z != NULL && (WHETHER (z, FORMAT_ITEM_N) || WHETHER (z, FORMAT_ITEM_G)
-                          || WHETHER (z, FORMAT_ITEM_H)
-                          || WHETHER (z, FORMAT_ITEM_F))) {
+        if (z != NULL && (WHETHER (z, FORMAT_ITEM_N) || WHETHER (z, FORMAT_ITEM_G) || WHETHER (z, FORMAT_ITEM_H) || WHETHER (z, FORMAT_ITEM_F))) {
           tokenise_source (module, root, level, A68_FALSE, l, s, start_l, start_c);
         } else if (att == OPEN_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
@@ -1612,8 +1784,8 @@ BOOL_T lexical_analyzer (MODULE_T * module)
   if (max_scan_buf_length == 0) {
     return (A68_FALSE);
   }
-  max_scan_buf_length += strlen (bold_prelude_start) + strlen (bold_postlude);
-  max_scan_buf_length += strlen (quote_prelude_start) + strlen (quote_postlude);
+  max_scan_buf_length += (int) strlen (bold_prelude_start) + (int) strlen (bold_postlude);
+  max_scan_buf_length += (int) strlen (quote_prelude_start) + (int) strlen (quote_postlude);
 /* Allocate a scan buffer with 8 bytes extra space. */
   scan_buf = (char *) get_temp_heap_space ((unsigned) (8 + max_scan_buf_length));
 /* Errors in file? */
@@ -1678,7 +1850,7 @@ void get_refinements (MODULE_T * z)
     return;
   }
   while (p != NULL && !IN_PRELUDE (p) && whether (p, IDENTIFIER, COLON_SYMBOL, 0)) {
-    REFINEMENT_T *new_one = (REFINEMENT_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (REFINEMENT_T)), *x;
+    REFINEMENT_T *new_one = (REFINEMENT_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (REFINEMENT_T)), *x;
     BOOL_T exists;
     NEXT (new_one) = NULL;
     new_one->name = SYMBOL (p);

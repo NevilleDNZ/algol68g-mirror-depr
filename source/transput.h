@@ -30,7 +30,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define WANT_PATTERN    	A68_TRUE
 #define SKIP_PATTERN    	A68_FALSE
 
-#define IS_NIL_FORMAT(f) (BODY (f) == NULL && ENVIRON (f) == 0)
+#define IS_NIL_FORMAT(f) ((BOOL_T) (BODY (f) == NULL && ENVIRON (f) == 0))
 #define NON_TERM(p) (find_non_terminal (top_non_terminal, ATTRIBUTE (p)))
 
 #undef DEBUG
@@ -50,7 +50,8 @@ enum
   READLINE_BUFFER, FIXED_TRANSPUT_BUFFERS
 };
 
-extern A68_CHANNEL stand_in_channel, stand_out_channel, stand_draw_channel, stand_back_channel, stand_error_channel, associate_channel;
+extern A68_REF stand_in, stand_out, skip_file;
+extern A68_CHANNEL stand_in_channel, stand_out_channel, stand_draw_channel, stand_back_channel, stand_error_channel, associate_channel, skip_channel;
 
 extern GENIE_PROCEDURE genie_associate;
 extern GENIE_PROCEDURE genie_backspace;
@@ -62,6 +63,8 @@ extern GENIE_PROCEDURE genie_create;
 extern GENIE_PROCEDURE genie_draw_possible;
 extern GENIE_PROCEDURE genie_erase;
 extern GENIE_PROCEDURE genie_real;
+extern GENIE_PROCEDURE genie_eof;
+extern GENIE_PROCEDURE genie_eoln;
 extern GENIE_PROCEDURE genie_error_char;
 extern GENIE_PROCEDURE genie_establish;
 extern GENIE_PROCEDURE genie_exp_char;

@@ -28,7 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ADDR_T fixed_heap_pointer, temp_heap_pointer;
-POSTULATE_T *top_postulate, *old_postulate;
+POSTULATE_T *top_postulate, *top_postulate_list;
 KEYWORD_T *top_keyword;
 TOKEN_T *top_token;
 BOOL_T get_fixed_heap_allowed;
@@ -66,7 +66,7 @@ void *get_heap_space (size_t s)
 char *new_string (char *t)
 {
   int n = (int) (strlen (t) + 1);
-  char *z = (char *) get_heap_space (n);
+  char *z = (char *) get_heap_space ((size_t) n);
   bufcpy (z, t, n);
   return (z);
 }
@@ -80,7 +80,7 @@ char *new_string (char *t)
 char *new_fixed_string (char *t)
 {
   int n = (int) (strlen (t) + 1);
-  char *z = (char *) get_fixed_heap_space (n);
+  char *z = (char *) get_fixed_heap_space ((size_t) n);
   bufcpy (z, t, n);
   return (z);
 }
@@ -95,7 +95,7 @@ BYTE_T *get_fixed_heap_space (size_t s)
 {
   BYTE_T *z = HEAP_ADDRESS (fixed_heap_pointer);
   ABNORMAL_END (get_fixed_heap_allowed == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
-  fixed_heap_pointer += A68_ALIGN (s);
+  fixed_heap_pointer += A68_ALIGN ((int) s);
   ABNORMAL_END (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
   ABNORMAL_END (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
@@ -110,7 +110,7 @@ BYTE_T *get_fixed_heap_space (size_t s)
 BYTE_T *get_temp_heap_space (size_t s)
 {
   BYTE_T *z;
-  temp_heap_pointer -= A68_ALIGN (s);
+  temp_heap_pointer -= A68_ALIGN ((int) s);
   ABNORMAL_END (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
   z = HEAP_ADDRESS (temp_heap_pointer);
   ABNORMAL_END (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
@@ -182,12 +182,39 @@ void renumber_nodes (NODE_T * p, int *n)
 
 NODE_INFO_T *new_node_info (void)
 {
-  NODE_INFO_T *z = (NODE_INFO_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (NODE_INFO_T));
+  NODE_INFO_T *z = (NODE_INFO_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (NODE_INFO_T));
+  new_node_infos++;
   MODULE (z) = NULL;
   z->PROCEDURE_LEVEL = 0;
   z->char_in_line = NULL;
   z->symbol = NULL;
   z->line = NULL;
+  return (z);
+}
+
+/*!
+\brief new_genie_info
+\return same
+**/
+
+GENIE_INFO_T *new_genie_info (void)
+{
+  GENIE_INFO_T *z = (GENIE_INFO_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (GENIE_INFO_T));
+  new_genie_infos++;
+  z->propagator.unit = NULL;
+  z->propagator.source = NULL;
+  z->partial_proc = NULL;
+  z->partial_locale = NULL;
+  z->whether_coercion = A68_FALSE;
+  z->whether_new_lexical_level = A68_FALSE;
+  z->need_dns = A68_FALSE;
+  z->parent = NULL;
+  z->offset = NULL;
+  z->constant = NULL;
+  z->level = 0;
+  z->argsize = 0;
+  z->size = 0;
+  z->protect_sweep = NULL;
   return (z);
 }
 
@@ -198,35 +225,22 @@ NODE_INFO_T *new_node_info (void)
 
 NODE_T *new_node (void)
 {
-  NODE_T *z = (NODE_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (NODE_T));
-  MASK (z) = NULL_MASK;
-  z->info = new_node_info ();
-  z->reduction = 0;
-  ATTRIBUTE (z) = 0;
-  z->annotation = 0;
-  z->error = A68_FALSE;
-  z->need_dns = A68_FALSE;
-  PROPAGATOR (z).unit = NULL;
-  PROPAGATOR (z).source = NULL;
-  z->genie.whether_coercion = A68_FALSE;
-  z->genie.whether_new_lexical_level = A68_FALSE;
-  z->genie.seq = NULL;
-  z->genie.seq_set = A68_FALSE;
-  z->genie.parent = NULL;
-  z->genie.constant = NULL;
-  z->genie.argsize = 0;
-  z->partial_proc = NULL;
-  z->partial_locale = NULL;
+  NODE_T *z = (NODE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (NODE_T));
+  new_nodes++;
+  STATUS (z) = NULL_MASK;
   SYMBOL_TABLE (z) = NULL;
+  INFO (z) = NULL;
+  GENIE (z) = NULL;
+  ATTRIBUTE (z) = 0;
+  ANNOTATION (z) = 0;
   MOID (z) = NULL;
   NEXT (z) = NULL;
   PREVIOUS (z) = NULL;
   SUB (z) = NULL;
   NEST (z) = NULL;
-  z->inits = NULL;
-  PACK (z) = NULL;
   TAX (z) = NULL;
-  z->protect_sweep = NULL;
+  SEQUENCE (z) = NULL;
+  PACK (z) = NULL;
   return (z);
 }
 
@@ -238,7 +252,7 @@ NODE_T *new_node (void)
 
 SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T * p)
 {
-  SYMBOL_TABLE_T *z = (SYMBOL_TABLE_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (SYMBOL_TABLE_T));
+  SYMBOL_TABLE_T *z = (SYMBOL_TABLE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (SYMBOL_TABLE_T));
   z->level = symbol_table_count++;
   z->nest = symbol_table_count;
   ATTRIBUTE (z) = 0;
@@ -257,7 +271,7 @@ SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T * p)
   z->anonymous = NULL;
   z->moids = NULL;
   z->jump_to = NULL;
-  z->inits = NULL;
+  SEQUENCE (z) = NULL;
   return (z);
 }
 
@@ -266,9 +280,10 @@ SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T * p)
 \return same
 **/
 
-MOID_T *new_moid ()
+MOID_T *new_moid (void)
 {
-  MOID_T *z = (MOID_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (MOID_T));
+  MOID_T *z = (MOID_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (MOID_T));
+  new_modes++;
   ATTRIBUTE (z) = 0;
   NUMBER (z) = 0;
   DIM (z) = 0;
@@ -283,7 +298,7 @@ MOID_T *new_moid ()
   NODE (z) = NULL;
   PACK (z) = NULL;
   SUB (z) = NULL;
-  z->equivalent_mode = 0;
+  z->equivalent_mode = NULL;
   SLICE (z) = NULL;
   z->deflexed_mode = NULL;
   NAME (z) = NULL;
@@ -298,9 +313,9 @@ MOID_T *new_moid ()
 \return same
 **/
 
-PACK_T *new_pack ()
+PACK_T *new_pack (void)
 {
-  PACK_T *z = (PACK_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (PACK_T));
+  PACK_T *z = (PACK_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (PACK_T));
   MOID (z) = NULL;
   TEXT (z) = NULL;
   NODE (z) = NULL;
@@ -316,11 +331,11 @@ PACK_T *new_pack ()
 \return same
 **/
 
-TAG_T *new_tag ()
+TAG_T *new_tag (void)
 {
-  TAG_T *z = (TAG_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (TAG_T));
-  MASK (z) = NULL_MASK;
-  SYMBOL_TABLE (z) = NULL;
+  TAG_T *z = (TAG_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TAG_T));
+  STATUS (z) = NULL_MASK;
+  TAG_TABLE (z) = NULL;
   MOID (z) = NULL;
   NODE (z) = NULL;
   z->unit = NULL;
@@ -349,9 +364,9 @@ TAG_T *new_tag ()
 \return same
 **/
 
-SOURCE_LINE_T *new_source_line ()
+SOURCE_LINE_T *new_source_line (void)
 {
-  SOURCE_LINE_T *z = (SOURCE_LINE_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (SOURCE_LINE_T));
+  SOURCE_LINE_T *z = (SOURCE_LINE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (SOURCE_LINE_T));
   z->marker[0] = NULL_CHAR;
   z->string = NULL;
   z->filename = NULL;
@@ -382,7 +397,7 @@ void make_special_mode (MOID_T ** n, int m)
   DEFLEXED (*n) = NULL;
   NAME (*n) = NULL;
   SLICE (*n) = NULL;
-  ROWED (*n) = 0;
+  ROWED (*n) = NULL;
 }
 
 /*!
@@ -395,18 +410,17 @@ void make_special_mode (MOID_T ** n, int m)
 
 BOOL_T match_string (char *x, char *c, char alt)
 {
-  BOOL_T match = A68_TRUE, ret;
+  BOOL_T match = A68_TRUE;
   while ((IS_UPPER (c[0]) || IS_DIGIT (c[0]) || c[0] == '-') && match) {
-    match &= (TO_LOWER (x[0]) == TO_LOWER ((c++)[0]));
+    match = (BOOL_T) (match & (TO_LOWER (x[0]) == TO_LOWER ((c++)[0])));
     if (!(x[0] == NULL_CHAR || x[0] == alt)) {
       x++;
     }
   }
   while (x[0] != NULL_CHAR && x[0] != alt && c[0] != NULL_CHAR && match) {
-    match &= (TO_LOWER ((x++)[0]) == TO_LOWER ((c++)[0]));
+    match = (BOOL_T) (match & (TO_LOWER ((x++)[0]) == TO_LOWER ((c++)[0])));
   }
-  ret = (match ? (x[0] == NULL_CHAR || x[0] == alt) : A68_FALSE);
-  return (ret);
+  return ((BOOL_T) (match ? (x[0] == NULL_CHAR || x[0] == alt) : A68_FALSE));
 }
 
 /*!
@@ -457,7 +471,7 @@ BOOL_T whether_one_of (NODE_T * p, ...)
     va_start (vl, p);
     while ((a = va_arg (vl, int)) != NULL_ATTRIBUTE)
     {
-      match |= (WHETHER (p, a));
+      match = (BOOL_T) (match | (BOOL_T) (WHETHER (p, a)));
     }
     va_end (vl);
     return (match);
@@ -477,7 +491,10 @@ void make_sub (NODE_T * p, NODE_T * q, int t)
 {
   NODE_T *z = new_node ();
   ABNORMAL_END (p == NULL || q == NULL, ERROR_INTERNAL_CONSISTENCY, "make_sub");
-  MOVE (z, p, ALIGNED_SIZE_OF (NODE_T));
+  *z = *p;
+  if (GENIE (p) != NULL) {
+    GENIE (z) = new_genie_info ();
+  }
   PREVIOUS (z) = NULL;
   if (p == q) {
     NEXT (z) = NULL;
@@ -525,14 +542,14 @@ SYMBOL_TABLE_T *find_level (NODE_T * n, int i)
 \return same
 **/
 
-double seconds ()
+double seconds (void)
 {
 #if defined ENABLE_UNIX_CLOCK
   struct rusage rus;
   getrusage (RUSAGE_SELF, &rus);
   return ((double) (rus.ru_utime.tv_sec + rus.ru_utime.tv_usec * 1e-6));
 #else
-  return (clock () / (double) CLOCKS_PER_SEC);
+  return ((double) clock () / (double) CLOCKS_PER_SEC);
 #endif
 }
 
@@ -589,6 +606,8 @@ BOOL_T whether_new_lexical_level (NODE_T * p)
 NODE_T *some_node (char *t)
 {
   NODE_T *z = new_node ();
+  INFO (z) = new_node_info ();
+  GENIE (z) = new_genie_info ();
   SYMBOL (z) = t;
   return (z);
 }
@@ -597,20 +616,29 @@ NODE_T *some_node (char *t)
 \brief initialise use of elem-lists
 **/
 
-void init_postulates ()
+void init_postulates (void)
 {
   top_postulate = NULL;
-  old_postulate = NULL;
+  top_postulate_list = NULL;
 }
 
 /*!
-\brief make old elem-list available for new use
+\brief make old postulates available for new use
+\param start start of list to save
+\param stop first element to not save
 **/
 
-void reset_postulates ()
+void free_postulate_list (POSTULATE_T *start, POSTULATE_T *stop)
 {
-  old_postulate = top_postulate;
-  top_postulate = NULL;
+  POSTULATE_T *last;
+  if (start == NULL && stop == NULL) {
+    return;
+  }
+  for (last = start; NEXT (last) != stop; FORWARD (last)) {
+    /* skip */;
+  }
+  NEXT (last) = top_postulate_list;
+  top_postulate_list = start;
 }
 
 /*!
@@ -623,11 +651,12 @@ void reset_postulates ()
 void make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
 {
   POSTULATE_T *new_one;
-  if (old_postulate != NULL) {
-    new_one = old_postulate;
-    old_postulate = NEXT (old_postulate);
+  if (top_postulate_list != NULL) {
+    new_one = top_postulate_list;
+    FORWARD (top_postulate_list);
   } else {
-    new_one = (POSTULATE_T *) get_temp_heap_space (ALIGNED_SIZE_OF (POSTULATE_T));
+    new_one = (POSTULATE_T *) get_temp_heap_space ((size_t) ALIGNED_SIZE_OF (POSTULATE_T));
+    new_postulates++;
   }
   new_one->a = a;
   new_one->b = b;
@@ -669,7 +698,6 @@ POSTULATE_T *whether_postulated (POSTULATE_T * p, MOID_T * a)
   }
   return (NULL);
 }
-
 
 /*------------------+
 | Control of C heap |
@@ -731,7 +759,7 @@ TOKEN_T *add_token (TOKEN_T ** p, char *t)
       return (*p);
     }
   }
-  *p = (TOKEN_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (TOKEN_T));
+  *p = (TOKEN_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TOKEN_T));
   TEXT (*p) = z;
   LESS (*p) = MORE (*p) = NULL;
   return (*p);
@@ -757,29 +785,6 @@ TOKEN_T *find_token (TOKEN_T ** p, char *t)
     }
   }
   return (NULL);
-}
-
-/*!
-\brief add keyword to the tree
-\param p top keyword
-\param a attribute
-\param t keyword text
-**/
-
-static void add_keyword (KEYWORD_T ** p, int a, char *t)
-{
-  while (*p != NULL) {
-    int k = strcmp (t, TEXT (*p));
-    if (k < 0) {
-      p = &LESS (*p);
-    } else {
-      p = &MORE (*p);
-    }
-  }
-  *p = (KEYWORD_T *) get_fixed_heap_space (ALIGNED_SIZE_OF (KEYWORD_T));
-  ATTRIBUTE (*p) = a;
-  TEXT (*p) = t;
-  LESS (*p) = MORE (*p) = NULL;
 }
 
 /*!
@@ -829,116 +834,6 @@ KEYWORD_T *find_keyword_from_attribute (KEYWORD_T * p, int a)
   }
 }
 
-
-/*!
-\brief make tables of keywords and non-terminals
-**/
-
-void set_up_tables ()
-{
-/* Entries are randomised to balance the tree. */
-  add_keyword (&top_keyword, DIAGONAL_SYMBOL, "DIAG");
-  add_keyword (&top_keyword, TRANSPOSE_SYMBOL, "TRNSP");
-  add_keyword (&top_keyword, ROW_SYMBOL, "ROW");
-  add_keyword (&top_keyword, COLUMN_SYMBOL, "COL");
-  add_keyword (&top_keyword, ROW_ASSIGN_SYMBOL, "::=");
-  add_keyword (&top_keyword, SOUND_SYMBOL, "SOUND");
-  add_keyword (&top_keyword, ANDF_SYMBOL, "THEF");
-  add_keyword (&top_keyword, ORF_SYMBOL, "ELSF");
-  add_keyword (&top_keyword, POINT_SYMBOL, ".");
-  add_keyword (&top_keyword, ACCO_SYMBOL, "{");
-  add_keyword (&top_keyword, OCCA_SYMBOL, "}");
-  add_keyword (&top_keyword, CODE_SYMBOL, "CODE");
-  add_keyword (&top_keyword, EDOC_SYMBOL, "EDOC");
-  add_keyword (&top_keyword, ENVIRON_SYMBOL, "ENVIRON");
-  add_keyword (&top_keyword, COLON_SYMBOL, ":");
-  add_keyword (&top_keyword, THEN_BAR_SYMBOL, "|");
-  add_keyword (&top_keyword, SUB_SYMBOL, "[");
-  add_keyword (&top_keyword, BY_SYMBOL, "BY");
-  add_keyword (&top_keyword, OP_SYMBOL, "OP");
-  add_keyword (&top_keyword, COMMA_SYMBOL, ",");
-  add_keyword (&top_keyword, AT_SYMBOL, "AT");
-  add_keyword (&top_keyword, PRIO_SYMBOL, "PRIO");
-  add_keyword (&top_keyword, STYLE_I_COMMENT_SYMBOL, "CO");
-  add_keyword (&top_keyword, END_SYMBOL, "END");
-  add_keyword (&top_keyword, GO_SYMBOL, "GO");
-  add_keyword (&top_keyword, TO_SYMBOL, "TO");
-  add_keyword (&top_keyword, ELSE_BAR_SYMBOL, "|:");
-  add_keyword (&top_keyword, THEN_SYMBOL, "THEN");
-  add_keyword (&top_keyword, TRUE_SYMBOL, "TRUE");
-  add_keyword (&top_keyword, PROC_SYMBOL, "PROC");
-  add_keyword (&top_keyword, FOR_SYMBOL, "FOR");
-  add_keyword (&top_keyword, GOTO_SYMBOL, "GOTO");
-  add_keyword (&top_keyword, ANDF_SYMBOL, "ANDTH");
-  add_keyword (&top_keyword, ORF_SYMBOL, "OREL");
-  add_keyword (&top_keyword, WHILE_SYMBOL, "WHILE");
-  add_keyword (&top_keyword, IS_SYMBOL, ":=:");
-  add_keyword (&top_keyword, ASSIGN_TO_SYMBOL, "=:");
-  add_keyword (&top_keyword, COMPLEX_SYMBOL, "COMPLEX");
-  add_keyword (&top_keyword, COMPL_SYMBOL, "COMPL");
-  add_keyword (&top_keyword, FROM_SYMBOL, "FROM");
-  add_keyword (&top_keyword, BOLD_PRAGMAT_SYMBOL, "PRAGMAT");
-  add_keyword (&top_keyword, BOLD_COMMENT_SYMBOL, "COMMENT");
-  add_keyword (&top_keyword, DO_SYMBOL, "DO");
-  add_keyword (&top_keyword, STYLE_II_COMMENT_SYMBOL, "#");
-  add_keyword (&top_keyword, CASE_SYMBOL, "CASE");
-  add_keyword (&top_keyword, LOC_SYMBOL, "LOC");
-  add_keyword (&top_keyword, CHAR_SYMBOL, "CHAR");
-  add_keyword (&top_keyword, ISNT_SYMBOL, ":/=:");
-  add_keyword (&top_keyword, REF_SYMBOL, "REF");
-  add_keyword (&top_keyword, NIL_SYMBOL, "NIL");
-  add_keyword (&top_keyword, ASSIGN_SYMBOL, ":=");
-  add_keyword (&top_keyword, FI_SYMBOL, "FI");
-  add_keyword (&top_keyword, FILE_SYMBOL, "FILE");
-  add_keyword (&top_keyword, PAR_SYMBOL, "PAR");
-  add_keyword (&top_keyword, ASSERT_SYMBOL, "ASSERT");
-  add_keyword (&top_keyword, OUSE_SYMBOL, "OUSE");
-  add_keyword (&top_keyword, IN_SYMBOL, "IN");
-  add_keyword (&top_keyword, LONG_SYMBOL, "LONG");
-  add_keyword (&top_keyword, SEMI_SYMBOL, ";");
-  add_keyword (&top_keyword, EMPTY_SYMBOL, "EMPTY");
-  add_keyword (&top_keyword, MODE_SYMBOL, "MODE");
-  add_keyword (&top_keyword, IF_SYMBOL, "IF");
-  add_keyword (&top_keyword, OD_SYMBOL, "OD");
-  add_keyword (&top_keyword, OF_SYMBOL, "OF");
-  add_keyword (&top_keyword, STRUCT_SYMBOL, "STRUCT");
-  add_keyword (&top_keyword, STYLE_I_PRAGMAT_SYMBOL, "PR");
-  add_keyword (&top_keyword, BUS_SYMBOL, "]");
-  add_keyword (&top_keyword, SKIP_SYMBOL, "SKIP");
-  add_keyword (&top_keyword, SHORT_SYMBOL, "SHORT");
-  add_keyword (&top_keyword, IS_SYMBOL, "IS");
-  add_keyword (&top_keyword, ESAC_SYMBOL, "ESAC");
-  add_keyword (&top_keyword, CHANNEL_SYMBOL, "CHANNEL");
-  add_keyword (&top_keyword, ANDF_SYMBOL, "ANDF");
-  add_keyword (&top_keyword, ORF_SYMBOL, "ORF");
-  add_keyword (&top_keyword, REAL_SYMBOL, "REAL");
-  add_keyword (&top_keyword, STRING_SYMBOL, "STRING");
-  add_keyword (&top_keyword, BOOL_SYMBOL, "BOOL");
-  add_keyword (&top_keyword, ISNT_SYMBOL, "ISNT");
-  add_keyword (&top_keyword, FALSE_SYMBOL, "FALSE");
-  add_keyword (&top_keyword, UNION_SYMBOL, "UNION");
-  add_keyword (&top_keyword, OUT_SYMBOL, "OUT");
-  add_keyword (&top_keyword, OPEN_SYMBOL, "(");
-  add_keyword (&top_keyword, BEGIN_SYMBOL, "BEGIN");
-  add_keyword (&top_keyword, FLEX_SYMBOL, "FLEX");
-  add_keyword (&top_keyword, VOID_SYMBOL, "VOID");
-  add_keyword (&top_keyword, BITS_SYMBOL, "BITS");
-  add_keyword (&top_keyword, ELSE_SYMBOL, "ELSE");
-  add_keyword (&top_keyword, DOWNTO_SYMBOL, "DOWNTO");
-  add_keyword (&top_keyword, UNTIL_SYMBOL, "UNTIL");
-  add_keyword (&top_keyword, EXIT_SYMBOL, "EXIT");
-  add_keyword (&top_keyword, HEAP_SYMBOL, "HEAP");
-  add_keyword (&top_keyword, INT_SYMBOL, "INT");
-  add_keyword (&top_keyword, BYTES_SYMBOL, "BYTES");
-  add_keyword (&top_keyword, PIPE_SYMBOL, "PIPE");
-  add_keyword (&top_keyword, FORMAT_SYMBOL, "FORMAT");
-  add_keyword (&top_keyword, SEMA_SYMBOL, "SEMA");
-  add_keyword (&top_keyword, CLOSE_SYMBOL, ")");
-  add_keyword (&top_keyword, AT_SYMBOL, "@");
-  add_keyword (&top_keyword, ELIF_SYMBOL, "ELIF");
-  add_keyword (&top_keyword, FORMAT_DELIMITER_SYMBOL, "$");
-}
-
 /* A list of 10 ^ 2 ^ n for conversion purposes on IEEE 754 platforms. */
 
 #define MAX_DOUBLE_EXPO 511
@@ -957,7 +852,7 @@ double ten_up (int expo)
 {
 /* This way appears sufficiently accurate. */
   double dbl_expo = 1.0, *dep;
-  BOOL_T neg_expo = (expo < 0);
+  BOOL_T neg_expo = (BOOL_T) (expo < 0);
   if (neg_expo) {
     expo = -expo;
   }
@@ -998,13 +893,13 @@ double a68g_atan2 (double x, double y)
     errno = EDOM;
     return (0.0);
   } else {
-    BOOL_T flip = (y < 0.0);
+    BOOL_T flip = (BOOL_T) (y < 0.0);
     double z;
     y = ABS (y);
     if (x == 0.0) {
       z = A68G_PI / 2.0;
     } else {
-      BOOL_T flop = (x < 0.0);
+      BOOL_T flop = (BOOL_T) (x < 0.0);
       x = ABS (x);
       z = atan (y / x);
       if (flop) {
@@ -1110,7 +1005,7 @@ double a68g_acosh (double x)
 double a68g_atanh (double x)
 {
   double a = ABS (x);
-  double s = (x < 0 ? -1 : 1);
+  double s = (double) (x < 0 ? -1 : 1);
   if (a >= 1.0) {
     errno = EDOM;
     return (0.0);
@@ -1228,16 +1123,16 @@ int grep_in_string (char *pat, char *str, int *start, int *end)
     regfree (&compiled);
     return (rc);
   }
-  nmatch = compiled.re_nsub;
+  nmatch = (int) (compiled.re_nsub);
   if (nmatch == 0) {
     nmatch = 1;
   }
-  matches = malloc (nmatch * ALIGNED_SIZE_OF (regmatch_t));
+  matches = malloc ((size_t) (nmatch * ALIGNED_SIZE_OF (regmatch_t)));
   if (nmatch > 0 && matches == NULL) {
     regfree (&compiled);
     return (2);
   }
-  rc = regexec (&compiled, str, nmatch, matches, 0);
+  rc = regexec (&compiled, str, (size_t) nmatch, matches, 0);
   if (rc != 0) {
     regfree (&compiled);
     return (rc);
@@ -1246,21 +1141,23 @@ int grep_in_string (char *pat, char *str, int *start, int *end)
   widest = 0;
   max_k = 0;
   for (k = 0; k < nmatch; k++) {
-    int dif = matches[k].rm_eo - (int) matches[k].rm_so;
+    int dif = (int) matches[k].rm_eo - (int) matches[k].rm_so;
     if (dif > widest) {
       widest = dif;
       max_k = k;
     }
   }
   if (start != NULL) {
-    (*start) = matches[max_k].rm_so;
+    (*start) = (int) matches[max_k].rm_so;
   }
   if (end != NULL) {
-    (*end) = matches[max_k].rm_eo;
+    (*end) = (int) matches[max_k].rm_eo;
   }
   free (matches);
   return (0);
 #else
+  (void) start;
+  (void) end;
   if (strstr (str, pat) != NULL) {
     return (0);
   } else {

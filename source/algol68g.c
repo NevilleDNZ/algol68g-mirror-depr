@@ -21,11 +21,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
-For the things we have to learn before we can do them,
-                               we learn by doing them.
-
-                     - Aristotle, Nichomachean Ethics
-
 Algol68G is an Algol 68 interpreter.
 
 Please refer to the documentation that comes with this distribution for a
@@ -52,6 +47,7 @@ MODULE_T a68_prog;
 char a68g_cmd_name[BUFFER_SIZE];
 int stack_size;
 int symbol_table_count, mode_count;
+int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
 
 static void announce_phase (char *);
 static void compiler_interpreter (void);
@@ -64,12 +60,12 @@ static void compiler_interpreter (void);
 void state_license (FILE_T f)
 {
 #define P(s)\
-  snprintf (output_line, BUFFER_SIZE, "%s\n", (s));\
+  CHECK_RETVAL (snprintf(output_line, (size_t) BUFFER_SIZE, "%s\n", (s)) >= 0);\
   WRITE (f, output_line);
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
   }
-  snprintf (output_line, BUFFER_SIZE, "Algol 68 Genie %s (%s), copyright 2001-%s J. Marcel van der Veer.\n", REVISION, RELEASE_DATE, RELEASE_YEAR);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Algol 68 Genie %s (%s), copyright 2001-%s J. Marcel van der Veer.\n", REVISION, RELEASE_DATE, RELEASE_YEAR) >= 0);
   WRITE (f, output_line);
   P ("Algol 68 Genie is free software covered by the GNU General Public License.");
   P ("There is ABSOLUTELY NO WARRANTY for Algol 68 Genie.");
@@ -92,43 +88,43 @@ void state_version (FILE_T f)
   WRITELN (f, "");
 #if ! defined ENABLE_WIN32
 #if defined __GNUC__ && defined GCC_VERSION
-  snprintf (output_line, BUFFER_SIZE, "Compiled on %s with gcc %s\n", OS_NAME, GCC_VERSION);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Compiled on %s with gcc %s\n", OS_NAME, GCC_VERSION) >= 0);
   WRITE (f, output_line);
 #else
-  snprintf (output_line, BUFFER_SIZE, "Compiled on %s\n", OS_NAME);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Compiled on %s\n", OS_NAME) >= 0);
   WRITE (f, output_line);
 #endif
 #endif
 #if ! defined ENABLE_WIN32
-  snprintf (output_line, BUFFER_SIZE, "Configured on %s with options \"%s\"\n", CONFIGURE_DATE, CONFIGURE_OPTIONS);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Configured on %s with options \"%s\"\n", CONFIGURE_DATE, CONFIGURE_OPTIONS) >= 0);
   WRITE (f, output_line);
 #endif
 #if defined ENABLE_GRAPHICS && defined A68_LIBPLOT_VERSION
-  snprintf (output_line, BUFFER_SIZE, "GNU libplot %s\n", A68_LIBPLOT_VERSION);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "GNU libplot %s\n", A68_LIBPLOT_VERSION) >= 0);
   WRITE (f, output_line);
 #endif
 #if defined ENABLE_NUMERICAL && defined A68_GSL_VERSION
-  snprintf (output_line, BUFFER_SIZE, "GNU Scientific Library %s\n", A68_GSL_VERSION);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "GNU Scientific Library %s\n", A68_GSL_VERSION) >= 0);
   WRITE (f, output_line);
 #endif
 #if defined ENABLE_POSTGRESQL && defined A68_PG_VERSION
-  snprintf (output_line, BUFFER_SIZE, "PostgreSQL libpq %s\n", A68_PG_VERSION);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "PostgreSQL libpq %s\n", A68_PG_VERSION) >= 0);
   WRITE (f, output_line);
 #endif
-  snprintf (output_line, BUFFER_SIZE, "Alignment %d bytes\n", A68_ALIGNMENT);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Alignment %d bytes\n", A68_ALIGNMENT) >= 0);
   WRITE (f, output_line);
   default_mem_sizes ();
-  snprintf (output_line, BUFFER_SIZE, "Default frame stack size: %ld kB\n", frame_stack_size / KILOBYTE);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Default frame stack size: %d kB\n", frame_stack_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  snprintf (output_line, BUFFER_SIZE, "Default expression stack size: %ld kB\n", expr_stack_size / KILOBYTE);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Default expression stack size: %d kB\n", expr_stack_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  snprintf (output_line, BUFFER_SIZE, "Default heap size: %ld kB\n", heap_size / KILOBYTE);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Default heap size: %d kB\n", heap_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  snprintf (output_line, BUFFER_SIZE, "Default handle pool size: %ld kB\n", handle_pool_size / KILOBYTE);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Default handle pool size: %d kB\n", handle_pool_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  snprintf (output_line, BUFFER_SIZE, "Default stack overhead: %ld kB\n", storage_overhead / KILOBYTE);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Default stack overhead: %d kB\n", storage_overhead / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  snprintf (output_line, BUFFER_SIZE, "Effective system stack size: %ld kB\n", stack_size / KILOBYTE);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Effective system stack size: %d kB\n", stack_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
 }
 
@@ -140,15 +136,15 @@ void state_version (FILE_T f)
 void online_help (FILE_T f)
 {
 #define P(s)\
-  snprintf (output_line, BUFFER_SIZE, "%s\n", (s));\
+  CHECK_RETVAL (snprintf(output_line, (size_t) BUFFER_SIZE, "%s\n", (s)) >= 0);\
   WRITE (f, output_line);
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
   }
   state_license (f);
-  snprintf (output_line, BUFFER_SIZE, "Usage: %s [options | filename]", a68g_cmd_name);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "Usage: %s [options | filename]", a68g_cmd_name) >= 0);
   WRITELN (f, output_line);
-  snprintf (output_line, BUFFER_SIZE, "For help: %s -apropos [keyword]", a68g_cmd_name);
+  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "For help: %s -apropos [keyword]", a68g_cmd_name) >= 0);
   WRITELN (f, output_line);
 }
 
@@ -167,14 +163,14 @@ int main (int argc, char *argv[])
   global_argv = argv;
 /* Get command name and discard path. */
   bufcpy (a68g_cmd_name, argv[0], BUFFER_SIZE);
-  for (k = strlen (a68g_cmd_name) - 1; k >= 0; k--) {
+  for (k = (int) strlen (a68g_cmd_name) - 1; k >= 0; k--) {
 #if defined ENABLE_WIN32
     char delim = '\\';
 #else
     char delim = '/';
 #endif
     if (a68g_cmd_name[k] == delim) {
-      MOVE (&a68g_cmd_name[0], &a68g_cmd_name[k + 1], strlen (a68g_cmd_name) - k + 1);
+      MOVE (&a68g_cmd_name[0], &a68g_cmd_name[k + 1], (int) strlen (a68g_cmd_name) - k + 1);
       k = -1;
     }
   }
@@ -257,8 +253,8 @@ int main (int argc, char *argv[])
 static void whether_extension (char *ext)
 {
   if (a68_prog.files.source.fd == -1) {
-    int len = strlen (a68_prog.files.source.name) + strlen (ext) + 1;
-    char *fn2 = (char *) get_heap_space (len);
+    int len = (int) strlen (a68_prog.files.source.name) + (int) strlen (ext) + 1;
+    char *fn2 = (char *) get_heap_space ((size_t) len);
     bufcpy (fn2, a68_prog.files.source.name, len);
     bufcat (fn2, ext, len);
     a68_prog.files.source.fd = open (fn2, O_RDONLY | O_BINARY);
@@ -287,6 +283,47 @@ static void init_before_tokeniser (void)
 }
 
 /*!
+\brief pretty print memory size
+**/
+
+char *pretty_size (int k) {
+  if (k >= 10 * MEGABYTE) {
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%dM", k / MEGABYTE) >= 0);
+  } else if (k >= 10 * KILOBYTE) {
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%dk", k / KILOBYTE) >= 0);
+  } else {
+    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%d", k) >= 0);
+  }
+  return (edit_line);
+}
+
+/*!
+\brief verbose statistics
+**/
+
+static void verbosity (MODULE_T *m)
+{
+  if (m->options.verbose) {
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nNodes: %dx%d=%s", new_nodes, (int) sizeof (NODE_T), pretty_size (new_nodes * (int) sizeof (NODE_T))) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nNode infos: %dx%d=%s", new_node_infos, (int) sizeof (NODE_INFO_T), pretty_size (new_node_infos * (int) sizeof (NODE_INFO_T))) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nGenie infos: %dx%d=%s", new_genie_infos, (int) sizeof (GENIE_INFO_T), pretty_size (new_genie_infos * (int) sizeof (GENIE_INFO_T))) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nModes: %dx%d=%s", new_modes, (int) sizeof (MOID_T), pretty_size (new_modes * (int) sizeof (MOID_T))) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nPostulates: %dx%d=%s", new_postulates, (int) sizeof (POSTULATE_T), pretty_size (new_postulates * (int) sizeof (POSTULATE_T))) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nMemory: %s", pretty_size (temp_heap_pointer)) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "-%s", pretty_size (fixed_heap_pointer)) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "=%s", pretty_size (temp_heap_pointer - fixed_heap_pointer)) >= 0);
+    WRITE (STDERR_FILENO, output_line);
+  }
+}
+
+/*!
 \brief drives compilation and interpretation
 **/
 
@@ -296,8 +333,12 @@ static void compiler_interpreter (void)
   BOOL_T path_set = A68_FALSE;
   a68_prog.tree_listing_safe = A68_FALSE;
   a68_prog.cross_reference_safe = A68_FALSE;
-  old_postulate = NULL;
-  error_tag = (TAG_T *) new_tag;
+  new_nodes = 0;
+  new_modes = 0;
+  new_postulates = 0;
+  new_node_infos = 0;
+  new_genie_infos = 0;
+  init_postulates ();
 /* File set-up. */
   SCAN_ERROR (a68_prog.files.generic_name == NULL, NULL, NULL, ERROR_NO_INPUT_FILE);
   a68_prog.files.source.name = new_string (a68_prog.files.generic_name);
@@ -325,7 +366,7 @@ Accept various silent extensions.
 /* Isolate the path name. */
   a68_prog.files.path = new_string (a68_prog.files.generic_name);
   path_set = A68_FALSE;
-  for (k = strlen (a68_prog.files.path); k >= 0 && path_set == A68_FALSE; k--) {
+  for (k = (int) strlen (a68_prog.files.path); k >= 0 && path_set == A68_FALSE; k--) {
 #if defined ENABLE_WIN32
     char delim = '\\';
 #else
@@ -340,14 +381,15 @@ Accept various silent extensions.
     a68_prog.files.path[0] = NULL_CHAR;
   }
 /* Listing file. */
-  len = 1 + strlen (a68_prog.files.source.name) + strlen (LISTING_EXTENSION);
-  a68_prog.files.listing.name = (char *) get_heap_space (len);
+  len = 1 + (int) strlen (a68_prog.files.source.name) + (int) strlen (LISTING_EXTENSION);
+  a68_prog.files.listing.name = (char *) get_heap_space ((size_t) len);
   bufcpy (a68_prog.files.listing.name, a68_prog.files.source.name, len);
   bufcat (a68_prog.files.listing.name, LISTING_EXTENSION, len);
 /* Tokeniser. */
   a68_prog.files.source.opened = A68_TRUE;
   announce_phase ("initialiser");
   init_before_tokeniser ();
+  error_tag = (TAG_T *) new_tag ();
   if (a68_prog.error_count == 0) {
     int frame_stack_size_2 = frame_stack_size;
     int expr_stack_size_2 = expr_stack_size;
@@ -366,12 +408,13 @@ Accept various silent extensions.
       init_before_tokeniser ();
       a68_prog.source_scan++;
       ok = lexical_analyzer (&a68_prog);
+      verbosity (&a68_prog);
     }
     if (!ok || errno != 0) {
       diagnostics_to_terminal (a68_prog.top_line, A68_ALL_DIAGNOSTICS);
       return;
     }
-    close (a68_prog.files.source.fd);
+    CHECK_RETVAL (close (a68_prog.files.source.fd) == 0);
     a68_prog.files.source.opened = A68_FALSE;
     prune_echoes (&a68_prog, a68_prog.options.list);
     a68_prog.tree_listing_safe = A68_TRUE;
@@ -401,6 +444,7 @@ Accept various silent extensions.
     }
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
 /* Top-down parser. */
   if (a68_prog.error_count == 0) {
@@ -417,12 +461,14 @@ Accept various silent extensions.
     }
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
 /* Standard environment builder. */
   if (a68_prog.error_count == 0) {
     announce_phase ("standard environ builder");
     SYMBOL_TABLE (a68_prog.top_node) = new_symbol_table (stand_env);
     make_standard_environ ();
+    verbosity (&a68_prog);
   }
 /* Bottom-up parser. */
   if (a68_prog.error_count == 0) {
@@ -431,6 +477,7 @@ Accept various silent extensions.
     bottom_up_parser (a68_prog.top_node);
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
   if (a68_prog.error_count == 0) {
     announce_phase ("parser phase 3");
@@ -449,16 +496,20 @@ Accept various silent extensions.
     }
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
 /* Mode table builder. */
   if (a68_prog.error_count == 0) {
     announce_phase ("mode table builder");
     set_up_mode_table (a68_prog.top_node);
+    verbosity (&a68_prog);
   }
+  a68_prog.cross_reference_safe = /* (BOOL_T) (a68_prog.error_count == 0) */ A68_TRUE;
 /* Symbol table builder. */
   if (a68_prog.error_count == 0) {
     announce_phase ("symbol table builder");
     collect_taxes (a68_prog.top_node);
+    verbosity (&a68_prog);
   }
 /* Post parser. */
   if (a68_prog.error_count == 0) {
@@ -466,13 +517,14 @@ Accept various silent extensions.
     rearrange_goto_less_jumps (a68_prog.top_node);
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
 /* Mode checker. */
   if (a68_prog.error_count == 0) {
-    a68_prog.cross_reference_safe = A68_FALSE;
     announce_phase ("mode checker");
     mode_checker (a68_prog.top_node);
     maintain_mode_table (a68_prog.top_node);
+    verbosity (&a68_prog);
   }
 /* Coercion inserter. */
   if (a68_prog.error_count == 0) {
@@ -490,6 +542,7 @@ Accept various silent extensions.
     assign_offsets_packs (top_moid_list);
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
 /* Application checker. */
   if (a68_prog.error_count == 0) {
@@ -499,6 +552,7 @@ Accept various silent extensions.
     jumps_from_procs (a68_prog.top_node);
     warn_for_unused_tags (a68_prog.top_node);
     warn_tags_threads (a68_prog.top_node);
+    verbosity (&a68_prog);
   }
 /* Scope checker. */
   if (a68_prog.error_count == 0) {
@@ -508,11 +562,13 @@ Accept various silent extensions.
     bind_routine_tags_to_tree (a68_prog.top_node);
     bind_format_tags_to_tree (a68_prog.top_node);
     scope_checker (a68_prog.top_node);
+    verbosity (&a68_prog);
   }
 /* Portability checker. */
   if (a68_prog.error_count == 0) {
     announce_phase ("portability checker");
     portcheck (a68_prog.top_node);
+    verbosity (&a68_prog);
   }
 /* Optimisation, on ongoing project. */
   if (a68_prog.error_count == 0 && a68_prog.options.optimise) {
@@ -523,6 +579,7 @@ Accept various silent extensions.
     reset_symbol_table_nest_count (a68_prog.top_node);
     num = 0;
     renumber_nodes (a68_prog.top_node, &num);
+    verbosity (&a68_prog);
   }
 /* Interpreter. */
   diagnostics_to_terminal (a68_prog.top_line, A68_ALL_DIAGNOSTICS);
@@ -539,9 +596,10 @@ Accept various silent extensions.
 /* Normal end of program. */
     diagnostics_to_terminal (a68_prog.top_line, A68_RUNTIME_ERROR);
     if (a68_prog.options.debug || a68_prog.options.trace) {
-      snprintf (output_line, BUFFER_SIZE, "\nGenie finished in %.2f seconds\n", seconds () - cputime_0);
+      CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nGenie finished in %.2f seconds\n", seconds () - cputime_0) >= 0);
       WRITE (STDOUT_FILENO, output_line);
     }
+    verbosity (&a68_prog);
   }
 /* Setting up listing file. */
   if (a68_prog.options.moid_listing || a68_prog.options.tree_listing || a68_prog.options.source_listing || a68_prog.options.statistics_listing) {
@@ -556,8 +614,9 @@ Accept various silent extensions.
     write_listing_header (&a68_prog);
     source_listing (&a68_prog);
     write_listing (&a68_prog);
-    close (a68_prog.files.listing.fd);
+    CHECK_RETVAL (close (a68_prog.files.listing.fd) == 0);
     a68_prog.files.listing.opened = A68_FALSE;
+    verbosity (&a68_prog);
   }
 }
 
@@ -572,7 +631,7 @@ void a68g_exit (int code)
   bufcpy (name, ".", BUFFER_SIZE);
   bufcat (name, a68g_cmd_name, BUFFER_SIZE);
   bufcat (name, ".x", BUFFER_SIZE);
-  remove (name);
+  (void) (remove (name));
   io_close_tty_line ();
 #if defined ENABLE_CURSES
 /* "curses" might still be open if it was not closed from A68, or the program
@@ -591,7 +650,7 @@ void a68g_exit (int code)
 static void announce_phase (char *t)
 {
   if (a68_prog.options.verbose) {
-    snprintf (output_line, BUFFER_SIZE, "%s: %s", a68g_cmd_name, t);
+    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s", a68g_cmd_name, t) >= 0);
     io_close_tty_line ();
     WRITE (STDOUT_FILENO, output_line);
   }

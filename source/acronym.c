@@ -44,7 +44,7 @@ static void make_acronym (char *, char *);
 
 static BOOL_T is_vowel (char ch)
 {
-  return (a68g_strchr ("aeiouAEIOU", ch) != NULL);
+  return ((BOOL_T) (a68g_strchr ("aeiouAEIOU", ch) != NULL));
 }
 
 /*!
@@ -55,7 +55,7 @@ static BOOL_T is_vowel (char ch)
 
 static BOOL_T is_consonant (char ch)
 {
-  return (a68g_strchr ("qwrtypsdfghjklzxcvbnmQWRTYPSDFGHJKLZXCVBNM", ch) != NULL);
+  return ((BOOL_T) (a68g_strchr ("qwrtypsdfghjklzxcvbnmQWRTYPSDFGHJKLZXCVBNM", ch) != NULL));
 }
 
 static char *codas[] = {
@@ -106,7 +106,7 @@ static BOOL_T is_coda (char *str, int len)
   char str2[BUFFER_SIZE];
   strncpy (str2, str, BUFFER_SIZE);
   str2[len] = NULL_CHAR;
-  return (bsearch (str2, codas, sizeof (codas) / sizeof (char *), sizeof (char *), qsort_strcmp) != NULL);
+  return ((BOOL_T) (bsearch (str2, codas, sizeof (codas) / sizeof (char *), sizeof (char *), qsort_strcmp) != NULL));
 }
 
 /*!
@@ -121,14 +121,14 @@ static void get_init_sylls (char *in, char *out)
   while (*in != NULL_CHAR) {
     if (isalpha (*in)) {
       while (*in != NULL_CHAR && isalpha (*in) && !is_vowel (*in)) {
-        *out++ = toupper (*in++);
+        *out++ = (char) toupper (*in++);
       }
       while (*in != NULL_CHAR && is_vowel (*in)) {
-        *out++ = toupper (*in++);
+        *out++ = (char) toupper (*in++);
       }
       coda = out;
       while (*in != NULL_CHAR && is_consonant (*in)) {
-        *out++ = toupper (*in++);
+        *out++ = (char) toupper (*in++);
         *out = NULL_CHAR;
         if (!is_coda (coda, out - coda)) {
           out--;
@@ -263,9 +263,9 @@ void genie_acronym (NODE_T * p)
   char *u, *v;
   POP_REF (p, &z);
   len = a68_string_size (p, z);
-  u = (char *) malloc (len + 1);
-  v = (char *) malloc (len + 1 + 8);
-  a_to_c_string (p, u, z);
+  u = (char *) malloc ((size_t) (len + 1));
+  v = (char *) malloc ((size_t) (len + 1 + 8));
+  (void) a_to_c_string (p, u, z);
   if (u != NULL && u[0] != NULL_CHAR && v != NULL) {
     make_acronym (u, v);
     PUSH_REF (p, c_to_a_string (p, v));

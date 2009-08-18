@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "algol68g.h"
 #include "genie.h"
 
@@ -67,8 +66,8 @@ static void sigint_handler (int i)
 {
   (void) i;
   ABNORMAL_END (signal (SIGINT, sigint_handler) == SIG_ERR, "cannot install SIGINT handler", NULL);
-  if (!((MASK (a68_prog.top_node) & BREAKPOINT_INTERRUPT_MASK) || in_monitor)) {
-    MASK (a68_prog.top_node) |= BREAKPOINT_INTERRUPT_MASK;
+  if (!(STATUS_TEST (a68_prog.top_node, BREAKPOINT_INTERRUPT_MASK) || in_monitor)) {
+    STATUS_SET (a68_prog.top_node, BREAKPOINT_INTERRUPT_MASK);
     genie_break (a68_prog.top_node);
   }
 }
