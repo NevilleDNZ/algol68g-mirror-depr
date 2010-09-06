@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -23,25 +23,26 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #if ! defined A68G_TRANSPUT_H
 #define A68G_TRANSPUT_H
 
-#define TRANSPUT_BUFFER_SIZE 	BUFFER_SIZE
-#define ITEM_NOT_USED		(-1)
-#define EMBEDDED_FORMAT 	A68_TRUE
-#define NOT_EMBEDDED_FORMAT     A68_FALSE
-#define WANT_PATTERN    	A68_TRUE
-#define SKIP_PATTERN    	A68_FALSE
+#define TRANSPUT_BUFFER_SIZE BUFFER_SIZE
+#define ITEM_NOT_USED (-1)
+#define EMBEDDED_FORMAT A68_TRUE
+#define NOT_EMBEDDED_FORMAT A68_FALSE
+#define WANT_PATTERN A68_TRUE
+#define SKIP_PATTERN A68_FALSE
 
 #define IS_NIL_FORMAT(f) ((BOOL_T) (BODY (f) == NULL && ENVIRON (f) == 0))
 #define NON_TERM(p) (find_non_terminal (top_non_terminal, ATTRIBUTE (p)))
 
 #undef DEBUG
 
-#define DIGIT_NORMAL		0x1
-#define DIGIT_BLANK		0x2
+#define DIGIT_NORMAL 0x1
+#define DIGIT_BLANK 0x2
 
-#define INSERTION_NORMAL	0x10
-#define INSERTION_BLANK		0x20
+#define INSERTION_NORMAL 0x10
+#define INSERTION_BLANK 0x20
 
-#define MAX_TRANSPUT_BUFFER	64	/* Some OS's open only 64 files. */
+/* Some OS's open only 64 files. */
+#define MAX_TRANSPUT_BUFFER 64
 
 enum
 { INPUT_BUFFER = 0, OUTPUT_BUFFER, EDIT_BUFFER, UNFORMATTED_BUFFER, 
@@ -149,7 +150,7 @@ extern GENIE_PROCEDURE genie_draw_circle;
 extern GENIE_PROCEDURE genie_draw_clear;
 extern GENIE_PROCEDURE genie_draw_colour;
 extern GENIE_PROCEDURE genie_draw_colour_name;
-extern GENIE_PROCEDURE genie_draw_filltype;
+extern GENIE_PROCEDURE genie_draw_fillstyle;
 extern GENIE_PROCEDURE genie_draw_fontname;
 extern GENIE_PROCEDURE genie_draw_fontsize;
 extern GENIE_PROCEDURE genie_draw_get_colour_name;

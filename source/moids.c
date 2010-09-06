@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "mp.h"
@@ -540,7 +542,7 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
         PACK_T *u = NULL;
         MOID_T *new_one;
         if (WHETHER (NEXT (p), FORMAL_DECLARERS)) {
-          get_mode_from_formal_pack (SUB (NEXT (p)), &u);
+          get_mode_from_formal_pack (SUB_NEXT (p), &u);
           FORWARD (p);
         }
         new_one = get_mode_from_declarer (NEXT (p));
@@ -586,7 +588,7 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
   MOID_T **m = &(SYMBOL_TABLE (p)->moids), *new_one;
   NODE_T *save = p;
   if (WHETHER (NEXT (p), FORMAL_DECLARERS)) {
-    get_mode_from_formal_pack (SUB (NEXT (p)), &u);
+    get_mode_from_formal_pack (SUB_NEXT (p), &u);
     FORWARD (p);
   }
   new_one = get_mode_from_declarer (NEXT (p));
@@ -1287,7 +1289,7 @@ BOOL_T whether_modes_equivalent (MOID_T * a, MOID_T * b)
   } else if (WHETHER (a, SERIES_MODE) || WHETHER (a, STOWED_MODE)) {
      return ((BOOL_T) (DIM (a) == DIM (b) && whether_packs_equivalent (PACK (a), PACK (b))));
   }
-  ABNORMAL_END (A68_TRUE, "cannot decide in whether_modes_equivalent", NULL);
+  ABEND (A68_TRUE, "cannot decide in whether_modes_equivalent", NULL);
   return (A68_FALSE);
 }
 
@@ -1600,7 +1602,7 @@ static void make_stowed_names_tree (NODE_T * p, int *mods)
             } else if (WHETHER (SUB (m), FLEX_SYMBOL)) {
               k = A68_TRUE;
               (*mods)++;
-              NAME (m) = make_name_row (SUB (SUB (m)), topmoid);
+              NAME (m) = make_name_row (SUB_SUB (m), topmoid);
             }
           }
         }
@@ -1714,13 +1716,13 @@ static void make_multiple_modes_tree (NODE_T * p, int *mods)
               MULTIPLE (q) = make_multiple_struct (SUB (q), top, DIM (q));
             }
           } else if (WHETHER (q, FLEX_SYMBOL)) {
-            if (SUB (SUB (q)) == NULL) {
+            if (SUB_SUB (q) == NULL) {
               (*mods)++;        /* as yet unresolved FLEX INDICANT. */
             } else {
-              if (WHETHER (SUB (SUB (q)), STRUCT_SYMBOL)) {
+              if (WHETHER (SUB_SUB (q), STRUCT_SYMBOL)) {
                 z = A68_TRUE;
                 (*mods)++;
-                MULTIPLE (q) = make_flex_multiple_struct (SUB (SUB (q)), top, DIM (SUB (q)));
+                MULTIPLE (q) = make_flex_multiple_struct (SUB_SUB (q), top, DIM (SUB (q)));
               }
             }
           }
@@ -1758,13 +1760,13 @@ static void make_multiple_modes_standenv (int *mods)
           MULTIPLE (q) = make_multiple_struct (SUB (q), top, DIM (q));
         }
       } else if (WHETHER (q, FLEX_SYMBOL)) {
-        if (SUB (SUB (q)) == NULL) {
+        if (SUB_SUB (q) == NULL) {
           (*mods)++;            /* as yet unresolved FLEX INDICANT. */
         } else {
-          if (WHETHER (SUB (SUB (q)), STRUCT_SYMBOL)) {
+          if (WHETHER (SUB_SUB (q), STRUCT_SYMBOL)) {
             z = A68_TRUE;
             (*mods)++;
-            MULTIPLE (q) = make_flex_multiple_struct (SUB (SUB (q)), top, DIM (SUB (q)));
+            MULTIPLE (q) = make_flex_multiple_struct (SUB_SUB (q), top, DIM (SUB (q)));
           }
         }
       }
@@ -1865,7 +1867,7 @@ static MOID_T *make_deflexed (MOID_T * m, MOID_T ** p)
     SUB (save) = new_one;
     return (save);
   } else if (WHETHER (m, FLEX_SYMBOL)) {
-    ABNORMAL_END (SUB (m) == NULL, "NULL mode while deflexing", NULL);
+    ABEND (SUB (m) == NULL, "NULL mode while deflexing", NULL);
     DEFLEXED (m) = make_deflexed (SUB (m), p);
     return (DEFLEXED (m));
   } else if (WHETHER (m, ROW_SYMBOL)) {
@@ -1893,7 +1895,7 @@ static MOID_T *make_deflexed (MOID_T * m, MOID_T ** p)
     return (save);
   } else if (WHETHER (m, INDICANT)) {
     MOID_T *n = EQUIVALENT (m);
-    ABNORMAL_END (n == NULL, "NULL equivalent mode while deflexing", NULL);
+    ABEND (n == NULL, "NULL equivalent mode while deflexing", NULL);
     return (DEFLEXED (m) = make_deflexed (n, p));
   } else if (WHETHER (m, STANDARD)) {
     MOID_T *n = (DEFLEXED (m) != NULL ? DEFLEXED (m) : m);
@@ -1924,7 +1926,7 @@ static void make_deflexed_modes_tree (NODE_T * p, int *mods)
         if (m->has_flex && DEFLEXED (m) == NULL) {
           (*mods)++;
           DEFLEXED (m) = make_deflexed (m, top);
-          ABNORMAL_END (whether_mode_has_flex (DEFLEXED (m)), "deflexing failed", moid_to_string (DEFLEXED (m), MOID_WIDTH, NULL));
+          ABEND (whether_mode_has_flex (DEFLEXED (m)), "deflexing failed", moid_to_string (DEFLEXED (m), MOID_WIDTH, NULL));
         }
 /* 'Light' deflexing needed for trims. */
         if (TRIM (m) == NULL && WHETHER (m, FLEX_SYMBOL)) {
@@ -1932,7 +1934,7 @@ static void make_deflexed_modes_tree (NODE_T * p, int *mods)
           TRIM (m) = SUB (m);
         } else if (TRIM (m) == NULL && WHETHER (m, REF_SYMBOL) && WHETHER (SUB (m), FLEX_SYMBOL)) {
           (*mods)++;
-          (void) add_mode (top, REF_SYMBOL, DIM (m), NULL, SUB (SUB (m)), NULL);
+          (void) add_mode (top, REF_SYMBOL, DIM (m), NULL, SUB_SUB (m), NULL);
           TRIM (m) = *top;
         }
       }
@@ -1953,7 +1955,7 @@ static void make_extra_rows_local (SYMBOL_TABLE_T * s)
     if (WHETHER (m, ROW_SYMBOL) && DIM (m) > 0 && SUB (m) != NULL) {
       (void) add_row (top, DIM (m) + 1, SUB (m), NODE (m));
     } else if (WHETHER (m, REF_SYMBOL) && WHETHER (SUB (m), ROW_SYMBOL)) {
-      MOID_T *z = add_row (top, DIM (SUB (m)) + 1, SUB (SUB (m)), NODE (SUB (m)));
+      MOID_T *z = add_row (top, DIM (SUB (m)) + 1, SUB_SUB (m), NODE (SUB (m)));
       MOID_T *y = add_mode (top, REF_SYMBOL, 0, NODE (m), z, NULL);
       NAME (y) = m;
     }
@@ -2203,17 +2205,17 @@ void set_up_mode_table (NODE_T * top_node)
 /* ... and check for cyclic definitions as MODE A = B, B = C, C = A. */
   check_cyclic_modes_tree (top_node);
   check_flex_modes_tree (top_node);
-  if (a68_prog.error_count == 0) {
+  if (program.error_count == 0) {
 /* Check yin-yang of modes. */
     free_postulate_list (top_postulate, NULL);
     top_postulate = NULL;
     check_well_formedness_tree (top_node);
 /* Construct the full moid list. */
-    if (a68_prog.error_count == 0) {
+    if (program.error_count == 0) {
       int cycle = 0;
       track_equivalent_standard_modes ();
       while (expand_contract_moids (top_node, cycle) > 0 || cycle < 16) {
-        ABNORMAL_END (cycle++ > 32, "apparently indefinite loop in set_up_mode_table", NULL);
+        ABEND (cycle++ > 32, "apparently indefinite loop in set_up_mode_table", NULL);
       }
 /* Set standard modes. */
       track_equivalent_standard_modes ();
@@ -2688,7 +2690,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
     }
   } else {
     char str[SMALL_BUFFER_SIZE];
-    CHECK_RETVAL (snprintf (str, (size_t) SMALL_BUFFER_SIZE, "\\%d", ATTRIBUTE (n)) >= 0);
+    ASSERT (snprintf (str, (size_t) SMALL_BUFFER_SIZE, "\\%d", ATTRIBUTE (n)) >= 0);
     add_to_moid_text (b, str, w);
   }
 }

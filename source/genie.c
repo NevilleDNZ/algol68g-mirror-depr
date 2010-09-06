@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -30,7 +32,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include <sys/resource.h>
 #endif
 
-void genie_preprocess (NODE_T *, int *);
+void genie_preprocess (NODE_T *, int *, void *);
 
 A68_HANDLE nil_handle = { INITIALISED_MASK, NULL, 0, NULL, NULL, NULL };
 A68_REF nil_ref = { (STATUS_MASK) (INITIALISED_MASK | NIL_MASK), 0, {NULL} };
@@ -42,7 +44,6 @@ NODE_T *last_unit = NULL;
 int global_level = 0, ret_code, ret_line_number, ret_char_number;
 int max_lex_lvl = 0;
 jmp_buf genie_exit_label;
-unsigned check_time_limit_count = 0;
 
 int frame_stack_size, expr_stack_size, heap_size, handle_pool_size;
 int stack_limit, frame_stack_limit, expr_stack_limit;
@@ -117,11 +118,15 @@ void exit_genie (NODE_T * p, int ret)
 #ifdef ENABLE_CURSES
   genie_curses_end (p);
 #endif
+  if (!in_execution) {
+    return;
+  }
   if (ret == A68_RUNTIME_ERROR && in_monitor) {
     return;
-  } else if (ret == A68_RUNTIME_ERROR && MODULE (INFO (p))->options.debug) {
-    diagnostics_to_terminal (MODULE (INFO (p))->top_line, A68_RUNTIME_ERROR);
+  } else if (ret == A68_RUNTIME_ERROR && program.options.debug) {
+    diagnostics_to_terminal (program.top_line, A68_RUNTIME_ERROR);
     single_step (p, (unsigned) BREAKPOINT_ERROR_MASK);
+    in_execution = A68_FALSE;
     ret_line_number = LINE_NUMBER (p);
     ret_code = ret;
     longjmp (genie_exit_label, 1);
@@ -133,11 +138,13 @@ void exit_genie (NODE_T * p, int ret)
     if (!whether_main_thread ()) {
       genie_set_exit_from_threads (ret);
     } else {
+      in_execution = A68_FALSE;
       ret_line_number = LINE_NUMBER (p);
       ret_code = ret;
       longjmp (genie_exit_label, 1);
     }
 #else
+    in_execution = A68_FALSE;
     ret_line_number = LINE_NUMBER (p);
     ret_code = ret;
     longjmp (genie_exit_label, 1);
@@ -215,7 +222,7 @@ void tie_label_to_unit (NODE_T * p)
 {
   for (; p != NULL; FORWARD (p)) {
     if (WHETHER (p, LABELED_UNIT)) {
-      tie_label (SUB (SUB (p)), NEXT (SUB (p)));
+      tie_label (SUB_SUB (p), NEXT_SUB (p));
     }
     tie_label_to_unit (SUB (p));
   }
@@ -364,7 +371,7 @@ static BOOL_T genie_empty_table (SYMBOL_TABLE_T * t)
 \param max_lev maximum level found
 **/
 
-void genie_preprocess (NODE_T * p, int *max_lev)
+void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
 {
   for (; p != NULL; FORWARD (p)) {
     if (STATUS_TEST (p, BREAKPOINT_MASK)) {
@@ -375,7 +382,19 @@ void genie_preprocess (NODE_T * p, int *max_lev)
     if (GENIE (p) != NULL) {
       GENIE (p)->whether_coercion = whether_coercion (p);
       GENIE (p)->whether_new_lexical_level = whether_new_lexical_level (p);
+#if defined ENABLE_COMPILER
+      if (program.options.optimise && GENIE (p)->compile_name != NULL && compile_lib != NULL) {
+/* Writing (PROPAGATOR_T) dlsym(...) would seem more natural, but the C99 standard leaves
+   casting from void * to a function pointer undefined. The assignment below is the 
+   POSIX.1-2003 (Technical Corrigendum 1) workaround. */
+        * (void **) &(PROPAGATOR (p).unit) = dlsym (compile_lib, GENIE (p)->compile_name);
+        ABEND (PROPAGATOR (p).unit == NULL, "compiler cannot resolve", dlerror ());
+      } else {
+        PROPAGATOR (p).unit = genie_unit;
+      }
+#else
       PROPAGATOR (p).unit = genie_unit;
+#endif
       PROPAGATOR (p).source = p;
     }
     if (MOID (p) != NULL) {
@@ -426,7 +445,7 @@ void genie_preprocess (NODE_T * p, int *max_lev)
       if (GENIE (p) != NULL) {
         PARENT (SUB (p)) = p;
       }
-      genie_preprocess (SUB (p), max_lev);
+      genie_preprocess (SUB (p), max_lev, compile_lib);
     }
   }
 }
@@ -469,7 +488,7 @@ void free_genie_heap (NODE_T * p)
 \param module current module
 **/
 
-void genie (MODULE_T * module)
+void genie (void * compile_lib)
 {
   MOID_LIST_T *ml;
 /* Fill in final info for modes */
@@ -480,30 +499,30 @@ void genie (MODULE_T * module)
   }
 /* Preprocessing */
   max_lex_lvl = 0;
-/*  genie_lex_levels (module->top_node, 1); */
-  genie_preprocess (module->top_node, &max_lex_lvl);
-  change_masks (module->top_node, BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
+/*  genie_lex_levels (program.top_node, 1); */
+  genie_preprocess (program.top_node, &max_lex_lvl, compile_lib);
+  change_masks (program.top_node, BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
   watchpoint_expression = NULL;
   frame_stack_limit = frame_end - storage_overhead;
   expr_stack_limit = stack_end - storage_overhead;
-  if (module->options.regression_test) {
+  if (program.options.regression_test) {
     init_rng (1);
   } else {
     genie_init_rng ();
   }
   io_close_tty_line ();
-  if (module->options.trace) {
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "genie: frame stack %uk, expression stack %uk, heap %uk, handles %uk\n", (unsigned) (frame_stack_size / 1024), (unsigned) (expr_stack_size / 1024), (unsigned) (heap_size / 1024), (unsigned) (handle_pool_size / 1024)) >= 0);
+  if (program.options.trace) {
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "genie: frame stack %dk, expression stack %dk, heap %dk, handles %dk\n", frame_stack_size / KILOBYTE, expr_stack_size / KILOBYTE, heap_size / KILOBYTE, handle_pool_size / KILOBYTE) >= 0);
     WRITE (STDOUT_FILENO, output_line);
   }
   install_signal_handlers ();
   do_confirm_exit = A68_TRUE;
 /* Dive into the program. */
   if (setjmp (genie_exit_label) == 0) {
-    NODE_T *p = SUB (module->top_node);
+    NODE_T *p = SUB (program.top_node);
 /* If we are to stop in the monitor, set a breakpoint on the first unit. */
-    if (module->options.debug) {
-      change_masks (module->top_node, BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
+    if (program.options.debug) {
+      change_masks (program.top_node, BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
       WRITE (STDOUT_FILENO, "Execution begins ...");
     }
     RESET_ERRNO;
@@ -522,33 +541,42 @@ void genie (MODULE_T * module)
     FRAME_PARAMETER_LEVEL (frame_pointer) = LEX_LEVEL (p);
     FRAME_PARAMETERS (frame_pointer) = frame_pointer;
     initialise_frame (p);
-    genie_init_heap (p, module);
-    genie_init_transput (module->top_node);
+    genie_init_heap (p);
+    genie_init_transput (program.top_node);
     cputime_0 = seconds ();
 /* Here we go ... */
-    (void) genie_enclosed (module->top_node);
+    in_execution = A68_TRUE;
+    last_unit = program.top_node;
+#if ! defined ENABLE_WIN32
+    (void) alarm (1);
+#endif
+    if (program.options.trace) {
+      where_in_source (STDOUT_FILENO, program.top_node);
+    }
+    (void) genie_enclosed (program.top_node);
   } else {
 /* Here we have jumped out of the interpreter. What happened? */
-    if (module->options.debug) {
+    if (program.options.debug) {
       WRITE (STDOUT_FILENO, "Execution discontinued");
     }
     if (ret_code == A68_RERUN) {
-      diagnostics_to_terminal (module->top_line, A68_RUNTIME_ERROR);
-      genie (module);
+      diagnostics_to_terminal (program.top_line, A68_RUNTIME_ERROR);
+      genie (compile_lib);
     } else if (ret_code == A68_RUNTIME_ERROR) {
-      if (module->options.backtrace) {
+      if (program.options.backtrace) {
         int printed = 0;
-        CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nStack backtrace") >= 0);
+        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\nStack backtrace") >= 0);
         WRITE (STDOUT_FILENO, output_line);
         stack_dump (STDOUT_FILENO, frame_pointer, 16, &printed);
         WRITE (STDOUT_FILENO, "\n");
       }
-      if (module->files.listing.opened) {
+      if (program.files.listing.opened) {
         int printed = 0;
-        CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nStack backtrace") >= 0);
-        WRITE (module->files.listing.fd, output_line);
-        stack_dump (module->files.listing.fd, frame_pointer, 32, &printed);
+        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\nStack backtrace") >= 0);
+        WRITE (program.files.listing.fd, output_line);
+        stack_dump (program.files.listing.fd, frame_pointer, 32, &printed);
       }
     }
   }
+  in_execution = A68_FALSE;
 }

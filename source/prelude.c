@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "transput.h"
@@ -491,7 +493,7 @@ static void stand_prelude (void)
   a68_idf (A68_STD, "longlongmaxreal", MODE (LONGLONG_REAL), genie_longlong_max_real);
   a68_idf (A68_STD, "longlongminreal", MODE (LONGLONG_REAL), genie_longlong_min_real);
   a68_idf (A68_STD, "longbyteswidth", MODE (INT), genie_long_bytes_width);
-  a68_idf (A68_EXT, "seconds", MODE (REAL), genie_seconds);
+  a68_idf (A68_EXT, "seconds", MODE (REAL), genie_cputime);
   a68_idf (A68_EXT, "clock", MODE (REAL), genie_cputime);
   a68_idf (A68_EXT, "cputime", MODE (REAL), genie_cputime);
   m = proc_int;
@@ -506,6 +508,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "actualstacksize", MODE (INT), genie_stack_pointer);
   m = proc_void;
   a68_idf (A68_EXT, "sweepheap", m, genie_sweep_heap);
+  a68_idf (A68_EXT, "preemptivesweep", m, genie_preemptive_sweep_heap);
   a68_idf (A68_EXT, "preemptivesweepheap", m, genie_preemptive_sweep_heap);
   a68_idf (A68_EXT, "break", m, genie_break);
   a68_idf (A68_EXT, "debug", m, genie_debug);
@@ -811,7 +814,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "toupper", m, genie_to_upper);
 /* BITS ops. */
   m = a68_proc (MODE (INT), MODE (BITS), NULL);
-  a68_op (A68_STD, "ABS", m, genie_idle);
+  a68_op (A68_STD, "ABS", m, genie_abs_bits);
   m = a68_proc (MODE (BITS), MODE (INT), NULL);
   a68_op (A68_STD, "BIN", m, genie_bin_int);
   m = a68_proc (MODE (BITS), MODE (BITS), NULL);
@@ -1780,7 +1783,7 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "drawflush", m, genie_draw_show);
   a68_idf (A68_EXT, "drawshow", m, genie_draw_show);
   m = a68_proc (MODE (VOID), MODE (REF_FILE), MODE (INT), NULL);
-  a68_idf (A68_EXT, "drawfillstyle", m, genie_draw_filltype);
+  a68_idf (A68_EXT, "drawfillstyle", m, genie_draw_fillstyle);
   m = a68_proc (MODE (STRING), MODE (INT), NULL);
   a68_idf (A68_EXT, "drawgetcolourname", m, genie_draw_get_colour_name);
   a68_idf (A68_EXT, "drawgetcolorname", m, genie_draw_get_colour_name);
@@ -2199,6 +2202,7 @@ static void stand_extensions (void)
   a68_op (A68_EXT, "DYAD", m, genie_vector_dyad);
   m = a68_proc (MODE (ROWROW_COMPLEX), MODE (ROW_COMPLEX), MODE (ROW_COMPLEX), NULL);
   a68_op (A68_EXT, "DYAD", m, genie_vector_complex_dyad);
+  a68_prio ("DYAD", 3);
 /* LU decomposition. */
   m = a68_proc (MODE (ROWROW_REAL), MODE (ROWROW_REAL), MODE (REF_ROW_INT), MODE (REF_INT), NULL);
   a68_idf (A68_EXT, "ludecomp", m, genie_matrix_lu);

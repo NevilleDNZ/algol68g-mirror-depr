@@ -1,18 +1,12 @@
-Changes in Version 1.18.0:
-
-   1.  Regression fixes:
-      -  Rowing failed for some flexible rows,
-      -  Generator failed for some structures,
-      -  Garbage collector could crash under rare circumstances,
-      -  Some flexible mode declarations were not accepted,
-      -  Some modes were incorrectly marked as equivalent,
-      -  Unnecessary size limitations in some matrix operations,
-      -  Build error on Mac OS X,
-      -  Alignment error on AMD64.
-   2. Adds NEW as alternative to HEAP.
-   3. More efficient use of memory during compilation.
-   4. Documentation updates.
-   5. Upon request, re-post the HTML translation of the Revised Report.
-   6. Change to a common Linux-style version numbering 
-      (former Mark j will now read Version 1.j.0, and 
-       former Mark j.k will now read Version 1.j.k). 
+Version 2.0.0
+* Adds compiler for units to speed execution
+* Adds options --optimise and --no-optimise
+* Adds options --compile and --no-compile
+* Adds options --object and --no-object
+* Adds option --strict
+* Improves parser
+* Improves diagnostics
+* Updates documentation
+* Regression fixes:
+1. Zero-suppression sometimes failed in formatted transput
+2. The default draw fill style was 1, not 0 as stated in the manual

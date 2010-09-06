@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -26,14 +26,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 /* Type definitions. */
 
 typedef int ADDR_T, FILE_T, LEAP_T;
-typedef unsigned char BYTE_T, BOOL_T;
+typedef unsigned char BYTE_T;
+typedef int BOOL_T;
 typedef unsigned STATUS_MASK;
 
 /* Includes needed by most files. */
 
-#include "version.h"
-#include "config.h"
-#include "diagnostics.h"
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -49,6 +47,10 @@ typedef unsigned STATUS_MASK;
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#if defined ENABLE_COMPILER
+#include <dlfcn.h>
+#endif
 
 #if defined ENABLE_PAR_CLAUSE
 #include <pthread.h>
@@ -66,6 +68,7 @@ typedef unsigned STATUS_MASK;
 #if defined ENABLE_MACOSX
 #define __off_t off_t
 #define __pid_t pid_t
+#define __mode_t mode_t
 #endif
 
 #if defined ENABLE_POSTGRESQL
@@ -102,7 +105,12 @@ typedef unsigned __off_t;
 #define MEGABYTE (KILOBYTE * KILOBYTE)
 #define GIGABYTE (KILOBYTE * MEGABYTE)
 
+#define HIDDEN_TEMP_FILE_NAME ".a68g.tmp"
 #define LISTING_EXTENSION ".l"
+#define LIBRARY_EXTENSION ".so"
+#define OBJECT_EXTENSION ".c"
+#define SCRIPT_EXTENSION ".sh"
+#define BINARY_EXTENSION ".o"
 #define A68_TRUE ((BOOL_T) 1)
 #define A68_FALSE ((BOOL_T) 0)
 #define TIME_FORMAT "%A %d-%b-%Y %H:%M:%S"
@@ -114,90 +122,99 @@ typedef int *A68_ALIGN_T;
 #define ALIGNED_SIZE_OF(p) ((int) A68_ALIGN (sizeof (p)))
 #define MOID_SIZE(p) A68_ALIGN ((p)->size)
 
-#define BUFFER_SIZE (KILOBYTE)			/* BUFFER_SIZE exceeds actual requirements. */
+/* BUFFER_SIZE exceeds actual requirements. */
+#define BUFFER_SIZE (KILOBYTE)
 #define SMALL_BUFFER_SIZE 128
 #define MAX_ERRORS 10
-#define MAX_PRIORITY 9				/* Algol 68 requirement. */
-#define MIN_MEM_SIZE (32 * KILOBYTE)		/* Stack, heap blocks not smaller than this in kB. */
-#define MAX_LINE_WIDTH (BUFFER_SIZE / 2)	/* Must be smaller than BUFFER_SIZE */
+/* MAX_PRIORITY follows from the revised report. */
+#define MAX_PRIORITY 9
+/* Stack, heap blocks not smaller than MIN_MEM_SIZE in kB. */
+#define MIN_MEM_SIZE (32 * KILOBYTE)
+/* MAX_LINE_WIDTH must be smaller than BUFFER_SIZE. */
+#define MAX_LINE_WIDTH (BUFFER_SIZE / 2)
 #define MOID_WIDTH 80
 
-#define BYTES_WIDTH 32		/* More useful than the usual 4. */
-#define LONG_BYTES_WIDTH 64	/* More useful than the usual 8. */
+/* This BYTES_WIDTH is more useful than the usual 4. */
+#define BYTES_WIDTH 32
+/* This LONG_BYTES_WIDTH is more useful than the usual 8. */
+#define LONG_BYTES_WIDTH 256
 
 #define A68_READ_ACCESS (O_RDONLY)
 #define A68_WRITE_ACCESS (O_WRONLY | O_CREAT | O_TRUNC)
-#define A68_PROTECTION (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)	/* -rw-r--r-- */
+#define A68_PROTECTION (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) /* -rw-r--r-- */
 
-#define A68_MAX_INT 	(INT_MAX)
-#define A68_MIN_INT 	(INT_MIN)
-#define A68_MAX_UNT 	(UINT_MAX)
-#define A68_MAX_BITS	(UINT_MAX)
+#define A68_MAX_INT (INT_MAX)
+#define A68_MIN_INT (INT_MIN)
+#define A68_MAX_UNT (UINT_MAX)
+#define A68_MAX_BITS (UINT_MAX)
+#define A68_PI 3.1415926535897932384626433832795029
 
 #define TO_UCHAR(c) ((c) >= 0 ? (int) (c) : (int) (UCHAR_MAX + (int) (c) + 1))
 
-#define BLANK_CHAR      ' '
-#define CR_CHAR		'\r'
-#define EOF_CHAR	(EOF)
-#define ERROR_CHAR      '*'
-#define ESCAPE_CHAR	'\\'
-#define EXPONENT_CHAR   'e'
-#define FLIP_CHAR       'T'
-#define FLOP_CHAR       'F'
-#define FORMFEED_CHAR	'\f'
-#define NEWLINE_CHAR	'\n'
-#define NEWLINE_STRING	"\n"
+#define BLANK_CHAR ' '
+#define CR_CHAR '\r'
+#define EOF_CHAR (EOF)
+#define ERROR_CHAR '*'
+#define ESCAPE_CHAR '\\'
+#define EXPONENT_CHAR 'e'
+#define FLIP_CHAR 'T'
+#define FLOP_CHAR 'F'
+#define FORMFEED_CHAR '\f'
+#define NEWLINE_CHAR '\n'
+#define NEWLINE_STRING "\n"
 #define NULL_CHAR	'\0'
-#define POINT_CHAR 	'.'
-#define QUOTE_CHAR	'"'
-#define RADIX_CHAR      'r'
-#define TAB_CHAR	'\t'
+#define POINT_CHAR '.'
+#define QUOTE_CHAR '"'
+#define RADIX_CHAR 'r'
+#define TAB_CHAR '\t'
 
-#define A68G_PI 	3.1415926535897932384626433832795029	/* pi*/
-
-#define MONADS  	"%^&+-~!?"
-#define NOMADS  	"></=*"
+#define MONADS "%^&+-~!?"
+#define NOMADS "></=*"
 
 #define PRIMAL_SCOPE 0
 
 /* Status Masks */
 
-#define NULL_MASK 			0x00000000
-#define IN_HEAP_MASK			0x00000001
-#define IN_FRAME_MASK			0x00000002
-#define IN_STACK_MASK			0x00000004
-#define IN_HANDLE_MASK			0x00000008
-#define INITIALISED_MASK 		0x00000010
-#define CONSTANT_MASK 			0x00000020
-#define NO_SWEEP_MASK 			0x00000040
-#define ROW_COLOUR_MASK 		0x00000080
-#define COOKIE_MASK 			0x00000100
-#define SCOPE_ERROR_MASK 		0x00000100
-#define ASSIGNED_MASK 			0x00000200
-#define ALLOCATED_MASK 			0x00000400
-#define STANDENV_PROC_MASK 		0x00000800
-#define COLOUR_MASK 			0x00001000
-#define PROCEDURE_MASK 			0x00002000
-#define OPTIMAL_MASK	 		0x00004000
-#define SERIAL_MASK 			0x00008000
-#define CROSS_REFERENCE_MASK 		0x00010000
-#define TREE_MASK 			0x00020000
-#define CODE_MASK 			0x00040000
-#define SYNTAX_TREE_MASK 		0x00080000
-#define SOURCE_MASK	 		0x00100000
-#define ASSERT_MASK 			0x00200000
-#define NIL_MASK			0x00400000
-#define SKIP_PROCEDURE_MASK	  	0x00800000
-#define SKIP_FORMAT_MASK	  	0x00800000
-#define SKIP_UNION_MASK		  	0x00800000
-#define INTERRUPTIBLE_MASK		0x01000000
-#define BREAKPOINT_MASK 		0x02000000
-#define BREAKPOINT_TEMPORARY_MASK 	0x04000000
-#define BREAKPOINT_INTERRUPT_MASK	0x08000000
-#define BREAKPOINT_WATCH_MASK		0x10000000
-#define BREAKPOINT_TRACE_MASK		0x20000000
-#define SEQUENCE_MASK                   0x40000000
-#define BREAKPOINT_ERROR_MASK		0xffffffff
+#define NULL_MASK 0x00000000
+#define IN_HEAP_MASK 0x00000001
+#define IN_FRAME_MASK 0x00000002
+#define IN_STACK_MASK 0x00000004
+#define IN_HANDLE_MASK 0x00000008
+#define INITIALISED_MASK 0x00000010
+#define CONSTANT_MASK 0x00000020
+#define NO_SWEEP_MASK 0x00000040
+#define ROW_COLOUR_MASK 0x00000080
+#define COOKIE_MASK 0x00000100
+#define SCOPE_ERROR_MASK 0x00000100
+#define ASSIGNED_MASK 0x00000200
+#define ALLOCATED_MASK 0x00000400
+#define STANDENV_PROC_MASK 0x00000800
+#define COLOUR_MASK 0x00001000
+#define PROCEDURE_MASK 0x00002000
+#define OPTIMAL_MASK 0x00004000
+#define SERIAL_MASK 0x00008000
+#define CROSS_REFERENCE_MASK 0x00010000
+#define TREE_MASK 0x00020000
+#define CODE_MASK 0x00040000
+#define SYNTAX_TREE_MASK 0x00080000
+#define SOURCE_MASK 0x00100000
+#define ASSERT_MASK 0x00200000
+#define NIL_MASK 0x00400000
+#define SKIP_PROCEDURE_MASK 0x00800000
+#define SKIP_FORMAT_MASK 0x00800000
+#define SKIP_UNION_MASK	0x00800000
+#define INTERRUPTIBLE_MASK 0x01000000
+#define BREAKPOINT_MASK 0x02000000
+#define BREAKPOINT_TEMPORARY_MASK 0x04000000
+#define BREAKPOINT_INTERRUPT_MASK 0x08000000
+#define BREAKPOINT_WATCH_MASK	0x10000000
+#define BREAKPOINT_TRACE_MASK	0x20000000
+#define SEQUENCE_MASK 0x40000000
+#define BREAKPOINT_ERROR_MASK	0xffffffff
+
+/* CODEX masks */
+
+#define PROC_DECLARATION_MASK 0x00000001
 
 /*
 Some (necessary) macros to overcome the ambiguity in having signed or unsigned
@@ -281,6 +298,7 @@ typedef void GENIE_PROCEDURE (NODE_T *);
 #define SET_REF_SCOPE(z, s) { if (!IS_IN_HEAP (z)) { REF_SCOPE (z) = (s);}}
 
 typedef struct A68_REF A68_REF, A68_ROW;
+typedef BYTE_T * A68_STRUCT;
 
 struct A68_HANDLE
 {
@@ -303,10 +321,10 @@ struct A68_REF
 struct OPTIONS_T
 {
   OPTION_LIST_T *list;
-  BOOL_T backtrace, brackets, check_only, cross_reference, debug, moid_listing, 
-    optimise, portcheck, pragmat_sema, reductions, regression_test, run, 
-    source_listing, standard_prelude_listing, statistics_listing, 
-    stropping, trace, tree_listing, unused, verbose, version; 
+  BOOL_T backtrace, brackets, check_only, cross_reference, debug, compile, keep, moid_listing, 
+    object_listing, optimise, portcheck, pragmat_sema, reductions, regression_test, run, rerun,
+    run_script, source_listing, standard_prelude_listing, statistics_listing, 
+    strict, stropping, trace, tree_listing, unused, verbose, version; 
   int time_limit; 
   STATUS_MASK nodemask;
 };
@@ -349,14 +367,14 @@ struct A68_CHANNEL
 
 struct A68_BOOL
 {
-  BYTE_T status;
+  STATUS_MASK status;
   BOOL_T value;
 };
 
 struct A68_CHAR
 {
   BYTE_T status;
-  signed char value;
+  int value;
 };
 
 struct A68_COLLITEM
@@ -398,6 +416,12 @@ struct A68_REAL
   STATUS_MASK status;
   double value;
 };
+
+typedef A68_REAL A68_COMPLEX[2];
+#define STATUS_RE(z) (STATUS (&z[0]))
+#define STATUS_IM(z) (STATUS (&z[1]))
+#define RE(z) (VALUE (&z[0]))
+#define IM(z) (VALUE (&z[1]))
 
 struct A68_STREAM
 {
@@ -471,8 +495,8 @@ struct DIAGNOSTIC_T
 
 struct FILES_T
 {
-  char *path, *generic_name;
-  struct A68_STREAM source, listing;
+  char *path, *initial_name, *generic_name;
+  struct A68_STREAM binary, library, script, object, source, listing;
 };
 
 struct KEYWORD_T
@@ -546,14 +570,13 @@ struct NODE_T
   NODE_INFO_T *info;
   NODE_T *next, *previous, *sub, *sequence, *nest;
   PACK_T *pack;
-  STATUS_MASK status;
+  STATUS_MASK status, codex;
   SYMBOL_TABLE_T *symbol_table;
   TAG_T *tag;
 };
 
 struct NODE_INFO_T
 {
-  MODULE_T *module;
   int PROCEDURE_LEVEL, priority;
   char *char_in_line, *symbol, *expr;
   SOURCE_LINE_T *line;
@@ -569,6 +592,7 @@ struct GENIE_INFO_T
   BYTE_T *offset;
   void *constant;
   TAG_T *protect_sweep;
+  char *compile_name;
 };
 
 struct OPTION_LIST_T
@@ -630,7 +654,6 @@ struct SOURCE_LINE_T
   DIAGNOSTIC_T *diagnostics;
   int number, print_status;
   BOOL_T list;
-  MODULE_T *module;
   SOURCE_LINE_T *next, *previous;
 };
 
@@ -647,7 +670,7 @@ struct SYMBOL_TABLE_T
 
 struct TAG_T
 {
-  STATUS_MASK status;
+  STATUS_MASK status, codex;
   SYMBOL_TABLE_T *symbol_table;
   MOID_T *type;
   NODE_T *node, *unit;
@@ -1039,16 +1062,19 @@ enum ATTRIBUTES
 enum
 { NOT_PRINTED, TO_PRINT, PRINTED };
 
-#define A68_NO_DIAGNOSTICS 0
-#define A68_ERROR 1
-#define A68_SYNTAX_ERROR 2
-#define A68_WARNING 3
-#define A68_RUNTIME_ERROR 4
-#define A68_SUPPRESS_SEVERITY 5
-#define A68_ALL_DIAGNOSTICS 6
-#define A68_RERUN 7
-#define A68_FORCE_DIAGNOSTICS 128
-#define A68_FORCE_QUIT 256
+enum {
+  A68_NO_DIAGNOSTICS = 0,
+  A68_ERROR,
+  A68_SYNTAX_ERROR,
+  A68_MATH_ERROR,
+  A68_WARNING,
+  A68_RUNTIME_ERROR,
+  A68_SUPPRESS_SEVERITY,
+  A68_ALL_DIAGNOSTICS,
+  A68_RERUN,
+  A68_FORCE_DIAGNOSTICS = 128,
+  A68_FORCE_QUIT = 256
+};
 
 enum
 { NO_DEFLEXING = 1, SAFE_DEFLEXING, ALIAS_DEFLEXING, FORCE_DEFLEXING, SKIP_DEFLEXING };
@@ -1084,13 +1110,13 @@ enum
    int _m_k = (n); A68_ALIGN_T *_m_u = (A68_ALIGN_T *) (d), _m_v = (A68_ALIGN_T) (s);\
    while (_m_k > 0) {*_m_u++ = _m_v; _m_k -= A68_ALIGNMENT;}}
 
-#define ABNORMAL_END(p, reason, info) {\
+#define ABEND(p, reason, info) {\
   if (p) {\
     abend (reason, info, __FILE__, __LINE__);\
   }}
 
 #if defined ENABLE_CURSES
-#define CHECK_RETVAL(f) {\
+#define ASSERT(f) {\
   extern BOOL_T curses_active;\
   if (!(f)) {\
     if (curses_active == A68_TRUE) {\
@@ -1098,11 +1124,11 @@ enum
       (void) endwin ();\
       curses_active = A68_FALSE;\
     }\
-    ABNORMAL_END(A68_TRUE, "Return value failure", ERROR_SPECIFICATION)\
+    ABEND(A68_TRUE, "Return value failure", ERROR_SPECIFICATION)\
   }}
 #else
-#define CHECK_RETVAL(f) {\
-  ABNORMAL_END((!(f)), "Return value failure", ERROR_SPECIFICATION)\
+#define ASSERT(f) {\
+  ABEND((!(f)), "Return value failure", ERROR_SPECIFICATION)\
   }
 #endif
 
@@ -1124,7 +1150,7 @@ enum
 #define DIM(p) ((p)->dim)
 #define ENVIRON(p) ((p)->environ)
 #define EQUIVALENT(p) ((p)->equivalent_mode)
-#define EXIT_COMPILATION longjmp(a68_prog.exit_compilation, 1)
+#define EXIT_COMPILATION longjmp(program.exit_compilation, 1)
 #define FILE_DEREF(p) ((A68_FILE *) ADDRESS (p))
 #define FORWARD(p) ((p) = NEXT (p))
 #define FORMAT(p) ((p)->format)
@@ -1143,15 +1169,16 @@ enum
 #define STATUS_CLEAR(p, q) {STATUS (p) &= (~(q));}
 #define STATUS_TEST(p, q) ((STATUS (p) & (q)) != (unsigned) 0)
 #define MODE(p) (a68_modes.p)
-#define MODULE(p) ((p)->module)
 #define MOID(p) ((p)->type)
 #define MORE(p) ((p)->more)
 #define MULTIPLE(p) ((p)->multiple_mode)
 #define NAME(p) ((p)->name)
 #define NEST(p) ((p)->nest)
 #define NEXT_NEXT(p) (NEXT (NEXT (p)))
+#define NEXT_NEXT_NEXT(p) (NEXT (NEXT_NEXT (p)))
 #define NEXT(p) ((p)->next)
 #define NEXT_SUB(p) (NEXT (SUB (p)))
+#define NEXT_NEXT_SUB(p) (NEXT (NEXT_SUB (p)))
 #define NODE(p) ((p)->node)
 #define NUMBER(p) ((p)->number)
 #define OFFSET(p) ((p)->offset)
@@ -1170,8 +1197,11 @@ enum
 #define SLICE(p) ((p)->slice)
 #define SORT(p) ((p)->sort)
 #define STATUS(p) ((p)->status)
+#define CODEX(p) ((p)->codex)
 #define SUB_NEXT(p) (SUB (NEXT (p)))
 #define SUB(p) ((p)->sub)
+#define SUB_MOID(p) (SUB (MOID (p)))
+#define SUB_SUB(p) (SUB (SUB (p)))
 #define SYMBOL(p) ((p)->info->symbol)
 #define SYMBOL_TABLE(p) ((p)->symbol_table)
 #define TAG_TABLE(p) ((p)->symbol_table)
@@ -1193,17 +1223,11 @@ enum
 
 extern ADDR_T fixed_heap_pointer, temp_heap_pointer;
 extern BOOL_T no_warnings;
+extern BOOL_T in_execution;
 extern BOOL_T halt_typing, time_limit_flag, listing_is_safe;
 extern BOOL_T get_fixed_heap_allowed;
 extern BYTE_T *system_stack_offset;
 extern char output_line[], edit_line[], input_line[];
-extern double a68g_acosh (double);
-extern double a68g_asinh (double);
-extern double a68g_atan2 (double, double);
-extern double a68g_atanh (double);
-extern double a68g_exp (double);
-extern double a68g_hypot (double, double);
-extern double a68g_log1p (double);
 extern double begin_of_time;
 extern double garbage_seconds;
 extern int garbage_collects;
@@ -1211,9 +1235,10 @@ extern int stack_size;
 extern int symbol_table_count, mode_count;
 extern int term_width;
 extern int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
+extern clock_t clock_res;
 extern KEYWORD_T *top_keyword;
 extern MODES_T a68_modes;
-extern MODULE_T a68_prog;
+extern MODULE_T program;
 extern MOID_LIST_T *top_moid_list, *old_moid_list;
 extern POSTULATE_T *top_postulate, *top_postulate_list;
 extern SYMBOL_TABLE_T *stand_env;
@@ -1223,47 +1248,28 @@ extern TOKEN_T *top_token;
 extern int global_argc;
 extern char **global_argv;
 extern char a68g_cmd_name[];
+extern NODE_T **node_register;
 
 extern A68_REF heap_generator (NODE_T *, MOID_T *, int);
 extern ADDR_T calculate_internal_index (A68_TUPLE *, int);
 extern BOOL_T increment_internal_index (A68_TUPLE *, int);
-extern BOOL_T lexical_analyzer (MODULE_T *);
+extern BOOL_T lexical_analyser (void);
 extern BOOL_T match_string (char *, char *, char);
-extern BOOL_T set_options (MODULE_T *, OPTION_LIST_T *, BOOL_T);
+extern BOOL_T set_options (OPTION_LIST_T *, BOOL_T);
+extern BOOL_T whether (NODE_T * p, ...);
 extern BOOL_T whether_coercion (NODE_T *);
 extern BOOL_T whether_firm (MOID_T *, MOID_T *);
 extern BOOL_T whether_modes_equal (MOID_T *, MOID_T *, int);
 extern BOOL_T whether_modes_equivalent (MOID_T *, MOID_T *);
 extern BOOL_T whether_new_lexical_level (NODE_T *);
-extern BOOL_T whether (NODE_T * p, ...);
 extern BOOL_T whether_one_of (NODE_T * p, ...);
 extern BOOL_T whether_subset (MOID_T *, MOID_T *, int);
 extern BOOL_T whether_unitable (MOID_T *, MOID_T *, int);
 extern BYTE_T *get_fixed_heap_space (size_t);
 extern BYTE_T *get_temp_heap_space (size_t);
-extern char *a68g_strchr (char *, int);
-extern char *a68g_strrchr (char *, int);
-extern char *ctrl_char (int);
-extern char digit_to_char (int);
-extern char *moid_to_string (MOID_T *, int, NODE_T *);
-extern char *new_fixed_string (char *);
-extern char *new_string (char *);
-extern char *non_terminal_string (char *, int);
-extern char *propagator_name (PROPAGATOR_PROCEDURE *p);
-extern char *read_string_from_tty (char *);
-extern char *standard_environ_proc_name (GENIE_PROCEDURE);
-extern double seconds (void);
-extern double ten_up (int);
 extern GENIE_INFO_T *new_genie_info (void);
-extern int count_pack_members (PACK_T *);
-extern int first_tag_global (SYMBOL_TABLE_T *, char *);
-extern int get_row_size (A68_TUPLE *, int);
-extern int grep_in_string (char *, char *, int *, int *);
-extern int heap_available (void);
-extern int moid_size (MOID_T *);
-extern int whether_identifier_or_label_global (SYMBOL_TABLE_T *, char *);
-extern KEYWORD_T *find_keyword_from_attribute (KEYWORD_T *, int);
 extern KEYWORD_T *find_keyword (KEYWORD_T *, char *);
+extern KEYWORD_T *find_keyword_from_attribute (KEYWORD_T *, int);
 extern MOID_T *add_mode (MOID_T **, int, int, NODE_T *, MOID_T *, PACK_T *);
 extern MOID_T *depref_completely (MOID_T *);
 extern MOID_T *new_moid (void);
@@ -1273,13 +1279,9 @@ extern NODE_T *new_node (void);
 extern NODE_T *some_node (char *);
 extern PACK_T *absorb_union_pack (PACK_T *, int *);
 extern PACK_T *new_pack (void);
-extern POSTULATE_T *whether_postulated_pair (POSTULATE_T *, MOID_T *, MOID_T *);
 extern POSTULATE_T *whether_postulated (POSTULATE_T *, MOID_T *);
+extern POSTULATE_T *whether_postulated_pair (POSTULATE_T *, MOID_T *, MOID_T *);
 extern SOURCE_LINE_T *new_source_line (void);
-extern ssize_t io_read_conv (FILE_T, void *, size_t);
-extern ssize_t io_read (FILE_T, void *, size_t);
-extern ssize_t io_write_conv (FILE_T, const void *, size_t);
-extern ssize_t io_write (FILE_T, const void *, size_t);
 extern SYMBOL_TABLE_T *find_level (NODE_T *, int);
 extern SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T *);
 extern TAG_T *add_tag (SYMBOL_TABLE_T *, int, NODE_T *, MOID_T *, int);
@@ -1288,12 +1290,47 @@ extern TAG_T *find_tag_local (SYMBOL_TABLE_T *, int, char *);
 extern TAG_T *new_tag (void);
 extern TOKEN_T *add_token (TOKEN_T **, char *);
 extern TOKEN_T *find_token (TOKEN_T **, char *);
+extern char *a68g_strchr (char *, int);
+extern char *a68g_strrchr (char *, int);
+extern char *ctrl_char (int);
+extern char *moid_to_string (MOID_T *, int, NODE_T *);
+extern char *new_fixed_string (char *);
+extern char *new_string (char *);
+extern char *non_terminal_string (char *, int);
+extern char *propagator_name (PROPAGATOR_PROCEDURE *p);
+extern char *read_string_from_tty (char *);
+extern char *standard_environ_proc_name (GENIE_PROCEDURE);
+extern char digit_to_char (int);
+extern double a68g_acosh (double);
+extern double a68g_asinh (double);
+extern double a68g_atan2 (double, double);
+extern double a68g_atanh (double);
+extern double a68g_exp (double);
+extern double a68g_hypot (double, double);
+extern double a68g_log1p (double);
+extern double seconds (void);
+extern double ten_up (int);
+extern int a68g_round (double);
+extern int count_pack_members (PACK_T *);
+extern int first_tag_global (SYMBOL_TABLE_T *, char *);
+extern int get_row_size (A68_TUPLE *, int);
+extern int grep_in_string (char *, char *, int *, int *);
+extern int heap_available (void);
+extern int moid_size (MOID_T *);
+extern int whether_identifier_or_label_global (SYMBOL_TABLE_T *, char *);
+extern ssize_t io_read (FILE_T, void *, size_t);
+extern ssize_t io_read_conv (FILE_T, void *, size_t);
+extern ssize_t io_write (FILE_T, const void *, size_t);
+extern ssize_t io_write_conv (FILE_T, const void *, size_t);
 extern unsigned a68g_strtoul (char *, char **, int);
+extern void *get_heap_space (size_t);
+extern void PROTECT_SWEEP_HANDLE (A68_REF *);
+extern void UNPROTECT_SWEEP_HANDLE (A68_REF *);
 extern void a68g_exit (int);
 extern void abend (char *, char *, char *, int);
 extern void acronym (char *, char *);
-extern void add_mode_to_pack_end (PACK_T **, MOID_T *, char *, NODE_T *);
 extern void add_mode_to_pack (PACK_T **, MOID_T *, char *, NODE_T *);
+extern void add_mode_to_pack_end (PACK_T **, MOID_T *, char *, NODE_T *);
 extern void add_moid_list (MOID_LIST_T **, SYMBOL_TABLE_T *);
 extern void add_moid_moid_list (NODE_T *, MOID_LIST_T **);
 extern void add_option_list (OPTION_LIST_T **, char *, SOURCE_LINE_T *);
@@ -1307,16 +1344,17 @@ extern void bind_routine_tags_to_tree (NODE_T *);
 extern void bind_tag (TAG_T **, TAG_T *);
 extern void bottom_up_error_check (NODE_T *);
 extern void bottom_up_parser (NODE_T *);
+extern void brief_mode_flat (FILE_T, MOID_T *);
 extern void brief_moid_flat (FILE_T, MOID_T *);
 extern void bufcat (char *, char *, int);
 extern void bufcpy (char *, char *, int);
-extern void brief_mode_flat (FILE_T, MOID_T *);
 extern void check_parenthesis (NODE_T *);
 extern void coercion_inserter (NODE_T *);
 extern void collect_taxes (NODE_T *);
+extern void compiler (FILE_T);
 extern void contract_union (MOID_T *, int *);
 extern void default_mem_sizes (void);
-extern void default_options (MODULE_T *);
+extern void default_options (void);
 extern void diagnostic_line (int, SOURCE_LINE_T *, char *, char *, ...);
 extern void diagnostic_node (int, NODE_T *, char *, ...);
 extern void diagnostics_to_terminal (SOURCE_LINE_T *, int);
@@ -1328,24 +1366,24 @@ extern void finalise_symbol_table_setup (NODE_T *, int);
 extern void free_heap (void);
 extern void free_postulate_list (POSTULATE_T *, POSTULATE_T *);
 extern void free_postulates (void);
-extern void genie_init_heap (NODE_T *, MODULE_T *);
-extern void *get_heap_space (size_t);
+extern void genie_init_heap (NODE_T *);
+extern void get_global_level (NODE_T *);
 extern void get_max_simplout_size (NODE_T *);
 extern void get_moid_list (MOID_LIST_T **, NODE_T *);
-extern void get_refinements (MODULE_T *);
+extern void get_refinements (void);
 extern void get_stack_size (void);
 extern void init_curses (void);
 extern void init_heap (void);
-extern void initialise_internal_index (A68_TUPLE *, int);
 extern void init_moid_list (void);
-extern void init_options (MODULE_T *);
+extern void init_options (void);
 extern void init_postulates (void);
 extern void init_tty (void);
+extern void initialise_internal_index (A68_TUPLE *, int);
 extern void io_close_tty_line (void);
 extern void io_write_string (FILE_T, const char *);
-extern void isolate_options (MODULE_T *, char *, SOURCE_LINE_T *);
+extern void isolate_options (char *, SOURCE_LINE_T *);
 extern void jumps_from_procs (NODE_T * p);
-extern void list_source_line (FILE_T, MODULE_T *, SOURCE_LINE_T *, BOOL_T);
+extern void list_source_line (FILE_T, SOURCE_LINE_T *, BOOL_T);
 extern void maintain_mode_table (NODE_T *);
 extern void make_postulate (POSTULATE_T **, MOID_T *, MOID_T *);
 extern void make_soid (SOID_T *, int, MOID_T *, int);
@@ -1361,15 +1399,14 @@ extern void optimise_tree (NODE_T *);
 extern void portcheck (NODE_T *);
 extern void preliminary_symbol_table_setup (NODE_T *);
 extern void print_internal_index (FILE_T, A68_TUPLE *, int);
-extern void print_item (NODE_T *, FILE_T, BYTE_T *, MOID_T *);
 extern void print_mode_flat (FILE_T, MOID_T *);
 extern void protect_from_sweep (NODE_T *);
-extern void PROTECT_SWEEP_HANDLE (A68_REF *);
-extern void prune_echoes (MODULE_T *, OPTION_LIST_T *);
-extern void put_refinements (MODULE_T *);
-extern void read_env_options (MODULE_T *);
-extern void read_rc_options (MODULE_T *);
+extern void prune_echoes (OPTION_LIST_T *);
+extern void put_refinements (void);
+extern void read_env_options (void);
+extern void read_rc_options (void);
 extern void rearrange_goto_less_jumps (NODE_T *);
+extern void register_nodes (NODE_T *);
 extern void remove_empty_symbol_tables (NODE_T *);
 extern void remove_file_type (char *);
 extern void renumber_nodes (NODE_T *, int *);
@@ -1384,21 +1421,23 @@ extern void set_par_level (NODE_T *, int);
 extern void set_proc_level (NODE_T *, int);
 extern void set_up_mode_table (NODE_T *);
 extern void set_up_tables (void);
-extern void source_listing (MODULE_T *);
 extern void state_license (FILE_T);
 extern void state_version (FILE_T);
 extern void substitute_brackets (NODE_T *);
 extern void tie_label_to_serial (NODE_T *);
 extern void tie_label_to_unit (NODE_T *);
 extern void top_down_parser (NODE_T *);
-extern void UNPROTECT_SWEEP_HANDLE (A68_REF *);
+extern void tree_listing (FILE_T, NODE_T *, int, SOURCE_LINE_T *, int *);
 extern void victal_checker (NODE_T *);
 extern void warn_for_unused_tags (NODE_T *);
 extern void warn_tags_threads (NODE_T *);
-extern void where (FILE_T, NODE_T *);
+extern void where_in_source (FILE_T, NODE_T *);
 extern void widen_denotation (NODE_T *);
-extern void write_listing_header (MODULE_T *);
-extern void write_listing (MODULE_T *);
+extern void write_listing (void);
+extern void write_listing_header (void);
+extern void write_object_listing (void);
 extern void write_source_line (FILE_T, SOURCE_LINE_T *, NODE_T *, int);
+extern void write_source_listing (void);
+extern void write_tree_listing (void);
 
 #endif

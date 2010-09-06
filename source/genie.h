@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -55,31 +55,6 @@ struct ACTIVATION_RECORD
 #endif
 };
 
-#define FRAME_ADDRESS(n) ((BYTE_T *) &(stack_segment[n]))
-#define FRAME_CLEAR(m) FILL_ALIGNED ((BYTE_T *) FRAME_OFFSET (FRAME_INFO_SIZE), 0, (m))
-#define FRAME_DYNAMIC_LINK(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->dynamic_link)
-#define FRAME_DYNAMIC_SCOPE(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->dynamic_scope)
-#define FRAME_INCREMENT(n) (SYMBOL_TABLE (FRAME_TREE(n))->ap_increment)
-#define FRAME_INFO_SIZE (A68_ALIGN (ALIGNED_SIZE_OF (ACTIVATION_RECORD)))
-#define FRAME_JUMP_STAT(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->jump_stat)
-#define FRAME_LEXICAL_LEVEL(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->frame_level)
-#define FRAME_LOCAL(n, m) (FRAME_ADDRESS ((n) + FRAME_INFO_SIZE + (m)))
-#define FRAME_NUMBER(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->frame_no)
-#define FRAME_OBJECT(n) (FRAME_OFFSET (FRAME_INFO_SIZE + (n)))
-#define FRAME_OFFSET(n) (FRAME_ADDRESS (frame_pointer + (n)))
-#define FRAME_OUTER(n) (SYMBOL_TABLE (FRAME_TREE(n))->outer)
-#define FRAME_PARAMETER_LEVEL(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->parameter_level)
-#define FRAME_PARAMETERS(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->parameters)
-#define FRAME_PROC_FRAME(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->proc_frame)
-#define FRAME_SIZE(fp) (FRAME_INFO_SIZE + FRAME_INCREMENT (fp))
-#define FRAME_STATIC_LINK(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->static_link)
-#define FRAME_TOP (FRAME_OFFSET (0))
-#define FRAME_TREE(n) (NODE ((ACTIVATION_RECORD *) FRAME_ADDRESS(n)))
-
-#if defined ENABLE_PAR_CLAUSE
-#define FRAME_THREAD_ID(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->thread_id)
-#endif
-
 /* Stack manipulation. */
 
 #define STACK_ADDRESS(n) ((BYTE_T *) &(stack_segment[(n)]))
@@ -109,7 +84,6 @@ extern int storage_overhead;
 #if defined ENABLE_PAR_CLAUSE
 #endif
 
-extern BOOL_T confirm_exit (void);
 extern int free_handle_count, max_handle_count;
 extern void genie_find_proc_op (NODE_T *, int *);
 extern void sweep_heap (NODE_T *, ADDR_T);
@@ -151,6 +125,7 @@ extern GENIE_PROCEDURE genie_atan2_long_mp;
 extern GENIE_PROCEDURE genie_atan2_real;
 extern GENIE_PROCEDURE genie_atan_long_complex;
 extern GENIE_PROCEDURE genie_atan_long_mp;
+extern GENIE_PROCEDURE genie_abs_bits;
 extern GENIE_PROCEDURE genie_bin_int;
 extern GENIE_PROCEDURE genie_bin_long_mp;
 extern GENIE_PROCEDURE genie_bits_lengths;
@@ -406,7 +381,6 @@ extern GENIE_PROCEDURE genie_re_long_complex;
 extern GENIE_PROCEDURE genie_repr_char;
 extern GENIE_PROCEDURE genie_round_long_mp;
 extern GENIE_PROCEDURE genie_round_real;
-extern GENIE_PROCEDURE genie_seconds;
 extern GENIE_PROCEDURE genie_set_bits;
 extern GENIE_PROCEDURE genie_set_long_bits;
 extern GENIE_PROCEDURE genie_set_longlong_bits;
@@ -508,35 +482,11 @@ extern PROPAGATOR_T genie_dyadic_quick (NODE_T *p);
 extern PROPAGATOR_T genie_enclosed (volatile NODE_T *p);
 extern PROPAGATOR_T genie_field_selection (NODE_T *p);
 extern PROPAGATOR_T genie_format_text (NODE_T *p);
-extern PROPAGATOR_T genie_formula_div_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_eq_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_eq_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_ge_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_ge_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_gt_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_gt_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_le_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_le_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_lt_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_lt_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_minus_int_constant (NODE_T *p);
-extern PROPAGATOR_T genie_formula_minus_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_minus_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_ne_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_ne_real (NODE_T *p);
 extern PROPAGATOR_T genie_formula (NODE_T *p);
-extern PROPAGATOR_T genie_formula_over_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_plus_int_constant (NODE_T *p);
-extern PROPAGATOR_T genie_formula_plus_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_plus_real (NODE_T *p);
-extern PROPAGATOR_T genie_formula_times_int (NODE_T *p);
-extern PROPAGATOR_T genie_formula_times_real (NODE_T *p);
 extern PROPAGATOR_T genie_generator (NODE_T *p);
 extern PROPAGATOR_T genie_identifier (NODE_T *p);
 extern PROPAGATOR_T genie_identifier_standenv (NODE_T *p);
 extern PROPAGATOR_T genie_identifier_standenv_proc (NODE_T *p);
-extern PROPAGATOR_T genie_identity_relation_is_nil (NODE_T *p);
-extern PROPAGATOR_T genie_identity_relation_isnt_nil (NODE_T *p);
 extern PROPAGATOR_T genie_identity_relation (NODE_T *p);
 extern PROPAGATOR_T genie_int_case (volatile NODE_T *p);
 extern PROPAGATOR_T genie_frame_identifier (NODE_T *p);
@@ -585,9 +535,8 @@ extern BOOL_T genie_string_to_value_internal (NODE_T *, MOID_T *, char *, BYTE_T
 extern BOOL_T genie_united_case_unit (NODE_T *, MOID_T *);
 extern char *a_to_c_string (NODE_T *, char *, A68_REF);
 extern char *genie_standard_format (NODE_T *, MOID_T *, void *);
-extern double dabs (double);
-extern double dmod (double, double);
-extern double dsign (double);
+extern double inverf (double);
+extern double inverfc (double);
 extern double rng_53_bit (void);
 extern int a68_string_size (NODE_T *, A68_REF);
 extern int iabs (int);
@@ -610,13 +559,14 @@ extern void genie_f_and_becomes (NODE_T *, MOID_T *, GENIE_PROCEDURE *);
 extern void genie_generator_bounds (NODE_T *);
 extern void genie_generator_internal (NODE_T *, MOID_T *, TAG_T *, LEAP_T, ADDR_T);
 extern void genie_init_lib (NODE_T *);
-extern void genie (MODULE_T *);
+extern void genie (void *);
 extern void genie_prepare_declarer (NODE_T *);
 extern void genie_push_undefined (NODE_T *, MOID_T *);
 extern void genie_serial_clause (NODE_T *, jmp_buf *);
 extern void genie_serial_units (NODE_T *, NODE_T **, jmp_buf *, int);
 extern void genie_subscript_linear (NODE_T *, ADDR_T *, int *);
 extern void genie_subscript (NODE_T *, A68_TUPLE **, int *, NODE_T **);
+extern void get_global_pointer (NODE_T *);
 extern void initialise_frame (NODE_T *);
 extern void init_rng (unsigned long);
 extern void install_signal_handlers (void);
@@ -626,7 +576,6 @@ extern void single_step (NODE_T *, unsigned);
 extern void stack_dump (FILE_T, ADDR_T, int, int *);
 extern void stack_dump_light (ADDR_T);
 extern void un_init_frame (NODE_T *);
-extern void where (FILE_T, NODE_T *);
 
 extern void genie_argc (NODE_T *);
 extern void genie_argv (NODE_T *);
@@ -718,5 +667,38 @@ extern void genie_pq_socket (NODE_T *);
 extern void genie_pq_tty (NODE_T *);
 extern void genie_pq_user (NODE_T *);
 #endif
+
+/* Library for code generator */
+
+extern int a68g_mod_int (int, int);
+extern int a68g_entier (double);
+extern A68_REF * a68g_plusab_real (A68_REF *, double);
+extern A68_REF * a68g_minusab_real (A68_REF *, double);
+extern A68_REF * a68g_timesab_real (A68_REF *, double);
+extern A68_REF * a68g_divab_real (A68_REF *, double);
+extern A68_REF * a68g_plusab_int (A68_REF *, int);
+extern A68_REF * a68g_minusab_int (A68_REF *, int);
+extern A68_REF * a68g_timesab_int (A68_REF *, int);
+extern A68_REF * a68g_overab_int (A68_REF *, int);
+extern double a68g_pow_real_int (double, int);
+extern double a68g_pow_real (double, double);
+extern double a68g_re_complex (A68_REAL *);
+extern double a68g_im_complex (A68_REAL *);
+extern double a68g_abs_complex (A68_REAL *);
+extern double a68g_arg_complex (A68_REAL *);
+extern void a68g_i_complex (A68_REAL *, double, double);
+extern void a68g_minus_complex (A68_REAL *, A68_REAL *);
+extern void a68g_conj_complex (A68_REAL *, A68_REAL *);
+extern void a68g_add_complex (A68_REAL *, A68_REAL *, A68_REAL *);
+extern void a68g_sub_complex (A68_REAL *, A68_REAL *, A68_REAL *);
+extern void a68g_mul_complex (A68_REAL *, A68_REAL *, A68_REAL *);
+extern void a68g_div_complex (A68_REAL *, A68_REAL *, A68_REAL *);
+extern void a68g_sqrt_complex (A68_REAL *, A68_REAL *);
+extern void a68g_exp_complex (A68_REAL *, A68_REAL *);
+extern void a68g_ln_complex (A68_REAL *, A68_REAL *);
+extern void a68g_sin_complex (A68_REAL *, A68_REAL *);
+extern void a68g_cos_complex (A68_REAL *, A68_REAL *);
+extern BOOL_T a68g_eq_complex (A68_REAL *, A68_REAL *);
+extern BOOL_T a68g_ne_complex (A68_REAL *, A68_REAL *);
 
 #endif

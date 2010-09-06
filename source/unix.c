@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -25,6 +25,8 @@ This code implements some UNIX/Linux/BSD related routines.
 In part contributed by Sian Leitch. 
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -494,7 +496,7 @@ static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
       int size = a68_string_size (p, *(A68_REF *) elem);
       CHECK_INIT (p, INITIALISED ((A68_REF *) elem), MODE (STRING));
       vec[k] = (char *) get_heap_space ((size_t) (1 + size));
-      CHECK_RETVAL (a_to_c_string (p, vec[k], *(A68_REF *) elem) != NULL);
+      ASSERT (a_to_c_string (p, vec[k], *(A68_REF *) elem) != NULL);
       if (k == VECTOR_SIZE - 1) {
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_TOO_MANY_ARGUMENTS);
         exit_genie (p, A68_RUNTIME_ERROR);
@@ -668,7 +670,7 @@ void genie_execve (NODE_T * p)
   POP_REF (p, &a_prog);
 /* Convert strings and hasta el infinito. */
   prog = (char *) get_heap_space ((size_t) (1 + a68_string_size (p, a_prog)));
-  CHECK_RETVAL (a_to_c_string (p, prog, a_prog) != NULL);
+  ASSERT (a_to_c_string (p, prog, a_prog) != NULL);
   convert_string_vector (p, argv, a_args);
   convert_string_vector (p, envp, a_env);
   if (argv[0] == NULL) {
@@ -710,7 +712,7 @@ void genie_execve_child (NODE_T * p)
     char *prog, *argv[VECTOR_SIZE], *envp[VECTOR_SIZE];
 /* Convert  strings. */
     prog = (char *) get_heap_space ((size_t) (1 + a68_string_size (p, a_prog)));
-    CHECK_RETVAL (a_to_c_string (p, prog, a_prog) != NULL);
+    ASSERT (a_to_c_string (p, prog, a_prog) != NULL);
     convert_string_vector (p, argv, a_args);
     convert_string_vector (p, envp, a_env);
     if (argv[0] == NULL) {
@@ -771,16 +773,16 @@ Return a PIPE that contains the descriptors for the parent.
     char *prog, *argv[VECTOR_SIZE], *envp[VECTOR_SIZE];
 /* Convert  strings. */
     prog = (char *) get_heap_space ((size_t) (1 + a68_string_size (p, a_prog)));
-    CHECK_RETVAL (a_to_c_string (p, prog, a_prog) != NULL);
+    ASSERT (a_to_c_string (p, prog, a_prog) != NULL);
     convert_string_vector (p, argv, a_args);
     convert_string_vector (p, envp, a_env);
 /* Set up redirection. */
-    CHECK_RETVAL (close (ctop_fd[FD_READ]) == 0);
-    CHECK_RETVAL (close (ptoc_fd[FD_WRITE]) == 0);
-    CHECK_RETVAL (close (STDIN_FILENO) == 0);
-    CHECK_RETVAL (close (STDOUT_FILENO) == 0);
-    CHECK_RETVAL (dup2 (ptoc_fd[FD_READ], STDIN_FILENO) != -1);
-    CHECK_RETVAL (dup2 (ctop_fd[FD_WRITE], STDOUT_FILENO) != -1);
+    ASSERT (close (ctop_fd[FD_READ]) == 0);
+    ASSERT (close (ptoc_fd[FD_WRITE]) == 0);
+    ASSERT (close (STDIN_FILENO) == 0);
+    ASSERT (close (STDOUT_FILENO) == 0);
+    ASSERT (dup2 (ptoc_fd[FD_READ], STDIN_FILENO) != -1);
+    ASSERT (dup2 (ctop_fd[FD_WRITE], STDOUT_FILENO) != -1);
     if (argv[0] == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_EMPTY_ARGUMENT);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -791,8 +793,8 @@ Return a PIPE that contains the descriptors for the parent.
     genie_mkpipe (p, -1, -1, -1);
   } else {
 /* Parent process. */
-    CHECK_RETVAL (close (ptoc_fd[FD_READ]) == 0);
-    CHECK_RETVAL (close (ctop_fd[FD_WRITE]) == 0);
+    ASSERT (close (ptoc_fd[FD_READ]) == 0);
+    ASSERT (close (ctop_fd[FD_WRITE]) == 0);
     genie_mkpipe (p, ctop_fd[FD_READ], ptoc_fd[FD_WRITE], pid);
   }
 }
@@ -842,16 +844,16 @@ Child redirects STDIN and STDOUT.
     char *prog, *argv[VECTOR_SIZE], *envp[VECTOR_SIZE];
 /* Convert  strings. */
     prog = (char *) get_heap_space ((size_t) (1 + a68_string_size (p, a_prog)));
-    CHECK_RETVAL (a_to_c_string (p, prog, a_prog) != NULL);
+    ASSERT (a_to_c_string (p, prog, a_prog) != NULL);
     convert_string_vector (p, argv, a_args);
     convert_string_vector (p, envp, a_env);
 /* Set up redirection. */
-    CHECK_RETVAL (close (ctop_fd[FD_READ]) == 0);
-    CHECK_RETVAL (close (ptoc_fd[FD_WRITE]) == 0);
-    CHECK_RETVAL (close (STDIN_FILENO) == 0);
-    CHECK_RETVAL (close (STDOUT_FILENO) == 0);
-    CHECK_RETVAL (dup2 (ptoc_fd[FD_READ], STDIN_FILENO) != -1);
-    CHECK_RETVAL (dup2 (ctop_fd[FD_WRITE], STDOUT_FILENO) != -1);
+    ASSERT (close (ctop_fd[FD_READ]) == 0);
+    ASSERT (close (ptoc_fd[FD_WRITE]) == 0);
+    ASSERT (close (STDIN_FILENO) == 0);
+    ASSERT (close (STDOUT_FILENO) == 0);
+    ASSERT (dup2 (ptoc_fd[FD_READ], STDIN_FILENO) != -1);
+    ASSERT (dup2 (ctop_fd[FD_WRITE], STDOUT_FILENO) != -1);
     if (argv[0] == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_EMPTY_ARGUMENT);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -864,8 +866,8 @@ Child redirects STDIN and STDOUT.
 /* Parent process. */
     char ch;
     int pipe_read, ret, status;
-    CHECK_RETVAL (close (ptoc_fd[FD_READ]) == 0);
-    CHECK_RETVAL (close (ctop_fd[FD_WRITE]) == 0);
+    ASSERT (close (ptoc_fd[FD_READ]) == 0);
+    ASSERT (close (ctop_fd[FD_WRITE]) == 0);
     reset_transput_buffer (INPUT_BUFFER);
     do {
       pipe_read = (int) io_read_conv (ctop_fd[FD_READ], &ch, 1);
@@ -911,7 +913,7 @@ void genie_waitpid (NODE_T * p)
   RESET_ERRNO;
   POP_OBJECT (p, &k, A68_INT);
 #if ! defined ENABLE_WIN32
-  CHECK_RETVAL (waitpid ((__pid_t) VALUE (&k), NULL, 0) != -1);
+  ASSERT (waitpid ((__pid_t) VALUE (&k), NULL, 0) != -1);
 #endif
 }
 
@@ -2119,14 +2121,14 @@ void genie_http_content (NODE_T * p)
   conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
-    CHECK_RETVAL (close (socket_id) == 0);
+    ASSERT (close (socket_id) == 0);
     return;
   };
 /* Read from host. */
   WRITE (socket_id, get_transput_buffer (REQUEST_BUFFER));
   if (errno != 0) {
     PUSH_PRIMITIVE (p, errno, A68_INT);
-    CHECK_RETVAL (close (socket_id) == 0);
+    ASSERT (close (socket_id) == 0);
     return;
   };
 /* Initialise file descriptor set. */
@@ -2141,13 +2143,13 @@ void genie_http_content (NODE_T * p)
     {
       errno = ETIMEDOUT;
       PUSH_PRIMITIVE (p, errno, A68_INT);
-      CHECK_RETVAL (close (socket_id) == 0);
+      ASSERT (close (socket_id) == 0);
       return;
     }
   case -1:
     {
       PUSH_PRIMITIVE (p, errno, A68_INT);
-      CHECK_RETVAL (close (socket_id) == 0);
+      ASSERT (close (socket_id) == 0);
       return;
     }
   case 1:
@@ -2156,7 +2158,7 @@ void genie_http_content (NODE_T * p)
     }
   default:
     {
-      ABNORMAL_END (A68_TRUE, "unexpected result from select", NULL);
+      ABEND (A68_TRUE, "unexpected result from select", NULL);
     }
   }
   while ((k = (int) io_read (socket_id, &buffer, (CONTENT_BUFFER_SIZE - 1))) > 0) {
@@ -2165,12 +2167,12 @@ void genie_http_content (NODE_T * p)
   }
   if (k < 0 || errno != 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
-    CHECK_RETVAL (close (socket_id) == 0);
+    ASSERT (close (socket_id) == 0);
     return;
   };
 /* Convert string. */
   *(A68_REF *) ADDRESS (&content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER));
-  CHECK_RETVAL (close (socket_id) == 0);
+  ASSERT (close (socket_id) == 0);
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }
 
@@ -2247,14 +2249,14 @@ void genie_tcp_request (NODE_T * p)
   conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
-    CHECK_RETVAL (close (socket_id) == 0);
+    ASSERT (close (socket_id) == 0);
     return;
   };
 /* Read from host. */
   WRITE (socket_id, get_transput_buffer (REQUEST_BUFFER));
   if (errno != 0) {
     PUSH_PRIMITIVE (p, errno, A68_INT);
-    CHECK_RETVAL (close (socket_id) == 0);
+    ASSERT (close (socket_id) == 0);
     return;
   };
 /* Initialise file descriptor set. */
@@ -2269,13 +2271,13 @@ void genie_tcp_request (NODE_T * p)
     {
       errno = ETIMEDOUT;
       PUSH_PRIMITIVE (p, errno, A68_INT);
-      CHECK_RETVAL (close (socket_id) == 0);
+      ASSERT (close (socket_id) == 0);
       return;
     }
   case -1:
     {
       PUSH_PRIMITIVE (p, errno, A68_INT);
-      CHECK_RETVAL (close (socket_id) == 0);
+      ASSERT (close (socket_id) == 0);
       return;
     }
   case 1:
@@ -2284,7 +2286,7 @@ void genie_tcp_request (NODE_T * p)
     }
   default:
     {
-      ABNORMAL_END (A68_TRUE, "unexpected result from select", NULL);
+      ABEND (A68_TRUE, "unexpected result from select", NULL);
     }
   }
   while ((k = (int) io_read (socket_id, &buffer, (CONTENT_BUFFER_SIZE - 1))) > 0) {
@@ -2293,12 +2295,12 @@ void genie_tcp_request (NODE_T * p)
   }
   if (k < 0 || errno != 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
-    CHECK_RETVAL (close (socket_id) == 0);
+    ASSERT (close (socket_id) == 0);
     return;
   };
 /* Convert string. */
   *(A68_REF *) ADDRESS (&content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER));
-  CHECK_RETVAL (close (socket_id) == 0);
+  ASSERT (close (socket_id) == 0);
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }
 

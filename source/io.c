@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "transput.h"
@@ -39,7 +41,7 @@ void init_tty (void)
 {
   chars_in_tty_line = 0;
   halt_typing = A68_FALSE;
-  change_masks (a68_prog.top_node, BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
+  change_masks (program.top_node, BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
 }
 
 /*!
@@ -64,7 +66,7 @@ char get_stdin_char (void)
   char ch[4];
   RESET_ERRNO;
   j = io_read_conv (STDIN_FILENO, &(ch[0]), 1);
-  ABNORMAL_END (j < 0, "cannot read char from stdin", NULL);
+  ABEND (j < 0, "cannot read char from stdin", NULL);
   return ((char) (j == 1 ? ch[0] : EOF_CHAR));
 }
 
@@ -112,7 +114,7 @@ void io_write_string (FILE_T f, const char *z)
   if (f != STDOUT_FILENO && f != STDERR_FILENO) {
 /* Writing to file. */
     j = io_write_conv (f, z, strlen (z));
-    ABNORMAL_END (j < 0, "cannot write", NULL);
+    ABEND (j < 0, "cannot write", NULL);
   } else {
 /* Writing to TTY. */
     int first, k;
@@ -128,7 +130,7 @@ void io_write_string (FILE_T f, const char *z)
 /* Write these characters. */
         int n = k - first;
         j = io_write_conv (f, &(z[first]), (size_t) n);
-        ABNORMAL_END (j < 0, "cannot write", NULL);
+        ABEND (j < 0, "cannot write", NULL);
         chars_in_tty_line += n;
       }
       if (z[k] == NEWLINE_CHAR) {
@@ -136,7 +138,7 @@ void io_write_string (FILE_T f, const char *z)
         k++;
         first = k;
         j = io_write_conv (f, NEWLINE_STRING, 1);
-        ABNORMAL_END (j < 0, "cannot write", NULL);
+        ABEND (j < 0, "cannot write", NULL);
         chars_in_tty_line = 0;
       }
     } while (z[k] != NULL_CHAR);

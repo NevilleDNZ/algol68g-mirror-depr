@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 
@@ -51,9 +53,9 @@ char *ctrl_char (int ch)
   static char loc_str[SMALL_BUFFER_SIZE];
   ch = TO_UCHAR (ch);
   if (IS_CNTRL (ch) && IS_LOWER (ch + 96)) {
-    CHECK_RETVAL (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\^%c", ch + 96) >= 0);
+    ASSERT (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\^%c", ch + 96) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\%02x", (unsigned) ch) >= 0);
+    ASSERT (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\%02x", (unsigned) ch) >= 0);
   }
   return (loc_str);
 }
@@ -119,7 +121,7 @@ static void pretty_diag (FILE_T f, char *p)
 
 void abend (char *reason, char *info, char *file, int line)
 {
-  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: abnormal end: %s: %d: %s", a68g_cmd_name, file, line, reason) >= 0);
+  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: exiting: %s: %d: %s", a68g_cmd_name, file, line, reason) >= 0);
   if (info != NULL) {
     bufcat (output_line, ", ", BUFFER_SIZE);
     bufcat (output_line, info, BUFFER_SIZE);
@@ -216,9 +218,9 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
     WRITE (f, NEWLINE_STRING);
   }
   if (NUMBER (p) == 0) {
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "      ") >= 0);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "      ") >= 0);
   } else {
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%-5d ", NUMBER (p) % 100000) >= 0);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%-5d ", NUMBER (p) % 100000) >= 0);
   }
   WRITE (f, output_line);
 /* Pretty print line */
@@ -305,7 +307,7 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
             if (diag == A68_NO_DIAGNOSTICS) {
               bufcpy (output_line, " ", BUFFER_SIZE);
             } else if (diags_at_this_pos == 1) {
-              CHECK_RETVAL (snprintf (output_line, BUFFER_SIZE, "%c", digit_to_char (k)) >= 0);
+              ASSERT (snprintf (output_line, BUFFER_SIZE, "%c", digit_to_char (k)) >= 0);
             } else {
               bufcpy (output_line, "*", BUFFER_SIZE);
             }
@@ -335,7 +337,7 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
 /* Resume pretty printing of line */
       if (!line_ended) {
         continuations++;
-        CHECK_RETVAL (snprintf (output_line, BUFFER_SIZE, "\n.%1d   ", continuations) >= 0);
+        ASSERT (snprintf (output_line, BUFFER_SIZE, "\n.%1d   ", continuations) >= 0);
         WRITE (f, output_line);
         if (continuations >= 9) {
           WRITE (f, "...");
@@ -381,7 +383,7 @@ void diagnostics_to_terminal (SOURCE_LINE_T * p, int what)
       DIAGNOSTIC_T *d = p->diagnostics;
       for (; d != NULL; FORWARD (d)) {
         if (what == A68_ALL_DIAGNOSTICS) {
-          z = (BOOL_T) (z | (WHETHER (d, A68_WARNING) || WHETHER (d, A68_ERROR) || WHETHER (d, A68_SYNTAX_ERROR) || WHETHER (d, A68_SUPPRESS_SEVERITY)));
+          z = (BOOL_T) (z | (WHETHER (d, A68_WARNING) || WHETHER (d, A68_ERROR) || WHETHER (d, A68_SYNTAX_ERROR) || WHETHER (d, A68_MATH_ERROR) || WHETHER (d, A68_SUPPRESS_SEVERITY)));
         } else if (what == A68_RUNTIME_ERROR) {
           z = (BOOL_T) (z | (WHETHER (d, A68_RUNTIME_ERROR)));
         }
@@ -407,7 +409,7 @@ void scan_error (SOURCE_LINE_T * u, char *v, char *txt)
   } else {
     diagnostic_line (A68_SUPPRESS_SEVERITY, u, v, txt, ERROR_UNSPECIFIED, NULL);
   }
-  longjmp (a68_prog.exit_compilation, 1);
+  longjmp (program.exit_compilation, 1);
 }
 
 /*
@@ -421,27 +423,32 @@ static char *get_severity (int sev)
   switch (sev) {
   case A68_ERROR:
     {
-      a68_prog.error_count++;
+      program.error_count++;
       return ("error");
     }
   case A68_SYNTAX_ERROR:
     {
-      a68_prog.error_count++;
+      program.error_count++;
       return ("syntax error");
     }
   case A68_RUNTIME_ERROR:
     {
-      a68_prog.error_count++;
+      program.error_count++;
       return ("runtime error");
+    }
+  case A68_MATH_ERROR:
+    {
+      program.error_count++;
+      return ("math error");
     }
   case A68_WARNING:
     {
-      a68_prog.warning_count++;
+      program.warning_count++;
       return ("warning");
     }
   case A68_SUPPRESS_SEVERITY:
     {
-      a68_prog.error_count++;
+      program.error_count++;
       return (NULL);
     }
   default:
@@ -462,10 +469,10 @@ static void write_diagnostic (int sev, char *b)
   char st[SMALL_BUFFER_SIZE];
   char *severity = get_severity (sev);
   if (severity == NULL) {
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s.", a68g_cmd_name, b) >= 0);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s.", a68g_cmd_name, b) >= 0);
   } else {
     bufcpy (st, get_severity (sev), SMALL_BUFFER_SIZE);
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s: %s.", a68g_cmd_name, st, b) >= 0);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s: %s.", a68g_cmd_name, st, b) >= 0);
   }
   io_close_tty_line ();
   pretty_diag (STDOUT_FILENO, output_line);
@@ -516,19 +523,19 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
       char *nt = non_terminal_string (edit_line, ATTRIBUTE (n));
       if (nt != NULL) {
         if (NUMBER (LINE (n)) == 0) {
-          CHECK_RETVAL (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s", nt) >= 0);
+          ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s", nt) >= 0);
         } else {
           if (MOID (n) != NULL) {
             if (NUMBER (LINE (n)) == NUMBER (line)) {
-              CHECK_RETVAL (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in this line", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n)) >= 0);
+              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in this line", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n)) >= 0);
             } else {
-              CHECK_RETVAL (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in line %d", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
+              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in line %d", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
             }
           } else {
             if (NUMBER (LINE (n)) == NUMBER (line)) {
-              CHECK_RETVAL (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s starting at \"%.64s\" in this line", nt, SYMBOL (n)) >= 0);
+              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s starting at \"%.64s\" in this line", nt, SYMBOL (n)) >= 0);
             } else {
-              CHECK_RETVAL (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s starting at \"%.64s\" in line %d", nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
+              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s starting at \"%.64s\" in line %d", nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
             }
           }
         }
@@ -536,21 +543,21 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
     }
   }
   if (severity == NULL) {
-    if (line->filename != NULL && strcmp (a68_prog.files.source.name, line->filename) == 0) {
-      CHECK_RETVAL (snprintf (a, (size_t) BUFFER_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
+    if (line->filename != NULL && strcmp (program.files.source.name, line->filename) == 0) {
+      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
     } else if (line->filename != NULL) {
-      CHECK_RETVAL (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, line->filename, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, line->filename, (unsigned) k, b) >= 0);
     } else {
-      CHECK_RETVAL (snprintf (a, (size_t) BUFFER_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
     }
   } else {
     bufcpy (st, get_severity (sev), SMALL_BUFFER_SIZE);
-    if (line->filename != NULL && strcmp (a68_prog.files.source.name, line->filename) == 0) {
-      CHECK_RETVAL (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
+    if (line->filename != NULL && strcmp (program.files.source.name, line->filename) == 0) {
+      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
     } else if (line->filename != NULL) {
-      CHECK_RETVAL (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %s: %x: %s", a68g_cmd_name, line->filename, st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %s: %x: %s", a68g_cmd_name, line->filename, st, (unsigned) k, b) >= 0);
     } else {
-      CHECK_RETVAL (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
     }
   }
   msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (DIAGNOSTIC_T));
@@ -639,24 +646,24 @@ Z quoted string literal.
     } else if (t[0] == 'D') {\
       int a = va_arg (args, int);\
       char d[BUFFER_SIZE];\
-      CHECK_RETVAL (snprintf(d, (size_t) BUFFER_SIZE, "%d", a) >= 0);\
+      ASSERT (snprintf(d, (size_t) BUFFER_SIZE, "%d", a) >= 0);\
       bufcat (b, d, BUFFER_SIZE);\
     } else if (t[0] == 'H') {\
       char *a = va_arg (args, char *);\
       char d[SMALL_BUFFER_SIZE];\
-      CHECK_RETVAL (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "\"%c\"", a[0]) >= 0);\
+      ASSERT (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "\"%c\"", a[0]) >= 0);\
       bufcat (b, d, BUFFER_SIZE);\
     } else if (t[0] == 'L') {\
       SOURCE_LINE_T *a = va_arg (args, SOURCE_LINE_T *);\
       char d[SMALL_BUFFER_SIZE];\
-      ABNORMAL_END (a == NULL, "NULL source line in error", NULL);\
+      ABEND (a == NULL, "NULL source line in error", NULL);\
       if (NUMBER (a) == 0) {\
 	bufcat (b, "in standard environment", BUFFER_SIZE);\
       } else {\
         if (p != NULL && NUMBER (a) == LINE_NUMBER (p)) {\
-          CHECK_RETVAL (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "in this line") >= 0);\
+          ASSERT (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "in this line") >= 0);\
 	} else {\
-          CHECK_RETVAL (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "in line %d", NUMBER (a)) >= 0);\
+          ASSERT (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "in line %d", NUMBER (a)) >= 0);\
         }\
 	bufcat (b, d, BUFFER_SIZE);\
       }\
@@ -710,7 +717,7 @@ Z quoted string literal.
     } else if (t[0] == 'X') {\
       int att = va_arg (args, int);\
       char z[BUFFER_SIZE];\
-      /* CHECK_RETVAL (snprintf(z, (size_t) BUFFER_SIZE, "\"%s\"", find_keyword_from_attribute (top_keyword, att)->text) >= 0); */\
+      /* ASSERT (snprintf(z, (size_t) BUFFER_SIZE, "\"%s\"", find_keyword_from_attribute (top_keyword, att)->text) >= 0); */\
       (void) non_terminal_string (z, att);\
       bufcat (b, new_string (z), BUFFER_SIZE);\
     } else if (t[0] == 'Y') {\
@@ -755,20 +762,20 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
   }
 /* Suppressed? */
   if (sev == A68_ERROR || sev == A68_SYNTAX_ERROR) {
-    if (a68_prog.error_count == MAX_ERRORS) {
+    if (program.error_count == MAX_ERRORS) {
       bufcpy (b, "further error diagnostics suppressed", BUFFER_SIZE);
       sev = A68_ERROR;
       shortcut = A68_TRUE;
-    } else if (a68_prog.error_count > MAX_ERRORS) {
-      a68_prog.error_count++;
+    } else if (program.error_count > MAX_ERRORS) {
+      program.error_count++;
       return;
     }
   } else if (sev == A68_WARNING) {
-    if (a68_prog.warning_count == MAX_ERRORS) {
+    if (program.warning_count == MAX_ERRORS) {
       bufcpy (b, "further warning diagnostics suppressed", BUFFER_SIZE);
       shortcut = A68_TRUE;
-    } else if (a68_prog.warning_count > MAX_ERRORS) {
-      a68_prog.warning_count++;
+    } else if (program.warning_count > MAX_ERRORS) {
+      program.warning_count++;
       return;
     }
   }
@@ -824,20 +831,20 @@ void diagnostic_line (int sev, SOURCE_LINE_T * line, char *pos, char *loc_str, .
   }
 /* Suppressed? */
   if (sev == A68_ERROR || sev == A68_SYNTAX_ERROR) {
-    if (a68_prog.error_count == MAX_ERRORS) {
+    if (program.error_count == MAX_ERRORS) {
       bufcpy (b, "further error diagnostics suppressed", BUFFER_SIZE);
       sev = A68_ERROR;
       shortcut = A68_TRUE;
-    } else if (a68_prog.error_count > MAX_ERRORS) {
-      a68_prog.error_count++;
+    } else if (program.error_count > MAX_ERRORS) {
+      program.error_count++;
       return;
     }
   } else if (sev == A68_WARNING) {
-    if (a68_prog.warning_count == MAX_ERRORS) {
+    if (program.warning_count == MAX_ERRORS) {
       bufcpy (b, "further warning diagnostics suppressed", BUFFER_SIZE);
       shortcut = A68_TRUE;
-    } else if (a68_prog.warning_count > MAX_ERRORS) {
-      a68_prog.warning_count++;
+    } else if (program.warning_count > MAX_ERRORS) {
+      program.warning_count++;
       return;
     }
   }

@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -22,6 +22,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 /* This file contains routines that work with TAXes and symbol tables. */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 
 static void tax_tags (NODE_T *);
@@ -86,7 +88,7 @@ void portcheck (NODE_T * p)
 {
   for (; p != NULL; FORWARD (p)) {
     portcheck (SUB (p));
-    if (MODULE (INFO (p))->options.portcheck) {
+    if (program.options.portcheck) {
       if (WHETHER (p, INDICANT) && MOID (p) != NULL) {
         PORTCHECK_TAX (p, MOID (p)->portable);
         MOID (p)->portable = A68_TRUE;
@@ -411,7 +413,7 @@ static void tax_generators (NODE_T * p)
     tax_generators (SUB (p));
     if (WHETHER (p, GENERATOR)) {
       if (WHETHER (SUB (p), LOC_SYMBOL)) {
-        TAG_T *z = add_tag (SYMBOL_TABLE (p), ANONYMOUS, p, SUB (MOID (SUB (p))), GENERATOR);
+        TAG_T *z = add_tag (SYMBOL_TABLE (p), ANONYMOUS, p, SUB_MOID (SUB (p)), GENERATOR);
         HEAP (z) = LOC_SYMBOL;
         USE (z) = A68_TRUE;
         TAX (p) = z;
@@ -557,7 +559,7 @@ static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
     if (t != NULL) {
       if (TAG_TABLE (t) == stand_env) {
         diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), SYMBOL (NODE (s)), MOID (t), SYMBOL (NODE (t)), NULL);
-        ABNORMAL_END (A68_TRUE, "standard environ error", NULL);
+        ABEND (A68_TRUE, "standard environ error", NULL);
       } else {
         diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), SYMBOL (NODE (s)), MOID (t), SYMBOL (NODE (t)), NULL);
       }
@@ -699,7 +701,7 @@ TAG_T *add_tag (SYMBOL_TABLE_T * s, int a, NODE_T * n, MOID_T * m, int p)
         break;
       }
     default:{
-        ABNORMAL_END (A68_TRUE, ERROR_INTERNAL_CONSISTENCY, "add tag");
+        ABEND (A68_TRUE, ERROR_INTERNAL_CONSISTENCY, "add tag");
       }
     }
     return (z);
@@ -743,7 +745,7 @@ TAG_T *find_tag_global (SYMBOL_TABLE_T * table, int a, char *name)
         break;
       }
     default:{
-        ABNORMAL_END (A68_TRUE, "impossible state in find_tag_global", NULL);
+        ABEND (A68_TRUE, "impossible state in find_tag_global", NULL);
         break;
       }
     }
@@ -808,7 +810,7 @@ TAG_T *find_tag_local (SYMBOL_TABLE_T * table, int a, char *name)
     } else if (a == LABEL) {
       s = table->labels;
     } else {
-      ABNORMAL_END (A68_TRUE, "impossible state in find_tag_local", NULL);
+      ABEND (A68_TRUE, "impossible state in find_tag_local", NULL);
     }
     for (; s != NULL; FORWARD (s)) {
       if (SYMBOL (NODE (s)) == name) {
@@ -940,8 +942,7 @@ static void tax_proc_variable_dec (NODE_T * p, int *q)
       HEAP (entry) = *q;
       MOID (entry) = MOID (p);
       if (*q == LOC_SYMBOL) {
-        TAG_T *z = add_tag (SYMBOL_TABLE (p), ANONYMOUS, p, SUB (MOID (p)),
-                            GENERATOR);
+        TAG_T *z = add_tag (SYMBOL_TABLE (p), ANONYMOUS, p, SUB_MOID (p), GENERATOR);
         HEAP (z) = LOC_SYMBOL;
         USE (z) = A68_TRUE;
         BODY (entry) = z;
@@ -973,6 +974,7 @@ static void tax_proc_dec (NODE_T * p)
       MOID_T *m = MOID (NEXT_NEXT (p));
       MOID (p) = m;
       TAX (p) = entry;
+      CODEX (entry) |= PROC_DECLARATION_MASK;
       HEAP (entry) = LOC_SYMBOL;
       MOID (entry) = m;
       tax_proc_dec (NEXT (p));
@@ -1011,7 +1013,7 @@ static int count_operands (NODE_T * p)
 static void check_operator_dec (NODE_T * p)
 {
   int k = 0;
-  NODE_T *pack = SUB (SUB (NEXT_NEXT (p)));     /* That's where the parameter pack is. */
+  NODE_T *pack = SUB_SUB (NEXT_NEXT (p));     /* That's where the parameter pack is. */
   if (ATTRIBUTE (NEXT_NEXT (p)) != ROUTINE_TEXT) {
     pack = SUB (pack);
   }
@@ -1569,7 +1571,7 @@ void jumps_from_procs (NODE_T * p)
 {
   for (; p != NULL; FORWARD (p)) {
     if (WHETHER (p, PROCEDURING)) {
-      NODE_T *u = SUB (SUB (p));
+      NODE_T *u = SUB_SUB (p);
       if (WHETHER (u, GOTO_SYMBOL)) {
         FORWARD (u);
       }

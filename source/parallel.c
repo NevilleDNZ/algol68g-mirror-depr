@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -33,6 +33,8 @@ in that other thread. Also jumps between threads are forbidden.
 
 #if defined ENABLE_PAR_CLAUSE
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -99,7 +101,7 @@ static void restore_stacks (pthread_t);
         free (s->swap);\
       }\
       s->swap = (BYTE_T *) malloc ((size_t) size);\
-      ABNORMAL_END (s->swap == NULL, ERROR_OUT_OF_CORE, NULL);\
+      ABEND (s->swap == NULL, ERROR_OUT_OF_CORE, NULL);\
     }\
     s->start = start;\
     s->bytes = size;\
@@ -128,17 +130,17 @@ static void restore_stacks (pthread_t);
       (z) = _k_;\
     }\
   }\
-  ABNORMAL_END ((z) == -1, "thread id not registered", NULL);\
+  ABEND ((z) == -1, "thread id not registered", NULL);\
   }
 
 #define ERROR_THREAD_FAULT "thread fault"
 
 #define LOCK_THREAD {\
-  ABNORMAL_END (pthread_mutex_lock (&unit_sema) != 0, ERROR_THREAD_FAULT, NULL);\
+  ABEND (pthread_mutex_lock (&unit_sema) != 0, ERROR_THREAD_FAULT, NULL);\
   }
 
 #define UNLOCK_THREAD {\
-  ABNORMAL_END (pthread_mutex_unlock (&unit_sema) != 0, ERROR_THREAD_FAULT, NULL);\
+  ABEND (pthread_mutex_unlock (&unit_sema) != 0, ERROR_THREAD_FAULT, NULL);\
   }
 
 /*!
@@ -284,7 +286,7 @@ static void save_stacks (pthread_t t)
 
 static void restore_stacks (pthread_t t)
 {
-  if (a68_prog.error_count > 0 || abend_all_threads) {
+  if (program.error_count > 0 || abend_all_threads) {
     genie_abend_thread ();
   } else {
     int k;
@@ -389,7 +391,7 @@ static void start_parallel_units (NODE_T * p, pthread_t parent)
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
         exit_genie (p, A68_RUNTIME_ERROR);
       }
-      ABNORMAL_END ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NULL);
+      ABEND ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NULL);
       if (pthread_create (&new_id, &new_at, start_unit, NULL) != 0) {
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
         exit_genie (p, A68_RUNTIME_ERROR);
@@ -427,7 +429,6 @@ static void *start_genie_parallel (void *arg)
 /* This is the thread spawned by the main thread, we spawn parallel units and await their completion. */
   start_parallel_units (SUB (p), t);
   do {
-    CHECK_TIME_LIMIT (p);
     units_active = A68_FALSE;
     check_parallel_units (&units_active, pthread_self ());
     if (units_active) {
@@ -494,7 +495,7 @@ PROPAGATOR_T genie_parallel (NODE_T * p)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-    ABNORMAL_END ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NULL);
+    ABEND ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NULL);
     if (pthread_create (&parent_thread_id, &new_at, start_genie_parallel, NULL) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -540,7 +541,7 @@ PROPAGATOR_T genie_parallel (NODE_T * p)
     if (whether_main_thread () && exit_from_threads) {
       exit_genie (p, par_return_code);
     }
-    if (whether_main_thread () && a68_prog.error_count > 0) {
+    if (whether_main_thread () && program.error_count > 0) {
       exit_genie (p, A68_RUNTIME_ERROR);
     }
 /* See if we jumped out of the parallel clause(s). */
@@ -555,7 +556,6 @@ PROPAGATOR_T genie_parallel (NODE_T * p)
 /* Spawn parallel units. */
     start_parallel_units (SUB (p), t);
     do {
-      CHECK_TIME_LIMIT (p);
       units_active = A68_FALSE;
       check_parallel_units (&units_active, t);
       if (units_active) {
@@ -632,13 +632,12 @@ void genie_down_sema (NODE_T * p)
     if (VALUE (k) <= 0) {
       save_stacks (pthread_self ());
       while (VALUE (k) <= 0) {
-        if (a68_prog.error_count > 0 || abend_all_threads) {
+        if (program.error_count > 0 || abend_all_threads) {
           genie_abend_thread ();
         }
-        CHECK_TIME_LIMIT (p);
         UNLOCK_THREAD;
 /* Waiting a bit relaxes overhead. */
-        CHECK_RETVAL (usleep (10) == 0);
+        ASSERT (usleep (10) == 0);
         LOCK_THREAD;
 /* Garbage may be collected, so recalculate 'k'. */
         k = (A68_INT *) ADDRESS (&s);

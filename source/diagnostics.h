@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -24,6 +24,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define A68G_DIAGNOSTICS_H
 
 #define MOID_ERROR_WIDTH 80
+
+#define ERROR_SPECIFICATION (errno == 0 ? NULL : strerror (errno))
+
+#if defined ENABLE_COMPILER
+#define ERROR_SPECIFICATION_COMPILER (dlerror ())
+#endif
 
 #define ERROR_ACCESSING_NIL "attempt to access N"
 #define ERROR_ALIGNMENT "alignment error"
@@ -75,6 +81,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define ERROR_FILE_RESET "error while resetting file"
 #define ERROR_FILE_SCRATCH "error while scratching file"
 #define ERROR_FILE_SET "error while setting file"
+#define ERROR_FILE_SOURCE_CTRL "control characters in source file"
 #define ERROR_FILE_TRANSPUT "error transputting M value"
 #define ERROR_FILE_TRANSPUT_SIGN "error transputting sign in M value"
 #define ERROR_FILE_WRONG_MOOD "file is in Y mood"
@@ -91,14 +98,14 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define ERROR_INDEXER_NUMBER "incorrect number of indexers for M"
 #define ERROR_INDEX_OUT_OF_BOUNDS "index out of bounds"
 #define ERROR_INTERNAL_CONSISTENCY "internal consistency check failure"
-#define ERROR_INVALID_ARGUMENT "invalid M argument for S"
+#define ERROR_INVALID_ARGUMENT "invalid M argument"
 #define ERROR_INVALID_DIMENSION "invalid dimension D"
 #define ERROR_INVALID_OPERAND "M construct is an invalid operand"
 #define ERROR_INVALID_OPERATOR_TAG "invalid operator tag"
 #define ERROR_INVALID_PARAMETER "invalid parameter (U Z)"
 #define ERROR_INVALID_PRIORITY "invalid priority declaration"
 #define ERROR_INVALID_RADIX "invalid radix D"
-#define ERROR_INVALID_SEQUENCE "expected A, which is not consistent with U"
+#define ERROR_INVALID_SEQUENCE "U is not a valid A"
 #define ERROR_INVALID_SIZE "object of invalid size"
 #define ERROR_KEYWORD "check for missing or unmatched keyword in clause starting at S"
 #define ERROR_LABEL_BEFORE_DECLARATION "declaration cannot follow a labeled unit"
@@ -108,7 +115,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define ERROR_LINE_ENDED "end of line reached"
 #define ERROR_LONG_STRING "string exceeds end of line"
 #define ERROR_MATH_EXCEPTION "math exception E"
-#define ERROR_MATH_INFO "M math error (Y)"
 #define ERROR_MATH "M math error"
 #define ERROR_MODE_SPECIFICATION "M construct must yield a routine, row or structured value"
 #define ERROR_MP_OUT_OF_BOUNDS "multiprecision value out of bounds"
@@ -156,21 +162,21 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define ERROR_REFINEMENT_NOT_APPLIED "refinement is not applied"
 #define ERROR_RELATED_MODES "M is related to M"
 #define ERROR_REQUIRE_THREADS "parallel clause requires posix threads"
+#define ERROR_RUNTIME_ERROR "runtime error"
+#define ERROR_SHELL_SCRIPT "source is a shell script"
 #define ERROR_SCOPE_DYNAMIC_0 "value is exported out of its scope"
 #define ERROR_SCOPE_DYNAMIC_1 "M value is exported out of its scope"
 #define ERROR_SCOPE_DYNAMIC_2 "M value from %s is exported out of its scope"
 #define ERROR_SOUND_INTERNAL "error while processing M value (Y)"
 #define ERROR_SOUND_INTERNAL_STRING "error while processing M value (Y \"Y\")"
 #define ERROR_SOURCE_FILE_OPEN "error while opening source file"
-#define ERROR_SPECIFICATION (errno == 0 ? NULL : strerror (errno))
 #define ERROR_STACK_OVERFLOW "stack overflow"
 #define ERROR_SUBSET_RELATED "M has firmly related subset M"
 #define ERROR_SYNTAX "detected in A"
-#define ERROR_SYNTAX_EXPECTED "A expected"
-#define ERROR_SYNTAX_MISSING_SEPARATOR "probably a missing separator"
-#define ERROR_SYNTAX_MIXED_DECLARATION "probably mixed identity and variable declaration"
-#define ERROR_SYNTAX_STRANGE_TOKENS "probably missing or wrong symbols nearby"
-#define ERROR_SYNTAX_WRONG_SEPARATOR "probably a wrong separator"
+#define ERROR_SYNTAX_EXPECTED "expected A"
+#define ERROR_SYNTAX_MIXED_DECLARATION "possibly mixed identity and variable declaration"
+#define ERROR_SYNTAX_STRANGE_SEPARATOR "possibly a missing or erroneous separator nearby"
+#define ERROR_SYNTAX_STRANGE_TOKENS "possibly a missing or erroneous symbol nearby"
 #define ERROR_THREAD_ACTIVE "parallel clause terminated but thread still active"
 #define ERROR_TIME_LIMIT_EXCEEDED "time limit exceeded"
 #define ERROR_TOO_MANY_ARGUMENTS "too many arguments"
@@ -199,7 +205,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define WARNING_SCOPE_STATIC_1 "value from A could be exported out of its scope"
 #define WARNING_SCOPE_STATIC_2 "M value from A could be exported out of its scope"
 #define WARNING_SKIPPED_SUPERFLUOUS "skipped superfluous A"
-#define WARNING_TAG_NOT_PORTABLE "Tag S is not portable"
+#define WARNING_TAG_NOT_PORTABLE "tag S is not portable"
 #define WARNING_TAG_UNUSED "tag S is not used"
 #define WARNING_TRAILING "ignoring trailing character H in A"
 #define WARNING_UNINITIALISED "identifier S might be used before being initialised"

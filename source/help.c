@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 
 typedef struct A68_INFO A68_INFO;
@@ -80,8 +82,10 @@ static A68_INFO info_text[] = {
   {"options", "--frame \"number\"", "set frame stack size to \"number\""},
   {"options", "--handles \"number\"", "set handle space size to \"number\""},
   {"options", "--heap \"number\"", "set heap size to \"number\""},
+  {"options", "--keep, --nokeep", "switch object file deletion off or on"},
   {"options", "--listing", "make concise listing"},
   {"options", "--moids", "make overview of moids in listing file"},
+  {"options", "--optimise, --nooptimise", "switch compilation on or off"},
   {"options", "--pedantic", "equivalent to --warnings --portcheck"},
   {"options", "--portcheck, --noportcheck", "switch portability warnings on or off"},
   {"options", "--pragmats, --nopragmats", "switch elaboration of pragmat items on or off"},
@@ -91,9 +95,11 @@ static A68_INFO info_text[] = {
   {"options", "--quotestropping", "set stropping mode to quote stropping"},
   {"options", "--reductions", "print parser reductions"},
   {"options", "--run", "override --check/--norun options"},
+  {"options", "--rerun", "run using already compiled code"},
   {"options", "--source, --nosource", "switch listing of source lines in listing file on or off"},
   {"options", "--stack \"number\"", "set expression stack size to \"number\""},
   {"options", "--statistics", "print statistics in listing file"},
+  {"options", "--strict", "disable most extensions to Algol 68 syntax"},
   {"options", "--timelimit \"number\"", "interrupt the interpreter after \"number\" seconds"},
   {"options", "--trace, --notrace", "switch tracing of a running program on or off"},
   {"options", "--tree, --notree", "switch syntax tree listing in listing file on or off"},
@@ -115,9 +121,9 @@ static A68_INFO info_text[] = {
 static void print_info (FILE_T f, char *prompt, int k)
 {
   if (prompt != NULL) {
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s %s: %s.", prompt, info_text[k].term, info_text[k].def) >= 0);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s %s: %s.", prompt, info_text[k].term, info_text[k].def) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s.", info_text[k].term, info_text[k].def) >= 0);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s.", info_text[k].term, info_text[k].def) >= 0);
   }
   WRITELN (f, output_line);
 }

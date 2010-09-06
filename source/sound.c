@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -500,7 +502,7 @@ void write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
   }
   if (little) {
     for (k = 0; k < n; k++) {
-      CHECK_RETVAL (io_write (fd, &(y[k]), 1) != -1);
+      ASSERT (io_write (fd, &(y[k]), 1) != -1);
     }
   } else {
     for (k = n - 1; k >= 0; k--) {

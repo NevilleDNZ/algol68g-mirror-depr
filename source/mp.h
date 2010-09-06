@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -91,7 +91,7 @@ enum
   while (_m_k--) {*_m_d++ = *_m_s++;}\
   }
 
-#define TEST_MP_INIT(p, z, m) {\
+#define CHECK_MP_INIT(p, z, m) {\
   if (! ((int) z[0] & INITIALISED_MASK)) {\
     diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_EMPTY_VALUE, (m));\
     exit_genie ((p), A68_RUNTIME_ERROR);\

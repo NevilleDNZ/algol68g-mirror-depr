@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 
@@ -53,7 +55,7 @@ void free_heap (void)
 void *get_heap_space (size_t s)
 {
   char *z = (char *) (A68_ALIGN_T *) malloc (A68_ALIGN (s));
-  ABNORMAL_END (z == NULL, ERROR_OUT_OF_CORE, NULL);
+  ABEND (z == NULL, ERROR_OUT_OF_CORE, NULL);
   return ((void *) z);
 }
 
@@ -94,10 +96,10 @@ char *new_fixed_string (char *t)
 BYTE_T *get_fixed_heap_space (size_t s)
 {
   BYTE_T *z = HEAP_ADDRESS (fixed_heap_pointer);
-  ABNORMAL_END (get_fixed_heap_allowed == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
+  ABEND (get_fixed_heap_allowed == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
   fixed_heap_pointer += A68_ALIGN ((int) s);
-  ABNORMAL_END (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
-  ABNORMAL_END (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
+  ABEND (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
+  ABEND (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
 }
 
@@ -111,9 +113,9 @@ BYTE_T *get_temp_heap_space (size_t s)
 {
   BYTE_T *z;
   temp_heap_pointer -= A68_ALIGN ((int) s);
-  ABNORMAL_END (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
+  ABEND (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
   z = HEAP_ADDRESS (temp_heap_pointer);
-  ABNORMAL_END (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
+  ABEND (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
 }
 
@@ -176,6 +178,19 @@ void renumber_nodes (NODE_T * p, int *n)
 }
 
 /*!
+\brief register nodes
+\param p position in tree
+**/
+
+void register_nodes (NODE_T * p)
+{
+  for (; p != NULL; FORWARD (p)) {
+    node_register[NUMBER (p)] = p;
+    register_nodes (SUB (p));
+  }
+}
+
+/*!
 \brief new_node_info
 \return same
 **/
@@ -184,7 +199,6 @@ NODE_INFO_T *new_node_info (void)
 {
   NODE_INFO_T *z = (NODE_INFO_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (NODE_INFO_T));
   new_node_infos++;
-  MODULE (z) = NULL;
   z->PROCEDURE_LEVEL = 0;
   z->char_in_line = NULL;
   z->symbol = NULL;
@@ -215,6 +229,7 @@ GENIE_INFO_T *new_genie_info (void)
   z->argsize = 0;
   z->size = 0;
   z->protect_sweep = NULL;
+  z->compile_name = NULL;
   return (z);
 }
 
@@ -228,6 +243,7 @@ NODE_T *new_node (void)
   NODE_T *z = (NODE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (NODE_T));
   new_nodes++;
   STATUS (z) = NULL_MASK;
+  CODEX (z) = NULL_MASK;
   SYMBOL_TABLE (z) = NULL;
   INFO (z) = NULL;
   GENIE (z) = NULL;
@@ -335,6 +351,7 @@ TAG_T *new_tag (void)
 {
   TAG_T *z = (TAG_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TAG_T));
   STATUS (z) = NULL_MASK;
+  CODEX (z) = NULL_MASK;
   TAG_TABLE (z) = NULL;
   MOID (z) = NULL;
   NODE (z) = NULL;
@@ -374,7 +391,6 @@ SOURCE_LINE_T *new_source_line (void)
   NUMBER (z) = 0;
   z->print_status = 0;
   z->list = A68_TRUE;
-  MODULE (z) = NULL;
   NEXT (z) = NULL;
   PREVIOUS (z) = NULL;
   return (z);
@@ -490,7 +506,7 @@ BOOL_T whether_one_of (NODE_T * p, ...)
 void make_sub (NODE_T * p, NODE_T * q, int t)
 {
   NODE_T *z = new_node ();
-  ABNORMAL_END (p == NULL || q == NULL, ERROR_INTERNAL_CONSISTENCY, "make_sub");
+  ABEND (p == NULL || q == NULL, ERROR_INTERNAL_CONSISTENCY, "make_sub");
   *z = *p;
   if (GENIE (p) != NULL) {
     GENIE (z) = new_genie_info ();
@@ -544,13 +560,7 @@ SYMBOL_TABLE_T *find_level (NODE_T * n, int i)
 
 double seconds (void)
 {
-#if defined ENABLE_UNIX_CLOCK
-  struct rusage rus;
-  getrusage (RUSAGE_SELF, &rus);
-  return ((double) (rus.ru_utime.tv_sec + rus.ru_utime.tv_usec * 1e-6));
-#else
   return ((double) clock () / (double) CLOCKS_PER_SEC);
-#endif
 }
 
 /*!
@@ -728,7 +738,7 @@ void init_heap (void)
   int expr_a_size = A68_ALIGN (expr_stack_size);
   int total_size = A68_ALIGN (heap_a_size + handle_a_size + frame_a_size + expr_a_size);
   BYTE_T *core = (BYTE_T *) (A68_ALIGN_T *) malloc ((size_t) total_size);
-  ABNORMAL_END (core == NULL, ERROR_OUT_OF_CORE, NULL);
+  ABEND (core == NULL, ERROR_OUT_OF_CORE, NULL);
   heap_segment = &core[0];
   handle_segment = &heap_segment[heap_a_size];
   stack_segment = &handle_segment[handle_a_size];
@@ -856,166 +866,13 @@ double ten_up (int expo)
   if (neg_expo) {
     expo = -expo;
   }
-  ABNORMAL_END (expo > MAX_DOUBLE_EXPO, "exponent too large", NULL);
+  ABEND (expo > MAX_DOUBLE_EXPO, "exponent too large", NULL);
   for (dep = pow_10; expo != 0; expo >>= 1, dep++) {
     if (expo & 0x1) {
       dbl_expo *= *dep;
     }
   }
   return (neg_expo ? 1 / dbl_expo : dbl_expo);
-}
-
-/*!
-\brief protected exp
-\param x
-\return same
-**/
-
-double a68g_exp (double x)
-{
-  if (x < log (DBL_MIN)) {
-    return (0.0);
-  } else {
-    return (exp (x));
-  }
-}
-
-/*!
-\brief atan2 consistent with atan2_mp
-\param x
-\param y
-\return same
-**/
-
-double a68g_atan2 (double x, double y)
-{
-  if (x == 0.0 && y == 0.0) {
-    errno = EDOM;
-    return (0.0);
-  } else {
-    BOOL_T flip = (BOOL_T) (y < 0.0);
-    double z;
-    y = ABS (y);
-    if (x == 0.0) {
-      z = A68G_PI / 2.0;
-    } else {
-      BOOL_T flop = (BOOL_T) (x < 0.0);
-      x = ABS (x);
-      z = atan (y / x);
-      if (flop) {
-        z = A68G_PI - z;
-      }
-    }
-    if (flip) {
-      z = -z;
-    }
-    return (z);
-  }
-}
-
-/*!
-\brief sqrt (x^2 + y^2) that does not needlessly overflow
-\param x x
-\param y y
-\return same
-**/
-
-double a68g_hypot (double x, double y)
-{
-  double xabs = ABS (x), yabs = ABS (y);
-  double min, max;
-  if (xabs < yabs) {
-    min = xabs;
-    max = yabs;
-  } else {
-    min = yabs;
-    max = xabs;
-  }
-  if (min == 0.0) {
-    return (max);
-  } else {
-    double u = min / max;
-    return (max * sqrt (1.0 + u * u));
-  }
-}
-
-/*!
-\brief log (1 + x) with anti-cancellation for IEEE 754
-\param x x
-\return same
-**/
-
-double a68g_log1p (double x)
-{
-  volatile double y;
-  y = 1 + x;
-  return log (y) - ((y - 1) - x) / y;   /* cancel errors with IEEE arithmetic. */
-}
-
-/*!
-\brief inverse hyperbolic sine
-\param x x
-\return same
-**/
-
-double a68g_asinh (double x)
-{
-  double a = ABS (x), s = (x < 0.0 ? -1.0 : 1.0);
-  if (a > 1.0 / sqrt (DBL_EPSILON)) {
-    return (s * (log (a) + log (2.0)));
-  } else if (a > 2.0) {
-    return (s * log (2.0 * a + 1.0 / (a + sqrt (a * a + 1.0))));
-  } else if (a > sqrt (DBL_EPSILON)) {
-    double a2 = a * a;
-    return (s * a68g_log1p (a + a2 / (1.0 + sqrt (1.0 + a2))));
-  } else {
-    return (x);
-  }
-}
-
-/*!
-\brief inverse hyperbolic cosine
-\param x x
-\return same
-**/
-
-double a68g_acosh (double x)
-{
-  if (x > 1.0 / sqrt (DBL_EPSILON)) {
-    return (log (x) + log (2.0));
-  } else if (x > 2.0) {
-    return (log (2.0 * x - 1.0 / (sqrt (x * x - 1.0) + x)));
-  } else if (x > 1.0) {
-    double t = x - 1.0;
-    return (a68g_log1p (t + sqrt (2.0 * t + t * t)));
-  } else if (x == 1.0) {
-    return (0.0);
-  } else {
-    errno = EDOM;
-    return (0.0);
-  }
-}
-
-/*!
-\brief inverse hyperbolic tangent
-\param x x
-\return same
-**/
-
-double a68g_atanh (double x)
-{
-  double a = ABS (x);
-  double s = (double) (x < 0 ? -1 : 1);
-  if (a >= 1.0) {
-    errno = EDOM;
-    return (0.0);
-  } else if (a >= 0.5) {
-    return (s * 0.5 * a68g_log1p (2 * a / (1.0 - a)));
-  } else if (a > DBL_EPSILON) {
-    return (s * 0.5 * a68g_log1p (2.0 * a + 2.0 * a * a / (1.0 - a)));
-  } else {
-    return (x);
-  }
 }
 
 /*!

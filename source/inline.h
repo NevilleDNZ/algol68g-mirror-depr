@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -28,10 +28,20 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 /* ADDRESS calculates the effective address of fat pointer z. */
 
 #define ADDRESS(z) (&((IS_IN_HEAP (z) ? REF_POINTER (z) : stack_segment)[REF_OFFSET (z)]))
-
 #define ARRAY_ADDRESS(z) (&(REF_POINTER (z)[REF_OFFSET (z)]))
-
 #define DEREF(mode, expr) ((mode *) ADDRESS (expr))
+
+/* Prelude errors can also occur in the constant folder */
+
+#define PRELUDE_ERROR(cond, p, txt, add)\
+  if (cond) {\
+    errno = ERANGE;\
+    if (in_execution) {\
+      diagnostic_node (A68_RUNTIME_ERROR, p, txt, add);\
+      exit_genie (p, A68_RUNTIME_ERROR);\
+    } else {\
+      diagnostic_node (A68_MATH_ERROR, p, txt, add);\
+    }}
 
 /* Check on a NIL name. */
 
@@ -43,6 +53,43 @@ this program. If not, see <http://www.gnu.org/licenses/>.
     diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_ACCESSING_NIL, (m));\
     exit_genie ((p), A68_RUNTIME_ERROR);\
   }
+
+/* Check whether the heap fills. */
+
+#define PREEMPTIVE_SWEEP {\
+  double f = (double) heap_pointer / (double) heap_size;\
+  double h = (double) free_handle_count / (double) max_handle_count;\
+  if (f > 0.8 || h < 0.2) {\
+    sweep_heap ((NODE_T *) p, frame_pointer);\
+  }}
+
+extern int block_heap_compacter;
+/* Operations on stack frames */
+
+#define FRAME_ADDRESS(n) ((BYTE_T *) &(stack_segment[n]))
+#define FRAME_CLEAR(m) FILL_ALIGNED ((BYTE_T *) FRAME_OFFSET (FRAME_INFO_SIZE), 0, (m))
+#define FRAME_DYNAMIC_LINK(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->dynamic_link)
+#define FRAME_DYNAMIC_SCOPE(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->dynamic_scope)
+#define FRAME_INCREMENT(n) (SYMBOL_TABLE (FRAME_TREE(n))->ap_increment)
+#define FRAME_INFO_SIZE (A68_ALIGN (ALIGNED_SIZE_OF (ACTIVATION_RECORD)))
+#define FRAME_JUMP_STAT(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->jump_stat)
+#define FRAME_LEXICAL_LEVEL(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->frame_level)
+#define FRAME_LOCAL(n, m) (FRAME_ADDRESS ((n) + FRAME_INFO_SIZE + (m)))
+#define FRAME_NUMBER(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->frame_no)
+#define FRAME_OBJECT(n) (FRAME_OFFSET (FRAME_INFO_SIZE + (n)))
+#define FRAME_OFFSET(n) (FRAME_ADDRESS (frame_pointer + (n)))
+#define FRAME_OUTER(n) (SYMBOL_TABLE (FRAME_TREE(n))->outer)
+#define FRAME_PARAMETER_LEVEL(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->parameter_level)
+#define FRAME_PARAMETERS(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->parameters)
+#define FRAME_PROC_FRAME(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->proc_frame)
+#define FRAME_SIZE(fp) (FRAME_INFO_SIZE + FRAME_INCREMENT (fp))
+#define FRAME_STATIC_LINK(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->static_link)
+#define FRAME_TOP (FRAME_OFFSET (0))
+#define FRAME_TREE(n) (NODE ((ACTIVATION_RECORD *) FRAME_ADDRESS(n)))
+
+#if defined ENABLE_PAR_CLAUSE
+#define FRAME_THREAD_ID(n) (((ACTIVATION_RECORD *) FRAME_ADDRESS(n))->thread_id)
+#endif
 
 #define FOLLOW_STATIC_LINK(dest, l) {\
   if ((l) == global_level && global_pointer > 0) {\
@@ -81,7 +128,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
   }
 
 #define PUT_DESCRIPTOR2(a, t1, t2, p) {\
-  /* ABNORMAL_END (IS_NIL (*p), ERROR_NIL_DESCRIPTOR, NULL); */\
+  /* ABEND (IS_NIL (*p), ERROR_NIL_DESCRIPTOR, NULL); */\
   BYTE_T *a_p = ARRAY_ADDRESS (p);\
   *(A68_ARRAY *) a_p = (a);\
   *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [ALIGNED_SIZE_OF (A68_ARRAY)]) = (t1);\
@@ -91,22 +138,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define ROW_SIZE(t) ((UPB (t) >= LWB (t)) ? (UPB (t) - LWB (t) + 1) : 0)
 
 #define ROW_ELEMENT(a, k) (((ADDR_T) k + (a)->slice_offset) * (a)->elem_size + (a)->field_offset)
+#define ROW_ELEM(a, k, s) (((ADDR_T) k + (a)->slice_offset) * (s) + (a)->field_offset)
 
 #define INDEX_1_DIM(a, t, k) ROW_ELEMENT (a, ((t)->span * (int) k - (t)->shift))
 
 /* Macros for execution. */
-
-extern unsigned check_time_limit_count;
-
-#define CHECK_TIME_LIMIT(p) {\
-  if (check_time_limit_count++ > 10000) {\
-    double _m_t = (double) MODULE (INFO (p))->options.time_limit;\
-    check_time_limit_count = 0;\
-    if (_m_t > 0 && (seconds () - cputime_0) > _m_t) {\
-      diagnostic_node (A68_RUNTIME_ERROR, (NODE_T *) p, ERROR_TIME_LIMIT_EXCEEDED);\
-      exit_genie ((NODE_T *) p, A68_RUNTIME_ERROR);\
-    }\
-  }}
 
 #define EXECUTE_UNIT_2(p, dest) {\
   PROPAGATOR_T *_prop_ = &PROPAGATOR (p);\
@@ -123,86 +159,14 @@ extern unsigned check_time_limit_count;
 #define EXECUTE_UNIT_TRACE(p) {\
   PROPAGATOR_T *_prop_ = &PROPAGATOR (p);\
   if (STATUS_TEST (p, (BREAKPOINT_MASK | BREAKPOINT_TEMPORARY_MASK | \
-      BREAKPOINT_INTERRUPT_MASK | BREAKPOINT_WATCH_MASK | \
-      BREAKPOINT_TRACE_MASK))) {\
+      BREAKPOINT_INTERRUPT_MASK | BREAKPOINT_WATCH_MASK | BREAKPOINT_TRACE_MASK))) {\
     single_step ((p), STATUS (p));\
   }\
+  errno = 0;\
   last_unit = p;\
   (void) (*(_prop_->unit)) (_prop_->source);\
-  }
-
-/* 
-GENIE_GET_OPR gets an operand when it is likely to be an identifier.
-This saves a push/pop pair.
-*/
-
-#define GENIE_GET_OPR(p, CAST_T, z, u) {\
-  PROPAGATOR_T *_prop_go_ = &PROPAGATOR (p);\
-  NODE_T *src2 = _prop_go_->source;\
-  last_unit = (p);\
-  if (_prop_go_->unit == genie_frame_identifier) {\
-    BYTE_T *x;\
-    FRAME_GET (x, BYTE_T, src2);\
-    (z) = (CAST_T *) x;\
-  } else {\
-    EXECUTE_UNIT (p);\
-    POP_OBJECT ((p), &(u), CAST_T);\
-    z = &u;\
-  }}
-
-#define EXECUTE_UNIT_INLINE(p) {\
-  PROPAGATOR_T *_prop_eui_ = &PROPAGATOR (p);\
-  NODE_T *src1 = _prop_eui_->source;\
-  last_unit = (p);\
-  if (_prop_eui_->unit == genie_dereference_frame_identifier) {\
-    A68_REF *_z_eui_;\
-    MOID_T *deref = SUB (MOID (src1));\
-    int _size_eui_ = MOID_SIZE (deref);\
-    FRAME_GET (_z_eui_, A68_REF, src1);\
-    PUSH_ALIGNED (p, ADDRESS (_z_eui_), _size_eui_);\
-    CHECK_INIT_GENERIC ((p), STACK_OFFSET (-_size_eui_), deref);\
-  } else if (_prop_eui_->unit == genie_frame_identifier) {\
-    BYTE_T *x;\
-    FRAME_GET (x, BYTE_T, src1);\
-    PUSH_ALIGNED ((p), x, MOID_SIZE (MOID (src1)));\
-  } else if (_prop_eui_->unit == genie_constant) {\
-    PUSH_ALIGNED ((p), GENIE (src1)->constant, GENIE (src1)->size);\
-  } else if (_prop_eui_->unit == genie_dereference_generic_identifier) {\
-    A68_REF *_z_eui_;\
-    MOID_T *deref = SUB (MOID (src1));\
-    int _size_eui_ = MOID_SIZE (deref);\
-    FRAME_GET (_z_eui_, A68_REF, src1);\
-    CHECK_REF (p, *_z_eui_, MOID (src1));\
-    PUSH_ALIGNED ((p), ADDRESS (_z_eui_), _size_eui_);\
-    CHECK_INIT_GENERIC ((p), STACK_OFFSET (-_size_eui_), deref);\
-  } else {\
-    EXECUTE_UNIT (p);\
-  }}
-
-#define GENIE_GET_UNIT_ADDRESS(p, cast, dst) {\
-  PROPAGATOR_T *_prop_gua_ = &PROPAGATOR (p);\
-  NODE_T *src0 = _prop_gua_->source;\
-  last_unit = (p);\
-  if (_prop_gua_->unit == genie_dereference_frame_identifier) {\
-    A68_REF *_z_gua_;\
-    MOID_T *deref = SUB (MOID (src0));\
-    FRAME_GET (_z_gua_, A68_REF, src0);\
-    dst = (cast *) (ADDRESS (_z_gua_));\
-    CHECK_INIT_GENERIC ((p), dst, deref);\
-  } else if (_prop_gua_->unit == genie_frame_identifier) {\
-    FRAME_GET (dst, cast, src0);\
-  } else if (_prop_gua_->unit == genie_constant) {\
-    dst = (cast *) (GENIE (src0)->constant);\
-  } else if (_prop_gua_->unit == genie_dereference_generic_identifier) {\
-    A68_REF *_z_gua_;\
-    MOID_T *deref = SUB (MOID (src0));\
-    FRAME_GET (_z_gua_, A68_REF, src0);\
-    CHECK_REF ((p), *_z_gua_, MOID (src0));\
-    dst = (cast *) (ADDRESS (_z_gua_));\
-    CHECK_INIT_GENERIC ((p), dst, deref);\
-  } else {\
-    dst = (cast *) (STACK_TOP);\
-    EXECUTE_UNIT (p);\
+  if (errno != 0) {\
+    diagnostic_node (A68_RUNTIME_ERROR, (NODE_T *) p, ERROR_RUNTIME_ERROR);\
   }}
 
 /* Macro's for the garbage collector. */
@@ -220,13 +184,6 @@ This saves a push/pop pair.
     *(A68_REF *) (STACK_OFFSET (- ALIGNED_SIZE_OF (A68_REF)));\
   }
 
-#define PREEMPTIVE_SWEEP {\
-  double f = (double) heap_pointer / (double) heap_size;\
-  double h = (double) free_handle_count / (double) max_handle_count;\
-  if (f > 0.8 || h < 0.2) {\
-    sweep_heap ((NODE_T *) p, frame_pointer);\
-  }}
-
 extern int block_heap_compacter;
 
 #define UP_SWEEP_SEMA {block_heap_compacter++;}
@@ -238,33 +195,26 @@ extern int block_heap_compacter;
 /* Tests for objects of mode INT. */
 
 #if defined ENABLE_IEEE_754
-#if INT_MAX == 2147483647
-#define TEST_INT_ADDITION(p, i, j) {\
-  double _sum_ = (double) (i) + (double) (j);\
-  if (ABS (_sum_) > (double) INT_MAX) {\
-    errno = ERANGE;\
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (INT), NULL);\
+#define CHECK_INT_ADDITION(p, i, j)\
+  PRELUDE_ERROR (ABS ((double) (i) + (double) (j)) > (double) INT_MAX, p, ERROR_MATH, MODE (INT))
+#define CHECK_INT_SUBTRACTION(p, i, j)\
+  PRELUDE_ERROR (ABS ((double) (i) - (double) (j)) > (double) INT_MAX, p, ERROR_MATH, MODE (INT))
+#define CHECK_INT_MULTIPLICATION(p, i, j)\
+  PRELUDE_ERROR (ABS ((double) (i) * (double) (j)) > (double) INT_MAX, p, ERROR_MATH, MODE (INT))
+#define CHECK_INT_DIVISION(p, i, j)\
+  PRELUDE_ERROR ((j) == 0, p, ERROR_DIVISION_BY_ZERO, MODE (INT))
+#else
+#define CHECK_INT_ADDITION(p, i, j) {;}
+#define CHECK_INT_SUBTRACTION(p, i, j) {;}
+#define CHECK_INT_MULTIPLICATION(p, i, j) {;}
+#define CHECK_INT_DIVISION(p, i, j) {;}
+#endif
+
+#define CHECK_INDEX(p, k, t) {\
+  if (VALUE (k) < LWB (t) || VALUE (k) > UPB (t)) {\
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);\
     exit_genie (p, A68_RUNTIME_ERROR);\
   }}
-#else
-#define TEST_INT_ADDITION(p, i, j)\
-  if (((i ^ j) & A68_MIN_INT) == 0 && ABS (i) > INT_MAX - ABS (j)) {\
-    errno = ERANGE;\
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (INT), NULL);\
-    exit_genie (p, A68_RUNTIME_ERROR);\
-    }
-#endif
-#define TEST_INT_MULTIPLICATION(p, i, j) {\
-  double _prod_ = (double ) (i) * (double) (j);\
-  if (ABS (_prod_) > (double) A68_MAX_INT) {\
-    errno = ERANGE;\
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (INT), NULL);\
-    exit_genie (p, A68_RUNTIME_ERROR);\
-  }}
-#else
-#define TEST_INT_ADDITION(p, i, j) {;}
-#define TEST_INT_MULTIPLICATION(p, i, j) {;}
-#endif
 
 /* Tests for objects of mode REAL. */
 
@@ -275,40 +225,26 @@ extern int finite (double);
 #endif
 
 #define NOT_A_REAL(x) (!finite (x))
-
-#define TEST_REAL_REPRESENTATION(p, u)\
-  if (NOT_A_REAL (u)) {\
-    errno = ERANGE;\
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (REAL), NULL);\
-    exit_genie (p, A68_RUNTIME_ERROR);\
-  }
+#define CHECK_REAL_REPRESENTATION(p, u)\
+  PRELUDE_ERROR (NOT_A_REAL (u), p, ERROR_MATH, MODE (REAL))
+#define CHECK_REAL_ADDITION(p, u, v) CHECK_REAL_REPRESENTATION (p, (u) + (v))
+#define CHECK_REAL_SUBTRACTION(p, u, v) CHECK_REAL_REPRESENTATION (p, (u) - (v))
+#define CHECK_REAL_MULTIPLICATION(p, u, v) CHECK_REAL_REPRESENTATION (p, (u) * (v))
+#define CHECK_REAL_DIVISION(p, u, v)\
+  PRELUDE_ERROR ((v) == 0, p, ERROR_DIVISION_BY_ZERO, MODE (REAL))
+#define CHECK_COMPLEX_REPRESENTATION(p, u, v)\
+  PRELUDE_ERROR (NOT_A_REAL (u) || NOT_A_REAL (v), p, ERROR_MATH, MODE (COMPLEX))
 #else
-#define TEST_REAL_REPRESENTATION(p, u) {;}
+#define CHECK_REAL_REPRESENTATION(p, u) {;}
+#define CHECK_REAL_ADDITION(p, u, v) {;}
+#define CHECK_REAL_SUBTRACTION(p, u, v) {;}
+#define CHECK_REAL_MULTIPLICATION(p, u, v) {;}
+#define CHECK_REAL_DIVISION(p, u, v) {;}
+#define CHECK_COMPLEX_REPRESENTATION(p, u, v) {;}
 #endif
 
-#if defined ENABLE_IEEE_754
-#define TEST_COMPLEX_REPRESENTATION(p, u, v)\
-  if (NOT_A_REAL (u) || NOT_A_REAL (v)) {\
-    errno = ERANGE;\
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (COMPLEX), NULL);\
-    exit_genie (p, A68_RUNTIME_ERROR);\
-  }
-#else
-#define TEST_COMPLEX_REPRESENTATION(p, u, v) {;}
-#endif
-
-#if defined ENABLE_IEEE_754
-#define TEST_TIMES_OVERFLOW_REAL(p, u, v) {;}
-#else
-#define TEST_TIMES_OVERFLOW_REAL(p, u, v)\
-  if (v != 0.0) {\
-    if ((u >= 0 ? u : -u) > DBL_MAX / (v >= 0 ? v : -v)) {\
-      errno = ERANGE;\
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH, MODE (REAL), NULL);\
-      exit_genie (p, A68_RUNTIME_ERROR);\
-      }\
-  }
-#endif
+#define math_rte(p, z, m, t)\
+  PRELUDE_ERROR (z, (p), ERROR_MATH, (m))
 
 /*
 Macro's for stack checking. Since the stacks grow by small amounts at a time
@@ -326,7 +262,7 @@ still is sufficient overhead to make it to the next check.
   if (stack_size > 0 && SYSTEM_STACK_USED >= stack_limit) {\
     errno = 0;\
     if ((p) == NULL) {\
-      ABNORMAL_END (A68_TRUE, TOO_COMPLEX, ERROR_STACK_OVERFLOW);\
+      ABEND (A68_TRUE, TOO_COMPLEX, ERROR_STACK_OVERFLOW);\
     } else {\
       diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_STACK_OVERFLOW);\
       exit_genie ((p), A68_RUNTIME_ERROR);\
@@ -341,8 +277,8 @@ still is sufficient overhead to make it to the next check.
 #define LOW_STACK_ALERT(p) {\
   (void) (p);\
   errno = 0;\
-  ABNORMAL_END (stack_pointer >= expr_stack_limit, TOO_COMPLEX, ERROR_STACK_OVERFLOW);\
-  ABNORMAL_END (frame_pointer >= frame_stack_limit, TOO_COMPLEX, ERROR_STACK_OVERFLOW);\
+  ABEND (stack_pointer >= expr_stack_limit, TOO_COMPLEX, ERROR_STACK_OVERFLOW);\
+  ABEND (frame_pointer >= frame_stack_limit, TOO_COMPLEX, ERROR_STACK_OVERFLOW);\
   }
 #endif
 
@@ -425,6 +361,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act;\
+  PREEMPTIVE_SWEEP;\
   LOW_STACK_ALERT (p);\
   static_link = (environ > 0 ? environ : frame_pointer);\
   if (frame_pointer < static_link) {\
@@ -452,6 +389,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act;\
+  PREEMPTIVE_SWEEP;\
   LOW_STACK_ALERT (p);\
   static_link = (environ > 0 ? environ : frame_pointer);\
   if (frame_pointer < static_link) {\
@@ -537,9 +475,9 @@ returns: static link for stack frame at 'new_lex_lvl'.
   if (scope > limit) {\
     char txt[BUFFER_SIZE];\
     if (info == NULL) {\
-      CHECK_RETVAL (snprintf (txt, (size_t) BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_1) >= 0);\
+      ASSERT (snprintf (txt, (size_t) BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_1) >= 0);\
     } else {\
-      CHECK_RETVAL (snprintf (txt, (size_t) BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_2, info) >= 0);\
+      ASSERT (snprintf (txt, (size_t) BUFFER_SIZE, ERROR_SCOPE_DYNAMIC_2, info) >= 0);\
     }\
     diagnostic_node (A68_RUNTIME_ERROR, p, txt, mode);\
     exit_genie (p, A68_RUNTIME_ERROR);\
@@ -652,44 +590,6 @@ returns: static link for stack frame at 'new_lex_lvl'.
 
 #define A68_ENV_INT(n, k) void n (NODE_T *p) {PUSH_PRIMITIVE (p, (k), A68_INT);}
 #define A68_ENV_REAL(n, z) void n (NODE_T *p) {PUSH_PRIMITIVE (p, (z), A68_REAL);}
-
-/* Debugging the engine. */
-
-#undef A68_DEBUG
-
-#if defined A68_DEBUG
-#define A68_TRACE(txt, p) {\
-  BYTE_T stack_offset;\
-  snprintf (output_line, BUFFER_SIZE, "\n\n\"%s\" file=\"%s\" line=%d level=%d node=%p attr=\"%s\"",\
-	    txt, __FILE__, __LINE__, LEX_LEVEL (p), p, non_terminal_string (edit_line, ATTRIBUTE (p)));\
-  WRITE (STDOUT_FILENO, output_line);\
-  where (STDOUT_FILENO, p);\
-  snprintf (output_line, BUFFER_SIZE, "\n     frame=%u stack=%u heap=%u C-stack =%u",\
-	    frame_pointer, stack_pointer, heap_pointer, ABS ((int) system_stack_offset - (int) &stack_offset));\
-  WRITE (STDOUT_FILENO, output_line);\
-  }
-#else
-#define A68_TRACE(txt, p) /* skip */
-#endif
-
-#if defined A68_DEBUG
-#define A68_PRINT_REF(txt, z) {\
-  snprintf (output_line, BUFFER_SIZE, "\n\n\"%s\" file=\"%s\" line=%d", txt, __FILE__, __LINE__);\
-  WRITE (STDOUT_FILENO, output_line);\
-  if (IS_IN_HEAP (z)) {\
-    snprintf (output_line, BUFFER_SIZE, " heap pointer %u %u", REF_OFFSET (z), REF_OFFSET (REF_HANDLE (z)));\
-  } else if (IS_IN_FRAME (z)) {\
-    snprintf (output_line, BUFFER_SIZE, " frame pointer %u", REF_OFFSET (z));\
-  } else {\
-    snprintf (output_line, BUFFER_SIZE, " stack pointer %u", REF_OFFSET (z));\
-  }\
-  WRITE (STDOUT_FILENO, output_line);\
-  snprintf (output_line, BUFFER_SIZE, " points at %p", ADDRESS (z));\
-  WRITE (STDOUT_FILENO, output_line);\
-  }
-#else
-#define A68_PRINT_REF(txt, z) /* skip */
-#endif
 
 #endif
 

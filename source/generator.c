@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -71,6 +73,7 @@ void genie_generator_stowed (NODE_T *, BYTE_T *, NODE_T **, ADDR_T *, ADDR_T *);
 MP_DIGIT_T garbage_total_freed[LONG_MP_DIGITS + 2];
 static MP_DIGIT_T garbage_freed[LONG_MP_DIGITS + 2];
 
+extern int block_heap_compacter;
 /*!
 \brief PROC VOID sweep heap
 \param p position in tree
@@ -138,24 +141,24 @@ int heap_available (void)
 \param module current module
 **/
 
-void genie_init_heap (NODE_T * p, MODULE_T * module)
+void genie_init_heap (NODE_T * p)
 {
   A68_HANDLE *z;
   int k, max;
   (void) p;
   if (heap_segment == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, module->top_node, ERROR_OUT_OF_CORE);
-    exit_genie (module->top_node, A68_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, program.top_node, ERROR_OUT_OF_CORE);
+    exit_genie (program.top_node, A68_RUNTIME_ERROR);
   }
   if (handle_segment == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, module->top_node, ERROR_OUT_OF_CORE);
-    exit_genie (module->top_node, A68_RUNTIME_ERROR);
+    diagnostic_node (A68_RUNTIME_ERROR, program.top_node, ERROR_OUT_OF_CORE);
+    exit_genie (program.top_node, A68_RUNTIME_ERROR);
   }
   block_heap_compacter = 0;
   garbage_seconds = 0;
   SET_MP_ZERO (garbage_total_freed, LONG_MP_DIGITS);
   garbage_collects = 0;
-  ABNORMAL_END (fixed_heap_pointer >= heap_size, ERROR_OUT_OF_CORE, NULL);
+  ABEND (fixed_heap_pointer >= heap_size, ERROR_OUT_OF_CORE, NULL);
   heap_pointer = fixed_heap_pointer;
   get_fixed_heap_allowed = A68_FALSE;
 /* Assign handle space. */
@@ -373,7 +376,7 @@ static void defragment_heap (void)
   }
 /* There can be no uncoloured allocated handle. */
   for (z = busy_handles; z != NULL; FORWARD (z)) {
-    ABNORMAL_END (!(STATUS_TEST (z, COLOUR_MASK)) && !(STATUS_TEST (z, NO_SWEEP_MASK)), "bad GC consistency", NULL);
+    ABEND (!(STATUS_TEST (z, COLOUR_MASK)) && !(STATUS_TEST (z, NO_SWEEP_MASK)), "bad GC consistency", NULL);
   }
 /* Defragment the heap. */
   heap_pointer = fixed_heap_pointer;
@@ -388,7 +391,7 @@ static void defragment_heap (void)
     STATUS_CLEAR (z, (COLOUR_MASK | COOKIE_MASK));
     POINTER (z) = dst;
     heap_pointer += (z->size);
-    ABNORMAL_END (heap_pointer % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
+    ABEND (heap_pointer % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   }
 }
 
@@ -420,15 +423,12 @@ void sweep_heap (NODE_T * p, ADDR_T fp)
     (void) add_mp (p, garbage_total_freed, garbage_total_freed, garbage_freed, LONG_MP_DIGITS);
   }
   t1 = seconds ();
-  if (t1 > t0) {
+/* C optimiser can make last digit differ, so next condition is 
+   needed to determine a positive time difference. */
+  if ((t1 - t0) > ((double) clock_res / 2.0)) {
     garbage_seconds += (t1 - t0);
   } else {
-/* Add average value in case of slow clock. */
-#if defined CLK_TCK
-    garbage_seconds += ((1.0 / CLK_TCK) / 2.0);
-#elif defined CLOCKS_PER_SEC
-    garbage_seconds += ((1.0 / CLOCKS_PER_SEC) / 2.0);
-#endif
+    garbage_seconds += ((double) clock_res / 2.0);
   }
 }
 
@@ -482,7 +482,7 @@ static A68_HANDLE *give_handle (NODE_T * p, MOID_T * a68m)
 A68_REF heap_generator (NODE_T * p, MOID_T * mode, int size)
 {
 /* Align. */
-  ABNORMAL_END (size < 0, ERROR_INVALID_SIZE, NULL);
+  ABEND (size < 0, ERROR_INVALID_SIZE, NULL);
   size = A68_ALIGN (size);
 /* Now give it. */
   if (heap_available () >= size) {
@@ -497,7 +497,7 @@ A68_REF heap_generator (NODE_T * p, MOID_T * mode, int size)
     FILL (x->pointer, 0, size);
     SET_REF_SCOPE (&z, PRIMAL_SCOPE);
     REF_HANDLE (&z) = x;
-    ABNORMAL_END (((long) ADDRESS (&z)) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
+    ABEND (((long) ADDRESS (&z)) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
     heap_pointer += size;
     return (z);
   } else {
@@ -685,7 +685,7 @@ void genie_generator_stowed (NODE_T * p, BYTE_T * q, NODE_T ** declarer, ADDR_T 
   }
   if (WHETHER (p, STRUCT_SYMBOL)) {
     BYTE_T *r = q;
-    genie_generator_struct (SUB (NEXT (p)), &r, sp, max_sp);
+    genie_generator_struct (SUB_NEXT (p), &r, sp, max_sp);
     return;
   }
   if (WHETHER (p, FLEX_SYMBOL)) {
@@ -780,16 +780,14 @@ PROPAGATOR_T genie_generator (NODE_T * p)
   PROPAGATOR_T self;
   ADDR_T pop_sp = stack_pointer;
   A68_REF z;
-  A68_TRACE ("enter genie_generator", p);
   if (NEXT_SUB (p) != NULL) {
-    genie_generator_bounds (NEXT (SUB (p)));
+    genie_generator_bounds (NEXT_SUB (p));
   }
-  genie_generator_internal (NEXT (SUB (p)), MOID (p), TAX (p), ATTRIBUTE (SUB (p)), pop_sp);
+  genie_generator_internal (NEXT_SUB (p), MOID (p), TAX (p), ATTRIBUTE (SUB (p)), pop_sp);
   POP_REF (p, &z);
   stack_pointer = pop_sp;
   PUSH_REF (p, z);
   PROTECT_FROM_SWEEP_STACK (p);
-  A68_TRACE ("exit genie_generator", p);
   self.unit = genie_generator;
   self.source = p;
   return (self);

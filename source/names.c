@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "gsl.h"
@@ -30,10 +32,10 @@ static char *attribute_names[WILDCARD + 1] = {
   "A68_PATTERN",
   "ACCO_SYMBOL",
   "ACTUAL_DECLARER_MARK",
-  "ALT_DO_PART",
-  "ALT_DO_SYMBOL",
-  "ALT_EQUALS_SYMBOL",
-  "ALT_FORMAL_BOUNDS_LIST",
+  "STYLE_DO_PART",
+  "STYLE_DO_SYMBOL",
+  "STYLE_EQUALS_SYMBOL",
+  "STYLE_FORMAL_BOUNDS_LIST",
   "ANDF_SYMBOL",
   "AND_FUNCTION",
   "ANONYMOUS",
@@ -518,72 +520,6 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_formula) {
     return ("genie_formula");
   }
-  if (p == genie_formula_div_real) {
-    return ("genie_formula_div_real");
-  }
-  if (p == genie_formula_eq_int) {
-    return ("genie_formula_eq_int");
-  }
-  if (p == genie_formula_eq_real) {
-    return ("genie_formula_eq_real");
-  }
-  if (p == genie_formula_ge_int) {
-    return ("genie_formula_ge_int");
-  }
-  if (p == genie_formula_ge_real) {
-    return ("genie_formula_ge_real");
-  }
-  if (p == genie_formula_gt_int) {
-    return ("genie_formula_gt_int");
-  }
-  if (p == genie_formula_gt_real) {
-    return ("genie_formula_gt_real");
-  }
-  if (p == genie_formula_le_int) {
-    return ("genie_formula_le_int");
-  }
-  if (p == genie_formula_le_real) {
-    return ("genie_formula_le_real");
-  }
-  if (p == genie_formula_lt_int) {
-    return ("genie_formula_lt_int");
-  }
-  if (p == genie_formula_lt_real) {
-    return ("genie_formula_lt_real");
-  }
-  if (p == genie_formula_minus_int) {
-    return ("genie_formula_minus_int");
-  }
-  if (p == genie_formula_minus_int_constant) {
-    return ("genie_formula_minus_int_constant");
-  }
-  if (p == genie_formula_minus_real) {
-    return ("genie_formula_minus_real");
-  }
-  if (p == genie_formula_ne_int) {
-    return ("genie_formula_ne_int");
-  }
-  if (p == genie_formula_ne_real) {
-    return ("genie_formula_ne_real");
-  }
-  if (p == genie_formula_over_int) {
-    return ("genie_formula_over_int");
-  }
-  if (p == genie_formula_plus_int) {
-    return ("genie_formula_plus_int");
-  }
-  if (p == genie_formula_plus_int_constant) {
-    return ("genie_formula_plus_int_constant");
-  }
-  if (p == genie_formula_plus_real) {
-    return ("genie_formula_plus_real");
-  }
-  if (p == genie_formula_times_int) {
-    return ("genie_formula_times_int");
-  }
-  if (p == genie_formula_times_real) {
-    return ("genie_formula_times_real");
-  }
   if (p == genie_generator) {
     return ("genie_generator");
   }
@@ -598,12 +534,6 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   }
   if (p == genie_identity_relation) {
     return ("genie_identity_relation");
-  }
-  if (p == genie_identity_relation_is_nil) {
-    return ("genie_identity_relation_is_nil");
-  }
-  if (p == genie_identity_relation_isnt_nil) {
-    return ("genie_identity_relation_isnt_nil");
   }
   if (p == (PROPAGATOR_PROCEDURE *) genie_int_case) {
     return ("genie_int_case");

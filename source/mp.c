@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -121,6 +121,8 @@ responsibility to validate the behaviour of the routines and their accuracy
 using the source code provided. See the GNU General Public License for details.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -388,7 +390,7 @@ void raw_write_mp (char *str, MP_DIGIT_T * z, int digits)
   }
   printf (" ^ %d", (int) MP_EXPONENT (z));
   printf (" status=%d", (int) MP_STATUS (z));
-  CHECK_RETVAL (fflush (stdout) == 0);
+  ASSERT (fflush (stdout) == 0);
 }
 
 /*!
@@ -718,7 +720,7 @@ double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
       sum += ABS (MP_DIGIT (z, j)) * weight;
       weight /= MP_RADIX;
     }
-    TEST_REAL_REPRESENTATION (p, sum);
+    CHECK_REAL_REPRESENTATION (p, sum);
     return (MP_DIGIT (z, 1) >= 0 ? sum : -sum);
   }
 }
@@ -926,7 +928,7 @@ void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     SET_MP_ZERO (z, digits);
   } else if (MP_EXPONENT (x) >= (MP_DIGIT_T) digits) {
     errno = EDOM;
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (WHETHER (MOID (p), PROC_SYMBOL) ? SUB (MOID (p)) : MOID (p)));
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (WHETHER (MOID (p), PROC_SYMBOL) ? SUB_MOID (p) : MOID (p)));
     exit_genie (p, A68_RUNTIME_ERROR);
   } else {
     int k;
@@ -1205,12 +1207,19 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
+  if (x_1 == 0 || y_1 == 0) {
+    stack_pointer = pop_sp;
+    MP_DIGIT (x, 1) = x_1;
+    MP_DIGIT (y, 1) = y_1;
+    SET_MP_ZERO (z, digits);
+    return (z);
+  }
+/* Calculate z = x * y. */
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
   MP_EXPONENT (w) = MP_EXPONENT (x) + MP_EXPONENT (y) + 1;
-/* Calculate z = x * y. */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (2 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
-  ABNORMAL_END (oflow <= 1, "inadequate MP_RADIX", NULL);
+  ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
   if (digits < oflow) {
     for (i = digits; i >= 1; i--) {
       MP_DIGIT_T yi = MP_DIGIT (y, i);
@@ -1285,7 +1294,7 @@ guesses without separate correction steps.
   }
 /* Determine normalisation interval assuming that q < 2b in each step. */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
-  ABNORMAL_END (oflow <= 1, "inadequate MP_RADIX", NULL);
+  ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
 /* `w' will be the working nominator in which the quotient develops. */
@@ -1515,7 +1524,7 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
   }
 /* Determine normalisation interval assuming that q < 2b in each step. */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
-  ABNORMAL_END (oflow <= 1, "inadequate MP_RADIX", NULL);
+  ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
 /* Work with positive operands. */
   MP_DIGIT (x, 1) = ABS (x_1);
   y = ABS (y_1);
@@ -1738,7 +1747,7 @@ static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
       }
     default:
       {
-        ABNORMAL_END (A68_TRUE, "unexpected mp base", "");
+        ABEND (A68_TRUE, "unexpected mp base", "");
         return (A68_FALSE);
       }
     }

@@ -6,7 +6,7 @@
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
 
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 3 of the License, or (at your option) any later
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -63,7 +65,7 @@ void genie_char_in_string (NODE_T * p)
   add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_str);
   len = get_transput_buffer_index (PATTERN_BUFFER);
   q = get_transput_buffer (PATTERN_BUFFER);
-  ch = VALUE (&c);
+  ch = (char) VALUE (&c);
   for (k = 0; k < len; k++) {
     if (q[k] == ch) {
       STATUS (&pos) = INITIALISED_MASK;
@@ -100,7 +102,7 @@ void genie_last_char_in_string (NODE_T * p)
   add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_str);
   len = get_transput_buffer_index (PATTERN_BUFFER);
   q = get_transput_buffer (PATTERN_BUFFER);
-  ch = VALUE (&c);
+  ch = (char) VALUE (&c);
   for (k = len - 1; k >= 0; k--) {
     if (q[k] == ch) {
       STATUS (&pos) = INITIALISED_MASK;
@@ -333,9 +335,8 @@ void add_char_transput_buffer (NODE_T * p, int k, char ch)
 
 void add_string_transput_buffer (NODE_T * p, int k, char *ch)
 {
-  while (ch[0] != NULL_CHAR) {
+  for (; ch[0] != NULL_CHAR; ch++) {
     add_char_transput_buffer (p, k, ch[0]);
-    ch++;
   }
 }
 
@@ -362,7 +363,7 @@ void add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
       int addr = INDEX_1_DIM (arr, tup, i);
       A68_CHAR *ch = (A68_CHAR *) & (base_address[addr]);
       CHECK_INIT (p, INITIALISED (ch), MODE (CHAR));
-      add_char_transput_buffer (p, k, VALUE (ch));
+      add_char_transput_buffer (p, k, (char) VALUE (ch));
     }
   }
 }
@@ -712,7 +713,7 @@ void genie_stand_error_channel (NODE_T * p)
 
 void genie_program_idf (NODE_T * p)
 {
-  PUSH_REF (p, c_to_a_string (p, a68_prog.files.generic_name));
+  PUSH_REF (p, c_to_a_string (p, program.files.source.name));
 }
 
 /* FILE and CHANNEL initialisations. */
@@ -907,7 +908,7 @@ void genie_make_term (NODE_T * p)
   }
   file->terminator = heap_generator (p, MODE (C_STRING), 1 + size);
   PROTECT_SWEEP_HANDLE (&(file->terminator));
-  CHECK_RETVAL (a_to_c_string (p, (char *) ADDRESS (&(file->terminator)), str) != NULL);
+  ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->terminator)), str) != NULL);
 }
 
 /*!
@@ -1070,7 +1071,7 @@ void genie_open (NODE_T * p)
   }
   file->identification = heap_generator (p, MODE (C_STRING), 1 + size);
   PROTECT_SWEEP_HANDLE (&(file->identification));
-  CHECK_RETVAL (a_to_c_string (p, (char *) ADDRESS (&(file->identification)), ref_iden) != NULL);
+  ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->identification)), ref_iden) != NULL);
   file->terminator = nil_ref;
   FORMAT (file) = nil_format;
   file->fd = -1;
@@ -1081,7 +1082,19 @@ void genie_open (NODE_T * p)
   file->strpos = 0;
   file->device.stream = NULL;
   set_default_mended_procedures (file);
+#if ! defined ENABLE_WIN32
+  {
+    struct stat status;
+    if (stat ((char *) ADDRESS (& (file->identification)), &status) == 0) {
+      PUSH_PRIMITIVE (p, (S_ISREG (status.st_mode) != 0 ? 0 : 1), A68_INT);
+    } else {
+      PUSH_PRIMITIVE (p, 1, A68_INT);
+    }
+    RESET_ERRNO;
+  }
+#else
   PUSH_PRIMITIVE (p, 0, A68_INT);
+#endif
 }
 
 /*!
@@ -1120,7 +1133,7 @@ void genie_establish (NODE_T * p)
   }
   file->identification = heap_generator (p, MODE (C_STRING), 1 + size);
   PROTECT_SWEEP_HANDLE (&(file->identification));
-  CHECK_RETVAL (a_to_c_string (p, (char *) ADDRESS (&(file->identification)), ref_iden) != NULL);
+  ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->identification)), ref_iden) != NULL);
   file->terminator = nil_ref;
   FORMAT (file) = nil_format;
   file->fd = -1;
@@ -1242,7 +1255,7 @@ void genie_close (NODE_T * p)
   file->device.device_made = A68_FALSE;
 #if defined ENABLE_GRAPHICS
   if (file->device.device_opened) {
-    CHECK_RETVAL(close_device (p, file) == A68_TRUE);
+    ASSERT(close_device (p, file) == A68_TRUE);
     file->device.stream = NULL;
     return;
   }
@@ -1291,14 +1304,14 @@ void genie_lock (NODE_T * p)
   file->device.device_made = A68_FALSE;
 #if defined ENABLE_GRAPHICS
   if (file->device.device_opened) {
-    CHECK_RETVAL(close_device (p, file) == A68_TRUE);
+    ASSERT(close_device (p, file) == A68_TRUE);
     file->device.stream = NULL;
     return;
   }
 #endif /*  */
 #if ! defined ENABLE_WIN32
   RESET_ERRNO;
-  CHECK_RETVAL (fchmod (file->fd, (mode_t) 0x0) != -1);
+  ASSERT (fchmod (file->fd, (mode_t) 0x0) != -1);
 #endif /*  */
   if (file->fd != -1 && close (file->fd) == -1) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_LOCK);
@@ -1344,7 +1357,7 @@ void genie_erase (NODE_T * p)
   file->device.device_made = A68_FALSE;
 #if defined ENABLE_GRAPHICS
   if (file->device.device_opened) {
-    CHECK_RETVAL(close_device (p, file) == A68_TRUE);
+    ASSERT(close_device (p, file) == A68_TRUE);
     file->device.stream = NULL;
     return;
   }
@@ -2195,6 +2208,7 @@ void scan_string (NODE_T * p, char *term, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   if (f->eof) {
+    reset_transput_buffer (INPUT_BUFFER);
     end_of_file_error (p, ref_file);
   } else {
     BOOL_T go_on; int ch;
@@ -3078,7 +3092,7 @@ void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref
     add_char_transput_buffer (p, UNFORMATTED_BUFFER, flipflop);
   } else if (mode == MODE (CHAR)) {
     A68_CHAR *ch = (A68_CHAR *) item;
-    add_char_transput_buffer (p, UNFORMATTED_BUFFER, VALUE (ch));
+    add_char_transput_buffer (p, UNFORMATTED_BUFFER, (char) VALUE (ch));
   } else if (mode == MODE (BITS) || mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
     char *str = (char *) STACK_TOP;
     genie_value_to_string (p, mode, item, FORMAT_ITEM_G);
@@ -3117,7 +3131,7 @@ void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref
     }
   }
   if (errno != 0) {
-    ABNORMAL_END (IS_NIL (ref_file), "conversion error: ", strerror (errno));
+    ABEND (IS_NIL (ref_file), "conversion error: ", strerror (errno));
     transput_error (p, ref_file, mode);
   }
 }
@@ -3238,44 +3252,44 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
   RESET_ERRNO;
   if (mode == MODE (INT)) {
     A68_INT *z = (A68_INT *) item;
-    CHECK_RETVAL (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
+    ASSERT (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
     STATUS (z) = INITIALISED_MASK;
   } else if (mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
     MP_DIGIT_T *z = (MP_DIGIT_T *) item;
-    CHECK_RETVAL (io_read (f->fd, z, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_read (f->fd, z, (size_t) get_mp_size (mode)) != -1);
     MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   } else if (mode == MODE (REAL)) {
     A68_REAL *z = (A68_REAL *) item;
-    CHECK_RETVAL (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
+    ASSERT (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
     STATUS (z) = INITIALISED_MASK;
   } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
     MP_DIGIT_T *z = (MP_DIGIT_T *) item;
-    CHECK_RETVAL (io_read (f->fd, z, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_read (f->fd, z, (size_t) get_mp_size (mode)) != -1);
     MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   } else if (mode == MODE (BOOL)) {
     A68_BOOL *z = (A68_BOOL *) item;
-    CHECK_RETVAL (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
+    ASSERT (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
     STATUS (z) = INITIALISED_MASK;
   } else if (mode == MODE (CHAR)) {
     A68_CHAR *z = (A68_CHAR *) item;
-    CHECK_RETVAL (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
+    ASSERT (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
     STATUS (z) = INITIALISED_MASK;
   } else if (mode == MODE (BITS)) {
     A68_BITS *z = (A68_BITS *) item;
-    CHECK_RETVAL (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
+    ASSERT (io_read (f->fd, &(VALUE (z)), sizeof (VALUE (z))) != -1);
     STATUS (z) = INITIALISED_MASK;
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
     MP_DIGIT_T *z = (MP_DIGIT_T *) item;
-    CHECK_RETVAL (io_read (f->fd, z, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_read (f->fd, z, (size_t) get_mp_size (mode)) != -1);
     MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   } else if (mode == MODE (ROW_CHAR) || mode == MODE (STRING)) {
     int len, k;
-    CHECK_RETVAL (io_read (f->fd, &(len), sizeof (len)) != -1);
+    ASSERT (io_read (f->fd, &(len), sizeof (len)) != -1);
     reset_transput_buffer (UNFORMATTED_BUFFER);
     for (k = 0; k < len; k++) {
       A68_CHAR z;
-      CHECK_RETVAL (io_read (f->fd, &(VALUE (&z)), sizeof (VALUE (&z))) != -1);
-      add_char_transput_buffer (p, UNFORMATTED_BUFFER, VALUE (&z));
+      ASSERT (io_read (f->fd, &(VALUE (&z)), sizeof (VALUE (&z))) != -1);
+      add_char_transput_buffer (p, UNFORMATTED_BUFFER, (char) VALUE (&z));
     }
     *(A68_REF *) item = c_to_a_string (p, get_transput_buffer (UNFORMATTED_BUFFER));
   } else if (WHETHER (mode, UNION_SYMBOL)) {
@@ -3486,27 +3500,27 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
   A68_FILE *f = FILE_DEREF (&ref_file);
   RESET_ERRNO;
   if (mode == MODE (INT)) {
-    CHECK_RETVAL (io_write (f->fd, &(VALUE ((A68_INT *) item)), sizeof (VALUE ((A68_INT *) item))) != -1);
+    ASSERT (io_write (f->fd, &(VALUE ((A68_INT *) item)), sizeof (VALUE ((A68_INT *) item))) != -1);
   } else if (mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
-    CHECK_RETVAL (io_write (f->fd, (MP_DIGIT_T *) item, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_write (f->fd, (MP_DIGIT_T *) item, (size_t) get_mp_size (mode)) != -1);
   } else if (mode == MODE (REAL)) {
-    CHECK_RETVAL (io_write (f->fd, &(VALUE ((A68_REAL *) item)), sizeof (VALUE ((A68_REAL *) item))) != -1);
+    ASSERT (io_write (f->fd, &(VALUE ((A68_REAL *) item)), sizeof (VALUE ((A68_REAL *) item))) != -1);
   } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
-    CHECK_RETVAL (io_write (f->fd, (MP_DIGIT_T *) item, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_write (f->fd, (MP_DIGIT_T *) item, (size_t) get_mp_size (mode)) != -1);
   } else if (mode == MODE (BOOL)) {
-    CHECK_RETVAL (io_write (f->fd, &(VALUE ((A68_BOOL *) item)), sizeof (VALUE ((A68_BOOL *) item))) != -1);
+    ASSERT (io_write (f->fd, &(VALUE ((A68_BOOL *) item)), sizeof (VALUE ((A68_BOOL *) item))) != -1);
   } else if (mode == MODE (CHAR)) {
-    CHECK_RETVAL (io_write (f->fd, &(VALUE ((A68_CHAR *) item)), sizeof (VALUE ((A68_CHAR *) item))) != -1);
+    ASSERT (io_write (f->fd, &(VALUE ((A68_CHAR *) item)), sizeof (VALUE ((A68_CHAR *) item))) != -1);
   } else if (mode == MODE (BITS)) {
-    CHECK_RETVAL (io_write (f->fd, &(VALUE ((A68_BITS *) item)), sizeof (VALUE ((A68_BITS *) item))) != -1);
+    ASSERT (io_write (f->fd, &(VALUE ((A68_BITS *) item)), sizeof (VALUE ((A68_BITS *) item))) != -1);
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
-    CHECK_RETVAL (io_write (f->fd, (MP_DIGIT_T *) item, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_write (f->fd, (MP_DIGIT_T *) item, (size_t) get_mp_size (mode)) != -1);
   } else if (mode == MODE (ROW_CHAR) || mode == MODE (STRING)) {
     int len;
     reset_transput_buffer (UNFORMATTED_BUFFER);
     add_a_string_transput_buffer (p, UNFORMATTED_BUFFER, item);
     len = get_transput_buffer_index (UNFORMATTED_BUFFER);
-    CHECK_RETVAL (io_write (f->fd, &(len), sizeof (len)) != -1);
+    ASSERT (io_write (f->fd, &(len), sizeof (len)) != -1);
     WRITE (f->fd, get_transput_buffer (UNFORMATTED_BUFFER));
   } else if (WHETHER (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
@@ -4130,6 +4144,7 @@ char *fixed (NODE_T * p)
     double x = VALUE ((A68_REAL *) (STACK_OFFSET (ALIGNED_SIZE_OF (A68_UNION))));
     int length = ABS (VALUE (&width)) - (x < 0 || VALUE (&width) > 0 ? 1 : 0);
     char *s;
+    CHECK_REAL_REPRESENTATION (p, x);
     stack_pointer = arg_sp;
     if (VALUE (&after) >= 0 && (length > VALUE (&after) || VALUE (&width) == 0)) {
       double y = ABS (x), z0, z1;
@@ -4137,12 +4152,6 @@ char *fixed (NODE_T * p)
         length = (VALUE (&after) == 0 ? 1 : 0);
         z0 = ten_up (-VALUE (&after));
         z1 = ten_up (length);
-
-/*
-	pow_real_int (p, &z0, 0.1, VALUE (&after));
-	pow_real_int (p, &z1, 10.0, length);
-*/
-
         while (y + 0.5 * z0 > z1) {
           length++;
           z1 *= 10.0;
@@ -4374,6 +4383,7 @@ char *real (NODE_T * p)
   if (mode == MODE (REAL)) {
     double x = VALUE ((A68_REAL *) (STACK_OFFSET (ALIGNED_SIZE_OF (A68_UNION))));
     int before = ABS (VALUE (&width)) - ABS (VALUE (&expo)) - (VALUE (&after) != 0 ? VALUE (&after) + 1 : 0) - 2;
+    CHECK_REAL_REPRESENTATION (p, x);
     stack_pointer = arg_sp;
 #if defined ENABLE_IEEE_754
     if (NOT_A_REAL (x)) {
@@ -5214,7 +5224,7 @@ static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
           } else if (file->write_mood) {
             write_insertion (picture, ref_file, INSERTION_NORMAL);
           } else {
-            ABNORMAL_END (A68_TRUE, "undetermined mood for insertion", NULL);
+            ABEND (A68_TRUE, "undetermined mood for insertion", NULL);
           }
           collitem->count = 0;  /* This insertion is now done. */
         } else if (WHETHER (picture, REPLICATOR) || WHETHER (picture, COLLECTION)) {
@@ -5355,7 +5365,7 @@ void write_insertion (NODE_T * p, A68_REF ref_file, unsigned mood)
       }
     } else if (WHETHER (p, REPLICATOR)) {
       int j, k = get_replicator_value (SUB (p), A68_TRUE);
-      if (ATTRIBUTE (SUB (NEXT (p))) != FORMAT_ITEM_K) {
+      if (ATTRIBUTE (SUB_NEXT (p)) != FORMAT_ITEM_K) {
         for (j = 1; j <= k; j++) {
           write_insertion (NEXT (p), ref_file, mood);
         }
@@ -5677,7 +5687,7 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
   if (WHETHER (p, CHAR_C_PATTERN)) {
     A68_CHAR *z = (A68_CHAR *) item;
     char q[2];
-    q[0] = VALUE (z);
+    q[0] = (char) VALUE (z);
     q[1] = NULL_CHAR;
     str = (char *) &q;
     width = (int) strlen (str);
@@ -5954,7 +5964,7 @@ static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
       if (width == 0) {
         A68_FILE *file = FILE_DEREF (&ref_file);
         int ch;
-        CHECK_RETVAL (snprintf (str, (size_t) TRANSPUT_BUFFER_SIZE, "%dr", radix) >= 0);
+        ASSERT (snprintf (str, (size_t) TRANSPUT_BUFFER_SIZE, "%dr", radix) >= 0);
         set_transput_buffer_index (INPUT_BUFFER, (int) strlen (str));
         ch = char_scanner (file);
         while (ch != EOF_CHAR && (IS_SPACE (ch) || IS_NL_FF (ch))) {
@@ -5970,7 +5980,7 @@ static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
         }
         unchar_scanner (p, file, (char) ch);
       } else {
-        CHECK_RETVAL (snprintf (str, (size_t) TRANSPUT_BUFFER_SIZE, "%dr", radix) >= 0);
+        ASSERT (snprintf (str, (size_t) TRANSPUT_BUFFER_SIZE, "%dr", radix) >= 0);
         set_transput_buffer_index (INPUT_BUFFER, (int) strlen (str));
         scan_n_chars (p, width, mode, ref_file);
       }
@@ -6001,29 +6011,6 @@ static void count_zd_frames (NODE_T * p, int *z)
       return;
     } else {
       count_zd_frames (SUB (p), z);
-    }
-  }
-}
-
-/*!
-\brief count D frames in a mould
-\param p position in tree
-\param z counting integer
-**/
-
-static void count_d_frames (NODE_T * p, int *z)
-{
-  for (; p != NULL; FORWARD (p)) {
-    if (WHETHER (p, FORMAT_ITEM_D)) {
-      (*z)++;
-    } else if (WHETHER (p, REPLICATOR)) {
-      int j, k = get_replicator_value (SUB (p), A68_TRUE);
-      for (j = 1; j <= k; j++) {
-        count_d_frames (NEXT (p), z);
-      }
-      return;
-    } else {
-      count_d_frames (SUB (p), z);
     }
   }
 }
@@ -6084,7 +6071,7 @@ static void shift_sign (NODE_T * p, char **q)
 
 static void put_zeroes_to_integral (NODE_T * p, int n)
 {
-  while (n--) {
+  for (; n > 0; n--) {
     add_char_transput_buffer (p, EDIT_BUFFER, '0');
   }
 }
@@ -6152,11 +6139,18 @@ static void write_mould_put_sign (NODE_T * p, char **q)
 \param mood mode of operation
 **/
 
+static void add_char_mould (NODE_T *p, char ch, char **q)
+{
+  if (ch != NULL_CHAR) {
+    add_char_transput_buffer (p, FORMATTED_BUFFER, ch);
+    (*q)++;
+  }
+}
+
 static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsigned *mood)
 {
   for (; p != NULL; FORWARD (p)) {
-/* Insertions are inserted straight away. Note that we can suppress them using
-   "mood", which is not standard A68. */
+/* Insertions are inserted straight away. Note that we can suppress them using "mood", which is not standard A68. */
     if (WHETHER (p, INSERTION)) {
       write_insertion (SUB (p), ref_file, *mood);
     } else {
@@ -6166,25 +6160,21 @@ static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsig
         write_mould_put_sign (p, q);
         if ((*q)[0] == '0') {
           if (*mood & DIGIT_BLANK) {
-            add_char_transput_buffer (p, FORMATTED_BUFFER, BLANK_CHAR);
-            (*q)++;
+            add_char_mould (p, BLANK_CHAR, q);
             *mood = (*mood & ~INSERTION_NORMAL) | INSERTION_BLANK;
           } else if (*mood & DIGIT_NORMAL) {
-            add_char_transput_buffer (p, FORMATTED_BUFFER, '0');
-            (*q)++;
+            add_char_mould (p, '0', q);
             *mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
           }
         } else {
-          add_char_transput_buffer (p, FORMATTED_BUFFER, (*q)[0]);
-          (*q)++;
+          add_char_mould (p, (*q)[0], q);
           *mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
         }
       }
 /* D frames print a digit. */
       else if (WHETHER (p, FORMAT_ITEM_D)) {
         write_mould_put_sign (p, q);
-        add_char_transput_buffer (p, FORMATTED_BUFFER, (*q)[0]);
-        (*q)++;
+        add_char_mould (p, (*q)[0], q);
         *mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
       }
 /* Suppressible frames. */
@@ -6193,7 +6183,9 @@ static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsig
         if (type == SIGN_MOULD) {
           write_mould (NEXT (p), ref_file, type, q, mood);
         } else if (type == INTEGRAL_MOULD) {
-          (*q)++;
+          if ((*q)[0] != NULL_CHAR) {
+            (*q)++;
+          }
         }
         return;
       }
@@ -6257,17 +6249,16 @@ static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BY
     put_zeroes_to_integral (p, width - (int) strlen (str));
     add_string_transput_buffer (p, EDIT_BUFFER, str);
     str = get_transput_buffer (EDIT_BUFFER);
+    mood = (unsigned) (DIGIT_BLANK | INSERTION_NORMAL);
     if (WHETHER (p, SIGN_MOULD)) {
       if (str[0] == '+' || str[0] == '-') {
         shift_sign (SUB (p), &str);
       }
       str = get_transput_buffer (EDIT_BUFFER);
-      mood = (unsigned) (DIGIT_BLANK | INSERTION_NORMAL);
       write_mould (SUB (p), ref_file, SIGN_MOULD, &str, &mood);
       FORWARD (p);
     }
     if (WHETHER (p, INTEGRAL_MOULD)) {  /* This *should* be the case. */
-      mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
       write_mould (SUB (p), ref_file, INTEGRAL_MOULD, &str, &mood);
     }
     stack_pointer = old_stack_pointer;
@@ -6289,23 +6280,22 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
     pattern_error (p, root, ATTRIBUTE (p));
   } else {
     ADDR_T old_stack_pointer = stack_pointer;
-    int stag_digits = 0, frac_digits = 0, expo_digits = 0;
-    int stag_width = 0, frac_width = 0, expo_width = 0;
-    int length, sign = 0, d_exp;
+    int sign_digits, stag_digits = 0, frac_digits = 0, expo_digits = 0;
+    int mant_length, sign = 0, exp_value;
     NODE_T *q, *sign_mould = NULL, *stag_mould = NULL, *point_frame = NULL, *frac_mould = NULL, *e_frame = NULL, *expo_mould = NULL;
-    char *str, *stag_str, *frac_str;
+    char *str = NULL, *stag_str = NULL, *frac_str = NULL;
+    unsigned mood;
 /* Dive into pattern. */
-    q = (WHETHER (p, REAL_PATTERN)) ? SUB (p) : p;
+    q = ((WHETHER (p, REAL_PATTERN)) ? SUB (p) : p);
 /* Dissect pattern and establish widths. */
     if (q != NULL && WHETHER (q, SIGN_MOULD)) {
       sign_mould = q;
-      count_zd_frames (SUB (sign_mould), &stag_width);
-      count_d_frames (SUB (sign_mould), &stag_digits);
+      count_zd_frames (SUB (sign_mould), &stag_digits);
       FORWARD (q);
     }
+    sign_digits = stag_digits;
     if (q != NULL && WHETHER (q, INTEGRAL_MOULD)) {
       stag_mould = q;
-      count_zd_frames (SUB (stag_mould), &stag_width);
       count_zd_frames (SUB (stag_mould), &stag_digits);
       FORWARD (q);
     }
@@ -6315,7 +6305,6 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
     }
     if (q != NULL && WHETHER (q, INTEGRAL_MOULD)) {
       frac_mould = q;
-      count_zd_frames (SUB (frac_mould), &frac_width);
       count_zd_frames (SUB (frac_mould), &frac_digits);
       FORWARD (q);
     }
@@ -6324,18 +6313,19 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
       expo_mould = NEXT_SUB (q);
       q = expo_mould;
       if (WHETHER (q, SIGN_MOULD)) {
-        count_zd_frames (SUB (q), &expo_width);
-        count_d_frames (SUB (q), &expo_digits);
+        count_zd_frames (SUB (q), &expo_digits);
         FORWARD (q);
       }
       if (WHETHER (q, INTEGRAL_MOULD)) {
-        count_zd_frames (SUB (q), &expo_width);
-        count_d_frames (SUB (q), &expo_digits);
+        count_zd_frames (SUB (q), &expo_digits);
       }
     }
 /* Make string representation. */
-    reset_transput_buffer (EDIT_BUFFER);
-    length = 1 + stag_width + frac_width;
+    if (point_frame == NULL) {
+      mant_length = stag_digits;
+    } else {
+      mant_length = 1 + stag_digits + frac_digits;
+    }
     if (mode == MODE (REAL) || mode == MODE (INT)) {
       double x;
       if (mode == MODE (REAL)) {
@@ -6345,96 +6335,99 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
       }
 #if defined ENABLE_IEEE_754
       if (NOT_A_REAL (x)) {
-        char *s = stack_string (p, 8 + length);
-        (void) error_chars (s, length);
+        char *s = stack_string (p, 8 + mant_length);
+        (void) error_chars (s, mant_length);
         add_string_transput_buffer (p, FORMATTED_BUFFER, s);
         stack_pointer = old_stack_pointer;
         return;
       }
-#endif /*  */
-      d_exp = 0;
+#endif
+      exp_value = 0;
       sign = SIGN (x);
       if (sign_mould != NULL) {
         put_sign_to_integral (sign_mould, sign);
       }
       x = ABS (x);
       if (expo_mould != NULL) {
-        standardise (&x, stag_digits, frac_digits, &d_exp);
+        standardise (&x, stag_digits, frac_digits, &exp_value);
       }
-      str = sub_fixed (p, x, length, frac_digits);
+      str = sub_fixed (p, x, mant_length, frac_digits);
     } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
       ADDR_T old_stack_pointer2 = stack_pointer;
       int digits = get_mp_digits (mode);
       MP_DIGIT_T *x;
       STACK_MP (x, p, digits);
       MOVE_MP (x, (MP_DIGIT_T *) item, digits);
-      d_exp = 0;
+      exp_value = 0;
       sign = SIGN (x[2]);
       if (sign_mould != NULL) {
         put_sign_to_integral (sign_mould, sign);
       }
       x[2] = ABS (x[2]);
       if (expo_mould != NULL) {
-        long_standardise (p, x, get_mp_digits (mode), stag_digits, frac_digits, &d_exp);
+        long_standardise (p, x, get_mp_digits (mode), stag_digits, frac_digits, &exp_value);
       }
-      str = long_sub_fixed (p, x, get_mp_digits (mode), length, frac_digits);
+      str = long_sub_fixed (p, x, get_mp_digits (mode), mant_length, frac_digits);
       stack_pointer = old_stack_pointer2;
     }
 /* Edit and output the string. */
     if (a68g_strchr (str, ERROR_CHAR) != NULL) {
       value_error (p, root, ref_file);
     }
-    put_zeroes_to_integral (p, length - (int) strlen (str));
-    add_string_transput_buffer (p, EDIT_BUFFER, str);
-    stag_str = get_transput_buffer (EDIT_BUFFER);
+    reset_transput_buffer (STRING_BUFFER);
+    add_string_transput_buffer (p, STRING_BUFFER, str);
+    stag_str = get_transput_buffer (STRING_BUFFER);
     if (a68g_strchr (stag_str, ERROR_CHAR) != NULL) {
       value_error (p, root, ref_file);
     }
     str = a68g_strchr (stag_str, POINT_CHAR);
-    if (frac_mould != NULL) {
-      frac_str = &str[1];
-    }
     if (str != NULL) {
+      frac_str = &str[1];
       str[0] = NULL_CHAR;
-    }
-/* Stagnant sign. */
-    if (sign_mould != NULL) {
-      int digits = 0;
-      count_zd_frames (SUB (sign_mould), &digits);
-      if (digits > 0) {
-        unsigned mood = (unsigned) (DIGIT_BLANK | INSERTION_NORMAL);
-        str = stag_str;
-        if (str[0] == '+' || str[0] == '-') {
-          shift_sign (SUB (sign_mould), &str);
-        }
-        write_mould (SUB (sign_mould), ref_file, SIGN_MOULD, &stag_str, &mood);
-      } else {
-        write_mould_put_sign (SUB (sign_mould), &stag_str);
-      }
-    } else if (sign < 0) {
-      value_sign_error (p, root, ref_file);
+    } else {
+      frac_str = NULL;
     }
 /* Stagnant part. */
+    reset_transput_buffer (EDIT_BUFFER);
+    if (sign_mould != NULL) {
+      put_sign_to_integral (sign_mould, sign);
+    } else if (sign < 0) {
+      value_sign_error (sign_mould, root, ref_file);
+    }
+    put_zeroes_to_integral (p, stag_digits - (int) strlen (stag_str));
+    add_string_transput_buffer (p, EDIT_BUFFER, stag_str);
+    stag_str = get_transput_buffer (EDIT_BUFFER);
+    mood = (unsigned) (DIGIT_BLANK | INSERTION_NORMAL);
+    if (sign_mould != NULL) {
+      if (stag_str[0] == '+' || stag_str[0] == '-') {
+        shift_sign (SUB (p), &stag_str);
+      }
+      stag_str = get_transput_buffer (EDIT_BUFFER);
+      write_mould (SUB (sign_mould), ref_file, SIGN_MOULD, &stag_str, &mood);
+    }
     if (stag_mould != NULL) {
-      unsigned mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
       write_mould (SUB (stag_mould), ref_file, INTEGRAL_MOULD, &stag_str, &mood);
+    }
+/* Point frame. */
+    if (point_frame != NULL) {
+      write_pie_frame (point_frame, ref_file, FORMAT_POINT_FRAME, FORMAT_ITEM_POINT);
     }
 /* Fraction. */
     if (frac_mould != NULL) {
-      unsigned mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
-      if (point_frame != NULL) {
-        write_pie_frame (point_frame, ref_file, FORMAT_POINT_FRAME, FORMAT_ITEM_POINT);
-      }
+      reset_transput_buffer (EDIT_BUFFER);
+      add_string_transput_buffer (p, EDIT_BUFFER, frac_str);
+      frac_str = get_transput_buffer (EDIT_BUFFER);
+      mood = (unsigned) (DIGIT_NORMAL | INSERTION_NORMAL);
       write_mould (SUB (frac_mould), ref_file, INTEGRAL_MOULD, &frac_str, &mood);
     }
 /* Exponent. */
     if (expo_mould != NULL) {
       A68_INT z;
+      STATUS (&z) = INITIALISED_MASK;
+      VALUE (&z) = exp_value;
       if (e_frame != NULL) {
         write_pie_frame (e_frame, ref_file, FORMAT_E_FRAME, FORMAT_ITEM_E);
       }
-      STATUS (&z) = INITIALISED_MASK;
-      VALUE (&z) = d_exp;
       write_integral_pattern (expo_mould, MODE (INT), root, (BYTE_T *) & z, ref_file);
     }
     stack_pointer = old_stack_pointer;
@@ -6481,7 +6474,7 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
     char *str;
 /* Establish width and radix. */
     count_zd_frames (SUB (p), &width);
-    radix = get_replicator_value (SUB (SUB (p)), A68_TRUE);
+    radix = get_replicator_value (SUB_SUB (p), A68_TRUE);
     if (radix < 2 || radix > 16) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_RADIX, radix);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -6508,7 +6501,7 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
     STACK_MP (w, p, digits);
 /* Establish width and radix. */
     count_zd_frames (SUB (p), &width);
-    radix = get_replicator_value (SUB (SUB (p)), A68_TRUE);
+    radix = get_replicator_value (SUB_SUB (p), A68_TRUE);
     if (radix < 2 || radix > 16) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_RADIX, radix);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -6790,11 +6783,11 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     A68_CHAR *z = (A68_CHAR *) item;
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (WHETHER (pat, GENERAL_PATTERN) && NEXT_SUB (pat) == NULL) {
-      add_char_transput_buffer (p, FORMATTED_BUFFER, VALUE (z));
+      add_char_transput_buffer (p, FORMATTED_BUFFER, (char) VALUE (z));
     } else if (WHETHER (pat, STRING_PATTERN)) {
       char *q = get_transput_buffer (EDIT_BUFFER);
       reset_transput_buffer (EDIT_BUFFER);
-      add_char_transput_buffer (p, EDIT_BUFFER, VALUE (z));
+      add_char_transput_buffer (p, EDIT_BUFFER, (char) VALUE (z));
       write_string_pattern (pat, mode, ref_file, &q);
       if (q[0] != NULL_CHAR) {
         value_error (p, mode, ref_file);
@@ -7080,7 +7073,7 @@ put, which is non-standard Algol68, but convenient.
       }
     } else if (WHETHER (p, REPLICATOR)) {
       int j, k = get_replicator_value (SUB (p), A68_TRUE);
-      if (ATTRIBUTE (SUB (NEXT (p))) != FORMAT_ITEM_K) {
+      if (ATTRIBUTE (SUB_NEXT (p)) != FORMAT_ITEM_K) {
         for (j = 1; j <= k; j++) {
           read_insertion (NEXT (p), ref_file);
         }
@@ -7489,13 +7482,13 @@ static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
 {
   int radix;
   char *z;
-  radix = get_replicator_value (SUB (SUB (p)), A68_TRUE);
+  radix = get_replicator_value (SUB_SUB (p), A68_TRUE);
   if (radix < 2 || radix > 16) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_RADIX, radix);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   z = get_transput_buffer (INPUT_BUFFER);
-  CHECK_RETVAL (snprintf (z, (size_t) TRANSPUT_BUFFER_SIZE, "%dr", radix) >= 0);
+  ASSERT (snprintf (z, (size_t) TRANSPUT_BUFFER_SIZE, "%dr", radix) >= 0);
   set_transput_buffer_index (INPUT_BUFFER, (int) strlen (z));
   read_integral_mould (NEXT_SUB (p), m, ref_file);
   genie_string_to_value (p, m, item, ref_file);

@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -29,6 +29,8 @@ routines in this file will give a runtime error when called. You can also choose
 to not have them defined in "prelude.c".
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -38,7 +40,6 @@ to not have them defined in "prelude.c".
 #if defined ENABLE_NUMERICAL
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_const.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -55,27 +56,6 @@ void n (NODE_T * p) {\
   POP_OPERAND_ADDRESS (p, i, MODE);\
   VALUE (i) = OP (VALUE (i));\
 }
-
-/*!
-\brief math_rte math runtime error
-\param p position in tree
-\param z condition
-\param m mode associated with error
-\param t info text
-**/
-
-/*
-void math_rte (NODE_T * p, z, MOID_T * m, const char *t)
-*/
-#define math_rte(p, z, m, t) {\
-  if (z) {\
-    if ((t) == NULL) {\
-      diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_MATH, (m), NULL);\
-    } else {\
-      diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_MATH_INFO, (m), (t));\
-    }\
-    exit_genie ((p), A68_RUNTIME_ERROR);\
-  }}
 
 /*!
 \brief generic procedure for OP AND BECOMES (+:=, -:=, ...)
@@ -131,8 +111,7 @@ A68_ENV_INT (genie_max_int, A68_MAX_INT)
 A68_ENV_REAL (genie_max_real, DBL_MAX)
 A68_ENV_REAL (genie_min_real, DBL_MIN)
 A68_ENV_REAL (genie_small_real, DBL_EPSILON)
-A68_ENV_REAL (genie_pi, A68G_PI)
-A68_ENV_REAL (genie_seconds, seconds ())
+A68_ENV_REAL (genie_pi, A68_PI)
 A68_ENV_REAL (genie_cputime, seconds () - cputime_0)
 A68_ENV_INT (genie_stack_pointer, stack_pointer)
 A68_ENV_INT (genie_system_stack_size, stack_size)
@@ -432,7 +411,7 @@ void genie_add_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
-  TEST_INT_ADDITION (p, VALUE (i), VALUE (j));
+  CHECK_INT_ADDITION (p, VALUE (i), VALUE (j));
   VALUE (i) += VALUE (j);
 }
 
@@ -445,7 +424,7 @@ void genie_sub_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
-  TEST_INT_ADDITION (p, VALUE (i), -VALUE (j));
+  CHECK_INT_SUBTRACTION (p, VALUE (i), VALUE (j));
   VALUE (i) -= VALUE (j);
 }
 
@@ -458,7 +437,7 @@ void genie_mul_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
-  TEST_INT_MULTIPLICATION (p, VALUE (i), VALUE (j));
+  CHECK_INT_MULTIPLICATION (p, VALUE (i), VALUE (j));
   VALUE (i) *= VALUE (j);
 }
 
@@ -471,10 +450,7 @@ void genie_over_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
-  if (VALUE (j) == 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (j) == 0, p, ERROR_DIVISION_BY_ZERO, MODE (INT));
   VALUE (i) /= VALUE (j);
 }
 
@@ -488,10 +464,7 @@ void genie_mod_int (NODE_T * p)
   A68_INT *i, *j;
   int k;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
-  if (VALUE (j) == 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (j) == 0, p, ERROR_DIVISION_BY_ZERO, MODE (INT));
   k = VALUE (i) % VALUE (j);
   if (k < 0) {
     k += (VALUE (j) >= 0 ? VALUE (j) : -VALUE (j));
@@ -509,10 +482,7 @@ void genie_div_int (NODE_T * p)
   A68_INT i, j;
   POP_OBJECT (p, &j, A68_INT);
   POP_OBJECT (p, &i, A68_INT);
-  if (VALUE (&j) == 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&j) == 0, p, ERROR_DIVISION_BY_ZERO, MODE (INT));
   PUSH_PRIMITIVE (p, (double) (VALUE (&i)) / (double) (VALUE (&j)), A68_REAL);
 }
 
@@ -526,22 +496,19 @@ void genie_pow_int (NODE_T * p)
   A68_INT i, j;
   int expo, mult, prod;
   POP_OBJECT (p, &j, A68_INT);
-  if (VALUE (&j) < 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_EXPONENT_INVALID, MODE (INT), VALUE (&j));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&j) < 0, p, ERROR_EXPONENT_INVALID, MODE (INT));
   POP_OBJECT (p, &i, A68_INT);
   prod = 1;
   mult = VALUE (&i);
   expo = 1;
   while ((unsigned) expo <= (unsigned) (VALUE (&j))) {
     if (VALUE (&j) & expo) {
-      TEST_INT_MULTIPLICATION (p, prod, mult);
+      CHECK_INT_MULTIPLICATION (p, prod, mult);
       prod *= mult;
     }
     expo <<= 1;
     if (expo <= VALUE (&j)) {
-      TEST_INT_MULTIPLICATION (p, mult, mult);
+      CHECK_INT_MULTIPLICATION (p, mult, mult);
       mult *= mult;
     }
   }
@@ -690,10 +657,7 @@ void genie_odd_long_mp (NODE_T * p)
 
 void test_long_int_range (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
 {
-  if (!check_mp_int (z, m)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, m);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (!check_mp_int (z, m), p, ERROR_OUT_OF_BOUNDS, m);
 }
 
 /*!
@@ -824,18 +788,9 @@ void genie_abs_real (NODE_T * p)
 void genie_round_real (NODE_T * p)
 {
   A68_REAL x;
-  int j;
   POP_OBJECT (p, &x, A68_REAL);
-  if (VALUE (&x) < -(double)A68_MAX_INT || VALUE (&x) > (double) A68_MAX_INT) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (VALUE (&x) > 0) {
-    j = (int) (VALUE (&x) + 0.5);
-  } else {
-    j = (int) (VALUE (&x) - 0.5);
-  }
-  PUSH_PRIMITIVE (p, j, A68_INT);
+  PRELUDE_ERROR (VALUE (&x) < -(double) A68_MAX_INT || VALUE (&x) > (double) A68_MAX_INT, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
+  PUSH_PRIMITIVE (p, a68g_round (VALUE (&x)), A68_INT);
 }
 
 /*!
@@ -847,10 +802,7 @@ void genie_entier_real (NODE_T * p)
 {
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
-  if (VALUE (&x) < -(double)A68_MAX_INT || VALUE (&x) > (double)A68_MAX_INT) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&x) < -(double) A68_MAX_INT || VALUE (&x) > (double)A68_MAX_INT, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   PUSH_PRIMITIVE (p, (int) floor (VALUE (&x)), A68_INT);
 }
 
@@ -876,7 +828,7 @@ void genie_add_real (NODE_T * p)
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
   VALUE (x) += VALUE (y);
-  TEST_REAL_REPRESENTATION (p, VALUE (x));
+  CHECK_REAL_REPRESENTATION (p, VALUE (x));
 }
 
 /*!
@@ -889,7 +841,7 @@ void genie_sub_real (NODE_T * p)
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
   VALUE (x) -= VALUE (y);
-  TEST_REAL_REPRESENTATION (p, VALUE (x));
+  CHECK_REAL_REPRESENTATION (p, VALUE (x));
 }
 
 /*!
@@ -901,9 +853,8 @@ void genie_mul_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
-  TEST_TIMES_OVERFLOW_REAL (p, VALUE (x), VALUE (y));
   VALUE (x) *= VALUE (y);
-  TEST_REAL_REPRESENTATION (p, VALUE (x));
+  CHECK_REAL_REPRESENTATION (p, VALUE (x));
 }
 
 /*!
@@ -915,14 +866,8 @@ void genie_div_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
-#if ! defined ENABLE_IEEE_754
-  if (VALUE (y) == 0.0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (REAL));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-#endif
+  PRELUDE_ERROR (VALUE (y) == 0.0, p, ERROR_DIVISION_BY_ZERO, MODE (REAL));
   VALUE (x) /= VALUE (y);
-  TEST_REAL_REPRESENTATION (p, VALUE (x));
 }
 
 /*!
@@ -946,16 +891,16 @@ void genie_pow_real_int (NODE_T * p)
   expo = 1;
   while ((unsigned) expo <= (unsigned) (VALUE (&j))) {
     if (VALUE (&j) & expo) {
-      TEST_TIMES_OVERFLOW_REAL (p, prod, mult);
+      CHECK_REAL_MULTIPLICATION (p, prod, mult);
       prod *= mult;
     }
     expo <<= 1;
     if (expo <= VALUE (&j)) {
-      TEST_TIMES_OVERFLOW_REAL (p, mult, mult);
+      CHECK_REAL_MULTIPLICATION (p, mult, mult);
       mult *= mult;
     }
   }
-  TEST_REAL_REPRESENTATION (p, prod);
+  CHECK_REAL_REPRESENTATION (p, prod);
   if (negative) {
     prod = 1.0 / prod;
   }
@@ -973,11 +918,8 @@ void genie_pow_real (NODE_T * p)
   double z;
   POP_OBJECT (p, &y, A68_REAL);
   POP_OBJECT (p, &x, A68_REAL);
-  if (VALUE (&x) <= 0.0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MODE (REAL), &x);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
   RESET_ERRNO;
+  PRELUDE_ERROR (VALUE (&x) <= 0.0, p, ERROR_INVALID_ARGUMENT, MODE (REAL));
   z = exp (VALUE (&y) * log (VALUE (&x)));
   math_rte (p, errno != 0, MODE (REAL), NULL);
   PUSH_PRIMITIVE (p, z, A68_REAL);
@@ -1133,10 +1075,7 @@ void genie_sqrt_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (sqrt_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longsqrt");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (sqrt_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
@@ -1149,10 +1088,7 @@ void genie_curt_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (curt_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longcurt");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (curt_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
@@ -1181,10 +1117,7 @@ void genie_ln_long_mp (NODE_T * p)
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (ln_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longln");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (ln_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
@@ -1199,10 +1132,7 @@ void genie_log_long_mp (NODE_T * p)
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (log_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longlog");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (log_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
 }
@@ -1320,10 +1250,7 @@ void genie_tan_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (tan_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longtan");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (tan_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
@@ -1336,10 +1263,7 @@ void genie_asin_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (asin_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longarcsin");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (asin_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
@@ -1352,10 +1276,7 @@ void genie_acos_long_mp (NODE_T * p)
 {
   int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (acos_mp (p, x, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longarcsin");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (acos_mp (p, x, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
@@ -1383,10 +1304,7 @@ void genie_atan2_long_mp (NODE_T * p)
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   stack_pointer -= size;
-  if (atan2_mp (p, x, y, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, "longarctan2");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (atan2_mp (p, x, y, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
 }
 
@@ -1414,14 +1332,11 @@ void genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
 void genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
 {
   MP_DIGIT_T *z;
-  MOID_T *m = SUB (MOID (p));
+  MOID_T *m = SUB_MOID (p);
   DECREMENT_STACK_POINTER (p, (int) size_longlong_mp ());
   STACK_MP (z, p, long_mp_digits ());
   if (m == MODE (LONG_INT)) {
-    if (MP_EXPONENT (z) > LONG_MP_DIGITS - 1) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, m, NULL);
-      exit_genie (p, A68_RUNTIME_ERROR);
-    }
+    PRELUDE_ERROR (MP_EXPONENT (z) > LONG_MP_DIGITS - 1, p, ERROR_OUT_OF_BOUNDS, m);
   }
   (void) shorten_mp (p, z, long_mp_digits (), z, longlong_mp_digits ());
   MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
@@ -1525,10 +1440,7 @@ void genie_div_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (div_mp (p, x, x, y, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_REAL));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (div_mp (p, x, x, y, digits) == NULL, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_REAL));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
@@ -1544,10 +1456,7 @@ void genie_over_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (over_mp (p, x, x, y, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (over_mp (p, x, x, y, digits) == NULL, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
@@ -1563,10 +1472,7 @@ void genie_mod_long_mp (NODE_T * p)
   int digits = get_mp_digits (mode), size = get_mp_size (mode);
   MP_DIGIT_T *x = (MP_DIGIT_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
-  if (mod_mp (p, x, x, y, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (mod_mp (p, x, x, y, digits) == NULL, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
   if (MP_DIGIT (x, 1) < 0) {
     MP_DIGIT (y, 1) = ABS (MP_DIGIT (y, 1));
    (void) add_mp (p, x, x, y, digits);
@@ -1692,11 +1598,8 @@ void genie_pow_long_mp (NODE_T * p)
   MP_DIGIT_T *y = (MP_DIGIT_T *) STACK_OFFSET (-size);
   MP_DIGIT_T *z;
   STACK_MP (z, p, digits);
-  if (ln_mp (p, z, x, digits) == NULL) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MOID (p), x, SYMBOL (p));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
- (void) mul_mp (p, z, y, z, digits);
+  PRELUDE_ERROR (ln_mp (p, z, x, digits) == NULL, p, ERROR_INVALID_ARGUMENT, MOID (p));
+  (void) mul_mp (p, z, y, z, digits);
   (void) exp_mp (p, x, z, digits);
   stack_pointer = pop_sp - size;
   MP_STATUS (x) = (MP_DIGIT_T) INITIALISED_MASK;
@@ -1742,10 +1645,7 @@ void genie_repr_char (NODE_T * p)
 {
   A68_INT k;
   POP_OBJECT (p, &k, A68_INT);
-  if (VALUE (&k) < 0 || VALUE (&k) > (int) UCHAR_MAX) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (CHAR));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&k) < 0 || VALUE (&k) > (int) UCHAR_MAX, p, ERROR_OUT_OF_BOUNDS, MODE (CHAR));
   PUSH_PRIMITIVE (p, (char) (VALUE (&k)), A68_CHAR);
 }
 
@@ -1840,13 +1740,8 @@ void genie_elem_string (NODE_T * p)
   CHECK_REF (p, z, MODE (STRING));
   POP_OBJECT (p, &k, A68_INT);
   GET_DESCRIPTOR (a, t, &z);
-  if (VALUE (&k) < LWB (t)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  } else if (VALUE (&k) > UPB (t)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&k) < LWB (t), p, ERROR_INDEX_OUT_OF_BOUNDS, NULL);
+  PRELUDE_ERROR (VALUE (&k) > UPB (t), p, ERROR_INDEX_OUT_OF_BOUNDS, NULL);
   base = ADDRESS (&(ARRAY (a)));
   ch = (A68_CHAR *) & (base[INDEX_1_DIM (a, t, VALUE (&k))]);
   PUSH_PRIMITIVE (p, VALUE (ch), A68_CHAR);
@@ -1922,10 +1817,7 @@ void genie_times_int_string (NODE_T * p)
   A68_REF a;
   POP_REF (p, &a);
   POP_OBJECT (p, &k, A68_INT);
-  if (VALUE (&k) < 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MODE (INT), k);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&k) < 0, p, ERROR_INVALID_ARGUMENT, MODE (INT));
   UP_SWEEP_SEMA;
   PUSH_REF (p, empty_string (p));
   while (VALUE (&k)--) {
@@ -1968,10 +1860,7 @@ void genie_times_int_char (NODE_T * p)
 /* Pop operands. */
   POP_OBJECT (p, &a, A68_CHAR);
   POP_OBJECT (p, &str_size, A68_INT);
-  if (VALUE (&str_size) < 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MODE (INT), str_size);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&str_size) < 0, p, ERROR_INVALID_ARGUMENT, MODE (INT));
 /* Make new_one string. */
   z = heap_generator (p, MODE (ROW_CHAR), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
   PROTECT_SWEEP_HANDLE (&z);
@@ -2060,10 +1949,7 @@ void genie_timesab_string (NODE_T * p)
   int i;
 /* INT. */
   POP_OBJECT (p, &k, A68_INT);
-  if (VALUE (&k) < 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MODE (INT), k);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&k) < 0, p, ERROR_INVALID_ARGUMENT, MODE (INT));
 /* REF STRING. */
   POP_REF (p, &refa);
   CHECK_REF (p, refa, MODE (REF_STRING));
@@ -2103,7 +1989,7 @@ static int string_difference (NODE_T * p)
   GET_DESCRIPTOR (a_1, t_1, &row1);
   s_1 = ROW_SIZE (t_1);
 /* Get difference. */
-  size = s_1 > s_2 ? s_1 : s_2;
+  size = (s_1 > s_2 ? s_1 : s_2);
   diff = 0;
   b_1 = ADDRESS (&ARRAY (a_1));
   b_2 = ADDRESS (&ARRAY (a_2));
@@ -2195,10 +2081,7 @@ void genie_elem_bytes (NODE_T * p)
   A68_INT i;
   POP_OBJECT (p, &j, A68_BYTES);
   POP_OBJECT (p, &i, A68_INT);
-  if (VALUE (&i) < 1 || VALUE (&i) > BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   if (VALUE (&i) > (int) strlen (VALUE (&j))) {
     genie_null_char (p);
   } else {
@@ -2217,12 +2100,9 @@ void genie_bytespack (NODE_T * p)
   A68_BYTES b;
   POP_REF (p, &z);
   CHECK_REF (p, z, MODE (STRING));
-  if (a68_string_size (p, z) > BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (STRING));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (a68_string_size (p, z) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (STRING));
   STATUS (&b) = INITIALISED_MASK;
-  CHECK_RETVAL (a_to_c_string (p, VALUE (&b), z) != NULL);
+  ASSERT (a_to_c_string (p, VALUE (&b), z) != NULL);
   PUSH_BYTES (p, VALUE (&b));
 }
 
@@ -2235,10 +2115,7 @@ void genie_add_bytes (NODE_T * p)
 {
   A68_BYTES *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_BYTES);
-  if (((int) strlen (VALUE (i)) + (int) strlen (VALUE (j))) > BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (((int) strlen (VALUE (i)) + (int) strlen (VALUE (j))) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
   bufcat (VALUE (i), VALUE (j), BYTES_WIDTH);
 }
 
@@ -2266,10 +2143,7 @@ void genie_plusto_bytes (NODE_T * p)
   address = (A68_BYTES *) ADDRESS (&z);
   CHECK_INIT (p, INITIALISED (address), MODE (BYTES));
   POP_OBJECT (p, &i, A68_BYTES);
-  if (((int) strlen (VALUE (address)) + (int) strlen (VALUE (&i))) > BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (((int) strlen (VALUE (address)) + (int) strlen (VALUE (&i))) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
   bufcpy (VALUE (&j), VALUE (&i), BYTES_WIDTH);
   bufcat (VALUE (&j), VALUE (address), BYTES_WIDTH);
   bufcpy (VALUE (address), VALUE (&j), BYTES_WIDTH);
@@ -2326,10 +2200,7 @@ void genie_shorten_bytes (NODE_T * p)
 {
   A68_LONG_BYTES a;
   POP_OBJECT (p, &a, A68_LONG_BYTES);
-  if (strlen (VALUE (&a)) >= BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (strlen (VALUE (&a)) >= BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
   PUSH_BYTES (p, VALUE (&a));
 }
 
@@ -2344,10 +2215,7 @@ void genie_elem_long_bytes (NODE_T * p)
   A68_INT i;
   POP_OBJECT (p, &j, A68_LONG_BYTES);
   POP_OBJECT (p, &i, A68_INT);
-  if (VALUE (&i) < 1 || VALUE (&i) > LONG_BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   if (VALUE (&i) > (int) strlen (VALUE (&j))) {
     genie_null_char (p);
   } else {
@@ -2366,12 +2234,9 @@ void genie_long_bytespack (NODE_T * p)
   A68_LONG_BYTES b;
   POP_REF (p, &z);
   CHECK_REF (p, z, MODE (STRING));
-  if (a68_string_size (p, z) > LONG_BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (STRING));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (a68_string_size (p, z) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (STRING));
   STATUS (&b) = INITIALISED_MASK;
-  CHECK_RETVAL (a_to_c_string (p, VALUE (&b), z) != NULL);
+  ASSERT (a_to_c_string (p, VALUE (&b), z) != NULL);
   PUSH_LONG_BYTES (p, VALUE (&b));
 }
 
@@ -2384,10 +2249,7 @@ void genie_add_long_bytes (NODE_T * p)
 {
   A68_LONG_BYTES *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_LONG_BYTES);
-  if (((int) strlen (VALUE (i)) + (int) strlen (VALUE (j))) > LONG_BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (LONG_BYTES));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (((int) strlen (VALUE (i)) + (int) strlen (VALUE (j))) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (LONG_BYTES));
   bufcat (VALUE (i), VALUE (j), LONG_BYTES_WIDTH);
 }
 
@@ -2415,10 +2277,7 @@ void genie_plusto_long_bytes (NODE_T * p)
   address = (A68_LONG_BYTES *) ADDRESS (&z);
   CHECK_INIT (p, INITIALISED (address), MODE (LONG_BYTES));
   POP_OBJECT (p, &i, A68_LONG_BYTES);
-  if (((int) strlen (VALUE (address)) + (int) strlen (VALUE (&i))) > LONG_BYTES_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (LONG_BYTES));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (((int) strlen (VALUE (address)) + (int) strlen (VALUE (&i))) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (LONG_BYTES));
   bufcpy (VALUE (&j), VALUE (&i), LONG_BYTES_WIDTH);
   bufcat (VALUE (&j), VALUE (address), LONG_BYTES_WIDTH);
   bufcpy (VALUE (address), VALUE (&j), LONG_BYTES_WIDTH);
@@ -2547,12 +2406,6 @@ void genie_shl_bits (NODE_T * p)
   POP_OBJECT (p, &j, A68_INT);
   POP_OBJECT (p, &i, A68_BITS);
   if (VALUE (&j) >= 0) {
-/*
-    if (VALUE (&i) > (A68_MAX_BITS >> VALUE (&j))) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BITS));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    }
-*/
     PUSH_PRIMITIVE (p, VALUE (&i) << VALUE (&j), A68_BITS);
   } else {
     PUSH_PRIMITIVE (p, VALUE (&i) >> -VALUE (&j), A68_BITS);
@@ -2585,10 +2438,7 @@ void genie_elem_bits (NODE_T * p)
   unsigned mask = 0x1;
   POP_OBJECT (p, &j, A68_BITS);
   POP_OBJECT (p, &i, A68_INT);
-  if (VALUE (&i) < 1 || VALUE (&i) > BITS_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > BITS_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   for (n = 0; n < (BITS_WIDTH - VALUE (&i)); n++) {
     mask = mask << 1;
   }
@@ -2608,10 +2458,7 @@ void genie_set_bits (NODE_T * p)
   unsigned mask = 0x1;
   POP_OBJECT (p, &j, A68_BITS);
   POP_OBJECT (p, &i, A68_INT);
-  if (VALUE (&i) < 1 || VALUE (&i) > BITS_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > BITS_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   for (n = 0; n < (BITS_WIDTH - VALUE (&i)); n++) {
     mask = mask << 1;
   }
@@ -2631,14 +2478,23 @@ void genie_clear_bits (NODE_T * p)
   unsigned mask = 0x1;
   POP_OBJECT (p, &j, A68_BITS);
   POP_OBJECT (p, &i, A68_INT);
-  if (VALUE (&i) < 1 || VALUE (&i) > BITS_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > BITS_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   for (n = 0; n < (BITS_WIDTH - VALUE (&i)); n++) {
     mask = mask << 1;
   }
   PUSH_PRIMITIVE (p, VALUE (&j) & ~mask, A68_BITS);
+}
+
+/*!
+\brief OP ABS = (BITS) INT
+\param p position in tree
+**/
+
+void genie_abs_bits (NODE_T * p)
+{
+  A68_BITS i;
+  POP_OBJECT (p, &i, A68_BITS);
+  PUSH_PRIMITIVE (p, (int) (VALUE (&i)), A68_INT);
 }
 
 /*!
@@ -2661,7 +2517,7 @@ void genie_bin_int (NODE_T * p)
 
 void genie_bin_long_mp (NODE_T * p)
 {
-  MOID_T *mode = SUB (MOID (p));
+  MOID_T *mode = SUB_MOID (p);
   int size = get_mp_size (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *u = (MP_DIGIT_T *) STACK_OFFSET (-size);
@@ -2740,10 +2596,7 @@ void genie_elem_long_bits (NODE_T * p)
   int bits = get_mp_bits_width (MODE (LONG_BITS)), size = get_mp_size (MODE (LONG_BITS));
   z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
-  if (VALUE (i) < 1 || VALUE (i) > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = elem_long_bits (p, VALUE (i), z, MODE (LONG_BITS));
   DECREMENT_STACK_POINTER (p, size + ALIGNED_SIZE_OF (A68_INT));
   PUSH_PRIMITIVE (p, (BOOL_T) (w != 0), A68_BOOL);
@@ -2762,10 +2615,7 @@ void genie_elem_longlong_bits (NODE_T * p)
   int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = get_mp_size (MODE (LONGLONG_BITS));
   z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
-  if (VALUE (i) < 1 || VALUE (i) > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = elem_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS));
   DECREMENT_STACK_POINTER (p, size + ALIGNED_SIZE_OF (A68_INT));
   PUSH_PRIMITIVE (p, (BOOL_T) (w != 0), A68_BOOL);
@@ -2809,10 +2659,7 @@ void genie_set_long_bits (NODE_T * p)
   int bits = get_mp_bits_width (MODE (LONG_BITS)), size = get_mp_size (MODE (LONG_BITS));
   z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
-  if (VALUE (i) < 1 || VALUE (i) > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONG_BITS), 0x1);
   (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
   stack_pointer = pop_sp;
@@ -2833,10 +2680,7 @@ void genie_set_longlong_bits (NODE_T * p)
   int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = get_mp_size (MODE (LONGLONG_BITS));
   z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
-  if (VALUE (i) < 1 || VALUE (i) > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS), 0x1);
   (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
   stack_pointer = pop_sp;
@@ -2857,10 +2701,7 @@ void genie_clear_long_bits (NODE_T * p)
   int bits = get_mp_bits_width (MODE (LONG_BITS)), size = get_mp_size (MODE (LONG_BITS));
   z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
-  if (VALUE (i) < 1 || VALUE (i) > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONG_BITS), 0x0);
   (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
   stack_pointer = pop_sp;
@@ -2881,10 +2722,7 @@ void genie_clear_longlong_bits (NODE_T * p)
   int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = get_mp_size (MODE (LONGLONG_BITS));
   z = (MP_DIGIT_T *) STACK_OFFSET (-size);
   i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
-  if (VALUE (i) < 1 || VALUE (i) > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS), 0x0);
   (void) pack_mp_bits (p, (MP_DIGIT_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
   stack_pointer = pop_sp;
@@ -2909,10 +2747,7 @@ void genie_bits_pack (NODE_T * p)
   CHECK_REF (p, z, MODE (ROW_BOOL));
   GET_DESCRIPTOR (arr, tup, &z);
   size = ROW_SIZE (tup);
-  if (size < 0 || size > BITS_WIDTH) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (size < 0 || size > BITS_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
   base = ADDRESS (&ARRAY (arr));
   VALUE (&b) = 0x0;
   bit = 0x1;
@@ -2950,10 +2785,7 @@ void genie_long_bits_pack (NODE_T * p)
   size = ROW_SIZE (tup);
   bits = get_mp_bits_width (mode);
   digits = get_mp_digits (mode);
-  if (size < 0 || size > bits) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (size < 0 || size > bits, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
 /* Convert so that LWB goes to MSB, so ELEM gives same order as [] BOOL. */
   base = ADDRESS (&ARRAY (arr));
   STACK_MP (sum, p, digits);
@@ -3137,134 +2969,217 @@ void genie_xor_long_mp (NODE_T * p)
 }
 
 #if defined ENABLE_NUMERICAL
-A68_ENV_REAL (genie_cgs_acre, GSL_CONST_CGS_ACRE)
-A68_ENV_REAL (genie_cgs_angstrom, GSL_CONST_CGS_ANGSTROM)
-A68_ENV_REAL (genie_cgs_astronomical_unit, GSL_CONST_CGS_ASTRONOMICAL_UNIT)
-A68_ENV_REAL (genie_cgs_bar, GSL_CONST_CGS_BAR)
-A68_ENV_REAL (genie_cgs_barn, GSL_CONST_CGS_BARN)
-A68_ENV_REAL (genie_cgs_bohr_magneton, GSL_CONST_CGS_BOHR_MAGNETON)
-A68_ENV_REAL (genie_cgs_bohr_radius, GSL_CONST_CGS_BOHR_RADIUS)
-A68_ENV_REAL (genie_cgs_boltzmann, GSL_CONST_CGS_BOLTZMANN)
-A68_ENV_REAL (genie_cgs_btu, GSL_CONST_CGS_BTU)
-A68_ENV_REAL (genie_cgs_calorie, GSL_CONST_CGS_CALORIE)
-A68_ENV_REAL (genie_cgs_canadian_gallon, GSL_CONST_CGS_CANADIAN_GALLON)
-A68_ENV_REAL (genie_cgs_carat, GSL_CONST_CGS_CARAT)
-A68_ENV_REAL (genie_cgs_cup, GSL_CONST_CGS_CUP)
-A68_ENV_REAL (genie_cgs_curie, GSL_CONST_CGS_CURIE)
-A68_ENV_REAL (genie_cgs_day, GSL_CONST_CGS_DAY)
-A68_ENV_REAL (genie_cgs_dyne, GSL_CONST_CGS_DYNE)
-A68_ENV_REAL (genie_cgs_electron_charge, GSL_CONST_CGS_ELECTRON_CHARGE)
-A68_ENV_REAL (genie_cgs_electron_magnetic_moment, GSL_CONST_CGS_ELECTRON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_cgs_electron_volt, GSL_CONST_CGS_ELECTRON_VOLT) A68_ENV_REAL (genie_cgs_erg, GSL_CONST_CGS_ERG)
-A68_ENV_REAL (genie_cgs_faraday, GSL_CONST_CGS_FARADAY) A68_ENV_REAL (genie_cgs_fathom, GSL_CONST_CGS_FATHOM)
-A68_ENV_REAL (genie_cgs_fluid_ounce, GSL_CONST_CGS_FLUID_OUNCE) A68_ENV_REAL (genie_cgs_foot, GSL_CONST_CGS_FOOT)
-A68_ENV_REAL (genie_cgs_footcandle, GSL_CONST_CGS_FOOTCANDLE) A68_ENV_REAL (genie_cgs_footlambert, GSL_CONST_CGS_FOOTLAMBERT)
-A68_ENV_REAL (genie_cgs_gauss, GSL_CONST_CGS_GAUSS) A68_ENV_REAL (genie_cgs_gram_force, GSL_CONST_CGS_GRAM_FORCE)
-A68_ENV_REAL (genie_cgs_grav_accel, GSL_CONST_CGS_GRAV_ACCEL)
-A68_ENV_REAL (genie_cgs_gravitational_constant, GSL_CONST_CGS_GRAVITATIONAL_CONSTANT)
-A68_ENV_REAL (genie_cgs_hectare, GSL_CONST_CGS_HECTARE) A68_ENV_REAL (genie_cgs_horsepower, GSL_CONST_CGS_HORSEPOWER)
-A68_ENV_REAL (genie_cgs_hour, GSL_CONST_CGS_HOUR) A68_ENV_REAL (genie_cgs_inch, GSL_CONST_CGS_INCH)
-A68_ENV_REAL (genie_cgs_inch_of_mercury, GSL_CONST_CGS_INCH_OF_MERCURY)
-A68_ENV_REAL (genie_cgs_inch_of_water, GSL_CONST_CGS_INCH_OF_WATER) A68_ENV_REAL (genie_cgs_joule, GSL_CONST_CGS_JOULE)
-A68_ENV_REAL (genie_cgs_kilometers_per_hour, GSL_CONST_CGS_KILOMETERS_PER_HOUR)
-A68_ENV_REAL (genie_cgs_kilopound_force, GSL_CONST_CGS_KILOPOUND_FORCE) A68_ENV_REAL (genie_cgs_knot, GSL_CONST_CGS_KNOT)
-A68_ENV_REAL (genie_cgs_lambert, GSL_CONST_CGS_LAMBERT) A68_ENV_REAL (genie_cgs_light_year, GSL_CONST_CGS_LIGHT_YEAR)
-A68_ENV_REAL (genie_cgs_liter, GSL_CONST_CGS_LITER) A68_ENV_REAL (genie_cgs_lumen, GSL_CONST_CGS_LUMEN)
-A68_ENV_REAL (genie_cgs_lux, GSL_CONST_CGS_LUX) A68_ENV_REAL (genie_cgs_mass_electron, GSL_CONST_CGS_MASS_ELECTRON)
-A68_ENV_REAL (genie_cgs_mass_muon, GSL_CONST_CGS_MASS_MUON) A68_ENV_REAL (genie_cgs_mass_neutron, GSL_CONST_CGS_MASS_NEUTRON)
-A68_ENV_REAL (genie_cgs_mass_proton, GSL_CONST_CGS_MASS_PROTON)
-A68_ENV_REAL (genie_cgs_meter_of_mercury, GSL_CONST_CGS_METER_OF_MERCURY)
-A68_ENV_REAL (genie_cgs_metric_ton, GSL_CONST_CGS_METRIC_TON) A68_ENV_REAL (genie_cgs_micron, GSL_CONST_CGS_MICRON)
-A68_ENV_REAL (genie_cgs_mil, GSL_CONST_CGS_MIL) A68_ENV_REAL (genie_cgs_mile, GSL_CONST_CGS_MILE)
-A68_ENV_REAL (genie_cgs_miles_per_hour, GSL_CONST_CGS_MILES_PER_HOUR) A68_ENV_REAL (genie_cgs_minute, GSL_CONST_CGS_MINUTE)
-A68_ENV_REAL (genie_cgs_molar_gas, GSL_CONST_CGS_MOLAR_GAS) A68_ENV_REAL (genie_cgs_nautical_mile, GSL_CONST_CGS_NAUTICAL_MILE)
-A68_ENV_REAL (genie_cgs_newton, GSL_CONST_CGS_NEWTON) A68_ENV_REAL (genie_cgs_nuclear_magneton, GSL_CONST_CGS_NUCLEAR_MAGNETON)
-A68_ENV_REAL (genie_cgs_ounce_mass, GSL_CONST_CGS_OUNCE_MASS) A68_ENV_REAL (genie_cgs_parsec, GSL_CONST_CGS_PARSEC)
-A68_ENV_REAL (genie_cgs_phot, GSL_CONST_CGS_PHOT) A68_ENV_REAL (genie_cgs_pint, GSL_CONST_CGS_PINT)
-A68_ENV_REAL (genie_cgs_planck_constant_h, 6.6260693e-27) A68_ENV_REAL (genie_cgs_planck_constant_hbar, 6.6260693e-27 / (2 * A68G_PI))
-A68_ENV_REAL (genie_cgs_point, GSL_CONST_CGS_POINT) A68_ENV_REAL (genie_cgs_poise, GSL_CONST_CGS_POISE)
-A68_ENV_REAL (genie_cgs_pound_force, GSL_CONST_CGS_POUND_FORCE) A68_ENV_REAL (genie_cgs_pound_mass, GSL_CONST_CGS_POUND_MASS)
-A68_ENV_REAL (genie_cgs_poundal, GSL_CONST_CGS_POUNDAL)
-A68_ENV_REAL (genie_cgs_proton_magnetic_moment, GSL_CONST_CGS_PROTON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_cgs_psi, GSL_CONST_CGS_PSI) A68_ENV_REAL (genie_cgs_quart, GSL_CONST_CGS_QUART)
-A68_ENV_REAL (genie_cgs_rad, GSL_CONST_CGS_RAD) A68_ENV_REAL (genie_cgs_roentgen, GSL_CONST_CGS_ROENTGEN)
-A68_ENV_REAL (genie_cgs_rydberg, GSL_CONST_CGS_RYDBERG) A68_ENV_REAL (genie_cgs_solar_mass, GSL_CONST_CGS_SOLAR_MASS)
-A68_ENV_REAL (genie_cgs_speed_of_light, GSL_CONST_CGS_SPEED_OF_LIGHT)
-A68_ENV_REAL (genie_cgs_standard_gas_volume, GSL_CONST_CGS_STANDARD_GAS_VOLUME)
-A68_ENV_REAL (genie_cgs_std_atmosphere, GSL_CONST_CGS_STD_ATMOSPHERE) A68_ENV_REAL (genie_cgs_stilb, GSL_CONST_CGS_STILB)
-A68_ENV_REAL (genie_cgs_stokes, GSL_CONST_CGS_STOKES) A68_ENV_REAL (genie_cgs_tablespoon, GSL_CONST_CGS_TABLESPOON)
-A68_ENV_REAL (genie_cgs_teaspoon, GSL_CONST_CGS_TEASPOON) A68_ENV_REAL (genie_cgs_texpoint, GSL_CONST_CGS_TEXPOINT)
-A68_ENV_REAL (genie_cgs_therm, GSL_CONST_CGS_THERM) A68_ENV_REAL (genie_cgs_ton, GSL_CONST_CGS_TON)
-A68_ENV_REAL (genie_cgs_torr, GSL_CONST_CGS_TORR) A68_ENV_REAL (genie_cgs_troy_ounce, GSL_CONST_CGS_TROY_OUNCE)
-A68_ENV_REAL (genie_cgs_uk_gallon, GSL_CONST_CGS_UK_GALLON) A68_ENV_REAL (genie_cgs_uk_ton, GSL_CONST_CGS_UK_TON)
-A68_ENV_REAL (genie_cgs_unified_atomic_mass, GSL_CONST_CGS_UNIFIED_ATOMIC_MASS)
-A68_ENV_REAL (genie_cgs_us_gallon, GSL_CONST_CGS_US_GALLON) A68_ENV_REAL (genie_cgs_week, GSL_CONST_CGS_WEEK)
-A68_ENV_REAL (genie_cgs_yard, GSL_CONST_CGS_YARD) A68_ENV_REAL (genie_mks_acre, GSL_CONST_MKS_ACRE)
+A68_ENV_REAL (genie_cgs_acre, GSL_CONST_CGSM_ACRE)
+A68_ENV_REAL (genie_cgs_angstrom, GSL_CONST_CGSM_ANGSTROM)
+A68_ENV_REAL (genie_cgs_astronomical_unit, GSL_CONST_CGSM_ASTRONOMICAL_UNIT)
+A68_ENV_REAL (genie_cgs_bar, GSL_CONST_CGSM_BAR)
+A68_ENV_REAL (genie_cgs_barn, GSL_CONST_CGSM_BARN)
+A68_ENV_REAL (genie_cgs_bohr_magneton, GSL_CONST_CGSM_BOHR_MAGNETON)
+A68_ENV_REAL (genie_cgs_bohr_radius, GSL_CONST_CGSM_BOHR_RADIUS)
+A68_ENV_REAL (genie_cgs_boltzmann, GSL_CONST_CGSM_BOLTZMANN)
+A68_ENV_REAL (genie_cgs_btu, GSL_CONST_CGSM_BTU)
+A68_ENV_REAL (genie_cgs_calorie, GSL_CONST_CGSM_CALORIE)
+A68_ENV_REAL (genie_cgs_canadian_gallon, GSL_CONST_CGSM_CANADIAN_GALLON)
+A68_ENV_REAL (genie_cgs_carat, GSL_CONST_CGSM_CARAT)
+A68_ENV_REAL (genie_cgs_cup, GSL_CONST_CGSM_CUP)
+A68_ENV_REAL (genie_cgs_curie, GSL_CONST_CGSM_CURIE)
+A68_ENV_REAL (genie_cgs_day, GSL_CONST_CGSM_DAY)
+A68_ENV_REAL (genie_cgs_dyne, GSL_CONST_CGSM_DYNE)
+A68_ENV_REAL (genie_cgs_electron_charge, GSL_CONST_CGSM_ELECTRON_CHARGE)
+A68_ENV_REAL (genie_cgs_electron_magnetic_moment, GSL_CONST_CGSM_ELECTRON_MAGNETIC_MOMENT)
+A68_ENV_REAL (genie_cgs_electron_volt, GSL_CONST_CGSM_ELECTRON_VOLT) 
+A68_ENV_REAL (genie_cgs_erg, GSL_CONST_CGSM_ERG)
+A68_ENV_REAL (genie_cgs_faraday, GSL_CONST_CGSM_FARADAY) 
+A68_ENV_REAL (genie_cgs_fathom, GSL_CONST_CGSM_FATHOM)
+A68_ENV_REAL (genie_cgs_fluid_ounce, GSL_CONST_CGSM_FLUID_OUNCE) 
+A68_ENV_REAL (genie_cgs_foot, GSL_CONST_CGSM_FOOT)
+A68_ENV_REAL (genie_cgs_footcandle, GSL_CONST_CGSM_FOOTCANDLE) 
+A68_ENV_REAL (genie_cgs_footlambert, GSL_CONST_CGSM_FOOTLAMBERT)
+A68_ENV_REAL (genie_cgs_gauss, GSL_CONST_CGSM_GAUSS) 
+A68_ENV_REAL (genie_cgs_gram_force, GSL_CONST_CGSM_GRAM_FORCE)
+A68_ENV_REAL (genie_cgs_grav_accel, GSL_CONST_CGSM_GRAV_ACCEL)
+A68_ENV_REAL (genie_cgs_gravitational_constant, GSL_CONST_CGSM_GRAVITATIONAL_CONSTANT)
+A68_ENV_REAL (genie_cgs_hectare, GSL_CONST_CGSM_HECTARE) 
+A68_ENV_REAL (genie_cgs_horsepower, GSL_CONST_CGSM_HORSEPOWER)
+A68_ENV_REAL (genie_cgs_hour, GSL_CONST_CGSM_HOUR) 
+A68_ENV_REAL (genie_cgs_inch, GSL_CONST_CGSM_INCH)
+A68_ENV_REAL (genie_cgs_inch_of_mercury, GSL_CONST_CGSM_INCH_OF_MERCURY)
+A68_ENV_REAL (genie_cgs_inch_of_water, GSL_CONST_CGSM_INCH_OF_WATER) 
+A68_ENV_REAL (genie_cgs_joule, GSL_CONST_CGSM_JOULE)
+A68_ENV_REAL (genie_cgs_kilometers_per_hour, GSL_CONST_CGSM_KILOMETERS_PER_HOUR)
+A68_ENV_REAL (genie_cgs_kilopound_force, GSL_CONST_CGSM_KILOPOUND_FORCE) 
+A68_ENV_REAL (genie_cgs_knot, GSL_CONST_CGSM_KNOT)
+A68_ENV_REAL (genie_cgs_lambert, GSL_CONST_CGSM_LAMBERT) 
+A68_ENV_REAL (genie_cgs_light_year, GSL_CONST_CGSM_LIGHT_YEAR)
+A68_ENV_REAL (genie_cgs_liter, GSL_CONST_CGSM_LITER) 
+A68_ENV_REAL (genie_cgs_lumen, GSL_CONST_CGSM_LUMEN)
+A68_ENV_REAL (genie_cgs_lux, GSL_CONST_CGSM_LUX) 
+A68_ENV_REAL (genie_cgs_mass_electron, GSL_CONST_CGSM_MASS_ELECTRON)
+A68_ENV_REAL (genie_cgs_mass_muon, GSL_CONST_CGSM_MASS_MUON) 
+A68_ENV_REAL (genie_cgs_mass_neutron, GSL_CONST_CGSM_MASS_NEUTRON)
+A68_ENV_REAL (genie_cgs_mass_proton, GSL_CONST_CGSM_MASS_PROTON)
+A68_ENV_REAL (genie_cgs_meter_of_mercury, GSL_CONST_CGSM_METER_OF_MERCURY)
+A68_ENV_REAL (genie_cgs_metric_ton, GSL_CONST_CGSM_METRIC_TON) 
+A68_ENV_REAL (genie_cgs_micron, GSL_CONST_CGSM_MICRON)
+A68_ENV_REAL (genie_cgs_mil, GSL_CONST_CGSM_MIL) 
+A68_ENV_REAL (genie_cgs_mile, GSL_CONST_CGSM_MILE)
+A68_ENV_REAL (genie_cgs_miles_per_hour, GSL_CONST_CGSM_MILES_PER_HOUR) 
+A68_ENV_REAL (genie_cgs_minute, GSL_CONST_CGSM_MINUTE)
+A68_ENV_REAL (genie_cgs_molar_gas, GSL_CONST_CGSM_MOLAR_GAS) 
+A68_ENV_REAL (genie_cgs_nautical_mile, GSL_CONST_CGSM_NAUTICAL_MILE)
+A68_ENV_REAL (genie_cgs_newton, GSL_CONST_CGSM_NEWTON) 
+A68_ENV_REAL (genie_cgs_nuclear_magneton, GSL_CONST_CGSM_NUCLEAR_MAGNETON)
+A68_ENV_REAL (genie_cgs_ounce_mass, GSL_CONST_CGSM_OUNCE_MASS) 
+A68_ENV_REAL (genie_cgs_parsec, GSL_CONST_CGSM_PARSEC)
+A68_ENV_REAL (genie_cgs_phot, GSL_CONST_CGSM_PHOT) 
+A68_ENV_REAL (genie_cgs_pint, GSL_CONST_CGSM_PINT)
+A68_ENV_REAL (genie_cgs_planck_constant_h, 6.6260693e-27) 
+A68_ENV_REAL (genie_cgs_planck_constant_hbar, 6.6260693e-27 / (2 * A68_PI))
+A68_ENV_REAL (genie_cgs_point, GSL_CONST_CGSM_POINT) 
+A68_ENV_REAL (genie_cgs_poise, GSL_CONST_CGSM_POISE)
+A68_ENV_REAL (genie_cgs_pound_force, GSL_CONST_CGSM_POUND_FORCE) 
+A68_ENV_REAL (genie_cgs_pound_mass, GSL_CONST_CGSM_POUND_MASS)
+A68_ENV_REAL (genie_cgs_poundal, GSL_CONST_CGSM_POUNDAL)
+A68_ENV_REAL (genie_cgs_proton_magnetic_moment, GSL_CONST_CGSM_PROTON_MAGNETIC_MOMENT)
+A68_ENV_REAL (genie_cgs_psi, GSL_CONST_CGSM_PSI) 
+A68_ENV_REAL (genie_cgs_quart, GSL_CONST_CGSM_QUART)
+A68_ENV_REAL (genie_cgs_rad, GSL_CONST_CGSM_RAD) 
+A68_ENV_REAL (genie_cgs_roentgen, GSL_CONST_CGSM_ROENTGEN)
+A68_ENV_REAL (genie_cgs_rydberg, GSL_CONST_CGSM_RYDBERG) 
+A68_ENV_REAL (genie_cgs_solar_mass, GSL_CONST_CGSM_SOLAR_MASS)
+A68_ENV_REAL (genie_cgs_speed_of_light, GSL_CONST_CGSM_SPEED_OF_LIGHT)
+A68_ENV_REAL (genie_cgs_standard_gas_volume, GSL_CONST_CGSM_STANDARD_GAS_VOLUME)
+A68_ENV_REAL (genie_cgs_std_atmosphere, GSL_CONST_CGSM_STD_ATMOSPHERE) 
+A68_ENV_REAL (genie_cgs_stilb, GSL_CONST_CGSM_STILB)
+A68_ENV_REAL (genie_cgs_stokes, GSL_CONST_CGSM_STOKES) 
+A68_ENV_REAL (genie_cgs_tablespoon, GSL_CONST_CGSM_TABLESPOON)
+A68_ENV_REAL (genie_cgs_teaspoon, GSL_CONST_CGSM_TEASPOON) 
+A68_ENV_REAL (genie_cgs_texpoint, GSL_CONST_CGSM_TEXPOINT)
+A68_ENV_REAL (genie_cgs_therm, GSL_CONST_CGSM_THERM) 
+A68_ENV_REAL (genie_cgs_ton, GSL_CONST_CGSM_TON)
+A68_ENV_REAL (genie_cgs_torr, GSL_CONST_CGSM_TORR) 
+A68_ENV_REAL (genie_cgs_troy_ounce, GSL_CONST_CGSM_TROY_OUNCE)
+A68_ENV_REAL (genie_cgs_uk_gallon, GSL_CONST_CGSM_UK_GALLON) 
+A68_ENV_REAL (genie_cgs_uk_ton, GSL_CONST_CGSM_UK_TON)
+A68_ENV_REAL (genie_cgs_unified_atomic_mass, GSL_CONST_CGSM_UNIFIED_ATOMIC_MASS)
+A68_ENV_REAL (genie_cgs_us_gallon, GSL_CONST_CGSM_US_GALLON) 
+A68_ENV_REAL (genie_cgs_week, GSL_CONST_CGSM_WEEK)
+A68_ENV_REAL (genie_cgs_yard, GSL_CONST_CGSM_YARD) 
+A68_ENV_REAL (genie_mks_acre, GSL_CONST_MKS_ACRE)
 A68_ENV_REAL (genie_mks_angstrom, GSL_CONST_MKS_ANGSTROM)
-A68_ENV_REAL (genie_mks_astronomical_unit, GSL_CONST_MKS_ASTRONOMICAL_UNIT) A68_ENV_REAL (genie_mks_bar, GSL_CONST_MKS_BAR)
-A68_ENV_REAL (genie_mks_barn, GSL_CONST_MKS_BARN) A68_ENV_REAL (genie_mks_bohr_magneton, GSL_CONST_MKS_BOHR_MAGNETON)
-A68_ENV_REAL (genie_mks_bohr_radius, GSL_CONST_MKS_BOHR_RADIUS) A68_ENV_REAL (genie_mks_boltzmann, GSL_CONST_MKS_BOLTZMANN)
-A68_ENV_REAL (genie_mks_btu, GSL_CONST_MKS_BTU) A68_ENV_REAL (genie_mks_calorie, GSL_CONST_MKS_CALORIE)
-A68_ENV_REAL (genie_mks_canadian_gallon, GSL_CONST_MKS_CANADIAN_GALLON) A68_ENV_REAL (genie_mks_carat, GSL_CONST_MKS_CARAT)
-A68_ENV_REAL (genie_mks_cup, GSL_CONST_MKS_CUP) A68_ENV_REAL (genie_mks_curie, GSL_CONST_MKS_CURIE)
-A68_ENV_REAL (genie_mks_day, GSL_CONST_MKS_DAY) A68_ENV_REAL (genie_mks_dyne, GSL_CONST_MKS_DYNE)
+A68_ENV_REAL (genie_mks_astronomical_unit, GSL_CONST_MKS_ASTRONOMICAL_UNIT) 
+A68_ENV_REAL (genie_mks_bar, GSL_CONST_MKS_BAR)
+A68_ENV_REAL (genie_mks_barn, GSL_CONST_MKS_BARN) 
+A68_ENV_REAL (genie_mks_bohr_magneton, GSL_CONST_MKS_BOHR_MAGNETON)
+A68_ENV_REAL (genie_mks_bohr_radius, GSL_CONST_MKS_BOHR_RADIUS) 
+A68_ENV_REAL (genie_mks_boltzmann, GSL_CONST_MKS_BOLTZMANN)
+A68_ENV_REAL (genie_mks_btu, GSL_CONST_MKS_BTU) 
+A68_ENV_REAL (genie_mks_calorie, GSL_CONST_MKS_CALORIE)
+A68_ENV_REAL (genie_mks_canadian_gallon, GSL_CONST_MKS_CANADIAN_GALLON) 
+A68_ENV_REAL (genie_mks_carat, GSL_CONST_MKS_CARAT)
+A68_ENV_REAL (genie_mks_cup, GSL_CONST_MKS_CUP) 
+A68_ENV_REAL (genie_mks_curie, GSL_CONST_MKS_CURIE)
+A68_ENV_REAL (genie_mks_day, GSL_CONST_MKS_DAY) 
+A68_ENV_REAL (genie_mks_dyne, GSL_CONST_MKS_DYNE)
 A68_ENV_REAL (genie_mks_electron_charge, GSL_CONST_MKS_ELECTRON_CHARGE)
 A68_ENV_REAL (genie_mks_electron_magnetic_moment, GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_mks_electron_volt, GSL_CONST_MKS_ELECTRON_VOLT) A68_ENV_REAL (genie_mks_erg, GSL_CONST_MKS_ERG)
-A68_ENV_REAL (genie_mks_faraday, GSL_CONST_MKS_FARADAY) A68_ENV_REAL (genie_mks_fathom, GSL_CONST_MKS_FATHOM)
-A68_ENV_REAL (genie_mks_fluid_ounce, GSL_CONST_MKS_FLUID_OUNCE) A68_ENV_REAL (genie_mks_foot, GSL_CONST_MKS_FOOT)
-A68_ENV_REAL (genie_mks_footcandle, GSL_CONST_MKS_FOOTCANDLE) A68_ENV_REAL (genie_mks_footlambert, GSL_CONST_MKS_FOOTLAMBERT)
-A68_ENV_REAL (genie_mks_gauss, GSL_CONST_MKS_GAUSS) A68_ENV_REAL (genie_mks_gram_force, GSL_CONST_MKS_GRAM_FORCE)
+A68_ENV_REAL (genie_mks_electron_volt, GSL_CONST_MKS_ELECTRON_VOLT) 
+A68_ENV_REAL (genie_mks_erg, GSL_CONST_MKS_ERG)
+A68_ENV_REAL (genie_mks_faraday, GSL_CONST_MKS_FARADAY) 
+A68_ENV_REAL (genie_mks_fathom, GSL_CONST_MKS_FATHOM)
+A68_ENV_REAL (genie_mks_fluid_ounce, GSL_CONST_MKS_FLUID_OUNCE) 
+A68_ENV_REAL (genie_mks_foot, GSL_CONST_MKS_FOOT)
+A68_ENV_REAL (genie_mks_footcandle, GSL_CONST_MKS_FOOTCANDLE) 
+A68_ENV_REAL (genie_mks_footlambert, GSL_CONST_MKS_FOOTLAMBERT)
+A68_ENV_REAL (genie_mks_gauss, GSL_CONST_MKS_GAUSS) 
+A68_ENV_REAL (genie_mks_gram_force, GSL_CONST_MKS_GRAM_FORCE)
 A68_ENV_REAL (genie_mks_grav_accel, GSL_CONST_MKS_GRAV_ACCEL)
 A68_ENV_REAL (genie_mks_gravitational_constant, GSL_CONST_MKS_GRAVITATIONAL_CONSTANT)
-A68_ENV_REAL (genie_mks_hectare, GSL_CONST_MKS_HECTARE) A68_ENV_REAL (genie_mks_horsepower, GSL_CONST_MKS_HORSEPOWER)
-A68_ENV_REAL (genie_mks_hour, GSL_CONST_MKS_HOUR) A68_ENV_REAL (genie_mks_inch, GSL_CONST_MKS_INCH)
+A68_ENV_REAL (genie_mks_hectare, GSL_CONST_MKS_HECTARE) 
+A68_ENV_REAL (genie_mks_horsepower, GSL_CONST_MKS_HORSEPOWER)
+A68_ENV_REAL (genie_mks_hour, GSL_CONST_MKS_HOUR) 
+A68_ENV_REAL (genie_mks_inch, GSL_CONST_MKS_INCH)
 A68_ENV_REAL (genie_mks_inch_of_mercury, GSL_CONST_MKS_INCH_OF_MERCURY)
-A68_ENV_REAL (genie_mks_inch_of_water, GSL_CONST_MKS_INCH_OF_WATER) A68_ENV_REAL (genie_mks_joule, GSL_CONST_MKS_JOULE)
+A68_ENV_REAL (genie_mks_inch_of_water, GSL_CONST_MKS_INCH_OF_WATER) 
+A68_ENV_REAL (genie_mks_joule, GSL_CONST_MKS_JOULE)
 A68_ENV_REAL (genie_mks_kilometers_per_hour, GSL_CONST_MKS_KILOMETERS_PER_HOUR)
-A68_ENV_REAL (genie_mks_kilopound_force, GSL_CONST_MKS_KILOPOUND_FORCE) A68_ENV_REAL (genie_mks_knot, GSL_CONST_MKS_KNOT)
-A68_ENV_REAL (genie_mks_lambert, GSL_CONST_MKS_LAMBERT) A68_ENV_REAL (genie_mks_light_year, GSL_CONST_MKS_LIGHT_YEAR)
-A68_ENV_REAL (genie_mks_liter, GSL_CONST_MKS_LITER) A68_ENV_REAL (genie_mks_lumen, GSL_CONST_MKS_LUMEN)
-A68_ENV_REAL (genie_mks_lux, GSL_CONST_MKS_LUX) A68_ENV_REAL (genie_mks_mass_electron, GSL_CONST_MKS_MASS_ELECTRON)
-A68_ENV_REAL (genie_mks_mass_muon, GSL_CONST_MKS_MASS_MUON) A68_ENV_REAL (genie_mks_mass_neutron, GSL_CONST_MKS_MASS_NEUTRON)
+A68_ENV_REAL (genie_mks_kilopound_force, GSL_CONST_MKS_KILOPOUND_FORCE) 
+A68_ENV_REAL (genie_mks_knot, GSL_CONST_MKS_KNOT)
+A68_ENV_REAL (genie_mks_lambert, GSL_CONST_MKS_LAMBERT) 
+A68_ENV_REAL (genie_mks_light_year, GSL_CONST_MKS_LIGHT_YEAR)
+A68_ENV_REAL (genie_mks_liter, GSL_CONST_MKS_LITER) 
+A68_ENV_REAL (genie_mks_lumen, GSL_CONST_MKS_LUMEN)
+A68_ENV_REAL (genie_mks_lux, GSL_CONST_MKS_LUX) 
+A68_ENV_REAL (genie_mks_mass_electron, GSL_CONST_MKS_MASS_ELECTRON)
+A68_ENV_REAL (genie_mks_mass_muon, GSL_CONST_MKS_MASS_MUON) 
+A68_ENV_REAL (genie_mks_mass_neutron, GSL_CONST_MKS_MASS_NEUTRON)
 A68_ENV_REAL (genie_mks_mass_proton, GSL_CONST_MKS_MASS_PROTON)
 A68_ENV_REAL (genie_mks_meter_of_mercury, GSL_CONST_MKS_METER_OF_MERCURY)
-A68_ENV_REAL (genie_mks_metric_ton, GSL_CONST_MKS_METRIC_TON) A68_ENV_REAL (genie_mks_micron, GSL_CONST_MKS_MICRON)
-A68_ENV_REAL (genie_mks_mil, GSL_CONST_MKS_MIL) A68_ENV_REAL (genie_mks_mile, GSL_CONST_MKS_MILE)
-A68_ENV_REAL (genie_mks_miles_per_hour, GSL_CONST_MKS_MILES_PER_HOUR) A68_ENV_REAL (genie_mks_minute, GSL_CONST_MKS_MINUTE)
-A68_ENV_REAL (genie_mks_molar_gas, GSL_CONST_MKS_MOLAR_GAS) A68_ENV_REAL (genie_mks_nautical_mile, GSL_CONST_MKS_NAUTICAL_MILE)
-A68_ENV_REAL (genie_mks_newton, GSL_CONST_MKS_NEWTON) A68_ENV_REAL (genie_mks_nuclear_magneton, GSL_CONST_MKS_NUCLEAR_MAGNETON)
-A68_ENV_REAL (genie_mks_ounce_mass, GSL_CONST_MKS_OUNCE_MASS) A68_ENV_REAL (genie_mks_parsec, GSL_CONST_MKS_PARSEC)
-A68_ENV_REAL (genie_mks_phot, GSL_CONST_MKS_PHOT) A68_ENV_REAL (genie_mks_pint, GSL_CONST_MKS_PINT)
-A68_ENV_REAL (genie_mks_planck_constant_h, 6.6260693e-34) A68_ENV_REAL (genie_mks_planck_constant_hbar, 6.6260693e-34 / (2 * A68G_PI))
-A68_ENV_REAL (genie_mks_point, GSL_CONST_MKS_POINT) A68_ENV_REAL (genie_mks_poise, GSL_CONST_MKS_POISE)
-A68_ENV_REAL (genie_mks_pound_force, GSL_CONST_MKS_POUND_FORCE) A68_ENV_REAL (genie_mks_pound_mass, GSL_CONST_MKS_POUND_MASS)
+A68_ENV_REAL (genie_mks_metric_ton, GSL_CONST_MKS_METRIC_TON) 
+A68_ENV_REAL (genie_mks_micron, GSL_CONST_MKS_MICRON)
+A68_ENV_REAL (genie_mks_mil, GSL_CONST_MKS_MIL) 
+A68_ENV_REAL (genie_mks_mile, GSL_CONST_MKS_MILE)
+A68_ENV_REAL (genie_mks_miles_per_hour, GSL_CONST_MKS_MILES_PER_HOUR) 
+A68_ENV_REAL (genie_mks_minute, GSL_CONST_MKS_MINUTE)
+A68_ENV_REAL (genie_mks_molar_gas, GSL_CONST_MKS_MOLAR_GAS) 
+A68_ENV_REAL (genie_mks_nautical_mile, GSL_CONST_MKS_NAUTICAL_MILE)
+A68_ENV_REAL (genie_mks_newton, GSL_CONST_MKS_NEWTON) 
+A68_ENV_REAL (genie_mks_nuclear_magneton, GSL_CONST_MKS_NUCLEAR_MAGNETON)
+A68_ENV_REAL (genie_mks_ounce_mass, GSL_CONST_MKS_OUNCE_MASS) 
+A68_ENV_REAL (genie_mks_parsec, GSL_CONST_MKS_PARSEC)
+A68_ENV_REAL (genie_mks_phot, GSL_CONST_MKS_PHOT) 
+A68_ENV_REAL (genie_mks_pint, GSL_CONST_MKS_PINT)
+A68_ENV_REAL (genie_mks_planck_constant_h, 6.6260693e-34) 
+A68_ENV_REAL (genie_mks_planck_constant_hbar, 6.6260693e-34 / (2 * A68_PI))
+A68_ENV_REAL (genie_mks_point, GSL_CONST_MKS_POINT) 
+A68_ENV_REAL (genie_mks_poise, GSL_CONST_MKS_POISE)
+A68_ENV_REAL (genie_mks_pound_force, GSL_CONST_MKS_POUND_FORCE) 
+A68_ENV_REAL (genie_mks_pound_mass, GSL_CONST_MKS_POUND_MASS)
 A68_ENV_REAL (genie_mks_poundal, GSL_CONST_MKS_POUNDAL)
 A68_ENV_REAL (genie_mks_proton_magnetic_moment, GSL_CONST_MKS_PROTON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_mks_psi, GSL_CONST_MKS_PSI) A68_ENV_REAL (genie_mks_quart, GSL_CONST_MKS_QUART)
-A68_ENV_REAL (genie_mks_rad, GSL_CONST_MKS_RAD) A68_ENV_REAL (genie_mks_roentgen, GSL_CONST_MKS_ROENTGEN)
-A68_ENV_REAL (genie_mks_rydberg, GSL_CONST_MKS_RYDBERG) A68_ENV_REAL (genie_mks_solar_mass, GSL_CONST_MKS_SOLAR_MASS)
+A68_ENV_REAL (genie_mks_psi, GSL_CONST_MKS_PSI) 
+A68_ENV_REAL (genie_mks_quart, GSL_CONST_MKS_QUART)
+A68_ENV_REAL (genie_mks_rad, GSL_CONST_MKS_RAD) 
+A68_ENV_REAL (genie_mks_roentgen, GSL_CONST_MKS_ROENTGEN)
+A68_ENV_REAL (genie_mks_rydberg, GSL_CONST_MKS_RYDBERG) 
+A68_ENV_REAL (genie_mks_solar_mass, GSL_CONST_MKS_SOLAR_MASS)
 A68_ENV_REAL (genie_mks_speed_of_light, GSL_CONST_MKS_SPEED_OF_LIGHT)
 A68_ENV_REAL (genie_mks_standard_gas_volume, GSL_CONST_MKS_STANDARD_GAS_VOLUME)
-A68_ENV_REAL (genie_mks_std_atmosphere, GSL_CONST_MKS_STD_ATMOSPHERE) A68_ENV_REAL (genie_mks_stilb, GSL_CONST_MKS_STILB)
-A68_ENV_REAL (genie_mks_stokes, GSL_CONST_MKS_STOKES) A68_ENV_REAL (genie_mks_tablespoon, GSL_CONST_MKS_TABLESPOON)
-A68_ENV_REAL (genie_mks_teaspoon, GSL_CONST_MKS_TEASPOON) A68_ENV_REAL (genie_mks_texpoint, GSL_CONST_MKS_TEXPOINT)
-A68_ENV_REAL (genie_mks_therm, GSL_CONST_MKS_THERM) A68_ENV_REAL (genie_mks_ton, GSL_CONST_MKS_TON)
-A68_ENV_REAL (genie_mks_torr, GSL_CONST_MKS_TORR) A68_ENV_REAL (genie_mks_troy_ounce, GSL_CONST_MKS_TROY_OUNCE)
-A68_ENV_REAL (genie_mks_uk_gallon, GSL_CONST_MKS_UK_GALLON) A68_ENV_REAL (genie_mks_uk_ton, GSL_CONST_MKS_UK_TON)
+A68_ENV_REAL (genie_mks_std_atmosphere, GSL_CONST_MKS_STD_ATMOSPHERE) 
+A68_ENV_REAL (genie_mks_stilb, GSL_CONST_MKS_STILB)
+A68_ENV_REAL (genie_mks_stokes, GSL_CONST_MKS_STOKES) 
+A68_ENV_REAL (genie_mks_tablespoon, GSL_CONST_MKS_TABLESPOON)
+A68_ENV_REAL (genie_mks_teaspoon, GSL_CONST_MKS_TEASPOON) 
+A68_ENV_REAL (genie_mks_texpoint, GSL_CONST_MKS_TEXPOINT)
+A68_ENV_REAL (genie_mks_therm, GSL_CONST_MKS_THERM) 
+A68_ENV_REAL (genie_mks_ton, GSL_CONST_MKS_TON)
+A68_ENV_REAL (genie_mks_torr, GSL_CONST_MKS_TORR) 
+A68_ENV_REAL (genie_mks_troy_ounce, GSL_CONST_MKS_TROY_OUNCE)
+A68_ENV_REAL (genie_mks_uk_gallon, GSL_CONST_MKS_UK_GALLON) 
+A68_ENV_REAL (genie_mks_uk_ton, GSL_CONST_MKS_UK_TON)
 A68_ENV_REAL (genie_mks_unified_atomic_mass, GSL_CONST_MKS_UNIFIED_ATOMIC_MASS)
 A68_ENV_REAL (genie_mks_us_gallon, GSL_CONST_MKS_US_GALLON)
 A68_ENV_REAL (genie_mks_vacuum_permeability, GSL_CONST_MKS_VACUUM_PERMEABILITY)
-A68_ENV_REAL (genie_mks_vacuum_permittivity, GSL_CONST_MKS_VACUUM_PERMITTIVITY) A68_ENV_REAL (genie_mks_week, GSL_CONST_MKS_WEEK)
-A68_ENV_REAL (genie_mks_yard, GSL_CONST_MKS_YARD) A68_ENV_REAL (genie_num_atto, GSL_CONST_NUM_ATTO)
-A68_ENV_REAL (genie_num_avogadro, GSL_CONST_NUM_AVOGADRO) A68_ENV_REAL (genie_num_exa, GSL_CONST_NUM_EXA)
-A68_ENV_REAL (genie_num_femto, GSL_CONST_NUM_FEMTO) A68_ENV_REAL (genie_num_fine_structure, GSL_CONST_NUM_FINE_STRUCTURE)
-A68_ENV_REAL (genie_num_giga, GSL_CONST_NUM_GIGA) A68_ENV_REAL (genie_num_kilo, GSL_CONST_NUM_KILO)
-A68_ENV_REAL (genie_num_mega, GSL_CONST_NUM_MEGA) A68_ENV_REAL (genie_num_micro, GSL_CONST_NUM_MICRO)
-A68_ENV_REAL (genie_num_milli, GSL_CONST_NUM_MILLI) A68_ENV_REAL (genie_num_nano, GSL_CONST_NUM_NANO)
-A68_ENV_REAL (genie_num_peta, GSL_CONST_NUM_PETA) A68_ENV_REAL (genie_num_pico, GSL_CONST_NUM_PICO)
-A68_ENV_REAL (genie_num_tera, GSL_CONST_NUM_TERA) A68_ENV_REAL (genie_num_yocto, GSL_CONST_NUM_YOCTO)
-A68_ENV_REAL (genie_num_yotta, GSL_CONST_NUM_YOTTA) A68_ENV_REAL (genie_num_zepto, GSL_CONST_NUM_ZEPTO)
+A68_ENV_REAL (genie_mks_vacuum_permittivity, GSL_CONST_MKS_VACUUM_PERMITTIVITY) 
+A68_ENV_REAL (genie_mks_week, GSL_CONST_MKS_WEEK)
+A68_ENV_REAL (genie_mks_yard, GSL_CONST_MKS_YARD) 
+A68_ENV_REAL (genie_num_atto, GSL_CONST_NUM_ATTO)
+A68_ENV_REAL (genie_num_avogadro, GSL_CONST_NUM_AVOGADRO) 
+A68_ENV_REAL (genie_num_exa, GSL_CONST_NUM_EXA)
+A68_ENV_REAL (genie_num_femto, GSL_CONST_NUM_FEMTO) 
+A68_ENV_REAL (genie_num_fine_structure, GSL_CONST_NUM_FINE_STRUCTURE)
+A68_ENV_REAL (genie_num_giga, GSL_CONST_NUM_GIGA) 
+A68_ENV_REAL (genie_num_kilo, GSL_CONST_NUM_KILO)
+A68_ENV_REAL (genie_num_mega, GSL_CONST_NUM_MEGA) 
+A68_ENV_REAL (genie_num_micro, GSL_CONST_NUM_MICRO)
+A68_ENV_REAL (genie_num_milli, GSL_CONST_NUM_MILLI) 
+A68_ENV_REAL (genie_num_nano, GSL_CONST_NUM_NANO)
+A68_ENV_REAL (genie_num_peta, GSL_CONST_NUM_PETA) 
+A68_ENV_REAL (genie_num_pico, GSL_CONST_NUM_PICO)
+A68_ENV_REAL (genie_num_tera, GSL_CONST_NUM_TERA) 
+A68_ENV_REAL (genie_num_yocto, GSL_CONST_NUM_YOCTO)
+A68_ENV_REAL (genie_num_yotta, GSL_CONST_NUM_YOTTA) 
+A68_ENV_REAL (genie_num_zepto, GSL_CONST_NUM_ZEPTO)
 A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
 #endif
 
@@ -3625,15 +3540,9 @@ void genie_atan2_real (NODE_T * p)
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
   RESET_ERRNO;
-  if (VALUE (x) == 0.0 && VALUE (y) == 0.0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MODE (LONG_REAL), NULL);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (x) == 0.0 && VALUE (y) == 0.0, p, ERROR_INVALID_ARGUMENT, MODE (LONG_REAL));
   VALUE (x) = a68g_atan2 (VALUE (y), VALUE (x));
-  if (errno != 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_MATH_EXCEPTION);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NULL);
 }
 
 /*!
@@ -3748,7 +3657,7 @@ void genie_lj_f_12_6 (NODE_T * p)
   u = (VALUE (s) / VALUE (r));
   u2 = u * u;
   u6 = u2 * u2 * u2;
-  VALUE (e) = 24.0 * VALUE (e) * u2 * u6 * (1.0 - 2.0 * u6);
+  VALUE (e) = 24.0 * VALUE (e) * u * u6 * (1.0 - 2.0 * u6);
   math_rte (p, errno != 0, MODE (REAL), NULL);
 }
 
@@ -4278,7 +4187,6 @@ Some routines are based on
 
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_const.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -4380,12 +4288,8 @@ void genie_arg_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x;
   POP_COMPLEX (p, &re_x, &im_x);
-  if (VALUE (&re_x) != 0.0 || VALUE (&im_x) != 0.0) {
-    PUSH_PRIMITIVE (p, atan2 (VALUE (&im_x), VALUE (&re_x)), A68_REAL);
-  } else {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INVALID_ARGUMENT, MODE (COMPLEX), NULL);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&re_x) == 0.0 && VALUE (&im_x) == 0.0, p, ERROR_INVALID_ARGUMENT, MODE (COMPLEX));
+  PUSH_PRIMITIVE (p, atan2 (VALUE (&im_x), VALUE (&re_x)), A68_REAL);
 }
 
 /*!
@@ -4413,7 +4317,7 @@ void genie_add_complex (NODE_T * p)
   re_x = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
   VALUE (im_x) += VALUE (&im_y);
   VALUE (re_x) += VALUE (&re_y);
-  TEST_COMPLEX_REPRESENTATION (p, VALUE (re_x), VALUE (im_x));
+  CHECK_COMPLEX_REPRESENTATION (p, VALUE (re_x), VALUE (im_x));
 }
 
 /*!
@@ -4429,7 +4333,7 @@ void genie_sub_complex (NODE_T * p)
   re_x = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
   VALUE (im_x) -= VALUE (&im_y);
   VALUE (re_x) -= VALUE (&re_y);
-  TEST_COMPLEX_REPRESENTATION (p, VALUE (re_x), VALUE (im_x));
+  CHECK_COMPLEX_REPRESENTATION (p, VALUE (re_x), VALUE (im_x));
 }
 
 /*!
@@ -4445,7 +4349,7 @@ void genie_mul_complex (NODE_T * p)
   POP_COMPLEX (p, &re_x, &im_x);
   re = VALUE (&re_x) * VALUE (&re_y) - VALUE (&im_x) * VALUE (&im_y);
   im = VALUE (&im_x) * VALUE (&re_y) + VALUE (&re_x) * VALUE (&im_y);
-  TEST_COMPLEX_REPRESENTATION (p, re, im);
+  CHECK_COMPLEX_REPRESENTATION (p, re, im);
   PUSH_COMPLEX (p, re, im);
 }
 
@@ -4461,10 +4365,7 @@ void genie_div_complex (NODE_T * p)
   POP_COMPLEX (p, &re_y, &im_y);
   POP_COMPLEX (p, &re_x, &im_x);
 #if ! defined ENABLE_IEEE_754
-  if (VALUE (&re_y) == 0.0 && VALUE (&im_y) == 0.0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DIVISION_BY_ZERO, MODE (COMPLEX));
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
+  PRELUDE_ERROR (VALUE (&re_y) == 0.0 && VALUE (&im_y) == 0.0, p, ERROR_DIVISION_BY_ZERO, MODE (COMPLEX));
 #endif
   if (ABS (VALUE (&re_y)) >= ABS (VALUE (&im_y))) {
     double r = VALUE (&im_y) / VALUE (&re_y), den = VALUE (&re_y) + r * VALUE (&im_y);
@@ -4475,7 +4376,7 @@ void genie_div_complex (NODE_T * p)
     re = (VALUE (&re_x) * r + VALUE (&im_x)) / den;
     im = (VALUE (&im_x) * r - VALUE (&re_x)) / den;
   }
-  TEST_COMPLEX_REPRESENTATION (p, re, im);
+  CHECK_COMPLEX_REPRESENTATION (p, re, im);
   PUSH_COMPLEX (p, re, im);
 }
 
@@ -4513,7 +4414,7 @@ void genie_pow_complex_int (NODE_T * p)
     re_y = rea;
     expo <<= 1;
   }
-  TEST_COMPLEX_REPRESENTATION (p, re_z, im_z);
+  CHECK_COMPLEX_REPRESENTATION (p, re_z, im_z);
   if (negative) {
     PUSH_PRIMITIVE (p, 1.0, A68_REAL);
     PUSH_PRIMITIVE (p, 0.0, A68_REAL);

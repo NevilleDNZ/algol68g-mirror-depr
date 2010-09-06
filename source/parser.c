@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -48,6 +48,8 @@ These are the phases:
      is done separately. Also structure of a format text is checked separately.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 
 static jmp_buf bottom_up_crash_exit, top_down_crash_exit;
@@ -442,7 +444,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
       }
 /* Add initiation. */
       if (count == 0) {
-        bufcat (buffer, "the construct starting with", BUFFER_SIZE);
+        bufcat (buffer, "construct beginning with", BUFFER_SIZE);
       } else if (count == 1) {
         bufcat (buffer, " followed by", BUFFER_SIZE);
       } else if (count == 2) {
@@ -453,7 +455,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
 /* Attribute or symbol. */
       if (z != NULL && SUB (p) != NULL) {
         if (gatt == IDENTIFIER || gatt == OPERATOR || gatt == DENOTATION) {
-          CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+          ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
           bufcat (buffer, edit_line, BUFFER_SIZE);
         } else {
           if (strchr ("aeio", z[0]) != NULL) {
@@ -461,14 +463,14 @@ diagnostic is not as important as accurately indicating *were* the problem is!
           } else {
             bufcat (buffer, " a", BUFFER_SIZE);
           }
-          CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " %s", z) >= 0);
+          ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, " %s", z) >= 0);
           bufcat (buffer, edit_line, BUFFER_SIZE);
         }
       } else if (z != NULL && SUB (p) == NULL) {
-        CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+        ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       } else if (SYMBOL (p) != NULL) {
-        CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+        ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       }
 /* Add "starting in line nn". */
@@ -477,7 +479,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
         if (gatt == SERIAL_CLAUSE || gatt == ENQUIRY_CLAUSE || gatt == INITIALISER_SERIES) {
           bufcat (buffer, " starting", BUFFER_SIZE);
         }
-        CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, " in line %d", line) >= 0);
+        ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, " in line %d", line) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       }
       count++;
@@ -510,7 +512,7 @@ static void bracket_check_error (char *txt, int n, char *bra, char *ket)
 {
   if (n != 0) {
     char b[BUFFER_SIZE];
-    CHECK_RETVAL (snprintf (b, (size_t) BUFFER_SIZE, "\"%s\" without matching \"%s\"", (n > 0 ? bra : ket), (n > 0 ? ket : bra)) >= 0);
+    ASSERT (snprintf (b, (size_t) BUFFER_SIZE, "\"%s\" without matching \"%s\"", (n > 0 ? bra : ket), (n > 0 ? ket : bra)) >= 0);
     if (strlen (txt) > 0) {
       bufcat (txt, " and ", BUFFER_SIZE);
     }
@@ -848,8 +850,7 @@ static NODE_T *top_down_skip_loop_unit (NODE_T * p)
       if (p != NULL && whether_loop_keyword (p)) {
         p = top_down_loop (p);
       }
-    } else if (whether_one_of (p, SEMI_SYMBOL, COMMA_SYMBOL, NULL_ATTRIBUTE)
-               || WHETHER (p, EXIT_SYMBOL)) {
+    } else if (whether_one_of (p, SEMI_SYMBOL, COMMA_SYMBOL, NULL_ATTRIBUTE) || WHETHER (p, EXIT_SYMBOL)) {
 /* Statement separators. */
       return (p);
     } else {
@@ -867,14 +868,14 @@ static NODE_T *top_down_skip_loop_unit (NODE_T * p)
 
 static NODE_T *top_down_skip_loop_series (NODE_T * p)
 {
-  BOOL_T z;
+  BOOL_T siga;
   do {
     p = top_down_skip_loop_unit (p);
-    z = (BOOL_T) (p != NULL && (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, COLON_SYMBOL, NULL_ATTRIBUTE)));
-    if (z) {
+    siga = (BOOL_T) (p != NULL && (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, COLON_SYMBOL, NULL_ATTRIBUTE)));
+    if (siga) {
       FORWARD (p);
     }
-  } while (!(p == NULL || !z));
+  } while (!(p == NULL || !siga));
   return (p);
 }
 
@@ -1036,13 +1037,13 @@ static void top_down_untils (NODE_T * p)
 
 static NODE_T *top_down_series (NODE_T * p)
 {
-  BOOL_T z = A68_TRUE;
-  while (z) {
-    z = A68_FALSE;
+  BOOL_T siga = A68_TRUE;
+  while (siga) {
+    siga = A68_FALSE;
     p = top_down_skip_unit (p);
     if (p != NULL) {
       if (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, NULL_ATTRIBUTE)) {
-        z = A68_TRUE;
+        siga = A68_TRUE;
         FORWARD (p);
       }
     }
@@ -1482,7 +1483,7 @@ Filling in gives one format for such construct; this helps later passes.
 
 static void a68_extension (NODE_T * p)
 {
-  if (MODULE (INFO (p))->options.portcheck) {
+  if (program.options.portcheck) {
     diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION, NULL);
   } else {
     diagnostic_node (A68_WARNING, p, WARNING_EXTENSION, NULL);
@@ -1525,25 +1526,14 @@ static void strange_tokens (NODE_T * p)
 }
 
 /*!
-\brief diagnose for missing separator
+\brief diagnose for strange separator
 \param p position in tree
 **/
 
-static void missing_separator (NODE_T * p)
+static void strange_separator (NODE_T * p)
 {
   NODE_T *q = (p != NULL && NEXT (p) != NULL) ? NEXT (p) : p;
-  diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MISSING_SEPARATOR);
-}
-
-/*!
-\brief diagnose for wrong separator
-\param p position in tree
-**/
-
-static void wrong_separator (NODE_T * p)
-{
-  NODE_T *q = (p != NULL && NEXT (p) != NULL) ? NEXT (p) : p;
-  diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_WRONG_SEPARATOR);
+  diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_STRANGE_SEPARATOR);
 }
 
 /*!
@@ -1584,12 +1574,12 @@ static void try_reduction (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
     }
   }
 /* Print parser reductions. */
-  if (head != NULL && MODULE (INFO (head))->options.reductions && LINE_NUMBER (head) > 0) {
+  if (head != NULL && program.options.reductions && LINE_NUMBER (head) > 0) {
     NODE_T *q;
     int count = 0;
     reductions++;
-    where (STDOUT_FILENO, head);
-    CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "\nReduction %d: %s<-", reductions, non_terminal_string (edit_line, result)) >= 0);
+    where_in_source (STDOUT_FILENO, head);
+    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\nReduction %d: %s<-", reductions, non_terminal_string (edit_line, result)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
     for (q = head; q != NULL && tail != NULL && q != NEXT (tail); FORWARD (q), count++) {
       int gatt = ATTRIBUTE (q);
@@ -1600,7 +1590,7 @@ static void try_reduction (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
       if (str != NULL) {
         WRITE (STDOUT_FILENO, str);
         if (gatt == IDENTIFIER || gatt == OPERATOR || gatt == DENOTATION || gatt == INDICANT) {
-          CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (q)) >= 0);
+          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (q)) >= 0);
           WRITE (STDOUT_FILENO, output_line);
         }
       } else {
@@ -1642,19 +1632,19 @@ void bottom_up_parser (NODE_T * p)
 static void reduce_particular_program (NODE_T * p)
 {
   NODE_T *q;
-  int error_count_0 = a68_prog.error_count;
+  int error_count_0 = program.error_count;
 /* A program is "label sequence; particular program" */
   extract_labels (p, SERIAL_CLAUSE /* a fake here, but ok. */ );
 /* Parse the program itself. */
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
+    BOOL_T siga = A68_TRUE;
     if (SUB (q) != NULL) {
       reduce_subordinate (q, SOME_CLAUSE);
     }
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, LABEL, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, LABEL, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
     }
   }
 /* Determine the encompassing enclosed clause. */
@@ -1678,7 +1668,7 @@ static void reduce_particular_program (NODE_T * p)
   try_reduction (q, NULL, NULL, PARTICULAR_PROGRAM, LABEL, ENCLOSED_CLAUSE, NULL_ATTRIBUTE);
   try_reduction (q, NULL, NULL, PARTICULAR_PROGRAM, ENCLOSED_CLAUSE, NULL_ATTRIBUTE);
   if (SUB (p) == NULL || NEXT (p) != NULL) {
-    recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((a68_prog.error_count - error_count_0) > MAX_ERRORS));
+    recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((program.error_count - error_count_0) > MAX_ERRORS));
   }
 }
 
@@ -1699,7 +1689,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
       BOOL_T no_error = reduce_phrase (SUB (p), expect);
       ATTRIBUTE (p) = ATTRIBUTE (SUB (p));
       if (no_error) {
-        SUB (p) = SUB (SUB (p));
+        SUB (p) = SUB_SUB (p);
       }
     }
   }
@@ -1714,7 +1704,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
 
 BOOL_T reduce_phrase (NODE_T * p, int expect)
 {
-  int error_count_0 = a68_prog.error_count, error_count_02;
+  int error_count_0 = program.error_count, error_count_02;
   BOOL_T declarer_pack = (BOOL_T) (expect == STRUCTURE_PACK || expect == PARAMETER_PACK || expect == FORMAL_DECLARERS || expect == UNION_PACK || expect == SPECIFIER);
 /* Sample all info needed to decide whether a bold tag is operator or indicant. */
   extract_indicants (p);
@@ -1722,18 +1712,18 @@ BOOL_T reduce_phrase (NODE_T * p, int expect)
     extract_priorities (p);
     extract_operators (p);
   }
-  error_count_02 = a68_prog.error_count;
+  error_count_02 = program.error_count;
   elaborate_bold_tags (p);
-  if ((a68_prog.error_count - error_count_02) > 0) {
+  if ((program.error_count - error_count_02) > 0) {
     longjmp (bottom_up_crash_exit, 1);
   }
 /* Now we can reduce declarers, knowing which bold tags are indicants. */
   reduce_declarers (p, expect);
 /* Parse the phrase, as appropriate. */
   if (!declarer_pack) {
-    error_count_02 = a68_prog.error_count;
+    error_count_02 = program.error_count;
     extract_declarations (p);
-    if ((a68_prog.error_count - error_count_02) > 0) {
+    if ((program.error_count - error_count_02) > 0) {
       longjmp (bottom_up_crash_exit, 1);
     }
     extract_labels (p, expect);
@@ -1745,7 +1735,7 @@ BOOL_T reduce_phrase (NODE_T * p, int expect)
   }
 /* Do something intelligible if parsing failed. */
   if (SUB (p) == NULL || NEXT (p) != NULL) {
-    recover_from_error (p, expect, (BOOL_T) ((a68_prog.error_count - error_count_0) > MAX_ERRORS));
+    recover_from_error (p, expect, (BOOL_T) ((program.error_count - error_count_0) > MAX_ERRORS));
     return (A68_FALSE);
   } else {
     return (A68_TRUE);
@@ -1778,9 +1768,10 @@ static void reduce_declarers (NODE_T * p, int expect)
   } else {
     NODE_T *q;
     for (q = p; q != NULL; FORWARD (q)) {
-      if (whether (q, OPEN_SYMBOL, COLON_SYMBOL, NULL_ATTRIBUTE)
-          && !(expect == GENERIC_ARGUMENT || expect == BOUNDS)) {
-        reduce_subordinate (q, SPECIFIER);
+      if (whether (q, OPEN_SYMBOL, COLON_SYMBOL, NULL_ATTRIBUTE) && !(expect == GENERIC_ARGUMENT || expect == BOUNDS)) {
+        if (whether_one_of (p, IN_SYMBOL, THEN_BAR_SYMBOL, NULL_ATTRIBUTE)) {
+          reduce_subordinate (q, SPECIFIER);
+        }
       }
       if (whether (q, OPEN_SYMBOL, DECLARER, COLON_SYMBOL, NULL_ATTRIBUTE)) {
         reduce_subordinate (q, PARAMETER_PACK);
@@ -1985,13 +1976,13 @@ static void reduce_lengtheties (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
+    BOOL_T siga = A68_TRUE;
     try_reduction (q, NULL, NULL, LONGETY, LONG_SYMBOL, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, SHORTETY, SHORT_SYMBOL, NULL_ATTRIBUTE);
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, LONGETY, LONGETY, LONG_SYMBOL, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, SHORTETY, SHORTETY, SHORT_SYMBOL, NULL_ATTRIBUTE);
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, LONGETY, LONGETY, LONG_SYMBOL, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, SHORTETY, SHORTETY, SHORT_SYMBOL, NULL_ATTRIBUTE);
     }
   }
 }
@@ -2034,11 +2025,11 @@ static void reduce_small_declarers (NODE_T * p)
   for (q = p; q != NULL; FORWARD (q)) {
     if (whether (q, LONGETY, INDICANT, NULL_ATTRIBUTE)) {
       int a;
-      if (SUB (NEXT (q)) == NULL) {
+      if (SUB_NEXT (q) == NULL) {
         diagnostic_node (A68_SYNTAX_ERROR, NEXT (q), ERROR_EXPECTED, INFO_APPROPRIATE_DECLARER);
         try_reduction (q, NULL, NULL, DECLARER, LONGETY, INDICANT, NULL_ATTRIBUTE);
       } else {
-        a = ATTRIBUTE (SUB (NEXT (q)));
+        a = ATTRIBUTE (SUB_NEXT (q));
         if (a == INT_SYMBOL || a == REAL_SYMBOL || a == BITS_SYMBOL || a == BYTES_SYMBOL || a == COMPLEX_SYMBOL || a == COMPL_SYMBOL) {
           try_reduction (q, NULL, NULL, DECLARER, LONGETY, INDICANT, NULL_ATTRIBUTE);
         } else {
@@ -2048,11 +2039,11 @@ static void reduce_small_declarers (NODE_T * p)
       }
     } else if (whether (q, SHORTETY, INDICANT, NULL_ATTRIBUTE)) {
       int a;
-      if (SUB (NEXT (q)) == NULL) {
+      if (SUB_NEXT (q) == NULL) {
         diagnostic_node (A68_SYNTAX_ERROR, NEXT (q), ERROR_EXPECTED, INFO_APPROPRIATE_DECLARER);
         try_reduction (q, NULL, NULL, DECLARER, SHORTETY, INDICANT, NULL_ATTRIBUTE);
       } else {
-        a = ATTRIBUTE (SUB (NEXT (q)));
+        a = ATTRIBUTE (SUB_NEXT (q));
         if (a == INT_SYMBOL || a == REAL_SYMBOL || a == BITS_SYMBOL || a == BYTES_SYMBOL || a == COMPLEX_SYMBOL || a == COMPL_SYMBOL) {
           try_reduction (q, NULL, NULL, DECLARER, SHORTETY, INDICANT, NULL_ATTRIBUTE);
         } else {
@@ -2109,7 +2100,7 @@ static void reduce_declarer_lists (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NULL; FORWARD (q)) {
-    if (NEXT (q) != NULL && SUB (NEXT (q)) != NULL) {
+    if (NEXT (q) != NULL && SUB_NEXT (q) != NULL) {
       if (WHETHER (q, STRUCT_SYMBOL)) {
         reduce_subordinate (NEXT (q), STRUCTURE_PACK);
         try_reduction (q, NULL, NULL, DECLARER, STRUCT_SYMBOL, STRUCTURE_PACK, NULL_ATTRIBUTE);
@@ -2140,36 +2131,34 @@ static void reduce_declarer_lists (NODE_T * p)
 
 static void reduce_row_proc_op_declarers (NODE_T * p)
 {
-  BOOL_T z = A68_TRUE;
-  while (z) {
+  BOOL_T siga = A68_TRUE;
+  while (siga) {
     NODE_T *q;
-    z = A68_FALSE;
+    siga = A68_FALSE;
     for (q = p; q != NULL; FORWARD (q)) {
 /* FLEX DECL. */
       if (whether (q, FLEX_SYMBOL, DECLARER, NULL_ATTRIBUTE)) {
-        try_reduction (q, NULL, &z, DECLARER, FLEX_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, FLEX_SYMBOL, DECLARER, NULL_ATTRIBUTE);
       }
 /* FLEX [] DECL. */
-      if (whether (q, FLEX_SYMBOL, SUB_SYMBOL, DECLARER, NULL_ATTRIBUTE)
-          && SUB (NEXT (q)) != NULL) {
+      if (whether (q, FLEX_SYMBOL, SUB_SYMBOL, DECLARER, NULL_ATTRIBUTE) && SUB_NEXT (q) != NULL) {
         reduce_subordinate (NEXT (q), BOUNDS);
-        try_reduction (q, NULL, &z, DECLARER, FLEX_SYMBOL, BOUNDS, DECLARER, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, DECLARER, FLEX_SYMBOL, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, FLEX_SYMBOL, BOUNDS, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, FLEX_SYMBOL, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
       }
 /* FLEX () DECL. */
-      if (whether (q, FLEX_SYMBOL, OPEN_SYMBOL, DECLARER, NULL_ATTRIBUTE)
-          && SUB (NEXT (q)) != NULL) {
+      if (whether (q, FLEX_SYMBOL, OPEN_SYMBOL, DECLARER, NULL_ATTRIBUTE) && SUB_NEXT (q) != NULL) {
         if (!whether (q, FLEX_SYMBOL, OPEN_SYMBOL, DECLARER, COLON_SYMBOL, NULL_ATTRIBUTE)) {
           reduce_subordinate (NEXT (q), BOUNDS);
-          try_reduction (q, NULL, &z, DECLARER, FLEX_SYMBOL, BOUNDS, DECLARER, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, DECLARER, FLEX_SYMBOL, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, DECLARER, FLEX_SYMBOL, BOUNDS, DECLARER, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, DECLARER, FLEX_SYMBOL, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
         }
       }
 /* [] DECL. */
       if (whether (q, SUB_SYMBOL, DECLARER, NULL_ATTRIBUTE) && SUB (q) != NULL) {
         reduce_subordinate (q, BOUNDS);
-        try_reduction (q, NULL, &z, DECLARER, BOUNDS, DECLARER, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, DECLARER, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, BOUNDS, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
       }
 /* () DECL. */
       if (whether (q, OPEN_SYMBOL, DECLARER, NULL_ATTRIBUTE) && SUB (q) != NULL) {
@@ -2177,13 +2166,13 @@ static void reduce_row_proc_op_declarers (NODE_T * p)
 /* Catch e.g. (INT i) () INT: */
           if (whether_formal_bounds (SUB (q))) {
             reduce_subordinate (q, BOUNDS);
-            try_reduction (q, NULL, &z, DECLARER, BOUNDS, DECLARER, NULL_ATTRIBUTE);
-            try_reduction (q, NULL, &z, DECLARER, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
+            try_reduction (q, NULL, &siga, DECLARER, BOUNDS, DECLARER, NULL_ATTRIBUTE);
+            try_reduction (q, NULL, &siga, DECLARER, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
           }
         } else {
           reduce_subordinate (q, BOUNDS);
-          try_reduction (q, NULL, &z, DECLARER, BOUNDS, DECLARER, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, DECLARER, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, DECLARER, BOUNDS, DECLARER, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, DECLARER, FORMAL_BOUNDS, DECLARER, NULL_ATTRIBUTE);
         }
       }
     }
@@ -2191,15 +2180,15 @@ static void reduce_row_proc_op_declarers (NODE_T * p)
     for (q = p; q != NULL; FORWARD (q)) {
       int a = ATTRIBUTE (q);
       if (a == REF_SYMBOL) {
-        try_reduction (q, NULL, &z, DECLARER, REF_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, REF_SYMBOL, DECLARER, NULL_ATTRIBUTE);
       } else if (a == PROC_SYMBOL) {
-        try_reduction (q, NULL, &z, DECLARER, PROC_SYMBOL, DECLARER, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, DECLARER, PROC_SYMBOL, FORMAL_DECLARERS, DECLARER, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, DECLARER, PROC_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, DECLARER, PROC_SYMBOL, FORMAL_DECLARERS, VOID_SYMBOL, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, PROC_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, PROC_SYMBOL, FORMAL_DECLARERS, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, PROC_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, DECLARER, PROC_SYMBOL, FORMAL_DECLARERS, VOID_SYMBOL, NULL_ATTRIBUTE);
       } else if (a == OP_SYMBOL) {
-        try_reduction (q, NULL, &z, OPERATOR_PLAN, OP_SYMBOL, FORMAL_DECLARERS, DECLARER, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, OPERATOR_PLAN, OP_SYMBOL, FORMAL_DECLARERS, VOID_SYMBOL, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, OPERATOR_PLAN, OP_SYMBOL, FORMAL_DECLARERS, DECLARER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, OPERATOR_PLAN, OP_SYMBOL, FORMAL_DECLARERS, VOID_SYMBOL, NULL_ATTRIBUTE);
       }
     }
   }
@@ -2214,21 +2203,21 @@ static void reduce_struct_pack (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, STRUCTURED_FIELD, DECLARER, IDENTIFIER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, STRUCTURED_FIELD, STRUCTURED_FIELD, COMMA_SYMBOL, IDENTIFIER, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, STRUCTURED_FIELD, DECLARER, IDENTIFIER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, STRUCTURED_FIELD, STRUCTURED_FIELD, COMMA_SYMBOL, IDENTIFIER, NULL_ATTRIBUTE);
     }
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD_LIST, COMMA_SYMBOL, STRUCTURED_FIELD, NULL_ATTRIBUTE);
-      try_reduction (q, missing_separator, &z, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD, NULL_ATTRIBUTE);
-      try_reduction (q, wrong_separator, &z, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD_LIST, SEMI_SYMBOL, STRUCTURED_FIELD, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD_LIST, COMMA_SYMBOL, STRUCTURED_FIELD, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD_LIST, SEMI_SYMBOL, STRUCTURED_FIELD, NULL_ATTRIBUTE);
     }
   }
   q = p;
@@ -2244,19 +2233,19 @@ static void reduce_parameter_pack (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, PARAMETER, DECLARER, IDENTIFIER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, PARAMETER, PARAMETER, COMMA_SYMBOL, IDENTIFIER, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, PARAMETER, DECLARER, IDENTIFIER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, PARAMETER, PARAMETER, COMMA_SYMBOL, IDENTIFIER, NULL_ATTRIBUTE);
     }
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, PARAMETER_LIST, PARAMETER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, PARAMETER_LIST, PARAMETER_LIST, COMMA_SYMBOL, PARAMETER, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, PARAMETER_LIST, PARAMETER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, PARAMETER_LIST, PARAMETER_LIST, COMMA_SYMBOL, PARAMETER, NULL_ATTRIBUTE);
     }
   }
   q = p;
@@ -2272,12 +2261,13 @@ static void reduce_formal_declarer_pack (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, FORMAL_DECLARERS_LIST, DECLARER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, FORMAL_DECLARERS_LIST, FORMAL_DECLARERS_LIST, COMMA_SYMBOL, DECLARER, NULL_ATTRIBUTE);
-      try_reduction (q, missing_separator, &z, FORMAL_DECLARERS_LIST, FORMAL_DECLARERS_LIST, DECLARER, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, FORMAL_DECLARERS_LIST, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, FORMAL_DECLARERS_LIST, FORMAL_DECLARERS_LIST, COMMA_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, FORMAL_DECLARERS_LIST, FORMAL_DECLARERS_LIST, SEMI_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, FORMAL_DECLARERS_LIST, FORMAL_DECLARERS_LIST, DECLARER, NULL_ATTRIBUTE);
     }
   }
   q = p;
@@ -2293,15 +2283,17 @@ static void reduce_union_pack (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, UNION_DECLARER_LIST, DECLARER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, UNION_DECLARER_LIST, VOID_SYMBOL, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, UNION_DECLARER_LIST, UNION_DECLARER_LIST, COMMA_SYMBOL, DECLARER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, UNION_DECLARER_LIST, UNION_DECLARER_LIST, COMMA_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
-      try_reduction (q, missing_separator, &z, UNION_DECLARER_LIST, UNION_DECLARER_LIST, DECLARER, NULL_ATTRIBUTE);
-      try_reduction (q, missing_separator, &z, UNION_DECLARER_LIST, UNION_DECLARER_LIST, VOID_SYMBOL, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, UNION_DECLARER_LIST, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, UNION_DECLARER_LIST, VOID_SYMBOL, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, UNION_DECLARER_LIST, UNION_DECLARER_LIST, COMMA_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, UNION_DECLARER_LIST, UNION_DECLARER_LIST, COMMA_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, UNION_DECLARER_LIST, UNION_DECLARER_LIST, SEMI_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, UNION_DECLARER_LIST, UNION_DECLARER_LIST, SEMI_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, UNION_DECLARER_LIST, UNION_DECLARER_LIST, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, UNION_DECLARER_LIST, UNION_DECLARER_LIST, VOID_SYMBOL, NULL_ATTRIBUTE);
     }
   }
   q = p;
@@ -2388,11 +2380,11 @@ static void reduce_primary_bits (NODE_T * p, int expect)
     try_reduction (q, NULL, NULL, DENOTATION, FALSE_SYMBOL, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, DENOTATION, EMPTY_SYMBOL, NULL_ATTRIBUTE);
     if (expect == SERIAL_CLAUSE || expect == ENQUIRY_CLAUSE || expect == SOME_CLAUSE) {
-      BOOL_T z = A68_TRUE;
-      while (z) {
-        z = A68_FALSE;
-        try_reduction (q, NULL, &z, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, LABEL, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
+      BOOL_T siga = A68_TRUE;
+      while (siga) {
+        siga = A68_FALSE;
+        try_reduction (q, NULL, &siga, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, LABEL, LABEL, DEFINING_IDENTIFIER, COLON_SYMBOL, NULL_ATTRIBUTE);
       }
     }
   }
@@ -2423,7 +2415,7 @@ static void reduce_primaries (NODE_T * p, int expect)
 {
   NODE_T *q = p;
   while (q != NULL) {
-    BOOL_T fwd = A68_TRUE, z;
+    BOOL_T fwd = A68_TRUE, siga;
 /* Primaries excepts call and slice. */
     try_reduction (q, NULL, NULL, PRIMARY, IDENTIFIER, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, PRIMARY, DENOTATION, NULL_ATTRIBUTE);
@@ -2434,19 +2426,19 @@ static void reduce_primaries (NODE_T * p, int expect)
     try_reduction (q, NULL, NULL, PRIMARY, ENCLOSED_CLAUSE, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, PRIMARY, FORMAT_TEXT, NULL_ATTRIBUTE);
 /* Call and slice. */
-    z = A68_TRUE;
-    while (z) {
+    siga = A68_TRUE;
+    while (siga) {
       NODE_T *x = NEXT (q);
-      z = A68_FALSE;
+      siga = A68_FALSE;
       if (WHETHER (q, PRIMARY) && x != NULL) {
         if (WHETHER (x, OPEN_SYMBOL)) {
           reduce_subordinate (NEXT (q), GENERIC_ARGUMENT);
-          try_reduction (q, NULL, &z, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, PRIMARY, SPECIFICATION, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, PRIMARY, SPECIFICATION, NULL_ATTRIBUTE);
         } else if (WHETHER (x, SUB_SYMBOL)) {
           reduce_subordinate (NEXT (q), GENERIC_ARGUMENT);
-          try_reduction (q, NULL, &z, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, PRIMARY, SPECIFICATION, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, PRIMARY, SPECIFICATION, NULL_ATTRIBUTE);
         }
       }
     }
@@ -2589,10 +2581,10 @@ static void reduce_format_texts (NODE_T * p)
     try_reduction (q, NULL, NULL, INSERTION, REPLICATOR, INSERTION, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, INSERTION, INSERTION, INSERTION, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, INSERTION, INSERTION, INSERTION, NULL_ATTRIBUTE);
     }
   }
 /* Replicated suppressible frames. */
@@ -2642,11 +2634,11 @@ static void reduce_format_texts (NODE_T * p)
     try_reduction (q, NULL, NULL, STRING_PATTERN, FORMAT_A_FRAME, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, STRING_PATTERN, STRING_PATTERN, STRING_PATTERN, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, STRING_PATTERN, STRING_PATTERN, INSERTION, STRING_PATTERN, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, STRING_PATTERN, STRING_PATTERN, STRING_PATTERN, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, STRING_PATTERN, STRING_PATTERN, INSERTION, STRING_PATTERN, NULL_ATTRIBUTE);
     }
   }
 /* Integral moulds. */
@@ -2655,11 +2647,11 @@ static void reduce_format_texts (NODE_T * p)
     try_reduction (q, NULL, NULL, INTEGRAL_MOULD, FORMAT_D_FRAME, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z = A68_TRUE;
-    while (z) {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, INTEGRAL_MOULD, INTEGRAL_MOULD, INTEGRAL_MOULD, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, INTEGRAL_MOULD, INTEGRAL_MOULD, INSERTION, NULL_ATTRIBUTE);
+    BOOL_T siga = A68_TRUE;
+    while (siga) {
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, INTEGRAL_MOULD, INTEGRAL_MOULD, INTEGRAL_MOULD, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, INTEGRAL_MOULD, INTEGRAL_MOULD, INSERTION, NULL_ATTRIBUTE);
     }
   }
 /* Sign moulds. */
@@ -2753,13 +2745,13 @@ static void reduce_format_texts (NODE_T * p)
 /* Picture lists. */
   for (q = p; q != NULL; FORWARD (q)) {
     if (WHETHER (q, PICTURE)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       try_reduction (q, NULL, NULL, PICTURE_LIST, PICTURE, NULL_ATTRIBUTE);
-      while (z) {
-        z = A68_FALSE;
-        try_reduction (q, NULL, &z, PICTURE_LIST, PICTURE_LIST, COMMA_SYMBOL, PICTURE, NULL_ATTRIBUTE);
+      while (siga) {
+        siga = A68_FALSE;
+        try_reduction (q, NULL, &siga, PICTURE_LIST, PICTURE_LIST, COMMA_SYMBOL, PICTURE, NULL_ATTRIBUTE);
         /* We filtered ambiguous patterns, so commas may be omitted. */
-        try_reduction (q, NULL, &z, PICTURE_LIST, PICTURE_LIST, PICTURE, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, PICTURE_LIST, PICTURE_LIST, PICTURE, NULL_ATTRIBUTE);
       }
     }
   }
@@ -2773,7 +2765,7 @@ static void reduce_format_texts (NODE_T * p)
 static void reduce_secondaries (NODE_T * p)
 {
   NODE_T *q;
-  BOOL_T z;
+  BOOL_T siga;
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, SECONDARY, PRIMARY, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, GENERATOR, LOC_SYMBOL, DECLARER, NULL_ATTRIBUTE);
@@ -2781,15 +2773,15 @@ static void reduce_secondaries (NODE_T * p)
     try_reduction (q, NULL, NULL, GENERATOR, NEW_SYMBOL, DECLARER, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, SECONDARY, GENERATOR, NULL_ATTRIBUTE);
   }
-  z = A68_TRUE;
-  while (z) {
-    z = A68_FALSE;
+  siga = A68_TRUE;
+  while (siga) {
+    siga = A68_FALSE;
     for (q = p; NEXT (q) != NULL; FORWARD (q)) {
       ;
     }
     for (; q != NULL; q = PREVIOUS (q)) {
-      try_reduction (q, NULL, &z, SELECTION, SELECTOR, SECONDARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, SECONDARY, SELECTION, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, SELECTION, SELECTOR, SECONDARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, SECONDARY, SELECTION, NULL_ATTRIBUTE);
     }
   }
 }
@@ -2826,34 +2818,34 @@ static void reduce_formulae (NODE_T * p)
   for (priority = MAX_PRIORITY; priority >= 0; priority--) {
     for (q = p; q != NULL; FORWARD (q)) {
       if (operator_with_priority (q, priority)) {
-        BOOL_T z = A68_FALSE;
+        BOOL_T siga = A68_FALSE;
         NODE_T *op = NEXT (q);
         if (WHETHER (q, SECONDARY)) {
-          try_reduction (q, NULL, &z, FORMULA, SECONDARY, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, FORMULA, SECONDARY, OPERATOR, MONADIC_FORMULA, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, FORMULA, SECONDARY, OPERATOR, FORMULA, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, FORMULA, SECONDARY, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, FORMULA, SECONDARY, OPERATOR, MONADIC_FORMULA, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, FORMULA, SECONDARY, OPERATOR, FORMULA, NULL_ATTRIBUTE);
         } else if (WHETHER (q, MONADIC_FORMULA)) {
-          try_reduction (q, NULL, &z, FORMULA, MONADIC_FORMULA, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, FORMULA, MONADIC_FORMULA, OPERATOR, MONADIC_FORMULA, NULL_ATTRIBUTE);
-          try_reduction (q, NULL, &z, FORMULA, MONADIC_FORMULA, OPERATOR, FORMULA, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, MONADIC_FORMULA, NULL_ATTRIBUTE);
+          try_reduction (q, NULL, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, FORMULA, NULL_ATTRIBUTE);
         }
-        if (priority == 0 && z) {
+        if (priority == 0 && siga) {
           diagnostic_node (A68_SYNTAX_ERROR, op, ERROR_NO_PRIORITY, NULL);
         }
-        z = A68_TRUE;
-        while (z) {
+        siga = A68_TRUE;
+        while (siga) {
           NODE_T *op2 = NEXT (q);
-          z = A68_FALSE;
+          siga = A68_FALSE;
           if (operator_with_priority (q, priority)) {
-            try_reduction (q, NULL, &z, FORMULA, FORMULA, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
+            try_reduction (q, NULL, &siga, FORMULA, FORMULA, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
           }
           if (operator_with_priority (q, priority)) {
-            try_reduction (q, NULL, &z, FORMULA, FORMULA, OPERATOR, MONADIC_FORMULA, NULL_ATTRIBUTE);
+            try_reduction (q, NULL, &siga, FORMULA, FORMULA, OPERATOR, MONADIC_FORMULA, NULL_ATTRIBUTE);
           }
           if (operator_with_priority (q, priority)) {
-            try_reduction (q, NULL, &z, FORMULA, FORMULA, OPERATOR, FORMULA, NULL_ATTRIBUTE);
+            try_reduction (q, NULL, &siga, FORMULA, FORMULA, OPERATOR, FORMULA, NULL_ATTRIBUTE);
           }
-          if (priority == 0 && z) {
+          if (priority == 0 && siga) {
             diagnostic_node (A68_SYNTAX_ERROR, op2, ERROR_NO_PRIORITY, NULL);
           }
         }
@@ -2878,14 +2870,14 @@ static NODE_T *reduce_dyadic (NODE_T * p, int u)
     } else if (WHETHER (p, OPERATOR)) {
 /* Reduce monadic formulas. */
       NODE_T *q = p;
-      BOOL_T z;
+      BOOL_T siga;
       do {
         PRIO (INFO (q)) = 10;
-        z = (BOOL_T) ((NEXT (q) != NULL) && (WHETHER (NEXT (q), OPERATOR)));
-        if (z) {
+        siga = (BOOL_T) ((NEXT (q) != NULL) && (WHETHER (NEXT (q), OPERATOR)));
+        if (siga) {
           FORWARD (q);
         }
-      } while (z);
+      } while (siga);
       try_reduction (q, NULL, NULL, MONADIC_FORMULA, OPERATOR, SECONDARY, NULL_ATTRIBUTE);
       while (q != p) {
         q = PREVIOUS (q);
@@ -2911,30 +2903,30 @@ static NODE_T *reduce_dyadic (NODE_T * p, int u)
 static void reduce_tertiaries (NODE_T * p)
 {
   NODE_T *q;
-  BOOL_T z;
+  BOOL_T siga;
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, TERTIARY, NIHIL, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, FORMULA, MONADIC_FORMULA, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, TERTIARY, FORMULA, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, TERTIARY, SECONDARY, NULL_ATTRIBUTE);
   }
-  z = A68_TRUE;
-  while (z) {
-    z = A68_FALSE;
+  siga = A68_TRUE;
+  while (siga) {
+    siga = A68_FALSE;
     for (q = p; q != NULL; FORWARD (q)) {
-      try_reduction (q, NULL, &z, TRANSPOSE_FUNCTION, TRANSPOSE_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, DIAGONAL_FUNCTION, TERTIARY, DIAGONAL_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, DIAGONAL_FUNCTION, DIAGONAL_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, COLUMN_FUNCTION, TERTIARY, COLUMN_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, COLUMN_FUNCTION, COLUMN_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, ROW_FUNCTION, TERTIARY, ROW_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, ROW_FUNCTION, ROW_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, TRANSPOSE_FUNCTION, TRANSPOSE_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, DIAGONAL_FUNCTION, TERTIARY, DIAGONAL_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, DIAGONAL_FUNCTION, DIAGONAL_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, COLUMN_FUNCTION, TERTIARY, COLUMN_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, COLUMN_FUNCTION, COLUMN_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, ROW_FUNCTION, TERTIARY, ROW_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, ROW_FUNCTION, ROW_SYMBOL, TERTIARY, NULL_ATTRIBUTE);
     }
     for (q = p; q != NULL; FORWARD (q)) {
-      try_reduction (q, a68_extension, &z, TERTIARY, TRANSPOSE_FUNCTION, NULL_ATTRIBUTE);
-      try_reduction (q, a68_extension, &z, TERTIARY, DIAGONAL_FUNCTION, NULL_ATTRIBUTE);
-      try_reduction (q, a68_extension, &z, TERTIARY, COLUMN_FUNCTION, NULL_ATTRIBUTE);
-      try_reduction (q, a68_extension, &z, TERTIARY, ROW_FUNCTION, NULL_ATTRIBUTE);
+      try_reduction (q, a68_extension, &siga, TERTIARY, TRANSPOSE_FUNCTION, NULL_ATTRIBUTE);
+      try_reduction (q, a68_extension, &siga, TERTIARY, DIAGONAL_FUNCTION, NULL_ATTRIBUTE);
+      try_reduction (q, a68_extension, &siga, TERTIARY, COLUMN_FUNCTION, NULL_ATTRIBUTE);
+      try_reduction (q, a68_extension, &siga, TERTIARY, ROW_FUNCTION, NULL_ATTRIBUTE);
     }
   }
   for (q = p; q != NULL; FORWARD (q)) {
@@ -2975,19 +2967,19 @@ static void reduce_basic_declarations (NODE_T * p)
     try_reduction (q, strange_tokens, NULL, PROCEDURE_DECLARATION, PROC_SYMBOL, WILDCARD, ROUTINE_TEXT, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z;
+    BOOL_T siga;
     do {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, ENVIRON_NAME, ENVIRON_NAME, COMMA_SYMBOL, ROW_CHAR_DENOTATION, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, PRIORITY_DECLARATION, PRIORITY_DECLARATION, COMMA_SYMBOL, DEFINING_OPERATOR, EQUALS_SYMBOL, PRIORITY, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, MODE_DECLARATION, MODE_DECLARATION, COMMA_SYMBOL, DEFINING_INDICANT, EQUALS_SYMBOL, DECLARER, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, MODE_DECLARATION, MODE_DECLARATION, COMMA_SYMBOL, DEFINING_INDICANT, EQUALS_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, PROCEDURE_DECLARATION, PROCEDURE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, EQUALS_SYMBOL, ROUTINE_TEXT, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, PROCEDURE_VARIABLE_DECLARATION, PROCEDURE_VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, ROUTINE_TEXT, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, BRIEF_OPERATOR_DECLARATION, BRIEF_OPERATOR_DECLARATION, COMMA_SYMBOL, DEFINING_OPERATOR, EQUALS_SYMBOL, ROUTINE_TEXT, NULL_ATTRIBUTE);
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, ENVIRON_NAME, ENVIRON_NAME, COMMA_SYMBOL, ROW_CHAR_DENOTATION, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, PRIORITY_DECLARATION, PRIORITY_DECLARATION, COMMA_SYMBOL, DEFINING_OPERATOR, EQUALS_SYMBOL, PRIORITY, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, MODE_DECLARATION, MODE_DECLARATION, COMMA_SYMBOL, DEFINING_INDICANT, EQUALS_SYMBOL, DECLARER, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, MODE_DECLARATION, MODE_DECLARATION, COMMA_SYMBOL, DEFINING_INDICANT, EQUALS_SYMBOL, VOID_SYMBOL, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, PROCEDURE_DECLARATION, PROCEDURE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, EQUALS_SYMBOL, ROUTINE_TEXT, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, PROCEDURE_VARIABLE_DECLARATION, PROCEDURE_VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, ROUTINE_TEXT, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, BRIEF_OPERATOR_DECLARATION, BRIEF_OPERATOR_DECLARATION, COMMA_SYMBOL, DEFINING_OPERATOR, EQUALS_SYMBOL, ROUTINE_TEXT, NULL_ATTRIBUTE);
 /* Errors. WILDCARD catches TERTIARY which catches IDENTIFIER. */
-      try_reduction (q, strange_tokens, &z, PROCEDURE_DECLARATION, PROCEDURE_DECLARATION, COMMA_SYMBOL, WILDCARD, ROUTINE_TEXT, NULL_ATTRIBUTE);
-    } while (z);
+      try_reduction (q, strange_tokens, &siga, PROCEDURE_DECLARATION, PROCEDURE_DECLARATION, COMMA_SYMBOL, WILDCARD, ROUTINE_TEXT, NULL_ATTRIBUTE);
+    } while (siga);
   }
 }
 
@@ -3027,7 +3019,7 @@ static void reduce_units (NODE_T * p)
 static void reduce_generic_arguments (NODE_T * p)
 {
   NODE_T *q;
-  BOOL_T z;
+  BOOL_T siga;
   for (q = p; q != NULL; FORWARD (q)) {
     if (WHETHER (q, UNIT)) {
       try_reduction (q, NULL, NULL, TRIMMER, UNIT, COLON_SYMBOL, UNIT, AT_SYMBOL, UNIT, NULL_ATTRIBUTE);
@@ -3070,16 +3062,16 @@ static void reduce_generic_arguments (NODE_T * p)
     }
   }
   q = NEXT (p);
-  ABNORMAL_END (q == NULL, "erroneous parser state", NULL);
+  ABEND (q == NULL, "erroneous parser state", NULL);
   try_reduction (q, NULL, NULL, GENERIC_ARGUMENT_LIST, UNIT, NULL_ATTRIBUTE);
   try_reduction (q, NULL, NULL, GENERIC_ARGUMENT_LIST, TRIMMER, NULL_ATTRIBUTE);
   do {
-    z = A68_FALSE;
-    try_reduction (q, NULL, &z, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, &z, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, COMMA_SYMBOL, TRIMMER, NULL_ATTRIBUTE);
-    try_reduction (q, missing_separator, &z, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, UNIT, NULL_ATTRIBUTE);
-    try_reduction (q, missing_separator, &z, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, TRIMMER, NULL_ATTRIBUTE);
-  } while (z);
+    siga = A68_FALSE;
+    try_reduction (q, NULL, &siga, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, &siga, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, COMMA_SYMBOL, TRIMMER, NULL_ATTRIBUTE);
+    try_reduction (q, strange_separator, &siga, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, UNIT, NULL_ATTRIBUTE);
+    try_reduction (q, strange_separator, &siga, GENERIC_ARGUMENT_LIST, GENERIC_ARGUMENT_LIST, TRIMMER, NULL_ATTRIBUTE);
+  } while (siga);
 }
 
 /*!
@@ -3090,7 +3082,7 @@ static void reduce_generic_arguments (NODE_T * p)
 static void reduce_bounds (NODE_T * p)
 {
   NODE_T *q;
-  BOOL_T z;
+  BOOL_T siga;
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, BOUND, UNIT, COLON_SYMBOL, UNIT, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, BOUND, UNIT, DOTDOT_SYMBOL, UNIT, NULL_ATTRIBUTE);
@@ -3102,14 +3094,14 @@ static void reduce_bounds (NODE_T * p)
   try_reduction (q, NULL, NULL, ALT_FORMAL_BOUNDS_LIST, COLON_SYMBOL, NULL_ATTRIBUTE);
   try_reduction (q, NULL, NULL, ALT_FORMAL_BOUNDS_LIST, DOTDOT_SYMBOL, NULL_ATTRIBUTE);
   do {
-    z = A68_FALSE;
-    try_reduction (q, NULL, &z, BOUNDS_LIST, BOUNDS_LIST, COMMA_SYMBOL, BOUND, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, &z, FORMAL_BOUNDS_LIST, FORMAL_BOUNDS_LIST, COMMA_SYMBOL, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, &z, ALT_FORMAL_BOUNDS_LIST, FORMAL_BOUNDS_LIST, COLON_SYMBOL, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, &z, ALT_FORMAL_BOUNDS_LIST, FORMAL_BOUNDS_LIST, DOTDOT_SYMBOL, NULL_ATTRIBUTE);
-    try_reduction (q, NULL, &z, FORMAL_BOUNDS_LIST, ALT_FORMAL_BOUNDS_LIST, COMMA_SYMBOL, NULL_ATTRIBUTE);
-    try_reduction (q, missing_separator, &z, BOUNDS_LIST, BOUNDS_LIST, BOUND, NULL_ATTRIBUTE);
-  } while (z);
+    siga = A68_FALSE;
+    try_reduction (q, NULL, &siga, BOUNDS_LIST, BOUNDS_LIST, COMMA_SYMBOL, BOUND, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, &siga, FORMAL_BOUNDS_LIST, FORMAL_BOUNDS_LIST, COMMA_SYMBOL, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, &siga, ALT_FORMAL_BOUNDS_LIST, FORMAL_BOUNDS_LIST, COLON_SYMBOL, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, &siga, ALT_FORMAL_BOUNDS_LIST, FORMAL_BOUNDS_LIST, DOTDOT_SYMBOL, NULL_ATTRIBUTE);
+    try_reduction (q, NULL, &siga, FORMAL_BOUNDS_LIST, ALT_FORMAL_BOUNDS_LIST, COMMA_SYMBOL, NULL_ATTRIBUTE);
+    try_reduction (q, strange_separator, &siga, BOUNDS_LIST, BOUNDS_LIST, BOUND, NULL_ATTRIBUTE);
+  } while (siga);
 }
 
 /*!
@@ -3121,13 +3113,13 @@ static void reduce_arguments (NODE_T * p)
 {
   if (NEXT (p) != NULL) {
     NODE_T *q = NEXT (p);
-    BOOL_T z;
+    BOOL_T siga;
     try_reduction (q, NULL, NULL, ARGUMENT_LIST, UNIT, NULL_ATTRIBUTE);
     do {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, ARGUMENT_LIST, ARGUMENT_LIST, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
-      try_reduction (q, missing_separator, &z, ARGUMENT_LIST, ARGUMENT_LIST, UNIT, NULL_ATTRIBUTE);
-    } while (z);
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, ARGUMENT_LIST, ARGUMENT_LIST, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+      try_reduction (q, strange_separator, &siga, ARGUMENT_LIST, ARGUMENT_LIST, UNIT, NULL_ATTRIBUTE);
+    } while (siga);
   }
 }
 
@@ -3147,25 +3139,25 @@ static void reduce_declaration_lists (NODE_T * p)
     try_reduction (q, NULL, NULL, VARIABLE_DECLARATION, DECLARER, DEFINING_IDENTIFIER, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z;
+    BOOL_T siga;
     do {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, IDENTITY_DECLARATION, IDENTITY_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, EQUALS_SYMBOL, UNIT, NULL_ATTRIBUTE);
-      try_reduction (q, NULL, &z, VARIABLE_DECLARATION, VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, UNIT, NULL_ATTRIBUTE);
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, IDENTITY_DECLARATION, IDENTITY_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, EQUALS_SYMBOL, UNIT, NULL_ATTRIBUTE);
+      try_reduction (q, NULL, &siga, VARIABLE_DECLARATION, VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, UNIT, NULL_ATTRIBUTE);
       if (!whether (q, VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, UNIT, NULL_ATTRIBUTE)) {
-        try_reduction (q, NULL, &z, VARIABLE_DECLARATION, VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, VARIABLE_DECLARATION, VARIABLE_DECLARATION, COMMA_SYMBOL, DEFINING_IDENTIFIER, NULL_ATTRIBUTE);
       }
-    } while (z);
+    } while (siga);
   }
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, OPERATOR_DECLARATION, OPERATOR_PLAN, DEFINING_OPERATOR, EQUALS_SYMBOL, UNIT, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z;
+    BOOL_T siga;
     do {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, OPERATOR_DECLARATION, OPERATOR_DECLARATION, COMMA_SYMBOL, DEFINING_OPERATOR, EQUALS_SYMBOL, UNIT, NULL_ATTRIBUTE);
-    } while (z);
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, OPERATOR_DECLARATION, OPERATOR_DECLARATION, COMMA_SYMBOL, DEFINING_OPERATOR, EQUALS_SYMBOL, UNIT, NULL_ATTRIBUTE);
+    } while (siga);
   }
   for (q = p; q != NULL; FORWARD (q)) {
     try_reduction (q, NULL, NULL, DECLARATION_LIST, MODE_DECLARATION, NULL_ATTRIBUTE);
@@ -3179,11 +3171,11 @@ static void reduce_declaration_lists (NODE_T * p)
     try_reduction (q, NULL, NULL, DECLARATION_LIST, ENVIRON_NAME, NULL_ATTRIBUTE);
   }
   for (q = p; q != NULL; FORWARD (q)) {
-    BOOL_T z;
+    BOOL_T siga;
     do {
-      z = A68_FALSE;
-      try_reduction (q, NULL, &z, DECLARATION_LIST, DECLARATION_LIST, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-    } while (z);
+      siga = A68_FALSE;
+      try_reduction (q, NULL, &siga, DECLARATION_LIST, DECLARATION_LIST, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+    } while (siga);
   }
 }
 
@@ -3239,42 +3231,45 @@ static void reduce_serial_clauses (NODE_T * p)
 {
   if (NEXT (p) != NULL) {
     NODE_T *q = NEXT (p);
-    BOOL_T z;
+    BOOL_T siga;
     precheck_serial_clause (p);
     try_reduction (q, NULL, NULL, SERIAL_CLAUSE, LABELED_UNIT, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, SERIAL_CLAUSE, UNIT, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, INITIALISER_SERIES, DECLARATION_LIST, NULL_ATTRIBUTE);
     do {
-      z = A68_FALSE;
+      siga = A68_FALSE;
       if (WHETHER (q, SERIAL_CLAUSE)) {
-        try_reduction (q, NULL, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, EXIT_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, INITIALISER_SERIES, SERIAL_CLAUSE, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-        /*
-         * Errors. 
-         */
-        try_reduction (q, wrong_separator, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, wrong_separator, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, COMMA_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, wrong_separator, &z, INITIALISER_SERIES, SERIAL_CLAUSE, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, SERIAL_CLAUSE, SERIAL_CLAUSE, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, INITIALISER_SERIES, SERIAL_CLAUSE, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, EXIT_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        /* Errors */
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, COMMA_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, COLON_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, COLON_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, COLON_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, DECLARATION_LIST, NULL_ATTRIBUTE);
       } else if (WHETHER (q, INITIALISER_SERIES)) {
-        try_reduction (q, NULL, &z, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-        /*
-         * Errors. 
-         */
-        try_reduction (q, wrong_separator, &z, SERIAL_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, wrong_separator, &z, SERIAL_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, wrong_separator, &z, INITIALISER_SERIES, INITIALISER_SERIES, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, SERIAL_CLAUSE, INITIALISER_SERIES, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, SERIAL_CLAUSE, INITIALISER_SERIES, LABELED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, INITIALISER_SERIES, INITIALISER_SERIES, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        /* Errors */
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, COLON_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, COLON_SYMBOL, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, COLON_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, LABELED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, DECLARATION_LIST, NULL_ATTRIBUTE);
       }
-    } while (z);
+    } 
+    while (siga);
   }
 }
 
@@ -3287,23 +3282,32 @@ static void reduce_enquiry_clauses (NODE_T * p)
 {
   if (NEXT (p) != NULL) {
     NODE_T *q = NEXT (p);
-    BOOL_T z;
+    BOOL_T siga;
     try_reduction (q, NULL, NULL, ENQUIRY_CLAUSE, UNIT, NULL_ATTRIBUTE);
     try_reduction (q, NULL, NULL, INITIALISER_SERIES, DECLARATION_LIST, NULL_ATTRIBUTE);
     do {
-      z = A68_FALSE;
+      siga = A68_FALSE;
       if (WHETHER (q, ENQUIRY_CLAUSE)) {
-        try_reduction (q, NULL, &z, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, INITIALISER_SERIES, ENQUIRY_CLAUSE, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, INITIALISER_SERIES, ENQUIRY_CLAUSE, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, COLON_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, COLON_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, DECLARATION_LIST, NULL_ATTRIBUTE);
       } else if (WHETHER (q, INITIALISER_SERIES)) {
-        try_reduction (q, NULL, &z, ENQUIRY_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, NULL, &z, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, ENQUIRY_CLAUSE, INITIALISER_SERIES, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, INITIALISER_SERIES, INITIALISER_SERIES, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, NULL, &siga, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, COMMA_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, COLON_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, COLON_SYMBOL, DECLARATION_LIST, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, DECLARATION_LIST, NULL_ATTRIBUTE);
       }
-    } while (z);
+    } 
+    while (siga);
   }
 }
 
@@ -3317,21 +3321,21 @@ static void reduce_collateral_clauses (NODE_T * p)
   if (NEXT (p) != NULL) {
     NODE_T *q = NEXT (p);
     if (WHETHER (q, UNIT)) {
-      BOOL_T z;
+      BOOL_T siga;
       try_reduction (q, NULL, NULL, UNIT_LIST, UNIT, NULL_ATTRIBUTE);
       do {
-        z = A68_FALSE;
-        try_reduction (q, NULL, &z, UNIT_LIST, UNIT_LIST, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, UNIT_LIST, UNIT_LIST, UNIT, NULL_ATTRIBUTE);
-      } while (z);
+        siga = A68_FALSE;
+        try_reduction (q, NULL, &siga, UNIT_LIST, UNIT_LIST, COMMA_SYMBOL, UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, UNIT_LIST, UNIT_LIST, UNIT, NULL_ATTRIBUTE);
+      } while (siga);
     } else if (WHETHER (q, SPECIFIED_UNIT)) {
-      BOOL_T z;
+      BOOL_T siga;
       try_reduction (q, NULL, NULL, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, NULL_ATTRIBUTE);
       do {
-        z = A68_FALSE;
-        try_reduction (q, NULL, &z, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT_LIST, COMMA_SYMBOL, SPECIFIED_UNIT, NULL_ATTRIBUTE);
-        try_reduction (q, missing_separator, &z, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, NULL_ATTRIBUTE);
-      } while (z);
+        siga = A68_FALSE;
+        try_reduction (q, NULL, &siga, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT_LIST, COMMA_SYMBOL, SPECIFIED_UNIT, NULL_ATTRIBUTE);
+        try_reduction (q, strange_separator, &siga, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, NULL_ATTRIBUTE);
+      } while (siga);
     }
   }
 }
@@ -3569,13 +3573,13 @@ static void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
     NODE_T *w = p;
     char *seq = phrase_to_text (p, &w);
     if (strlen (seq) == 0) {
-      if (a68_prog.error_count == 0) {
+      if (program.error_count == 0) {
         diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_SYNTAX_EXPECTED, expect, NULL);
       }
     } else {
-      diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_INVALID_SEQUENCE, expect, seq, NULL);
+      diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_INVALID_SEQUENCE, seq, expect, NULL);
     }
-    if (a68_prog.error_count >= MAX_ERRORS) {
+    if (program.error_count >= MAX_ERRORS) {
       longjmp (bottom_up_crash_exit, 1);
     }
   }
@@ -3652,14 +3656,10 @@ unsuspecting user. */
       try_reduction (q, NULL, NULL, UNIT, SELECTOR, WILDCARD, NULL_ATTRIBUTE);
     }
 /* Attention for identity relations that require tertiaries. */
-    if (whether (q, -TERTIARY, IS_SYMBOL, TERTIARY, NULL_ATTRIBUTE)
-        || whether (q, TERTIARY, IS_SYMBOL, -TERTIARY, NULL_ATTRIBUTE)
-        || whether (q, -TERTIARY, IS_SYMBOL, -TERTIARY, NULL_ATTRIBUTE)) {
+    if (whether (q, -TERTIARY, IS_SYMBOL, TERTIARY, NULL_ATTRIBUTE) || whether (q, TERTIARY, IS_SYMBOL, -TERTIARY, NULL_ATTRIBUTE) || whether (q, -TERTIARY, IS_SYMBOL, -TERTIARY, NULL_ATTRIBUTE)) {
       diagnostic_node (A68_SYNTAX_ERROR, NEXT (q), ERROR_SYNTAX_EXPECTED, TERTIARY);
       try_reduction (q, NULL, NULL, UNIT, WILDCARD, IS_SYMBOL, WILDCARD, NULL_ATTRIBUTE);
-    } else if (whether (q, -TERTIARY, ISNT_SYMBOL, TERTIARY, NULL_ATTRIBUTE)
-               || whether (q, TERTIARY, ISNT_SYMBOL, -TERTIARY, NULL_ATTRIBUTE)
-               || whether (q, -TERTIARY, ISNT_SYMBOL, -TERTIARY, NULL_ATTRIBUTE)) {
+    } else if (whether (q, -TERTIARY, ISNT_SYMBOL, TERTIARY, NULL_ATTRIBUTE) || whether (q, TERTIARY, ISNT_SYMBOL, -TERTIARY, NULL_ATTRIBUTE) || whether (q, -TERTIARY, ISNT_SYMBOL, -TERTIARY, NULL_ATTRIBUTE)) {
       diagnostic_node (A68_SYNTAX_ERROR, NEXT (q), ERROR_SYNTAX_EXPECTED, TERTIARY);
       try_reduction (q, NULL, NULL, UNIT, WILDCARD, ISNT_SYMBOL, WILDCARD, NULL_ATTRIBUTE);
     }
@@ -3793,21 +3793,21 @@ static void extract_indicants (NODE_T * p)
   NODE_T *q = p;
   while (q != NULL) {
     if (WHETHER (q, MODE_SYMBOL)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
         detect_redefined_keyword (q, MODE_DECLARATION);
         if (whether (q, BOLD_TAG, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), INDICANT, q, NULL, NULL_ATTRIBUTE) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), INDICANT, q, NULL, NULL_ATTRIBUTE) != NULL);
           ATTRIBUTE (q) = DEFINING_INDICANT;
           FORWARD (q);
-          q->attribute = ALT_EQUALS_SYMBOL;
+          ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
           q = skip_pack_declarer (NEXT (q));
           FORWARD (q);
         } else {
-          z = A68_FALSE;
+          siga = A68_FALSE;
         }
-      } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -3835,7 +3835,7 @@ static void extract_priorities (NODE_T * p)
   NODE_T *q = p;
   while (q != NULL) {
     if (WHETHER (q, PRIO_SYMBOL)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
         detect_redefined_keyword (q, PRIORITY_DECLARATION);
@@ -3849,24 +3849,40 @@ static void extract_priorities (NODE_T * p)
           NEXT (q) = NEXT_NEXT (q);
           PREVIOUS (NEXT (q)) = q;
           FORWARD (q);
-          q->attribute = ALT_EQUALS_SYMBOL;
+          ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
           FORWARD (q);
           GET_PRIORITY (q, k);
           ATTRIBUTE (q) = PRIORITY;
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
           FORWARD (q);
-        } else if (whether (q, BOLD_TAG, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, OPERATOR, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
+        } else if (whether (q, OPERATOR, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE) || 
+                   whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
           int k;
           NODE_T *y = q;
           ATTRIBUTE (q) = DEFINING_OPERATOR;
           FORWARD (q);
-          q->attribute = ALT_EQUALS_SYMBOL;
+          ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
           FORWARD (q);
           GET_PRIORITY (q, k);
           ATTRIBUTE (q) = PRIORITY;
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
           FORWARD (q);
-        } else if (whether (q, BOLD_TAG, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, OPERATOR, INT_DENOTATION, NULL_ATTRIBUTE) || whether (q, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
+        } else if (whether (q, BOLD_TAG, IDENTIFIER, NULL_ATTRIBUTE)) {
+          siga = A68_FALSE;
+        } else if (whether (q, BOLD_TAG, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
+          int k;
+          NODE_T *y = q;
+          ATTRIBUTE (q) = DEFINING_OPERATOR;
+          FORWARD (q);
+          ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
+          FORWARD (q);
+          GET_PRIORITY (q, k);
+          ATTRIBUTE (q) = PRIORITY;
+          ASSERT (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
+          FORWARD (q);
+        } else if (whether (q, BOLD_TAG, INT_DENOTATION, NULL_ATTRIBUTE) || 
+                   whether (q, OPERATOR, INT_DENOTATION, NULL_ATTRIBUTE) || 
+                   whether (q, EQUALS_SYMBOL, INT_DENOTATION, NULL_ATTRIBUTE)) {
 /* The scanner cannot separate operator and "=" sign so we do this here. */
           int len = (int) strlen (SYMBOL (q));
           if (len > 1 && SYMBOL (q)[len - 1] == '=') {
@@ -3881,15 +3897,15 @@ static void extract_priorities (NODE_T * p)
             q = NEXT_NEXT (q);
             GET_PRIORITY (q, k);
             ATTRIBUTE (q) = PRIORITY;
-            CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
+            ASSERT (add_tag (SYMBOL_TABLE (p), PRIO_SYMBOL, y, NULL, k) != NULL);
             FORWARD (q);
           } else {
-            diagnostic_node (A68_SYNTAX_ERROR, (q != NULL ? q : p), ERROR_SYNTAX_EXPECTED, EQUALS_SYMBOL, NULL);
+            siga = A68_FALSE;
           }
         } else {
-          z = A68_FALSE;
+          siga = A68_FALSE;
         }
-      } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -3908,7 +3924,7 @@ static void extract_operators (NODE_T * p)
     if (WHETHER_NOT (q, OP_SYMBOL)) {
       FORWARD (q);
     } else {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
 /* Skip operator plan. */
       if (NEXT (q) != NULL && WHETHER (NEXT (q), OPEN_SYMBOL)) {
         q = skip_pack_declarer (NEXT (q));
@@ -3922,17 +3938,26 @@ static void extract_operators (NODE_T * p)
           if (whether (q, OPERATOR, OPERATOR, NULL_ATTRIBUTE)) {
             diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG, NULL);
             ATTRIBUTE (q) = DEFINING_OPERATOR;
-            CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
+            ASSERT (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
             NEXT (q) = NEXT_NEXT (q);   /* Remove one superfluous operator, and hope it was only one. */
             PREVIOUS (NEXT (q)) = q;
             FORWARD (q);
-            q->attribute = ALT_EQUALS_SYMBOL;
+            ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
             q = skip_unit (q);
-          } else if (whether (q, OPERATOR, EQUALS_SYMBOL, NULL_ATTRIBUTE) || whether (q, BOLD_TAG, EQUALS_SYMBOL, NULL_ATTRIBUTE) || whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
+          } else if (whether (q, OPERATOR, EQUALS_SYMBOL, NULL_ATTRIBUTE) || 
+                     whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
             ATTRIBUTE (q) = DEFINING_OPERATOR;
-            CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
+            ASSERT (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
             FORWARD (q);
-            q->attribute = ALT_EQUALS_SYMBOL;
+            ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
+            q = skip_unit (q);
+          } else if (whether (q, BOLD_TAG, IDENTIFIER, NULL_ATTRIBUTE)) {
+            siga = A68_FALSE;
+          } else if (whether (q, BOLD_TAG, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
+            ATTRIBUTE (q) = DEFINING_OPERATOR;
+            ASSERT (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
+            FORWARD (q);
+            ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
             q = skip_unit (q);
           } else if (q != NULL && (whether_one_of (q, OPERATOR, BOLD_TAG, EQUALS_SYMBOL, NULL_ATTRIBUTE))) {
 /* The scanner cannot separate operator and "=" sign so we do this here. */
@@ -3944,16 +3969,16 @@ static void extract_operators (NODE_T * p)
               SYMBOL (q) = TEXT (add_token (&top_token, sym));
               ATTRIBUTE (q) = DEFINING_OPERATOR;
               insert_node (q, ALT_EQUALS_SYMBOL);
-              CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
+              ASSERT (add_tag (SYMBOL_TABLE (p), OP_SYMBOL, q, NULL, NULL_ATTRIBUTE) != NULL);
               FORWARD (q);
               q = skip_unit (q);
             } else {
-              diagnostic_node (A68_SYNTAX_ERROR, (q != NULL ? q : p), ERROR_SYNTAX_EXPECTED, EQUALS_SYMBOL, NULL);
+              siga = A68_FALSE;
             }
           } else {
-            z = A68_FALSE;
+            siga = A68_FALSE;
           }
-        } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+        } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
       }
     }
   }
@@ -3990,25 +4015,25 @@ static void extract_identities (NODE_T * p)
   NODE_T *q = p;
   while (q != NULL) {
     if (whether (q, DECLARER, IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       do {
         if (whether ((FORWARD (q)), IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           FORWARD (q);
-          q->attribute = ALT_EQUALS_SYMBOL;
+          ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
           q = skip_unit (q);
         } else if (whether (q, IDENTIFIER, ASSIGN_SYMBOL, NULL_ATTRIBUTE)) {
 /* Handle common error in ALGOL 68 programs. */
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ALT_EQUALS_SYMBOL;
           q = skip_unit (q);
         } else {
-          z = A68_FALSE;
+          siga = A68_FALSE;
         }
-      } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4025,7 +4050,7 @@ static void extract_variables (NODE_T * p)
   NODE_T *q = p;
   while (q != NULL) {
     if (whether (q, DECLARER, IDENTIFIER, NULL_ATTRIBUTE)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
         if (whether (q, IDENTIFIER, NULL_ATTRIBUTE)) {
@@ -4034,13 +4059,13 @@ static void extract_variables (NODE_T * p)
             diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
             ATTRIBUTE (NEXT (q)) = ASSIGN_SYMBOL;
           }
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           q = skip_unit (q);
         } else {
-          z = A68_FALSE;
+          siga = A68_FALSE;
         }
-      } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4057,7 +4082,7 @@ static void extract_proc_identities (NODE_T * p)
   NODE_T *q = p;
   while (q != NULL) {
     if (whether (q, PROC_SYMBOL, IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
         if (whether (q, IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
@@ -4069,14 +4094,14 @@ static void extract_proc_identities (NODE_T * p)
         } else if (whether (q, IDENTIFIER, ASSIGN_SYMBOL, NULL_ATTRIBUTE)) {
 /* Handle common error in ALGOL 68 programs. */
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ALT_EQUALS_SYMBOL;
           q = skip_unit (q);
         } else {
-          z = A68_FALSE;
+          siga = A68_FALSE;
         }
-      } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4093,24 +4118,24 @@ static void extract_proc_variables (NODE_T * p)
   NODE_T *q = p;
   while (q != NULL) {
     if (whether (q, PROC_SYMBOL, IDENTIFIER, NULL_ATTRIBUTE)) {
-      BOOL_T z = A68_TRUE;
+      BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
         if (whether (q, IDENTIFIER, ASSIGN_SYMBOL, NULL_ATTRIBUTE)) {
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           q = skip_unit (FORWARD (q));
         } else if (whether (q, IDENTIFIER, EQUALS_SYMBOL, NULL_ATTRIBUTE)) {
 /* Handle common error in ALGOL 68 programs. */
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_MIXED_DECLARATION);
-          CHECK_RETVAL (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
+          ASSERT (add_tag (SYMBOL_TABLE (p), IDENTIFIER, q, NULL, NORMAL_IDENTIFIER) != NULL);
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ASSIGN_SYMBOL;
           q = skip_unit (q);
         } else {
-          z = A68_FALSE;
+          siga = A68_FALSE;
         }
-      } while (z && q != NULL && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NULL && WHETHER (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }

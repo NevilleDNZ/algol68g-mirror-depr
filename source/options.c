@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -32,12 +32,52 @@ Options come from:
   [4] Pragmat items overrule [3]. 
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "mp.h"
 
 OPTIONS_T *options;
 BOOL_T no_warnings = A68_TRUE;
+
+/*!
+\brief set default values for options
+\param module current module
+**/
+
+void default_options (void)
+{
+  no_warnings = A68_TRUE;
+  program.options.backtrace = A68_FALSE;
+  program.options.brackets = A68_FALSE;
+  program.options.check_only = A68_FALSE;
+  program.options.compile = A68_FALSE;
+  program.options.cross_reference = A68_FALSE;
+  program.options.debug = A68_FALSE;
+  program.options.keep = A68_FALSE;
+  program.options.moid_listing = A68_FALSE;
+  program.options.nodemask = (STATUS_MASK) (ASSERT_MASK | SOURCE_MASK);
+  program.options.optimise = A68_FALSE;
+  program.options.portcheck = A68_FALSE;
+  program.options.pragmat_sema = A68_TRUE;
+  program.options.reductions = A68_FALSE;
+  program.options.regression_test = A68_FALSE;
+  program.options.rerun = A68_FALSE;
+  program.options.run = A68_FALSE;
+  program.options.run_script = A68_FALSE;
+  program.options.source_listing = A68_FALSE;
+  program.options.standard_prelude_listing = A68_FALSE;
+  program.options.statistics_listing = A68_FALSE;
+  program.options.strict = A68_FALSE;
+  program.options.stropping = UPPER_STROPPING;
+  program.options.time_limit = 0;
+  program.options.trace = A68_FALSE;
+  program.options.tree_listing = A68_FALSE;
+  program.options.unused = A68_FALSE;
+  program.options.verbose = A68_FALSE;
+  program.options.version = A68_FALSE;
+}
 
 /*!
 \brief error handler for options
@@ -49,14 +89,14 @@ BOOL_T no_warnings = A68_TRUE;
 static void option_error (SOURCE_LINE_T * l, char *option, char *info)
 {
   int k;
-  CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", option) >= 0);
+  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", option) >= 0);
   for (k = 0; output_line[k] != NULL_CHAR; k++) {
     output_line[k] = (char) TO_LOWER (output_line[k]);
   }
   if (info != NULL) {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s option \"%s\"", info, output_line) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s option \"%s\"", info, output_line) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "error in option \"%s\"", output_line) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "error in option \"%s\"", output_line) >= 0);
   }
   scan_error (l, NULL, edit_line);
 }
@@ -86,7 +126,7 @@ void add_option_list (OPTION_LIST_T ** l, char *str, SOURCE_LINE_T * line)
 {
   if (*l == NULL) {
     *l = (OPTION_LIST_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (OPTION_LIST_T));
-    (*l)->scan = a68_prog.source_scan;
+    (*l)->scan = program.source_scan;
     (*l)->str = new_string (str);
     (*l)->processed = A68_FALSE;
     (*l)->line = line;
@@ -101,10 +141,10 @@ void add_option_list (OPTION_LIST_T ** l, char *str, SOURCE_LINE_T * line)
 \param module current module
 **/
 
-void init_options (MODULE_T * module)
+void init_options (void)
 {
   options = (OPTIONS_T *) malloc ((size_t) ALIGNED_SIZE_OF (OPTIONS_T));
-  module->options.list = NULL;
+  program.options.list = NULL;
 }
 
 /*!
@@ -115,10 +155,10 @@ void init_options (MODULE_T * module)
 \return whether equal
 **/
 
-static BOOL_T eq (MODULE_T * module, char *p, char *q)
+static BOOL_T eq (char *p, char *q)
 {
 /* Upper case letters in 'q' are mandatory, lower case must match. */
-  if (module->options.pragmat_sema) {
+  if (program.options.pragmat_sema) {
     return (match_string (p, q, '='));
   } else {
     return (A68_FALSE);
@@ -131,18 +171,18 @@ static BOOL_T eq (MODULE_T * module, char *p, char *q)
 \param i option chain
 **/
 
-void prune_echoes (MODULE_T * module, OPTION_LIST_T * i)
+void prune_echoes (OPTION_LIST_T * i)
 {
   while (i != NULL) {
-    if (i->scan == module->source_scan) {
+    if (i->scan == program.source_scan) {
       char *p = strip_sign (i->str);
 /* ECHO echoes a string. */
-      if (eq (module, p, "ECHO")) {
+      if (eq (p, "ECHO")) {
         {
           char *car = a68g_strchr (p, '=');
           if (car != NULL) {
             io_close_tty_line ();
-            CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", &car[1]) >= 0);
+            ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", &car[1]) >= 0);
             WRITE (STDOUT_FILENO, output_line);
           } else {
             FORWARD (i);
@@ -152,7 +192,7 @@ void prune_echoes (MODULE_T * module, OPTION_LIST_T * i)
               }
               if (i != NULL) {
                 io_close_tty_line ();
-                CHECK_RETVAL (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", i->str) >= 0);
+                ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", i->str) >= 0);
                 WRITE (STDOUT_FILENO, output_line);
               }
             }
@@ -265,7 +305,7 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
 \return whether processing was successful
 **/
 
-BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
+BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 {
   BOOL_T go_on = A68_TRUE, name_set = A68_FALSE;
   OPTION_LIST_T *j = i;
@@ -278,41 +318,41 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
       BOOL_T minus_sign = (BOOL_T) ((i->str)[0] == '-');
       char *p = strip_sign (i->str);
       if (!minus_sign && cmd_line) {
-/* Item without '-'s is generic filename. */
+/* Item without '-'s is a filename. */
         if (!name_set) {
-          module->files.generic_name = new_string (p);
+          program.files.initial_name = new_string (p);
           name_set = A68_TRUE;
         } else {
-          option_error (NULL, start_c, "filename reset by");
+          option_error (NULL, start_c, "will not reset initial file name by");
         }
       }
 /* Preprocessor items stop option processing. */
-      else if (eq (module, p, "INCLUDE")) {
+      else if (eq (p, "INCLUDE")) {
         go_on = A68_FALSE;
-      } else if (eq (module, p, "READ")) {
+      } else if (eq (p, "READ")) {
         go_on = A68_FALSE;
-      } else if (eq (module, p, "PREPROCESSOR")) {
+      } else if (eq (p, "PREPROCESSOR")) {
         go_on = A68_FALSE;
-      } else if (eq (module, p, "NOPREPROCESSOR")) {
+      } else if (eq (p, "NOPREPROCESSOR")) {
         go_on = A68_FALSE;
       }
 /* EXIT stops option processing. */
-      else if (eq (module, p, "EXIT")) {
+      else if (eq (p, "EXIT")) {
         go_on = A68_FALSE;
       }
 /* Empty item (from specifying '-' or '--') stops option processing. */
-      else if (eq (module, p, "")) {
+      else if (eq (p, "")) {
         go_on = A68_FALSE;
       }
-/* FILE accepts its argument as generic filename. */
-      else if (eq (module, p, "File") && cmd_line) {
+/* FILE accepts its argument as filename. */
+      else if (eq (p, "File") && cmd_line) {
         FORWARD (i);
         if (i != NULL && strcmp (i->str, "=") == 0) {
           FORWARD (i);
         }
         if (i != NULL) {
           if (!name_set) {
-            module->files.generic_name = new_string (i->str);
+            program.files.initial_name = new_string (i->str);
             name_set = A68_TRUE;
           } else {
             option_error (start_l, start_c, NULL);
@@ -321,8 +361,21 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
           option_error (start_l, start_c, NULL);
         }
       }
+/* VERIFY checks that argument is current a68g version number. */
+      else if (eq (p, "VERIFY")) {
+        FORWARD (i);
+        if (i != NULL && strcmp (i->str, "=") == 0) {
+          FORWARD (i);
+        }
+        if (i != NULL) {
+          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s verification \"%s\" does not match script verification \"%s\"", a68g_cmd_name, VERIFICATION, i->str) >= 0);
+          ABEND (strcmp (VERIFICATION, i->str) != 0, new_string (output_line), "rebuild the script");
+        } else {
+          option_error (start_l, start_c, NULL);
+        }
+      }
 /* HELP gives online help. */
-      else if ((eq (module, p, "APropos") || eq (module, p, "Help") || eq (module, p, "INfo")) && cmd_line) {
+      else if ((eq (p, "APropos") || eq (p, "Help") || eq (p, "INfo")) && cmd_line) {
         FORWARD (i);
         if (i != NULL && strcmp (i->str, "=") == 0) {
           FORWARD (i);
@@ -335,7 +388,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
         a68g_exit (EXIT_SUCCESS);
       }
 /* ECHO is treated later. */
-      else if (eq (module, p, "ECHO")) {
+      else if (eq (p, "ECHO")) {
         if (a68g_strchr (p, '=') == NULL) {
           FORWARD (i);
           if (i != NULL) {
@@ -346,7 +399,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
         }
       }
 /* EXECUTE and PRINT execute their argument as Algol 68 text. */
-      else if (eq (module, p, "Execute") || eq (module, p, "Print")) {
+      else if (eq (p, "Execute") || eq (p, "Print")) {
         if (cmd_line == A68_FALSE) {
           option_error (start_l, start_c, "not at command line when encountering");
         } else if ((FORWARD (i)) != NULL) {
@@ -357,18 +410,17 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
           if (!error) {
             char name[BUFFER_SIZE];
             FILE *f;
-            bufcpy (name, ".", BUFFER_SIZE);
-            bufcat (name, a68g_cmd_name, BUFFER_SIZE);
-            bufcat (name, ".x", BUFFER_SIZE);
+            bufcpy (name, HIDDEN_TEMP_FILE_NAME, BUFFER_SIZE);
+            bufcat (name, ".cmd.a68", BUFFER_SIZE);
             f = fopen (name, "w");
-            ABNORMAL_END (f == NULL, "cannot open temp file", NULL);
-            if (eq (module, p, "Execute")) {
+            ABEND (f == NULL, "cannot open temp file", NULL);
+            if (eq (p, "Execute")) {
               fprintf (f, "(%s)\n", i->str);
             } else {
               fprintf (f, "(print ((%s)))\n", i->str);
             }
-            CHECK_RETVAL (fclose (f) == 0);
-            module->files.generic_name = new_string (name);
+            ASSERT (fclose (f) == 0);
+            program.files.initial_name = new_string (name);
           } else {
             option_error (start_l, start_c, NULL);
           }
@@ -377,7 +429,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
         }
       }
 /* HEAP, HANDLES, STACK, FRAME and OVERHEAD  set core allocation. */
-      else if (eq (module, p, "HEAP") || eq (module, p, "HANDLES") || eq (module, p, "STACK") || eq (module, p, "FRAME") || eq (module, p, "OVERHEAD")) {
+      else if (eq (p, "HEAP") || eq (p, "HANDLES") || eq (p, "STACK") || eq (p, "FRAME") || eq (p, "OVERHEAD")) {
         BOOL_T error = A68_FALSE;
         int k = fetch_integral (p, &i, &error);
 /* Adjust size. */
@@ -388,169 +440,234 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, NULL);
             k = MIN_MEM_SIZE;
           }
-          if (eq (module, p, "HEAP")) {
+          if (eq (p, "HEAP")) {
             heap_size = k;
-          } else if (eq (module, p, "HANDLE")) {
+          } else if (eq (p, "HANDLE")) {
             handle_pool_size = k;
-          } else if (eq (module, p, "STACK")) {
+          } else if (eq (p, "STACK")) {
             expr_stack_size = k;
-          } else if (eq (module, p, "FRAME")) {
+          } else if (eq (p, "FRAME")) {
             frame_stack_size = k;
-          } else if (eq (module, p, "OVERHEAD")) {
+          } else if (eq (p, "OVERHEAD")) {
             storage_overhead = k;
           }
         }
       }
+/* COMPILE and NOCOMPILE switch on/off compilation. */
+      else if (eq (p, "Compile")) {
+        program.options.compile = A68_TRUE;
+        program.options.optimise = A68_TRUE;
+        program.options.run_script = A68_FALSE;
+      } else if (eq (p, "NOCompile")) {
+        program.options.compile = A68_FALSE;
+        program.options.optimise = A68_FALSE;
+        program.options.run_script = A68_FALSE;
+      } else if (eq (p, "NO-Compile")) {
+        program.options.compile = A68_FALSE;
+        program.options.optimise = A68_FALSE;
+        program.options.run_script = A68_FALSE;
+      }
+/* OPTIMISE and NOOPTIMISE switch on/off optimisation. */
+      else if (eq (p, "Optimise")) {
+        program.options.optimise = A68_TRUE;
+      } else if (eq (p, "NOOptimise")) {
+        program.options.optimise = A68_FALSE;
+      } else if (eq (p, "NO-Optimise")) {
+        program.options.optimise = A68_FALSE;
+      }
+/* RUN-SCRIPT runs a comiled .sh script. */
+      else if (eq (p, "RUN-SCRIPT")) {
+        program.options.run_script = A68_TRUE;
+        program.options.compile = A68_FALSE;
+        program.options.optimise = A68_TRUE;
+      } 
+/* RERUN re-uses an existing .so file. */
+      else if (eq (p, "RERUN")) {
+        program.options.rerun = A68_TRUE;
+        program.options.optimise = A68_TRUE;
+      } 
+/* KEEP and NOKEEP switch off/on object file deletion. */
+      else if (eq (p, "KEEP")) {
+        program.options.keep = A68_TRUE;
+      } else if (eq (p, "NOKEEP")) {
+        program.options.keep = A68_FALSE;
+      } else if (eq (p, "NO-KEEP")) {
+        program.options.keep = A68_FALSE;
+      }
 /* BRACKETS extends Algol 68 syntax for brackets. */
-      else if (eq (module, p, "BRackets")) {
-        module->options.brackets = A68_TRUE;
+      else if (eq (p, "BRackets")) {
+        program.options.brackets = A68_TRUE;
       }
 /* REDUCTIONS gives parser reductions.*/
-      else if (eq (module, p, "REDuctions")) {
-        module->options.reductions = A68_TRUE;
+      else if (eq (p, "REDuctions")) {
+        program.options.reductions = A68_TRUE;
       }
 /* QUOTESTROPPING sets stropping to quote stropping. */
-      else if (eq (module, p, "QUOTEstropping")) {
-        module->options.stropping = QUOTE_STROPPING;
+      else if (eq (p, "QUOTEstropping")) {
+        program.options.stropping = QUOTE_STROPPING;
+      } else if (eq (p, "QUOTE-stropping")) {
+        program.options.stropping = QUOTE_STROPPING;
       }
 /* UPPERSTROPPING sets stropping to upper stropping, which is nowadays the expected default. */
-      else if (eq (module, p, "UPPERstropping")) {
-        module->options.stropping = UPPER_STROPPING;
+      else if (eq (p, "UPPERstropping")) {
+        program.options.stropping = UPPER_STROPPING;
+      } else if (eq (p, "UPPER-stropping")) {
+        program.options.stropping = UPPER_STROPPING;
       }
 /* CHECK and NORUN just check for syntax. */
-      else if (eq (module, p, "Check") || eq (module, p, "NORun")) {
-        module->options.check_only = A68_TRUE;
+      else if (eq (p, "Check") || eq (p, "NORun") || eq (p, "NO-Run")) {
+        program.options.check_only = A68_TRUE;
       }
 /* RUN overrides NORUN. */
-      else if (eq (module, p, "RUN")) {
-        module->options.run = A68_TRUE;
+      else if (eq (p, "RUN")) {
+        program.options.run = A68_TRUE;
       }
 /* MONITOR or DEBUG invokes the debugger at runtime errors. */
-      else if (eq (module, p, "MONitor") || eq (module, p, "DEBUG")) {
-        module->options.debug = A68_TRUE;
-      }
-/* OPTIMISE attempts optimisations. */
-      else if (eq (module, p, "Optimise")) {
-        module->options.optimise = A68_TRUE;
-      }
-/* NOOPTIMISE skips optimisations. */
-      else if (eq (module, p, "NOOptimise")) {
-        module->options.optimise = A68_FALSE;
+      else if (eq (p, "MONitor") || eq (p, "DEBUG")) {
+        program.options.debug = A68_TRUE;
       }
 /* REGRESSION is an option that sets preferences when running the Algol68G test suite. */
-      else if (eq (module, p, "REGRESSION")) {
+      else if (eq (p, "REGRESSION")) {
         no_warnings = A68_FALSE;
-        module->options.portcheck = A68_TRUE;
-        module->options.regression_test = A68_TRUE;
-        module->options.time_limit = 30;
+        program.options.portcheck = A68_TRUE;
+        program.options.regression_test = A68_TRUE;
+        program.options.time_limit = 30;
         term_width = MAX_LINE_WIDTH;
       }
 /* NOWARNINGS switches warnings off. */
-      else if (eq (module, p, "NOWarnings")) {
+      else if (eq (p, "NOWarnings")) {
+        no_warnings = A68_TRUE;
+      } else if (eq (p, "NO-Warnings")) {
         no_warnings = A68_TRUE;
       }
 /* WARNINGS switches warnings on. */
-      else if (eq (module, p, "Warnings")) {
+      else if (eq (p, "Warnings")) {
         no_warnings = A68_FALSE;
       }
 /* NOPORTCHECK switches portcheck off. */
-      else if (eq (module, p, "NOPORTcheck")) {
-        module->options.portcheck = A68_FALSE;
+      else if (eq (p, "NOPORTcheck")) {
+        program.options.portcheck = A68_FALSE;
+      } else if (eq (p, "NO-PORTcheck")) {
+        program.options.portcheck = A68_FALSE;
       }
 /* PORTCHECK switches portcheck on. */
-      else if (eq (module, p, "PORTcheck")) {
-        module->options.portcheck = A68_TRUE;
+      else if (eq (p, "PORTcheck")) {
+        program.options.portcheck = A68_TRUE;
       }
 /* PEDANTIC switches portcheck and warnings on. */
-      else if (eq (module, p, "PEDANTIC")) {
-        module->options.portcheck = A68_TRUE;
+      else if (eq (p, "PEDANTIC")) {
+        program.options.portcheck = A68_TRUE;
         no_warnings = A68_FALSE;
       }
 /* PRAGMATS and NOPRAGMATS switch on/off pragmat processing. */
-      else if (eq (module, p, "PRagmats")) {
-        module->options.pragmat_sema = A68_TRUE;
-      } else if (eq (module, p, "NOPRagmats")) {
-        module->options.pragmat_sema = A68_FALSE;
+      else if (eq (p, "PRagmats")) {
+        program.options.pragmat_sema = A68_TRUE;
+      } else if (eq (p, "NOPRagmats")) {
+        program.options.pragmat_sema = A68_FALSE;
+      } else if (eq (p, "NO-PRagmats")) {
+        program.options.pragmat_sema = A68_FALSE;
+      }
+/* STRICT ignores A68G extensions to A68 syntax. */
+      else if (eq (p, "STRict")) {
+        program.options.strict = A68_TRUE;
+        program.options.portcheck = A68_TRUE;
       }
 /* VERBOSE in case you want to know what Algol68G is doing. */
-      else if (eq (module, p, "VERBose")) {
-        module->options.verbose = A68_TRUE;
+      else if (eq (p, "VERBose")) {
+        program.options.verbose = A68_TRUE;
       }
 /* VERSION lists the current version at an appropriate time in the future. */
-      else if (eq (module, p, "Version")) {
-        module->options.version = A68_TRUE;
+      else if (eq (p, "Version")) {
+        program.options.version = A68_TRUE;
       }
 /* XREF and NOXREF switch on/off a cross reference. */
-      else if (eq (module, p, "Xref")) {
-        module->options.source_listing = A68_TRUE;
-        module->options.cross_reference = A68_TRUE;
-        module->options.nodemask |= (CROSS_REFERENCE_MASK | SOURCE_MASK);
-      } else if (eq (module, p, "NOXref")) {
-        module->options.nodemask &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
+      else if (eq (p, "Xref")) {
+        program.options.source_listing = A68_TRUE;
+        program.options.cross_reference = A68_TRUE;
+        program.options.nodemask |= (CROSS_REFERENCE_MASK | SOURCE_MASK);
+      } else if (eq (p, "NOXref")) {
+        program.options.nodemask &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
+      } else if (eq (p, "NO-Xref")) {
+        program.options.nodemask &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
       }
 /* PRELUDELISTING cross references preludes, if they ever get implemented ... */
-      else if (eq (module, p, "PRELUDElisting")) {
-        module->options.standard_prelude_listing = A68_TRUE;
+      else if (eq (p, "PRELUDElisting")) {
+        program.options.standard_prelude_listing = A68_TRUE;
       }
 /* STATISTICS prints process statistics. */
-      else if (eq (module, p, "STatistics")) {
-        module->options.statistics_listing = A68_TRUE;
+      else if (eq (p, "STatistics")) {
+        program.options.statistics_listing = A68_TRUE;
       }
 /* TREE and NOTREE switch on/off printing of the syntax tree. This gets bulky! */
-      else if (eq (module, p, "TREE")) {
-        module->options.source_listing = A68_TRUE;
-        module->options.tree_listing = A68_TRUE;
-        module->options.nodemask |= (TREE_MASK | SOURCE_MASK);
-      } else if (eq (module, p, "NOTREE")) {
-        module->options.nodemask ^= (TREE_MASK | SOURCE_MASK);
+      else if (eq (p, "TREE")) {
+        program.options.source_listing = A68_TRUE;
+        program.options.tree_listing = A68_TRUE;
+        program.options.nodemask |= (TREE_MASK | SOURCE_MASK);
+      } else if (eq (p, "NOTREE")) {
+        program.options.nodemask ^= (TREE_MASK | SOURCE_MASK);
+      } else if (eq (p, "NO-TREE")) {
+        program.options.nodemask ^= (TREE_MASK | SOURCE_MASK);
       }
 /* UNUSED indicates unused tags. */
-      else if (eq (module, p, "UNUSED")) {
-        module->options.unused = A68_TRUE;
+      else if (eq (p, "UNUSED")) {
+        program.options.unused = A68_TRUE;
       }
 /* EXTENSIVE set of options for an extensive listing. */
-      else if (eq (module, p, "EXTensive")) {
-        module->options.source_listing = A68_TRUE;
-        module->options.tree_listing = A68_TRUE;
-        module->options.cross_reference = A68_TRUE;
-        module->options.moid_listing = A68_TRUE;
-        module->options.standard_prelude_listing = A68_TRUE;
-        module->options.statistics_listing = A68_TRUE;
-        module->options.unused = A68_TRUE;
-        module->options.nodemask |= (CROSS_REFERENCE_MASK | TREE_MASK | CODE_MASK | SOURCE_MASK);
+      else if (eq (p, "EXTensive")) {
+        program.options.source_listing = A68_TRUE;
+        program.options.object_listing = A68_TRUE;
+        program.options.tree_listing = A68_TRUE;
+        program.options.cross_reference = A68_TRUE;
+        program.options.moid_listing = A68_TRUE;
+        program.options.standard_prelude_listing = A68_TRUE;
+        program.options.statistics_listing = A68_TRUE;
+        program.options.unused = A68_TRUE;
+        program.options.nodemask |= (CROSS_REFERENCE_MASK | TREE_MASK | CODE_MASK | SOURCE_MASK);
       }
 /* LISTING set of options for a default listing. */
-      else if (eq (module, p, "Listing")) {
-        module->options.source_listing = A68_TRUE;
-        module->options.cross_reference = A68_TRUE;
-        module->options.statistics_listing = A68_TRUE;
-        module->options.nodemask |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
+      else if (eq (p, "Listing")) {
+        program.options.source_listing = A68_TRUE;
+        program.options.cross_reference = A68_TRUE;
+        program.options.statistics_listing = A68_TRUE;
+        program.options.nodemask |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
       }
 /* TTY send listing to standout. Remnant from my mainframe past. */
-      else if (eq (module, p, "TTY")) {
-        module->options.cross_reference = A68_TRUE;
-        module->options.statistics_listing = A68_TRUE;
-        module->options.nodemask |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
+      else if (eq (p, "TTY")) {
+        program.options.cross_reference = A68_TRUE;
+        program.options.statistics_listing = A68_TRUE;
+        program.options.nodemask |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
       }
 /* SOURCE and NOSOURCE print source lines. */
-      else if (eq (module, p, "SOURCE")) {
-        module->options.source_listing = A68_TRUE;
-        module->options.nodemask |= SOURCE_MASK;
-      } else if (eq (module, p, "NOSOURCE")) {
-        module->options.nodemask &= ~SOURCE_MASK;
+      else if (eq (p, "SOURCE")) {
+        program.options.source_listing = A68_TRUE;
+        program.options.nodemask |= SOURCE_MASK;
+      } else if (eq (p, "NOSOURCE")) {
+        program.options.nodemask &= ~SOURCE_MASK;
+      } else if (eq (p, "NO-SOURCE")) {
+        program.options.nodemask &= ~SOURCE_MASK;
+      }
+/* OBJECT and NOOBJECT print object lines. */
+      else if (eq (p, "OBJECT")) {
+        program.options.object_listing = A68_TRUE;
+      } else if (eq (p, "NOOBJECT")) {
+        program.options.object_listing = A68_FALSE;
+      } else if (eq (p, "NO-OBJECT")) {
+        program.options.object_listing = A68_FALSE;
       }
 /* MOIDS prints an overview of moids used in the program. */
-      else if (eq (module, p, "MOIDS")) {
-        module->options.moid_listing = A68_TRUE;
+      else if (eq (p, "MOIDS")) {
+        program.options.moid_listing = A68_TRUE;
       }
 /* ASSERTIONS and NOASSERTIONS switch on/off the processing of assertions. */
-      else if (eq (module, p, "Assertions")) {
-        module->options.nodemask |= ASSERT_MASK;
-      } else if (eq (module, p, "NOAssertions")) {
-        module->options.nodemask &= ~ASSERT_MASK;
+      else if (eq (p, "Assertions")) {
+        program.options.nodemask |= ASSERT_MASK;
+      } else if (eq (p, "NOAssertions")) {
+        program.options.nodemask &= ~ASSERT_MASK;
+      } else if (eq (p, "NO-Assertions")) {
+        program.options.nodemask &= ~ASSERT_MASK;
       }
 /* PRECISION sets the precision. */
-      else if (eq (module, p, "PRECision")) {
+      else if (eq (p, "PRECision")) {
         BOOL_T error = A68_FALSE;
         int k = fetch_integral (p, &i, &error);
         if (error || errno > 0) {
@@ -570,26 +687,32 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
         }
       }
 /* BACKTRACE and NOBACKTRACE switch on/off stack backtracing. */
-      else if (eq (module, p, "BACKtrace")) {
-        module->options.backtrace = A68_TRUE;
-      } else if (eq (module, p, "NOBACKtrace")) {
-        module->options.backtrace = A68_FALSE;
+      else if (eq (p, "BACKtrace")) {
+        program.options.backtrace = A68_TRUE;
+      } else if (eq (p, "NOBACKtrace")) {
+        program.options.backtrace = A68_FALSE;
+      } else if (eq (p, "NO-BACKtrace")) {
+        program.options.backtrace = A68_FALSE;
       }
 /* BREAK and NOBREAK switch on/off tracing of the running program. */
-      else if (eq (module, p, "BReakpoint")) {
-        module->options.nodemask |= BREAKPOINT_MASK;
-      } else if (eq (module, p, "NOBReakpoint")) {
-        module->options.nodemask &= ~BREAKPOINT_MASK;
+      else if (eq (p, "BReakpoint")) {
+        program.options.nodemask |= BREAKPOINT_MASK;
+      } else if (eq (p, "NOBReakpoint")) {
+        program.options.nodemask &= ~BREAKPOINT_MASK;
+      } else if (eq (p, "NO-BReakpoint")) {
+        program.options.nodemask &= ~BREAKPOINT_MASK;
       }
 /* TRACE and NOTRACE switch on/off tracing of the running program. */
-      else if (eq (module, p, "TRace")) {
-        module->options.trace = A68_TRUE;
-        module->options.nodemask |= BREAKPOINT_TRACE_MASK;
-      } else if (eq (module, p, "NOTRace")) {
-        module->options.nodemask &= ~BREAKPOINT_TRACE_MASK;
+      else if (eq (p, "TRace")) {
+        program.options.trace = A68_TRUE;
+        program.options.nodemask |= BREAKPOINT_TRACE_MASK;
+      } else if (eq (p, "NOTRace")) {
+        program.options.nodemask &= ~BREAKPOINT_TRACE_MASK;
+      } else if (eq (p, "NO-TRace")) {
+        program.options.nodemask &= ~BREAKPOINT_TRACE_MASK;
       }
 /* TIMELIMIT lets the interpreter stop after so-many seconds. */
-      else if (eq (module, p, "TImelimit")) {
+      else if (eq (p, "TImelimit") || eq (p, "TIME-Limit")) {
         BOOL_T error = A68_FALSE;
         int k = fetch_integral (p, &i, &error);
         if (error || errno > 0) {
@@ -597,7 +720,7 @@ BOOL_T set_options (MODULE_T * module, OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (k < 1) {
           option_error (start_l, start_c, NULL);
         } else {
-          module->options.time_limit = k;
+          program.options.time_limit = k;
         }
       } else {
 /* Unrecognised. */
@@ -630,44 +753,11 @@ void default_mem_sizes (void)
 }
 
 /*!
-\brief set default values for options
-\param module current module
-**/
-
-void default_options (MODULE_T * module)
-{
-  no_warnings = A68_TRUE;
-  module->options.backtrace = A68_FALSE;
-  module->options.brackets = A68_FALSE;
-  module->options.check_only = A68_FALSE;
-  module->options.cross_reference = A68_FALSE;
-  module->options.debug = A68_FALSE;
-  module->options.moid_listing = A68_FALSE;
-  module->options.nodemask = (STATUS_MASK) (ASSERT_MASK | SOURCE_MASK);
-  module->options.optimise = A68_FALSE;
-  module->options.portcheck = A68_FALSE;
-  module->options.pragmat_sema = A68_TRUE;
-  module->options.reductions = A68_FALSE;
-  module->options.regression_test = A68_FALSE;
-  module->options.run = A68_FALSE;
-  module->options.source_listing = A68_FALSE;
-  module->options.standard_prelude_listing = A68_FALSE;
-  module->options.statistics_listing = A68_FALSE;
-  module->options.stropping = UPPER_STROPPING;
-  module->options.time_limit = 0;
-  module->options.trace = A68_FALSE;
-  module->options.tree_listing = A68_FALSE;
-  module->options.unused = A68_FALSE;
-  module->options.verbose = A68_FALSE;
-  module->options.version = A68_FALSE;
-}
-
-/*!
 \brief read options from the .rc file
 \param module current module
 **/
 
-void read_rc_options (MODULE_T * module)
+void read_rc_options (void)
 {
   FILE *f;
   int len = 2 + (int) strlen (a68g_cmd_name) + (int) strlen ("rc");
@@ -682,11 +772,11 @@ void read_rc_options (MODULE_T * module)
         if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
           input_line[strlen (input_line) - 1] = NULL_CHAR;
         }
-        isolate_options (module, input_line, NULL);
+        isolate_options (input_line, NULL);
       }
     }
-    CHECK_RETVAL (fclose (f) == 0);
-    (void) set_options (module, module->options.list, A68_FALSE);
+    ASSERT (fclose (f) == 0);
+    (void) set_options (program.options.list, A68_FALSE);
   } else {
     errno = 0;
   }
@@ -697,11 +787,11 @@ void read_rc_options (MODULE_T * module)
 \param module current module
 **/
 
-void read_env_options (MODULE_T * module)
+void read_env_options (void)
 {
   if (getenv ("A68G_OPTIONS") != NULL) {
-    isolate_options (module, getenv ("A68G_OPTIONS"), NULL);
-    (void) set_options (module, module->options.list, A68_FALSE);
+    isolate_options (getenv ("A68G_OPTIONS"), NULL);
+    (void) set_options (program.options.list, A68_FALSE);
     errno = 0;
   }
 }
@@ -713,7 +803,7 @@ void read_env_options (MODULE_T * module)
 \param line source line
 **/
 
-void isolate_options (MODULE_T * module, char *p, SOURCE_LINE_T * line)
+void isolate_options (char *p, SOURCE_LINE_T * line)
 {
   char *q;
 /* 'q' points at first significant char in item .*/
@@ -757,7 +847,7 @@ void isolate_options (MODULE_T * module, char *p, SOURCE_LINE_T * line)
         }
       }
 /* 'q' points to first significant char in item, and 'p' points after item. */
-      add_option_list (&(module->options.list), q, line);
+      add_option_list (&(program.options.list), q, line);
     }
   }
 }

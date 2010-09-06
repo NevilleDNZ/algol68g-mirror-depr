@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 
@@ -537,7 +539,7 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
       }
     } else if (WHETHER (p, PROCEDURING)) {
 /* Can only be a JUMP. */
-      NODE_T *q = SUB (SUB (p));
+      NODE_T *q = SUB_SUB (p);
       if (WHETHER (q, GOTO_SYMBOL)) {
         FORWARD (q);
       }
@@ -562,7 +564,7 @@ static void scope_format_text (NODE_T * p, SCOPE_T ** s)
     if (WHETHER (p, FORMAT_PATTERN)) {
       scope_enclosed_clause (SUB (NEXT_SUB (p)), s);
     } else if (WHETHER (p, FORMAT_ITEM_G) && NEXT (p) != NULL) {
-      scope_enclosed_clause (SUB (NEXT (p)), s);
+      scope_enclosed_clause (SUB_NEXT (p), s);
     } else if (WHETHER (p, DYNAMIC_REPLICATOR)) {
       scope_enclosed_clause (SUB (NEXT_SUB (p)), s);
     } else {
@@ -683,7 +685,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     SCOPE_T *x = NULL;
     MOID_T *m = MOID (SUB (p));
     if (WHETHER (m, REF_SYMBOL)) {
-      if (ATTRIBUTE (SUB (p)) == PRIMARY && ATTRIBUTE (SUB (SUB (p))) == SLICE) {
+      if (ATTRIBUTE (SUB (p)) == PRIMARY && ATTRIBUTE (SUB_SUB (p)) == SLICE) {
         scope_statement (SUB (p), s);
       } else {
         scope_statement (SUB (p), &x);
@@ -776,7 +778,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
   } else if (WHETHER (p, ASSIGNATION)) {
     NODE_T *unit = NEXT (NEXT_SUB (p));
     SCOPE_T *ns = NULL, *nd = NULL;
-    scope_statement (SUB (SUB (p)), &nd);
+    scope_statement (SUB_SUB (p), &nd);
     scope_statement (unit, &ns);
     (void) scope_check_multiple (ns, TRANSIENT, nd);
     scope_add (s, p, scope_make_tuple (scope_find_youngest (nd).level, NOT_TRANSIENT));

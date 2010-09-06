@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "genie.h"
 #include "inline.h"
@@ -30,7 +32,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_const.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_linalg.h>
@@ -45,7 +46,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_const.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_matrix.h>
@@ -85,9 +85,9 @@ void gsl_permutation_set (const gsl_permutation * p, const size_t i, const size_
 void torrix_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_TORRIX, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -249,7 +249,7 @@ static void push_vector (NODE_T * p, gsl_vector * v)
     A68_REAL *x = (A68_REAL *) (base + iindex);
     STATUS (x) = INITIALISED_MASK;
     VALUE (x) = gsl_vector_get (v, (size_t) k);
-    TEST_REAL_REPRESENTATION (p, VALUE (x));
+    CHECK_REAL_REPRESENTATION (p, VALUE (x));
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
   UNPROTECT_SWEEP_HANDLE (&row);
@@ -338,7 +338,7 @@ static void push_matrix (NODE_T * p, gsl_matrix * a)
       A68_REAL *x = (A68_REAL *) (base + iindex2);
       STATUS (x) = INITIALISED_MASK;
       VALUE (x) = gsl_matrix_get (a, (size_t) k1, (size_t) k2);
-      TEST_REAL_REPRESENTATION (p, VALUE (x));
+      CHECK_REAL_REPRESENTATION (p, VALUE (x));
     }
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
@@ -423,7 +423,7 @@ static void push_vector_complex (NODE_T * p, gsl_vector_complex * v)
     VALUE (re) = GSL_REAL (z);
     STATUS (im) = INITIALISED_MASK;
     VALUE (im) = GSL_IMAG (z);
-    TEST_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
+    CHECK_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
   UNPROTECT_SWEEP_HANDLE (&row);
@@ -519,7 +519,7 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
       VALUE (re) = GSL_REAL (z);
       STATUS (im) = INITIALISED_MASK;
       VALUE (im) = GSL_IMAG (z);
-      TEST_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
+      CHECK_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
     }
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
@@ -2368,9 +2368,9 @@ void genie_matrix_ch_solve (NODE_T * p)
 void fft_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_FFT, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -2461,7 +2461,7 @@ static void push_array_real (NODE_T * p, double *v, int len)
     A68_REAL *x = (A68_REAL *) (base + iindex);
     STATUS (x) = INITIALISED_MASK;
     VALUE (x) = v[2 * k];
-    TEST_REAL_REPRESENTATION (p, VALUE (x));
+    CHECK_REAL_REPRESENTATION (p, VALUE (x));
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
   UNPROTECT_SWEEP_HANDLE (&row);
@@ -2546,7 +2546,7 @@ static void push_array_complex (NODE_T * p, double *v, int len)
     VALUE (re) = v[2 * k];
     STATUS (im) = INITIALISED_MASK;
     VALUE (im) = v[2 * k + 1];
-    TEST_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
+    CHECK_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
   }
   UNPROTECT_SWEEP_HANDLE (&desc);
   UNPROTECT_SWEEP_HANDLE (&row);
@@ -2782,9 +2782,9 @@ void genie_fft_inverse (NODE_T * p)
 void laplace_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_LAPLACE, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);

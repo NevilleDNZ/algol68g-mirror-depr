@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2009 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -44,6 +44,8 @@ Quote stropping was used frequently in the (excusez-le-mot) punch-card age.
 Hence, bold stropping is the default. There also existed point stropping, but
 that has not been implemented here. */
 
+#include "config.h"
+#include "diagnostics.h"
 #include "algol68g.h"
 #include "environ.h"
 #include "genie.h"
@@ -54,13 +56,12 @@ that has not been implemented here. */
 #define IN_PRELUDE(p) (LINE_NUMBER (p) <= 0)
 #define EOL(c) ((c) == NEWLINE_CHAR || (c) == NULL_CHAR)
 
-void file_format_error (MODULE_T *, int);
-static void append_source_line (MODULE_T *, char *, SOURCE_LINE_T **, int *, char *);
+void file_format_error (int);
+static void append_source_line (char *, SOURCE_LINE_T **, int *, char *);
 
 static char *scan_buf;
 static int max_scan_buf_length, source_file_size;
 static BOOL_T stop_scanner = A68_FALSE, read_error = A68_FALSE, no_preprocessing = A68_FALSE;
-
 
 /*!
 \brief add keyword to the tree
@@ -92,22 +93,31 @@ static void add_keyword (KEYWORD_T ** p, int a, char *t)
 void set_up_tables (void)
 {
 /* Entries are randomised to balance the tree. */
-  add_keyword (&top_keyword, CLASS_SYMBOL, "CLASS");
-  add_keyword (&top_keyword, NEW_SYMBOL, "NEW");
-  add_keyword (&top_keyword, DIAGONAL_SYMBOL, "DIAG");
-  add_keyword (&top_keyword, TRANSPOSE_SYMBOL, "TRNSP");
-  add_keyword (&top_keyword, ROW_SYMBOL, "ROW");
-  add_keyword (&top_keyword, COLUMN_SYMBOL, "COL");
-  add_keyword (&top_keyword, ROW_ASSIGN_SYMBOL, "::=");
-  add_keyword (&top_keyword, SOUND_SYMBOL, "SOUND");
-  add_keyword (&top_keyword, ANDF_SYMBOL, "THEF");
-  add_keyword (&top_keyword, ORF_SYMBOL, "ELSF");
+  if (program.options.strict == A68_FALSE) {
+    add_keyword (&top_keyword, ENVIRON_SYMBOL, "ENVIRON");
+    add_keyword (&top_keyword, DOWNTO_SYMBOL, "DOWNTO");
+    add_keyword (&top_keyword, UNTIL_SYMBOL, "UNTIL");
+    add_keyword (&top_keyword, CLASS_SYMBOL, "CLASS");
+    add_keyword (&top_keyword, NEW_SYMBOL, "NEW");
+    add_keyword (&top_keyword, DIAGONAL_SYMBOL, "DIAG");
+    add_keyword (&top_keyword, TRANSPOSE_SYMBOL, "TRNSP");
+    add_keyword (&top_keyword, ROW_SYMBOL, "ROW");
+    add_keyword (&top_keyword, COLUMN_SYMBOL, "COL");
+    add_keyword (&top_keyword, ROW_ASSIGN_SYMBOL, "::=");
+    add_keyword (&top_keyword, CODE_SYMBOL, "CODE");
+    add_keyword (&top_keyword, EDOC_SYMBOL, "EDOC");
+    add_keyword (&top_keyword, ANDF_SYMBOL, "THEF");
+    add_keyword (&top_keyword, ORF_SYMBOL, "ELSF");
+    add_keyword (&top_keyword, ANDF_SYMBOL, "ANDTH");
+    add_keyword (&top_keyword, ORF_SYMBOL, "OREL");
+    add_keyword (&top_keyword, ANDF_SYMBOL, "ANDF");
+    add_keyword (&top_keyword, ORF_SYMBOL, "ORF");
+  }
   add_keyword (&top_keyword, POINT_SYMBOL, ".");
+  add_keyword (&top_keyword, COMPLEX_SYMBOL, "COMPLEX");
   add_keyword (&top_keyword, ACCO_SYMBOL, "{");
   add_keyword (&top_keyword, OCCA_SYMBOL, "}");
-  add_keyword (&top_keyword, CODE_SYMBOL, "CODE");
-  add_keyword (&top_keyword, EDOC_SYMBOL, "EDOC");
-  add_keyword (&top_keyword, ENVIRON_SYMBOL, "ENVIRON");
+  add_keyword (&top_keyword, SOUND_SYMBOL, "SOUND");
   add_keyword (&top_keyword, COLON_SYMBOL, ":");
   add_keyword (&top_keyword, THEN_BAR_SYMBOL, "|");
   add_keyword (&top_keyword, SUB_SYMBOL, "[");
@@ -126,12 +136,9 @@ void set_up_tables (void)
   add_keyword (&top_keyword, PROC_SYMBOL, "PROC");
   add_keyword (&top_keyword, FOR_SYMBOL, "FOR");
   add_keyword (&top_keyword, GOTO_SYMBOL, "GOTO");
-  add_keyword (&top_keyword, ANDF_SYMBOL, "ANDTH");
-  add_keyword (&top_keyword, ORF_SYMBOL, "OREL");
   add_keyword (&top_keyword, WHILE_SYMBOL, "WHILE");
   add_keyword (&top_keyword, IS_SYMBOL, ":=:");
   add_keyword (&top_keyword, ASSIGN_TO_SYMBOL, "=:");
-  add_keyword (&top_keyword, COMPLEX_SYMBOL, "COMPLEX");
   add_keyword (&top_keyword, COMPL_SYMBOL, "COMPL");
   add_keyword (&top_keyword, FROM_SYMBOL, "FROM");
   add_keyword (&top_keyword, BOLD_PRAGMAT_SYMBOL, "PRAGMAT");
@@ -166,8 +173,6 @@ void set_up_tables (void)
   add_keyword (&top_keyword, IS_SYMBOL, "IS");
   add_keyword (&top_keyword, ESAC_SYMBOL, "ESAC");
   add_keyword (&top_keyword, CHANNEL_SYMBOL, "CHANNEL");
-  add_keyword (&top_keyword, ANDF_SYMBOL, "ANDF");
-  add_keyword (&top_keyword, ORF_SYMBOL, "ORF");
   add_keyword (&top_keyword, REAL_SYMBOL, "REAL");
   add_keyword (&top_keyword, STRING_SYMBOL, "STRING");
   add_keyword (&top_keyword, BOOL_SYMBOL, "BOOL");
@@ -181,8 +186,6 @@ void set_up_tables (void)
   add_keyword (&top_keyword, VOID_SYMBOL, "VOID");
   add_keyword (&top_keyword, BITS_SYMBOL, "BITS");
   add_keyword (&top_keyword, ELSE_SYMBOL, "ELSE");
-  add_keyword (&top_keyword, DOWNTO_SYMBOL, "DOWNTO");
-  add_keyword (&top_keyword, UNTIL_SYMBOL, "UNTIL");
   add_keyword (&top_keyword, EXIT_SYMBOL, "EXIT");
   add_keyword (&top_keyword, HEAP_SYMBOL, "HEAP");
   add_keyword (&top_keyword, INT_SYMBOL, "INT");
@@ -198,32 +201,30 @@ void set_up_tables (void)
 
 /*!
 \brief save scanner state, for character look-ahead
-\param module
 \param ref_l source line
 \param ref_s position in source line text
 \param ch last scanned character
 **/
 
-static void save_state (MODULE_T * module, SOURCE_LINE_T * ref_l, char *ref_s, char ch)
+static void save_state (SOURCE_LINE_T * ref_l, char *ref_s, char ch)
 {
-  module->scan_state.save_l = ref_l;
-  module->scan_state.save_s = ref_s;
-  module->scan_state.save_c = ch;
+  program.scan_state.save_l = ref_l;
+  program.scan_state.save_s = ref_s;
+  program.scan_state.save_c = ch;
 }
 
 /*!
 \brief restore scanner state, for character look-ahead
-\param module
 \param ref_l source line
 \param ref_s position in source line text
 \param ch last scanned character
 **/
 
-static void restore_state (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
+static void restore_state (SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
 {
-  *ref_l = module->scan_state.save_l;
-  *ref_s = module->scan_state.save_s;
-  *ch = module->scan_state.save_c;
+  *ref_l = program.scan_state.save_l;
+  *ref_s = program.scan_state.save_s;
+  *ch = program.scan_state.save_c;
 }
 
 /*!
@@ -236,9 +237,9 @@ static void restore_state (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref
 static void unworthy (SOURCE_LINE_T * u, char *v, char ch)
 {
   if (IS_PRINT (ch)) {
-    CHECK_RETVAL (snprintf (edit_line, BUFFER_SIZE, "%s", ERROR_UNWORTHY_CHARACTER) >= 0);
+    ASSERT (snprintf (edit_line, BUFFER_SIZE, "%s", ERROR_UNWORTHY_CHARACTER) >= 0);
   } else {
-    CHECK_RETVAL (snprintf (edit_line, BUFFER_SIZE, "%s %s", ERROR_UNWORTHY_CHARACTER, ctrl_char (ch)) >= 0);
+    ASSERT (snprintf (edit_line, BUFFER_SIZE, "%s %s", ERROR_UNWORTHY_CHARACTER, ctrl_char (ch)) >= 0);
   }
   scan_error (u, v, edit_line);
 }
@@ -278,10 +279,10 @@ static void concatenate_lines (SOURCE_LINE_T * top)
 \return whether u is v
 **/
 
-static BOOL_T whether_bold (SOURCE_LINE_T * z, char *u, char *v)
+static BOOL_T whether_bold (char *u, char *v)
 {
   unsigned len = (unsigned) strlen (v);
-  if (MODULE (z)->options.stropping == QUOTE_STROPPING) {
+  if (program.options.stropping == QUOTE_STROPPING) {
     if (u[0] == '\'') {
       return ((BOOL_T) (strncmp (++u, v, len) == 0 && u[len] == '\''));
     } else {
@@ -341,11 +342,11 @@ static BOOL_T skip_comment (SOURCE_LINE_T ** top, char **ch, int delim)
   v++;
   while (u != NULL) {
     while (v[0] != NULL_CHAR) {
-      if (whether_bold (u, v, "COMMENT") && delim == BOLD_COMMENT_SYMBOL) {
+      if (whether_bold (v, "COMMENT") && delim == BOLD_COMMENT_SYMBOL) {
         *top = u;
         *ch = &v[1];
         return (A68_TRUE);
-      } else if (whether_bold (u, v, "CO") && delim == STYLE_I_COMMENT_SYMBOL) {
+      } else if (whether_bold (v, "CO") && delim == STYLE_I_COMMENT_SYMBOL) {
         *top = u;
         *ch = &v[1];
         return (A68_TRUE);
@@ -382,11 +383,11 @@ static BOOL_T skip_pragmat (SOURCE_LINE_T ** top, char **ch, int delim, BOOL_T w
   char *v = *ch;
   while (u != NULL) {
     while (v[0] != NULL_CHAR) {
-      if (whether_bold (u, v, "PRAGMAT") && delim == BOLD_PRAGMAT_SYMBOL) {
+      if (whether_bold (v, "PRAGMAT") && delim == BOLD_PRAGMAT_SYMBOL) {
         *top = u;
         *ch = &v[1];
         return (A68_TRUE);
-      } else if (whether_bold (u, v, "PR")
+      } else if (whether_bold (v, "PR")
                  && delim == STYLE_I_PRAGMAT_SYMBOL) {
         *top = u;
         *ch = &v[1];
@@ -483,20 +484,19 @@ static char *next_preprocessor_item (SOURCE_LINE_T ** top, char **ch, int *delim
         SCAN_ERROR (!skip_string (&u, &v), start_l, start_c, ERROR_UNTERMINATED_STRING);
       }
 /* COMMENTS must be skipped. */
-      else if (whether_bold (u, v, "COMMENT")) {
+      else if (whether_bold (v, "COMMENT")) {
         SCAN_ERROR (!skip_comment (&u, &v, BOLD_COMMENT_SYMBOL), start_l, start_c, ERROR_UNTERMINATED_COMMENT);
-      } else if (whether_bold (u, v, "CO")) {
+      } else if (whether_bold (v, "CO")) {
         SCAN_ERROR (!skip_comment (&u, &v, STYLE_I_COMMENT_SYMBOL), start_l, start_c, ERROR_UNTERMINATED_COMMENT);
       } else if (v[0] == '#') {
         SCAN_ERROR (!skip_comment (&u, &v, STYLE_II_COMMENT_SYMBOL), start_l, start_c, ERROR_UNTERMINATED_COMMENT);
-      } else if (whether_bold (u, v, "PRAGMAT")
-                 || whether_bold (u, v, "PR")) {
+      } else if (whether_bold (v, "PRAGMAT") || whether_bold (v, "PR")) {
 /* We caught a PRAGMAT. */
         char *item;
-        if (whether_bold (u, v, "PRAGMAT")) {
+        if (whether_bold (v, "PRAGMAT")) {
           *delim = BOLD_PRAGMAT_SYMBOL;
           v = &v[strlen ("PRAGMAT")];
-        } else if (whether_bold (u, v, "PR")) {
+        } else if (whether_bold (v, "PR")) {
           *delim = STYLE_I_PRAGMAT_SYMBOL;
           v = &v[strlen ("PR")];
         }
@@ -624,9 +624,9 @@ been included will not be included a second time - it will be ignored.
         SCAN_ERROR (!skip_pragmat (&u, &v, pr_lim, A68_TRUE), start_l, start_c, ERROR_UNTERMINATED_PRAGMAT);
 /* Filename valid? */
         SCAN_ERROR (n == 0, start_l, start_c, ERROR_INCORRECT_FILENAME);
-        fnwid = (int) strlen (MODULE (u)->files.path) + (int) strlen (fnb) + 1;
+        fnwid = (int) strlen (program.files.path) + (int) strlen (fnb) + 1;
         fn = (char *) get_fixed_heap_space ((size_t) fnwid);
-        bufcpy (fn, MODULE (u)->files.path, fnwid);
+        bufcpy (fn, program.files.path, fnwid);
         bufcat (fn, fnb, fnwid);
 /* Recursive include? Then *ignore* the file. */
         for (t = top; t != NULL; t = NEXT (t)) {
@@ -641,11 +641,11 @@ been included will not be included a second time - it will be ignored.
 /* Access the file. */
         RESET_ERRNO;
         fsize = (int) lseek (fd, 0, SEEK_END);
-        CHECK_RETVAL (fsize >= 0);
+        ASSERT (fsize >= 0);
         SCAN_ERROR (errno != 0, start_l, start_c, ERROR_FILE_READ);
         fbuf = (char *) get_temp_heap_space ((unsigned) (8 + fsize));
         RESET_ERRNO;
-        CHECK_RETVAL (lseek (fd, 0, SEEK_SET) >= 0);
+        ASSERT (lseek (fd, 0, SEEK_SET) >= 0);
         SCAN_ERROR (errno != 0, start_l, start_c, ERROR_FILE_READ);
         RESET_ERRNO;
         bytes_read = (int) io_read (fd, fbuf, (size_t) fsize);
@@ -666,8 +666,7 @@ been included will not be included a second time - it will be ignored.
           n = 0;
           scan_buf[0] = NULL_CHAR;
           while (k < fsize && fbuf[k] != NEWLINE_CHAR) {
-            SCAN_ERROR ((IS_CNTRL (fbuf[k]) && !IS_SPACE (fbuf[k]))
-                        || fbuf[k] == STOP_CHAR, start_l, start_c, ERROR_FILE_INCLUDE_CTRL);
+            SCAN_ERROR ((IS_CNTRL (fbuf[k]) && !IS_SPACE (fbuf[k])) || fbuf[k] == STOP_CHAR, start_l, start_c, ERROR_FILE_INCLUDE_CTRL);
             scan_buf[n++] = fbuf[k++];
             scan_buf[n] = NULL_CHAR;
           }
@@ -676,13 +675,13 @@ been included will not be included a second time - it will be ignored.
           if (k < fsize) {
             k++;
           }
-          append_source_line (MODULE (u), scan_buf, &t, &linum, fn);
+          append_source_line (scan_buf, &t, &linum, fn);
         }
 /* Conclude and go find another include directive, if any. */
         NEXT (t) = s;
         PREVIOUS (s) = t;
         concatenate_lines (top);
-        CHECK_RETVAL (close (fd) == 0);
+        ASSERT (close (fd) == 0);
         make_pass = A68_TRUE;
       }
     search_next_pragmat:       /* skip. */ ;
@@ -692,24 +691,24 @@ been included will not be included a second time - it will be ignored.
 
 /*!
 \brief append a source line to the internal source file
-\param module module that reads source
 \param str text line to be appended
 \param ref_l previous source line
 \param line_num previous source line number
 \param filename name of file being read
 **/
 
-static void append_source_line (MODULE_T * module, char *str, SOURCE_LINE_T ** ref_l, int *line_num, char *filename)
+static void append_source_line (char *str, SOURCE_LINE_T ** ref_l, int *line_num, char *filename)
 {
   SOURCE_LINE_T *z = new_source_line ();
 /* Allow shell command in first line, f.i. "#!/usr/share/bin/a68g". */
   if (*line_num == 1) {
     if (strlen (str) >= 2 && strncmp (str, "#!", 2) == 0) {
+      ABEND (strstr (str, "run-script") != NULL, ERROR_SHELL_SCRIPT, NULL);
       (*line_num)++;
       return;
     }
   }
-  if (module->options.reductions) {
+  if (program.options.reductions) {
     WRITELN (STDOUT_FILENO, "\"");
     WRITE (STDOUT_FILENO, str);
     WRITE (STDOUT_FILENO, "\"");
@@ -721,11 +720,10 @@ static void append_source_line (MODULE_T * module, char *str, SOURCE_LINE_T ** r
   z->print_status = NOT_PRINTED;
   z->list = A68_TRUE;
   z->diagnostics = NULL;
-  MODULE (z) = module;
   NEXT (z) = NULL;
   PREVIOUS (z) = *ref_l;
-  if (module != NULL && module->top_line == NULL) {
-    module->top_line = z;
+  if (program.top_line == NULL) {
+    program.top_line = z;
   }
   if (*ref_l != NULL) {
     NEXT (*ref_l) = z;
@@ -735,27 +733,25 @@ static void append_source_line (MODULE_T * module, char *str, SOURCE_LINE_T ** r
 
 /*!
 \brief size of source file
-\param module module that reads source
 \return size of file
 **/
 
-static int get_source_size (MODULE_T * module)
+static int get_source_size (void)
 {
-  FILE_T f = module->files.source.fd;
+  FILE_T f = program.files.source.fd;
 /* This is why WIN32 must open as "read binary". */
   return ((int) lseek (f, 0, SEEK_END));
 }
 
 /*!
 \brief append environment source lines
-\param module module that reads source
 \param str line to append
 \param ref_l source line after which to append
 \param line_num number of source line 'ref_l'
 \param name either "prelude" or "postlude"
 **/
 
-static void append_environ (MODULE_T * module, char *str, SOURCE_LINE_T ** ref_l, int *line_num, char *name)
+static void append_environ (char *str, SOURCE_LINE_T ** ref_l, int *line_num, char *name)
 {
   char *text = new_string (str);
   while (text != NULL && text[0] != NULL_CHAR) {
@@ -765,45 +761,105 @@ static void append_environ (MODULE_T * module, char *str, SOURCE_LINE_T ** ref_l
     cdr[0] = NULL_CHAR;
     text = &cdr[1];
     (*line_num)++;
-    CHECK_RETVAL (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s\n", car) >= 0);
-    append_source_line (module, edit_line, ref_l, &zero_line_num, name);
+    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s\n", car) >= 0);
+    append_source_line (edit_line, ref_l, &zero_line_num, name);
   }
 }
 
 /*!
-\brief read source file and make internal copy
-\param module module that reads source
+\brief read script file and make internal copy
 \return whether reading is satisfactory 
 **/
 
-static BOOL_T read_source_file (MODULE_T * module)
+static BOOL_T read_script_file (void)
+{
+  SOURCE_LINE_T * ref_l = NULL;
+  int k, n, num;
+  unsigned len;
+  BOOL_T file_end = A68_FALSE;
+  char filename[BUFFER_SIZE], linenum[BUFFER_SIZE];
+  char ch, * fn, * line; 
+  char * buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
+  FILE_T source = program.files.source.fd;
+  ABEND (source == -1, "source file not open", NULL);
+  buffer[0] = NULL_CHAR;
+  n = 0;
+  len = (unsigned) (8 + source_file_size);
+  buffer = (char *) get_temp_heap_space (len);
+  ASSERT (lseek (source, 0, SEEK_SET) >= 0);
+  while (!file_end) {
+/* Read the original file name */
+    filename[0] = NULL_CHAR;
+    k = 0;
+    if (io_read (source, &ch, 1) == 0) {
+      file_end = A68_TRUE;
+      continue;
+    }
+    while (ch != NEWLINE_CHAR) {
+      filename[k++] = ch;
+      ASSERT (io_read (source, &ch, 1) == 1);
+    }
+    filename[k] = NULL_CHAR;
+    fn = add_token (&top_token, filename)->text;
+/* Read the original file number */
+    linenum[0] = NULL_CHAR;
+    k = 0;
+    ASSERT (io_read (source, &ch, 1) == 1);
+    while (ch != NEWLINE_CHAR) {
+      linenum[k++] = ch;
+      ASSERT (io_read (source, &ch, 1) == 1);
+    }
+    linenum[k] = NULL_CHAR;
+    num = strtol (linenum, NULL, 10);
+    ABEND (errno == ERANGE, "strange line number", NULL);
+/* COPY original line into buffer */
+    ASSERT (io_read (source, &ch, 1) == 1);
+    line = &buffer[n];
+    while (ch != NEWLINE_CHAR) {
+      buffer[n++] = ch;
+      ASSERT (io_read (source, &ch, 1) == 1);
+      ABEND ((unsigned) n >= len, "buffer overflow", NULL);
+    }
+    buffer[n++] = NEWLINE_CHAR;
+    buffer[n] = NULL_CHAR;
+    append_source_line (line, &ref_l, &num, fn);
+  }
+  return (A68_TRUE);
+}
+
+/*!
+\brief read source file and make internal copy
+\return whether reading is satisfactory 
+**/
+
+static BOOL_T read_source_file (void)
 {
   SOURCE_LINE_T *ref_l = NULL;
   int line_num = 0, k, bytes_read;
   ssize_t l;
-  FILE_T f = module->files.source.fd;
+  FILE_T f = program.files.source.fd;
   char *prelude_start, *postlude, *buffer;
 /* Prelude. */
-  if (module->options.stropping == UPPER_STROPPING) {
+  if (program.options.stropping == UPPER_STROPPING) {
     prelude_start = bold_prelude_start;
     postlude = bold_postlude;
-  } else if (module->options.stropping == QUOTE_STROPPING) {
+  } else if (program.options.stropping == QUOTE_STROPPING) {
     prelude_start = quote_prelude_start;
     postlude = quote_postlude;
   } else {
     prelude_start = NULL;
     postlude = NULL;
   }
-  append_environ (module, prelude_start, &ref_l, &line_num, "prelude");
+  append_environ (prelude_start, &ref_l, &line_num, "prelude");
 /* Read the file into a single buffer, so we save on system calls. */
   line_num = 1;
   buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
   RESET_ERRNO;
-  CHECK_RETVAL (lseek (f, 0, SEEK_SET) >= 0);
-  ABNORMAL_END (errno != 0, "error while reading source file", NULL);
+  ASSERT (lseek (f, 0, SEEK_SET) >= 0);
+  ABEND (errno != 0, "error while reading source file", NULL);
   RESET_ERRNO;
   bytes_read = (int) io_read (f, buffer, (size_t) source_file_size);
-  ABNORMAL_END (errno != 0 || bytes_read != source_file_size, "error while reading source file", NULL);
+  ABEND (errno != 0 || bytes_read != source_file_size, "error while reading source file", NULL);
 /* Link all lines into the list. */
   k = 0;
   while (k < source_file_size) {
@@ -822,27 +878,27 @@ static BOOL_T read_source_file (MODULE_T * module)
     if (k < source_file_size) {
       k++;
     }
-    append_source_line (module, scan_buf, &ref_l, &line_num, module->files.source.name);
+    append_source_line (scan_buf, &ref_l, &line_num, program.files.source.name);
+    SCAN_ERROR (l != (ssize_t) strlen (scan_buf), NULL, NULL, ERROR_FILE_SOURCE_CTRL);
   }
 /* Postlude. */
-  append_environ (module, postlude, &ref_l, &line_num, "postlude");
+  append_environ (postlude, &ref_l, &line_num, "postlude");
 /* Concatenate lines. */
-  concatenate_lines (module->top_line);
+  concatenate_lines (program.top_line);
 /* Include files. */
-  include_files (module->top_line);
+  include_files (program.top_line);
   return (A68_TRUE);
 }
 
 /*!
 \brief next_char get next character from internal copy of source file
-\param module module that reads source
 \param ref_l source line we're scanning
 \param ref_s character (in source line) we're scanning
 \param allow_typo whether typographical display features are allowed
 \return next char on input
 **/
 
-static char next_char (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
+static char next_char (SOURCE_LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
 {
   char ch;
 #if defined NO_TYPO
@@ -853,7 +909,7 @@ static char next_char (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref_s, 
   if (*ref_l == NULL) {
     return (STOP_CHAR);
   } else {
-    (*ref_l)->list = (BOOL_T) (module->options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+    (*ref_l)->list = (BOOL_T) (program.options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
 /* Take new line? */
     if ((*ref_s)[0] == NEWLINE_CHAR || (*ref_s)[0] == NULL_CHAR) {
       *ref_l = NEXT (*ref_l);
@@ -867,7 +923,7 @@ static char next_char (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref_s, 
 /* Deliver next char. */
     ch = (*ref_s)[0];
     if (allow_typo && (IS_SPACE (ch) || ch == FORMFEED_CHAR)) {
-      ch = next_char (module, ref_l, ref_s, allow_typo);
+      ch = next_char (ref_l, ref_s, allow_typo);
     }
     return (ch);
   }
@@ -875,30 +931,28 @@ static char next_char (MODULE_T * module, SOURCE_LINE_T ** ref_l, char **ref_s, 
 
 /*!
 \brief find first character that can start a valid symbol
-\param module module that reads source
 \param ref_l source line we're scanning
 \param ref_s character (in source line) we're scanning
 **/
 
-static void get_good_char (MODULE_T * module, char *ref_c, SOURCE_LINE_T ** ref_l, char **ref_s)
+static void get_good_char (char *ref_c, SOURCE_LINE_T ** ref_l, char **ref_s)
 {
   while (*ref_c != STOP_CHAR && (IS_SPACE (*ref_c) || (*ref_c == NULL_CHAR))) {
     if (*ref_l != NULL) {
-      (*ref_l)->list = (BOOL_T) (module->options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+      (*ref_l)->list = (BOOL_T) (program.options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
     }
-    *ref_c = next_char (module, ref_l, ref_s, A68_FALSE);
+    *ref_c = next_char (ref_l, ref_s, A68_FALSE);
   }
 }
 
 /*!
 \brief handle a pragment (pragmat or comment)
-\param module module that reads source
 \param type type of pragment (#, CO, COMMENT, PR, PRAGMAT)
 \param ref_l source line we're scanning
 \param ref_s character (in source line) we're scanning
 **/
 
-static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char **ref_c)
+static void pragment (int type, SOURCE_LINE_T ** ref_l, char **ref_c)
 {
 #define INIT_BUFFER {chars_in_buf = 0; scan_buf[chars_in_buf] = NULL_CHAR;}
 #define ADD_ONE_CHAR(ch) {scan_buf[chars_in_buf ++] = ch; scan_buf[chars_in_buf] = NULL_CHAR;}
@@ -907,7 +961,7 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
   int term_s_length, chars_in_buf;
   BOOL_T stop;
 /* Set terminator. */
-  if (module->options.stropping == UPPER_STROPPING) {
+  if (program.options.stropping == UPPER_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
       term_s = "CO";
     } else if (type == STYLE_II_COMMENT_SYMBOL) {
@@ -919,7 +973,7 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
     } else if (type == BOLD_PRAGMAT_SYMBOL) {
       term_s = "PRAGMAT";
     }
-  } else if (module->options.stropping == QUOTE_STROPPING) {
+  } else if (program.options.stropping == QUOTE_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
       term_s = "'CO'";
     } else if (type == STYLE_II_COMMENT_SYMBOL) {
@@ -935,32 +989,32 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
   term_s_length = (int) strlen (term_s);
 /* Scan for terminator, and process pragmat items. */
   INIT_BUFFER;
-  get_good_char (module, &c, ref_l, ref_c);
+  get_good_char (&c, ref_l, ref_c);
   stop = A68_FALSE;
   while (stop == A68_FALSE) {
     SCAN_ERROR (c == STOP_CHAR, start_l, start_c, ERROR_UNTERMINATED_PRAGMENT);
 /* A ".." or '..' delimited string in a PRAGMAT. */
-    if ((c == QUOTE_CHAR || (c == '\'' && module->options.stropping == UPPER_STROPPING))
+    if ((c == QUOTE_CHAR || (c == '\'' && program.options.stropping == UPPER_STROPPING))
         && (type == STYLE_I_PRAGMAT_SYMBOL || type == BOLD_PRAGMAT_SYMBOL)) {
       char delim = c;
       BOOL_T eos = A68_FALSE;
       ADD_ONE_CHAR (c);
-      c = next_char (module, ref_l, ref_c, A68_FALSE);
+      c = next_char (ref_l, ref_c, A68_FALSE);
       while (!eos) {
         SCAN_ERROR (EOL (c), start_l, start_c, ERROR_LONG_STRING);
         if (c == delim) {
           ADD_ONE_CHAR (delim);
-          c = next_char (module, ref_l, ref_c, A68_FALSE);
-          save_state (module, *ref_l, *ref_c, c);
+          c = next_char (ref_l, ref_c, A68_FALSE);
+          save_state (*ref_l, *ref_c, c);
           if (c == delim) {
-            c = next_char (module, ref_l, ref_c, A68_FALSE);
+            c = next_char (ref_l, ref_c, A68_FALSE);
           } else {
-            restore_state (module, ref_l, ref_c, &c);
+            restore_state (ref_l, ref_c, &c);
             eos = A68_TRUE;
           }
         } else if (IS_PRINT (c)) {
           ADD_ONE_CHAR (c);
-          c = next_char (module, ref_l, ref_c, A68_FALSE);
+          c = next_char (ref_l, ref_c, A68_FALSE);
         } else {
           unworthy (start_l, start_c, c);
         }
@@ -969,7 +1023,7 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
 /* On newline we empty the buffer and scan options when appropriate. */
     else if (EOL (c)) {
       if (type == STYLE_I_PRAGMAT_SYMBOL || type == BOLD_PRAGMAT_SYMBOL) {
-        isolate_options (module, scan_buf, start_l);
+        isolate_options (scan_buf, start_l);
       }
       INIT_BUFFER;
     } else if (IS_PRINT (c)) {
@@ -979,7 +1033,7 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
 /* Check whether we encountered the terminator. */
       stop = (BOOL_T) (strcmp (term_s, &(scan_buf[chars_in_buf - term_s_length])) == 0);
     }
-    c = next_char (module, ref_l, ref_c, A68_FALSE);
+    c = next_char (ref_l, ref_c, A68_FALSE);
   }
   scan_buf[chars_in_buf - term_s_length] = NULL_CHAR;
 #undef ADD_ONE_CHAR
@@ -995,131 +1049,37 @@ static void pragment (MODULE_T * module, int type, SOURCE_LINE_T ** ref_l, char 
 static int get_format_item (char ch)
 {
   switch (TO_LOWER (ch)) {
-  case 'a':
-    {
-      return (FORMAT_ITEM_A);
-    }
-  case 'b':
-    {
-      return (FORMAT_ITEM_B);
-    }
-  case 'c':
-    {
-      return (FORMAT_ITEM_C);
-    }
-  case 'd':
-    {
-      return (FORMAT_ITEM_D);
-    }
-  case 'e':
-    {
-      return (FORMAT_ITEM_E);
-    }
-  case 'f':
-    {
-      return (FORMAT_ITEM_F);
-    }
-  case 'g':
-    {
-      return (FORMAT_ITEM_G);
-    }
-  case 'h':
-    {
-      return (FORMAT_ITEM_H);
-    }
-  case 'i':
-    {
-      return (FORMAT_ITEM_I);
-    }
-  case 'j':
-    {
-      return (FORMAT_ITEM_J);
-    }
-  case 'k':
-    {
-      return (FORMAT_ITEM_K);
-    }
-  case 'l':
-  case '/':
-    {
-      return (FORMAT_ITEM_L);
-    }
-  case 'm':
-    {
-      return (FORMAT_ITEM_M);
-    }
-  case 'n':
-    {
-      return (FORMAT_ITEM_N);
-    }
-  case 'o':
-    {
-      return (FORMAT_ITEM_O);
-    }
-  case 'p':
-    {
-      return (FORMAT_ITEM_P);
-    }
-  case 'q':
-    {
-      return (FORMAT_ITEM_Q);
-    }
-  case 'r':
-    {
-      return (FORMAT_ITEM_R);
-    }
-  case 's':
-    {
-      return (FORMAT_ITEM_S);
-    }
-  case 't':
-    {
-      return (FORMAT_ITEM_T);
-    }
-  case 'u':
-    {
-      return (FORMAT_ITEM_U);
-    }
-  case 'v':
-    {
-      return (FORMAT_ITEM_V);
-    }
-  case 'w':
-    {
-      return (FORMAT_ITEM_W);
-    }
-  case 'x':
-    {
-      return (FORMAT_ITEM_X);
-    }
-  case 'y':
-    {
-      return (FORMAT_ITEM_Y);
-    }
-  case 'z':
-    {
-      return (FORMAT_ITEM_Z);
-    }
-  case '+':
-    {
-      return (FORMAT_ITEM_PLUS);
-    }
-  case '-':
-    {
-      return (FORMAT_ITEM_MINUS);
-    }
-  case POINT_CHAR:
-    {
-      return (FORMAT_ITEM_POINT);
-    }
-  case '%':
-    {
-      return (FORMAT_ITEM_ESCAPE);
-    }
-  default:
-    {
-      return (0);
-    }
+    case 'a': { return (FORMAT_ITEM_A); }
+    case 'b': { return (FORMAT_ITEM_B); }
+    case 'c': { return (FORMAT_ITEM_C); }
+    case 'd': { return (FORMAT_ITEM_D); }
+    case 'e': { return (FORMAT_ITEM_E); }
+    case 'f': { return (FORMAT_ITEM_F); }
+    case 'g': { return (FORMAT_ITEM_G); }
+    case 'h': { return (FORMAT_ITEM_H); }
+    case 'i': { return (FORMAT_ITEM_I); }
+    case 'j': { return (FORMAT_ITEM_J); }
+    case 'k': { return (FORMAT_ITEM_K); }
+    case 'l': case '/': { return (FORMAT_ITEM_L); }
+    case 'm': { return (FORMAT_ITEM_M); }
+    case 'n': { return (FORMAT_ITEM_N); }
+    case 'o': { return (FORMAT_ITEM_O); }
+    case 'p': { return (FORMAT_ITEM_P); }
+    case 'q': { return (FORMAT_ITEM_Q); }
+    case 'r': { return (FORMAT_ITEM_R); }
+    case 's': { return (FORMAT_ITEM_S); }
+    case 't': { return (FORMAT_ITEM_T); }
+    case 'u': { return (FORMAT_ITEM_U); }
+    case 'v': { return (FORMAT_ITEM_V); }
+    case 'w': { return (FORMAT_ITEM_W); }
+    case 'x': { return (FORMAT_ITEM_X); }
+    case 'y': { return (FORMAT_ITEM_Y); }
+    case 'z': { return (FORMAT_ITEM_Z); }
+    case '+': { return (FORMAT_ITEM_PLUS); }
+    case '-': { return (FORMAT_ITEM_MINUS); }
+    case POINT_CHAR: { return (FORMAT_ITEM_POINT); }
+    case '%': { return (FORMAT_ITEM_ESCAPE); }
+    default: { return (0); }
   }
 }
 
@@ -1128,15 +1088,15 @@ static int get_format_item (char ch)
 #define SCAN_DIGITS(c)\
   while (IS_DIGIT (c)) {\
     (sym++)[0] = (c);\
-    (c) = next_char (module, ref_l, ref_s, A68_TRUE);\
+    (c) = next_char (ref_l, ref_s, A68_TRUE);\
   }
 
 #define SCAN_EXPONENT_PART(c)\
   (sym++)[0] = EXPONENT_CHAR;\
-  (c) = next_char (module, ref_l, ref_s, A68_TRUE);\
+  (c) = next_char (ref_l, ref_s, A68_TRUE);\
   if ((c) == '+' || (c) == '-') {\
     (sym++)[0] = (c);\
-    (c) = next_char (module, ref_l, ref_s, A68_TRUE);\
+    (c) = next_char (ref_l, ref_s, A68_TRUE);\
   }\
   SCAN_ERROR (!IS_DIGIT (c), *start_l, *start_c, ERROR_EXPONENT_DIGIT);\
   SCAN_DIGITS (c)
@@ -1150,11 +1110,11 @@ static int get_format_item (char ch)
 \return same
 **/
 
-static BOOL_T whether_exp_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T whether_exp_char (SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
 {
-  BOOL_T res = A68_FALSE;
+  BOOL_T ret = A68_FALSE;
   char exp_syms[3];
-  if (m->options.stropping == UPPER_STROPPING) {
+  if (program.options.stropping == UPPER_STROPPING) {
     exp_syms[0] = EXPONENT_CHAR;
     exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
     exp_syms[2] = NULL_CHAR;
@@ -1163,13 +1123,13 @@ static BOOL_T whether_exp_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **ref
     exp_syms[1] = ESCAPE_CHAR;
     exp_syms[2] = NULL_CHAR;
   }
-  save_state (m, *ref_l, *ref_s, *ch);
+  save_state (*ref_l, *ref_s, *ch);
   if (strchr (exp_syms, *ch) != NULL) {
-    *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-    res = (BOOL_T) (strchr ("+-0123456789", *ch) != NULL);
+    *ch = next_char (ref_l, ref_s, A68_TRUE);
+    ret = (BOOL_T) (strchr ("+-0123456789", *ch) != NULL);
   }
-  restore_state (m, ref_l, ref_s, ch);
-  return (res);
+  restore_state (ref_l, ref_s, ch);
+  return (ret);
 }
 
 /*!
@@ -1180,23 +1140,23 @@ static BOOL_T whether_exp_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **ref
 \return same
 **/
 
-static BOOL_T whether_radix_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T whether_radix_char (SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
 {
-  BOOL_T res = A68_FALSE;
-  save_state (m, *ref_l, *ref_s, *ch);
-  if (m->options.stropping == QUOTE_STROPPING) {
+  BOOL_T ret = A68_FALSE;
+  save_state (*ref_l, *ref_s, *ch);
+  if (program.options.stropping == QUOTE_STROPPING) {
     if (*ch == TO_UPPER (RADIX_CHAR)) {
-      *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-      res = (BOOL_T) (strchr ("0123456789ABCDEF", *ch) != NULL);
+      *ch = next_char (ref_l, ref_s, A68_TRUE);
+      ret = (BOOL_T) (strchr ("0123456789ABCDEF", *ch) != NULL);
     }
   } else {
     if (*ch == RADIX_CHAR) {
-      *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-      res = (BOOL_T) (strchr ("0123456789abcdef", *ch) != NULL);
+      *ch = next_char (ref_l, ref_s, A68_TRUE);
+      ret = (BOOL_T) (strchr ("0123456789abcdef", *ch) != NULL);
     }
   }
-  restore_state (m, ref_l, ref_s, ch);
-  return (res);
+  restore_state (ref_l, ref_s, ch);
+  return (ret);
 }
 
 /*!
@@ -1207,13 +1167,13 @@ static BOOL_T whether_radix_char (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **r
 \return same
 **/
 
-static BOOL_T whether_decimal_point (MODULE_T * m, SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T whether_decimal_point (SOURCE_LINE_T ** ref_l, char **ref_s, char *ch)
 {
-  BOOL_T res = A68_FALSE;
-  save_state (m, *ref_l, *ref_s, *ch);
+  BOOL_T ret = A68_FALSE;
+  save_state (*ref_l, *ref_s, *ch);
   if (*ch == POINT_CHAR) {
     char exp_syms[3];
-    if (m->options.stropping == UPPER_STROPPING) {
+    if (program.options.stropping == UPPER_STROPPING) {
       exp_syms[0] = EXPONENT_CHAR;
       exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
       exp_syms[2] = NULL_CHAR;
@@ -1222,21 +1182,20 @@ static BOOL_T whether_decimal_point (MODULE_T * m, SOURCE_LINE_T ** ref_l, char 
       exp_syms[1] = ESCAPE_CHAR;
       exp_syms[2] = NULL_CHAR;
     }
-    *ch = next_char (m, ref_l, ref_s, A68_TRUE);
+    *ch = next_char (ref_l, ref_s, A68_TRUE);
     if (strchr (exp_syms, *ch) != NULL) {
-      *ch = next_char (m, ref_l, ref_s, A68_TRUE);
-      res = (BOOL_T) (strchr ("+-0123456789", *ch) != NULL);
+      *ch = next_char (ref_l, ref_s, A68_TRUE);
+      ret = (BOOL_T) (strchr ("+-0123456789", *ch) != NULL);
     } else {
-      res = (BOOL_T) (strchr ("0123456789", *ch) != NULL);
+      ret = (BOOL_T) (strchr ("0123456789", *ch) != NULL);
     }
   }
-  restore_state (m, ref_l, ref_s, ch);
-  return (res);
+  restore_state (ref_l, ref_s, ch);
+  return (ret);
 }
 
 /*!
 \brief get next token from internal copy of source file.
-\param module module that reads source
 \param in_format are we scanning a format text
 \param ref_l source line we're scanning
 \param ref_s character (in source line) we're scanning
@@ -1245,11 +1204,11 @@ static BOOL_T whether_decimal_point (MODULE_T * m, SOURCE_LINE_T ** ref_l, char 
 \param att attribute designated to token
 **/
 
-static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T ** ref_l, char **ref_s, SOURCE_LINE_T ** start_l, char **start_c, int *att)
+static void get_next_token (BOOL_T in_format, SOURCE_LINE_T ** ref_l, char **ref_s, SOURCE_LINE_T ** start_l, char **start_c, int *att)
 {
   char c = **ref_s, *sym = scan_buf;
   sym[0] = NULL_CHAR;
-  get_good_char (module, &c, ref_l, ref_s);
+  get_good_char (&c, ref_l, ref_s);
   *start_l = *ref_l;
   *start_c = *ref_s;
   if (c == STOP_CHAR) {
@@ -1263,9 +1222,9 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
 +------------*/
   if (in_format) {
     char *format_items;
-    if (module->options.stropping == UPPER_STROPPING) {
+    if (program.options.stropping == UPPER_STROPPING) {
       format_items = "/%\\+-.abcdefghijklmnopqrstuvwxyz";
-    } else {                    /* if (module->options.stropping == QUOTE_STROPPING) */
+    } else {                    /* if (program.options.stropping == QUOTE_STROPPING) */
       format_items = "/%\\+-.ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     }
     if (a68g_strchr (format_items, c) != NULL) {
@@ -1273,7 +1232,7 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
       (sym++)[0] = c;
       sym[0] = NULL_CHAR;
       *att = get_format_item (c);
-      (void) next_char (module, ref_l, ref_s, A68_FALSE);
+      (void) next_char (ref_l, ref_s, A68_FALSE);
       return;
     }
     if (IS_DIGIT (c)) {
@@ -1288,18 +1247,18 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
 | Not in a format |
 +----------------*/
   if (IS_UPPER (c)) {
-    if (module->options.stropping == UPPER_STROPPING) {
+    if (program.options.stropping == UPPER_STROPPING) {
 /* Upper case word - bold tag. */
       while (IS_UPPER (c) || c == '_') {
         (sym++)[0] = c;
-        c = next_char (module, ref_l, ref_s, A68_FALSE);
+        c = next_char (ref_l, ref_s, A68_FALSE);
       }
       sym[0] = NULL_CHAR;
       *att = BOLD_TAG;
-    } else if (module->options.stropping == QUOTE_STROPPING) {
+    } else if (program.options.stropping == QUOTE_STROPPING) {
       while (IS_UPPER (c) || IS_DIGIT (c) || c == '_') {
         (sym++)[0] = c;
-        c = next_char (module, ref_l, ref_s, A68_TRUE);
+        c = next_char (ref_l, ref_s, A68_TRUE);
       }
       sym[0] = NULL_CHAR;
       *att = IDENTIFIER;
@@ -1307,46 +1266,46 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
   } else if (c == '\'') {
 /* Quote, uppercase word, quote - bold tag. */
     int k = 0;
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
     while (IS_UPPER (c) || IS_DIGIT (c) || c == '_') {
       (sym++)[0] = c;
       k++;
-      c = next_char (module, ref_l, ref_s, A68_TRUE);
+      c = next_char (ref_l, ref_s, A68_TRUE);
     }
     SCAN_ERROR (k == 0, *start_l, *start_c, ERROR_QUOTED_BOLD_TAG);
     sym[0] = NULL_CHAR;
     *att = BOLD_TAG;
 /* Skip terminating quote, or complain if it is not there. */
     SCAN_ERROR (c != '\'', *start_l, *start_c, ERROR_QUOTED_BOLD_TAG);
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
   } else if (IS_LOWER (c)) {
 /* Lower case word - identifier. */
     while (IS_LOWER (c) || IS_DIGIT (c) || c == '_') {
       (sym++)[0] = c;
-      c = next_char (module, ref_l, ref_s, A68_TRUE);
+      c = next_char (ref_l, ref_s, A68_TRUE);
     }
     sym[0] = NULL_CHAR;
     *att = IDENTIFIER;
   } else if (c == POINT_CHAR) {
 /* Begins with a point symbol - point, dotdot, L REAL denotation. */
-    if (whether_decimal_point (module, ref_l, ref_s, &c)) {
+    if (whether_decimal_point (ref_l, ref_s, &c)) {
       (sym++)[0] = '0';
       (sym++)[0] = POINT_CHAR;
-      c = next_char (module, ref_l, ref_s, A68_TRUE);
+      c = next_char (ref_l, ref_s, A68_TRUE);
       SCAN_DIGITS (c);
-      if (whether_exp_char (module, ref_l, ref_s, &c)) {
+      if (whether_exp_char (ref_l, ref_s, &c)) {
         SCAN_EXPONENT_PART (c);
       }
       sym[0] = NULL_CHAR;
       *att = REAL_DENOTATION;
     } else {
-      c = next_char (module, ref_l, ref_s, A68_TRUE);
+      c = next_char (ref_l, ref_s, A68_TRUE);
       if (c == POINT_CHAR) {
         (sym++)[0] = POINT_CHAR;
         (sym++)[0] = POINT_CHAR;
         sym[0] = NULL_CHAR;
         *att = DOTDOT_SYMBOL;
-        c = next_char (module, ref_l, ref_s, A68_FALSE);
+        c = next_char (ref_l, ref_s, A68_FALSE);
       } else {
         (sym++)[0] = POINT_CHAR;
         sym[0] = NULL_CHAR;
@@ -1356,9 +1315,9 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
   } else if (IS_DIGIT (c)) {
 /* Something that begins with a digit - L INT denotation, L REAL denotation. */
     SCAN_DIGITS (c);
-    if (whether_decimal_point (module, ref_l, ref_s, &c)) {
-      c = next_char (module, ref_l, ref_s, A68_TRUE);
-      if (whether_exp_char (module, ref_l, ref_s, &c)) {
+    if (whether_decimal_point (ref_l, ref_s, &c)) {
+      c = next_char (ref_l, ref_s, A68_TRUE);
+      if (whether_exp_char (ref_l, ref_s, &c)) {
         (sym++)[0] = POINT_CHAR;
         (sym++)[0] = '0';
         SCAN_EXPONENT_PART (c);
@@ -1366,26 +1325,26 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
       } else {
         (sym++)[0] = POINT_CHAR;
         SCAN_DIGITS (c);
-        if (whether_exp_char (module, ref_l, ref_s, &c)) {
+        if (whether_exp_char (ref_l, ref_s, &c)) {
           SCAN_EXPONENT_PART (c);
         }
         *att = REAL_DENOTATION;
       }
-    } else if (whether_exp_char (module, ref_l, ref_s, &c)) {
+    } else if (whether_exp_char (ref_l, ref_s, &c)) {
       SCAN_EXPONENT_PART (c);
       *att = REAL_DENOTATION;
-    } else if (whether_radix_char (module, ref_l, ref_s, &c)) {
+    } else if (whether_radix_char (ref_l, ref_s, &c)) {
       (sym++)[0] = c;
-      c = next_char (module, ref_l, ref_s, A68_TRUE);
-      if (module->options.stropping == UPPER_STROPPING) {
+      c = next_char (ref_l, ref_s, A68_TRUE);
+      if (program.options.stropping == UPPER_STROPPING) {
         while (IS_DIGIT (c) || strchr ("abcdef", c) != NULL) {
           (sym++)[0] = c;
-          c = next_char (module, ref_l, ref_s, A68_TRUE);
+          c = next_char (ref_l, ref_s, A68_TRUE);
         }
       } else {
         while (IS_DIGIT (c) || strchr ("ABCDEF", c) != NULL) {
           (sym++)[0] = c;
-          c = next_char (module, ref_l, ref_s, A68_TRUE);
+          c = next_char (ref_l, ref_s, A68_TRUE);
         }
       }
       *att = BITS_DENOTATION;
@@ -1397,14 +1356,14 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
 /* STRING denotation. */
     BOOL_T stop = A68_FALSE;
     while (!stop) {
-      c = next_char (module, ref_l, ref_s, A68_FALSE);
+      c = next_char (ref_l, ref_s, A68_FALSE);
       while (c != QUOTE_CHAR && c != STOP_CHAR) {
         SCAN_ERROR (EOL (c), *start_l, *start_c, ERROR_LONG_STRING);
         (sym++)[0] = c;
-        c = next_char (module, ref_l, ref_s, A68_FALSE);
+        c = next_char (ref_l, ref_s, A68_FALSE);
       }
       SCAN_ERROR (*ref_l == NULL, *start_l, *start_c, ERROR_UNTERMINATED_STRING);
-      c = next_char (module, ref_l, ref_s, A68_FALSE);
+      c = next_char (ref_l, ref_s, A68_FALSE);
       if (c == QUOTE_CHAR) {
         (sym++)[0] = QUOTE_CHAR;
       } else {
@@ -1416,52 +1375,52 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
   } else if (a68g_strchr ("#$()[]{},;@", c) != NULL) {
 /* Single character symbols. */
     (sym++)[0] = c;
-    (void) next_char (module, ref_l, ref_s, A68_FALSE);
+    (void) next_char (ref_l, ref_s, A68_FALSE);
     sym[0] = NULL_CHAR;
     *att = 0;
   } else if (c == '|') {
 /* Bar. */
     (sym++)[0] = c;
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
     if (c == ':') {
       (sym++)[0] = c;
-      (void) next_char (module, ref_l, ref_s, A68_FALSE);
+      (void) next_char (ref_l, ref_s, A68_FALSE);
     }
     sym[0] = NULL_CHAR;
     *att = 0;
-  } else if (c == '!' && module->options.stropping == QUOTE_STROPPING) {
+  } else if (c == '!' && program.options.stropping == QUOTE_STROPPING) {
 /* Bar, will be replaced with modern variant.
    For this reason ! is not a MONAD with quote-stropping. */
     (sym++)[0] = '|';
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
     if (c == ':') {
       (sym++)[0] = c;
-      (void) next_char (module, ref_l, ref_s, A68_FALSE);
+      (void) next_char (ref_l, ref_s, A68_FALSE);
     }
     sym[0] = NULL_CHAR;
     *att = 0;
   } else if (c == ':') {
 /* Colon, semicolon, IS, ISNT. */
     (sym++)[0] = c;
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
     if (c == '=') {
       (sym++)[0] = c;
-      if ((c = next_char (module, ref_l, ref_s, A68_FALSE)) == ':') {
+      if ((c = next_char (ref_l, ref_s, A68_FALSE)) == ':') {
         (sym++)[0] = c;
-        c = next_char (module, ref_l, ref_s, A68_FALSE);
+        c = next_char (ref_l, ref_s, A68_FALSE);
       }
     } else if (c == '/') {
       (sym++)[0] = c;
-      if ((c = next_char (module, ref_l, ref_s, A68_FALSE)) == '=') {
+      if ((c = next_char (ref_l, ref_s, A68_FALSE)) == '=') {
         (sym++)[0] = c;
-        if ((c = next_char (module, ref_l, ref_s, A68_FALSE)) == ':') {
+        if ((c = next_char (ref_l, ref_s, A68_FALSE)) == ':') {
           (sym++)[0] = c;
-          c = next_char (module, ref_l, ref_s, A68_FALSE);
+          c = next_char (ref_l, ref_s, A68_FALSE);
         }
       }
     } else if (c == ':') {
       (sym++)[0] = c;
-      if ((c = next_char (module, ref_l, ref_s, A68_FALSE)) == '=') {
+      if ((c = next_char (ref_l, ref_s, A68_FALSE)) == '=') {
         (sym++)[0] = c;
       }
     }
@@ -1471,27 +1430,27 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
 /* Operator starting with "=". */
     char *scanned = sym;
     (sym++)[0] = c;
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
     if (a68g_strchr (NOMADS, c) != NULL) {
       (sym++)[0] = c;
-      c = next_char (module, ref_l, ref_s, A68_FALSE);
+      c = next_char (ref_l, ref_s, A68_FALSE);
     }
     if (c == '=') {
       (sym++)[0] = c;
-      if (next_char (module, ref_l, ref_s, A68_FALSE) == ':') {
+      if (next_char (ref_l, ref_s, A68_FALSE) == ':') {
         (sym++)[0] = ':';
-        c = next_char (module, ref_l, ref_s, A68_FALSE);
+        c = next_char (ref_l, ref_s, A68_FALSE);
         if (strlen (sym) < 4 && c == '=') {
           (sym++)[0] = '=';
-          (void) next_char (module, ref_l, ref_s, A68_FALSE);
+          (void) next_char (ref_l, ref_s, A68_FALSE);
         }
       }
     } else if (c == ':') {
       (sym++)[0] = c;
       sym[0] = NULL_CHAR;
-      if (next_char (module, ref_l, ref_s, A68_FALSE) == '=') {
+      if (next_char (ref_l, ref_s, A68_FALSE) == '=') {
         (sym++)[0] = '=';
-        (void) next_char (module, ref_l, ref_s, A68_FALSE);
+        (void) next_char (ref_l, ref_s, A68_FALSE);
       } else {
         SCAN_ERROR (!(strcmp (scanned, "=:") == 0 || strcmp (scanned, "==:") == 0), *start_l, *start_c, ERROR_INVALID_OPERATOR_TAG);
       }
@@ -1506,28 +1465,28 @@ static void get_next_token (MODULE_T * module, BOOL_T in_format, SOURCE_LINE_T *
 /* Operator. */
     char *scanned = sym;
     (sym++)[0] = c;
-    c = next_char (module, ref_l, ref_s, A68_FALSE);
+    c = next_char (ref_l, ref_s, A68_FALSE);
     if (a68g_strchr (NOMADS, c) != NULL) {
       (sym++)[0] = c;
-      c = next_char (module, ref_l, ref_s, A68_FALSE);
+      c = next_char (ref_l, ref_s, A68_FALSE);
     }
     if (c == '=') {
       (sym++)[0] = c;
-      if (next_char (module, ref_l, ref_s, A68_FALSE) == ':') {
+      if (next_char (ref_l, ref_s, A68_FALSE) == ':') {
         (sym++)[0] = ':';
-        c = next_char (module, ref_l, ref_s, A68_FALSE);
+        c = next_char (ref_l, ref_s, A68_FALSE);
         if (strlen (scanned) < 4 && c == '=') {
           (sym++)[0] = '=';
-          (void) next_char (module, ref_l, ref_s, A68_FALSE);
+          (void) next_char (ref_l, ref_s, A68_FALSE);
         }
       }
     } else if (c == ':') {
       (sym++)[0] = c;
       sym[0] = NULL_CHAR;
-      if (next_char (module, ref_l, ref_s, A68_FALSE) == '=') {
+      if (next_char (ref_l, ref_s, A68_FALSE) == '=') {
         (sym++)[0] = '=';
         sym[0] = NULL_CHAR;
-        (void) next_char (module, ref_l, ref_s, A68_FALSE);
+        (void) next_char (ref_l, ref_s, A68_FALSE);
       } else {
         SCAN_ERROR (strcmp (&(scanned[1]), "=:") != 0, *start_l, *start_c, ERROR_INVALID_OPERATOR_TAG);
       }
@@ -1613,7 +1572,6 @@ static void make_lower_case (char *p)
 
 /*!
 \brief construct a linear list of tokens
-\param module module that reads source
 \param root node where to insert new symbol
 \param level current recursive descent depth
 \param in_format whether we scan a format
@@ -1623,11 +1581,11 @@ static void make_lower_case (char *p)
 \param start_c character where symbol starts
 **/
 
-static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_T in_format, SOURCE_LINE_T ** l, char **s, SOURCE_LINE_T ** start_l, char **start_c)
+static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, SOURCE_LINE_T ** l, char **s, SOURCE_LINE_T ** start_l, char **start_c)
 {
   while (l != NULL && !stop_scanner) {
     int att = 0;
-    get_next_token (module, in_format, l, s, start_l, start_c, &att);
+    get_next_token (in_format, l, s, start_l, start_c, &att);
     if (scan_buf[0] == STOP_CHAR) {
       stop_scanner = A68_TRUE;
     } else if (strlen (scan_buf) > 0 || att == ROW_CHAR_DENOTATION || att == LITERAL) {
@@ -1666,13 +1624,13 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
           c = kw->text;
 /* Handle pragments. */
           if (att == STYLE_II_COMMENT_SYMBOL || att == STYLE_I_COMMENT_SYMBOL || att == BOLD_COMMENT_SYMBOL) {
-            pragment (module, ATTRIBUTE (kw), l, s);
+            pragment (ATTRIBUTE (kw), l, s);
             make_node = A68_FALSE;
           } else if (att == STYLE_I_PRAGMAT_SYMBOL || att == BOLD_PRAGMAT_SYMBOL) {
-            pragment (module, ATTRIBUTE (kw), l, s);
+            pragment (ATTRIBUTE (kw), l, s);
             if (!stop_scanner) {
-              isolate_options (module, scan_buf, *start_l);
-              (void) set_options (module, module->options.list, A68_FALSE);
+              isolate_options (scan_buf, *start_l);
+              (void) set_options (program.options.list, A68_FALSE);
               make_node = A68_FALSE;
             }
           }
@@ -1704,14 +1662,14 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
             break;
           }
         }
-        STATUS (q) = module->options.nodemask;
+        STATUS (q) = program.options.nodemask;
         LINE (q) = *start_l;
         INFO (q)->char_in_line = *start_c;
         PRIO (INFO (q)) = 0;
         INFO (q)->PROCEDURE_LEVEL = 0;
         ATTRIBUTE (q) = att;
         SYMBOL (q) = c;
-        if (module->options.reductions) {
+        if (program.options.reductions) {
           WRITELN (STDOUT_FILENO, "\"");
           WRITE (STDOUT_FILENO, c);
           WRITE (STDOUT_FILENO, "\"");
@@ -1719,14 +1677,13 @@ static void tokenise_source (MODULE_T * module, NODE_T ** root, int level, BOOL_
         PREVIOUS (q) = *root;
         SUB (q) = NEXT (q) = NULL;
         SYMBOL_TABLE (q) = NULL;
-        MODULE (INFO (q)) = module;
         MOID (q) = NULL;
         TAX (q) = NULL;
         if (*root != NULL) {
           NEXT (*root) = q;
         }
-        if (module->top_node == NULL) {
-          module->top_node = q;
+        if (program.top_node == NULL) {
+          program.top_node = q;
         }
         *root = q;
         if (trailing != NULL) {
@@ -1740,27 +1697,27 @@ to know when it scans a format text and when not.
       if (in_format && att == FORMAT_DELIMITER_SYMBOL) {
         return;
       } else if (!in_format && att == FORMAT_DELIMITER_SYMBOL) {
-        tokenise_source (module, root, level + 1, A68_TRUE, l, s, start_l, start_c);
+        tokenise_source (root, level + 1, A68_TRUE, l, s, start_l, start_c);
       } else if (in_format && open_embedded_clause (att)) {
         NODE_T *z = PREVIOUS (*root);
         if (z != NULL && (WHETHER (z, FORMAT_ITEM_N) || WHETHER (z, FORMAT_ITEM_G) || WHETHER (z, FORMAT_ITEM_H) || WHETHER (z, FORMAT_ITEM_F))) {
-          tokenise_source (module, root, level, A68_FALSE, l, s, start_l, start_c);
+          tokenise_source (root, level, A68_FALSE, l, s, start_l, start_c);
         } else if (att == OPEN_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
-        } else if (module->options.brackets && att == SUB_SYMBOL) {
+        } else if (program.options.brackets && att == SUB_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
-        } else if (module->options.brackets && att == ACCO_SYMBOL) {
+        } else if (program.options.brackets && att == ACCO_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
         }
       } else if (!in_format && level > 0 && open_embedded_clause (att)) {
-        tokenise_source (module, root, level + 1, A68_FALSE, l, s, start_l, start_c);
+        tokenise_source (root, level + 1, A68_FALSE, l, s, start_l, start_c);
       } else if (!in_format && level > 0 && close_embedded_clause (att)) {
         return;
       } else if (in_format && att == CLOSE_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
-      } else if (module->options.brackets && in_format && att == BUS_SYMBOL) {
+      } else if (program.options.brackets && in_format && att == BUS_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
-      } else if (module->options.brackets && in_format && att == OCCA_SYMBOL) {
+      } else if (program.options.brackets && in_format && att == OCCA_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
       }
     }
@@ -1769,36 +1726,42 @@ to know when it scans a format text and when not.
 
 /*!
 \brief tokenise source file, build initial syntax tree
-\param module module that reads source
 \return whether tokenising ended satisfactorily
 **/
 
-BOOL_T lexical_analyzer (MODULE_T * module)
+BOOL_T lexical_analyser (void)
 {
   SOURCE_LINE_T *l, *start_l = NULL;
   char *s = NULL, *start_c = NULL;
   NODE_T *root = NULL;
   scan_buf = NULL;
-  max_scan_buf_length = source_file_size = get_source_size (module);
+  max_scan_buf_length = source_file_size = get_source_size ();
 /* Errors in file? */
   if (max_scan_buf_length == 0) {
     return (A68_FALSE);
   }
-  max_scan_buf_length += (int) strlen (bold_prelude_start) + (int) strlen (bold_postlude);
-  max_scan_buf_length += (int) strlen (quote_prelude_start) + (int) strlen (quote_postlude);
+  if (program.options.run_script) {
+    scan_buf = (char *) get_temp_heap_space ((unsigned) (8 + max_scan_buf_length));
+    if (!read_script_file ()) {
+      return (A68_FALSE);
+    }
+  } else {
+    max_scan_buf_length += (int) strlen (bold_prelude_start) + (int) strlen (bold_postlude);
+    max_scan_buf_length += (int) strlen (quote_prelude_start) + (int) strlen (quote_postlude);
 /* Allocate a scan buffer with 8 bytes extra space. */
-  scan_buf = (char *) get_temp_heap_space ((unsigned) (8 + max_scan_buf_length));
+    scan_buf = (char *) get_temp_heap_space ((unsigned) (8 + max_scan_buf_length));
 /* Errors in file? */
-  if (!read_source_file (module)) {
-    return (A68_FALSE);
+    if (!read_source_file ()) {
+      return (A68_FALSE);
+    }
   }
 /* Start tokenising. */
   read_error = A68_FALSE;
   stop_scanner = A68_FALSE;
-  if ((l = module->top_line) != NULL) {
+  if ((l = program.top_line) != NULL) {
     s = l->string;
   }
-  tokenise_source (module, &root, 0, A68_FALSE, &l, &s, &start_l, &start_c);
+  tokenise_source (&root, 0, A68_FALSE, &l, &s, &start_l, &start_c);
   return (A68_TRUE);
 }
 
@@ -1828,10 +1791,10 @@ static BOOL_T whether_refinement_terminator (NODE_T * p)
 \param z module that reads source
 **/
 
-void get_refinements (MODULE_T * z)
+void get_refinements (void)
 {
-  NODE_T *p = z->top_node;
-  z->top_refinement = NULL;
+  NODE_T *p = program.top_node;
+  program.top_refinement = NULL;
 /* First look where the prelude ends. */
   while (p != NULL && IN_PRELUDE (p)) {
     FORWARD (p);
@@ -1878,7 +1841,7 @@ void get_refinements (MODULE_T * z)
       FORWARD (p);
     }
 /* Do we already have one by this name. */
-    x = z->top_refinement;
+    x = program.top_refinement;
     exists = A68_FALSE;
     while (x != NULL && !exists) {
       if (x->name == new_one->name) {
@@ -1889,8 +1852,8 @@ void get_refinements (MODULE_T * z)
     }
 /* Straight insertion in chain. */
     if (!exists) {
-      NEXT (new_one) = z->top_refinement;
-      z->top_refinement = new_one;
+      NEXT (new_one) = program.top_refinement;
+      program.top_refinement = new_one;
     }
   }
   if (p != NULL && !IN_PRELUDE (p)) {
@@ -1903,37 +1866,37 @@ void get_refinements (MODULE_T * z)
 \param z module that reads source
 **/
 
-void put_refinements (MODULE_T * z)
+void put_refinements (void)
 {
   REFINEMENT_T *x;
   NODE_T *p, *point;
 /* If there are no refinements, there's little to do. */
-  if (z->top_refinement == NULL) {
+  if (program.top_refinement == NULL) {
     return;
   }
 /* Initialisation. */
-  x = z->top_refinement;
+  x = program.top_refinement;
   while (x != NULL) {
     x->applications = 0;
     FORWARD (x);
   }
 /* Before we introduce infinite loops, find where closing-prelude starts. */
-  p = z->top_node;
+  p = program.top_node;
   while (p != NULL && IN_PRELUDE (p)) {
     FORWARD (p);
   }
   while (p != NULL && !IN_PRELUDE (p)) {
     FORWARD (p);
   }
-  ABNORMAL_END (p == NULL, ERROR_INTERNAL_CONSISTENCY, NULL);
+  ABEND (p == NULL, ERROR_INTERNAL_CONSISTENCY, NULL);
   point = p;
 /* We need to substitute until the first point. */
-  p = z->top_node;
+  p = program.top_node;
   while (p != NULL && ATTRIBUTE (p) != POINT_SYMBOL) {
     if (WHETHER (p, IDENTIFIER)) {
 /* See if we can find its definition. */
       REFINEMENT_T *y = NULL;
-      x = z->top_refinement;
+      x = program.top_refinement;
       while (x != NULL && y == NULL) {
         if (x->name == SYMBOL (p)) {
           y = x;
@@ -1983,8 +1946,8 @@ void put_refinements (MODULE_T * z)
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX_EXPECTED, POINT_SYMBOL, NULL);
   }
 /* Has the programmer done it well? */
-  if (a68_prog.error_count == 0) {
-    x = z->top_refinement;
+  if (program.error_count == 0) {
+    x = program.top_refinement;
     while (x != NULL) {
       if (x->applications == 0) {
         diagnostic_node (A68_SYNTAX_ERROR, x->node_defined, ERROR_REFINEMENT_NOT_APPLIED, NULL);
