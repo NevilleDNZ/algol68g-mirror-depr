@@ -1647,7 +1647,9 @@ static void stand_transput (void)
   a68_idf (A68_STD, "reidfpossible", MODE (PROC_REF_FILE_BOOL), genie_reidf_possible);
   a68_idf (A68_EXT, "drawpossible", MODE (PROC_REF_FILE_BOOL), genie_draw_possible);
   a68_idf (A68_STD, "compressible", MODE (PROC_REF_FILE_BOOL), genie_compressible);
+  a68_idf (A68_EXT, "endoffile", MODE (PROC_REF_FILE_BOOL), genie_eof);
   a68_idf (A68_EXT, "eof", MODE (PROC_REF_FILE_BOOL), genie_eof);
+  a68_idf (A68_EXT, "endofline", MODE (PROC_REF_FILE_BOOL), genie_eoln);
   a68_idf (A68_EXT, "eoln", MODE (PROC_REF_FILE_BOOL), genie_eoln);
 /* Handling of files. */
   m = a68_proc (MODE (INT), MODE (REF_FILE), MODE (STRING), MODE (CHANNEL), NULL);

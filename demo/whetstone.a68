@@ -1,0 +1,165 @@
+CO 
+
+Synthetic benchmark following Curnow & Wichmann.
+Follows the Algol 60 code.
+
+Some A60 results (MWHIPS):
+
+IBM 3090:  	Algol 60 Compiler	5.0
+Sun 3/60: 	Nase Algol Interpreter	0.01	68020/68881 20 MHz
+		Nase Algol2C		0.4
+Sparc 2: 	Nase Algol Interpreter	0.06 	40 MHz
+		Nase Algol2C		4.2
+
+`Nase' indicates NASE A60.
+
+Some A68 results (MWHIPS):
+
+Pentium III 1.2 GHZ A68G		18	Interpreter only
+Pentium IV  3 GHz   A68G		116	Unit compiler
+
+CO
+
+[1 : 4] REAL e1;
+REAL t, t1, t2, cpu1, time, x1, x2, x3, x4, x, y, z;
+INT j, k, l, i, ii;
+    
+PROC pa = (REF [] REAL e) VOID:
+     TO 6
+     DO e[1] := (e[1] + e[2] + e[3] - e[4]) * t;
+        e[2] := (e[1] + e[2] - e[3] + e[4]) * t;
+        e[3] := (e[1] - e[2] + e[3] + e[4]) * t;
+        e[4] := (- e[1] + e[2] + e[3] + e[4]) / t2
+     OD;
+
+PROC po = VOID:
+     BEGIN e1[j] := e1[k]; 
+           e1[k] := e1[l]; 
+           e1[l] := e1[j]    
+     END;
+
+PROC p3 = (REF REAL x, y, z) VOID:
+     BEGIN x := t * (x + y); 
+           y := t * (x + y); 
+           z := (x + y) / t2 
+     END;
+  
+INT max = 5;
+
+PROC test = VOID:
+TO max
+DO # Initialise constants #
+  
+   t := 0.499975; 
+   t1 := 0.50025; 
+   t2 := 2.0;
+  
+   # If i = 10 we have 1e6 whetstone instructions per loop #
+
+   i := 100;
+   ii := i; 
+   INT n2 = 12 * i, n3 = 14 * i, n4 = 345 * i, 
+       n6 = 210 * i, n7 = 32 * i, n8 = 899 * i, n9 = 616 * i,
+       n11 = 93 * i;
+
+   # MODULE 1. Simple identifiers #
+
+   x1 := 1.0; 
+   x2 := x3 := x4 := -1.0;
+  
+   # MODULE 2. Array elements #
+
+   e1[1] := 1.0; 
+   e1[2] := e1[3] := e1[4] := -1.0;
+
+   TO n2
+   DO e1[1] := (e1[1] + e1[2] + e1[3] - e1[4]) * t;
+      e1[2] := (e1[1] + e1[2] - e1[3] + e1[4]) * t;
+      e1[3] := (e1[1] - e1[2] + e1[3] + e1[4]) * t;
+      e1[4] := (- e1[1] + e1[2] + e1[3] + e1[4]) * t
+   OD;
+    
+   # MODULE 3. Array parameters #
+
+   TO n3 
+   DO pa(e1)
+   OD;
+
+   # MODULE 4. Conditional jumps #
+  
+   j := 1;
+   TO n4 
+   DO IF j = 1
+      THEN j := 2
+      ELSE j := 3
+      FI;
+
+      IF j > 2
+      THEN j := 0
+      ELSE j := 1
+      FI;
+
+      IF j < 1
+      THEN j := 1
+      ELSE j := 0
+      FI
+   OD;
+        
+   # MODULE 5. Omitted #
+   # MODULE 6. Integers #
+     
+   j := 1; k := 2; l := 3;
+   TO n6
+   DO j := j * (k - j) * (l - k);
+      k := l * k - (l - j) * k;
+      l := (l - k) * (k + j);
+      e1[l - 1] := j + k + l;
+      e1[k - 1] := j * k * l
+   OD;
+
+   # MODULE 7. Trigonometry #
+
+   x := y := 0.5;
+
+   TO n7
+   DO x := t * arctan(t2 * sin(x) * cos(x) / (cos (x + y) + cos(x - y) - 1.0));
+      y := t * arctan(t2 * sin(y) * cos(y) / (cos (x + y) + cos(x - y) - 1.0))
+   OD;
+
+   # MODULE 8. Calls #
+    
+   x := y := z := 1.0;
+
+   TO n8 
+   DO p3(x, y, z)
+   OD;
+     
+   # MODULE 9. Array references #
+
+   j := 1; 
+   k := 2; 
+   l := 3;
+
+   e1[1] := 1.0; 
+   e1[2] := 2.0; 
+   e1[3] := 3.0;
+
+   TO n9 
+   DO po
+   OD;
+    
+   # MODULE 11. Standard functions #
+
+   x := 0.75;
+
+   TO n11 
+   DO x := sqrt(exp(ln(x) / t1))
+   OD
+OD;
+
+cpu1 := seconds;
+test;
+cpu1 := seconds;
+test;
+time := (seconds - cpu1) / max;
+printf (($lzzdx, " samples ", xz-d.2dx, " seconds ", xzz-d.dx, "MWhets", xzzdx, "collections"$, max, time, 1 / (time / (ii / 10)), collections))

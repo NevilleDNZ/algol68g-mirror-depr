@@ -1,3 +1,6 @@
+Version 2.0.1
+* Fixes minor discrepancies between source code and documentation.
+
 Version 2.0.0
 * Adds compiler for units to speed execution
 * Adds options --optimise and --no-optimise

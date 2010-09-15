@@ -1,5 +1,5 @@
-ALGOL68G - Algol 68 Genie (Version 2.0.0)
------------------------------------------
+ALGOL68G - Algol 68 Genie
+-------------------------
 
 Algol68G is a nearly fully featured implementation of Algol 68 as defined by 
 the Revised Report.
