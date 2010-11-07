@@ -1,5 +1,13 @@
+Version 2.0.2, October 2010
+* Adds option --script
+* Adds Algol 68 comment syntax for shell interpreter call
+* Updates documentation
+* Regression fixes:
+1. A buffering problem could occur when using routines set or backspace
+2. Some minor errors in the compiler
+
 Version 2.0.1
-* Fixes minor discrepancies between source code and documentation.
+* Fixes minor discrepancies between source code and documentation
 
 Version 2.0.0
 * Adds compiler for units to speed execution

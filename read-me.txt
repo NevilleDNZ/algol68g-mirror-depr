@@ -15,3 +15,22 @@ does not permit this software to be redistributed in proprietary programs.
 
 Author of Algol68G is Marcel van der Veer <algol68g@xs4all.nl>.
 Web pages for Algol68G are at <http://www.xs4all.nl/~jmvdveer>.
+
+
+Installation
+------------
+
+Please refer to the manual for detailed instructions.
+In brief, for the reasonably experienced Unix/Linux user:
+
+tar -xzf algol68g-VERSION.tgz
+cd algol68g-VERSION
+./configure -O --threads
+make
+
+and if you want to install when building as root, type:
+
+make install
+
+Have fun!
+

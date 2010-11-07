@@ -20,9 +20,9 @@
 #
 A68G_NAME="a68g"
 MAKEFILE=makefile
-VERSION_NUMBER="2.0.1"
+VERSION_NUMBER="2.0.2"
 REVISION="Version $VERSION_NUMBER"
-MONTH="September"
+MONTH="November"
 YEAR="2010"
 DATE=`date +"%e %B %Y %H:%M"`
 TIME_STAMP="$MONTH $YEAR"
@@ -34,19 +34,20 @@ libgsl=
 libpostgresql=
 compiler=
 # Where does the system store things
-PWD=`pwd`
-SYS_INC=/usr/include
-SYS_LIB=/usr/lib
-SYS_BIN=/usr/bin
-SYS_LOC=/usr/local
-LOC_INC=$SYS_LOC/include
-LOC_LIB=$SYS_LOC/lib
+CURDIR=`pwd`
+SYS_LIB=/lib
+USR_INC=/usr/include
+USR_LIB=/usr/lib
+USR_BIN=/usr/bin
+USR_LOC=/usr/local
+LOC_INC=$USR_LOC/include
+LOC_LIB=$USR_LOC/lib
 A68G_CHECK="./regression-$VERSION_NUMBER"
 A68G_DOC="./doc"
 A68G_HTML_TEMPLATES="$A68G_DOC/html"
 A68G_LATEX_TEMPLATES="$A68G_DOC/latex"
 A68G_SOURCE="./source"
-SQL_DIR=$SYS_LOC/pgsql
+SQL_DIR=$USR_LOC/pgsql
 UPLOAD_DIR="upload-$VERSION_NUMBER"
 BUILD_FILE="$A68G_SOURCE/$MAKEFILE"
 CONFIG_FILE="$A68G_SOURCE/config.h"
@@ -158,7 +159,7 @@ do
 	-O3)
 		opt=`echo $opt "-O3"` ;;
 	-O4 | -O5 | -O6 | -O7 | -O8 | -O9)
-		opt=`echo $opt "-O2 -march=prescott"` ;;
+		opt=`echo $opt "-O3 -march=prescott"` ;;
 	-threads | --threads)
 		threads=;;
 	-upload | --upload)
@@ -225,27 +226,17 @@ then
 	then
 		rm -fr $UPLOAD_DIR
 	fi
-	./configure -dist
 	./configure -html
 	./configure -ps
 	./configure -pdf
 	mkdir $UPLOAD_DIR
 	cd $UPLOAD_DIR
-	mv ../../$PACKAGE.devel.tgz .
 	mv ../index.lst .
 	cp ../configure .
 	cp ../doc/latex/a68gdoc.pdf ./a68g-doc.pdf
 	cp ../doc/algol.html .
-	cp ../doc/html/a68g.png .
 	cp ../doc/html/*.png .
 	cp ../a68g.pdf .
-	mkdir a68g-report
-	cd a68g-report
-	cp ../../doc/a68g-report.html .
-	cp ../../doc/html/a68g.png .
-	cd ..
-	tar -czf a68g-report.tgz a68g-report
-	tar -cjf a68g-report.bz2 a68g-report
 	mkdir algol68g-$VERSION_NUMBER
 	cd algol68g-$VERSION_NUMBER
 	cp ../../read-me.txt .
@@ -263,22 +254,7 @@ then
 	cp ../../doc/man1/a68g.1 doc/man1/
 	mkdir regression-$VERSION_NUMBER
 	cd ..
-	tar -cf algol68g-$VERSION_NUMBER.tar algol68g-$VERSION_NUMBER
-	xz algol68g-$VERSION_NUMBER.tar
-	mv algol68g-$VERSION_NUMBER.tar.xz algol68g-$VERSION_NUMBER.txz
 	tar -czf algol68g-$VERSION_NUMBER.tgz algol68g-$VERSION_NUMBER
-	tar -cjf algol68g-$VERSION_NUMBER.bz2 algol68g-$VERSION_NUMBER
-	mkdir algol68g-$VERSION_NUMBER.win32
-	cd algol68g-$VERSION_NUMBER.win32
-	cp ../../read-me.txt .
-	cp ../../copying.txt .
-	cp ../../changes.txt .
-	cp ../../win32/a68g-$VERSION_NUMBER.exe .
-	mkdir demo
-	cp ../../demo/*.a68 demo/
-	cd ..
-	zip -r algol68g-$VERSION_NUMBER.win32.zip algol68g-$VERSION_NUMBER.win32
-	cd ..
 	echo "$0 done"
 	exit
 fi
@@ -298,7 +274,6 @@ fi
 #
 if [ -z $html_opt ]
 then
-	pushd .
 	cd $A68G_HTML_TEMPLATES
 	for f in `echo *.html`
 	do
@@ -306,7 +281,7 @@ then
 		sed "s/REVISION/$REVISION/g" < $f | sed "s/VERSION_NUMBER/$VERSION_NUMBER/" | sed "s/TIME_STAMP/$TIME_STAMP/g" | sed "s/PACKAGE/$PACKAGE/g" | sed "s/LINK_COLOUR/$LINK_COLOUR/g" | sed "s/BACKGROUND_COLOUR/$BACKGROUND_COLOUR/g" | sed "s/OS_VERSION/`uname -mrs`/g" | sed "s/GCC_VERSION/`gcc -dumpversion | sed '2,$d'`/g" > ../$f
 	done
 	echo "generated HTML documentation"
-	popd
+	cd $CURDIR
 	man doc/man1/a68g.1 -t > a68g.ps
 	ps2pdf a68g.ps a68g.pdf
 	rm a68g.ps
@@ -319,7 +294,6 @@ fi
 #
 if [ -z $tex_opt ]
 then
-	pushd .
 	cd $A68G_LATEX_TEMPLATES
 	echo "\Chapter{Algol 68 Genie manual page}{manpage}">a68g.man.tex
 	echo "\markboth{\sc {Algol 68 Genie manual page}}{\sc {Appendices}}">>a68g.man.tex
@@ -336,12 +310,13 @@ then
 		echo $f
 		sed "s/A68G_REVISION/$REVISION/g" <$f | sed "s/VERSION_NUMBER/$VERSION_NUMBER/" | sed "s/TIME_STAMP/$TIME_STAMP/g" | sed "s/PACKAGE/$PACKAGE/g" | sed "s/OS_VERSION/`uname -mrs`/g" | sed "s/GCC_VERSION/`gcc -dumpversion | sed '2,$d'`/g" > ../$f
 	done
-	popd
-	pushd .
+	cd $CURDIR
+	pwd
+	echo $CURDIR
 	cd $A68G_LATEX_TEMPLATES
 	make
 	rm ./source/*.tex
-	popd
+	cd $CURDIR
 	echo "generated postscript documentation"
 	echo "$0 done"
 	exit
@@ -351,10 +326,9 @@ fi
 #
 if [ -z $pdf_opt ]
 then
-	pushd .
 	cd $A68G_LATEX_TEMPLATES
 	make pdf0
-	popd
+	cd $CURDIR
 	echo "generated manual"
 	echo "$0 done"
 	exit
@@ -503,15 +477,15 @@ fi
 #
 if [ -z $cc ]
 then
-	printf "checking for C compiler in $SYS_BIN ... "
-	if [ -f $SYS_BIN/gcc ]
+	printf "checking for C compiler in $USR_BIN ... "
+	if [ -f $USR_BIN/gcc ]
 	then
 		cc=gcc
 		if [ -n "$OPENBSD" ]
 		then
 			opt=`echo $opt "-pthread"`
 		fi
-	elif [ -f $SYS_BIN/cc ]
+	elif [ -f $USR_BIN/cc ]
 	then
 		cc=cc
 	else
@@ -540,11 +514,11 @@ fi
 if [ -z $INCLUDE_DIR ]
 then
 	printf "include directory ... "
-	if [ -d $SYS_LOC/include ]
+	if [ -d $USR_LOC/include ]
 	then
-		INCLUDE_DIR=$SYS_LOC/include
+		INCLUDE_DIR=$USR_LOC/include
 	else
-		INCLUDE_DIR=$SYS_INC
+		INCLUDE_DIR=$USR_INC
 	fi
 	echo $INCLUDE_DIR
 fi
@@ -554,11 +528,11 @@ fi
 if [ -z $LIBRARY_DIR ]
 then
 	printf "library directory ... "
-	if [ -d $SYS_LOC/lib ]
+	if [ -d $USR_LOC/lib ]
 	then
-		LIBRARY_DIR=$SYS_LOC/lib
+		LIBRARY_DIR=$USR_LOC/lib
 	else
-		LIBRARY_DIR=$SYS_LIB
+		LIBRARY_DIR=$USR_LIB
 	fi
 	echo $LIBRARY_DIR
 fi
@@ -568,15 +542,15 @@ fi
 if [ -z $INSTALL_BIN ]
 then
 	printf "target binary directory ... "
-	if [ -d $SYS_LOC/bin ]
+	if [ -d $USR_LOC/bin ]
 	then
-		INSTALL_BIN=$SYS_LOC/bin
+		INSTALL_BIN=$USR_LOC/bin
 	elif [ -d /usr/share/bin ]
 	then
 		INSTALL_BIN=/usr/share/bin
-	elif [ -w $SYS_BIN ]
+	elif [ -w $USR_BIN ]
 	then
-		INSTALL_BIN=$SYS_BIN
+		INSTALL_BIN=$USR_BIN
 	elif [ 	-d ~/bin ]
 	then
 		INSTALL_BIN=~/bin
@@ -592,7 +566,7 @@ fi
 #
 if ! [ -w $INSTALL_BIN ]
 then
-	warn1=`echo "warning: $USERID cannot write to $INSTALL_BIN, will write to $PWD"`
+	warn1=`echo "warning: $USERID cannot write to $INSTALL_BIN, will write to $CURDIR"`
 	if [ -f $INSTALL_BIN/a68g ]
 	then
 		warn2=`echo "warning: $INSTALL_BIN/a68g already exists which may cause confusion"`
@@ -602,7 +576,7 @@ then
 fi
 if ! [ -w $LOC_INC ]
 then
-	warn5=`echo "warning: $USERID cannot write to $LOC_INC, will write to $PWD"`
+	warn5=`echo "warning: $USERID cannot write to $LOC_INC, will write to $CURDIR"`
 	if [ -f $LOC_INC/a68g.h ]
 	then
 		warn6=`echo "warning: $LOC_INC/a68g.h already exists which may cause confusion"`
@@ -616,9 +590,9 @@ fi
 if [ -z $INSTALL_MAN ]
 then
 	printf "target man directory ... "
-	if [ -d $SYS_LOC/man/man1 ]
+	if [ -d $USR_LOC/man/man1 ]
 	then
-		INSTALL_MAN="$SYS_LOC/man/man1"
+		INSTALL_MAN="$USR_LOC/man/man1"
 	elif [ -d /usr/share/man/man1 ]
 	then
 		INSTALL_MAN="/usr/share/man/man1"
@@ -640,7 +614,7 @@ fi
 #
 if ! [ -w $INSTALL_MAN ]
 then
-	warn3=`echo "warning: $USERID cannot write to $INSTALL_MAN, will write to $PWD"`
+	warn3=`echo "warning: $USERID cannot write to $INSTALL_MAN, will write to $CURDIR"`
 	warnings=yes
 	INSTALL_MAN=`pwd`
 fi
@@ -651,7 +625,7 @@ err=no
 for inc in assert.h ctype.h errno.h fcntl.h limits.h math.h setjmp.h signal.h stdio.h stdlib.h string.h sys/resource.h sys/stat.h sys/time.h sys/times.h sys/types.h sys/wait.h time.h unistd.h
 do
 	printf "checking for $inc ... "
-	if ! [ -f $SYS_INC/$inc ]
+	if ! [ -f $USR_INC/$inc ]
 	then
 		echo "no"
 		err=yes
@@ -683,7 +657,7 @@ cat >>$MAKEFILE <<\_MAKE_EOF
 all a68g::
 	@cd $(A68G_SOURCE); $(MAKE) CPP_FLAGS="$(CPP_FLAGS)" CFLAGS="$(CFLAGS)" LD_FLAGS="$(LD_FLAGS)"; cd ..
 	@mv $(A68G_SOURCE)/a68g .
-	@cat $(A68G_SOURCE)/config.h $(A68G_SOURCE)/algol68g.h $(A68G_SOURCE)/diagnostics.h $(A68G_SOURCE)/environ.h $(A68G_SOURCE)/genie.h $(A68G_SOURCE)/gsl.h $(A68G_SOURCE)/inline.h $(A68G_SOURCE)/mp.h $(A68G_SOURCE)/transput.h > a68g.h
+	@cat $(A68G_SOURCE)/config.h $(A68G_SOURCE)/algol68g.h $(A68G_SOURCE)/environ.h $(A68G_SOURCE)/interpreter.h $(A68G_SOURCE)/gsl.h $(A68G_SOURCE)/mp.h > a68g.h
 install:	all
 	@install -m 755 ./a68g $(INSTALL_BIN)
 	@install -m 644 ./a68g.h $(COMPILER_INC)
@@ -716,7 +690,7 @@ echo "SHELL=/bin/sh" 1>>$BUILD_FILE
 echo "INSTALL_BIN=$INSTALL_BIN" 1>>$BUILD_FILE
 echo "LIBRARY_DIR=$LIBRARY_DIR" 1>>$BUILD_FILE
 echo "INCLUDE_DIR=$INCLUDE_DIR" 1>>$BUILD_FILE
-echo "SYS_INC=$SYS_INC" 1>>$BUILD_FILE
+echo "USR_INC=$USR_INC" 1>>$BUILD_FILE
 echo "CC=$cc" 1>>$BUILD_FILE
 #
 # Find POSIX threads
@@ -724,9 +698,9 @@ echo "CC=$cc" 1>>$BUILD_FILE
 if [ -z $threads ]
 then
 	printf "checking for POSIX threads ... "
-	if [ -f $SYS_INC/pthread.h ]
+	if [ -f $USR_INC/pthread.h ]
 	then
-		if [ -f $SYS_LIB/libpthread.so -o -f $SYS_LIB/libpthread.a -o -f $SYS_LIB/libpthread.dylib ]
+		if [ -f $USR_LIB/libpthread.so -o -f $USR_LIB/libpthread.a -o -f $USR_LIB/libpthread.dylib ]
 		then
 			echo "yes"
 			echo "POSIX_THREADS_LIBS=-lpthread" 1>>$BUILD_FILE
@@ -745,9 +719,9 @@ fi
 # Find GNU Plotutils
 #
 printf "checking for GNU plotutils ... "
-if [ -f $INCLUDE_DIR/plot.h -o -f $SYS_INC/plot.h ]
+if [ -f $INCLUDE_DIR/plot.h -o -f $USR_INC/plot.h ]
 then
-	if [ -f $LIBRARY_DIR/libplot.so -o -f $LIBRARY_DIR/libplot.a -o -f $LIBRARY_DIR/libplot.dylib -o -f $SYS_LIB/libplot.so ]
+	if [ -f $LIBRARY_DIR/libplot.so -o -f $LIBRARY_DIR/libplot.a -o -f $LIBRARY_DIR/libplot.dylib -o -f $USR_LIB/libplot.so ]
 	then
 		libplot=yes
 		echo "yes"
@@ -763,11 +737,11 @@ fi
 # Find GSL
 #
 printf "checking for GNU scientific library ... "
-if [ -d $INCLUDE_DIR/gsl -o -d $SYS_INC/gsl ]
+if [ -d $INCLUDE_DIR/gsl -o -d $USR_INC/gsl ]
 then
-	if [ -f $LIBRARY_DIR/libgsl.so -o -f $LIBRARY_DIR/libgsl.a -o -f $SYS_LIB/libgsl.so -o -f $SYS_LIB/libgsl.a -o -f $LIBRARY_DIR/libgsl.dylib ]
+	if [ -f $LIBRARY_DIR/libgsl.so -o -f $LIBRARY_DIR/libgsl.a -o -f $USR_LIB/libgsl.so -o -f $USR_LIB/libgsl.a -o -f $LIBRARY_DIR/libgsl.dylib ]
 	then
-		if [ -f $LIBRARY_DIR/libgslcblas.so -o -f $LIBRARY_DIR/libgslcblas.a -o -f $SYS_LIB/libgslcblas.so -o -f $SYS_LIB/libgslcblas.a -o -f $LIBRARY_DIR/libgslcblas.dylib ]
+		if [ -f $LIBRARY_DIR/libgslcblas.so -o -f $LIBRARY_DIR/libgslcblas.a -o -f $USR_LIB/libgslcblas.so -o -f $USR_LIB/libgslcblas.a -o -f $LIBRARY_DIR/libgslcblas.dylib ]
 		then
 			libgsl=yes
 			echo "yes"
@@ -791,10 +765,20 @@ then
 	echo "yes"
 	echo "CURSES_LIBS=-lncurses" 1>>$BUILD_FILE
 	echo "CURSES_FLAG=-DENABLE_CURSES" 1>>$BUILD_FILE
+elif [ -f $USR_LIB/libncurses.so -o -f $USR_LIB/libncurses.a -o -f $USR_LIB/libncurses.dylib ]
+then
+	echo "yes"
+	echo "CURSES_LIBS=-lncurses" 1>>$BUILD_FILE
+	echo "CURSES_FLAG=-DENABLE_CURSES" 1>>$BUILD_FILE
 else
 	echo "no"
 	printf "checking for curses ... "
 	if [ -f $SYS_LIB/libcurses.so -o -f $SYS_LIB/libcurses.a -o -f $SYS_LIB/libcurses.dylib ]
+	then
+		echo "yes"
+		echo "CURSES_LIBS=-lcurses" 1>>$BUILD_FILE
+		echo "CURSES_FLAG=-DENABLE_CURSES" 1>>$BUILD_FILE
+	elif [ -f $USR_LIB/libcurses.so -o -f $USR_LIB/libcurses.a -o -f $USR_LIB/libcurses.dylib ]
 	then
 		echo "yes"
 		echo "CURSES_LIBS=-lcurses" 1>>$BUILD_FILE
@@ -807,7 +791,7 @@ fi
 # Find terminfo 
 #
 printf "checking for terminfo ... "
-if [ -f $SYS_INC/term.h ]
+if [ -f $USR_INC/term.h ]
 then
 	if [ -d /usr/share/terminfo -o -d /usr/local/share/terminfo ]
 	then
@@ -823,7 +807,7 @@ fi
 # Find dirent
 #
 printf "checking for dirent ... "
-if [ -f $INCLUDE_DIR/dirent.h -o -$SYS_INC/dirent.h ] 
+if [ -f $INCLUDE_DIR/dirent.h -o -$USR_INC/dirent.h ] 
 then
 	echo "yes"
 	echo "DIRENT_FLAG=-DENABLE_DIRENT" 1>>$BUILD_FILE
@@ -834,7 +818,7 @@ fi
 # Find HTTP support
 #
 printf "checking for HTTP support ... "
-if [ -f $SYS_INC/netdb.h -a -f $SYS_INC/arpa/inet.h -a -f $SYS_INC/netinet/in.h -a -f $SYS_INC/sys/socket.h ]
+if [ -f $USR_INC/netdb.h -a -f $USR_INC/arpa/inet.h -a -f $USR_INC/netinet/in.h -a -f $USR_INC/sys/socket.h ]
 then
 	echo "yes"
 	echo "HTTP_FLAG=-DENABLE_HTTP" 1>>$BUILD_FILE
@@ -845,7 +829,7 @@ fi
 # Find regular expression support
 #
 printf "checking for regular expression support ... "
-if [ -f $SYS_INC/regex.h ]
+if [ -f $USR_INC/regex.h ]
 then
 	echo "yes"
 	echo "REGEX_FLAG=-DENABLE_REGEX" 1>>$BUILD_FILE
@@ -856,7 +840,7 @@ fi
 # Find PostgreSQL libraries
 #
 printf "checking for PostgreSQL ... "
-if [ -f $SQL_DIR/include/libpq-fe.h -o -f $INCLUDE_DIR/libpq-fe.h -o -f $SYS_INC/libpq-fe.h ]
+if [ -f $SQL_DIR/include/libpq-fe.h -o -f $INCLUDE_DIR/libpq-fe.h -o -f $USR_INC/libpq-fe.h ]
 then
 	if [ -f $SQL_DIR/lib/libpq.so -o -f $SQL_DIR/lib/libpq.a -o -f $SQL_DIR/lib/libpq.dylib ]
 	then
@@ -865,11 +849,11 @@ then
 		echo "SQL_DIR=$SQL_DIR">>$BUILD_FILE
 		echo "SQL_LIBS=-lpq" 1>>$BUILD_FILE
 		echo "SQL_FLAG=-DENABLE_POSTGRESQL" 1>>$BUILD_FILE
-	elif [ -f $SYS_LIB/libpq.so -o -f $SYS_LIB/libpq.a -o -f $SYS_LIB/libpq.dylib ]
+	elif [ -f $USR_LIB/libpq.so -o -f $USR_LIB/libpq.a -o -f $USR_LIB/libpq.dylib ]
 	then
 		libpostgresql=yes
 		echo "yes"
-		echo "SQL_DIR=`dirname $SYS_LIB`">>$BUILD_FILE
+		echo "SQL_DIR=`dirname $USR_LIB`">>$BUILD_FILE
 		echo "SQL_LIBS=-lpq" 1>>$BUILD_FILE
 		echo "SQL_FLAG=-DENABLE_POSTGRESQL" 1>>$BUILD_FILE
 	else
@@ -888,8 +872,8 @@ then
 	echo "IEEE_754_FLAG=-DENABLE_IEEE_754" 1>>$BUILD_FILE
 else
 	echo "unknown"
-	printf "checking for IEEE 754 floating point support in $SYS_INC ... "
-	if [ -f $SYS_INC/ieee754.h -o -f $SYS_INC/ieeefp.h -o -f $SYS_INC/machine/ieeefp.h ]
+	printf "checking for IEEE 754 floating point support in $USR_INC ... "
+	if [ -f $USR_INC/ieee754.h -o -f $USR_INC/ieeefp.h -o -f $USR_INC/machine/ieeefp.h ]
 	then
 		echo "yes"
 		echo "IEEE_754_FLAG=-DENABLE_IEEE_754" 1>>$BUILD_FILE
@@ -917,9 +901,9 @@ if [ "$cc" = "gcc" ]
 then
         if ! [ -d $SQL_DIR ]
         then
-		echo "-I\$(INCLUDE_DIR) -I\$(SYS_INC) $warn $opt" 1>>$BUILD_FILE
+		echo "-I\$(INCLUDE_DIR) -I\$(USR_INC) $warn $opt" 1>>$BUILD_FILE
 	else
-		echo "-I\$(INCLUDE_DIR) -I\$(SYS_INC) -I\$(SQL_DIR)/include $warn $opt" 1>>$BUILD_FILE
+		echo "-I\$(INCLUDE_DIR) -I\$(USR_INC) -I\$(SQL_DIR)/include $warn $opt" 1>>$BUILD_FILE
 	fi
 else
 	echo "-I\$(INCLUDE_DIR)" 1>>$BUILD_FILE
@@ -1014,8 +998,12 @@ echo "generated $BUILD_FILE"
 cat >$TEST_FILE <<\_REGRESSION_EOF
 #! /bin/sh
 #
+# regression -DIR only checks files in DIR
+if [ -n $1 ]
+then
+	cd ./$1
+fi
 # Locate a68g
-#
 if [ -f './a68g' ]
 then
 	A68='./a68g'
@@ -1023,7 +1011,7 @@ elif [ -f '../a68g' ]
 then
 	A68='../a68g'
 else
-	A68='a68g'
+	A68='../../a68g'
 fi
 #
 # Locate reference a68g
@@ -1035,12 +1023,7 @@ elif [ -f '../a68g-ref' ]
 then
 	A68REF='../a68g-ref'
 else
-	A68REF='a68g'
-fi
-# regression -DIR only checks files in DIR
-if [ -n $1 ]
-then
-	cd ./$1
+	A68REF='../../a68g-ref'
 fi
 #
 echo $line
@@ -1132,7 +1115,7 @@ elif [ -f $LOC_INC/plot.h ]
 then
 	echo "#define A68_LIBPLOT_VERSION \"`grep '#define PL_LIBPLOT_VER_STRING ' $LOC_INC/plot.h | sed 's/#define[A-Z_ ]*//'`\"" | sed 's/\"\"/\"/g' 1>>$CONFIG_FILE
 fi
-if [ -f $INCLUDE_DIR/pg_config.h -o -f $SYS_INC/pg_config.h -o -f $SQL_DIR/include/pg_config.h ]
+if [ -f $INCLUDE_DIR/pg_config.h -o -f $USR_INC/pg_config.h -o -f $SQL_DIR/include/pg_config.h ]
 then	if [ "$cc" = "gcc" ]
 	then
 cat > pgvers.c <<_ACEOF

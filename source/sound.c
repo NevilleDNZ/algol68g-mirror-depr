@@ -21,12 +21,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "config.h"
-#include "diagnostics.h"
 #include "algol68g.h"
-#include "genie.h"
-#include "inline.h"
+#include "interpreter.h"
 #include "mp.h"
-#include "transput.h"
 
 #define MAX_BYTES 4
 #define A68_LITTLE_ENDIAN A68_TRUE
@@ -463,7 +460,7 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
     } else if (z == code_string (p, "data", 4)) {
 /* Read data chunk */
       subchunk2size = read_riff_item (p, f->fd, 4, A68_LITTLE_ENDIAN);
-      w->num_samples = subchunk2size / w->num_channels / A68_SOUND_BYTES (w);
+      w->num_samples = subchunk2size / w->num_channels / (unsigned) A68_SOUND_BYTES (w);
       w->data = heap_generator (p, MODE (SOUND_DATA), (int) subchunk2size);
       r = (int) io_read (f->fd, ADDRESS (&(w->data)), subchunk2size);
       if (r != (int) subchunk2size) {

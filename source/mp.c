@@ -122,10 +122,8 @@ using the source code provided. See the GNU General Public License for details.
 */
 
 #include "config.h"
-#include "diagnostics.h"
 #include "algol68g.h"
-#include "genie.h"
-#include "inline.h"
+#include "interpreter.h"
 #include "gsl.h"
 #include "mp.h"
 

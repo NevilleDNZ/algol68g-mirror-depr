@@ -175,46 +175,46 @@ typedef int *A68_ALIGN_T;
 
 /* Status Masks */
 
-#define NULL_MASK 0x00000000
-#define IN_HEAP_MASK 0x00000001
-#define IN_FRAME_MASK 0x00000002
-#define IN_STACK_MASK 0x00000004
-#define IN_HANDLE_MASK 0x00000008
-#define INITIALISED_MASK 0x00000010
-#define CONSTANT_MASK 0x00000020
-#define NO_SWEEP_MASK 0x00000040
-#define ROW_COLOUR_MASK 0x00000080
-#define COOKIE_MASK 0x00000100
-#define SCOPE_ERROR_MASK 0x00000100
-#define ASSIGNED_MASK 0x00000200
-#define ALLOCATED_MASK 0x00000400
-#define STANDENV_PROC_MASK 0x00000800
-#define COLOUR_MASK 0x00001000
-#define PROCEDURE_MASK 0x00002000
-#define OPTIMAL_MASK 0x00004000
-#define SERIAL_MASK 0x00008000
-#define CROSS_REFERENCE_MASK 0x00010000
-#define TREE_MASK 0x00020000
-#define CODE_MASK 0x00040000
-#define SYNTAX_TREE_MASK 0x00080000
-#define SOURCE_MASK 0x00100000
-#define ASSERT_MASK 0x00200000
-#define NIL_MASK 0x00400000
-#define SKIP_PROCEDURE_MASK 0x00800000
-#define SKIP_FORMAT_MASK 0x00800000
-#define SKIP_UNION_MASK	0x00800000
-#define INTERRUPTIBLE_MASK 0x01000000
-#define BREAKPOINT_MASK 0x02000000
-#define BREAKPOINT_TEMPORARY_MASK 0x04000000
-#define BREAKPOINT_INTERRUPT_MASK 0x08000000
-#define BREAKPOINT_WATCH_MASK	0x10000000
-#define BREAKPOINT_TRACE_MASK	0x20000000
-#define SEQUENCE_MASK 0x40000000
-#define BREAKPOINT_ERROR_MASK	0xffffffff
+#define NULL_MASK ((STATUS_MASK) 0x00000000)
+#define IN_HEAP_MASK ((STATUS_MASK) 0x00000001)
+#define IN_FRAME_MASK ((STATUS_MASK) 0x00000002)
+#define IN_STACK_MASK ((STATUS_MASK) 0x00000004)
+#define IN_HANDLE_MASK ((STATUS_MASK) 0x00000008)
+#define INITIALISED_MASK ((STATUS_MASK) 0x00000010)
+#define CONSTANT_MASK ((STATUS_MASK) 0x00000020)
+#define NO_SWEEP_MASK ((STATUS_MASK) 0x00000040)
+#define ROW_COLOUR_MASK ((STATUS_MASK) 0x00000080)
+#define COOKIE_MASK ((STATUS_MASK) 0x00000100)
+#define SCOPE_ERROR_MASK ((STATUS_MASK) 0x00000100)
+#define ASSIGNED_MASK ((STATUS_MASK) 0x00000200)
+#define ALLOCATED_MASK ((STATUS_MASK) 0x00000400)
+#define STANDENV_PROC_MASK ((STATUS_MASK) 0x00000800)
+#define COLOUR_MASK ((STATUS_MASK) 0x00001000)
+#define PROCEDURE_MASK ((STATUS_MASK) 0x00002000)
+#define OPTIMAL_MASK ((STATUS_MASK) 0x00004000)
+#define SERIAL_MASK ((STATUS_MASK) 0x00008000)
+#define CROSS_REFERENCE_MASK ((STATUS_MASK) 0x00010000)
+#define TREE_MASK ((STATUS_MASK) 0x00020000)
+#define CODE_MASK ((STATUS_MASK) 0x00040000)
+#define SYNTAX_TREE_MASK ((STATUS_MASK) 0x00080000)
+#define SOURCE_MASK ((STATUS_MASK) 0x00100000)
+#define ASSERT_MASK ((STATUS_MASK) 0x00200000)
+#define NIL_MASK ((STATUS_MASK) 0x00400000)
+#define SKIP_PROCEDURE_MASK ((STATUS_MASK) 0x00800000)
+#define SKIP_FORMAT_MASK ((STATUS_MASK) 0x00800000)
+#define SKIP_UNION_MASK	0x00800000)
+#define INTERRUPTIBLE_MASK ((STATUS_MASK) 0x01000000)
+#define BREAKPOINT_MASK ((STATUS_MASK) 0x02000000)
+#define BREAKPOINT_TEMPORARY_MASK ((STATUS_MASK) 0x04000000)
+#define BREAKPOINT_INTERRUPT_MASK ((STATUS_MASK) 0x08000000)
+#define BREAKPOINT_WATCH_MASK ((STATUS_MASK) 0x10000000)
+#define BREAKPOINT_TRACE_MASK ((STATUS_MASK) 0x20000000)
+#define SEQUENCE_MASK ((STATUS_MASK) 0x40000000)
+#define BREAKPOINT_ERROR_MASK ((STATUS_MASK) 0xffffffff)
 
 /* CODEX masks */
 
-#define PROC_DECLARATION_MASK 0x00000001
+#define PROC_DECLARATION_MASK ((STATUS_MASK) 0x00000001)
 
 /*
 Some (necessary) macros to overcome the ambiguity in having signed or unsigned
@@ -585,14 +585,14 @@ struct NODE_INFO_T
 struct GENIE_INFO_T
 {
   PROPAGATOR_T propagator;
-  MOID_T *partial_proc, *partial_locale;
   BOOL_T whether_coercion, whether_new_lexical_level, need_dns;
-  int level, argsize, size;
-  NODE_T *parent;
   BYTE_T *offset;
-  void *constant;
+  MOID_T *partial_proc, *partial_locale;
+  NODE_T *parent;
   TAG_T *protect_sweep;
   char *compile_name;
+  int level, argsize, size, compile_node;
+  void *constant;
 };
 
 struct OPTION_LIST_T
@@ -1295,8 +1295,10 @@ extern char *a68g_strrchr (char *, int);
 extern char *ctrl_char (int);
 extern char *moid_to_string (MOID_T *, int, NODE_T *);
 extern char *new_fixed_string (char *);
+extern char *new_temp_string (char *);
 extern char *new_string (char *);
 extern char *non_terminal_string (char *, int);
+extern char *phrase_to_text (NODE_T *, NODE_T **);
 extern char *propagator_name (PROPAGATOR_PROCEDURE *p);
 extern char *read_string_from_tty (char *);
 extern char *standard_environ_proc_name (GENIE_PROCEDURE);
@@ -1439,5 +1441,199 @@ extern void write_object_listing (void);
 extern void write_source_line (FILE_T, SOURCE_LINE_T *, NODE_T *, int);
 extern void write_source_listing (void);
 extern void write_tree_listing (void);
+
+/* Diagnostic texts */
+
+#define MOID_ERROR_WIDTH 80
+
+#define ERROR_SPECIFICATION (errno == 0 ? NULL : strerror (errno))
+
+#if defined ENABLE_COMPILER
+#define ERROR_SPECIFICATION_COMPILER (dlerror ())
+#endif
+
+#define ERROR_ACCESSING_NIL "attempt to access N"
+#define ERROR_ALIGNMENT "alignment error"
+#define ERROR_ARGUMENT_NUMBER "incorrect number of arguments for M"
+#define ERROR_CANNOT_END_WITH_DECLARATION "clause cannot end with a declaration"
+#define ERROR_CANNOT_OPEN_NAME "cannot open Z"
+#define ERROR_CANNOT_WIDEN "cannot widen M to M"
+#define ERROR_CANNOT_WRITE_LISTING "cannot write listing file"
+#define ERROR_CHANNEL_DOES_NOT_ALLOW "channel does not allow Y"
+#define ERROR_CLAUSE_WITHOUT_VALUE "clause does not yield a value"
+#define ERROR_CLOSING_DEVICE "error while closing device"
+#define ERROR_CLOSING_FILE "error while closing file"
+#define ERROR_COMMA_MUST_SEPARATE "A and A must be separated by a comma-symbol"
+#define ERROR_COMPONENT_NUMBER "M must have at least two components"
+#define ERROR_COMPONENT_RELATED "M has firmly related components"
+#define ERROR_CURSES "error in curses operation"
+#define ERROR_CURSES_OFF_SCREEN "curses operation moves cursor off the screen"
+#define ERROR_CYCLIC_MODE "M specifies no mode (references to self)"
+#define ERROR_DEVICE_ALREADY_SET "device parameters already set"
+#define ERROR_DEVICE_CANNOT_ALLOCATE "cannot allocate device parameters"
+#define ERROR_DEVICE_CANNOT_OPEN "cannot open device"
+#define ERROR_DEVICE_NOT_OPEN "device is not open"
+#define ERROR_DEVICE_NOT_SET "device parameters not set"
+#define ERROR_DIFFERENT_BOUNDS "rows have different bounds"
+#define ERROR_DIVISION_BY_ZERO "attempt at M division by zero"
+#define ERROR_DYADIC_PRIORITY "dyadic S has no priority declaration"
+#define ERROR_EMPTY_ARGUMENT "empty argument"
+#define ERROR_EMPTY_VALUE "attempt to use uninitialised M value"
+#define ERROR_EMPTY_VALUE_FROM (ERROR_EMPTY_VALUE)
+#define ERROR_EXPECTED_NEAR "B expected in A, near Z L"
+#define ERROR_EXPECTED "Y expected"
+#define ERROR_EXPONENT_DIGIT "invalid exponent digit"
+#define ERROR_EXPONENT_INVALID "invalid M exponent"
+#define ERROR_FALSE_ASSERTION "false assertion"
+#define ERROR_FEATURE_UNSUPPORTED "unsupported feature S"
+#define ERROR_FFT "fourier transform error; U; U"
+#define ERROR_FILE_ACCESS "file access error"
+#define ERROR_FILE_ALREADY_OPEN "file is already open"
+#define ERROR_FILE_CANNOT_OPEN_FOR "cannot open Z for Y"
+#define ERROR_FILE_CANT_RESET "cannot reset file"
+#define ERROR_FILE_CANT_SET "cannot set file"
+#define ERROR_FILE_CLOSE "error while closing file"
+#define ERROR_FILE_ENDED "end of file reached"
+#define ERROR_FILE_INCLUDE_CTRL "control characters in include file"
+#define ERROR_FILE_LOCK "error while locking file"
+#define ERROR_FILE_NO_TEMP "cannot create unique temporary file name"
+#define ERROR_FILE_NOT_OPEN "file is not open"
+#define ERROR_FILE_READ "error while reading file"
+#define ERROR_FILE_RESET "error while resetting file"
+#define ERROR_FILE_SCRATCH "error while scratching file"
+#define ERROR_FILE_SET "error while setting file"
+#define ERROR_FILE_SOURCE_CTRL "control characters in source file"
+#define ERROR_FILE_TRANSPUT "error transputting M value"
+#define ERROR_FILE_TRANSPUT_SIGN "error transputting sign in M value"
+#define ERROR_FILE_WRONG_MOOD "file is in Y mood"
+#define ERROR_FLEX_ROW "flexibility is a property of rows"
+#define ERROR_FORMAT_CANNOT_TRANSPUT "cannot transput M value with A"
+#define ERROR_FORMAT_EXHAUSTED "patterns exhausted in format"
+#define ERROR_FORMAT_INTS_REQUIRED "1 .. 3 M arguments required"
+#define ERROR_FORMAT_INVALID_REPLICATOR "negative replicator"
+#define ERROR_FORMAT_PICTURE_NUMBER "incorrect number of pictures for A"
+#define ERROR_FORMAT_PICTURES "number of pictures does not match number of arguments"
+#define ERROR_FORMAT_UNDEFINED "cannot use undefined format"
+#define ERROR_INCORRECT_FILENAME "incorrect filename"
+#define ERROR_IN_DENOTATION "error in M denotation"
+#define ERROR_INDEXER_NUMBER "incorrect number of indexers for M"
+#define ERROR_INDEX_OUT_OF_BOUNDS "index out of bounds"
+#define ERROR_INTERNAL_CONSISTENCY "internal consistency check failure"
+#define ERROR_INVALID_ARGUMENT "invalid M argument"
+#define ERROR_INVALID_DIMENSION "invalid dimension D"
+#define ERROR_INVALID_OPERAND "M construct is an invalid operand"
+#define ERROR_INVALID_OPERATOR_TAG "invalid operator tag"
+#define ERROR_INVALID_PARAMETER "invalid parameter (U Z)"
+#define ERROR_INVALID_PRIORITY "invalid priority declaration"
+#define ERROR_INVALID_RADIX "invalid radix D"
+#define ERROR_INVALID_SEQUENCE "U is not a valid A"
+#define ERROR_INVALID_SIZE "object of invalid size"
+#define ERROR_KEYWORD "check for missing or unmatched keyword in clause starting at S"
+#define ERROR_LABEL_BEFORE_DECLARATION "declaration cannot follow a labeled unit"
+#define ERROR_LABELED_UNIT_MUST_FOLLOW "S must be followed by a labeled unit"
+#define ERROR_LABEL_IN_PAR_CLAUSE "target label is in another parallel unit"
+#define ERROR_LAPLACE "laplace transform error; U; U"
+#define ERROR_LINE_ENDED "end of line reached"
+#define ERROR_LONG_STRING "string exceeds end of line"
+#define ERROR_MATH_EXCEPTION "math exception E"
+#define ERROR_MATH "M math error"
+#define ERROR_MODE_SPECIFICATION "M construct must yield a routine, row or structured value"
+#define ERROR_MP_OUT_OF_BOUNDS "multiprecision value out of bounds"
+#define ERROR_MULTIPLE_FIELD "multiple declaration of field S"
+#define ERROR_MULTIPLE_TAG "multiple declaration of tag S"
+#define ERROR_NIL_DESCRIPTOR "descriptor is N"
+#define ERROR_NO_COMPONENT "M is neither component nor subset of M"
+#define ERROR_NO_DYADIC "dyadic operator O S O has not been declared"
+#define ERROR_NO_FIELD "M has no field Z"
+#define ERROR_NO_FLEX_ARGUMENT "M value from A cannot be flexible"
+#define ERROR_NO_SOURCE_FILE "no source file specified"
+#define ERROR_NO_MATRIX "M A does not yield a two-dimensional row"
+#define ERROR_NO_MONADIC "monadic operator S O has not been declared"
+#define ERROR_NO_NAME "M A does not yield a name"
+#define ERROR_NO_NAME_REQUIRED "context does not require a name"
+#define ERROR_NO_PARALLEL_CLAUSE "interpreter was compiled without support for the parallel-clause"
+#define ERROR_NO_PRIORITY "S has no priority declaration"
+#define ERROR_NO_PROC "M A does not yield a procedure taking arguments"
+#define ERROR_NO_ROW_OR_PROC "M A does not yield a row or procedure"
+#define ERROR_NO_SQUARE_MATRIX "M matrix is not square"
+#define ERROR_NO_STRUCT "M A does not yield a structured value"
+#define ERROR_NOT_WELL_FORMED "S does not specify a well formed mode"
+#define ERROR_NO_UNION "M is not a united mode"
+#define ERROR_NO_UNIQUE_MODE "construct has no unique mode"
+#define ERROR_NO_VECTOR "M A does not yield a one-dimensional row"
+#define ERROR_OPERAND_NUMBER "incorrect number of operands for S"
+#define ERROR_OPERATOR_INVALID "monadic S cannot start with a character from Z"
+#define ERROR_OPERATOR_RELATED "M Z is firmly related to M Z"
+#define ERROR_OUT_OF_BOUNDS "M value out of bounds"
+#define ERROR_OUT_OF_CORE "insufficient memory"
+#define ERROR_PAGE_SIZE "error in page size"
+#define ERROR_PARALLEL_CANNOT_CREATE "cannot create thread"
+#define ERROR_PARALLEL_CANNOT_JOIN "cannot join thread"
+#define ERROR_PARALLEL_OUTSIDE "invalid outside a parallel clause"
+#define ERROR_PARALLEL_OVERFLOW "too many parallel units"
+#define ERROR_PARENTHESIS_2 "incorrect parenthesis nesting; encountered X L but expected X; check for Y"
+#define ERROR_PARENTHESIS "incorrect parenthesis nesting; check for Y"
+#define ERROR_PRAGMENT "error in pragment"
+#define ERROR_QUOTED_BOLD_TAG "error in quoted bold tag"
+#define ERROR_REDEFINED_KEYWORD "attempt to redefine keyword U in A"
+#define ERROR_REFINEMENT_APPLIED "refinement is applied more than once"
+#define ERROR_REFINEMENT_DEFINED "refinement already defined"
+#define ERROR_REFINEMENT_EMPTY "empty refinement at end of program"
+#define ERROR_REFINEMENT_INVALID "invalid refinement"
+#define ERROR_REFINEMENT_NOT_APPLIED "refinement is not applied"
+#define ERROR_RELATED_MODES "M is related to M"
+#define ERROR_REQUIRE_THREADS "parallel clause requires posix threads"
+#define ERROR_RUNTIME_ERROR "runtime error"
+#define ERROR_SHELL_SCRIPT "source is a shell script"
+#define ERROR_SCOPE_DYNAMIC_0 "value is exported out of its scope"
+#define ERROR_SCOPE_DYNAMIC_1 "M value is exported out of its scope"
+#define ERROR_SCOPE_DYNAMIC_2 "M value from %s is exported out of its scope"
+#define ERROR_SOUND_INTERNAL "error while processing M value (Y)"
+#define ERROR_SOUND_INTERNAL_STRING "error while processing M value (Y \"Y\")"
+#define ERROR_SOURCE_FILE_OPEN "error while opening source file"
+#define ERROR_STACK_OVERFLOW "stack overflow"
+#define ERROR_SUBSET_RELATED "M has firmly related subset M"
+#define ERROR_SYNTAX "detected in A"
+#define ERROR_SYNTAX_EXPECTED "expected A"
+#define ERROR_SYNTAX_MIXED_DECLARATION "possibly mixed identity and variable declaration"
+#define ERROR_SYNTAX_STRANGE_SEPARATOR "possibly a missing or erroneous separator nearby"
+#define ERROR_SYNTAX_STRANGE_TOKENS "possibly a missing or erroneous symbol nearby"
+#define ERROR_THREAD_ACTIVE "parallel clause terminated but thread still active"
+#define ERROR_TIME_LIMIT_EXCEEDED "time limit exceeded"
+#define ERROR_TOO_MANY_ARGUMENTS "too many arguments"
+#define ERROR_TOO_MANY_OPEN_FILES "too many open files"
+#define ERROR_TORRIX "linear algebra error; U; U"
+#define ERROR_TRANSIENT_NAME "attempt at storing a transient name"
+#define ERROR_UNBALANCED_KEYWORD "missing or unbalanced keyword in A, near Z L"
+#define ERROR_UNDECLARED_TAG_2 "tag Z has not been declared properly"
+#define ERROR_UNDECLARED_TAG "tag S has not been declared properly"
+#define ERROR_UNDEFINED_TRANSPUT "transput of M value by this procedure is not defined"
+#define ERROR_UNDETERMINDED_FILE_MOOD "file has undetermined mood"
+#define ERROR_UNIMPLEMENTED_PRECISION "M precision is not implemented"
+#define ERROR_UNIMPLEMENTED "S is either not implemented or not compiled"
+#define ERROR_UNSPECIFIED "unspecified error"
+#define ERROR_UNTERMINATED_COMMENT "unterminated comment"
+#define ERROR_UNTERMINATED_PRAGMAT "unterminated pragmat"
+#define ERROR_UNTERMINATED_PRAGMENT "unterminated pragment"
+#define ERROR_UNTERMINATED_STRING "unterminated string"
+#define ERROR_UNWORTHY_CHARACTER "unworthy character"
+#define INFO_APPROPRIATE_DECLARER "appropriate declarer"
+#define INFO_MISSING_KEYWORDS "missing or unmatched keyword"
+#define WARNING_DEFINED_IN_OTHER_THREAD "definition of S is in the private stack of another thread"
+#define WARNING_EXTENSION "@ is an extension"
+#define WARNING_HIDES "declaration hides a declaration of S with larger reach"
+#define WARNING_HIDES_PRELUDE "declaration hides prelude declaration of M S"
+#define WARNING_OVERFLOW "M constant overflow"
+#define WARNING_SCOPE_STATIC_1 "value from A could be exported out of its scope"
+#define WARNING_SCOPE_STATIC_2 "M value from A could be exported out of its scope"
+#define WARNING_SKIPPED_SUPERFLUOUS "skipped superfluous A"
+#define WARNING_TAG_NOT_PORTABLE "tag S is not portable"
+#define WARNING_TAG_UNUSED "tag S is not used"
+#define WARNING_TRAILING "ignoring trailing character H in A"
+#define WARNING_UNDERFLOW "M constant underflow"
+#define WARNING_UNINITIALISED "identifier S might be used before being initialised"
+#define WARNING_UNINTENDED "possibly unintended M A in M A"
+#define WARNING_VOIDED "value of M @ will be voided"
+#define WARNING_WIDENING_NOT_PORTABLE "implicit widening is not portable"
 
 #endif

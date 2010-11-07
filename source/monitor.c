@@ -30,12 +30,9 @@ clauses) and has basic means for inspecting call-frame stack and heap.
 */
 
 #include "config.h"
-#include "diagnostics.h"
 #include "algol68g.h"
-#include "genie.h"
-#include "inline.h"
+#include "interpreter.h"
 #include "mp.h"
-#include "transput.h"
 
 #if defined ENABLE_TERMINFO
 #include <term.h>
@@ -1277,7 +1274,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONG_BITS:
     {
       MP_DIGIT_T *z = (MP_DIGIT_T *) w;
-      initialised = (BOOL_T) ((int) z[0] & INITIALISED_MASK);
+      initialised = (BOOL_T) ((unsigned) z[0] & INITIALISED_MASK);
       recognised = A68_TRUE;
       break;
     }
@@ -1286,7 +1283,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONGLONG_BITS:
     {
       MP_DIGIT_T *z = (MP_DIGIT_T *) w;
-      initialised = (BOOL_T) ((int) z[0] & INITIALISED_MASK);
+      initialised = (BOOL_T) ((unsigned) z[0] & INITIALISED_MASK);
       recognised = A68_TRUE;
       break;
     }
@@ -1294,7 +1291,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
     {
       MP_DIGIT_T *r = (MP_DIGIT_T *) w;
       MP_DIGIT_T *i = (MP_DIGIT_T *) (w + size_long_mp ());
-      initialised = (BOOL_T) (((int) r[0] & INITIALISED_MASK) && ((int) i[0] & INITIALISED_MASK));
+      initialised = (BOOL_T) (((unsigned) r[0] & INITIALISED_MASK) && ((unsigned) i[0] & INITIALISED_MASK));
       recognised = A68_TRUE;
       break;
     }
@@ -1302,7 +1299,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
     {
       MP_DIGIT_T *r = (MP_DIGIT_T *) w;
       MP_DIGIT_T *i = (MP_DIGIT_T *) (w + size_long_mp ());
-      initialised = (BOOL_T) (((int) r[0] & INITIALISED_MASK) && ((int) i[0] & INITIALISED_MASK));
+      initialised = (BOOL_T) (((unsigned) r[0] & INITIALISED_MASK) && ((unsigned) i[0] & INITIALISED_MASK));
       recognised = A68_TRUE;
       break;
     }

@@ -21,11 +21,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "config.h"
-#include "diagnostics.h"
 #include "algol68g.h"
-#include "genie.h"
-#include "inline.h"
-#include "transput.h"
+#include "interpreter.h"
 
 /*
 This file contains the Algol68G interface to libplot. Note that Algol68G is not
