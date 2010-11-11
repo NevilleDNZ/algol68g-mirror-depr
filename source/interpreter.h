@@ -314,6 +314,17 @@ returns: static link for stack frame at 'new_lex_lvl'.
     (dest) = frame_pointer;\
   }}
 
+#define INIT_STATIC_FRAME(p) {\
+  FRAME_CLEAR (SYMBOL_TABLE (p)->ap_increment);\
+  if (SYMBOL_TABLE (p)->initialise_frame) {\
+    initialise_frame (p);\
+  }}
+
+#define INIT_GLOBAL_POINTER(p) {\
+  if (LEX_LEVEL (p) == global_level) {\
+    global_pointer = frame_pointer;\
+  }}
+
 #if defined ENABLE_PAR_CLAUSE
 #define OPEN_STATIC_FRAME(p) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
@@ -333,13 +344,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
   act->jump_stat = NULL;\
   act->proc_frame = A68_FALSE;\
   act->thread_id = pthread_self ();\
-  FRAME_CLEAR (SYMBOL_TABLE (p)->ap_increment);\
-  if (LEX_LEVEL (p) == global_level) {\
-    global_pointer = frame_pointer;\
-  }\
-  if (SYMBOL_TABLE (p)->initialise_frame) {\
-    initialise_frame (p);\
-  }}
+  }
 #else
 #define OPEN_STATIC_FRAME(p) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
@@ -358,13 +363,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
   act->node = p;\
   act->jump_stat = NULL;\
   act->proc_frame = A68_FALSE;\
-  FRAME_CLEAR (SYMBOL_TABLE (p)->ap_increment);\
-  if (LEX_LEVEL (p) == global_level) {\
-    global_pointer = frame_pointer;\
-  }\
-  if (SYMBOL_TABLE (p)->initialise_frame) {\
-    initialise_frame (p);\
-  }}
+  }
 #endif
 
 #if defined ENABLE_PAR_CLAUSE
@@ -391,10 +390,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
   act->jump_stat = NULL;\
   act->proc_frame = A68_TRUE;\
   act->thread_id = pthread_self ();\
-  FRAME_CLEAR (SYMBOL_TABLE (p)->ap_increment);\
-  if (SYMBOL_TABLE (p)->initialise_frame) {\
-    initialise_frame (p);\
-  }}
+  }
 #else
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
@@ -418,10 +414,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
   act->node = p;\
   act->jump_stat = NULL;\
   act->proc_frame = A68_TRUE;\
-  FRAME_CLEAR (SYMBOL_TABLE (p)->ap_increment);\
-  if (SYMBOL_TABLE (p)->initialise_frame) {\
-    initialise_frame (p);\
-  }}
+  }
 #endif
 
 #define CLOSE_FRAME {\

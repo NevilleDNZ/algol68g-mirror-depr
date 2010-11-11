@@ -26,8 +26,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include "gsl.h"
 #include "mp.h"
 
-#if defined ENABLE_NUMERICAL
-
 #define A68_STD A68_TRUE
 #define A68_EXT A68_FALSE
 
@@ -2399,6 +2397,7 @@ routines in this file will give a runtime error when called. You can also choose
 to not have them defined in "prelude.c".
 */
 
+#if defined ENABLE_NUMERICAL
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
@@ -12808,6 +12807,7 @@ static void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, B
 /* Ok, seems usable */
   dollar = SUB (BODY (fmt));
   OPEN_PROC_FRAME (dollar, ENVIRON (fmt));
+  INIT_STATIC_FRAME (dollar);
 /* Save old format. */
   save = (A68_FORMAT *) FRAME_LOCAL (frame_pointer, OFFSET (TAX (dollar)));
   *save = (embedded == EMBEDDED_FORMAT ? FORMAT (file) : nil_format);

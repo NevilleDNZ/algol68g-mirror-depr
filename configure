@@ -20,10 +20,10 @@
 #
 A68G_NAME="a68g"
 MAKEFILE=makefile
-VERSION_NUMBER="2.0.2"
+VERSION_NUMBER="2.0.3"
 REVISION="Version $VERSION_NUMBER"
-MONTH="November"
-YEAR="2010"
+MONTH=`date +%B`
+YEAR=`date +%Y`
 DATE=`date +"%e %B %Y %H:%M"`
 TIME_STAMP="$MONTH $YEAR"
 RELEASE_DATE="released $TIME_STAMP"
@@ -961,11 +961,11 @@ cat >>$BUILD_FILE <<\_BUILD_EOF
 FLAGS=$(CPPFLAGS) $(STD_CFLAGS) $(POSIX_THREADS_FLAG) $(COMPILER_FLAG) $(PLOTUTILS_FLAG) $(GSL_FLAG) $(CURSES_FLAG) $(IEEE_754_FLAG) $(HTTP_FLAG) $(REGEX_FLAG) $(TERMINFO_FLAG) $(SQL_FLAG) $(READLINE_FLAG) $(DIRENT_FLAG) $(MACOSX_FLAG) $(LINUX_FLAG) $(CFLAGS)
 all:    a68g
 a68g:   $(CS)
-	@echo "building a68g ..."
+	@echo "LINK a68g"
 	@$(CC) $(CS) -Wl,--export-dynamic $(CFLAGS) $(STD_LD_FLAGS) $(POSIX_THREADS_LIBS) $(PLOTUTILS_LIBS) $(GSL_LIBS) $(CURSES_LIBS) $(SQL_LIBS) $(READLINE_LIBS) -lm -ldl $(LD_FLAGS) -o a68g
 $(CS): $(HS)
 .c.o:
-	@echo "compiling $<"
+	@echo "CC $<"
 	@$(CC) -c $(FLAGS) $<
 clean:
 	@rm -f $(CS)
@@ -1030,7 +1030,7 @@ echo $line
 echo "a68g regression test versus reference"
 date
 uname -mrs
-$A68 -version
+$A68 -version --mips
 $A68REF -version
 pwd
 echo "number of test programs: `find . -name "*.a68" -print | wc -l`"
@@ -1051,15 +1051,25 @@ do
 			echo "++++ $f by interpretation"
 			diff a.out b.out
 		fi
-		printf "$f by compilation ... " 1>&2
+		printf "$f by compilation -O ... " 1>&2
 		$A68 --regression -O $f > c.out
 		if [ -z "`diff --brief b.out c.out`" ] 
 		then
 			echo " same" 1>&2
 		else
 			echo " different" 1>&2
-			echo "++++ $f by compilation"
+			echo "++++ $f by compilation -O"
 			diff b.out c.out
+		fi
+		printf "$f by compilation -O2 ... " 1>&2
+		$A68 --regression -O2 $f > d.out
+		if [ -z "`diff --brief b.out d.out`" ] 
+		then
+			echo " same" 1>&2
+		else
+			echo " different" 1>&2
+			echo "++++ $f by compilation -O2"
+			diff b.out d.out
 		fi
 	else
 		if [ -z "`diff --brief a.out b.out`" ] 

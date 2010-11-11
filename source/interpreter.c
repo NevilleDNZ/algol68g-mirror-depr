@@ -718,12 +718,10 @@ void initialise_frame (NODE_T * p)
     for (_q_ = SEQUENCE (SYMBOL_TABLE (p)); _q_ != NULL; _q_ = SEQUENCE (_q_)) {
       NODE_T *u = NEXT_NEXT (_q_);
       if (WHETHER (u, ROUTINE_TEXT)) {
-        PROPAGATOR_T *prop = &PROPAGATOR (u);
-        NODE_T *src = prop->source;
+        NODE_T *src = (PROPAGATOR (u)).source;
         *(A68_PROCEDURE *) FRAME_OBJECT (OFFSET (TAX (_q_))) = *(A68_PROCEDURE *) (FRAME_OBJECT (OFFSET (TAX (src))));
       } else if ((WHETHER (u, UNIT) && WHETHER (SUB (u), ROUTINE_TEXT))) {
-        PROPAGATOR_T *prop = &PROPAGATOR (SUB (u));
-        NODE_T *src = prop->source;
+        NODE_T *src = (PROPAGATOR (SUB (u))).source;
         *(A68_PROCEDURE *) FRAME_OBJECT (OFFSET (TAX (_q_))) = *(A68_PROCEDURE *) (FRAME_OBJECT (OFFSET (TAX (src))));
       }
     }
@@ -1576,6 +1574,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
       ADDR_T fp0 = 0;
 /* Copy arguments from stack to frame. */
       OPEN_PROC_FRAME (entry, ENVIRON (z));
+      INIT_STATIC_FRAME (entry);
       FRAME_DYNAMIC_SCOPE (frame_pointer) = pop_fp;
       for (; args != NULL; FORWARD (args)) {
         int size = MOID_SIZE (MOID (args));
@@ -1600,6 +1599,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
       GENIE_DNS_STACK (p, SUB (pr_mode), frame_pointer, "procedure");
     } else {
       OPEN_PROC_FRAME (body, ENVIRON (z));
+      INIT_STATIC_FRAME (body);
       FRAME_DYNAMIC_SCOPE (frame_pointer) = pop_fp;
       EXECUTE_UNIT (body);
       if (frame_pointer == finish_frame_pointer) {
@@ -3565,6 +3565,7 @@ BOOL_T genie_united_case_unit (NODE_T * p, MOID_T * m)
       if (equal_modes) {
         NODE_T *q = NEXT_NEXT (SUB (p));
         OPEN_STATIC_FRAME (p);
+        INIT_STATIC_FRAME (p);
         if (WHETHER (q, IDENTIFIER)) {
           if (WHETHER (spec_moid, UNION_SYMBOL)) {
             COPY ((FRAME_OBJECT (OFFSET (TAX (q)))), STACK_TOP, MOID_SIZE (spec_moid));
@@ -3894,11 +3895,14 @@ PROPAGATOR_T genie_int_case (volatile NODE_T * p)
   volatile MOID_T *yield = MOID (q);
 /* CASE or OUSE. */
   OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+  INIT_GLOBAL_POINTER ((NODE_T *) SUB (q));
+  INIT_STATIC_FRAME ((NODE_T *) SUB (q));
   ENQUIRY_CLAUSE (NEXT_SUB (q));
   POP_OBJECT (q, &k, A68_INT);
 /* IN. */
   FORWARD (q);
   OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+  INIT_STATIC_FRAME ((NODE_T *) SUB (q));
   unit_count = 1;
   found_unit = genie_int_case_unit (NEXT_SUB ((NODE_T *) q), (int) VALUE (&k), (int *) &unit_count);
   CLOSE_FRAME;
@@ -3910,6 +3914,7 @@ PROPAGATOR_T genie_int_case (volatile NODE_T * p)
     case OUT_PART:
       {
         OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+        INIT_STATIC_FRAME ((NODE_T *) SUB (q));
         SERIAL_CLAUSE (NEXT_SUB (q));
         CLOSE_FRAME;
         break;
@@ -3950,6 +3955,8 @@ PROPAGATOR_T genie_united_case (volatile NODE_T * p)
   volatile MOID_T *yield = MOID (q);
 /* CASE or OUSE. */
   OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+  INIT_GLOBAL_POINTER ((NODE_T *) SUB (q));
+  INIT_STATIC_FRAME ((NODE_T *) SUB (q));
   pop_sp = stack_pointer;
   ENQUIRY_CLAUSE (NEXT_SUB (q));
   stack_pointer = pop_sp;
@@ -3958,6 +3965,7 @@ PROPAGATOR_T genie_united_case (volatile NODE_T * p)
   FORWARD (q);
   if (um != NULL) {
     OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+    INIT_STATIC_FRAME ((NODE_T *) SUB (q));
     found_unit = genie_united_case_unit (NEXT_SUB ((NODE_T *) q), (MOID_T *) um);
     CLOSE_FRAME;
   } else {
@@ -3971,6 +3979,7 @@ PROPAGATOR_T genie_united_case (volatile NODE_T * p)
     case OUT_PART:
       {
         OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+        INIT_STATIC_FRAME ((NODE_T *) SUB (q));
         SERIAL_CLAUSE (NEXT_SUB (q));
         CLOSE_FRAME;
         break;
@@ -4009,12 +4018,15 @@ PROPAGATOR_T genie_conditional (volatile NODE_T * p)
   volatile MOID_T *yield = MOID (q);
 /* IF or ELIF. */
   OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+  INIT_GLOBAL_POINTER ((NODE_T *) SUB (q));
+  INIT_STATIC_FRAME ((NODE_T *) SUB (q));
   ENQUIRY_CLAUSE (NEXT_SUB (q));
   stack_pointer = pop_sp;
   FORWARD (q);
   if (VALUE ((A68_BOOL *) STACK_TOP) == A68_TRUE) {
 /* THEN. */
     OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+    INIT_STATIC_FRAME ((NODE_T *) SUB (q));
     SERIAL_CLAUSE (NEXT_SUB (q));
     CLOSE_FRAME;
   } else {
@@ -4025,6 +4037,7 @@ PROPAGATOR_T genie_conditional (volatile NODE_T * p)
     case ELSE_PART:
       {
         OPEN_STATIC_FRAME ((NODE_T *) SUB (q));
+        INIT_STATIC_FRAME ((NODE_T *) SUB (q));
         SERIAL_CLAUSE (NEXT_SUB (q));
         CLOSE_FRAME;
         break;
@@ -4115,6 +4128,8 @@ PROPAGATOR_T genie_loop (volatile NODE_T * p)
 /* Here the loop part starts.
    We open the frame only once and reinitialise if necessary. */
   OPEN_STATIC_FRAME ((NODE_T *) q);
+  INIT_GLOBAL_POINTER ((NODE_T *) q);
+  INIT_STATIC_FRAME ((NODE_T *) q);
   counter = from;
 /* Does the loop contain conditionals? */
   if (WHETHER (p, WHILE_PART)) {
@@ -4148,6 +4163,7 @@ PROPAGATOR_T genie_loop (volatile NODE_T * p)
         if (WHETHER (p, WHILE_PART)) {
           do_p = NEXT_SUB (NEXT (p));
           OPEN_STATIC_FRAME ((NODE_T *) do_p);
+          INIT_STATIC_FRAME ((NODE_T *) do_p);
         } else {
           do_p = NEXT_SUB (p);
         }
@@ -4162,6 +4178,7 @@ PROPAGATOR_T genie_loop (volatile NODE_T * p)
         if (un_p != NULL && WHETHER (un_p, UNTIL_PART)) {
           NODE_T *v = NEXT_SUB (un_p);
           OPEN_STATIC_FRAME ((NODE_T *) v);
+          INIT_STATIC_FRAME ((NODE_T *) v);
           stack_pointer = pop_sp;
           ENQUIRY_CLAUSE (v);
           stack_pointer = pop_sp;
@@ -4196,7 +4213,7 @@ PROPAGATOR_T genie_loop (volatile NODE_T * p)
       }
       stack_pointer = pop_sp;
       PREEMPTIVE_SWEEP;
-      SERIAL_CLAUSE_TRACE (NEXT_SUB (p));
+      SERIAL_CLAUSE_TRACE (q);
       INCREMENT_COUNTER;
       siga = (BOOL_T) ((by > 0 && counter <= to) || (by < 0 && counter >= to) || (by == 0));
 /* The genie cannot take things to next iteration: re-initialise stack frame. */
@@ -4228,6 +4245,8 @@ PROPAGATOR_T genie_closed (volatile NODE_T * p)
   jmp_buf exit_buf;
   volatile NODE_T *q = NEXT_SUB (p);
   OPEN_STATIC_FRAME ((NODE_T *) q);
+  INIT_GLOBAL_POINTER ((NODE_T *) q);
+  INIT_STATIC_FRAME ((NODE_T *) q);
   SERIAL_CLAUSE (q);
   CLOSE_FRAME;
   GENIE_DNS_STACK (p, MOID (p), frame_pointer, "closed-clause");
@@ -4259,9 +4278,11 @@ PROPAGATOR_T genie_enclosed (volatile NODE_T * p)
     }
   case CLOSED_CLAUSE:
     {
-      (void) genie_closed ((NODE_T *) p);
-      self.unit = (PROPAGATOR_PROCEDURE *) genie_closed;
-      self.source = (NODE_T *) p;
+      self = genie_closed ((NODE_T *) p);
+      if (self.unit == genie_unit) {
+        self.unit = (PROPAGATOR_PROCEDURE *) genie_closed;
+        self.source = (NODE_T *) p;
+      }
       break;
     }
 #if defined ENABLE_PAR_CLAUSE

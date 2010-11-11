@@ -268,6 +268,10 @@ int main (int argc, char *argv[])
     if (program.options.version) {
       state_version (STDOUT_FILENO);
     }
+/* Attention for --mips */
+   if (program.options.mips) {
+     bogus_mips ();
+   }
 /* Running a script */
    if (program.options.run_script) {
      load_script ();
@@ -1036,8 +1040,10 @@ void default_options (void)
   program.options.cross_reference = A68_FALSE;
   program.options.debug = A68_FALSE;
   program.options.keep = A68_FALSE;
+  program.options.mips = A68_FALSE;
   program.options.moid_listing = A68_FALSE;
   program.options.nodemask = (STATUS_MASK) (ASSERT_MASK | SOURCE_MASK);
+  program.options.opt_level = 0;
   program.options.optimise = A68_FALSE;
   program.options.portcheck = A68_FALSE;
   program.options.pragmat_sema = A68_TRUE;
@@ -1327,6 +1333,10 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "EXIT")) {
           go_on = A68_FALSE;
         }
+/* MIPS gives a bogus mips rating. */
+        else if (eq (p, "MIPS")) {
+          program.options.mips = A68_TRUE;
+        }
 /* Empty item (from specifying '-' or '--') stops option processing. */
         else if (eq (p, "")) {
           go_on = A68_FALSE;
@@ -1460,29 +1470,43 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "Compile")) {
           program.options.compile = A68_TRUE;
           program.options.optimise = A68_TRUE;
+          program.options.opt_level = 1;
           program.options.run_script = A68_FALSE;
         } else if (eq (p, "NOCompile")) {
           program.options.compile = A68_FALSE;
           program.options.optimise = A68_FALSE;
+          program.options.opt_level = 0;
           program.options.run_script = A68_FALSE;
         } else if (eq (p, "NO-Compile")) {
           program.options.compile = A68_FALSE;
           program.options.optimise = A68_FALSE;
+          program.options.opt_level = 0;
           program.options.run_script = A68_FALSE;
         }
 /* OPTIMISE and NOOPTIMISE switch on/off optimisation. */
         else if (eq (p, "Optimise")) {
           program.options.optimise = A68_TRUE;
+          program.options.opt_level = 1;
         } else if (eq (p, "NOOptimise")) {
           program.options.optimise = A68_FALSE;
+          program.options.opt_level = 0;
         } else if (eq (p, "NO-Optimise")) {
           program.options.optimise = A68_FALSE;
+          program.options.opt_level = 0;
         } else if (eq (p, "Optimize")) {
           program.options.optimise = A68_TRUE;
+          program.options.opt_level = 1;
         } else if (eq (p, "NOOptimize")) {
           program.options.optimise = A68_FALSE;
+          program.options.opt_level = 0;
         } else if (eq (p, "NO-Optimize")) {
           program.options.optimise = A68_FALSE;
+          program.options.opt_level = 0;
+        }
+/* Optimisation level 2 */
+        else if (eq (p, "O2")) {
+          program.options.optimise = A68_TRUE;
+          program.options.opt_level = 2;
         }
 /* RUN-SCRIPT runs a comiled .sh script. */
         else if (eq (p, "RUN-SCRIPT")) {
@@ -2235,10 +2259,12 @@ static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
         ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n[level %d", c->level) >= 0);
         WRITE (f, output_line);
         if (PREVIOUS (c) == stand_env) {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", in standard environ]") >= 0);
+          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", in standard environ") >= 0);
         } else {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", in level %d]", PREVIOUS (c)->level) >= 0);
+          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", in level %d", PREVIOUS (c)->level) >= 0);
         }
+        WRITE (f, output_line);
+        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %d increment]", c->ap_increment) >= 0);
         WRITE (f, output_line);
         if (c->moids != NULL) {
           xref_moids (f, c->moids);
@@ -2330,6 +2356,14 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
       }
       if (GENIE (p) != NULL && propagator_name (PROPAGATOR (p).unit) != NULL) {
         ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %s", propagator_name (PROPAGATOR (p).unit)) >= 0);
+        WRITE (f, output_line);
+      }
+      if (GENIE (p) != NULL && GENIE (p)->compile_name != NULL) {
+        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %s", GENIE (p)->compile_name) >= 0);
+        WRITE (f, output_line);
+      }
+      if (GENIE (p) != NULL && GENIE (p)->compile_node > 0) {
+        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %06d", GENIE (p)->compile_node) >= 0);
         WRITE (f, output_line);
       }
     }

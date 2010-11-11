@@ -321,11 +321,11 @@ struct A68_REF
 struct OPTIONS_T
 {
   OPTION_LIST_T *list;
-  BOOL_T backtrace, brackets, check_only, cross_reference, debug, compile, keep, moid_listing, 
+  BOOL_T backtrace, brackets, check_only, cross_reference, debug, compile, keep, mips, moid_listing, 
     object_listing, optimise, portcheck, pragmat_sema, reductions, regression_test, run, rerun,
     run_script, source_listing, standard_prelude_listing, statistics_listing, 
     strict, stropping, trace, tree_listing, unused, verbose, version; 
-  int time_limit; 
+  int time_limit, opt_level; 
   STATUS_MASK nodemask;
 };
 
@@ -1344,6 +1344,7 @@ extern void assign_offsets_table (SYMBOL_TABLE_T *);
 extern void bind_format_tags_to_tree (NODE_T *);
 extern void bind_routine_tags_to_tree (NODE_T *);
 extern void bind_tag (TAG_T **, TAG_T *);
+extern void bogus_mips (void);
 extern void bottom_up_error_check (NODE_T *);
 extern void bottom_up_parser (NODE_T *);
 extern void brief_mode_flat (FILE_T, MOID_T *);
