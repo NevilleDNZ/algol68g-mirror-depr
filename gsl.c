@@ -1,11 +1,11 @@
 /*!
-\file math.c
+\file gsl.c
 \brief vector, matrix and FFT support through GSL
 */
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,12 +20,13 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
-#include "algol68g.h"
-#include "interpreter.h"
-#include "gsl.h"
+#if defined HAVE_CONFIG_H
+#include "a68g-config.h"
+#endif
 
-#if defined ENABLE_NUMERICAL
+#include "a68g.h"
+
+#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
 
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_complex.h>
@@ -83,9 +84,9 @@ void gsl_permutation_set (const gsl_permutation * p, const size_t i, const size_
 void torrix_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_TORRIX, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -118,7 +119,7 @@ static gsl_permutation *pop_permutation (NODE_T * p, BOOL_T get)
   int len, inc, iindex, k;
   BYTE_T *base;
   gsl_permutation *v;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROW_INT));
   GET_DESCRIPTOR (arr, tup, &desc);
@@ -151,9 +152,9 @@ static void push_permutation (NODE_T * p, gsl_permutation * v)
   BYTE_T *base;
   len = (int) (v->size);
   desc = heap_generator (p, MODE (ROW_INT), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_INT), len * ALIGNED_SIZE_OF (A68_INT));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 1;
   MOID (&arr) = MODE (INT);
   arr.elem_size = ALIGNED_SIZE_OF (A68_INT);
@@ -173,8 +174,8 @@ static void push_permutation (NODE_T * p, gsl_permutation * v)
     STATUS (x) = INITIALISED_MASK;
     VALUE (x) = (int) gsl_permutation_get (v, (size_t) k);
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -193,7 +194,7 @@ static gsl_vector *pop_vector (NODE_T * p, BOOL_T get)
   int len, inc, iindex, k;
   BYTE_T *base;
   gsl_vector *v;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROW_REAL));
   GET_DESCRIPTOR (arr, tup, &desc);
@@ -226,9 +227,9 @@ static void push_vector (NODE_T * p, gsl_vector * v)
   BYTE_T *base;
   len = (int) (v->size);
   desc = heap_generator (p, MODE (ROW_REAL), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_REAL), len * ALIGNED_SIZE_OF (A68_REAL));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 1;
   MOID (&arr) = MODE (REAL);
   arr.elem_size = ALIGNED_SIZE_OF (A68_REAL);
@@ -249,8 +250,8 @@ static void push_vector (NODE_T * p, gsl_vector * v)
     VALUE (x) = gsl_vector_get (v, (size_t) k);
     CHECK_REAL_REPRESENTATION (p, VALUE (x));
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -269,7 +270,7 @@ static gsl_matrix *pop_matrix (NODE_T * p, BOOL_T get)
   int len1, len2, inc1, inc2, iindex1, iindex2, k1, k2;
   BYTE_T *base;
   gsl_matrix *a;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROWROW_REAL));
   GET_DESCRIPTOR (arr, tup1, &desc);
@@ -308,9 +309,9 @@ static void push_matrix (NODE_T * p, gsl_matrix * a)
   len1 = (int) (a->size1);
   len2 = (int) (a->size2);
   desc = heap_generator (p, MODE (ROWROW_REAL), ALIGNED_SIZE_OF (A68_ARRAY) + 2 * ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROWROW_REAL), len1 * len2 * ALIGNED_SIZE_OF (A68_REAL));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 2;
   MOID (&arr) = MODE (REAL);
   arr.elem_size = ALIGNED_SIZE_OF (A68_REAL);
@@ -339,8 +340,8 @@ static void push_matrix (NODE_T * p, gsl_matrix * a)
       CHECK_REAL_REPRESENTATION (p, VALUE (x));
     }
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -359,7 +360,7 @@ static gsl_vector_complex *pop_vector_complex (NODE_T * p, BOOL_T get)
   int len, inc, iindex, k;
   BYTE_T *base;
   gsl_vector_complex *v;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROW_COMPLEX));
   GET_DESCRIPTOR (arr, tup, &desc);
@@ -396,9 +397,9 @@ static void push_vector_complex (NODE_T * p, gsl_vector_complex * v)
   BYTE_T *base;
   len = (int) (v->size);
   desc = heap_generator (p, MODE (ROW_COMPLEX), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_COMPLEX), len * 2 * ALIGNED_SIZE_OF (A68_REAL));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 1;
   MOID (&arr) = MODE (COMPLEX);
   arr.elem_size = 2 * ALIGNED_SIZE_OF (A68_REAL);
@@ -423,8 +424,8 @@ static void push_vector_complex (NODE_T * p, gsl_vector_complex * v)
     VALUE (im) = GSL_IMAG (z);
     CHECK_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -442,7 +443,7 @@ static gsl_matrix_complex *pop_matrix_complex (NODE_T * p, BOOL_T get)
   A68_TUPLE *tup1, *tup2;
   int len1, len2;
   gsl_matrix_complex *a;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROWROW_COMPLEX));
   GET_DESCRIPTOR (arr, tup1, &desc);
@@ -485,9 +486,9 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
   len1 = (int) (a->size1);
   len2 = (int) (a->size2);
   desc = heap_generator (p, MODE (ROWROW_COMPLEX), ALIGNED_SIZE_OF (A68_ARRAY) + 2 * ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROWROW_COMPLEX), len1 * len2 * 2 * ALIGNED_SIZE_OF (A68_REAL));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 2;
   MOID (&arr) = MODE (COMPLEX);
   arr.elem_size = 2 * ALIGNED_SIZE_OF (A68_REAL);
@@ -520,8 +521,8 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
       CHECK_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
     }
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -2366,9 +2367,9 @@ void genie_matrix_ch_solve (NODE_T * p)
 void fft_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_FFT, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -2402,7 +2403,7 @@ static double *pop_array_real (NODE_T * p, int *len)
   BYTE_T *base;
   double *v;
   error_node = p;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROW_REAL));
   GET_DESCRIPTOR (arr, tup, &desc);
@@ -2438,9 +2439,9 @@ static void push_array_real (NODE_T * p, double *v, int len)
   BYTE_T *base;
   error_node = p;
   desc = heap_generator (p, MODE (ROW_REAL), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_REAL), len * ALIGNED_SIZE_OF (A68_REAL));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 1;
   MOID (&arr) = MODE (REAL);
   arr.elem_size = ALIGNED_SIZE_OF (A68_REAL);
@@ -2461,8 +2462,8 @@ static void push_array_real (NODE_T * p, double *v, int len)
     VALUE (x) = v[2 * k];
     CHECK_REAL_REPRESENTATION (p, VALUE (x));
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -2482,7 +2483,7 @@ static double *pop_array_complex (NODE_T * p, int *len)
   BYTE_T *base;
   double *v;
   error_node = p;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &desc);
   CHECK_REF (p, desc, MODE (ROW_COMPLEX));
   GET_DESCRIPTOR (arr, tup, &desc);
@@ -2520,9 +2521,9 @@ static void push_array_complex (NODE_T * p, double *v, int len)
   BYTE_T *base;
   error_node = p;
   desc = heap_generator (p, MODE (ROW_COMPLEX), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_COMPLEX), len * 2 * ALIGNED_SIZE_OF (A68_REAL));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 1;
   MOID (&arr) = MODE (COMPLEX);
   arr.elem_size = 2 * ALIGNED_SIZE_OF (A68_REAL);
@@ -2546,8 +2547,8 @@ static void push_array_complex (NODE_T * p, double *v, int len)
     VALUE (im) = v[2 * k + 1];
     CHECK_COMPLEX_REPRESENTATION (p, VALUE (re), VALUE (im));
   }
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
 }
 
@@ -2572,9 +2573,9 @@ void genie_prime_factors (NODE_T * p)
   wt = gsl_fft_complex_wavetable_alloc ((size_t) (VALUE (&n)));
   len = (int) (wt->nf);
   desc = heap_generator (p, MODE (ROW_INT), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  PROTECT_SWEEP_HANDLE (&desc);
+  BLOCK_GC_HANDLE (&desc);
   row = heap_generator (p, MODE (ROW_INT), len * ALIGNED_SIZE_OF (A68_INT));
-  PROTECT_SWEEP_HANDLE (&row);
+  BLOCK_GC_HANDLE (&row);
   DIM (&arr) = 1;
   MOID (&arr) = MODE (INT);
   arr.elem_size = ALIGNED_SIZE_OF (A68_INT);
@@ -2595,8 +2596,8 @@ void genie_prime_factors (NODE_T * p)
     VALUE (x) = (int) ((wt->factor)[k]);
   }
   gsl_fft_complex_wavetable_free (wt);
-  UNPROTECT_SWEEP_HANDLE (&desc);
-  UNPROTECT_SWEEP_HANDLE (&row);
+  UNBLOCK_GC_HANDLE (&desc);
+  UNBLOCK_GC_HANDLE (&row);
   PUSH_REF (p, desc);
   (void) gsl_set_error_handler (save_handler);
 }
@@ -2780,9 +2781,9 @@ void genie_fft_inverse (NODE_T * p)
 void laplace_error_handler (const char *reason, const char *file, int line, int gsl_errno)
 {
   if (line != 0) {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s in line %d of file %s", reason, line, file) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s", reason) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s", reason) >= 0);
   }
   diagnostic_node (A68_RUNTIME_ERROR, error_node, ERROR_LAPLACE, edit_line, gsl_strerror (gsl_errno), NULL);
   exit_genie (error_node, A68_RUNTIME_ERROR);
@@ -2862,4 +2863,4 @@ void genie_laplace (NODE_T * p)
   (void) gsl_set_error_handler (save_handler);
 }
 
-#endif /* ENABLE_NUMERICAL */
+#endif /* HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL */

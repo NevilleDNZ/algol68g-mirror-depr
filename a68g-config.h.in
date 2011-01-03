@@ -1,0 +1,257 @@
+/* a68g-config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the <curses.h> header file. */
+#undef HAVE_CURSES_H
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define this if FreeBSD was detected */
+#undef HAVE_FREEBSD
+
+/* Define this if GCC was detected */
+#undef HAVE_GCC
+
+/* Define to 1 if you have the <gsl/gsl_blas.h> header file. */
+#undef HAVE_GSL_GSL_BLAS_H
+
+/* Define to 1 if you have the <gsl/gsl_complex.h> header file. */
+#undef HAVE_GSL_GSL_COMPLEX_H
+
+/* Define to 1 if you have the <gsl/gsl_complex_math.h> header file. */
+#undef HAVE_GSL_GSL_COMPLEX_MATH_H
+
+/* Define to 1 if you have the <gsl/gsl_errno.h> header file. */
+#undef HAVE_GSL_GSL_ERRNO_H
+
+/* Define to 1 if you have the <gsl/gsl_fft_complex.h> header file. */
+#undef HAVE_GSL_GSL_FFT_COMPLEX_H
+
+/* Define to 1 if you have the <gsl/gsl_integration.h> header file. */
+#undef HAVE_GSL_GSL_INTEGRATION_H
+
+/* Define to 1 if you have the <gsl/gsl_linalg.h> header file. */
+#undef HAVE_GSL_GSL_LINALG_H
+
+/* Define to 1 if you have the <gsl/gsl_math.h> header file. */
+#undef HAVE_GSL_GSL_MATH_H
+
+/* Define to 1 if you have the <gsl/gsl_matrix.h> header file. */
+#undef HAVE_GSL_GSL_MATRIX_H
+
+/* Define to 1 if you have the <gsl/gsl_permutation.h> header file. */
+#undef HAVE_GSL_GSL_PERMUTATION_H
+
+/* Define to 1 if you have the <gsl/gsl_sf.h> header file. */
+#undef HAVE_GSL_GSL_SF_H
+
+/* Define to 1 if you have the <gsl/gsl_vector.h> header file. */
+#undef HAVE_GSL_GSL_VECTOR_H
+
+/* Define this if IEEE_754 compliant */
+#undef HAVE_IEEE_754
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
+/* Define to 1 if you have the `gsl' library (-lgsl). */
+#undef HAVE_LIBGSL
+
+/* Define to 1 if you have the `gslcblas' library (-lgslcblas). */
+#undef HAVE_LIBGSLCBLAS
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the `ncurses' library (-lncurses). */
+#undef HAVE_LIBNCURSES
+
+/* Define to 1 if you have the `plot' library (-lplot). */
+#undef HAVE_LIBPLOT
+
+/* Define to 1 if you have the `pq' library (-lpq). */
+#undef HAVE_LIBPQ
+
+/* Define to 1 if you have the <libpq-fe.h> header file. */
+#undef HAVE_LIBPQ_FE_H
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the `termcap' library (-ltermcap). */
+#undef HAVE_LIBTERMCAP
+
+/* Define this if LINUX was detected */
+#undef HAVE_LINUX
+
+/* Define this if DARWIN was detected */
+#undef HAVE_MACOS_X
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define this if OpenBSD was detected */
+#undef HAVE_OPENBSD
+
+/* Define to 1 if you have the <plot.h> header file. */
+#undef HAVE_PLOT_H
+
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
+/* Define to 1 if you have the <regex.h> header file. */
+#undef HAVE_REGEX_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <term.h> header file. */
+#undef HAVE_TERM_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Define to 1 if type `char' is unsigned and you are not using gcc.  */
+#ifndef __CHAR_UNSIGNED__
+# undef __CHAR_UNSIGNED__
+#endif
+
+/* Define to the type of an unsigned integer type of width exactly 16 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint16_t
+
+/* Define to empty if the keyword `volatile' does not work. Warning: valid
+   code using `volatile' can become incorrect without. Disable with care. */
+#undef volatile
+
+/* In case of incomplete GSL installation - tant pis */
+#if ! defined  HAVE_GSL_GSL_BLAS_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_COMPLEX_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_COMPLEX_MATH_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_ERRNO_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_FFT_COMPLEX_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_INTEGRATION_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_LINALG_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_MATH_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_MATRIX_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_PERMUTATION_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_SF_H
+#undef HAVE_LIBGSL
+#endif
+
+#if ! defined  HAVE_GSL_GSL_VECTOR_H
+#undef HAVE_LIBGSL
+#endif
+
+/* Do we have a compiler? */
+
+/* Linux has libdl */
+#if (defined HAVE_LINUX && defined HAVE_GCC && defined HAVE_DLFCN_H && defined HAVE_LIBDL)
+#define HAVE_COMPILER 1
+#endif
+
+/* MacOS X has libdl */
+#if (defined HAVE_MACOS_X && defined HAVE_GCC && defined HAVE_DLFCN_H && defined HAVE_LIBDL)
+#define HAVE_COMPILER 1
+#endif
+
+/* FreeBSD has libdl functionality in libc */
+#if (defined HAVE_FREEBSD && defined HAVE_GCC && defined HAVE_DLFCN_H)
+#define HAVE_COMPILER 1
+#endif
+
+ /* Can we access the internet? */
+#if (defined HAVE_NETDB_H && defined HAVE_NETINET_IN_H && defined HAVE_SYS_SOCKET_H)
+#define HAVE_HTTP
+#endif

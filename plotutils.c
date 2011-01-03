@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,9 +20,11 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
-#include "algol68g.h"
-#include "interpreter.h"
+#if defined HAVE_CONFIG_H
+#include "a68g-config.h"
+#endif
+
+#include "a68g.h"
 
 /*
 This file contains the Algol68G interface to libplot. Note that Algol68G is not
@@ -31,16 +33,7 @@ this file will give a runtime error when called. You can also choose to not
 define them in "prelude.c". 
 */
 
-#if defined ENABLE_GRAPHICS
-
-/*
-To use titles in an X-window you must enable ENABLE_X_TITLE and edit
-GNU libplot. See the INSTALL file. 
-*/
-
-#if defined ENABLE_X_TITLE
-extern char *XPLOT_APP_NAME;
-#endif
+#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
 
 #define MAXIMUM(x, y) ((x) > (y) ? (x) : (y))
 
@@ -746,7 +739,7 @@ static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
   char *z = (char *) ADDRESS (&z_ref);
   int i, j;
   BOOL_T k;
-/* First remove formatting from name: spaces and capitals are irrelevant. */
+/* First remove formatting from name: spaces and capitals are irrelevant */
   j = 0;
   for (i = 0; name[i] != NULL_CHAR; i++) {
     if (name[i] != BLANK_CHAR) {
@@ -754,7 +747,7 @@ static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
     }
     z[j] = 0;
   }
-/* Now search with the famous British Library Method. */
+/* Now search with the famous British Library Method */
   k = A68_FALSE;
   for (i = 0; i < COLOUR_NAMES && !k; i++) {
     if (!strcmp (A68_COLOURS[i].name, z)) {
@@ -796,7 +789,7 @@ void genie_make_device (NODE_T * p)
   int size;
   A68_REF ref_device, ref_page, ref_file;
   A68_FILE *file;
-/* Pop arguments. */
+/* Pop arguments */
   POP_REF (p, &ref_page);
   POP_REF (p, &ref_device);
   POP_REF (p, &ref_file);
@@ -806,21 +799,21 @@ void genie_make_device (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_ALREADY_SET);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-/* Fill in page_size. */
+/* Fill in page_size */
   size = a68_string_size (p, ref_page);
   if (INITIALISED (&(file->device.page_size)) && !IS_NIL (file->device.page_size)) {
-    UNPROTECT_SWEEP_HANDLE (&file->device.page_size);
+    UNBLOCK_GC_HANDLE (&file->device.page_size);
   }
   file->device.page_size = heap_generator (p, MODE (STRING), 1 + size);
-  PROTECT_SWEEP_HANDLE (&file->device.page_size);
+  BLOCK_GC_HANDLE (&file->device.page_size);
   ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->device.page_size)), ref_page) != NULL);
-/* Fill in device. */
+/* Fill in device */
   size = a68_string_size (p, ref_device);
   if (INITIALISED (&(file->device.device)) && !IS_NIL (file->device.device)) {
-    UNPROTECT_SWEEP_HANDLE (&file->device.device);
+    UNBLOCK_GC_HANDLE (&file->device.device);
   }
   file->device.device = heap_generator (p, MODE (STRING), 1 + size);
-  PROTECT_SWEEP_HANDLE (&file->device.device);
+  BLOCK_GC_HANDLE (&file->device.device);
   ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->device.device)), ref_device) != NULL);
   file->device.device_made = A68_TRUE;
   PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
@@ -846,10 +839,10 @@ BOOL_T close_device (NODE_T * p, A68_FILE * f)
   }
   if (f->device.device_made) {
     if (!IS_NIL (f->device.device)) {
-      UNPROTECT_SWEEP_HANDLE (&(f->device.device));
+      UNBLOCK_GC_HANDLE (&(f->device.device));
     }
     if (!IS_NIL (f->device.page_size)) {
-      UNPROTECT_SWEEP_HANDLE (&(f->device.page_size));
+      UNBLOCK_GC_HANDLE (&(f->device.page_size));
     }
   }
   if (pl_closepl_r (f->device.plotter) < 0) {
@@ -879,10 +872,10 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 {
   A68_REF ref_filename;
   char *filename, *device_type;
-/* First set up the general device, then plotter-specific things. */
+/* First set up the general device, then plotter-specific things */
   CHECK_INIT (p, INITIALISED (f), MODE (FILE));
   ref_filename = f->identification;
-/* This one in front as to quickly select the plotter. */
+/* This one in front as to quickly select the plotter */
   if (f->device.device_opened) {
     if (f->device.device_handle < 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_OPEN);
@@ -890,7 +883,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     }
     return (f->device.plotter);
   }
-/* Device not set up yet. */
+/* Device not set up yet */
   if (!f->opened) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_NOT_OPEN);
     exit_genie (p, A68_RUNTIME_ERROR);
@@ -921,7 +914,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 | Supported plotter type - X Window System |
 +-----------------------------------------*/
     char *z = (char *) ADDRESS (&(f->device.page_size)), size[BUFFER_SIZE];
-/* Establish page size. */
+/* Establish page size */
     if (!scan_int (&z, &(f->device.window_x_size))) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -934,14 +927,14 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-/* Make the X window. */
+/* Make the X window */
     f->fd = -1;
     f->device.plotter_params = pl_newplparams ();
     if (f->device.plotter_params == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_ALLOCATE);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-    ASSERT (snprintf (size, (size_t) BUFFER_SIZE, "%dx%d", f->device.window_x_size, f->device.window_y_size) >= 0);
+    ASSERT (snprintf (size, SNPRINTF_SIZE, "%dx%d", f->device.window_x_size, f->device.window_y_size) >= 0);
     (void) pl_setplparam (f->device.plotter_params, "BITMAPSIZE", size);
     (void) pl_setplparam (f->device.plotter_params, "BG_COLOR", (void *) "black");
     (void) pl_setplparam (f->device.plotter_params, "VANISH_ON_DELETE", (void *) "no");
@@ -952,13 +945,6 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_OPEN);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-#if defined ENABLE_X_TITLE
-/* To use this you must enable ENABLE_X_TITLE and edit GNU libplot.
-   See the INSTALL file. */
-    CHECK_REF (p, ref_filename, MODE (ROWS));
-    filename = (char *) ADDRESS (&ref_filename);
-    XPLOT_APP_NAME = filename;
-#endif
     if (pl_openpl_r (f->device.plotter) < 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_OPEN);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -980,7 +966,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 | Supported plotter type - Portable aNyMap |
 +-----------------------------------------*/
     char *z = (char *) ADDRESS (&(f->device.page_size)), size[BUFFER_SIZE];
-/* Establish page size. */
+/* Establish page size */
     if (!scan_int (&z, &(f->device.window_x_size))) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -993,7 +979,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-/* Open the output file for drawing. */
+/* Open the output file for drawing */
     CHECK_REF (p, ref_filename, MODE (ROWS));
     filename = (char *) ADDRESS (&ref_filename);
     RESET_ERRNO;
@@ -1006,8 +992,8 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       f->char_mood = A68_FALSE;
       f->draw_mood = A68_TRUE;
     }
-/* Set up plotter. */
-    ASSERT (snprintf (size, (size_t) BUFFER_SIZE, "%dx%d", f->device.window_x_size, f->device.window_y_size) >= 0);
+/* Set up plotter */
+    ASSERT (snprintf (size, SNPRINTF_SIZE, "%dx%d", f->device.window_x_size, f->device.window_y_size) >= 0);
     f->device.plotter_params = pl_newplparams ();
     if (f->device.plotter_params == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_ALLOCATE);
@@ -1041,7 +1027,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 | Supported plotter type - pseudo GIF |
 +------------------------------------*/
     char *z = (char *) ADDRESS (&(f->device.page_size)), size[BUFFER_SIZE];
-/* Establish page size. */
+/* Establish page size */
     if (!scan_int (&z, &(f->device.window_x_size))) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -1054,7 +1040,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-/* Open the output file for drawing. */
+/* Open the output file for drawing */
     CHECK_REF (p, ref_filename, MODE (ROWS));
     filename = (char *) ADDRESS (&ref_filename);
     RESET_ERRNO;
@@ -1067,13 +1053,13 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       f->char_mood = A68_FALSE;
       f->draw_mood = A68_TRUE;
     }
-/* Set up plotter. */
+/* Set up plotter */
     f->device.plotter_params = pl_newplparams ();
     if (f->device.plotter_params == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_ALLOCATE);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-    ASSERT (snprintf (size, (size_t) BUFFER_SIZE, "%dx%d", f->device.window_x_size, f->device.window_y_size) >= 0);
+    ASSERT (snprintf (size, SNPRINTF_SIZE, "%dx%d", f->device.window_x_size, f->device.window_y_size) >= 0);
     (void) pl_setplparam (f->device.plotter_params, "BITMAPSIZE", size);
     (void) pl_setplparam (f->device.plotter_params, "BG_COLOR", (void *) "black");
     (void) pl_setplparam (f->device.plotter_params, "GIF_ANIMATION", (void *) "no");
@@ -1105,7 +1091,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 /*------------------------------------+
 | Supported plotter type - Postscript |
 +------------------------------------*/
-/* Open the output file for drawing. */
+/* Open the output file for drawing */
     CHECK_REF (p, ref_filename, MODE (ROWS));
     filename = (char *) ADDRESS (&ref_filename);
     RESET_ERRNO;
@@ -1118,7 +1104,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       f->char_mood = A68_FALSE;
       f->draw_mood = A68_TRUE;
     }
-/* Set up ps plotter. */
+/* Set up ps plotter */
     f->device.plotter_params = pl_newplparams ();
     if (f->device.plotter_params == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_ALLOCATE);

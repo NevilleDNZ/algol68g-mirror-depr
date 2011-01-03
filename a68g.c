@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -27,16 +27,16 @@ Please refer to the documentation that comes with this distribution for a
 detailed description of Algol68G.
 */
 
-#include "config.h"
-#include "algol68g.h"
-#include "interpreter.h"
-#include "mp.h"
-#include "gsl.h"
+#if defined HAVE_CONFIG_H
+#include "a68g-config.h"
+#endif
 
-int global_argc; /* Keep argc and argv for reference from A68. */
+#include "a68g.h"
+
+int global_argc; /* Keep argc and argv for reference from A68 */
 char **global_argv;
 
-#if defined ENABLE_TERMINFO
+#if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
 #include <term.h>
 char term_buffer[2 * KILOBYTE];
 char *term_type;
@@ -52,7 +52,7 @@ clock_t clock_res;
 int stack_size;
 int symbol_table_count, mode_count;
 int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
-NODE_T **node_register;
+NODE_T **node_register = NULL;
 
 #define EXTENSIONS 11
 static char * extensions[EXTENSIONS] = {
@@ -67,11 +67,27 @@ static char * extensions[EXTENSIONS] = {
 static void announce_phase (char *);
 static void compiler_interpreter (void);
 
-#if defined ENABLE_COMPILER
+#if defined HAVE_COMPILER
 static void build_script (void);
 static void load_script (void);
 static void rewrite_script_source (void);
 #endif
+
+/*!
+\brief print k bytes from z; debugging routine
+\param z byte string
+\param k length
+**/
+
+void print_bytes (BYTE_T *z, int k)
+{
+  int j;
+  for (j = 0; j < k; j ++) {
+    printf ("%02x ", z[j]);
+    }
+  printf ("\n");
+  (void) fflush (stdout);
+}
 
 /*!
 \brief state license of running a68g image
@@ -81,16 +97,24 @@ static void rewrite_script_source (void);
 void state_license (FILE_T f)
 {
 #define P(s)\
-  ASSERT (snprintf(output_line, (size_t) BUFFER_SIZE, "%s\n", (s)) >= 0);\
+  ASSERT (snprintf(output_line, SNPRINTF_SIZE, "%s\n", (s)) >= 0);\
   WRITE (f, output_line);
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
   }
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Algol 68 Genie %s (%s), copyright 2001-%s J. Marcel van der Veer.\n", REVISION, RELEASE_DATE, RELEASE_YEAR) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
   WRITE (f, output_line);
-  P ("Algol 68 Genie is free software covered by the GNU General Public License.");
-  P ("There is ABSOLUTELY NO WARRANTY for Algol 68 Genie.");
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright (c) 2011 %s.\n", PACKAGE_BUGREPORT) >= 0);
+  WRITE (f, output_line);
+  P ("");
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie is free software covered by the GNU General Public License.\n") >= 0);
+  WRITE (f, output_line);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "There is ABSOLUTELY NO WARRANTY for Algol 68 Genie.\n") >= 0);
+  WRITE (f, output_line);
   P ("See the GNU General Public License for more details.");
+  P ("");
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Please report bugs to %s.\n", PACKAGE_BUGREPORT) >= 0);
+  WRITE (f, output_line);
   P ("");
 #undef P
 }
@@ -107,65 +131,65 @@ void state_version (FILE_T f)
   }
   state_license (f);
   WRITELN (f, "");
-#if ! defined ENABLE_WIN32
-#if defined __GNUC__ && defined GCC_VERSION
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Compiled on %s with gcc %s\n", OS_NAME, GCC_VERSION) >= 0);
+#if defined HAVE_COMPILER
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Interpreter and compiler are available\n") >= 0);
   WRITE (f, output_line);
 #else
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Compiled on %s\n", OS_NAME) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Interpreter is available, compiler is not available\n") >= 0);
   WRITE (f, output_line);
 #endif
-#endif
-#if ! defined ENABLE_WIN32
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Configured on %s with options \"%s\"\n", CONFIGURE_DATE, CONFIGURE_OPTIONS) >= 0);
-  WRITE (f, output_line);
-#if defined ENABLE_GRAPHICS && defined A68_LIBPLOT_VERSION
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "GNU libplot %s\n", A68_LIBPLOT_VERSION) >= 0);
+#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is available\n") >= 0);
   WRITE (f, output_line);
 #endif
-#if defined ENABLE_NUMERICAL && defined A68_GSL_VERSION
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "GNU Scientific Library %s\n", A68_GSL_VERSION) >= 0);
+#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libplot is available\n") >= 0);
   WRITE (f, output_line);
 #endif
-#if defined ENABLE_POSTGRESQL && defined A68_PG_VERSION
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "PostgreSQL libpq %s\n", A68_PG_VERSION) >= 0);
+#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU Scientific Library is available\n") >= 0);
   WRITE (f, output_line);
 #endif
+#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PostgreSQL is available\n") >= 0);
+  WRITE (f, output_line);
 #endif
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Alignment %d bytes\n", A68_ALIGNMENT) >= 0);
+/*
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Alignment %d bytes\n", A68_ALIGNMENT) >= 0);
   WRITE (f, output_line);
   default_mem_sizes ();
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Default frame stack size: %d kB\n", frame_stack_size / KILOBYTE) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default frame stack size: %d kB\n", frame_stack_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Default expression stack size: %d kB\n", expr_stack_size / KILOBYTE) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default expression stack size: %d kB\n", expr_stack_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Default heap size: %d kB\n", heap_size / KILOBYTE) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default heap size: %d kB\n", heap_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Default handle pool size: %d kB\n", handle_pool_size / KILOBYTE) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default handle pool size: %d kB\n", handle_pool_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Default stack overhead: %d kB\n", storage_overhead / KILOBYTE) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default stack overhead: %d kB\n", storage_overhead / KILOBYTE) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Effective system stack size: %d kB\n", stack_size / KILOBYTE) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Effective system stack size: %d kB\n", stack_size / KILOBYTE) >= 0);
   WRITE (f, output_line);
+*/
 }
 
 /*!
-\brief give brief help if someone types 'a68g -help'
+\brief give brief help if someone types 'a68g --help'
 \param f file number
 **/
 
 void online_help (FILE_T f)
 {
 #define P(s)\
-  ASSERT (snprintf(output_line, (size_t) BUFFER_SIZE, "%s\n", (s)) >= 0);\
+  ASSERT (snprintf(output_line, SNPRINTF_SIZE, "%s\n", (s)) >= 0);\
   WRITE (f, output_line);
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
   }
   state_license (f);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Usage: %s [options | filename]", a68g_cmd_name) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Usage: %s [options | filename]", a68g_cmd_name) >= 0);
   WRITELN (f, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "For help: %s -apropos [keyword]", a68g_cmd_name) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "For help: %s -apropos [keyword]", a68g_cmd_name) >= 0);
   WRITELN (f, output_line);
 }
 
@@ -182,21 +206,17 @@ int main (int argc, char *argv[])
   int argcc, k;
   global_argc = argc;
   global_argv = argv;
-/* Get command name and discard path. */
+/* Get command name and discard path */
   bufcpy (a68g_cmd_name, argv[0], BUFFER_SIZE);
   for (k = (int) strlen (a68g_cmd_name) - 1; k >= 0; k--) {
-#if defined ENABLE_WIN32
-    char delim = '\\';
-#else
     char delim = '/';
-#endif
     if (a68g_cmd_name[k] == delim) {
       MOVE (&a68g_cmd_name[0], &a68g_cmd_name[k + 1], (int) strlen (a68g_cmd_name) - k + 1);
       k = -1;
     }
   }
-/* Try to read maximum line width on the terminal. */
-#if defined ENABLE_TERMINFO
+/* Try to read maximum line width on the terminal */
+#if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
   term_type = getenv ("TERM");
   if (term_type == NULL) {
     term_width = MAX_LINE_WIDTH;
@@ -211,7 +231,7 @@ int main (int argc, char *argv[])
 #else
   term_width = MAX_LINE_WIDTH;
 #endif
-/* Determine clock resolution. */
+/* Determine clock resolution */
   {
     clock_t t0 = clock (), t1;
     do {
@@ -219,25 +239,25 @@ int main (int argc, char *argv[])
     } while (t1 == t0);
     clock_res = (t1 - t0) / (clock_t) CLOCKS_PER_SEC;
   }
-/* Set the main thread id. */
-#if defined ENABLE_PAR_CLAUSE
+/* Set the main thread id */
+#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
   main_thread_id = pthread_self ();
 #endif
-  get_fixed_heap_allowed = A68_TRUE;
+  heap_is_fluid = A68_TRUE;
   system_stack_offset = &stack_offset;
   if (!setjmp (program.exit_compilation)) {
     init_tty ();
-/* Initialise option handling. */
+/* Initialise option handling */
     init_options ();
     program.source_scan = 1;
     default_options ();
     default_mem_sizes ();
-/* Initialise core. */
+/* Initialise core */
     stack_segment = NULL;
     heap_segment = NULL;
     handle_segment = NULL;
     get_stack_size ();
-/* Well, let's start. */
+/* Well, let's start */
     program.top_refinement = NULL;
     program.files.initial_name = NULL;
     program.files.generic_name = NULL;
@@ -247,10 +267,10 @@ int main (int argc, char *argv[])
     program.files.library.name = NULL;
     program.files.binary.name = NULL;
     program.files.script.name = NULL;
-/* Options are processed here. */
+/* Options are processed here */
     read_rc_options ();
     read_env_options ();
-/* Posix copies arguments from the command line. */
+/* Posix copies arguments from the command line */
     if (argc <= 1) {
       online_help (STDOUT_FILENO);
       a68g_exit (EXIT_FAILURE);
@@ -264,7 +284,7 @@ int main (int argc, char *argv[])
     if (program.options.regression_test) {
       bufcpy (a68g_cmd_name, "a68g", BUFFER_SIZE);
     }
-/* Attention for --version. */
+/* Attention for --version */
     if (program.options.version) {
       state_version (STDOUT_FILENO);
     }
@@ -273,12 +293,14 @@ int main (int argc, char *argv[])
      bogus_mips ();
    }
 /* Running a script */
+#if defined HAVE_COMPILER
    if (program.options.run_script) {
      load_script ();
    }
-/* We translate the program. */
+#endif
+/* We translate the program */
     if (program.files.initial_name == NULL || strlen (program.files.initial_name) == 0) {
-      SCAN_ERROR (!program.options.version, NULL, NULL, ERROR_NO_SOURCE_FILE);
+      SCAN_ERROR (!(program.options.version || program.options.mips), NULL, NULL, ERROR_NO_SOURCE_FILE);
     } else {
       compiler_interpreter ();
     }
@@ -358,14 +380,14 @@ static void open_with_extensions (void)
 
 static void init_before_tokeniser (void)
 {
-/* Heap management set-up. */
+/* Heap management set-up */
   init_heap ();
   top_keyword = NULL;
   top_token = NULL;
   program.top_node = NULL;
   program.top_line = NULL;
   set_up_tables ();
-/* Various initialisations. */
+/* Various initialisations */
   program.error_count = program.warning_count = 0;
   RESET_ERRNO;
 }
@@ -376,11 +398,11 @@ static void init_before_tokeniser (void)
 
 char *pretty_size (int k) {
   if (k >= 10 * MEGABYTE) {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%dM", k / MEGABYTE) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%dM", k / MEGABYTE) >= 0);
   } else if (k >= 10 * KILOBYTE) {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%dk", k / KILOBYTE) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%dk", k / KILOBYTE) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%d", k) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%d", k) >= 0);
   }
   return (edit_line);
 }
@@ -412,7 +434,7 @@ static void compiler_interpreter (void)
   new_node_infos = 0;
   new_genie_infos = 0;
   init_postulates ();
-/* File set-up. */
+/* File set-up */
   SCAN_ERROR (program.files.initial_name == NULL, NULL, NULL, ERROR_NO_SOURCE_FILE);
   program.files.binary.opened = A68_FALSE;
   program.files.binary.writemood = A68_TRUE;
@@ -439,15 +461,11 @@ Accept various silent extensions.
   }
   ABEND (program.files.source.name == NULL, "no source file name", NULL);
   ABEND (program.files.generic_name == NULL, "no generic file name", NULL);
-/* Isolate the path name. */
+/* Isolate the path name */
   program.files.path = new_string (program.files.generic_name);
   path_set = A68_FALSE;
   for (k = (int) strlen (program.files.path); k >= 0 && path_set == A68_FALSE; k--) {
-#if defined ENABLE_WIN32
-    char delim = '\\';
-#else
     char delim = '/';
-#endif
     if (program.files.path[k] == delim) {
       program.files.path[k + 1] = NULL_CHAR;
       path_set = A68_TRUE;
@@ -456,7 +474,7 @@ Accept various silent extensions.
   if (path_set == A68_FALSE) {
     program.files.path[0] = NULL_CHAR;
   }
-/* Object file. */
+/* Object file */
   len = 1 + (int) strlen (program.files.generic_name) + (int) strlen (OBJECT_EXTENSION);
   program.files.object.name = (char *) get_heap_space ((size_t) len);
   bufcpy (program.files.object.name, program.files.generic_name, len);
@@ -466,12 +484,12 @@ Accept various silent extensions.
   program.files.binary.name = (char *) get_heap_space ((size_t) len);
   bufcpy (program.files.binary.name, program.files.generic_name, len);
   bufcat (program.files.binary.name, BINARY_EXTENSION, len);
-/* Library file. */
+/* Library file */
   len = 1 + (int) strlen (program.files.generic_name) + (int) strlen (LIBRARY_EXTENSION);
   program.files.library.name = (char *) get_heap_space ((size_t) len);
   bufcpy (program.files.library.name, program.files.generic_name, len);
   bufcat (program.files.library.name, LIBRARY_EXTENSION, len);
-/* Listing file. */
+/* Listing file */
   len = 1 + (int) strlen (program.files.generic_name) + (int) strlen (LISTING_EXTENSION);
   program.files.listing.name = (char *) get_heap_space ((size_t) len);
   bufcpy (program.files.listing.name, program.files.generic_name, len);
@@ -481,7 +499,7 @@ Accept various silent extensions.
   program.files.script.name = (char *) get_heap_space ((size_t) len);
   bufcpy (program.files.script.name, program.files.generic_name, len);
   bufcat (program.files.script.name, SCRIPT_EXTENSION, len);
-/* Tokeniser. */
+/* Tokeniser */
   program.files.source.opened = A68_TRUE;
   announce_phase ("initialiser");
   init_before_tokeniser ();
@@ -498,7 +516,7 @@ Accept various silent extensions.
       diagnostics_to_terminal (program.top_line, A68_ALL_DIAGNOSTICS);
       return;
     }
-/* Maybe the program asks for more memory through a PRAGMAT. We restart. */
+/* Maybe the program asks for more memory through a PRAGMAT. We restart */
     if (frame_stack_size_2 != frame_stack_size || expr_stack_size_2 != expr_stack_size || heap_size_2 != heap_size || handle_pool_size_2 != handle_pool_size) {
       discard_heap ();
       init_before_tokeniser ();
@@ -517,7 +535,7 @@ Accept various silent extensions.
     num = 0;
     renumber_nodes (program.top_node, &num);
   }
-/* Final initialisations. */
+/* Final initialisations */
   if (program.error_count == 0) {
     stand_env = NULL;
     init_postulates ();
@@ -531,7 +549,7 @@ Accept various silent extensions.
     make_special_mode (&MODE (COLLITEM), mode_count++);
     make_special_mode (&MODE (SOUND_DATA), mode_count++);
   }
-/* Refinement preprocessor. */
+/* Refinement preprocessor */
   if (program.error_count == 0) {
     announce_phase ("preprocessor");
     get_refinements ();
@@ -542,7 +560,7 @@ Accept various silent extensions.
     renumber_nodes (program.top_node, &num);
     verbosity ();
   }
-/* Top-down parser. */
+/* Top-down parser */
   if (program.error_count == 0) {
     announce_phase ("parser phase 1");
     check_parenthesis (program.top_node);
@@ -552,21 +570,21 @@ Accept various silent extensions.
       }
       symbol_table_count = 0;
       stand_env = new_symbol_table (NULL);
-      stand_env->level = 0;
+      LEVEL (stand_env) = 0;
       top_down_parser (program.top_node);
     }
     num = 0;
     renumber_nodes (program.top_node, &num);
     verbosity ();
   }
-/* Standard environment builder. */
+/* Standard environment builder */
   if (program.error_count == 0) {
     announce_phase ("standard environ builder");
     SYMBOL_TABLE (program.top_node) = new_symbol_table (stand_env);
     make_standard_environ ();
     verbosity ();
   }
-/* Bottom-up parser. */
+/* Bottom-up parser */
   if (program.error_count == 0) {
     announce_phase ("parser phase 2");
     preliminary_symbol_table_setup (program.top_node);
@@ -584,7 +602,7 @@ Accept various silent extensions.
       SYMBOL_TABLE (program.top_node)->nest = symbol_table_count = 3;
       reset_symbol_table_nest_count (program.top_node);
       fill_symbol_table_outer (program.top_node, SYMBOL_TABLE (program.top_node));
-#if defined ENABLE_PAR_CLAUSE
+#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
       set_par_level (program.top_node, 0);
 #endif
       set_nest (program.top_node, NULL);
@@ -594,20 +612,20 @@ Accept various silent extensions.
     renumber_nodes (program.top_node, &num);
     verbosity ();
   }
-/* Mode table builder. */
+/* Mode table builder */
   if (program.error_count == 0) {
     announce_phase ("mode table builder");
     set_up_mode_table (program.top_node);
     verbosity ();
   }
   program.cross_reference_safe = /* (BOOL_T) (program.error_count == 0) */ A68_TRUE;
-/* Symbol table builder. */
+/* Symbol table builder */
   if (program.error_count == 0) {
     announce_phase ("symbol table builder");
     collect_taxes (program.top_node);
     verbosity ();
   }
-/* Post parser. */
+/* Post parser */
   if (program.error_count == 0) {
     announce_phase ("parser phase 4");
     rearrange_goto_less_jumps (program.top_node);
@@ -615,19 +633,19 @@ Accept various silent extensions.
     renumber_nodes (program.top_node, &num);
     verbosity ();
   }
-/* Mode checker. */
+/* Mode checker */
   if (program.error_count == 0) {
     announce_phase ("mode checker");
     mode_checker (program.top_node);
     maintain_mode_table (program.top_node);
     verbosity ();
   }
-/* Coercion inserter. */
+/* Coercion inserter */
   if (program.error_count == 0) {
     announce_phase ("coercion enforcer");
     coercion_inserter (program.top_node);
     widen_denotation (program.top_node);
-    protect_from_sweep (program.top_node);
+    protect_from_gc (program.top_node);
     reset_max_simplout_size ();
     get_max_simplout_size (program.top_node);
     reset_moid_list ();
@@ -640,7 +658,7 @@ Accept various silent extensions.
     renumber_nodes (program.top_node, &num);
     verbosity ();
   }
-/* Application checker. */
+/* Application checker */
   if (program.error_count == 0) {
     announce_phase ("application checker");
     mark_moids (program.top_node);
@@ -650,7 +668,7 @@ Accept various silent extensions.
     warn_tags_threads (program.top_node);
     verbosity ();
   }
-/* Scope checker. */
+/* Scope checker */
   if (program.error_count == 0) {
     announce_phase ("static scope checker");
     tie_label_to_serial (program.top_node);
@@ -660,13 +678,13 @@ Accept various silent extensions.
     scope_checker (program.top_node);
     verbosity ();
   }
-/* Portability checker. */
+/* Portability checker */
   if (program.error_count == 0) {
     announce_phase ("portability checker");
     portcheck (program.top_node);
     verbosity ();
   }
-/* Finalise syntax tree. */
+/* Finalise syntax tree */
   if (program.error_count == 0) {
     num = 0;
     renumber_nodes (program.top_node, &num);
@@ -674,7 +692,7 @@ Accept various silent extensions.
     reset_symbol_table_nest_count (program.top_node);
     verbosity ();
   }
-/* Compiler. */
+/* Compiler */
   if (program.error_count == 0 && program.options.optimise) {
     announce_phase ("optimiser (code generator)");
     num = 0;
@@ -690,60 +708,83 @@ Accept various silent extensions.
     program.files.object.opened = A68_FALSE;
     emitted = A68_TRUE;
   }
-#if defined ENABLE_COMPILER
+#if defined HAVE_COMPILER
 /* Only compile C if the A68 compiler found no errors (constant folder for instance) */
   if (program.error_count == 0 && program.options.optimise && !program.options.run_script) {
-    int ret;
-    char cmd[BUFFER_SIZE];
+    char cmd[BUFFER_SIZE], *optimisation, *extra_inc;
+    extra_inc = "-I. -I/usr/local/pgsql/include -I/opt/local/pgsql/include";
+    switch (program.options.opt_level) {
+      case 0: {
+        optimisation = "-O0";
+        break;
+      }
+      case 1: {
+        optimisation = "-O1";
+        break;
+      }
+      case 2: {
+        optimisation = "-O2";
+        break;
+      }
+      case 3: {
+        optimisation = "-O3";
+        break;
+      }
+      default: {
+        optimisation = "-O2";
+        break;
+      }
+    }
     if (program.options.rerun == A68_FALSE) {
       announce_phase ("optimiser (code compiler)");
-/* Build shared library using gcc. */
-      ABEND (GCC_VERSION == 0, "compiler requires gcc", "use option --nocompile"); 
-#ifdef ENABLE_PAR_CLAUSE
-      ASSERT (snprintf (cmd, BUFFER_SIZE, "gcc -DENABLE_PAR_CLAUSE -c %s -o \"%s.o\" \"%s\"", GCC_OPTIONS, program.files.generic_name, program.files.object.name) >= 0);
-#else
-      ASSERT (snprintf (cmd, BUFFER_SIZE, "gcc -c %s -o \"%s\" \"%s\"", GCC_OPTIONS, program.files.binary.name, program.files.object.name) >= 0);
+/*
+Build shared library using gcc.
+FIXME: One day this should be all portable between platforms ... 
+*/
+#if (defined HAVE_LINUX || defined HAVE_FREEBSD)
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s %s -g -c -o \"%s\" \"%s\"", extra_inc, optimisation, program.files.binary.name, program.files.object.name) >= 0);
+      ABEND (system (cmd) != 0, "cannot compile", cmd);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", program.files.library.name, program.files.binary.name) >= 0);
+      ABEND (system (cmd) != 0, "cannot link", cmd);
+      ABEND (remove (program.files.binary.name) != 0, "cannot remove", cmd);
+#elif defined HAVE_MACOS_X
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s %s -g -fPIC -fno-common -dynamic -c -o \"%s\" \"%s\"", extra_inc, optimisation, program.files.binary.name, program.files.object.name) >= 0);
+      ABEND (system (cmd) != 0, "cannot compile", cmd);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "libtool -dynamic -flat_namespace -undefined suppress -o %s %s", program.files.library.name, program.files.binary.name) >= 0);
+      ABEND (system (cmd) != 0, "cannot link", cmd);
+      ABEND (remove (program.files.binary.name) != 0, "cannot remove", cmd);
 #endif
-      ret = system (cmd);
-      ABEND (ret != 0, "gcc cannot compile", cmd);
-#if defined ENABLE_LINUX
-      ASSERT (snprintf (cmd, BUFFER_SIZE, "gcc -shared -o \"%s\" \"%s\"", program.files.library.name, program.files.binary.name) >= 0);
-      ret = system (cmd);
-      ABEND (ret != 0, "gcc cannot link", cmd);
-#elif defined ENABLE_MACOSX
-      ASSERT (snprintf (cmd, BUFFER_SIZE, "libtool %s -o %s %s", LIBTOOL_OPTIONS, program.files.library.name, program.files.binary.name) >= 0);
-      ret = system (cmd);
-      ABEND (ret != 0, "libtool cannot link", cmd);
-#else
-      ABEND (ret != 0, "cannot link", cmd);
-#endif
-      ret = remove (program.files.binary.name);
-      ABEND (ret != 0, "cannot remove", cmd);
     }
     verbosity ();
   }
+#else
+  if (program.options.optimise) {
+    diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, program.top_node, WARNING_OPTIMISATION, NULL);
+  }
 #endif
-/* Interpreter. */
+/* Interpreter */
   diagnostics_to_terminal (program.top_line, A68_ALL_DIAGNOSTICS);
   if (program.error_count == 0 && program.options.compile == A68_FALSE && (program.options.check_only ? program.options.run : A68_TRUE)) {
-#ifdef ENABLE_COMPILER
+#if defined HAVE_COMPILER
   void * compile_lib;
 #endif
+#if defined HAVE_COMPILER
     if (program.options.run_script) {
       rewrite_script_source ();
     }
+#endif
     if (program.options.debug) {
       state_license (STDOUT_FILENO);
     }
-#ifdef ENABLE_COMPILER
+#if defined HAVE_COMPILER
     if (program.options.optimise) {
       char libname[BUFFER_SIZE];
       void * a68g_lib;
       struct stat srcstat, objstat;
       int ret;
       announce_phase ("dynamic linker");
-      ASSERT (snprintf (libname, BUFFER_SIZE, "./%s", program.files.library.name) >= 0);
-/* Check whether we are doing something rash. */
+      ASSERT (snprintf (libname, SNPRINTF_SIZE, "./%s", program.files.library.name) >= 0);
+/* Check whether we are doing something rash */
       ret = stat (program.files.source.name, &srcstat);
       ABEND (ret != 0, "cannot stat", program.files.source.name);
       ret = stat (libname, &objstat);
@@ -751,10 +792,10 @@ Accept various silent extensions.
       if (program.options.rerun) {
         ABEND (srcstat.st_mtime > objstat.st_mtime, "source file is younger than library", "do not specify RERUN");
       }
-/* First load a68g itself so compiler code can resolve a68g symbols. */
+/* First load a68g itself so compiler code can resolve a68g symbols */
       a68g_lib = dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
       ABEND (a68g_lib == NULL, "compiler cannot resolve a68g symbols", dlerror ());
-/* Then load compiler code. */
+/* Then load compiler code */
       compile_lib = dlopen (libname, RTLD_NOW | RTLD_GLOBAL);
       ABEND (compile_lib == NULL, "compiler cannot resolve symbols", dlerror ());
     } else {
@@ -762,7 +803,7 @@ Accept various silent extensions.
     }
     announce_phase ("genie");
     genie (compile_lib);
-/* Unload compiler library. */
+/* Unload compiler library */
     if (program.options.optimise) {
       int ret = dlclose (compile_lib);
       ABEND (ret != 0, "cannot close shared library", dlerror ());
@@ -770,18 +811,18 @@ Accept various silent extensions.
 #else
     genie (NULL);
 #endif
-/* Free heap allocated by genie. */
+/* Free heap allocated by genie */
     free_genie_heap (program.top_node);
-/* Normal end of program. */
+/* Normal end of program */
     diagnostics_to_terminal (program.top_line, A68_RUNTIME_ERROR);
-    if (program.options.debug || program.options.trace) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\nGenie finished in %.2f seconds\n", seconds () - cputime_0) >= 0);
+    if (program.options.debug || program.options.trace || program.options.clock) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\nGenie finished in %.2f seconds\n", seconds () - cputime_0) >= 0);
       WRITE (STDOUT_FILENO, output_line);
     }
-    /* ASSERT (block_heap_compacter == 0); fails in case we jumped out of a RTS routine! */
+    /* ASSERT (block_gc == 0); fails in case we jumped out of a RTS routine! */
     verbosity ();
   }
-/* Setting up listing file. */
+/* Setting up listing file */
   if (program.options.moid_listing || program.options.tree_listing || program.options.source_listing || program.options.object_listing || program.options.statistics_listing) {
     program.files.listing.fd = open (program.files.listing.name, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
     ABEND (program.files.listing.fd == -1, "cannot open listing file", NULL);
@@ -789,12 +830,13 @@ Accept various silent extensions.
   } else {
     program.files.listing.opened = A68_FALSE;
   }
-/* Write listing. */
+/* Write listing */
   if (program.files.listing.opened) {
     write_listing_header ();
     write_source_listing ();
     write_tree_listing ();
     if (program.error_count == 0 && program.options.optimise) {
+      heap_is_fluid = A68_TRUE;
       write_object_listing ();
     }
     write_listing ();
@@ -803,7 +845,7 @@ Accept various silent extensions.
     verbosity ();
   }
 /* Cleaning up the intermediate files */
-#if defined ENABLE_COMPILER
+#if defined HAVE_COMPILER
   if (program.options.run_script && !program.options.keep) {
     if (emitted) {
       ABEND (remove (program.files.object.name) != 0, "cannot remove", program.files.object.name);
@@ -841,10 +883,10 @@ void a68g_exit (int code)
   bufcat (name, ".x", BUFFER_SIZE);
   /* (void) (remove (name)); */
   io_close_tty_line ();
-#if defined ENABLE_CURSES
+#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
 /* "curses" might still be open if it was not closed from A68, or the program
    was interrupted, or a runtime error occured. That wreaks havoc on your
-   terminal. */
+   terminal */
   genie_curses_end (NULL);
 #endif
   exit (code);
@@ -858,13 +900,13 @@ void a68g_exit (int code)
 static void announce_phase (char *t)
 {
   if (program.options.verbose) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s", a68g_cmd_name, t) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: %s", a68g_cmd_name, t) >= 0);
     io_close_tty_line ();
     WRITE (STDOUT_FILENO, output_line);
   }
 }
 
-#if defined ENABLE_COMPILER
+#if defined HAVE_COMPILER
 
 /*!
 \brief build shell script from program
@@ -876,64 +918,64 @@ static void build_script (void)
   FILE_T script, source;
   SOURCE_LINE_T *sl;
   char cmd[BUFFER_SIZE];
-#if ! defined ENABLE_COMPILER
+#if ! defined HAVE_COMPILER
   return;
 #endif
   announce_phase ("script builder");
 /* Flatten the source file */
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.source.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.source.name) >= 0);
   source = open (cmd, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
   ABEND (source == -1, "cannot flatten source file", cmd);
   for (sl = program.top_line; sl != NULL; FORWARD (sl)) {
     if (strlen (sl->string) == 0 || (sl->string)[strlen (sl->string) - 1] != NEWLINE_CHAR) {
-      ASSERT (snprintf (cmd, BUFFER_SIZE, "%s\n%d\n%s\n", sl->filename, NUMBER (sl), sl->string) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s\n%d\n%s\n", sl->filename, NUMBER (sl), sl->string) >= 0);
     } else {
-      ASSERT (snprintf (cmd, BUFFER_SIZE, "%s\n%d\n%s", sl->filename, NUMBER (sl), sl->string) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s\n%d\n%s", sl->filename, NUMBER (sl), sl->string) >= 0);
     }
     WRITE (source, cmd);
   }
   ASSERT (close (source) == 0);
 /* Compress source and library */
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "cp %s %s.%s", program.files.library.name, HIDDEN_TEMP_FILE_NAME, program.files.library.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cp %s %s.%s", program.files.library.name, HIDDEN_TEMP_FILE_NAME, program.files.library.name) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, "cannot copy", cmd);
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "tar czf %s.%s.tgz %s.%s %s.%s", HIDDEN_TEMP_FILE_NAME, program.files.generic_name, HIDDEN_TEMP_FILE_NAME, program.files.source.name, HIDDEN_TEMP_FILE_NAME, program.files.library.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "tar czf %s.%s.tgz %s.%s %s.%s", HIDDEN_TEMP_FILE_NAME, program.files.generic_name, HIDDEN_TEMP_FILE_NAME, program.files.source.name, HIDDEN_TEMP_FILE_NAME, program.files.library.name) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, "cannot compress", cmd);
 /* Compose script */
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.script.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.script.name) >= 0);
   script = open (cmd, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
   ABEND (script == -1, "cannot compose script file", cmd);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "#! %s/a68g --run-script\n", INSTALL_BIN) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! %s/a68g --run-script\n", BINDIR) >= 0);
   WRITE (script, output_line);
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s\n--verify \"%s\"\n", program.files.generic_name, VERIFICATION) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s\n--verify \"%s\"\n", program.files.generic_name, PACKAGE_STRING) >= 0);
   WRITE (script, output_line);
   ASSERT (close (script) == 0);
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "cat %s.%s %s.%s.tgz > %s", HIDDEN_TEMP_FILE_NAME, program.files.script.name, HIDDEN_TEMP_FILE_NAME, program.files.generic_name, program.files.script.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cat %s.%s %s.%s.tgz > %s", HIDDEN_TEMP_FILE_NAME, program.files.script.name, HIDDEN_TEMP_FILE_NAME, program.files.generic_name, program.files.script.name) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, "cannot compose script file", cmd);
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s", program.files.script.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s", program.files.script.name) >= 0);
   ret = chmod (cmd, (__mode_t) (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH)); /* -rwx-r--r-- */
   ABEND (ret != 0, "cannot compose script file", cmd);
   ABEND (ret != 0, "cannot remove", cmd);
 /* Clean up */
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s.tgz", HIDDEN_TEMP_FILE_NAME, program.files.generic_name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s.tgz", HIDDEN_TEMP_FILE_NAME, program.files.generic_name) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, "cannot remove", cmd);
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.source.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.source.name) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, "cannot remove", cmd);
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.library.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.library.name) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, "cannot remove", cmd);
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.script.name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.script.name) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, "cannot remove", cmd);
 }
 
 #endif
 
-#if defined ENABLE_COMPILER
+#if defined HAVE_COMPILER
 
 /*!
 \brief load program from shell script 
@@ -944,12 +986,12 @@ static void load_script (void)
   int k;
   FILE_T script;
   char cmd[BUFFER_SIZE], ch;
-#if ! defined ENABLE_COMPILER
+#if ! defined HAVE_COMPILER
   return;
 #endif
   announce_phase ("script loader");
 /* Decompress the archive */
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "sed '1,3d' < %s | tar xzf -", program.files.initial_name) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "sed '1,3d' < %s | tar xzf -", program.files.initial_name) >= 0);
   ABEND (system (cmd) != 0, "cannot decompress", cmd);
 /* Reread the header */
   script = open (program.files.initial_name, O_RDONLY);
@@ -968,7 +1010,7 @@ static void load_script (void)
     ASSERT (io_read (script, &ch, 1) == 1);
   }
   input_line[k] = NULL_CHAR;
-  ASSERT (snprintf (cmd, BUFFER_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, input_line) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, input_line) >= 0);
   program.files.initial_name = new_string (cmd);
 /* Read options */
   input_line[0] = NULL_CHAR;
@@ -985,7 +1027,7 @@ static void load_script (void)
 
 #endif
 
-#if defined ENABLE_COMPILER
+#if defined HAVE_COMPILER
 
 /*!
 \brief rewrite source for shell script 
@@ -1002,7 +1044,7 @@ static void rewrite_script_source (void)
   for (ref_l = program.top_line; ref_l != NULL; FORWARD (ref_l)) {
     WRITE (source, ref_l->string);
     if (strlen (ref_l->string) == 0 || (ref_l->string)[strlen (ref_l->string - 1)] != NEWLINE_CHAR) {
-      WRITE (source, "\n");
+      WRITE (source, NEWLINE_STRING);
     }
   }
 /* Wrap it up */
@@ -1036,10 +1078,12 @@ void default_options (void)
   program.options.backtrace = A68_FALSE;
   program.options.brackets = A68_FALSE;
   program.options.check_only = A68_FALSE;
+  program.options.clock = A68_FALSE;
   program.options.compile = A68_FALSE;
   program.options.cross_reference = A68_FALSE;
   program.options.debug = A68_FALSE;
   program.options.keep = A68_FALSE;
+  program.options.local = A68_FALSE;
   program.options.mips = A68_FALSE;
   program.options.moid_listing = A68_FALSE;
   program.options.nodemask = (STATUS_MASK) (ASSERT_MASK | SOURCE_MASK);
@@ -1075,14 +1119,14 @@ void default_options (void)
 static void option_error (SOURCE_LINE_T * l, char *option, char *info)
 {
   int k;
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", option) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", option) >= 0);
   for (k = 0; output_line[k] != NULL_CHAR; k++) {
     output_line[k] = (char) TO_LOWER (output_line[k]);
   }
   if (info != NULL) {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "%s option \"%s\"", info, output_line) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s option \"%s\"", info, output_line) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, (size_t) BUFFER_SIZE, "error in option \"%s\"", output_line) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "error in option \"%s\"", output_line) >= 0);
   }
   scan_error (l, NULL, edit_line);
 }
@@ -1141,7 +1185,7 @@ void init_options (void)
 
 static BOOL_T eq (char *p, char *q)
 {
-/* Upper case letters in 'q' are mandatory, lower case must match. */
+/* Upper case letters in 'q' are mandatory, lower case must match */
   if (program.options.pragmat_sema) {
     return (match_string (p, q, '='));
   } else {
@@ -1159,13 +1203,13 @@ void prune_echoes (OPTION_LIST_T * i)
   while (i != NULL) {
     if (i->scan == program.source_scan) {
       char *p = strip_sign (i->str);
-/* ECHO echoes a string. */
+/* ECHO echoes a string */
       if (eq (p, "ECHO")) {
         {
           char *car = a68g_strchr (p, '=');
           if (car != NULL) {
             io_close_tty_line ();
-            ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", &car[1]) >= 0);
+            ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", &car[1]) >= 0);
             WRITE (STDOUT_FILENO, output_line);
           } else {
             FORWARD (i);
@@ -1175,7 +1219,7 @@ void prune_echoes (OPTION_LIST_T * i)
               }
               if (i != NULL) {
                 io_close_tty_line ();
-                ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", i->str) >= 0);
+                ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", i->str) >= 0);
                 WRITE (STDOUT_FILENO, output_line);
               }
             }
@@ -1202,7 +1246,7 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
   char *car = NULL, *num = NULL;
   int k, mult = 1;
   *error = A68_FALSE;
-/* Fetch argument. */
+/* Fetch argument */
   car = a68g_strchr (p, '=');
   if (car == NULL) {
     FORWARD (*i);
@@ -1217,14 +1261,14 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
   } else {
     num = &car[1];
   }
-/* Translate argument into integer. */
+/* Translate argument into integer */
   if (*error) {
     option_error (start_l, start_c, NULL);
     return (0);
   } else {
     char *postfix;
     RESET_ERRNO;
-    k = strtol (num, &postfix, 0);      /* Accept also octal and hex. */
+    k = strtol (num, &postfix, 0);      /* Accept also octal and hex */
     *error = (BOOL_T) (postfix == num);
     if (errno != 0 || *error) {
       option_error (start_l, start_c, NULL);
@@ -1233,7 +1277,7 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
       option_error (start_l, start_c, NULL);
       *error = A68_TRUE;
     } else {
-/* Accept postfix multipliers: 32k, 64M, 1G. */
+/* Accept postfix multipliers: 32k, 64M, 1G */
       if (postfix != NULL) {
         switch (postfix[0]) {
         case NULL_CHAR:
@@ -1293,14 +1337,14 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
   OPTION_LIST_T *j = i;
   RESET_ERRNO;
   while (i != NULL && go_on) {
-/* Once SCRIPT is processed we skip options on the command line. */
+/* Once SCRIPT is processed we skip options on the command line */
     if (cmd_line && skip) {
       FORWARD (i);
     } else {
       SOURCE_LINE_T *start_l = i->line;
       char *start_c = i->str;
       int n = (int) strlen (i->str);
-/* Allow for spaces ending in # to have A68 comment syntax with '#!'. */
+/* Allow for spaces ending in # to have A68 comment syntax with '#!' */
       while (n > 0 && (IS_SPACE((i->str)[n - 1]) || (i->str)[n - 1] == '#')) {
         (i->str)[--n] = NULL_CHAR;
       }
@@ -1311,7 +1355,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         if (!minus_sign && eq (p, "#")) {
           ;
         } else if (!minus_sign && cmd_line) {
-/* Item without '-'s is a filename. */
+/* Item without '-'s is a filename */
           if (!name_set) {
             program.files.initial_name = new_string (p);
             name_set = A68_TRUE;
@@ -1319,7 +1363,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (NULL, start_c, "will not reset initial file name by");
           }
         }
-/* Preprocessor items stop option processing. */
+/* Preprocessor items stop option processing */
         else if (eq (p, "INCLUDE")) {
           go_on = A68_FALSE;
         } else if (eq (p, "READ")) {
@@ -1329,19 +1373,19 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NOPREPROCESSOR")) {
           go_on = A68_FALSE;
         }
-/* EXIT stops option processing. */
+/* EXIT stops option processing */
         else if (eq (p, "EXIT")) {
           go_on = A68_FALSE;
         }
-/* MIPS gives a bogus mips rating. */
+/* MIPS gives a bogus mips rating */
         else if (eq (p, "MIPS")) {
           program.options.mips = A68_TRUE;
         }
-/* Empty item (from specifying '-' or '--') stops option processing. */
+/* Empty item (from specifying '-' or '--') stops option processing */
         else if (eq (p, "")) {
           go_on = A68_FALSE;
         }
-/* FILE accepts its argument as filename. */
+/* FILE accepts its argument as filename */
         else if (eq (p, "File") && cmd_line) {
           FORWARD (i);
           if (i != NULL && strcmp (i->str, "=") == 0) {
@@ -1359,7 +1403,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
         }
 /* SCRIPT takes next argument as filename.
-   Further options on the command line are not processed, but stored. */
+   Further options on the command line are not processed, but stored */
         else if (eq (p, "Script") && cmd_line) {
           FORWARD (i);
           if (i != NULL) {
@@ -1374,20 +1418,20 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           skip = A68_TRUE;
         }
-/* VERIFY checks that argument is current a68g version number. */
+/* VERIFY checks that argument is current a68g version number */
         else if (eq (p, "VERIFY")) {
           FORWARD (i);
           if (i != NULL && strcmp (i->str, "=") == 0) {
             FORWARD (i);
           }
           if (i != NULL) {
-            ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s verification \"%s\" does not match script verification \"%s\"", a68g_cmd_name, VERIFICATION, i->str) >= 0);
-            ABEND (strcmp (VERIFICATION, i->str) != 0, new_string (output_line), "rebuild the script");
+            ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s verification \"%s\" does not match script verification \"%s\"", a68g_cmd_name, PACKAGE_STRING, i->str) >= 0);
+            ABEND (strcmp (PACKAGE_STRING, i->str) != 0, new_string (output_line), "rebuild the script");
           } else {
             option_error (start_l, start_c, NULL);
           }
         }
-/* HELP gives online help. */
+/* HELP gives online help */
         else if ((eq (p, "APropos") || eq (p, "Help") || eq (p, "INfo")) && cmd_line) {
           FORWARD (i);
           if (i != NULL && strcmp (i->str, "=") == 0) {
@@ -1400,7 +1444,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           a68g_exit (EXIT_SUCCESS);
         }
-/* ECHO is treated later. */
+/* ECHO is treated later */
         else if (eq (p, "ECHO")) {
           if (a68g_strchr (p, '=') == NULL) {
             FORWARD (i);
@@ -1411,7 +1455,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             }
           }
         }
-/* EXECUTE and PRINT execute their argument as Algol 68 text. */
+/* EXECUTE and PRINT execute their argument as Algol 68 text */
         else if (eq (p, "Execute") || eq (p, "Print")) {
           if (cmd_line == A68_FALSE) {
             option_error (start_l, start_c, "not at command line when encountering");
@@ -1441,11 +1485,11 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, NULL);
           }
         }
-/* HEAP, HANDLES, STACK, FRAME and OVERHEAD  set core allocation. */
+/* HEAP, HANDLES, STACK, FRAME and OVERHEAD  set core allocation */
         else if (eq (p, "HEAP") || eq (p, "HANDLES") || eq (p, "STACK") || eq (p, "FRAME") || eq (p, "OVERHEAD")) {
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
-/* Adjust size. */
+/* Adjust size */
           if (error || errno > 0) {
             option_error (start_l, start_c, NULL);
           } else if (k > 0) {
@@ -1466,11 +1510,11 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             }
           }
         }
-/* COMPILE and NOCOMPILE switch on/off compilation. */
+/* COMPILE and NOCOMPILE switch on/off compilation */
         else if (eq (p, "Compile")) {
           program.options.compile = A68_TRUE;
           program.options.optimise = A68_TRUE;
-          program.options.opt_level = 1;
+          program.options.opt_level = 2;
           program.options.run_script = A68_FALSE;
         } else if (eq (p, "NOCompile")) {
           program.options.compile = A68_FALSE;
@@ -1483,19 +1527,31 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           program.options.opt_level = 0;
           program.options.run_script = A68_FALSE;
         }
-/* OPTIMISE and NOOPTIMISE switch on/off optimisation. */
-        else if (eq (p, "Optimise")) {
+/* OPTIMISE and NOOPTIMISE switch on/off optimisation */
+        else if (eq (p, "OPTimise")) {
+          program.options.optimise = A68_TRUE;
+          program.options.opt_level = 2;
+        } else if (eq (p, "O0")) { 
+          program.options.optimise = A68_TRUE;
+          program.options.opt_level = 0;
+        } else if (eq (p, "O")) {
           program.options.optimise = A68_TRUE;
           program.options.opt_level = 1;
+        } else if (eq (p, "O1")) {
+          program.options.optimise = A68_TRUE;
+          program.options.opt_level = 1;
+        } else if (eq (p, "O2")) {
+          program.options.optimise = A68_TRUE;
+          program.options.opt_level = 2;
+        } else if (eq (p, "O3")) {
+          program.options.optimise = A68_TRUE;
+          program.options.opt_level = 3;
         } else if (eq (p, "NOOptimise")) {
           program.options.optimise = A68_FALSE;
           program.options.opt_level = 0;
         } else if (eq (p, "NO-Optimise")) {
           program.options.optimise = A68_FALSE;
           program.options.opt_level = 0;
-        } else if (eq (p, "Optimize")) {
-          program.options.optimise = A68_TRUE;
-          program.options.opt_level = 1;
         } else if (eq (p, "NOOptimize")) {
           program.options.optimise = A68_FALSE;
           program.options.opt_level = 0;
@@ -1503,12 +1559,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           program.options.optimise = A68_FALSE;
           program.options.opt_level = 0;
         }
-/* Optimisation level 2 */
-        else if (eq (p, "O2")) {
-          program.options.optimise = A68_TRUE;
-          program.options.opt_level = 2;
-        }
-/* RUN-SCRIPT runs a comiled .sh script. */
+/* RUN-SCRIPT runs a comiled .sh script */
         else if (eq (p, "RUN-SCRIPT")) {
           FORWARD (i);
           if (i != NULL) {
@@ -1525,13 +1576,15 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           program.options.run_script = A68_TRUE;
           program.options.compile = A68_FALSE;
           program.options.optimise = A68_TRUE;
+          program.options.opt_level = 2;
         } 
-/* RERUN re-uses an existing .so file. */
+/* RERUN re-uses an existing .so file */
         else if (eq (p, "RERUN")) {
           program.options.rerun = A68_TRUE;
           program.options.optimise = A68_TRUE;
+          program.options.opt_level = 2;
         } 
-/* KEEP and NOKEEP switch off/on object file deletion. */
+/* KEEP and NOKEEP switch off/on object file deletion */
         else if (eq (p, "KEEP")) {
           program.options.keep = A68_TRUE;
         } else if (eq (p, "NOKEEP")) {
@@ -1539,7 +1592,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-KEEP")) {
           program.options.keep = A68_FALSE;
         }
-/* BRACKETS extends Algol 68 syntax for brackets. */
+/* BRACKETS extends Algol 68 syntax for brackets */
         else if (eq (p, "BRackets")) {
           program.options.brackets = A68_TRUE;
         }
@@ -1547,64 +1600,73 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "REDuctions")) {
           program.options.reductions = A68_TRUE;
         }
-/* QUOTESTROPPING sets stropping to quote stropping. */
+/* QUOTESTROPPING sets stropping to quote stropping */
         else if (eq (p, "QUOTEstropping")) {
           program.options.stropping = QUOTE_STROPPING;
         } else if (eq (p, "QUOTE-stropping")) {
           program.options.stropping = QUOTE_STROPPING;
         }
-/* UPPERSTROPPING sets stropping to upper stropping, which is nowadays the expected default. */
+/* UPPERSTROPPING sets stropping to upper stropping, which is nowadays the expected default */
         else if (eq (p, "UPPERstropping")) {
           program.options.stropping = UPPER_STROPPING;
         } else if (eq (p, "UPPER-stropping")) {
           program.options.stropping = UPPER_STROPPING;
         }
-/* CHECK and NORUN just check for syntax. */
+/* CHECK and NORUN just check for syntax */
         else if (eq (p, "Check") || eq (p, "NORun") || eq (p, "NO-Run")) {
           program.options.check_only = A68_TRUE;
         }
-/* RUN overrides NORUN. */
+/* CLOCK times program execution */
+        else if (eq (p, "CLock")) {
+          program.options.clock = A68_TRUE;
+        }
+/* RUN overrides NORUN */
         else if (eq (p, "RUN")) {
           program.options.run = A68_TRUE;
         }
-/* MONITOR or DEBUG invokes the debugger at runtime errors. */
+/* MONITOR or DEBUG invokes the debugger at runtime errors */
         else if (eq (p, "MONitor") || eq (p, "DEBUG")) {
           program.options.debug = A68_TRUE;
         }
-/* REGRESSION is an option that sets preferences when running the Algol68G test suite. */
+/* REGRESSION is an option that sets preferences when running the test suite - undocumented option */
         else if (eq (p, "REGRESSION")) {
           no_warnings = A68_FALSE;
           program.options.portcheck = A68_TRUE;
           program.options.regression_test = A68_TRUE;
           program.options.time_limit = 30;
+          program.options.keep = A68_TRUE;
           term_width = MAX_LINE_WIDTH;
         }
-/* NOWARNINGS switches warnings off. */
+/* LOCAL assumes include files in the current directory - undocumented option */
+        else if (eq (p, "LOCal")) {
+          program.options.local = A68_TRUE;
+        }
+/* NOWARNINGS switches warnings off */
         else if (eq (p, "NOWarnings")) {
           no_warnings = A68_TRUE;
         } else if (eq (p, "NO-Warnings")) {
           no_warnings = A68_TRUE;
         }
-/* WARNINGS switches warnings on. */
+/* WARNINGS switches warnings on */
         else if (eq (p, "Warnings")) {
           no_warnings = A68_FALSE;
         }
-/* NOPORTCHECK switches portcheck off. */
+/* NOPORTCHECK switches portcheck off */
         else if (eq (p, "NOPORTcheck")) {
           program.options.portcheck = A68_FALSE;
         } else if (eq (p, "NO-PORTcheck")) {
           program.options.portcheck = A68_FALSE;
         }
-/* PORTCHECK switches portcheck on. */
+/* PORTCHECK switches portcheck on */
         else if (eq (p, "PORTcheck")) {
           program.options.portcheck = A68_TRUE;
         }
-/* PEDANTIC switches portcheck and warnings on. */
+/* PEDANTIC switches portcheck and warnings on */
         else if (eq (p, "PEDANTIC")) {
           program.options.portcheck = A68_TRUE;
           no_warnings = A68_FALSE;
         }
-/* PRAGMATS and NOPRAGMATS switch on/off pragmat processing. */
+/* PRAGMATS and NOPRAGMATS switch on/off pragmat processing */
         else if (eq (p, "PRagmats")) {
           program.options.pragmat_sema = A68_TRUE;
         } else if (eq (p, "NOPRagmats")) {
@@ -1612,20 +1674,20 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-PRagmats")) {
           program.options.pragmat_sema = A68_FALSE;
         }
-/* STRICT ignores A68G extensions to A68 syntax. */
+/* STRICT ignores A68G extensions to A68 syntax */
         else if (eq (p, "STRict")) {
           program.options.strict = A68_TRUE;
           program.options.portcheck = A68_TRUE;
         }
-/* VERBOSE in case you want to know what Algol68G is doing. */
+/* VERBOSE in case you want to know what Algol68G is doing */
         else if (eq (p, "VERBose")) {
           program.options.verbose = A68_TRUE;
         }
-/* VERSION lists the current version at an appropriate time in the future. */
+/* VERSION lists the current version at an appropriate time in the future */
         else if (eq (p, "Version")) {
           program.options.version = A68_TRUE;
         }
-/* XREF and NOXREF switch on/off a cross reference. */
+/* XREF and NOXREF switch on/off a cross reference */
         else if (eq (p, "Xref")) {
           program.options.source_listing = A68_TRUE;
           program.options.cross_reference = A68_TRUE;
@@ -1635,11 +1697,11 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-Xref")) {
           program.options.nodemask &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
         }
-/* PRELUDELISTING cross references preludes, if they ever get implemented ... */
+/* PRELUDELISTING cross references preludes, if they ever get implemented .. */
         else if (eq (p, "PRELUDElisting")) {
           program.options.standard_prelude_listing = A68_TRUE;
         }
-/* STATISTICS prints process statistics. */
+/* STATISTICS prints process statistics */
         else if (eq (p, "STatistics")) {
           program.options.statistics_listing = A68_TRUE;
         }
@@ -1653,11 +1715,11 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-TREE")) {
           program.options.nodemask ^= (TREE_MASK | SOURCE_MASK);
         }
-/* UNUSED indicates unused tags. */
+/* UNUSED indicates unused tags */
         else if (eq (p, "UNUSED")) {
           program.options.unused = A68_TRUE;
         }
-/* EXTENSIVE set of options for an extensive listing. */
+/* EXTENSIVE set of options for an extensive listing */
         else if (eq (p, "EXTensive")) {
           program.options.source_listing = A68_TRUE;
           program.options.object_listing = A68_TRUE;
@@ -1669,20 +1731,20 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           program.options.unused = A68_TRUE;
           program.options.nodemask |= (CROSS_REFERENCE_MASK | TREE_MASK | CODE_MASK | SOURCE_MASK);
         }
-/* LISTING set of options for a default listing. */
+/* LISTING set of options for a default listing */
         else if (eq (p, "Listing")) {
           program.options.source_listing = A68_TRUE;
           program.options.cross_reference = A68_TRUE;
           program.options.statistics_listing = A68_TRUE;
           program.options.nodemask |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
         }
-/* TTY send listing to standout. Remnant from my mainframe past. */
+/* TTY send listing to standout. Remnant from my mainframe past */
         else if (eq (p, "TTY")) {
           program.options.cross_reference = A68_TRUE;
           program.options.statistics_listing = A68_TRUE;
           program.options.nodemask |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
         }
-/* SOURCE and NOSOURCE print source lines. */
+/* SOURCE and NOSOURCE print source lines */
         else if (eq (p, "SOURCE")) {
           program.options.source_listing = A68_TRUE;
           program.options.nodemask |= SOURCE_MASK;
@@ -1691,7 +1753,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-SOURCE")) {
           program.options.nodemask &= ~SOURCE_MASK;
         }
-/* OBJECT and NOOBJECT print object lines. */
+/* OBJECT and NOOBJECT print object lines */
         else if (eq (p, "OBJECT")) {
           program.options.object_listing = A68_TRUE;
         } else if (eq (p, "NOOBJECT")) {
@@ -1699,11 +1761,11 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-OBJECT")) {
           program.options.object_listing = A68_FALSE;
         }
-/* MOIDS prints an overview of moids used in the program. */
+/* MOIDS prints an overview of moids used in the program */
         else if (eq (p, "MOIDS")) {
           program.options.moid_listing = A68_TRUE;
         }
-/* ASSERTIONS and NOASSERTIONS switch on/off the processing of assertions. */
+/* ASSERTIONS and NOASSERTIONS switch on/off the processing of assertions */
         else if (eq (p, "Assertions")) {
           program.options.nodemask |= ASSERT_MASK;
         } else if (eq (p, "NOAssertions")) {
@@ -1711,7 +1773,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-Assertions")) {
           program.options.nodemask &= ~ASSERT_MASK;
         }
-/* PRECISION sets the precision. */
+/* PRECISION sets the precision */
         else if (eq (p, "PRECision")) {
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
@@ -1731,7 +1793,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, NULL);
           }
         }
-/* BACKTRACE and NOBACKTRACE switch on/off stack backtracing. */
+/* BACKTRACE and NOBACKTRACE switch on/off stack backtracing */
         else if (eq (p, "BACKtrace")) {
           program.options.backtrace = A68_TRUE;
         } else if (eq (p, "NOBACKtrace")) {
@@ -1739,7 +1801,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-BACKtrace")) {
           program.options.backtrace = A68_FALSE;
         }
-/* BREAK and NOBREAK switch on/off tracing of the running program. */
+/* BREAK and NOBREAK switch on/off tracing of the running program */
         else if (eq (p, "BReakpoint")) {
           program.options.nodemask |= BREAKPOINT_MASK;
         } else if (eq (p, "NOBReakpoint")) {
@@ -1747,7 +1809,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-BReakpoint")) {
           program.options.nodemask &= ~BREAKPOINT_MASK;
         }
-/* TRACE and NOTRACE switch on/off tracing of the running program. */
+/* TRACE and NOTRACE switch on/off tracing of the running program */
         else if (eq (p, "TRace")) {
           program.options.trace = A68_TRUE;
           program.options.nodemask |= BREAKPOINT_TRACE_MASK;
@@ -1756,7 +1818,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "NO-TRace")) {
           program.options.nodemask &= ~BREAKPOINT_TRACE_MASK;
         }
-/* TIMELIMIT lets the interpreter stop after so-many seconds. */
+/* TIMELIMIT lets the interpreter stop after so-many seconds */
         else if (eq (p, "TImelimit") || eq (p, "TIME-Limit")) {
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
@@ -1768,17 +1830,17 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             program.options.time_limit = k;
           }
         } else {
-/* Unrecognised. */
+/* Unrecognised */
           option_error (start_l, start_c, "unrecognised");
         }
       }
-/* Go processing next item, if present. */
+/* Go processing next item, if present */
       if (i != NULL) {
         FORWARD (i);
       }
     }
   }
-/* Mark options as processed. */
+/* Mark options as processed */
   for (; j != NULL; FORWARD (j)) {
     j->processed = A68_TRUE;
   }
@@ -1795,7 +1857,7 @@ void default_mem_sizes (void)
   expr_stack_size = MEGABYTE;
   heap_size = 24 * MEGABYTE;
   handle_pool_size = 4 * MEGABYTE;
-  storage_overhead = 512 * KILOBYTE;
+  storage_overhead = MIN_MEM_SIZE;
 }
 
 /*!
@@ -1851,13 +1913,13 @@ void isolate_options (char *p, SOURCE_LINE_T * line)
   char *q;
 /* 'q' points at first significant char in item .*/
   while (p[0] != NULL_CHAR) {
-/* Skip white space ... */
+/* Skip white space .. */
     while ((p[0] == BLANK_CHAR || p[0] == TAB_CHAR || p[0] == ',') && p[0] != NULL_CHAR) {
       p++;
     }
-/* ... then tokenise an item. */
+/* ... then tokenise an item */
     if (p[0] != NULL_CHAR) {
-/* Item can be "string". Note that these are not A68 strings. */
+/* Item can be "string". Note that these are not A68 strings */
       if (p[0] == QUOTE_CHAR || p[0] == '\'' || p[0] == '`') {
         char delim = p[0];
         p++;
@@ -1866,20 +1928,20 @@ void isolate_options (char *p, SOURCE_LINE_T * line)
           p++;
         }
         if (p[0] != NULL_CHAR) {
-          p[0] = NULL_CHAR;     /* p[0] was delimiter. */
+          p[0] = NULL_CHAR;     /* p[0] was delimiter */
           p++;
         } else {
           scan_error (line, NULL, ERROR_UNTERMINATED_STRING);
         }
       } else {
-/* Item is not a delimited string. */
+/* Item is not a delimited string */
         q = p;
 /* Tokenise symbol and gather it in the option list for later processing.
-   Skip '='s, we accept if someone writes -prec=60 -heap=8192. */
+   Skip '='s, we accept if someone writes -prec=60 -heap=8192 */
         if (*q == '=') {
           p++;
         } else {
-          /* Skip item. */
+          /* Skip item */
           while (p[0] != BLANK_CHAR && p[0] != NULL_CHAR && p[0] != '=' && p[0] != ',') {
             p++;
           }
@@ -1889,7 +1951,7 @@ void isolate_options (char *p, SOURCE_LINE_T * line)
           p++;
         }
       }
-/* 'q' points to first significant char in item, and 'p' points after item. */
+/* 'q' points to first significant char in item, and 'p' points after item */
       add_option_list (&(program.options.list), q, line);
     }
   }
@@ -1910,7 +1972,7 @@ char *bar[BUFFER_SIZE];
 static char *brief_mode_string (MOID_T * p)
 {
   static char q[BUFFER_SIZE];
-  ASSERT (snprintf (q, BUFFER_SIZE, "MODE_%d", NUMBER (p)) >= 0);
+  ASSERT (snprintf (q, SNPRINTF_SIZE, "MODE_%d", NUMBER (p)) >= 0);
   return (new_string (q));
 }
 
@@ -1933,10 +1995,10 @@ void brief_mode_flat (FILE_T f, MOID_T * z)
         WRITE (f, "SHORT ");
       }
     }
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", SYMBOL (NODE (z))) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", SYMBOL (NODE (z))) >= 0);
     WRITE (f, output_line);
   } else {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", brief_mode_string (z)) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", brief_mode_string (z)) >= 0);
     WRITE (f, output_line);
   }
 }
@@ -1952,7 +2014,7 @@ static void brief_fields_flat (FILE_T f, PACK_T * pack)
   if (pack != NULL) {
     brief_mode_flat (f, MOID (pack));
     if (NEXT (pack) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", ") >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", ") >= 0);
       WRITE (f, output_line);
       brief_fields_flat (f, NEXT (pack));
     }
@@ -2031,38 +2093,38 @@ void print_mode_flat (FILE_T f, MOID_T * m)
   if (m != NULL) {
     brief_moid_flat (f, m);
     if (m->equivalent_mode != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", equi: %s", brief_mode_string (EQUIVALENT (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", equi: %s", brief_mode_string (EQUIVALENT (m))) >= 0);
       WRITE (f, output_line);
     }
     if (SLICE (m) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", slice: %s", brief_mode_string (SLICE (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", slice: %s", brief_mode_string (SLICE (m))) >= 0);
       WRITE (f, output_line);
     }
     if (ROWED (m) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", rowed: %s", brief_mode_string (ROWED (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", rowed: %s", brief_mode_string (ROWED (m))) >= 0);
       WRITE (f, output_line);
     }
     if (DEFLEXED (m) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", deflex: %s", brief_mode_string (DEFLEXED (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", deflex: %s", brief_mode_string (DEFLEXED (m))) >= 0);
       WRITE (f, output_line);
     }
     if (MULTIPLE (m) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", multiple: %s", brief_mode_string (MULTIPLE (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", multiple: %s", brief_mode_string (MULTIPLE (m))) >= 0);
       WRITE (f, output_line);
     }
     if (NAME (m) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", name: %s", brief_mode_string (NAME (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", name: %s", brief_mode_string (NAME (m))) >= 0);
       WRITE (f, output_line);
     }
     if (TRIM (m) != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", trim: %s", brief_mode_string (TRIM (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", trim: %s", brief_mode_string (TRIM (m))) >= 0);
       WRITE (f, output_line);
     }
     if (m->use == A68_FALSE) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", unused") >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", unused") >= 0);
       WRITE (f, output_line);
     }
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", size: %d", MOID_SIZE (m)) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", size: %d", MOID_SIZE (m)) >= 0);
     WRITE (f, output_line);
   }
 }
@@ -2080,39 +2142,39 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
     NODE_T *where_tag = NODE (s);
     if ((where_tag != NULL) && ((STATUS_TEST (where_tag, CROSS_REFERENCE_MASK)) || TAG_TABLE (s) == stand_env)) {
       WRITE (f, "\n     ");
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "tag %d ", NUMBER (s)) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "tag %d ", NUMBER (s)) >= 0);
       WRITE (f, output_line);
       switch (a) {
       case IDENTIFIER:
         {
           brief_moid_flat (f, MOID (s));
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, " %s", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, " %s", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
           break;
         }
       case INDICANT:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Indicant %s ", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Indicant %s ", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       case PRIO_SYMBOL:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Priority %s %d", SYMBOL (NODE (s)), PRIO (s)) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Priority %s %d", SYMBOL (NODE (s)), PRIO (s)) >= 0);
           WRITE (f, output_line);
           break;
         }
       case OP_SYMBOL:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Operator %s ", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Operator %s ", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       case LABEL:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Label %s", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Label %s", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
           break;
         }
@@ -2121,32 +2183,32 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
           switch (PRIO (s)) {
           case ROUTINE_TEXT:
             {
-              ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Routine text ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Routine text ") >= 0);
               break;
             }
           case FORMAT_TEXT:
             {
-              ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Format text ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Format text ") >= 0);
               break;
             }
           case FORMAT_IDENTIFIER:
             {
-              ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Format item ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Format item ") >= 0);
               break;
             }
           case COLLATERAL_CLAUSE:
             {
-              ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Display ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Display ") >= 0);
               break;
             }
           case GENERATOR:
             {
-              ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Generator ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Generator ") >= 0);
               break;
             }
-          case PROTECT_FROM_SWEEP:
+          case BLOCK_GC_REF:
             {
-              ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Sweep protect ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Sweep protect ") >= 0);
               break;
             }
           }
@@ -2156,18 +2218,18 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
         }
       default:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Internal %d ", a) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Internal %d ", a) >= 0);
           WRITE (f, output_line);
           brief_moid_flat (f, MOID (s));
           break;
         }
       }
-      if (NODE (s) != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", node %d", NUMBER (NODE (s))) >= 0);
+      if (NODE (s) != NULL && NUMBER (NODE (s)) > 0) {
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", node %d", NUMBER (NODE (s))) >= 0);
         WRITE (f, output_line);
       }
       if (where_tag != NULL && where_tag->info != NULL && where_tag->info->line != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", line %d", LINE_NUMBER (where_tag)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", line %d", LINE_NUMBER (where_tag)) >= 0);
         WRITE (f, output_line);
       }
     }
@@ -2211,7 +2273,7 @@ static void xref_decs (FILE_T f, SYMBOL_TABLE_T * t)
 static void xref1_moid (FILE_T f, MOID_T * p)
 {
   if (/* USE (p) && */ (EQUIVALENT (p) == NULL || SHOW_EQ)) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n     %s ", brief_mode_string (p)) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     %s ", brief_mode_string (p)) >= 0);
     WRITE (f, output_line);
     print_mode_flat (f, p);
   }
@@ -2256,15 +2318,15 @@ static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
     for (; p != NULL; FORWARD (p)) {
       if (whether_new_lexical_level (p) && l == LINE (p)) {
         SYMBOL_TABLE_T *c = SYMBOL_TABLE (SUB (p));
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n[level %d", c->level) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n[level %d", LEVEL (c)) >= 0);
         WRITE (f, output_line);
         if (PREVIOUS (c) == stand_env) {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", in standard environ") >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", in standard environ") >= 0);
         } else {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", in level %d", PREVIOUS (c)->level) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", in level %d", LEVEL (PREVIOUS (c))) >= 0);
         }
         WRITE (f, output_line);
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %d increment]", c->ap_increment) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %d increment]", c->ap_increment) >= 0);
         WRITE (f, output_line);
         if (c->moids != NULL) {
           xref_moids (f, c->moids);
@@ -2297,7 +2359,7 @@ static void write_symbols (FILE_T f, NODE_T * p, int *count)
       if (*count == 5) {
         WRITE (f, "...");
       } else {
-        ASSERT (snprintf(output_line, (size_t) BUFFER_SIZE, "%s", SYMBOL (p)) >= 0);
+        ASSERT (snprintf(output_line, SNPRINTF_SIZE, "%s", SYMBOL (p)) >= 0);
         WRITE (f, output_line);
       }
     }
@@ -2323,47 +2385,51 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
       if (*ld < 0) {
         *ld = x;
       }
-/* Indent. */
+/* Indent */
       WRITE (f, "\n     ");
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%02u %06u p%02u ", (unsigned) x, (unsigned) NUMBER (p), (unsigned) INFO (p)->PROCEDURE_LEVEL) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02u %06u p%02u ", (unsigned) x, (unsigned) NUMBER (p), (unsigned) INFO (p)->PROCEDURE_LEVEL) >= 0);
       WRITE (f, output_line);
       if (PREVIOUS (SYMBOL_TABLE (p)) != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "l%02u(%02u) ", (unsigned) (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1), (unsigned) LEVEL (PREVIOUS (SYMBOL_TABLE (p)))) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02u(%02u) ", (unsigned) (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1), (unsigned) LEVEL (PREVIOUS (SYMBOL_TABLE (p)))) >= 0);
       } else {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "l%02u    ", (unsigned) (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02u    ", (unsigned) (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1)) >= 0);
       }
       WRITE (f, output_line);
       for (k = 0; k < (x - *ld); k++) {
         WRITE (f, bar[k]);
       }
       if (MOID (p) != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s ", moid_to_string (MOID (p), MOID_WIDTH, NULL)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s ", moid_to_string (MOID (p), MOID_WIDTH, NULL)) >= 0);
         WRITE (f, output_line);
       }
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s", non_terminal_string (edit_line, ATTRIBUTE (p))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", non_terminal_string (edit_line, ATTRIBUTE (p))) >= 0);
       WRITE (f, output_line);
       if (SUB (p) == NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
         WRITE (f, output_line);
       }
       if (TAX (p) != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", tag %06u", (unsigned) NUMBER (TAX (p))) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", tag %06u", (unsigned) NUMBER (TAX (p))) >= 0);
         WRITE (f, output_line);
         if (MOID (TAX (p)) != NULL) {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", mode %06u", (unsigned) NUMBER (MOID (TAX (p)))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", mode %06u", (unsigned) NUMBER (MOID (TAX (p)))) >= 0);
           WRITE (f, output_line);
         }
       }
       if (GENIE (p) != NULL && propagator_name (PROPAGATOR (p).unit) != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %s", propagator_name (PROPAGATOR (p).unit)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %s", propagator_name (PROPAGATOR (p).unit)) >= 0);
         WRITE (f, output_line);
       }
       if (GENIE (p) != NULL && GENIE (p)->compile_name != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %s", GENIE (p)->compile_name) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %s", GENIE (p)->compile_name) >= 0);
         WRITE (f, output_line);
       }
       if (GENIE (p) != NULL && GENIE (p)->compile_node > 0) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", %06d", GENIE (p)->compile_node) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %06d", GENIE (p)->compile_node) >= 0);
+        WRITE (f, output_line);
+      }
+      if (GENIE (p) != NULL && GENIE (p)->block_ref != NULL) {
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, " *") >= 0);
         WRITE (f, output_line);
       }
     }
@@ -2409,19 +2475,19 @@ void list_source_line (FILE_T f, SOURCE_LINE_T * line, BOOL_T tree)
 {
   int k = (int) strlen (line->string) - 1;
   if (NUMBER (line) <= 0) {
-/* Mask the prelude and postlude. */
+/* Mask the prelude and postlude */
     return;
   }
   if ((line->string)[k] == NEWLINE_CHAR) {
     (line->string)[k] = NULL_CHAR;
   }
-/* Print source line. */
+/* Print source line */
   write_source_line (f, line, NULL, A68_ALL_DIAGNOSTICS);
-/* Cross reference for lexical levels starting at this line. */
+/* Cross reference for lexical levels starting at this line */
   if (program.options.cross_reference) {
     cross_reference (f, program.top_node, line);
   }
-/* Syntax tree listing connected with this line. */
+/* Syntax tree listing connected with this line */
   if (tree && program.options.tree_listing) {
     if (program.tree_listing_safe && leaves_to_print (program.top_node, line)) {
       int ld = -1, k2;
@@ -2443,10 +2509,10 @@ void write_source_listing (void)
   SOURCE_LINE_T *line = program.top_line;
   FILE_T f = program.files.listing.fd;
   int listed = 0;
-  WRITE (program.files.listing.fd, "\n");
+  WRITE (program.files.listing.fd, NEWLINE_STRING);
   WRITE (program.files.listing.fd, "\nSource listing");
   WRITE (program.files.listing.fd, "\n------ -------");
-  WRITE (program.files.listing.fd, "\n");
+  WRITE (program.files.listing.fd, NEWLINE_STRING);
   if (program.files.listing.opened == 0) {
     diagnostic_node (A68_ERROR, NULL, ERROR_CANNOT_WRITE_LISTING, NULL);
     return;
@@ -2457,9 +2523,9 @@ void write_source_listing (void)
     }
     list_source_line (f, line, A68_FALSE);
   }
-/* Warn if there was no source at all. */
+/* Warn if there was no source at all */
   if (listed == 0) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n     No lines to list") >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     No lines to list") >= 0);
     WRITE (f, output_line);
   }
 }
@@ -2473,10 +2539,10 @@ void write_tree_listing (void)
   SOURCE_LINE_T *line = program.top_line;
   FILE_T f = program.files.listing.fd;
   int listed = 0;
-  WRITE (program.files.listing.fd, "\n");
+  WRITE (program.files.listing.fd, NEWLINE_STRING);
   WRITE (program.files.listing.fd, "\nSyntax tree listing");
   WRITE (program.files.listing.fd, "\n------ ---- -------");
-  WRITE (program.files.listing.fd, "\n");
+  WRITE (program.files.listing.fd, NEWLINE_STRING);
   if (program.files.listing.opened == 0) {
     diagnostic_node (A68_ERROR, NULL, ERROR_CANNOT_WRITE_LISTING, NULL);
     return;
@@ -2487,9 +2553,9 @@ void write_tree_listing (void)
     }
     list_source_line (f, line, A68_TRUE);
   }
-/* Warn if there was no source at all. */
+/* Warn if there was no source at all */
   if (listed == 0) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n     No lines to list") >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     No lines to list") >= 0);
     WRITE (f, output_line);
   }
 }
@@ -2501,10 +2567,10 @@ void write_tree_listing (void)
 void write_object_listing (void)
 {
   if (program.options.object_listing) {
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nObject listing");
     WRITE (program.files.listing.fd, "\n------ -------");
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     compiler (program.files.listing.fd);
   }
 }
@@ -2517,40 +2583,40 @@ void write_listing (void)
 {
   FILE_T f = program.files.listing.fd;
   if (program.options.moid_listing && top_moid_list != NULL) {
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nMode listing");
     WRITE (program.files.listing.fd, "\n---- -------");
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     moid_listing (f, top_moid_list);
   }
   if (program.options.standard_prelude_listing && stand_env != NULL) {
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nStandard prelude listing");
     WRITE (program.files.listing.fd, "\n-------- ------- -------");
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     xref_decs (f, stand_env);
   }
   if (program.top_refinement != NULL) {
     REFINEMENT_T *x = program.top_refinement;
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nRefinement listing");
     WRITE (program.files.listing.fd, "\n---------- -------");
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     while (x != NULL) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n  \"%s\"", x->name) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n  \"%s\"", x->name) >= 0);
       WRITE (f, output_line);
       if (x->line_defined != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", defined in line %d", NUMBER (x->line_defined)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", defined in line %d", NUMBER (x->line_defined)) >= 0);
         WRITE (f, output_line);
       }
       if (x->line_applied != NULL) {
-        ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", applied in line %d", NUMBER (x->line_applied)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", applied in line %d", NUMBER (x->line_applied)) >= 0);
         WRITE (f, output_line);
       }
       switch (x->applications) {
       case 0:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", not applied") >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", not applied") >= 0);
           WRITE (f, output_line);
           break;
         }
@@ -2560,7 +2626,7 @@ void write_listing (void)
         }
       default:
         {
-          ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, ", applied more than once") >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", applied more than once") >= 0);
           WRITE (f, output_line);
           break;
         }
@@ -2571,12 +2637,12 @@ void write_listing (void)
   if (program.options.list != NULL) {
     OPTION_LIST_T *i;
     int k = 1;
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nPragmat listing");
     WRITE (program.files.listing.fd, "\n------- -------");
-    WRITE (program.files.listing.fd, "\n");
+    WRITE (program.files.listing.fd, NEWLINE_STRING);
     for (i = program.options.list; i != NULL; FORWARD (i)) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\n%d: %s", k++, i->str) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n%d: %s", k++, i->str) >= 0);
       WRITE (f, output_line);
     }
   }
@@ -2596,7 +2662,7 @@ void write_listing_header (void)
   WRITE (program.files.listing.fd, program.files.source.name);
   if (program.options.statistics_listing) {
     if (program.error_count + program.warning_count > 0) {
-      ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "\nDiagnostics: %d error(s), %d warning(s)", program.error_count, program.warning_count) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\nDiagnostics: %d error(s), %d warning(s)", program.error_count, program.warning_count) >= 0);
       WRITE (f, output_line);
       for (z = program.top_line; z != NULL; FORWARD (z)) {
         if (z->diagnostics != NULL) {
@@ -2638,8 +2704,6 @@ static void sigint_handler (int i)
   }
 }
 
-#if ! defined ENABLE_WIN32
-
 /*!
 \brief signal reading from disconnected terminal
 \param i dummy
@@ -2680,8 +2744,6 @@ static void sigalrm_handler (int i)
   (void) alarm (1);
 }
 
-#endif
-
 /*!
 \brief install_signal_handlers
 **/
@@ -2690,22 +2752,16 @@ void install_signal_handlers (void)
 {
   ABEND (signal (SIGINT, sigint_handler) == SIG_ERR, "cannot install SIGINT handler", NULL);
   ABEND (signal (SIGSEGV, sigsegv_handler) == SIG_ERR, "cannot install SIGSEGV handler", NULL);
-#if ! defined ENABLE_WIN32
   ABEND (signal (SIGALRM, sigalrm_handler) == SIG_ERR, "cannot install SIGALRM handler", NULL);
   ABEND (signal (SIGPIPE, sigpipe_handler) == SIG_ERR, "cannot install SIGPIPE handler", NULL);
   ABEND (signal (SIGTTIN, sigttin_handler) == SIG_ERR, "cannot install SIGTTIN handler", NULL);
-#endif
 }
-
-#if ! defined ENABLE_WIN32
-#include <sys/resource.h>
-#endif
 
 ADDR_T fixed_heap_pointer, temp_heap_pointer;
 POSTULATE_T *top_postulate, *top_postulate_list;
 KEYWORD_T *top_keyword;
 TOKEN_T *top_token;
-BOOL_T get_fixed_heap_allowed;
+BOOL_T heap_is_fluid;
 
 static int tag_number = 0;
 
@@ -2781,10 +2837,13 @@ char *new_temp_string (char *t)
 
 BYTE_T *get_fixed_heap_space (size_t s)
 {
-  BYTE_T *z = HEAP_ADDRESS (fixed_heap_pointer);
-  ABEND (get_fixed_heap_allowed == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
+  BYTE_T *z;
+  ABEND (heap_is_fluid == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
+  z = HEAP_ADDRESS (fixed_heap_pointer);
   fixed_heap_pointer += A68_ALIGN ((int) s);
-  ABEND (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
+/* Allow for extra storage for diagnostics etcetera */
+  ABEND (fixed_heap_pointer >= (heap_size - MIN_MEM_SIZE), ERROR_OUT_OF_CORE, NULL);
+  ABEND (((int) temp_heap_pointer - (int) fixed_heap_pointer) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, NULL);
   ABEND (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
 }
@@ -2798,8 +2857,10 @@ BYTE_T *get_fixed_heap_space (size_t s)
 BYTE_T *get_temp_heap_space (size_t s)
 {
   BYTE_T *z;
+  ABEND (heap_is_fluid == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
   temp_heap_pointer -= A68_ALIGN ((int) s);
-  ABEND (fixed_heap_pointer >= temp_heap_pointer, ERROR_OUT_OF_CORE, NULL);
+/* Allow for extra storage for diagnostics etcetera */
+  ABEND (((int) temp_heap_pointer - (int) fixed_heap_pointer) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, NULL);
   z = HEAP_ADDRESS (temp_heap_pointer);
   ABEND (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
@@ -2811,25 +2872,19 @@ BYTE_T *get_temp_heap_space (size_t s)
 
 void get_stack_size (void)
 {
-#if ! defined ENABLE_WIN32
   struct rlimit limits;
   RESET_ERRNO;
-/* Some systems do not implement RLIMIT_STACK so if getrlimit fails, we do not abend. */
+/* Some systems do not implement RLIMIT_STACK so if getrlimit fails, we do not abend */
   if (!(getrlimit (RLIMIT_STACK, &limits) == 0 && errno == 0)) {
     stack_size = MEGABYTE;
   }
   stack_size = (int) (limits.rlim_cur < limits.rlim_max ? limits.rlim_cur : limits.rlim_max);
 /* A heuristic in case getrlimit yields extreme numbers: the frame stack is
    assumed to fill at a rate comparable to the C stack, so the C stack needs
-   not be larger than the frame stack. This may not be true. */
+   not be larger than the frame stack. This may not be true */
   if (stack_size < KILOBYTE || (stack_size > 96 * MEGABYTE && stack_size > frame_stack_size)) {
     stack_size = frame_stack_size;
   }
-#elif defined ENABLE_WIN32
-  stack_size = MEGABYTE;
-#else
-  stack_size = 0;               /* No stack check. */
-#endif
   stack_limit = (stack_size > (4 * storage_overhead) ? (stack_size - storage_overhead) : stack_size / 2);
 }
 
@@ -2909,12 +2964,12 @@ GENIE_INFO_T *new_genie_info (void)
   z->whether_new_lexical_level = A68_FALSE;
   z->need_dns = A68_FALSE;
   z->parent = NULL;
-  z->offset = NULL;
+  OFFSET (z) = NULL;
   z->constant = NULL;
-  z->level = 0;
+  LEVEL (z) = 0;
   z->argsize = 0;
   z->size = 0;
-  z->protect_sweep = NULL;
+  z->block_ref = NULL;
   z->compile_name = NULL;
   z->compile_node = 0;
   return (z);
@@ -2956,7 +3011,7 @@ NODE_T *new_node (void)
 SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T * p)
 {
   SYMBOL_TABLE_T *z = (SYMBOL_TABLE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (SYMBOL_TABLE_T));
-  z->level = symbol_table_count++;
+  LEVEL (z) = symbol_table_count++;
   z->nest = symbol_table_count;
   ATTRIBUTE (z) = 0;
   z->ap_increment = 0;
@@ -3045,7 +3100,7 @@ TAG_T *new_tag (void)
   z->unit = NULL;
   VALUE (z) = NULL;
   z->stand_env_proc = 0;
-  z->procedure = NULL;
+  PROC (z) = NULL;
   z->scope = PRIMAL_SCOPE;
   z->scope_assigned = A68_FALSE;
   PRIO (z) = 0;
@@ -3260,7 +3315,7 @@ BOOL_T whether_new_lexical_level (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case ALT_DO_PART:
-  case BRIEF_ELIF_IF_PART:
+  case BRIEF_ELIF_PART:
   case BRIEF_INTEGER_OUSE_PART:
   case BRIEF_UNITED_OUSE_PART:
   case CHOICE:
@@ -3531,7 +3586,7 @@ KEYWORD_T *find_keyword_from_attribute (KEYWORD_T * p, int a)
   }
 }
 
-/* A list of 10 ^ 2 ^ n for conversion purposes on IEEE 754 platforms. */
+/* A list of 10 ^ 2 ^ n for conversion purposes on IEEE 754 platforms */
 
 #define MAX_DOUBLE_EXPO 511
 
@@ -3547,7 +3602,7 @@ static double pow_10[] = {
 
 double ten_up (int expo)
 {
-/* This way appears sufficiently accurate. */
+/* This way appears sufficiently accurate */
   double dbl_expo = 1.0, *dep;
   BOOL_T neg_expo = (BOOL_T) (expo < 0);
   if (neg_expo) {
@@ -3655,7 +3710,7 @@ void bufcpy (char *dst, char *src, int len)
 
 int grep_in_string (char *pat, char *str, int *start, int *end)
 {
-#if defined ENABLE_REGEX
+#if defined HAVE_REGEX_H
 
 #include <regex.h>
 
@@ -3681,7 +3736,7 @@ int grep_in_string (char *pat, char *str, int *start, int *end)
     regfree (&compiled);
     return (rc);
   }
-/* Find widest match. Do not assume it is the first one. */
+/* Find widest match. Do not assume it is the first one */
   widest = 0;
   max_k = 0;
   for (k = 0; k < nmatch; k++) {
@@ -3707,7 +3762,7 @@ int grep_in_string (char *pat, char *str, int *start, int *end)
   } else {
     return (1);
   }
-#endif /* ENABLE_REGEX */
+#endif /* HAVE_REGEX_H */
 }
 
 /* VMS style acronyms */
@@ -4003,7 +4058,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "BOUND",
   "BOUNDS",
   "BOUNDS_LIST",
-  "BRIEF_ELIF_IF_PART",
+  "BRIEF_ELIF_PART",
   "BRIEF_INTEGER_OUSE_PART",
   "BRIEF_OPERATOR_DECLARATION",
   "BRIEF_UNITED_OUSE_PART",
@@ -4244,7 +4299,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "PROCEDURE_VARIABLE_DECLARATION",
   "PROCEDURING",
   "PROC_SYMBOL",
-  "PROTECT_FROM_SWEEP",
+  "BLOCK_GC_REF",
   "QUALIFIER",
   "RADIX_FRAME",
   "REAL_DENOTATION",
@@ -4373,7 +4428,7 @@ char *standard_environ_proc_name (GENIE_PROCEDURE f)
 {
   TAG_T *i = stand_env->identifiers;
   for (; i != NULL; FORWARD (i)) {
-    if (i->procedure == f) {
+    if (PROC (i) == f) {
       return (SYMBOL (NODE (i)));
     }
   }
@@ -4499,7 +4554,7 @@ char *propagator_name (PROPAGATOR_PROCEDURE * p)
   if (p == genie_or_function) {
     return ("genie_or_function");
   }
-#if defined ENABLE_PAR_CLAUSE
+#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
   if (p == genie_parallel) {
     return ("genie_parallel");
   }
@@ -4624,6 +4679,7 @@ static A68_INFO info_text[] = {
   {"options", "--boldstropping", "set stropping mode to bold stropping"},
   {"options", "--brackets", "consider [ .. ] and { .. } as equivalent to ( .. )"},
   {"options", "--check, --norun", "check syntax only, interpreter does not start"},
+  {"options", "--clock", "report execution time excluding compilation time"},
   {"options", "--debug, --monitor", "start execution in the debugger and debug in case of runtime error"},
   {"options", "--echo string", "echo \"string\" to standard output"},
   {"options", "--execute unit", "execute algol 68 unit \"unit\""},
@@ -4673,9 +4729,9 @@ static A68_INFO info_text[] = {
 static void print_info (FILE_T f, char *prompt, int k)
 {
   if (prompt != NULL) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s %s: %s.", prompt, info_text[k].term, info_text[k].def) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s %s: %s.", prompt, info_text[k].term, info_text[k].def) >= 0);
   } else {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s.", info_text[k].term, info_text[k].def) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: %s.", info_text[k].term, info_text[k].def) >= 0);
   }
   WRITELN (f, output_line);
 }
@@ -4706,24 +4762,16 @@ void apropos (FILE_T f, char *prompt, char *item)
     return;
   }
   for (k = 0; info_text[k].cat != NULL; k++) {
-    if (grep_in_string (item, info_text[k].term, NULL, NULL) == 0) {
+    if (grep_in_string (item, info_text[k].term, NULL, NULL) == 0 || grep_in_string (item, info_text[k].def, NULL, NULL) == 0) {
       print_info (f, prompt, k);
       n++;
-    }
-  }
-  if (n > 0) {
-    return;
-  }
-  for (k = 0; info_text[k].cat != NULL; k++) {
-    if (grep_in_string (item, info_text[k].def, NULL, NULL) == 0) {
-      print_info (f, prompt, k);
     }
   }
 }
 
 /* Error handling routines */
 
-#if defined ENABLE_CURSES
+#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
 #include <curses.h>
 #endif
 
@@ -4784,7 +4832,7 @@ static void pretty_diag (FILE_T f, char *p)
   while (p[0] != NULL_CHAR) {
     char *q;
     int k;
-/* Count the number of characters in token to print. */
+/* Count the number of characters in token to print */
     if (IS_GRAPH (p[0])) {
       for (k = 0, q = p; q[0] != BLANK_CHAR && q[0] != NULL_CHAR && k <= line_width; q++, k++) {
         ;
@@ -4792,7 +4840,7 @@ static void pretty_diag (FILE_T f, char *p)
     } else {
       k = 1;
     }
-/* Now see if there is space for the token. */
+/* Now see if there is space for the token */
     if (k > line_width) {
       k = 1;
     }
@@ -4819,7 +4867,7 @@ static void pretty_diag (FILE_T f, char *p)
 
 void abend (char *reason, char *info, char *file, int line)
 {
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: exiting: %s: %d: %s", a68g_cmd_name, file, line, reason) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: exiting: %s: %d: %s", a68g_cmd_name, file, line, reason) >= 0);
   if (info != NULL) {
     bufcat (output_line, ", ", BUFFER_SIZE);
     bufcat (output_line, info, BUFFER_SIZE);
@@ -4916,9 +4964,9 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
     WRITE (f, NEWLINE_STRING);
   }
   if (NUMBER (p) == 0) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "      ") >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "      ") >= 0);
   } else {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%-5d ", NUMBER (p) % 100000) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%-5d ", NUMBER (p) % 100000) >= 0);
   }
   WRITE (f, output_line);
 /* Pretty print line */
@@ -5005,7 +5053,7 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
             if (diag == A68_NO_DIAGNOSTICS) {
               bufcpy (output_line, " ", BUFFER_SIZE);
             } else if (diags_at_this_pos == 1) {
-              ASSERT (snprintf (output_line, BUFFER_SIZE, "%c", digit_to_char (k)) >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%c", digit_to_char (k)) >= 0);
             } else {
               bufcpy (output_line, "*", BUFFER_SIZE);
             }
@@ -5035,7 +5083,7 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
 /* Resume pretty printing of line */
       if (!line_ended) {
         continuations++;
-        ASSERT (snprintf (output_line, BUFFER_SIZE, "\n.%1d   ", continuations) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n.%1d   ", continuations) >= 0);
         WRITE (f, output_line);
         if (continuations >= 9) {
           WRITE (f, "...");
@@ -5056,11 +5104,11 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
         if (diag == A68_RUNTIME_ERROR) {
           if (WHETHER (d, A68_RUNTIME_ERROR)) {
             WRITE (f, NEWLINE_STRING);
-            pretty_diag (f, d->text);
+            pretty_diag (f, TEXT (d));
           }
         } else {
           WRITE (f, NEWLINE_STRING);
-          pretty_diag (f, d->text);
+          pretty_diag (f, TEXT (d));
         }
       }
     }
@@ -5081,7 +5129,7 @@ void diagnostics_to_terminal (SOURCE_LINE_T * p, int what)
       DIAGNOSTIC_T *d = p->diagnostics;
       for (; d != NULL; FORWARD (d)) {
         if (what == A68_ALL_DIAGNOSTICS) {
-          z = (BOOL_T) (z | (WHETHER (d, A68_WARNING) || WHETHER (d, A68_ERROR) || WHETHER (d, A68_SYNTAX_ERROR) || WHETHER (d, A68_MATH_ERROR) || WHETHER (d, A68_SUPPRESS_SEVERITY)));
+          z = (BOOL_T) (z | (WHETHER (d, A68_WARNING) || WHETHER (d, A68_ERROR) || WHETHER (d, A68_SYNTAX_ERROR) || WHETHER (d, A68_MATH_ERROR) || WHETHER (d, A68_RUNTIME_ERROR) || WHETHER (d, A68_SUPPRESS_SEVERITY)));
         } else if (what == A68_RUNTIME_ERROR) {
           z = (BOOL_T) (z | (WHETHER (d, A68_RUNTIME_ERROR)));
         }
@@ -5167,10 +5215,10 @@ static void write_diagnostic (int sev, char *b)
   char st[SMALL_BUFFER_SIZE];
   char *severity = get_severity (sev);
   if (severity == NULL) {
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s.", a68g_cmd_name, b) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: %s.", a68g_cmd_name, b) >= 0);
   } else {
     bufcpy (st, get_severity (sev), SMALL_BUFFER_SIZE);
-    ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "%s: %s: %s.", a68g_cmd_name, st, b) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: %s: %s.", a68g_cmd_name, st, b) >= 0);
   }
   io_close_tty_line ();
   pretty_diag (STDOUT_FILENO, output_line);
@@ -5186,7 +5234,7 @@ static void write_diagnostic (int sev, char *b)
 
 static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
 {
-/* Add diagnostic and choose GNU style or non-GNU style. */
+/* Add diagnostic and choose GNU style or non-GNU style */
   DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (DIAGNOSTIC_T));
   DIAGNOSTIC_T **ref_msg;
   char a[BUFFER_SIZE], st[SMALL_BUFFER_SIZE], nst[BUFFER_SIZE];
@@ -5221,19 +5269,19 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
       char *nt = non_terminal_string (edit_line, ATTRIBUTE (n));
       if (nt != NULL) {
         if (NUMBER (LINE (n)) == 0) {
-          ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s", nt) >= 0);
+          ASSERT (snprintf (nst, SNPRINTF_SIZE, "detected in %s", nt) >= 0);
         } else {
           if (MOID (n) != NULL) {
             if (NUMBER (LINE (n)) == NUMBER (line)) {
-              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in this line", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n)) >= 0);
+              ASSERT (snprintf (nst, SNPRINTF_SIZE, "detected in %s %s starting at \"%.64s\" in this line", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n)) >= 0);
             } else {
-              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s %s starting at \"%.64s\" in line %d", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
+              ASSERT (snprintf (nst, SNPRINTF_SIZE, "detected in %s %s starting at \"%.64s\" in line %d", moid_to_string (MOID (n), MOID_ERROR_WIDTH, p), nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
             }
           } else {
             if (NUMBER (LINE (n)) == NUMBER (line)) {
-              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s starting at \"%.64s\" in this line", nt, SYMBOL (n)) >= 0);
+              ASSERT (snprintf (nst, SNPRINTF_SIZE, "detected in %s starting at \"%.64s\" in this line", nt, SYMBOL (n)) >= 0);
             } else {
-              ASSERT (snprintf (nst, (size_t) BUFFER_SIZE, "detected in %s starting at \"%.64s\" in line %d", nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
+              ASSERT (snprintf (nst, SNPRINTF_SIZE, "detected in %s starting at \"%.64s\" in line %d", nt, SYMBOL (n), NUMBER (LINE (n))) >= 0);
             }
           }
         }
@@ -5242,20 +5290,20 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
   }
   if (severity == NULL) {
     if (line->filename != NULL && strcmp (program.files.source.name, line->filename) == 0) {
-      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
     } else if (line->filename != NULL) {
-      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, line->filename, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", a68g_cmd_name, line->filename, (unsigned) k, b) >= 0);
     } else {
-      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", a68g_cmd_name, (unsigned) k, b) >= 0);
     }
   } else {
     bufcpy (st, get_severity (sev), SMALL_BUFFER_SIZE);
     if (line->filename != NULL && strcmp (program.files.source.name, line->filename) == 0) {
-      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
     } else if (line->filename != NULL) {
-      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %s: %x: %s", a68g_cmd_name, line->filename, st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %s: %x: %s", a68g_cmd_name, line->filename, st, (unsigned) k, b) >= 0);
     } else {
-      ASSERT (snprintf (a, (size_t) BUFFER_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
     }
   }
   msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (DIAGNOSTIC_T));
@@ -5267,7 +5315,7 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
     bufcat (a, ")", BUFFER_SIZE);
   }
   bufcat (a, ".", BUFFER_SIZE);
-  msg->text = new_string (a);
+  TEXT (msg) = new_string (a);
   msg->where = p;
   msg->line = line;
   msg->symbol = pos;
@@ -5320,7 +5368,7 @@ Z quoted string literal.
       KEYWORD_T *nt = find_keyword_from_attribute (top_keyword, att);\
       if (nt != NULL) {\
 	bufcat (b, "\"", BUFFER_SIZE);\
-	bufcat (b, nt->text, BUFFER_SIZE);\
+	bufcat (b, TEXT (nt), BUFFER_SIZE);\
 	bufcat (b, "\"", BUFFER_SIZE);\
       } else {\
 	bufcat (b, "keyword", BUFFER_SIZE);\
@@ -5344,7 +5392,7 @@ Z quoted string literal.
     } else if (t[0] == 'D') {\
       int a = va_arg (args, int);\
       char d[BUFFER_SIZE];\
-      ASSERT (snprintf(d, (size_t) BUFFER_SIZE, "%d", a) >= 0);\
+      ASSERT (snprintf(d, SNPRINTF_SIZE, "%d", a) >= 0);\
       bufcat (b, d, BUFFER_SIZE);\
     } else if (t[0] == 'H') {\
       char *a = va_arg (args, char *);\
@@ -5415,7 +5463,7 @@ Z quoted string literal.
     } else if (t[0] == 'X') {\
       int att = va_arg (args, int);\
       char z[BUFFER_SIZE];\
-      /* ASSERT (snprintf(z, (size_t) BUFFER_SIZE, "\"%s\"", find_keyword_from_attribute (top_keyword, att)->text) >= 0); */\
+      /* ASSERT (snprintf(z, SNPRINTF_SIZE, "\"%s\"", TEXT (find_keyword_from_attribute (top_keyword, att))) >= 0); */\
       (void) non_terminal_string (z, att);\
       bufcat (b, new_string (z), BUFFER_SIZE);\
     } else if (t[0] == 'Y') {\
@@ -5478,9 +5526,9 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
     }
   }
   if (shortcut == A68_FALSE) {
-/* Synthesize diagnostic message. */
+/* Synthesize diagnostic message */
     COMPOSE_DIAGNOSTIC;
-/* Add information from errno, if any. */
+/* Add information from errno, if any */
     if (err != 0) {
       char *loc_str2 = new_string (ERROR_SPECIFICATION);
       if (loc_str2 != NULL) {
@@ -5494,7 +5542,7 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
       }
     }
   }
-/* Construct a diagnostic message. */
+/* Construct a diagnostic message */
   if (p == NULL) {
     write_diagnostic (sev, b);
   } else {
@@ -5547,9 +5595,9 @@ void diagnostic_line (int sev, SOURCE_LINE_T * line, char *pos, char *loc_str, .
     }
   }
   if (!shortcut) {
-/* Synthesize diagnostic message. */
+/* Synthesize diagnostic message */
     COMPOSE_DIAGNOSTIC;
-/* Add information from errno, if any. */
+/* Add information from errno, if any */
     if (err != 0) {
       char *loc_str2 = new_string (ERROR_SPECIFICATION);
       if (loc_str2 != NULL) {
@@ -5563,7 +5611,7 @@ void diagnostic_line (int sev, SOURCE_LINE_T * line, char *pos, char *loc_str, .
       }
     }
   }
-/* Construct a diagnostic message. */
+/* Construct a diagnostic message */
   if (pos != NULL && IS_PRINT (*pos)) {
     bufcat (b, " (detected at", BUFFER_SIZE);
     if (*pos == '\"') {

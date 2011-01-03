@@ -1,0 +1,17 @@
+# Test recursion using the Ackermann function #
+
+PR echo "[8] Ackermann function" PR
+                
+PROC ack = (INT m, n) INT:
+     IF m = 0
+     THEN n + 1
+     ELSE (n = 0 | ack(m - 1, 1) | ack(m - 1, ack(m, n - 1)))
+     FI;
+                
+FOR i TO 3
+DO FOR j TO i
+   DO print(("A(", whole(i, 0), ", ", whole(j, 0), ") = ", whole(ack(i, j), 0), new line))
+   OD
+OD;
+        
+SKIP

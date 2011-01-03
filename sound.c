@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,16 +20,17 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
-#include "algol68g.h"
-#include "interpreter.h"
-#include "mp.h"
+#if defined HAVE_CONFIG_H
+#include "a68g-config.h"
+#endif
+
+#include "a68g.h"
 
 #define MAX_BYTES 4
 #define A68_LITTLE_ENDIAN A68_TRUE
 #define A68_BIG_ENDIAN A68_FALSE
 
-/* From public Microsoft RIFF documentation. */
+/* From public Microsoft RIFF documentation */
 
 #define	WAVE_FORMAT_UNKNOWN		(0x0000)
 #define	WAVE_FORMAT_PCM			(0x0001)
@@ -602,7 +603,7 @@ void genie_get_sound (NODE_T * p)
   }
   n = A68_SOUND_BYTES (&w);
   d = &(ADDRESS (&(w.data))[((VALUE (&sample) - 1) * (int) (w.num_channels) + (VALUE (&channel) - 1)) * n]);
-/* Convert from little-endian, irrespective from the platform we work on. */
+/* Convert from little-endian, irrespective from the platform we work on */
   for (k = 0, z = 0, m = 0; k < n; k++) {
     z += ((int) (d[k]) * (int) (pow256[k]));
     m = k;
@@ -639,7 +640,7 @@ void genie_set_sound (NODE_T * p)
   }
   n = A68_SOUND_BYTES (&w);
   d = &(ADDRESS (&(w.data))[((VALUE (&sample) - 1) * (int) (w.num_channels) + (VALUE (&channel) - 1)) * n]);
-/* Convert to little-endian. */
+/* Convert to little-endian */
   for (k = 0, z = VALUE (&value); k < n; k++) {
     d[k] = (BYTE_T) (z & 0xff);
     z >>= 8;

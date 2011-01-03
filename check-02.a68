@@ -1,0 +1,34 @@
+CO Lucas-Lehmer Test: For p an odd prime, the Mersenne number 2**p-1 is prime
+   if and only if 2**p-1 divides S(p-1) where S(n+1) = S(n)**2-2, and S(1)=4. 
+CO
+
+PR echo "[2] Mersenne primes by the Lucas-Lehmer test" precision=600 timelimit=60 PR
+
+# Theorem: If 2**p-1 is prime, then so is p. Preprocess by sieving prime exponents first. #
+
+INT max = 1000, [max] BOOL prime;
+FOR k TO max
+DO prime[k] := TRUE
+OD;
+
+FOR mult FROM 2 TO ENTIER sqrt (max)
+DO INT k := 2 * mult;
+   WHILE k < max
+   DO prime[k] := FALSE;
+      k +:= mult
+   OD
+OD;
+
+# Now determine Mersenne primes using Lucas-Lehmer test #
+
+FOR k FROM 2 TO max
+DO IF prime[k]
+   THEN IF LONG LONG INT cand = LONG LONG 2 ** k - 1, LONG LONG INT s := 4;
+        FROM 3 TO k
+        DO s := (s * s - 2) MOD cand
+        OD;
+        s = 0
+        THEN printf (($l"M_"g(0)" has "g(0)" digits"$, k, ENTIER (1 + long long log (cand))))
+        FI
+   FI
+OD

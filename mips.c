@@ -1,11 +1,11 @@
 /*!
 \file mips.c
-\brief bogus mips rating
+\brief arbitrary platform speed rating (Whetstone test)
 */
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -20,11 +20,17 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* Bogus MIPS is the classic Whetsone rating */
+/* Next is because the Whetstone test was not designed for inlining etcetera */
 
-#include "config.h"
-#include "algol68g.h"
-#include "interpreter.h"
+#if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
+#pragma GCC optimize("-O0")
+#endif
+
+#if defined HAVE_CONFIG_H
+#include "a68g-config.h"
+#endif
+
+#include "a68g.h"
 
 static double t, t1, t2, e1[5];
 static int j, k, l;
@@ -48,12 +54,12 @@ static void p0 (void)
 
 static void p3 (double x, double y, double *z)
 {
-  double x1, y1;
-  x1 = x;
-  y1 = y;
-  x1 = t * (x1 + y1);
-  y1 = t * (x1 + y1);
-  *z = (x1 + y1) / t2;
+  double x_1, y_1;
+  x_1 = x;
+  y_1 = y;
+  x_1 = t * (x_1 + y_1);
+  y_1 = t * (x_1 + y_1);
+  *z = (x_1 + y_1) / t2;
 }
 
 void bogus_mips (void)
@@ -138,8 +144,8 @@ void bogus_mips (void)
 	j = j * (k - j) * (l - k);
 	k = l * k - (l - j) * k;
 	l = (l - k) * (k + j);
-	e1[l - 1] = j + k + l;
-	e1[k - 1] = j * k * l;
+	e1[l - 1] = (double) (j + k + l);
+	e1[k - 1] = (double) (j * k * l);
       }
 /* Module 7: trigonometric functions */
       x = 0.5;
@@ -181,11 +187,17 @@ void bogus_mips (void)
       }
     }
     elapsed = seconds () - time_0;
-    if (elapsed <= 3) {
+    if (elapsed <= 1) {
       takt *= 2;
     }
-  } while (elapsed <= 3);
+  } while (elapsed <= 1);
   rate = (loop * ii) / (elapsed) / 10;
-  ASSERT (snprintf (output_line, (size_t) BUFFER_SIZE, "Bogus MIPS: %.0f\n", rate) >= 0);
+  if (rate > 1000) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Rate: %.0f GWhets\n", rate / 1000) >= 0);
+  } else if (rate > 100) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Rate: %.1f GWhets\n", rate / 1000) >= 0);
+  } else {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Rate: %.0f MWhets\n", rate) >= 0);
+  }
   WRITE (STDOUT_FILENO, output_line);
 }

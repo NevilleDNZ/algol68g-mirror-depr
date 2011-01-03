@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2010 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -121,17 +121,17 @@ responsibility to validate the behaviour of the routines and their accuracy
 using the source code provided. See the GNU General Public License for details.
 */
 
-#include "config.h"
-#include "algol68g.h"
-#include "interpreter.h"
-#include "gsl.h"
-#include "mp.h"
+#if defined HAVE_CONFIG_H
+#include "a68g-config.h"
+#endif
 
-/* If DOUBLE_PRECISION is defined functions are evaluated in double precision. */
+#include "a68g.h"
+
+/* If DOUBLE_PRECISION is defined functions are evaluated in double precision */
 
 #undef DOUBLE_PRECISION
 
-/* Internal mp constants. */
+/* Internal mp constants */
 
 static MP_DIGIT_T *ref_mp_pi = NULL;
 static int mp_pi_size = -1;
@@ -446,7 +446,7 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
   if (s[0] == '+' || s[0] == '-') {
     s++;
   }
-/* Scan mantissa digits and put them into "z". */
+/* Scan mantissa digits and put them into "z" */
   while (s[0] == '0') {
     s++;
   }
@@ -472,11 +472,11 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
     }
     i++;
   }
-/* Store the last digits. */
+/* Store the last digits */
   if (j <= digits) {
     MP_DIGIT (z, j++) = (MP_DIGIT_T) sum;
   }
-/* See if there is an exponent. */
+/* See if there is an exponent */
   expo = 0;
   if (s[i] != NULL_CHAR && TO_UPPER (s[i]) == TO_UPPER (EXPONENT_CHAR)) {
     char *end;
@@ -485,7 +485,7 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
   } else {
     ok = (BOOL_T) (s[i] == NULL_CHAR);
   }
-/* Calculate effective exponent. */
+/* Calculate effective exponent */
   expo += (comma >= 0 ? comma - 1 : power - 1);
   (void) align_mp (z, &expo, digits);
   MP_EXPONENT (z) = (MP_DIGIT (z, 1) == 0 ? 0 : (double) expo);
@@ -652,12 +652,12 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
   if (x == 0.0) {
     return (z);
   }
-/* Small integers can be done better by int_to_mp. */
+/* Small integers can be done better by int_to_mp */
   if (ABS (x) < MP_RADIX && (double) (int) x == x) {
     return (int_to_mp (p, z, (int) x, digits));
   }
   sign_x = (x > 0 ? 1 : -1);
-/* Scale to [0, 0.1>. */
+/* Scale to [0, 0.1> */
   a = x = ABS (x);
   expo = (int) log10 (a);
   a /= ten_up (expo);
@@ -666,7 +666,7 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
     a /= 10;
     expo++;
   }
-/* Transport digits of x to the mantissa of z. */
+/* Transport digits of x to the mantissa of z */
   k = 0;
   j = 1;
   sum = 0;
@@ -685,7 +685,7 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
     }
     k++;
   }
-/* Store the last digits. */
+/* Store the last digits */
   if (j <= digits) {
     u[0] = (MP_DIGIT_T) sum;
   }
@@ -706,7 +706,7 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
 
 double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
 {
-/* This routine looks a lot like "strtod". */
+/* This routine looks a lot like "strtod" */
   (void) p;
   if (MP_EXPONENT (z) * (MP_DIGIT_T) LOG_MP_BASE <= (MP_DIGIT_T) DBL_MIN_10_EXP) {
     return (0);
@@ -742,13 +742,13 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
   STACK_MP (v, p, digits);
   STACK_MP (w, p, digits);
   MOVE_MP (u, z, digits);
-/* Argument check. */
+/* Argument check */
   if (MP_DIGIT (u, 1) < 0.0) {
     errno = EDOM;
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (m == MODE (LONG_BITS) ? MODE (LONG_INT) : MODE (LONGLONG_INT)));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-/* Convert radix MP_BITS_RADIX number. */
+/* Convert radix MP_BITS_RADIX number */
   for (k = words - 1; k >= 0; k--) {
     MOVE_MP (w, u, digits);
     (void) over_mp_digit (p, u, u, (MP_DIGIT_T) MP_BITS_RADIX, digits);
@@ -756,7 +756,7 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
     (void) sub_mp (p, v, w, v, digits);
     row[k] = (unsigned) MP_DIGIT (v, 1);
   }
-/* Test on overflow: too many bits or not reduced to 0. */
+/* Test on overflow: too many bits or not reduced to 0 */
   mask = 0x1;
   lim = get_mp_bits_width (m) % MP_BITS_BITS;
   for (k = 1; k < lim; k++) {
@@ -768,7 +768,7 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, m);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-/* Exit. */
+/* Exit */
   return (row);
 }
 
@@ -802,7 +802,7 @@ MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
   int digits = get_mp_digits (m), words = get_mp_bits_words (m), k, lim;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *v, *w;
-/* Discard excess bits. */
+/* Discard excess bits */
   unsigned mask = 0x1, musk = 0x0;
   STACK_MP (v, p, digits);
   STACK_MP (w, p, digits);
@@ -819,7 +819,7 @@ MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
     musk <<= 1;
     musk |= 0x1;
   }
-/* Convert. */
+/* Convert */
   SET_MP_ZERO (u, digits);
   (void) set_mp_short (v, (MP_DIGIT_T) 1, 0, digits);
   for (k = words - 1; k >= 0; k--) {
@@ -843,7 +843,7 @@ MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
 
 static void norm_mp_light (MP_DIGIT_T * w, int k, int digits)
 {
-/* Bring every digit back to [0 .. MP_RADIX>. */
+/* Bring every digit back to [0 .. MP_RADIX> */
   int j;
   MP_DIGIT_T *z;
   for (j = digits, z = &MP_DIGIT (w, digits); j >= k; j--, z--) {
@@ -866,7 +866,7 @@ static void norm_mp_light (MP_DIGIT_T * w, int k, int digits)
 
 static void norm_mp (MP_DIGIT_T * w, int k, int digits)
 {
-/* Bring every digit back to [0 .. MP_RADIX>. */
+/* Bring every digit back to [0 .. MP_RADIX> */
   int j;
   MP_DIGIT_T *z;
   for (j = digits, z = &MP_DIGIT (w, digits); j >= k; j--, z--) {
@@ -889,9 +889,9 @@ static void norm_mp (MP_DIGIT_T * w, int k, int digits)
 \param digits precision in mp-digits
 **/
 
-static void round_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
+static void round_internal_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
 {
-/* Assume that w has precision of at least 2 + digits. */
+/* Assume that w has precision of at least 2 + digits */
   int last = (MP_DIGIT (w, 1) == 0 ? 2 + digits : 1 + digits);
   if (MP_DIGIT (w, last) >= MP_RADIX / 2) {
     MP_DIGIT (w, last - 1) += 1;
@@ -903,10 +903,10 @@ static void round_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
     MOVE_DIGITS (&MP_DIGIT (z, 1), &MP_DIGIT (w, 2), digits);
     MP_EXPONENT (z) = MP_EXPONENT (w) - 1;
   } else {
-/* Normally z != w, so no test on this. */
+/* Normally z != w, so no test on this */
     MOVE_DIGITS (&MP_EXPONENT (z), &MP_EXPONENT (w), (1 + digits));
   }
-/* Zero is zero is zero. */
+/* Zero is zero is zero */
   if (MP_DIGIT (z, 1) == 0) {
     MP_EXPONENT (z) = (MP_DIGIT_T) 0;
   }
@@ -953,7 +953,7 @@ MP_DIGIT_T *shorten_mp (NODE_T * p, MP_DIGIT_T * z, int digits, MP_DIGIT_T * x, 
     errno = EDOM;
     return (NULL);
   } else {
-/* Reserve extra digits for proper rounding. */
+/* Reserve extra digits for proper rounding */
     int pop_sp = stack_pointer, digits_h = digits + 2;
     MP_DIGIT_T *w;
     BOOL_T negative = (BOOL_T) (MP_DIGIT (x, 1) < 0);
@@ -965,7 +965,7 @@ MP_DIGIT_T *shorten_mp (NODE_T * p, MP_DIGIT_T * z, int digits, MP_DIGIT_T * x, 
     MP_EXPONENT (w) = MP_EXPONENT (x) + 1;
     MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
     MOVE_DIGITS (&MP_DIGIT (w, 2), &MP_DIGIT (x, 1), digits + 1);
-    round_mp (z, w, digits);
+    round_internal_mp (z, w, digits);
     if (negative) {
       MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
     }
@@ -1015,7 +1015,8 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 {
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
-/* Trivial cases. */
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+/* Trivial cases */
   if (MP_DIGIT (x, 1) == (MP_DIGIT_T) 0) {
     MOVE_MP (z, y, digits);
     return (z);
@@ -1023,7 +1024,7 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
     MOVE_MP (z, x, digits);
     return (z);
   }
-/* We want positive arguments. */
+/* We want positive arguments */
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
   if (x_1 >= 0 && y_1 < 0) {
@@ -1034,7 +1035,7 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
     (void) add_mp (p, z, x, y, digits);
     MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
   } else {
-/* Add. */
+/* Add */
     int j, digits_h = 2 + digits;
     STACK_MP (w, p, digits_h);
     MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
@@ -1064,15 +1065,15 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
       }
     }
     norm_mp_light (w, 2, digits_h);
-    round_mp (z, w, digits);
+    round_internal_mp (z, w, digits);
     CHECK_MP_EXPONENT (p, z);
   }
-/* Restore and exit. */
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
   MP_DIGIT (y, 1) = y_1;
-  MP_DIGIT (z, 1) = z_1;        /* In case z IS x OR z IS y. */
+  MP_DIGIT (z, 1) = z_1;        /* In case z IS x OR z IS y */
   return (z);
 }
 
@@ -1092,7 +1093,8 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   int fnz, k;
   MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
   BOOL_T negative = A68_FALSE;
-/* Trivial cases. */
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+/* Trivial cases */
   if (MP_DIGIT (x, 1) == (MP_DIGIT_T) 0) {
     MOVE_MP (z, y, digits);
     MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
@@ -1103,7 +1105,7 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   }
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
-/* We want positive arguments. */
+/* We want positive arguments */
   if (x_1 >= 0 && y_1 < 0) {
     (void) add_mp (p, z, x, y, digits);
   } else if (x_1 < 0 && y_1 >= 0) {
@@ -1112,7 +1114,7 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   } else if (x_1 < 0 && y_1 < 0) {
     (void) sub_mp (p, z, y, x, digits);
   } else {
-/* Subtract. */
+/* Subtract */
     int j, digits_h = 2 + digits;
     STACK_MP (w, p, digits_h);
     MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
@@ -1141,7 +1143,7 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
         MP_DIGIT (w, j + 1) = x_j - y_j;
       }
     }
-/* Correct if we subtract large from small. */
+/* Correct if we subtract large from small */
     if (MP_DIGIT (w, 2) <= 0) {
       fnz = -1;
       for (j = 2; j <= digits_h && fnz < 0; j++) {
@@ -1156,7 +1158,7 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
         }
       }
     }
-/* Normalise. */
+/* Normalise */
     norm_mp_light (w, 2, digits_h);
     fnz = -1;
     for (j = 1; j <= digits_h && fnz < 0; j++) {
@@ -1172,19 +1174,19 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
       }
       MP_EXPONENT (w) -= j2;
     }
-/* Round. */
-    round_mp (z, w, digits);
+/* Round */
+    round_internal_mp (z, w, digits);
     if (negative) {
       MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
     }
     CHECK_MP_EXPONENT (p, z);
   }
-/* Restore and exit. */
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
   MP_DIGIT (y, 1) = y_1;
-  MP_DIGIT (z, 1) = z_1;        /* In case z IS x OR z IS y. */
+  MP_DIGIT (z, 1) = z_1;        /* In case z IS x OR z IS y */
   return (z);
 }
 
@@ -1205,6 +1207,7 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   if (x_1 == 0 || y_1 == 0) {
     stack_pointer = pop_sp;
     MP_DIGIT (x, 1) = x_1;
@@ -1212,7 +1215,7 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
     SET_MP_ZERO (z, digits);
     return (z);
   }
-/* Calculate z = x * y. */
+/* Calculate z = x * y */
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
   MP_EXPONENT (w) = MP_EXPONENT (x) + MP_EXPONENT (y) + 1;
@@ -1249,8 +1252,8 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
     }
   }
   norm_mp (w, 2, digits_h);
-  round_mp (z, w, digits);
-/* Restore and exit. */
+  round_internal_mp (z, w, digits);
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
@@ -1290,12 +1293,13 @@ guesses without separate correction steps.
     errno = ERANGE;
     return (NULL);
   }
-/* Determine normalisation interval assuming that q < 2b in each step. */
+/* Determine normalisation interval assuming that q < 2b in each step */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
   ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
-/* `w' will be the working nominator in which the quotient develops. */
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+/* `w' will be the working nominator in which the quotient develops */
   STACK_MP (w, p, digits_w);
   MP_EXPONENT (w) = MP_EXPONENT (x) - MP_EXPONENT (y);
   MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
@@ -1303,18 +1307,18 @@ guesses without separate correction steps.
   MP_DIGIT (w, digits + 2) = (MP_DIGIT_T) 0;
   MP_DIGIT (w, digits + 3) = (MP_DIGIT_T) 0;
   MP_DIGIT (w, digits + 4) = (MP_DIGIT_T) 0;
-/* Estimate the denominator. Take four terms to also suit small MP_RADIX. */
+/* Estimate the denominator. Take four terms to also suit small MP_RADIX */
   xd = (MP_DIGIT (y, 1) * MP_RADIX + MP_DIGIT (y, 2)) * MP_RADIX + MP_DIGIT (y, 3) + MP_DIGIT (y, 4) / MP_RADIX;
   t = &MP_DIGIT (w, 2);
   if (digits + 2 < oflow) {
     for (k = 1; k <= digits + 2; k++, t++) {
       double xn, q;
       int first = k + 2;
-/* Estimate quotient digit. */
+/* Estimate quotient digit */
       xn = ((t[-1] * MP_RADIX + t[0]) * MP_RADIX + t[1]) * MP_RADIX + (digits_w >= (first + 2) ? t[2] : 0);
       q = (double) ((int) (xn / xd));
       if (q != 0) {
-/* Correct the nominator. */
+/* Correct the nominator */
         int j, len = k + digits + 1;
         int lim = (len < digits_w ? len : digits_w);
         MP_DIGIT_T *u = t, *v = &MP_DIGIT (y, 1);
@@ -1332,11 +1336,11 @@ guesses without separate correction steps.
       if (k % oflow == 0) {
         norm_mp (w, first, digits_w);
       }
-/* Estimate quotient digit. */
+/* Estimate quotient digit */
       xn = ((t[-1] * MP_RADIX + t[0]) * MP_RADIX + t[1]) * MP_RADIX + (digits_w >= (first + 2) ? t[2] : 0);
       q = (double) ((int) (xn / xd));
       if (q != 0) {
-/* Correct the nominator. */
+/* Correct the nominator */
         int j, len = k + digits + 1;
         int lim = (len < digits_w ? len : digits_w);
         MP_DIGIT_T *u = t, *v = &MP_DIGIT (y, 1);
@@ -1349,8 +1353,8 @@ guesses without separate correction steps.
     }
   }
   norm_mp (w, 2, digits_w);
-  round_mp (z, w, digits);
-/* Restore and exit. */
+  round_internal_mp (z, w, digits);
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
@@ -1387,7 +1391,8 @@ MP_DIGIT_T *over_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y,
   (void) div_mp (p, z_g, x_g, y_g, digits_g);
   trunc_mp (p, z_g, z_g, digits_g);
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-/* Restore and exit. */
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+/* Restore and exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -1416,12 +1421,12 @@ MP_DIGIT_T *mod_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   STACK_MP (z_g, p, digits_g);
   (void) lengthen_mp (p, y_g, digits_g, y, digits);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
-/* x mod y = x - y * trunc (x / y). */
+/* x mod y = x - y * trunc (x / y) */
   (void) over_mp (p, z_g, x_g, y_g, digits_g);
   (void) mul_mp (p, z_g, y_g, z_g, digits_g);
   (void) sub_mp (p, z_g, x_g, z_g, digits_g);
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-/* Restore and exit. */
+/* Restore and exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -1438,11 +1443,12 @@ MP_DIGIT_T *mod_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 
 MP_DIGIT_T *mul_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
 {
-/* This is an O(N) routine for multiplication by a short value. */
+/* This is an O(N) routine for multiplication by a short value */
   MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = y, *u, *v;
   int j, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   y = ABS (y_1);
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
@@ -1454,8 +1460,8 @@ MP_DIGIT_T *mul_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
     (u--)[0] += y * (v--)[0];
   }
   norm_mp (w, 2, digits_h);
-  round_mp (z, w, digits);
-/* Restore and exit. */
+  round_internal_mp (z, w, digits);
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
@@ -1479,9 +1485,10 @@ MP_DIGIT_T *half_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   int j, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
-/* Calculate x * 0.5. */
+/* Calculate x * 0.5 */
   MP_EXPONENT (w) = MP_EXPONENT (x);
   j = digits;
   u = &MP_DIGIT (w, 1 + digits);
@@ -1490,8 +1497,8 @@ MP_DIGIT_T *half_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     (u--)[0] += (MP_RADIX / 2) * (v--)[0];
   }
   norm_mp (w, 2, digits_h);
-  round_mp (z, w, digits);
-/* Restore and exit. */
+  round_internal_mp (z, w, digits);
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
@@ -1520,11 +1527,12 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
     errno = ERANGE;
     return (NULL);
   }
-/* Determine normalisation interval assuming that q < 2b in each step. */
+/* Determine normalisation interval assuming that q < 2b in each step */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
   ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
-/* Work with positive operands. */
+/* Work with positive operands */
   MP_DIGIT (x, 1) = ABS (x_1);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
   y = ABS (y_1);
   STACK_MP (w, p, digits_w);
   MP_EXPONENT (w) = MP_EXPONENT (x);
@@ -1533,14 +1541,14 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
   MP_DIGIT (w, digits + 2) = (MP_DIGIT_T) 0;
   MP_DIGIT (w, digits + 3) = (MP_DIGIT_T) 0;
   MP_DIGIT (w, digits + 4) = (MP_DIGIT_T) 0;
-/* Estimate the denominator. */
+/* Estimate the denominator */
   xd = (double) y *MP_RADIX * MP_RADIX;
   t = &MP_DIGIT (w, 2);
   if (digits + 2 < oflow) {
     for (k = 1; k <= digits + 2; k++, t++) {
       double xn, q;
       int first = k + 2;
-/* Estimate quotient digit and correct. */
+/* Estimate quotient digit and correct */
       xn = ((t[-1] * MP_RADIX + t[0]) * MP_RADIX + t[1]) * MP_RADIX + (digits_w >= (first + 2) ? t[2] : 0);
       q = (double) ((int) (xn / xd));
       t[0] += (t[-1] * MP_RADIX - q * y);
@@ -1553,7 +1561,7 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
       if (k % oflow == 0) {
         norm_mp (w, first, digits_w);
       }
-/* Estimate quotient digit and correct. */
+/* Estimate quotient digit and correct */
       xn = ((t[-1] * MP_RADIX + t[0]) * MP_RADIX + t[1]) * MP_RADIX + (digits_w >= (first + 2) ? t[2] : 0);
       q = (double) ((int) (xn / xd));
       t[0] += (t[-1] * MP_RADIX - q * y);
@@ -1561,8 +1569,8 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
     }
   }
   norm_mp (w, 2, digits_w);
-  round_mp (z, w, digits);
-/* Restore and exit. */
+  round_internal_mp (z, w, digits);
+/* Restore and exit */
   stack_pointer = pop_sp;
   z_1 = MP_DIGIT (z, 1);
   MP_DIGIT (x, 1) = x_1;
@@ -1596,7 +1604,7 @@ MP_DIGIT_T *over_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_
   (void) div_mp_digit (p, z_g, x_g, y, digits_g);
   trunc_mp (p, z_g, z_g, digits_g);
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-/* Restore and exit. */
+/* Restore and exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -1621,7 +1629,7 @@ MP_DIGIT_T *rec_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (one, p, digits);
   (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
   (void) div_mp (p, z, one, x, digits);
-/* Restore and exit. */
+/* Restore and exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -1723,7 +1731,7 @@ static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
     return (A68_FALSE);
   } else {
 #if (MP_RADIX == DEFAULT_MP_RADIX)
-/* More or less optimised for LONG and default LONG LONG precisions. */
+/* More or less optimised for LONG and default LONG LONG precisions */
     return ((BOOL_T) (digits <= 10 ? ABS (MP_DIGIT (z, 1)) > 100000 : ABS (MP_DIGIT (z, 1)) > 10000));
 #else
     switch (LOG_MP_BASE) {
@@ -1786,13 +1794,13 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     (void) rec_mp (p, x_g, x_g, digits_g);
   }
   if (ABS (MP_EXPONENT (x_g)) >= 2) {
-/* For extreme arguments we want accurate results as well. */
+/* For extreme arguments we want accurate results as well */
     int expo = (int) MP_EXPONENT (x_g);
     MP_EXPONENT (x_g) = (MP_DIGIT_T) (expo % 2);
     (void) sqrt_mp (p, z_g, x_g, digits_g);
     MP_EXPONENT (z_g) += (MP_DIGIT_T) (expo / 2);
   } else {
-/* Argument is in range. Estimate the root as double. */
+/* Argument is in range. Estimate the root as double */
     int decimals;
     double x_d = mp_to_real (p, x_g, digits_g);
     (void) real_to_mp (p, z_g, sqrt (x_d), digits_g);
@@ -1810,7 +1818,7 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     (void) rec_mp (p, z_g, z_g, digits);
   }
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -1847,13 +1855,13 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     (void) rec_mp (p, x_g, x_g, digits_g);
   }
   if (ABS (MP_EXPONENT (x_g)) >= 3) {
-/* For extreme arguments we want accurate results as well. */
+/* For extreme arguments we want accurate results as well */
     int expo = (int) MP_EXPONENT (x_g);
     MP_EXPONENT (x_g) = (MP_DIGIT_T) (expo % 3);
     (void) curt_mp (p, z_g, x_g, digits_g);
     MP_EXPONENT (z_g) += (MP_DIGIT_T) (expo / 3);
   } else {
-/* Argument is in range. Estimate the root as double. */
+/* Argument is in range. Estimate the root as double */
     int decimals;
     (void) real_to_mp (p, z_g, curt (mp_to_real (p, x_g, digits_g)), digits_g);
 /* Newton's method: x<n+1> = (2 x<n> + a / x<n> ^ 2) / 3 */
@@ -1872,7 +1880,7 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     (void) rec_mp (p, z_g, z_g, digits);
   }
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   if (change_sign) {
     MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
@@ -1937,7 +1945,7 @@ MP_DIGIT_T *hypot_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y
 
 MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
-/* Argument is reduced by using exp (z / (2 ** n)) ** (2 ** n) = exp(z). */
+/* Argument is reduced by using exp (z / (2 ** n)) ** (2 ** n) = exp(z) */
   int m, n, pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   MP_DIGIT_T *x_g, *sum, *a68g_pow, *fac, *tmp;
   BOOL_T iterate;
@@ -1952,13 +1960,13 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (tmp, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
   m = 0;
-/* Scale x down. */
+/* Scale x down */
   while (eps_mp (x_g, digits_g)) {
     m++;
     (void) half_mp (p, x_g, x_g, digits_g);
   }
 /* Calculate Taylor sum
-   exp (z) = 1 + z / 1 ! + z ** 2 / 2 ! + ... */
+   exp (z) = 1 + z / 1 ! + z ** 2 / 2 ! + .. */
   (void) set_mp_short (sum, (MP_DIGIT_T) 1, 0, digits_g);
   (void) add_mp (p, sum, sum, x_g, digits_g);
   (void) mul_mp (p, a68g_pow, x_g, x_g, digits_g);
@@ -2005,12 +2013,12 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       (void) mul_mp_digit (p, fac, fac, (MP_DIGIT_T) n, digits_g);
     }
   }
-/* Square exp (x) up. */
+/* Square exp (x) up */
   while (m--) {
     (void) mul_mp (p, sum, sum, sum, digits_g);
   }
   (void) shorten_mp (p, z, digits, sum, digits_g);
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -2039,7 +2047,7 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (fac, p, digits_g);
   STACK_MP (tmp, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
-/* Calculate Taylor sum expm1 (z) = z / 1 ! + z ** 2 / 2 ! + ... */
+/* Calculate Taylor sum expm1 (z) = z / 1 ! + z ** 2 / 2 ! + .. */
   SET_MP_ZERO (sum, digits_g);
   (void) add_mp (p, sum, sum, x_g, digits_g);
   (void) mul_mp (p, a68g_pow, x_g, x_g, digits_g);
@@ -2087,7 +2095,7 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     }
   }
   (void) shorten_mp (p, z, digits, sum, digits_g);
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -2105,11 +2113,11 @@ MP_DIGIT_T *mp_ln_scale (NODE_T * p, MP_DIGIT_T * z, int digits)
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   MP_DIGIT_T *z_g;
   STACK_MP (z_g, p, digits_g);
-/* First see if we can restore a previous calculation. */
+/* First see if we can restore a previous calculation */
   if (digits_g <= mp_ln_scale_size) {
     MOVE_MP (z_g, ref_mp_ln_scale, digits_g);
   } else {
-/* No luck with the kept value, we generate a longer one. */
+/* No luck with the kept value, we generate a longer one */
     (void) set_mp_short (z_g, (MP_DIGIT_T) 1, 1, digits_g);
     (void) ln_mp (p, z_g, z_g, digits_g);
     ref_mp_ln_scale = (MP_DIGIT_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
@@ -2134,11 +2142,11 @@ MP_DIGIT_T *mp_ln_10 (NODE_T * p, MP_DIGIT_T * z, int digits)
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   MP_DIGIT_T *z_g;
   STACK_MP (z_g, p, digits_g);
-/* First see if we can restore a previous calculation. */
+/* First see if we can restore a previous calculation */
   if (digits_g <= mp_ln_10_size) {
     MOVE_MP (z_g, ref_mp_ln_10, digits_g);
   } else {
-/* No luck with the kept value, we generate a longer one. */
+/* No luck with the kept value, we generate a longer one */
     (void) set_mp_short (z_g, (MP_DIGIT_T) 10, 0, digits_g);
     (void) ln_mp (p, z_g, z_g, digits_g);
     ref_mp_ln_10 = (MP_DIGIT_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
@@ -2161,7 +2169,7 @@ MP_DIGIT_T *mp_ln_10 (NODE_T * p, MP_DIGIT_T * z, int digits)
 
 MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
-/* Depending on the argument we choose either Taylor or Newton. */
+/* Depending on the argument we choose either Taylor or Newton */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   BOOL_T negative, scale;
   MP_DIGIT_T *x_g, *z_g, expo = 0;
@@ -2187,7 +2195,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   if (MP_EXPONENT (x_g) == 0 && MP_DIGIT (x_g, 1) == 1 && MP_DIGIT (x_g, 2) == 0) {
 /* Taylor sum for x close to unity.
    ln (x) = (x - 1) - (x - 1) ** 2 / 2 + (x - 1) ** 3 / 3 - ...
-   This is faster for small x and avoids cancellation. */
+   This is faster for small x and avoids cancellation */
     MP_DIGIT_T *one, *tmp, *a68g_pow;
     int n = 2;
     BOOL_T iterate;
@@ -2211,7 +2219,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       }
     }
   } else {
-/* Newton's method: x<n+1> = x<n> - 1 + a / exp (x<n>). */
+/* Newton's method: x<n+1> = x<n> - 1 + a / exp (x<n>) */
     MP_DIGIT_T *tmp, *z_0, *one;
     int decimals;
     STACK_MP (tmp, p, digits_g);
@@ -2219,7 +2227,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     STACK_MP (z_0, p, digits_g);
     (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
     SET_MP_ZERO (z_0, digits_g);
-/* Construct an estimate. */
+/* Construct an estimate */
     (void) real_to_mp (p, z_g, log (mp_to_real (p, x_g, digits_g)), digits_g);
     decimals = DOUBLE_ACCURACY;
     do {
@@ -2232,7 +2240,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       (void) add_mp (p, z_g, z_g, tmp, digits_h);
     } while (decimals < digits_g * LOG_MP_BASE);
   }
-/* Inverse scaling. */
+/* Inverse scaling */
   if (scale) {
 /* ln (x * MP_RADIX ** n) = ln (x) + n * ln (MP_RADIX) */
     MP_DIGIT_T *ln_base;
@@ -2245,7 +2253,7 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     MP_DIGIT (z_g, 1) = -MP_DIGIT (z_g, 1);
   }
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -2295,7 +2303,7 @@ MP_DIGIT_T *hyp_mp (NODE_T * p, MP_DIGIT_T * sh, MP_DIGIT_T * ch, MP_DIGIT_T * z
   (void) exp_mp (p, x_g, z_g, digits);
   (void) rec_mp (p, y_g, x_g, digits);
   (void) add_mp (p, ch, x_g, y_g, digits);
-/* Avoid cancellation for sinh. */
+/* Avoid cancellation for sinh */
   if ((MP_DIGIT (x_g, 1) == 1 && MP_DIGIT (x_g, 2) == 0) || (MP_DIGIT (y_g, 1) == 1 && MP_DIGIT (y_g, 2) == 0)) {
     (void) expm1_mp (p, x_g, z_g, digits);
     MP_DIGIT (z_g, 1) = -MP_DIGIT (z_g, 1);
@@ -2504,13 +2512,13 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
   BOOL_T iterate;
   MP_DIGIT_T *pi_g, *one, *two, *x_g, *y_g, *u_g, *v_g;
   STACK_MP (pi_g, p, digits_g);
-/* First see if we can restore a previous calculation. */
+/* First see if we can restore a previous calculation */
   if (digits_g <= mp_pi_size) {
     MOVE_MP (pi_g, ref_mp_pi, digits_g);
   } else {
 /* No luck with the kept value, hence we generate a longer "pi".
    Calculate "pi" using the Borwein & Borwein AGM algorithm.
-   This AGM doubles the numbers of digits at every pass. */
+   This AGM doubles the numbers of digits at every pass */
     STACK_MP (one, p, digits_g);
     STACK_MP (two, p, digits_g);
     STACK_MP (x_g, p, digits_g);
@@ -2525,12 +2533,12 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
     (void) sqrt_mp (p, y_g, x_g, digits_g);
     iterate = A68_TRUE;
     while (iterate) {
-/* New x. */
+/* New x */
       (void) sqrt_mp (p, u_g, x_g, digits_g);
       (void) div_mp (p, v_g, one, u_g, digits_g);
       (void) add_mp (p, u_g, u_g, v_g, digits_g);
       (void) half_mp (p, x_g, u_g, digits_g);
-/* New pi. */
+/* New pi */
       (void) add_mp (p, u_g, x_g, one, digits_g);
       (void) add_mp (p, v_g, y_g, one, digits_g);
       (void) div_mp (p, u_g, u_g, v_g, digits_g);
@@ -2540,7 +2548,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
         iterate = A68_FALSE;
       } else {
         MOVE_MP (pi_g, v_g, digits_g);
-/* New y. */
+/* New y */
         (void) sqrt_mp (p, u_g, x_g, digits_g);
         (void) div_mp (p, v_g, one, u_g, digits_g);
         (void) mul_mp (p, u_g, y_g, u_g, digits_g);
@@ -2549,7 +2557,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
         (void) div_mp (p, y_g, u_g, v_g, digits_g);
       }
     }
-/* Keep the result for future restore. */
+/* Keep the result for future restore */
     ref_mp_pi = (MP_DIGIT_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
     MOVE_MP (ref_mp_pi, pi_g, digits_g);
     mp_pi_size = digits_g;
@@ -2586,7 +2594,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
 
 MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
-/* Use triple-angle relation to reduce argument. */
+/* Use triple-angle relation to reduce argument */
   int pop_sp = stack_pointer, m, n, digits_g = FUN_DIGITS (digits);
   BOOL_T flip, negative, iterate, even;
   MP_DIGIT_T *x_g, *pi, *tpi, *hpi, *sqr, *tmp, *a68g_pow, *fac, *z_g;
@@ -2603,7 +2611,7 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   (void) mod_mp (p, x_g, x_g, tpi, digits_g);
 /* Argument reduction (2): sin (-x) = sin (x)
                            sin (x) = - sin (x - pi); pi < x <= 2 pi
-                           sin (x) = sin (pi - x);   pi / 2 < x <= pi. */
+                           sin (x) = sin (pi - x);   pi / 2 < x <= pi */
   negative = (BOOL_T) (MP_DIGIT (x_g, 1) < 0);
   if (negative) {
     MP_DIGIT (x_g, 1) = -MP_DIGIT (x_g, 1);
@@ -2611,7 +2619,7 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (tmp, p, digits_g);
   (void) sub_mp (p, tmp, x_g, pi, digits_g);
   flip = (BOOL_T) (MP_DIGIT (tmp, 1) > 0);
-  if (flip) {                   /* x > pi. */
+  if (flip) {                   /* x > pi */
     (void) sub_mp (p, x_g, x_g, pi, digits_g);
   }
   (void) sub_mp (p, tmp, x_g, hpi, digits_g);
@@ -2625,7 +2633,7 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     m++;
     (void) div_mp_digit (p, x_g, x_g, (MP_DIGIT_T) 3, digits_g);
   }
-/* Taylor sum. */
+/* Taylor sum */
   STACK_MP (sqr, p, digits_g);
   STACK_MP (a68g_pow, p, digits_g);
   STACK_MP (fac, p, digits_g);
@@ -2670,7 +2678,7 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     }
   }
 /* Inverse scaling using sin (3x) = sin (x) * (3 - 4 sin ** 2 (x))
-   Use existing mp's for intermediates. */
+   Use existing mp's for intermediates */
   (void) set_mp_short (fac, (MP_DIGIT_T) 3, 0, digits_g);
   while (m--) {
     (void) mul_mp (p, a68g_pow, z_g, z_g, digits_g);
@@ -2682,7 +2690,7 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   if (negative ^ flip) {
     MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
   }
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -2730,7 +2738,7 @@ Compute x mod 2 pi before subtracting to avoid cancellation.
 
 MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
-/* Use tan (x) = sin (x) / sqrt (1 - sin ^ 2 (x)). */
+/* Use tan (x) = sin (x) / sqrt (1 - sin ^ 2 (x)) */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   MP_DIGIT_T *sns, *cns, *one, *pi, *hpi, *x_g, *y_g;
   BOOL_T negate;
@@ -2741,7 +2749,7 @@ MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (y_g, p, digits_g);
   STACK_MP (sns, p, digits);
   STACK_MP (cns, p, digits);
-/* Argument mod pi. */
+/* Argument mod pi */
   (void) mp_pi (p, pi, MP_PI, digits_g);
   (void) mp_pi (p, hpi, MP_HALF_PI, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
@@ -2873,7 +2881,7 @@ MP_DIGIT_T *acos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 
 MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 {
-/* Depending on the argument we choose either Taylor or Newton. */
+/* Depending on the argument we choose either Taylor or Newton */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   MP_DIGIT_T *x_g, *z_g;
   BOOL_T flip, negative;
@@ -2897,7 +2905,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   if (MP_EXPONENT (x_g) < -1 || (MP_EXPONENT (x_g) == -1 && MP_DIGIT (x_g, 1) < MP_RADIX / 100)) {
 /* Taylor sum for x close to zero.
    arctan (x) = x - x ** 3 / 3 + x ** 5 / 5 - x ** 7 / 7 + ..
-   This is faster for small x and avoids cancellation. */
+   This is faster for small x and avoids cancellation */
     MP_DIGIT_T *tmp, *a68g_pow, *sqr;
     int n = 3;
     BOOL_T iterate, even;
@@ -2936,7 +2944,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     STACK_MP (one, p, digits_g);
     SET_MP_ZERO (z_0, digits_g);
     (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
-/* Construct an estimate. */
+/* Construct an estimate */
     (void) real_to_mp (p, z_g, atan (mp_to_real (p, x_g, digits_g)), digits_g);
     decimals = DOUBLE_ACCURACY;
     do {
@@ -2959,7 +2967,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   }
   (void) shorten_mp (p, z, digits, z_g, digits_g);
   MP_DIGIT (z, 1) = (negative ? -MP_DIGIT (z, 1) : MP_DIGIT (z, 1));
-/* Exit. */
+/* Exit */
   stack_pointer = pop_sp;
   return (z);
 }
@@ -3510,4 +3518,217 @@ MP_DIGIT_T *catan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
   (void) shorten_mp (p, i, digits, v, digits_g);
   stack_pointer = pop_sp;
   return (re);
+}
+
+/*!
+\brief comparison of "x" and "y"
+\param p position in tree
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return whether x = y
+**/
+
+void eq_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+{
+  ADDR_T pop_sp = stack_pointer;
+  MP_DIGIT_T *v;
+  STACK_MP (v, p, digits);
+  (void) sub_mp (p, v, x, y, digits);
+  STATUS (z) = INITIALISED_MASK;
+  VALUE (z) = (MP_DIGIT (v, 1) == 0 ? A68_TRUE : A68_FALSE);
+  stack_pointer = pop_sp;
+}
+
+/*!
+\brief comparison of "x" and "y"
+\param p position in tree
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return whether x != y
+**/
+
+void ne_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+{
+  ADDR_T pop_sp = stack_pointer;
+  MP_DIGIT_T *v;
+  STACK_MP (v, p, digits);
+  (void) sub_mp (p, v, x, y, digits);
+  STATUS (z) = INITIALISED_MASK;
+  VALUE (z) = (MP_DIGIT (v, 1) != 0 ? A68_TRUE : A68_FALSE);
+  stack_pointer = pop_sp;
+}
+
+/*!
+\brief comparison of "x" and "y"
+\param p position in tree
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return whether x < y
+**/
+
+void lt_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+{
+  ADDR_T pop_sp = stack_pointer;
+  MP_DIGIT_T *v;
+  STACK_MP (v, p, digits);
+  (void) sub_mp (p, v, x, y, digits);
+  STATUS (z) = INITIALISED_MASK;
+  VALUE (z) = (MP_DIGIT (v, 1) < 0 ? A68_TRUE : A68_FALSE);
+  stack_pointer = pop_sp;
+}
+
+/*!
+\brief comparison of "x" and "y"
+\param p position in tree
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return whether x <= y
+**/
+
+void le_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+{
+  ADDR_T pop_sp = stack_pointer;
+  MP_DIGIT_T *v;
+  STACK_MP (v, p, digits);
+  (void) sub_mp (p, v, x, y, digits);
+  STATUS (z) = INITIALISED_MASK;
+  VALUE (z) = (MP_DIGIT (v, 1) <= 0 ? A68_TRUE : A68_FALSE);
+  stack_pointer = pop_sp;
+}
+
+/*!
+\brief comparison of "x" and "y"
+\param p position in tree
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return whether x > y
+**/
+
+void gt_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+{
+  ADDR_T pop_sp = stack_pointer;
+  MP_DIGIT_T *v;
+  STACK_MP (v, p, digits);
+  (void) sub_mp (p, v, x, y, digits);
+  STATUS (z) = INITIALISED_MASK;
+  VALUE (z) = (MP_DIGIT (v, 1) > 0 ? A68_TRUE : A68_FALSE);
+  stack_pointer = pop_sp;
+}
+
+/*!
+\brief comparison of "x" and "y"
+\param p position in tree
+\param x mp number
+\param y mp number
+\param digits precision in mp-digits
+\return whether x >= y
+**/
+
+void ge_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+{
+  ADDR_T pop_sp = stack_pointer;
+  MP_DIGIT_T *v;
+  STACK_MP (v, p, digits);
+  (void) sub_mp (p, v, x, y, digits);
+  STATUS (z) = INITIALISED_MASK;
+  VALUE (z) = (MP_DIGIT (v, 1) >= 0 ? A68_TRUE : A68_FALSE);
+  stack_pointer = pop_sp;
+}
+
+/*!
+\brief rounding
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return round (x)
+**/
+
+MP_DIGIT_T *round_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+{
+  MP_DIGIT_T *y;
+  STACK_MP (y, p, digits);
+  (void) set_mp_short (y, (MP_DIGIT_T) (MP_RADIX / 2), -1, digits);
+  if (MP_DIGIT (x, 1) >= 0) {
+    (void) add_mp (p, z, x, y, digits);
+    (void) trunc_mp (p, z, z, digits);
+  } else {
+    (void) sub_mp (p, z, x, y, digits);
+    (void) trunc_mp (p, z, z, digits);
+  }
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  return (z);
+}
+
+/*!
+\brief rounding
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return entier (x)
+**/
+
+MP_DIGIT_T *entier_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+{
+  if (MP_DIGIT (x, 1) >= 0) {
+    (void) trunc_mp (p, z, x, digits);
+  } else {
+    MP_DIGIT_T *y;
+    STACK_MP (y, p, digits);
+    MOVE_MP (y, z, digits);
+    (void) trunc_mp (p, z, x, digits);
+    (void) sub_mp (p, y, y, z, digits);
+    if (MP_DIGIT (y, 1) != 0) {
+      (void) set_mp_short (y, (MP_DIGIT_T) 1, 0, digits);
+      (void) sub_mp (p, z, z, y, digits);
+    }
+  }
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  return (z);
+}
+
+/*!
+\brief absolute value
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return |x|
+**/
+
+MP_DIGIT_T *abs_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+{
+  (void) p;
+  if (x != z) {
+    MOVE_MP (z, x, digits);
+  }
+  MP_DIGIT (z, 1) = fabs (MP_DIGIT (z, 1));
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  return (z);
+}
+
+/*!
+\brief change sign
+\param p position in tree
+\param z mp number
+\param x mp number
+\param digits precision in mp-digits
+\return -x
+**/
+
+MP_DIGIT_T *minus_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+{
+  (void) p;
+  if (x != z) {
+    MOVE_MP (z, x, digits);
+  }
+  MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
+  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  return (z);
 }

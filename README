@@ -1,5 +1,5 @@
 ALGOL68G - Algol 68 Genie
--------------------------
+*************************
 
 Algol68G is a nearly fully featured implementation of Algol 68 as defined by 
 the Revised Report.
@@ -17,20 +17,24 @@ Author of Algol68G is Marcel van der Veer <algol68g@xs4all.nl>.
 Web pages for Algol68G are at <http://www.xs4all.nl/~jmvdveer>.
 
 
+Documentation
+*************
+
+Documentation is available from the web pages for Algol68G at <http://www.xs4all.nl/~jmvdveer>.
+
+
 Installation
-------------
+************
 
-Please refer to the manual for detailed instructions.
-In brief, for the reasonably experienced Unix/Linux user:
+Please refer to file INSTALL or the manual for detailed instructions.
+Since Algol 68 Genie complies with the GNU build system, a reasonably 
+experienced Unix/Linux user can execute:
 
-tar -xzf algol68g-VERSION.tgz
-cd algol68g-VERSION
-./configure -O --threads
+tar -xzf algol-68-genie-VERSION.tgz
+cd algol-68-genie-VERSION
+./configure
 make
-
-and if you want to install when building as root, type:
-
+make check
+su
 make install
-
-Have fun!
 
