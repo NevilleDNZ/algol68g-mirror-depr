@@ -33,6 +33,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 bin_PROGRAMS = a68g$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(pkginclude_HEADERS) \
@@ -55,9 +56,9 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_a68g_OBJECTS = a68g-a68g.$(OBJEXT) a68g-code.$(OBJEXT) \
 	a68g-environ.$(OBJEXT) a68g-genie.$(OBJEXT) a68g-gsl.$(OBJEXT) \
-	a68g-mips.$(OBJEXT) a68g-monitor.$(OBJEXT) a68g-mp.$(OBJEXT) \
-	a68g-plotutils.$(OBJEXT) a68g-syntax.$(OBJEXT) \
-	a68g-sound.$(OBJEXT) a68g-unix.$(OBJEXT)
+	a68g-monitor.$(OBJEXT) a68g-mp.$(OBJEXT) \
+	a68g-plotutils.$(OBJEXT) a68g-postgresql.$(OBJEXT) \
+	a68g-syntax.$(OBJEXT) a68g-sound.$(OBJEXT) a68g-unix.$(OBJEXT)
 a68g_OBJECTS = $(am_a68g_OBJECTS)
 a68g_LDADD = $(LDADD)
 a68g_LINK = $(CCLD) $(a68g_CFLAGS) $(CFLAGS) $(a68g_LDFLAGS) \
@@ -189,12 +190,16 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c mips.c monitor.c mp.c plotutils.c syntax.c sound.c unix.c
-a68g_CFLAGS = -DBINDIR='"$(bindir)"' -Wshadow
+a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c monitor.c mp.c plotutils.c postgresql.c syntax.c sound.c unix.c
+a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 TESTS_ENVIRONMENT = ./a68g
 TESTS = check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
@@ -295,10 +300,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-environ.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-genie.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-gsl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-mips.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-monitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-mp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-plotutils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-postgresql.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-sound.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-syntax.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-unix.Po@am__quote@
@@ -387,20 +392,6 @@ a68g-gsl.obj: gsl.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-gsl.obj `if test -f 'gsl.c'; then $(CYGPATH_W) 'gsl.c'; else $(CYGPATH_W) '$(srcdir)/gsl.c'; fi`
 
-a68g-mips.o: mips.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-mips.o -MD -MP -MF $(DEPDIR)/a68g-mips.Tpo -c -o a68g-mips.o `test -f 'mips.c' || echo '$(srcdir)/'`mips.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-mips.Tpo $(DEPDIR)/a68g-mips.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mips.c' object='a68g-mips.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-mips.o `test -f 'mips.c' || echo '$(srcdir)/'`mips.c
-
-a68g-mips.obj: mips.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-mips.obj -MD -MP -MF $(DEPDIR)/a68g-mips.Tpo -c -o a68g-mips.obj `if test -f 'mips.c'; then $(CYGPATH_W) 'mips.c'; else $(CYGPATH_W) '$(srcdir)/mips.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-mips.Tpo $(DEPDIR)/a68g-mips.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mips.c' object='a68g-mips.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-mips.obj `if test -f 'mips.c'; then $(CYGPATH_W) 'mips.c'; else $(CYGPATH_W) '$(srcdir)/mips.c'; fi`
-
 a68g-monitor.o: monitor.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-monitor.o -MD -MP -MF $(DEPDIR)/a68g-monitor.Tpo -c -o a68g-monitor.o `test -f 'monitor.c' || echo '$(srcdir)/'`monitor.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-monitor.Tpo $(DEPDIR)/a68g-monitor.Po
@@ -442,6 +433,20 @@ a68g-plotutils.obj: plotutils.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='plotutils.c' object='a68g-plotutils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-plotutils.obj `if test -f 'plotutils.c'; then $(CYGPATH_W) 'plotutils.c'; else $(CYGPATH_W) '$(srcdir)/plotutils.c'; fi`
+
+a68g-postgresql.o: postgresql.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-postgresql.o -MD -MP -MF $(DEPDIR)/a68g-postgresql.Tpo -c -o a68g-postgresql.o `test -f 'postgresql.c' || echo '$(srcdir)/'`postgresql.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-postgresql.Tpo $(DEPDIR)/a68g-postgresql.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='postgresql.c' object='a68g-postgresql.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-postgresql.o `test -f 'postgresql.c' || echo '$(srcdir)/'`postgresql.c
+
+a68g-postgresql.obj: postgresql.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-postgresql.obj -MD -MP -MF $(DEPDIR)/a68g-postgresql.Tpo -c -o a68g-postgresql.obj `if test -f 'postgresql.c'; then $(CYGPATH_W) 'postgresql.c'; else $(CYGPATH_W) '$(srcdir)/postgresql.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-postgresql.Tpo $(DEPDIR)/a68g-postgresql.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='postgresql.c' object='a68g-postgresql.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-postgresql.obj `if test -f 'postgresql.c'; then $(CYGPATH_W) 'postgresql.c'; else $(CYGPATH_W) '$(srcdir)/postgresql.c'; fi`
 
 a68g-syntax.o: syntax.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-syntax.o -MD -MP -MF $(DEPDIR)/a68g-syntax.Tpo -c -o a68g-syntax.o `test -f 'syntax.c' || echo '$(srcdir)/'`syntax.c

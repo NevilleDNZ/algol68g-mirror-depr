@@ -24,6 +24,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include "a68g-config.h"
 #endif
 
+#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+
 #include "a68g.h"
 
 /*
@@ -32,8 +34,6 @@ a binding for libplot. When GNU plotutils are not installed then the routines in
 this file will give a runtime error when called. You can also choose to not
 define them in "prelude.c". 
 */
-
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
 
 #define MAXIMUM(x, y) ((x) > (y) ? (x) : (y))
 

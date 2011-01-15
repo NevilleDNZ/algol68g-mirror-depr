@@ -24,9 +24,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include "a68g-config.h"
 #endif
 
-#include "a68g.h"
-
 #if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+
+#include "a68g.h"
 
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_complex.h>
@@ -40,18 +40,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_integration.h>
-
-/*
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_permutation.h>
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_vector.h>
-*/
 
 static NODE_T *error_node = NULL;
 

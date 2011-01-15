@@ -1422,7 +1422,7 @@ void genie_http_content (NODE_T * p)
   if (service_address == NULL) {
     PUSH_PRIMITIVE (p, 1, A68_INT);
     return;
-  };
+  }
   if (VALUE (&port_number) == 0) {
     socket_address.sin_port = (uint16_t) (service_address->s_port);
   } else {
@@ -1435,37 +1435,37 @@ This warning can be safely ignored.
     if (socket_address.sin_port == 0) {
       PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
       return;
-    };
+    }
   }
   host_address = gethostbyname (get_transput_buffer (DOMAIN_BUFFER));
   if (host_address == NULL) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
-  };
+  }
   COPY (&socket_address.sin_addr, host_address->h_addr, host_address->h_length);
   protocol = getprotobyname (PROTOCOL);
   if (protocol == NULL) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
-  };
+  }
   socket_id = socket (PF_INET, SOCK_STREAM, protocol->p_proto);
   if (socket_id < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
-  };
+  }
   conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     ASSERT (close (socket_id) == 0);
     return;
-  };
+  }
 /* Read from host */
   WRITE (socket_id, get_transput_buffer (REQUEST_BUFFER));
   if (errno != 0) {
     PUSH_PRIMITIVE (p, errno, A68_INT);
     ASSERT (close (socket_id) == 0);
     return;
-  };
+  }
 /* Initialise file descriptor set */
   FD_ZERO (&set);
   FD_SET (socket_id, &set);
@@ -1504,7 +1504,7 @@ This warning can be safely ignored.
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     ASSERT (close (socket_id) == 0);
     return;
-  };
+  }
 /* Convert string */
   *(A68_REF *) ADDRESS (&content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER));
   ASSERT (close (socket_id) == 0);
@@ -1555,7 +1555,7 @@ void genie_tcp_request (NODE_T * p)
   if (service_address == NULL) {
     PUSH_PRIMITIVE (p, 1, A68_INT);
     return;
-  };
+  }
   if (VALUE (&port_number) == 0) {
     socket_address.sin_port = (uint16_t) (service_address->s_port);
   } else {
@@ -1568,37 +1568,37 @@ This warning can be safely ignored.
     if (socket_address.sin_port == 0) {
       PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
       return;
-    };
+    }
   }
   host_address = gethostbyname (get_transput_buffer (DOMAIN_BUFFER));
   if (host_address == NULL) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
-  };
+  }
   COPY (&socket_address.sin_addr, host_address->h_addr, host_address->h_length);
   protocol = getprotobyname (PROTOCOL);
   if (protocol == NULL) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
-  };
+  }
   socket_id = socket (PF_INET, SOCK_STREAM, protocol->p_proto);
   if (socket_id < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
-  };
+  }
   conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     ASSERT (close (socket_id) == 0);
     return;
-  };
+  }
 /* Read from host */
   WRITE (socket_id, get_transput_buffer (REQUEST_BUFFER));
   if (errno != 0) {
     PUSH_PRIMITIVE (p, errno, A68_INT);
     ASSERT (close (socket_id) == 0);
     return;
-  };
+  }
 /* Initialise file descriptor set */
   FD_ZERO (&set);
   FD_SET (socket_id, &set);
@@ -1637,7 +1637,7 @@ This warning can be safely ignored.
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     ASSERT (close (socket_id) == 0);
     return;
-  };
+  }
 /* Convert string */
   *(A68_REF *) ADDRESS (&content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER));
   ASSERT (close (socket_id) == 0);
@@ -1647,9 +1647,6 @@ This warning can be safely ignored.
 #endif /* HAVE_HTTP */
 
 #if defined HAVE_REGEX_H
-
-#include <regex.h>
-
 /*!
 \brief return code for regex interface
 \param rc return code from regex routine

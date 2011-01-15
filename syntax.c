@@ -1,6 +1,6 @@
 /*!
-\file parser.c
-\brief hand-coded Algol 68 scanner and parser
+\file syntax.c
+\brief hand-coded Algol 68 scanner and parser 
 */
 
 /*
@@ -21,14 +21,25 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
-This is the scanner. The source file is read and stored internally, is
-tokenised, and if needed a refinement preprocessor elaborates a stepwise
+
+AN EFFECTIVE ALGOL 68 PARSER
+
+Algol 68 grammar is defined as a two level (Van Wijngaarden) grammar that
+incorporates, as syntactical rules, a lot of the "semantical" rules in 
+other languages. Examples are correct use of symbols, modes and scope.
+That is why so much functionality is in the "syntax.c" file. In fact, all
+this material constitutes an effective "Algol 68 parser". This pragmatic
+approach was chosen since in the early days of Algol 68, many implementations
+"ab initio" failed. If, from now on, I mention "parser", I mean a common
+recursive-descent or bottom-up parser.
+
+First part in this file is the scanner. The source file is read,
+is tokenised, and if needed a refinement preprocessor elaborates a stepwise
 refined program. The result is a linear list of tokens that is input for the
 parser, that will transform the linear list into a syntax tree.
 
-Algol68G tokenises all symbols before the parser is invoked. This means that
-scanning does not use information from the parser.
-
+Algol68G tokenises all symbols before the bottom-up parser is invoked. 
+This means that scanning does not use information from the parser.
 The scanner does of course do some rudimentary parsing. Format texts can have
 enclosed clauses in them, so we record information in a stack as to know
 what is being scanned. Also, the refinement preprocessor implements a
@@ -42,7 +53,107 @@ The scanner supports two stropping regimes: bold and quote. Examples of both:
 
 Quote stropping was used frequently in the (excusez-le-mot) punch-card age.
 Hence, bold stropping is the default. There also existed point stropping, but
-that has not been implemented here */
+that has not been implemented here.
+
+Next, this file contains a hand-coded parser for Algol 68.
+
+First part of the parser is a recursive-descent type to check parenthesis.
+Also a first set-up is made of symbol tables, needed by the bottom-up parser.
+Next part is the bottom-up parser, that parses without knowing about modes while
+parsing and reducing. It can therefore not exchange "[]" with "()" as was
+blessed by the Revised Report. This is solved by treating CALL and SLICE as
+equivalent for the moment and letting the mode checker sort it out later.
+
+This is a Mailloux-type parser, in the sense that it scans a "phrase" for
+definitions before it starts parsing, and therefore allows for tags to be used
+before they are defined, which gives some freedom in top-down programming.
+
+This parser sees the program as a set of "phrases" that needs reducing from
+the inside out (bottom up). For instance
+
+		IF a = b THEN RE a ELSE  pi * (IM a - IM b) FI
+ Phrase level 3 			      +-----------+
+ Phrase level 2    +---+      +--+       +----------------+
+ Phrase level 1 +--------------------------------------------+
+
+Roughly speaking, the BU parser will first work out level 3, than level 2, and
+finally the level 1 phrase.
+
+Parsing progresses in various phases to avoid spurious diagnostics from a
+recovering parser. Every phase "tightens" the grammar more.
+An error in any phase makes the parser quit when that phase ends.
+The parser is forgiving in case of superfluous semicolons.
+
+So those are the parser phases:
+
+ (1) Parenthesis are checked to see whether they match.
+
+ (2) Then, a top-down parser determines the basic-block structure of the program
+     so symbol tables can be set up that the bottom-up parser will consult
+     as you can define things before they are applied.
+
+ (3) A bottom-up parser tries to resolve the structure of the program.
+
+ (4) After the symbol tables have been finalised, a small rearrangement of the
+     tree may be required where JUMPs have no GOTO. This leads to the
+     non-standard situation that JUMPs without GOTO can have the syntactic
+     position of a PRIMARY, SECONDARY or TERTIARY. 
+
+ (5) The bottom-up parser does not check VICTAL correctness of declarers. This
+     is done separately. Also structure of format texts is checked separately.
+
+The parser sets up symbol tables and populates them as far as needed to parse
+the source. After the bottom-up parser terminates succesfully, the symbol tables
+are completed.
+
+Next, modes are collected and rules for well-formedness and structural equivalence
+are applied.
+
+Next tasks are the mode checker and coercion inserter. The syntax tree is traversed 
+to determine and check all modes. Next the tree is traversed again to insert
+coercions.
+
+Algol 68 contexts are SOFT, WEAK, MEEK, FIRM and STRONG.
+These contexts are increasing in strength:
+
+  SOFT: Deproceduring
+  WEAK: Dereferencing to REF [] or REF STRUCT
+  MEEK: Deproceduring and dereferencing
+  FIRM: MEEK followed by uniting
+  STRONG: FIRM followed by rowing, widening or voiding
+
+Furthermore you will see in this file next switches:
+
+(1) FORCE_DEFLEXING allows assignment compatibility between FLEX and non FLEX
+rows. This can only be the case when there is no danger of altering bounds of a
+non FLEX row.
+
+(2) ALIAS_DEFLEXING prohibits aliasing a FLEX row to a non FLEX row (vice versa
+is no problem) so that one cannot alter the bounds of a non FLEX row by
+aliasing it to a FLEX row. This is particularly the case when passing names as
+parameters to procedures:
+
+   PROC x = (REF STRING s) VOID: ..., PROC y = (REF [] CHAR c) VOID: ...;
+
+   x (LOC STRING);    # OK #
+
+   x (LOC [10] CHAR); # Not OK, suppose x changes bounds of s! #
+   y (LOC STRING);    # OK #
+   y (LOC [10] CHAR); # OK #
+
+(3) SAFE_DEFLEXING sets FLEX row apart from non FLEX row. This holds for names,
+not for values, so common things are not rejected, for instance
+
+   STRING x = read string;
+   [] CHAR y = read string
+
+(4) NO_DEFLEXING sets FLEX row apart from non FLEX row.
+
+Finally, a static scope checker inspects the source. Note that Algol 68 also 
+needs synamic scope checking. This concludes the syntactical analysis of the
+source.
+
+*/
 
 #if defined HAVE_CONFIG_H
 #include "a68g-config.h"
@@ -55,12 +166,70 @@ that has not been implemented here */
 #define IN_PRELUDE(p) (LINE_NUMBER (p) <= 0)
 #define EOL(c) ((c) == NEWLINE_CHAR || (c) == NULL_CHAR)
 
-void file_format_error (int);
-static void append_source_line (char *, SOURCE_LINE_T **, int *, char *);
-
+static BOOL_T stop_scanner = A68_FALSE, read_error = A68_FALSE, no_preprocessing = A68_FALSE;
 static char *scan_buf;
 static int max_scan_buf_length, source_file_size;
-static BOOL_T stop_scanner = A68_FALSE, read_error = A68_FALSE, no_preprocessing = A68_FALSE;
+static int reductions = 0;
+static jmp_buf bottom_up_crash_exit, top_down_crash_exit;
+
+static BOOL_T reduce_phrase (NODE_T *, int);
+static BOOL_T victal_check_declarer (NODE_T *, int);
+static NODE_T *reduce_dyadic (NODE_T *, int u);
+static NODE_T *top_down_loop (NODE_T *);
+static NODE_T *top_down_skip_unit (NODE_T *);
+static void append_source_line (char *, SOURCE_LINE_T **, int *, char *);
+static void elaborate_bold_tags (NODE_T *);
+static void extract_declarations (NODE_T *);
+static void extract_identities (NODE_T *);
+static void extract_indicants (NODE_T *);
+static void extract_labels (NODE_T *, int);
+static void extract_operators (NODE_T *);
+static void extract_priorities (NODE_T *);
+static void extract_proc_identities (NODE_T *);
+static void extract_proc_variables (NODE_T *);
+static void extract_variables (NODE_T *);
+static void ignore_superfluous_semicolons (NODE_T *);
+static void recover_from_error (NODE_T *, int, BOOL_T);
+static void reduce_arguments (NODE_T *);
+static void reduce_basic_declarations (NODE_T *);
+static void reduce_bounds (NODE_T *);
+static void reduce_collateral_clauses (NODE_T *);
+static void reduce_constructs (NODE_T *, int);
+static void reduce_control_structure (NODE_T *, int);
+static void reduce_declaration_lists (NODE_T *);
+static void reduce_declarer_lists (NODE_T *);
+static void reduce_declarers (NODE_T *, int);
+static void reduce_deeper_clauses (NODE_T *);
+static void reduce_deeper_clauses_driver (NODE_T *);
+static void reduce_enclosed_clause_bits (NODE_T *, int);
+static void reduce_enclosed_clauses (NODE_T *);
+static void reduce_enquiry_clauses (NODE_T *);
+static void reduce_erroneous_units (NODE_T *);
+static void reduce_formal_declarer_pack (NODE_T *);
+static void reduce_format_texts (NODE_T *);
+static void reduce_formulae (NODE_T *);
+static void reduce_generic_arguments (NODE_T *);
+static void reduce_indicants (NODE_T *);
+static void reduce_labels (NODE_T *);
+static void reduce_lengtheties (NODE_T *);
+static void reduce_parameter_pack (NODE_T *);
+static void reduce_particular_program (NODE_T *);
+static void reduce_primaries (NODE_T *, int);
+static void reduce_primary_bits (NODE_T *, int);
+static void reduce_right_to_left_constructs (NODE_T * q);
+static void reduce_row_proc_op_declarers (NODE_T *);
+static void reduce_secondaries (NODE_T *);
+static void reduce_serial_clauses (NODE_T *);
+static void reduce_small_declarers (NODE_T *);
+static void reduce_specifiers (NODE_T *);
+static void reduce_statements (NODE_T *, int);
+static void reduce_struct_pack (NODE_T *);
+static void reduce_subordinate (NODE_T *, int);
+static void reduce_tertiaries (NODE_T *);
+static void reduce_union_pack (NODE_T *);
+static void reduce_units (NODE_T *);
+static void try_reduction (NODE_T *, void (*)(NODE_T *), BOOL_T *, ...);
+void file_format_error (int);
 
 /* Standard environ */
 
@@ -1084,7 +1253,8 @@ static int get_format_item (char ch)
     case 'i': { return (FORMAT_ITEM_I); }
     case 'j': { return (FORMAT_ITEM_J); }
     case 'k': { return (FORMAT_ITEM_K); }
-    case 'l': case '/': { return (FORMAT_ITEM_L); }
+    case 'l': 
+    case '/': { return (FORMAT_ITEM_L); }
     case 'm': { return (FORMAT_ITEM_M); }
     case 'n': { return (FORMAT_ITEM_N); }
     case 'o': { return (FORMAT_ITEM_O); }
@@ -1981,94 +2151,7 @@ void put_refinements (void)
   }
 }
 
-/*
-This file contains a hand-coded parser for Algol 68.
-
-Parsing progresses in various phases to avoid spurious diagnostics from a
-recovering parser. Every phase "tightens" the grammar more.
-An error in any phase makes the parser quit when that phase ends.
-The parser is forgiving in case of superfluous semicolons.
-
-These are the phases:
-
- (1) Parenthesis are checked to see whether they match.
-
- (2) Then, a top-down parser determines the basic-block structure of the program
-     so symbol tables can be set up that the bottom-up parser will consult
-     as you can define things before they are applied.
-
- (3) A bottom-up parser tries to resolve the structure of the program.
-
- (4) After the symbol tables have been finalised, a small rearrangement of the
-     tree may be required where JUMPs have no GOTO. This leads to the
-     non-standard situation that JUMPs without GOTO can have the syntactic
-     position of a PRIMARY, SECONDARY or TERTIARY. The mode checker will reject
-     such constructs later on.
-
- (5) The bottom-up parser does not check VICTAL correctness of declarers. This
-     is done separately. Also structure of a format text is checked separately.
-*/
-
-static jmp_buf bottom_up_crash_exit, top_down_crash_exit;
-
-static int reductions = 0;
-
-static BOOL_T reduce_phrase (NODE_T *, int);
-static BOOL_T victal_check_declarer (NODE_T *, int);
-static NODE_T *reduce_dyadic (NODE_T *, int u);
-static NODE_T *top_down_loop (NODE_T *);
-static NODE_T *top_down_skip_unit (NODE_T *);
-static void elaborate_bold_tags (NODE_T *);
-static void extract_declarations (NODE_T *);
-static void extract_identities (NODE_T *);
-static void extract_indicants (NODE_T *);
-static void extract_labels (NODE_T *, int);
-static void extract_operators (NODE_T *);
-static void extract_priorities (NODE_T *);
-static void extract_proc_identities (NODE_T *);
-static void extract_proc_variables (NODE_T *);
-static void extract_variables (NODE_T *);
-static void try_reduction (NODE_T *, void (*)(NODE_T *), BOOL_T *, ...);
-static void ignore_superfluous_semicolons (NODE_T *);
-static void recover_from_error (NODE_T *, int, BOOL_T);
-static void reduce_arguments (NODE_T *);
-static void reduce_basic_declarations (NODE_T *);
-static void reduce_bounds (NODE_T *);
-static void reduce_collateral_clauses (NODE_T *);
-static void reduce_constructs (NODE_T *, int);
-static void reduce_control_structure (NODE_T *, int);
-static void reduce_declaration_lists (NODE_T *);
-static void reduce_declarer_lists (NODE_T *);
-static void reduce_declarers (NODE_T *, int);
-static void reduce_deeper_clauses (NODE_T *);
-static void reduce_deeper_clauses_driver (NODE_T *);
-static void reduce_enclosed_clause_bits (NODE_T *, int);
-static void reduce_enclosed_clauses (NODE_T *);
-static void reduce_enquiry_clauses (NODE_T *);
-static void reduce_erroneous_units (NODE_T *);
-static void reduce_formal_declarer_pack (NODE_T *);
-static void reduce_format_texts (NODE_T *);
-static void reduce_formulae (NODE_T *);
-static void reduce_generic_arguments (NODE_T *);
-static void reduce_indicants (NODE_T *);
-static void reduce_labels (NODE_T *);
-static void reduce_lengtheties (NODE_T *);
-static void reduce_parameter_pack (NODE_T *);
-static void reduce_particular_program (NODE_T *);
-static void reduce_primaries (NODE_T *, int);
-static void reduce_primary_bits (NODE_T *, int);
-static void reduce_right_to_left_constructs (NODE_T * q);
-static void reduce_row_proc_op_declarers (NODE_T *);
-static void reduce_secondaries (NODE_T *);
-static void reduce_serial_clauses (NODE_T *);
-static void reduce_small_declarers (NODE_T *);
-static void reduce_specifiers (NODE_T *);
-static void reduce_statements (NODE_T *, int);
-static void reduce_struct_pack (NODE_T *);
-static void reduce_subordinate (NODE_T *, int);
-static void reduce_tertiaries (NODE_T *);
-static void reduce_union_pack (NODE_T *);
-static void reduce_units (NODE_T *);
+/* Parser starts here */
 
 /*!
 \brief insert node
@@ -3343,27 +3426,6 @@ void top_down_parser (NODE_T * p)
   }
 }
 
-/*
-Next part is the bottom-up parser, that parses without knowing about modes while
-parsing and reducing. It can therefore not exchange "[]" with "()" as was
-blessed by the Revised Report. This is solved by treating CALL and SLICE as
-equivalent here and letting the mode checker sort it out.
-
-This is a Mailloux-type parser, in the sense that it scans a "phrase" for
-definitions before it starts parsing, and therefore allows for tags to be used
-before they are defined, which gives some freedom in top-down programming.
-
-This parser sees the program as a set of "phrases" that needs reducing from
-the inside out (bottom up). For instance
-
-		IF a = b THEN RE a ELSE  pi * (IM a - IM b) FI
- Phrase level 3 			      +-----------+
- Phrase level 2    +---+      +--+       +----------------+
- Phrase level 1 +--------------------------------------------+
-
-Roughly speaking, the BU parser will first work out level 3, than level 2, and
-finally the level 1 phrase.
-*/
 
 /*!
 \brief detect redefined keyword
@@ -11962,48 +12024,6 @@ void scope_checker (NODE_T * p)
 }
 
 /* Mode checker and coercion inserter */
-
-/*
-This is the mode checker and coercion inserter. The syntax tree is traversed to
-determine and check all modes. Next the tree is traversed again to insert
-coercions.
-
-Algol 68 contexts are SOFT, WEAK, MEEK, FIRM and STRONG.
-These contexts are increasing in strength:
-
-  SOFT: Deproceduring
-  WEAK: Dereferencing to REF [] or REF STRUCT
-  MEEK: Deproceduring and dereferencing
-  FIRM: MEEK followed by uniting
-  STRONG: FIRM followed by rowing, widening or voiding
-
-Furthermore you will see in this file next switches:
-
-(1) FORCE_DEFLEXING allows assignment compatibility between FLEX and non FLEX
-rows. This can only be the case when there is no danger of altering bounds of a
-non FLEX row.
-
-(2) ALIAS_DEFLEXING prohibits aliasing a FLEX row to a non FLEX row (vice versa
-is no problem) so that one cannot alter the bounds of a non FLEX row by
-aliasing it to a FLEX row. This is particularly the case when passing names as
-parameters to procedures:
-
-   PROC x = (REF STRING s) VOID: ..., PROC y = (REF [] CHAR c) VOID: ...;
-
-   x (LOC STRING);    # OK #
-
-   x (LOC [10] CHAR); # Not OK, suppose x changes bounds of s! #
-   y (LOC STRING);    # OK #
-   y (LOC [10] CHAR); # OK #
-
-(3) SAFE_DEFLEXING sets FLEX row apart from non FLEX row. This holds for names,
-not for values, so common things are not rejected, for instance
-
-   STRING x = read string;
-   [] CHAR y = read string
-
-(4) NO_DEFLEXING sets FLEX row apart from non FLEX row.
-*/
 
 TAG_T *error_tag;
 

@@ -389,18 +389,24 @@ void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
           PROPAGATOR (p).unit = last_compile_unit;
         } else { /* look up */
 /* 
+----------------------
 BEGIN C STANDARD ISSUE
+----------------------
 
 Writing (PROPAGATOR_T) dlsym(...) below would seem more natural, but the C99 standard leaves
-casting from void * to a function pointer undefined. 
-The assignment below is the POSIX.1-2003 (Technical Corrigendum 1) workaround.
-Even so, this line will provoke inevitably:
+casting from void * to a function pointer undefined. The weird assignment below is the 
+POSIX.1-2003 (Technical Corrigendum 1) workaround.  Even so, this line will provoke apparently 
+inevitably next gcc warning:
+
   warning: dereferencing type-punned pointer will break strict-aliasing rules
-This warning can be safely ignored.
+
+The warning can be safely ignored.
 */
           * (void **) &(PROPAGATOR (p).unit) = dlsym (compile_lib, GENIE (p)->compile_name);
-/* 
+/*
+--------------------
 END C STANDARD ISSUE 
+--------------------
 */
           ABEND (PROPAGATOR (p).unit == NULL, "compiler cannot resolve", dlerror ());
           last_compile_name = GENIE (p)->compile_name;
@@ -7042,7 +7048,7 @@ static void *start_unit (void *arg)
   LOCK_THREAD;
   t = pthread_self ();
   GET_THREAD_INDEX (k, t);
-  context[k].thread_stack_offset = (BYTE_T *) ((int) (&stack_offset - stack_direction (&stack_offset) * context[k].stack_used));
+  context[k].thread_stack_offset = (BYTE_T *) (&stack_offset - stack_direction (&stack_offset) * context[k].stack_used);
   restore_stacks (t);
   p = (NODE_T *) (context[k].unit);
   EXECUTE_UNIT_TRACE (p);
@@ -7137,7 +7143,7 @@ static void *start_genie_parallel (void *arg)
   LOCK_THREAD;
   t = pthread_self ();
   GET_THREAD_INDEX (k, t);
-  context[k].thread_stack_offset = (BYTE_T *) ((int) (&stack_offset - stack_direction (&stack_offset) * context[k].stack_used));
+  context[k].thread_stack_offset = (BYTE_T *) (&stack_offset - stack_direction (&stack_offset) * context[k].stack_used);
   restore_stacks (t);
   p = (NODE_T *) (context[k].unit);
 /* This is the thread spawned by the main thread, we spawn parallel units and await their completion */

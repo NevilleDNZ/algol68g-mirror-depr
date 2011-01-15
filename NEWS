@@ -1,3 +1,9 @@
+Version 2.1.1, January 2011
+* Adds configuration options to configure script.
+* Updates the documentation.
+* Fixes reported problems in version 2.1.0.
+* Improves error messages for options to a68g.
+
 Version 2.1.0, January 2011
 * Upgrades to the GNU build system using autoconf and automake.
 * Updates the memory management system.

@@ -1,8 +1,10 @@
 PR echo "[1] Synthetic benchmark after Curnow & Wichmann" PR
 
-[1 : 4] REAL e1;
-REAL cpu1, time, x1, x2, x3, x4, x, y, z;
-INT j, k, l;
+# After HJ Curnow and BA Wichmann, Computer Journal 19(1) 43 [1976] 
+  Free versions for other languages are available on the i-net.
+#
+
+[1 : 4] REAL e1, REAL x1, x2, x3, x4, x, y, z, INT j, k, l;
     
 PROC pa = (REF [] REAL e) VOID:
      TO 6
@@ -24,21 +26,20 @@ PROC p3 = (REF REAL x, y, z) VOID:
            z := (x + y) / t2 
      END;
   
-cpu1 := seconds;
+# weight = 10 means 1e6 whetstone instructions per loop #
 
-# If i = 10 we have 1e6 whetstone instructions per loop #
+INT weight = 100, duration = 5, INT cycles := 0;
 
-INT i = 100;
+INT n2 = 12 * weight, n3 = 14 * weight, n4 = 345 * weight, 
+    n6 = 210 * weight, n7 = 32 * weight, n8 = 899 * weight, 
+    n9 = 616 * weight, n11 = 93 * weight;
 
-INT n2 = 12 * i, n3 = 14 * i, n4 = 345 * i, 
-    n6 = 210 * i, n7 = 32 * i, n8 = 899 * i, n9 = 616 * i,
-    n11 = 93 * i;
+REAL t = 0.499975, t1 = 0.50025, t2 = 2.0, cpu1 = seconds;
 
-REAL t = 0.499975, t1 = 0.50025, t2 = 2.0;
+WHILE (seconds - cpu1) < duration
+DO cycles +:= 1;
 
-INT max = 10;
-FOR cycles TO max
-DO # MODULE 1. Simple identifiers #
+   # MODULE 1. Simple identifiers #
 
    x1 := 1.0; 
    x2 := x3 := x4 := -1.0;
@@ -82,6 +83,7 @@ DO # MODULE 1. Simple identifiers #
    OD;
         
    # MODULE 5. Omitted #
+
    # MODULE 6. Integers #
      
    j := 1; k := 2; l := 3;
@@ -124,6 +126,8 @@ DO # MODULE 1. Simple identifiers #
    DO po
    OD;
     
+   # MODULE 10. Zero frequency #
+
    # MODULE 11. Standard functions #
 
    x := 0.75;
@@ -132,5 +136,6 @@ DO # MODULE 1. Simple identifiers #
    DO x := sqrt(exp(ln(x) / t1))
    OD
 OD;
-time := (seconds - cpu1) / max;
-printf (($z-d.3d" seconds ", x3z-d.3d" MWhets"$, time, 1 / (time / (i / 10))))
+
+REAL time = (seconds - cpu1) / cycles;
+printf (($z-d.3d" seconds ", x3z-d.d" MWhets"$, time, 1 / (time / (weight / 10))))

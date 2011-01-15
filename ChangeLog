@@ -1,3 +1,20 @@
+08.01.2011 - 2.1.1
+Improved error reporting in options to a68g.
+Updated the documentation.
+
+07.01.2011 - 2.1.1
+Added option --enable-arch and --enable-pic to configure.ac.
+
+05.01.2011 - 2.1.1
+Adapted configure.ac to accomodate /usr/pkg platforms.
+Adapted configure.ac so optional functionality can be enabled/disabled.
+Updated the documentation.
+
+04.01.2011 - 2.1.1
+Adapted configure.ac to better accomodate /usr and /opt platforms.
+Shell-script building is not portable - inhibited on non-Linux systems.
+Pass (includedir) to a68g so compiler knows about non-standard target directories.
+
 03.01.2011 - 2.1.0
 Macro-ised various RTS functions for INT, REAL and COMPLEX.
 

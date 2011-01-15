@@ -10,6 +10,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define this if EXPORT_DYNAMIC is recognised */
+#define HAVE_EXPORT_DYNAMIC 1
+
 /* Define this if FreeBSD was detected */
 /* #undef HAVE_FREEBSD */
 
@@ -92,7 +95,7 @@
 #define HAVE_LINUX 1
 
 /* Define this if DARWIN was detected */
-/* #undef HAVE_MACOS_X */
+/* #undef HAVE_MAC_OS_X */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -105,6 +108,12 @@
 
 /* Define this if OpenBSD was detected */
 /* #undef HAVE_OPENBSD */
+
+/* Define this if /opt/local/pgsql/include was detected */
+/* #undef HAVE_OPT_LOCAL_PGSQL_INCLUDE */
+
+/* Define this as PIC option */
+#define HAVE_PIC "-fPIC"
 
 /* Define to 1 if you have the <plot.h> header file. */
 #define HAVE_PLOT_H 1
@@ -139,35 +148,44 @@
 /* Define to 1 if you have the <term.h> header file. */
 #define HAVE_TERM_H 1
 
+/* Define this if user wants to tune for a specific CPU */
+/* #undef HAVE_TUNING */
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define this if /usr/local/pgsql/include was detected */
+#define HAVE_USR_LOCAL_PGSQL_INCLUDE 1
+
+/* Define this if /usr/pkg/pgsql/include was detected */
+/* #undef HAVE_USR_PKG_PGSQL_INCLUDE */
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
 
 /* Name of package */
-#define PACKAGE "algol-68-genie"
+#define PACKAGE "algol68g"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "Marcel van der Veer <algol68g@xs4all.nl>"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "algol-68-genie"
+#define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol-68-genie 2.1.0"
+#define PACKAGE_STRING "algol68g 2.1.1"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "algol-68-genie"
+#define PACKAGE_TARNAME "algol68g"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.1.0"
+#define PACKAGE_VERSION "2.1.1"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.1.0"
+#define VERSION "2.1.1"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
@@ -182,11 +200,11 @@
    such a type exists and the standard includes do not define it. */
 /* #undef uint16_t */
 
-/* Define to empty if the keyword `volatile' does not work. Warning: valid
-   code using `volatile' can become incorrect without. Disable with care. */
-/* #undef volatile */
-
 /* In case of incomplete GSL installation - tant pis */
+#if ! defined  HAVE_LIBGSLCBLAS
+#define HAVE_LIBGSL 1
+#endif
+
 #if ! defined  HAVE_GSL_GSL_BLAS_H
 #define HAVE_LIBGSL 1
 #endif
@@ -236,23 +254,19 @@
 #endif
 
 /* Do we have a compiler? */
-
-/* Linux has libdl */
-#if (defined HAVE_LINUX && defined HAVE_GCC && defined HAVE_DLFCN_H && defined HAVE_LIBDL)
+#if (! defined HAVE_GCC || defined NO_MINUS_C_MINUS_O || ! defined HAVE_DLFCN_H)
+/* #undef HAVE_COMPILER */
+#elif ! defined HAVE_EXPORT_DYNAMIC
+/* #undef HAVE_COMPILER */
+#elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_LIBDL)
 #define HAVE_COMPILER 1
+#elif defined HAVE_FREEBSD
+#define HAVE_COMPILER 1
+#else
+/* #undef HAVE_COMPILER */
 #endif
 
-/* MacOS X has libdl */
-#if (defined HAVE_MACOS_X && defined HAVE_GCC && defined HAVE_DLFCN_H && defined HAVE_LIBDL)
-#define HAVE_COMPILER 1
-#endif
-
-/* FreeBSD has libdl functionality in libc */
-#if (defined HAVE_FREEBSD && defined HAVE_GCC && defined HAVE_DLFCN_H)
-#define HAVE_COMPILER 1
-#endif
-
- /* Can we access the internet? */
+/* Can we access the internet? */
 #if (defined HAVE_NETDB_H && defined HAVE_NETINET_IN_H && defined HAVE_SYS_SOCKET_H)
 #define HAVE_HTTP
 #endif

@@ -41,18 +41,18 @@ char **global_argv;
 char term_buffer[2 * KILOBYTE];
 char *term_type;
 #endif
-int term_width;
 
 BOOL_T in_execution;
 BYTE_T *system_stack_offset;
 MODES_T a68_modes;
 MODULE_T program;
+NODE_T **node_register = NULL;
 char a68g_cmd_name[BUFFER_SIZE];
 clock_t clock_res;
+int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
 int stack_size;
 int symbol_table_count, mode_count;
-int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
-NODE_T **node_register = NULL;
+int term_width;
 
 #define EXTENSIONS 11
 static char * extensions[EXTENSIONS] = {
@@ -91,7 +91,7 @@ void print_bytes (BYTE_T *z, int k)
 
 /*!
 \brief state license of running a68g image
-\param f file number
+\param f file number to write to
 **/
 
 void state_license (FILE_T f)
@@ -107,9 +107,11 @@ void state_license (FILE_T f)
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright (c) 2011 %s.\n", PACKAGE_BUGREPORT) >= 0);
   WRITE (f, output_line);
   P ("");
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie is free software covered by the GNU General Public License.\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "This is free software covered by the GNU General Public License.\n") >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "There is ABSOLUTELY NO WARRANTY for Algol 68 Genie.\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "There is ABSOLUTELY NO WARRANTY for Algol 68 Genie;\n") >= 0);
+  WRITE (f, output_line);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n") >= 0);
   WRITE (f, output_line);
   P ("See the GNU General Public License for more details.");
   P ("");
@@ -121,7 +123,7 @@ void state_license (FILE_T f)
 
 /*!
 \brief state version of running a68g image
-\param f file number
+\param f file number to write to
 **/
 
 void state_version (FILE_T f)
@@ -132,45 +134,28 @@ void state_version (FILE_T f)
   state_license (f);
   WRITELN (f, "");
 #if defined HAVE_COMPILER
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Interpreter and compiler are available\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Interpreter and compiler are available.\n") >= 0);
   WRITE (f, output_line);
 #else
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Interpreter is available, compiler is not available\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Interpreter is available, compiler is not available.\n") >= 0);
   WRITE (f, output_line);
 #endif
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is available\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is available.\n") >= 0);
   WRITE (f, output_line);
 #endif
 #if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libplot is available\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libplot is available.\n") >= 0);
   WRITE (f, output_line);
 #endif
 #if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU Scientific Library is available\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU Scientific Library is available.\n") >= 0);
   WRITE (f, output_line);
 #endif
 #if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PostgreSQL is available\n") >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PostgreSQL is available.\n") >= 0);
   WRITE (f, output_line);
 #endif
-/*
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Alignment %d bytes\n", A68_ALIGNMENT) >= 0);
-  WRITE (f, output_line);
-  default_mem_sizes ();
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default frame stack size: %d kB\n", frame_stack_size / KILOBYTE) >= 0);
-  WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default expression stack size: %d kB\n", expr_stack_size / KILOBYTE) >= 0);
-  WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default heap size: %d kB\n", heap_size / KILOBYTE) >= 0);
-  WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default handle pool size: %d kB\n", handle_pool_size / KILOBYTE) >= 0);
-  WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Default stack overhead: %d kB\n", storage_overhead / KILOBYTE) >= 0);
-  WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Effective system stack size: %d kB\n", stack_size / KILOBYTE) >= 0);
-  WRITE (f, output_line);
-*/
 }
 
 /*!
@@ -189,7 +174,7 @@ void online_help (FILE_T f)
   state_license (f);
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Usage: %s [options | filename]", a68g_cmd_name) >= 0);
   WRITELN (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "For help: %s -apropos [keyword]", a68g_cmd_name) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "For help: %s --apropos [keyword]", a68g_cmd_name) >= 0);
   WRITELN (f, output_line);
 }
 
@@ -288,19 +273,15 @@ int main (int argc, char *argv[])
     if (program.options.version) {
       state_version (STDOUT_FILENO);
     }
-/* Attention for --mips */
-   if (program.options.mips) {
-     bogus_mips ();
-   }
 /* Running a script */
 #if defined HAVE_COMPILER
-   if (program.options.run_script) {
-     load_script ();
-   }
+    if (program.options.run_script) {
+      load_script ();
+    }
 #endif
 /* We translate the program */
     if (program.files.initial_name == NULL || strlen (program.files.initial_name) == 0) {
-      SCAN_ERROR (!(program.options.version || program.options.mips), NULL, NULL, ERROR_NO_SOURCE_FILE);
+      SCAN_ERROR (!program.options.version, NULL, NULL, ERROR_NO_SOURCE_FILE);
     } else {
       compiler_interpreter ();
     }
@@ -711,8 +692,16 @@ Accept various silent extensions.
 #if defined HAVE_COMPILER
 /* Only compile C if the A68 compiler found no errors (constant folder for instance) */
   if (program.error_count == 0 && program.options.optimise && !program.options.run_script) {
-    char cmd[BUFFER_SIZE], *optimisation, *extra_inc;
-    extra_inc = "-I. -I/usr/local/pgsql/include -I/opt/local/pgsql/include";
+    char cmd[BUFFER_SIZE], options[BUFFER_SIZE], *optimisation, extra_inc[BUFFER_SIZE];
+#if defined HAVE_USR_LOCAL_PGSQL_INCLUDE
+    ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s -I/usr/local/pgsql/include", INCLUDEDIR) >= 0);
+#elif defined HAVE_USR_PKG_PGSQL_INCLUDE
+    ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s -I/usr/pkg/pgsql/include", INCLUDEDIR) >= 0);
+#elif defined HAVE_OPT_LOCAL_PGSQL_INCLUDE
+    ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s -I/opt/local/pgsql/include", INCLUDEDIR) >= 0);
+#else
+    ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s", INCLUDEDIR) >= 0);
+#endif
     switch (program.options.opt_level) {
       case 0: {
         optimisation = "-O0";
@@ -741,16 +730,52 @@ Accept various silent extensions.
 Build shared library using gcc.
 FIXME: One day this should be all portable between platforms ... 
 */
+/*
+Compilation on Linux or FreeBSD
+*/
 #if (defined HAVE_LINUX || defined HAVE_FREEBSD)
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s %s -g -c -o \"%s\" \"%s\"", extra_inc, optimisation, program.files.binary.name, program.files.object.name) >= 0);
+#if defined HAVE_TUNING
+      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g", extra_inc, optimisation, HAVE_TUNING) >= 0);
+#else
+      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s -g", extra_inc, optimisation) >= 0);
+#endif
+#if defined HAVE_PIC
+      bufcat (options, " ", BUFFER_SIZE);
+      bufcat (options, HAVE_PIC, BUFFER_SIZE);
+#endif
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, program.files.binary.name, program.files.object.name) >= 0);
+      if (program.options.verbose) {
+        WRITELN (STDOUT_FILENO, cmd);
+      }
       ABEND (system (cmd) != 0, "cannot compile", cmd);
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", program.files.library.name, program.files.binary.name) >= 0);
+      if (program.options.verbose) {
+        WRITELN (STDOUT_FILENO, cmd);
+      }
       ABEND (system (cmd) != 0, "cannot link", cmd);
       ABEND (remove (program.files.binary.name) != 0, "cannot remove", cmd);
-#elif defined HAVE_MACOS_X
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s %s -g -fPIC -fno-common -dynamic -c -o \"%s\" \"%s\"", extra_inc, optimisation, program.files.binary.name, program.files.object.name) >= 0);
+/*
+Compilation on Mac OS X
+*/
+#elif defined HAVE_MAC_OS_X
+#if defined HAVE_TUNING
+      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g -fno-common -dynamic", extra_inc, optimisation, HAVE_TUNING) >= 0);
+#else
+      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s -g -fno-common -dynamic", extra_inc, optimisation) >= 0);
+#endif
+#if defined HAVE_PIC
+      bufcat (options, " ", BUFFER_SIZE);
+      bufcat (options, HAVE_PIC, BUFFER_SIZE);
+#endif
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, program.files.binary.name, program.files.object.name) >= 0);
+      if (program.options.verbose) {
+        WRITELN (STDOUT_FILENO, cmd);
+      }
       ABEND (system (cmd) != 0, "cannot compile", cmd);
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "libtool -dynamic -flat_namespace -undefined suppress -o %s %s", program.files.library.name, program.files.binary.name) >= 0);
+      if (program.options.verbose) {
+        WRITELN (STDOUT_FILENO, cmd);
+      }
       ABEND (system (cmd) != 0, "cannot link", cmd);
       ABEND (remove (program.files.binary.name) != 0, "cannot remove", cmd);
 #endif
@@ -946,7 +971,11 @@ static void build_script (void)
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, program.files.script.name) >= 0);
   script = open (cmd, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
   ABEND (script == -1, "cannot compose script file", cmd);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! %s/a68g --run-script\n", BINDIR) >= 0);
+  if (program.options.local) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! ./a68g --run-script\n") >= 0);
+  } else {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! %s/a68g --run-script\n", BINDIR) >= 0);
+  }
   WRITE (script, output_line);
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s\n--verify \"%s\"\n", program.files.generic_name, PACKAGE_STRING) >= 0);
   WRITE (script, output_line);
@@ -1084,7 +1113,6 @@ void default_options (void)
   program.options.debug = A68_FALSE;
   program.options.keep = A68_FALSE;
   program.options.local = A68_FALSE;
-  program.options.mips = A68_FALSE;
   program.options.moid_listing = A68_FALSE;
   program.options.nodemask = (STATUS_MASK) (ASSERT_MASK | SOURCE_MASK);
   program.options.opt_level = 0;
@@ -1124,9 +1152,9 @@ static void option_error (SOURCE_LINE_T * l, char *option, char *info)
     output_line[k] = (char) TO_LOWER (output_line[k]);
   }
   if (info != NULL) {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s option \"%s\"", info, output_line) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "error: %s option \"%s\"", info, output_line) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "error in option \"%s\"", output_line) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "error: in option \"%s\"", output_line) >= 0);
   }
   scan_error (l, NULL, edit_line);
 }
@@ -1260,26 +1288,27 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
     }
   } else {
     num = &car[1];
+    *error = (BOOL_T) (num[0] == NULL_CHAR);
   }
 /* Translate argument into integer */
   if (*error) {
-    option_error (start_l, start_c, NULL);
+    option_error (start_l, start_c, "integer value required by");
     return (0);
   } else {
-    char *postfix;
+    char *suffix;
     RESET_ERRNO;
-    k = strtol (num, &postfix, 0);      /* Accept also octal and hex */
-    *error = (BOOL_T) (postfix == num);
+    k = strtol (num, &suffix, 0);      /* Accept also octal and hex */
+    *error = (BOOL_T) (suffix == num);
     if (errno != 0 || *error) {
-      option_error (start_l, start_c, NULL);
+      option_error (start_l, start_c, "conversion error in");
       *error = A68_TRUE;
     } else if (k < 0) {
-      option_error (start_l, start_c, NULL);
+      option_error (start_l, start_c, "negative value in");
       *error = A68_TRUE;
     } else {
-/* Accept postfix multipliers: 32k, 64M, 1G */
-      if (postfix != NULL) {
-        switch (postfix[0]) {
+/* Accept suffix multipliers: 32k, 64M, 1G */
+      if (suffix != NULL) {
+        switch (suffix[0]) {
         case NULL_CHAR:
           {
             mult = 1;
@@ -1305,20 +1334,20 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
           }
         default:
           {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "unknown suffix in");
             *error = A68_TRUE;
             break;
           }
         }
-        if (postfix[0] != NULL_CHAR && postfix[1] != NULL_CHAR) {
-          option_error (start_l, start_c, NULL);
+        if (suffix[0] != NULL_CHAR && suffix[1] != NULL_CHAR) {
+          option_error (start_l, start_c, "unknown suffix in");
           *error = A68_TRUE;
         }
       }
     }
     if ((double) k * (double) mult > (double) A68_MAX_INT) {
       errno = ERANGE;
-      option_error (start_l, start_c, NULL);
+      option_error (start_l, start_c, "conversion overflow in");
     }
     return (k * mult);
   }
@@ -1360,7 +1389,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             program.files.initial_name = new_string (p);
             name_set = A68_TRUE;
           } else {
-            option_error (NULL, start_c, "will not reset initial file name by");
+            option_error (NULL, start_c, "multiple source file names at");
           }
         }
 /* Preprocessor items stop option processing */
@@ -1377,10 +1406,6 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "EXIT")) {
           go_on = A68_FALSE;
         }
-/* MIPS gives a bogus mips rating */
-        else if (eq (p, "MIPS")) {
-          program.options.mips = A68_TRUE;
-        }
 /* Empty item (from specifying '-' or '--') stops option processing */
         else if (eq (p, "")) {
           go_on = A68_FALSE;
@@ -1396,10 +1421,10 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               program.files.initial_name = new_string (i->str);
               name_set = A68_TRUE;
             } else {
-              option_error (start_l, start_c, NULL);
+              option_error (start_l, start_c, "multiple source file names at");
             }
           } else {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "missing argument in");
           }
         }
 /* SCRIPT takes next argument as filename.
@@ -1411,10 +1436,10 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               program.files.initial_name = new_string (i->str);
               name_set = A68_TRUE;
             } else {
-              option_error (start_l, start_c, NULL);
+              option_error (start_l, start_c, "multiple source file names at");
             }
           } else {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "missing argument in");
           }
           skip = A68_TRUE;
         }
@@ -1428,7 +1453,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s verification \"%s\" does not match script verification \"%s\"", a68g_cmd_name, PACKAGE_STRING, i->str) >= 0);
             ABEND (strcmp (PACKAGE_STRING, i->str) != 0, new_string (output_line), "rebuild the script");
           } else {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "missing argument in");
           }
         }
 /* HELP gives online help */
@@ -1458,7 +1483,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 /* EXECUTE and PRINT execute their argument as Algol 68 text */
         else if (eq (p, "Execute") || eq (p, "Print")) {
           if (cmd_line == A68_FALSE) {
-            option_error (start_l, start_c, "not at command line when encountering");
+            option_error (start_l, start_c, "command-line-only");
           } else if ((FORWARD (i)) != NULL) {
             BOOL_T error = A68_FALSE;
             if (strcmp (i->str, "=") == 0) {
@@ -1479,10 +1504,10 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               ASSERT (fclose (f) == 0);
               program.files.initial_name = new_string (name);
             } else {
-              option_error (start_l, start_c, NULL);
+              option_error (start_l, start_c, "unit required by");
             }
           } else {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "missing argument in");
           }
         }
 /* HEAP, HANDLES, STACK, FRAME and OVERHEAD  set core allocation */
@@ -1491,10 +1516,10 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           int k = fetch_integral (p, &i, &error);
 /* Adjust size */
           if (error || errno > 0) {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "conversion error in");
           } else if (k > 0) {
             if (k < MIN_MEM_SIZE) {
-              option_error (start_l, start_c, NULL);
+              option_error (start_l, start_c, "value less than minimum in");
               k = MIN_MEM_SIZE;
             }
             if (eq (p, "HEAP")) {
@@ -1512,10 +1537,14 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         }
 /* COMPILE and NOCOMPILE switch on/off compilation */
         else if (eq (p, "Compile")) {
+#if defined HAVE_LINUX
           program.options.compile = A68_TRUE;
           program.options.optimise = A68_TRUE;
           program.options.opt_level = 2;
           program.options.run_script = A68_FALSE;
+#else
+          option_error (start_l, start_c, "linux-only");
+#endif
         } else if (eq (p, "NOCompile")) {
           program.options.compile = A68_FALSE;
           program.options.optimise = A68_FALSE;
@@ -1561,25 +1590,30 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         }
 /* RUN-SCRIPT runs a comiled .sh script */
         else if (eq (p, "RUN-SCRIPT")) {
+#if defined HAVE_LINUX
           FORWARD (i);
           if (i != NULL) {
             if (!name_set) {
               program.files.initial_name = new_string (i->str);
               name_set = A68_TRUE;
             } else {
-              option_error (start_l, start_c, NULL);
+              option_error (start_l, start_c, "multiple source file names at");
             }
           } else {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "missing argument in");
           }
           skip = A68_TRUE;
           program.options.run_script = A68_TRUE;
           program.options.compile = A68_FALSE;
           program.options.optimise = A68_TRUE;
           program.options.opt_level = 2;
+#else
+          option_error (start_l, start_c, "linux-only");
+#endif
         } 
 /* RERUN re-uses an existing .so file */
         else if (eq (p, "RERUN")) {
+          program.options.compile = A68_FALSE;
           program.options.rerun = A68_TRUE;
           program.options.optimise = A68_TRUE;
           program.options.opt_level = 2;
@@ -1778,7 +1812,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
           if (error || errno > 0) {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "conversion error in");
           } else if (k > 1) {
             if (int_to_mp_digits (k) > long_mp_digits ()) {
               set_longlong_mp_digits (int_to_mp_digits (k));
@@ -1787,10 +1821,10 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               while (int_to_mp_digits (k) <= long_mp_digits ()) {
                 k++;
               }
-              option_error (start_l, start_c, NULL);
+              option_error (start_l, start_c, "value less than minimum in");
             }
           } else {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "invalid value in");
           }
         }
 /* BACKTRACE and NOBACKTRACE switch on/off stack backtracing */
@@ -1823,9 +1857,9 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
           if (error || errno > 0) {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "conversion error in");
           } else if (k < 1) {
-            option_error (start_l, start_c, NULL);
+            option_error (start_l, start_c, "invalid time span in");
           } else {
             program.options.time_limit = k;
           }
@@ -2844,7 +2878,6 @@ BYTE_T *get_fixed_heap_space (size_t s)
 /* Allow for extra storage for diagnostics etcetera */
   ABEND (fixed_heap_pointer >= (heap_size - MIN_MEM_SIZE), ERROR_OUT_OF_CORE, NULL);
   ABEND (((int) temp_heap_pointer - (int) fixed_heap_pointer) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, NULL);
-  ABEND (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
 }
 
@@ -2862,7 +2895,6 @@ BYTE_T *get_temp_heap_space (size_t s)
 /* Allow for extra storage for diagnostics etcetera */
   ABEND (((int) temp_heap_pointer - (int) fixed_heap_pointer) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, NULL);
   z = HEAP_ADDRESS (temp_heap_pointer);
-  ABEND (((long) z) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, NULL);
   return (z);
 }
 
@@ -3711,9 +3743,6 @@ void bufcpy (char *dst, char *src, int len)
 int grep_in_string (char *pat, char *str, int *start, int *end)
 {
 #if defined HAVE_REGEX_H
-
-#include <regex.h>
-
   int rc, nmatch, k, max_k, widest;
   regex_t compiled;
   regmatch_t *matches;
@@ -4692,6 +4721,7 @@ static A68_INFO info_text[] = {
   {"options", "--keep, --nokeep", "switch object file deletion off or on"},
   {"options", "--listing", "make concise listing"},
   {"options", "--moids", "make overview of moids in listing file"},
+  {"options", "-O0, -O1, -O2, -O3", "switch compilation on and pass option to back-end C compiler"},
   {"options", "--optimise, --nooptimise", "switch compilation on or off"},
   {"options", "--pedantic", "equivalent to --warnings --portcheck"},
   {"options", "--portcheck, --noportcheck", "switch portability warnings on or off"},

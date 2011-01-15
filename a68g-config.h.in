@@ -9,6 +9,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define this if EXPORT_DYNAMIC is recognised */
+#undef HAVE_EXPORT_DYNAMIC
+
 /* Define this if FreeBSD was detected */
 #undef HAVE_FREEBSD
 
@@ -91,7 +94,7 @@
 #undef HAVE_LINUX
 
 /* Define this if DARWIN was detected */
-#undef HAVE_MACOS_X
+#undef HAVE_MAC_OS_X
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -104,6 +107,12 @@
 
 /* Define this if OpenBSD was detected */
 #undef HAVE_OPENBSD
+
+/* Define this if /opt/local/pgsql/include was detected */
+#undef HAVE_OPT_LOCAL_PGSQL_INCLUDE
+
+/* Define this as PIC option */
+#undef HAVE_PIC
 
 /* Define to 1 if you have the <plot.h> header file. */
 #undef HAVE_PLOT_H
@@ -138,8 +147,17 @@
 /* Define to 1 if you have the <term.h> header file. */
 #undef HAVE_TERM_H
 
+/* Define this if user wants to tune for a specific CPU */
+#undef HAVE_TUNING
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define this if /usr/local/pgsql/include was detected */
+#undef HAVE_USR_LOCAL_PGSQL_INCLUDE
+
+/* Define this if /usr/pkg/pgsql/include was detected */
+#undef HAVE_USR_PKG_PGSQL_INCLUDE
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
@@ -181,11 +199,11 @@
    such a type exists and the standard includes do not define it. */
 #undef uint16_t
 
-/* Define to empty if the keyword `volatile' does not work. Warning: valid
-   code using `volatile' can become incorrect without. Disable with care. */
-#undef volatile
-
 /* In case of incomplete GSL installation - tant pis */
+#if ! defined  HAVE_LIBGSLCBLAS
+#undef HAVE_LIBGSL
+#endif
+
 #if ! defined  HAVE_GSL_GSL_BLAS_H
 #undef HAVE_LIBGSL
 #endif
@@ -235,23 +253,19 @@
 #endif
 
 /* Do we have a compiler? */
-
-/* Linux has libdl */
-#if (defined HAVE_LINUX && defined HAVE_GCC && defined HAVE_DLFCN_H && defined HAVE_LIBDL)
+#if (! defined HAVE_GCC || defined NO_MINUS_C_MINUS_O || ! defined HAVE_DLFCN_H)
+#undef HAVE_COMPILER
+#elif ! defined HAVE_EXPORT_DYNAMIC
+#undef HAVE_COMPILER
+#elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_LIBDL)
 #define HAVE_COMPILER 1
+#elif defined HAVE_FREEBSD
+#define HAVE_COMPILER 1
+#else
+#undef HAVE_COMPILER
 #endif
 
-/* MacOS X has libdl */
-#if (defined HAVE_MACOS_X && defined HAVE_GCC && defined HAVE_DLFCN_H && defined HAVE_LIBDL)
-#define HAVE_COMPILER 1
-#endif
-
-/* FreeBSD has libdl functionality in libc */
-#if (defined HAVE_FREEBSD && defined HAVE_GCC && defined HAVE_DLFCN_H)
-#define HAVE_COMPILER 1
-#endif
-
- /* Can we access the internet? */
+/* Can we access the internet? */
 #if (defined HAVE_NETDB_H && defined HAVE_NETINET_IN_H && defined HAVE_SYS_SOCKET_H)
 #define HAVE_HTTP
 #endif
