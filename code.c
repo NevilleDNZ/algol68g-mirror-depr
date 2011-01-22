@@ -2001,8 +2001,8 @@ static void write_prelude (FILE_T out)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "#include \"a68g-config.h\"\n"));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "#include \"a68g.h\"\n\n"));
   } else {
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <algol-68-genie/a68g-config.h>\n"));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <algol-68-genie/a68g.h>\n\n"));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <algol68g/a68g-config.h>\n"));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <algol68g/a68g.h>\n\n"));
   }
   indent (out, "#define CODE(n) PROPAGATOR_T n (NODE_T * p) {\\\n");
   indent (out, "  PROPAGATOR_T self;\n\n");

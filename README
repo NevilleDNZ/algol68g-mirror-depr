@@ -18,23 +18,23 @@ Web pages for Algol68G are at <http://www.xs4all.nl/~jmvdveer>.
 
 
 Documentation
-*************
+=============
 
 Documentation is available from the web pages for Algol68G at <http://www.xs4all.nl/~jmvdveer>.
 
 
 Installation
-************
+============
 
 Please refer to file INSTALL or the manual for detailed instructions.
 Since Algol 68 Genie complies with the GNU build system, a reasonably 
 experienced Unix/Linux user can execute:
 
-tar -xzf algol-68-genie-VERSION.tgz
-cd algol-68-genie-VERSION
+tar -xzf algol68g-VERSION.tgz
+cd algol68g-VERSION
 ./configure
 make
 make check
-su
+[su]
 make install
 

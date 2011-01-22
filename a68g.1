@@ -1,4 +1,4 @@
-.Dd January 2, 2011
+.Dd November 27, 2010
 .Dt A68G 1 PRM
 .Os LINUX
 .
@@ -25,7 +25,6 @@ a68g
 .Op Fl -moids
 .Op Fl -object | Fl -no-object
 .Op Fl -overhead Ar number
-.Op Fl O0 | Fl O1 | Fl O2 | Fl O3
 .Op Fl -optimise | Fl -no-optimise
 .Op Fl -pragmats | Fl -no-pragmats
 .Op Fl -precision Ar number
@@ -125,12 +124,8 @@ Generate an overview of modes in the listing file.
 .It Fl -object | Fl -no-object
 Control the listing of C code in the listing file.
 .
-.It Fl O0 | O1 | O2 | O3
-Compile units and pass same option to the back-end C compiler (see --optimise).
-.
 .It Fl -optimise | -no-optimise
 Switch compilation of units on or off. Compilation omits many of the runtime checks offered by the interpreter proper.
-Option --optimise is equivalent to -O2.
 .
 .It Fl -overhead Ar number
 Set overhead for stack checking.

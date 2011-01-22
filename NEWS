@@ -1,3 +1,7 @@
+Version 2.1.2, January 2011
+* Updates documentation.
+* Fixes reported problem in version 2.1.1.
+
 Version 2.1.1, January 2011
 * Adds configuration options to configure script.
 * Updates the documentation.

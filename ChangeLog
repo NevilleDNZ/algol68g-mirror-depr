@@ -1,3 +1,12 @@
+22.01.2011 - 2.1.2
+Fix "include" problem in code.c.
+
+21.01.2011 - 2.1.2
+Revised the documentation.
+
+15.01.2011 - 2.1.2
+Adapted Makefile.am for Wextra and Wshadow.
+
 08.01.2011 - 2.1.1
 Improved error reporting in options to a68g.
 Updated the documentation.
