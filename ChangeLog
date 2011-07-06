@@ -1,11 +1,47 @@
+03.07.2001 - 2.2.0
+Improved the parser.
+
+30.06.2011 - 2.2.0
+Revamped the mode table builder.
+
+17.06.2011 - 2.2.0
+Improved mode checker.
+
+13.06.2011 - 2.2.0
+Fixed minor bug in mode checker.
+
+05.06.2011 - 2.2.0
+Added handling of unclosed files at end of execution.
+
+15.05.2011 - 2.2.0
+Fixed "a68g_divab_real not found" in a68g.h.
+
+30.04.2011 - 2.2.0
+Finished alpha version of the editor, which is undocumented for now.
+
+19.04.2011 - 2.2.0
+Added function a68g_mkstemp.
+
+13.02.2011 - 2.2.0
+Added routine grep in substring.
+
+23.01.2011 - 2.2.0
+Added compile_uniting to code.c.
+Removed unneeded stackpointer saves in code.c.
+Improved underflow/overflow detection in REAL denotations in code.c.
+
+------
+
 22.01.2011 - 2.1.2
-Fix "include" problem in code.c.
+Fixed "include" problem in code.c.
 
 21.01.2011 - 2.1.2
 Revised the documentation.
 
 15.01.2011 - 2.1.2
 Adapted Makefile.am for Wextra and Wshadow.
+
+------
 
 08.01.2011 - 2.1.1
 Improved error reporting in options to a68g.
@@ -24,6 +60,8 @@ Adapted configure.ac to better accomodate /usr and /opt platforms.
 Shell-script building is not portable - inhibited on non-Linux systems.
 Pass (includedir) to a68g so compiler knows about non-standard target directories.
 
+------
+
 03.01.2011 - 2.1.0
 Macro-ised various RTS functions for INT, REAL and COMPLEX.
 
@@ -41,5 +79,7 @@ Made the upgraded package run on Linux.
 
 21.12.2010 - 2.1.0
 Finished upgrading to the GNU build system.
+
+------
 
 [Before release 2.1.0 there is no ChangeLog record]

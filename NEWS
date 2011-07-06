@@ -1,3 +1,11 @@
+Version 2.2.0, July 2011
+* Improves the parser.
+* Improves handling of unclosed files.
+* Adds compilation of uniting.
+* Adds routine grep in substring.
+* Fixes minor issues in 2.1.2.
+* Updates documentation.
+
 Version 2.1.2, January 2011
 * Updates documentation.
 * Fixes reported problem in version 2.1.1.
@@ -60,7 +68,9 @@ Version 1.18.0, August 2009
 * More efficient use of memory during compilation.
 * Documentation updates.
 * Upon request, re-post the HTML translation of the Revised Report.
-* Change to a common Linux-style version numbering (former Mark j will now read Version 1.j.0, and former Mark j.k will now read Version 1.j.k)
+* Change to a common Linux-style version numbering
+  (former Mark j will now read Version 1.j.0, and 
+   former Mark j.k will now read Version 1.j.k)
 
 Version 1.17.0, May 2009
 * Adds C-style placeholders in formats.

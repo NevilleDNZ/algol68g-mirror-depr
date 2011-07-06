@@ -1,7 +1,7 @@
 /*!
 \file algol68g.c
 \brief driver routines for the compiler-interpreter.
-*/
+*/                                             
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
@@ -53,6 +53,8 @@ int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
 int stack_size;
 int symbol_table_count, mode_count;
 int term_width;
+static int max_simplout_size;
+static POSTULATE_T *postulates;
 
 #define EXTENSIONS 11
 static char * extensions[EXTENSIONS] = {
@@ -66,6 +68,7 @@ static char * extensions[EXTENSIONS] = {
 
 static void announce_phase (char *);
 static void compiler_interpreter (void);
+static void moid_to_string_2 (char *, MOID_T *, int *, NODE_T *);
 
 #if defined HAVE_COMPILER
 static void build_script (void);
@@ -179,6 +182,25 @@ void online_help (FILE_T f)
 }
 
 /*!
+\brief first initialisations
+**/
+
+static void init_before_tokeniser (void)
+{
+/* Heap management set-up */
+  init_heap ();
+  top_keyword = NULL;
+  top_token = NULL;
+  program.top_node = NULL;
+  program.top_moid = NULL;
+  program.top_line = NULL;
+  set_up_tables ();
+/* Various initialisations */
+  program.error_count = program.warning_count = 0;
+  RESET_ERRNO;
+}
+
+/*!
 \brief main entry point
 \param argc arg count
 \param argv arg string
@@ -191,6 +213,7 @@ int main (int argc, char *argv[])
   int argcc, k;
   global_argc = argc;
   global_argv = argv;
+  program.files.diags.fd = -1;
 /* Get command name and discard path */
   bufcpy (a68g_cmd_name, argv[0], BUFFER_SIZE);
   for (k = (int) strlen (a68g_cmd_name) - 1; k >= 0; k--) {
@@ -200,7 +223,9 @@ int main (int argc, char *argv[])
       k = -1;
     }
   }
-/* Try to read maximum line width on the terminal */
+/* Try to read maximum line width on the terminal,
+   used to pretty print diagnostics to same.
+ */
 #if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
   term_type = getenv ("TERM");
   if (term_type == NULL) {
@@ -230,6 +255,7 @@ int main (int argc, char *argv[])
 #endif
   heap_is_fluid = A68_TRUE;
   system_stack_offset = &stack_offset;
+  init_file_entries ();
   if (!setjmp (program.exit_compilation)) {
     init_tty ();
 /* Initialise option handling */
@@ -252,6 +278,7 @@ int main (int argc, char *argv[])
     program.files.library.name = NULL;
     program.files.binary.name = NULL;
     program.files.script.name = NULL;
+    program.files.diags.name = NULL;
 /* Options are processed here */
     read_rc_options ();
     read_env_options ();
@@ -272,6 +299,17 @@ int main (int argc, char *argv[])
 /* Attention for --version */
     if (program.options.version) {
       state_version (STDOUT_FILENO);
+    }
+/* Start the UI */
+    init_before_tokeniser ();
+    if (program.options.edit) {
+#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
+      edit (output_line);
+#else 
+      errno = ENOTSUP;
+      SCAN_ERROR (A68_TRUE, NULL, NULL, "EDIT requires the ncurses library");
+#endif
     }
 /* Running a script */
 #if defined HAVE_COMPILER
@@ -356,24 +394,6 @@ static void open_with_extensions (void)
 }
 
 /*!
-\brief initialise before tokenisation
-**/
-
-static void init_before_tokeniser (void)
-{
-/* Heap management set-up */
-  init_heap ();
-  top_keyword = NULL;
-  top_token = NULL;
-  program.top_node = NULL;
-  program.top_line = NULL;
-  set_up_tables ();
-/* Various initialisations */
-  program.error_count = program.warning_count = 0;
-  RESET_ERRNO;
-}
-
-/*!
 \brief pretty print memory size
 **/
 
@@ -429,6 +449,8 @@ static void compiler_interpreter (void)
   program.files.script.writemood = A68_FALSE;
   program.files.source.opened = A68_FALSE;
   program.files.source.writemood = A68_FALSE;
+  program.files.diags.opened = A68_FALSE;
+  program.files.diags.writemood = A68_TRUE;
 /*
 Open the source file. Open it for binary reading for systems that require so (Win32).
 Accept various silent extensions.
@@ -480,10 +502,15 @@ Accept various silent extensions.
   program.files.script.name = (char *) get_heap_space ((size_t) len);
   bufcpy (program.files.script.name, program.files.generic_name, len);
   bufcat (program.files.script.name, SCRIPT_EXTENSION, len);
+/* Diagnostics file */
+  if (program.options.tui) {
+    program.files.diags.name = A68_DIAGNOSTICS_FILE;
+    program.files.diags.fd = open (program.files.diags.name, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
+    ABEND (program.files.diags.fd == -1, "cannot open diagnostics file", program.files.diags.name);
+  }
 /* Tokeniser */
   program.files.source.opened = A68_TRUE;
   announce_phase ("initialiser");
-  init_before_tokeniser ();
   error_tag = (TAG_T *) new_tag ();
   if (program.error_count == 0) {
     int frame_stack_size_2 = frame_stack_size;
@@ -520,7 +547,6 @@ Accept various silent extensions.
   if (program.error_count == 0) {
     stand_env = NULL;
     init_postulates ();
-    init_moid_list ();
     mode_count = 0;
     make_special_mode (&MODE (HIP), mode_count++);
     make_special_mode (&MODE (UNDEFINED), mode_count++);
@@ -596,7 +622,7 @@ Accept various silent extensions.
 /* Mode table builder */
   if (program.error_count == 0) {
     announce_phase ("mode table builder");
-    set_up_mode_table (program.top_node);
+    make_moid_list (&program);
     verbosity ();
   }
   program.cross_reference_safe = /* (BOOL_T) (program.error_count == 0) */ A68_TRUE;
@@ -611,14 +637,14 @@ Accept various silent extensions.
     announce_phase ("parser phase 4");
     rearrange_goto_less_jumps (program.top_node);
     num = 0;
-    renumber_nodes (program.top_node, &num);
+/*    renumber_nodes (program.top_node, &num); */
     verbosity ();
   }
 /* Mode checker */
   if (program.error_count == 0) {
     announce_phase ("mode checker");
     mode_checker (program.top_node);
-    maintain_mode_table (program.top_node);
+/*    renumber_moids (program.top_moid, 0); */
     verbosity ();
   }
 /* Coercion inserter */
@@ -629,12 +655,10 @@ Accept various silent extensions.
     protect_from_gc (program.top_node);
     reset_max_simplout_size ();
     get_max_simplout_size (program.top_node);
-    reset_moid_list ();
-    get_moid_list (&top_moid_list, program.top_node);
-    set_moid_sizes (top_moid_list);
+    set_moid_sizes (program.top_moid);
     assign_offsets_table (stand_env);
     assign_offsets (program.top_node);
-    assign_offsets_packs (top_moid_list);
+    assign_offsets_packs (program.top_moid);
     num = 0;
     renumber_nodes (program.top_node, &num);
     verbosity ();
@@ -857,11 +881,11 @@ Compilation on Mac OS X
   }
 /* Write listing */
   if (program.files.listing.opened) {
+    heap_is_fluid = A68_TRUE;
     write_listing_header ();
     write_source_listing ();
     write_tree_listing ();
     if (program.error_count == 0 && program.options.optimise) {
-      heap_is_fluid = A68_TRUE;
       write_object_listing ();
     }
     write_listing ();
@@ -902,18 +926,28 @@ Compilation on Mac OS X
 
 void a68g_exit (int code)
 {
+/*
   char name[BUFFER_SIZE];
   bufcpy (name, ".", BUFFER_SIZE);
   bufcat (name, a68g_cmd_name, BUFFER_SIZE);
   bufcat (name, ".x", BUFFER_SIZE);
-  /* (void) (remove (name)); */
+  (void) (remove (name)); 
+*/
+/* Close unclosed files, remove temp files */
+  free_file_entries ();
+/* Close the terminal */
   io_close_tty_line ();
 #if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
-/* "curses" might still be open if it was not closed from A68, or the program
-   was interrupted, or a runtime error occured. That wreaks havoc on your
-   terminal */
+/* 
+"curses" might still be open if it was not closed from A68, or the program
+was interrupted, or a runtime error occured. That wreaks havoc on your
+terminal 
+*/
   genie_curses_end (NULL);
 #endif
+  if (program.options.tui && program.files.diags.fd != -1) {
+    ASSERT (close (program.files.diags.fd) == 0);
+  }
   exit (code);
 }
 
@@ -1095,7 +1129,6 @@ Options come from:
 */
 
 OPTIONS_T *options;
-BOOL_T no_warnings = A68_TRUE;
 
 /*!
 \brief set default values for options
@@ -1103,7 +1136,7 @@ BOOL_T no_warnings = A68_TRUE;
 
 void default_options (void)
 {
-  no_warnings = A68_TRUE;
+  program.options.no_warnings = A68_TRUE;
   program.options.backtrace = A68_FALSE;
   program.options.brackets = A68_FALSE;
   program.options.check_only = A68_FALSE;
@@ -1119,6 +1152,7 @@ void default_options (void)
   program.options.optimise = A68_FALSE;
   program.options.portcheck = A68_FALSE;
   program.options.pragmat_sema = A68_TRUE;
+  program.options.quiet = A68_FALSE;
   program.options.reductions = A68_FALSE;
   program.options.regression_test = A68_FALSE;
   program.options.rerun = A68_FALSE;
@@ -1132,9 +1166,12 @@ void default_options (void)
   program.options.time_limit = 0;
   program.options.trace = A68_FALSE;
   program.options.tree_listing = A68_FALSE;
+  program.options.tui = A68_FALSE;
   program.options.unused = A68_FALSE;
   program.options.verbose = A68_FALSE;
   program.options.version = A68_FALSE;
+  program.options.edit = A68_FALSE;
+  program.options.target = NULL;
 }
 
 /*!
@@ -1427,6 +1464,18 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, "missing argument in");
           }
         }
+/* TARGET accepts its argument as editor target */
+        else if (eq (p, "TArget") && cmd_line) {
+          FORWARD (i);
+          if (i != NULL && strcmp (i->str, "=") == 0) {
+            FORWARD (i);
+          }
+          if (i != NULL) {
+            program.options.target = new_string (i->str);
+          } else {
+            option_error (start_l, start_c, "missing argument in");
+          }
+        }
 /* SCRIPT takes next argument as filename.
    Further options on the command line are not processed, but stored */
         else if (eq (p, "Script") && cmd_line) {
@@ -1480,8 +1529,20 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             }
           }
         }
+/* EDIT starts a basic TUI */
+        else if (eq (p, "Edit")) {
+          if (cmd_line == A68_FALSE) {
+            option_error (start_l, start_c, "command-line-only");
+          } else {
+            program.options.edit = A68_TRUE;
+          }
+        }
+/* TUI generates diagnostics apt for EDIT */
+        else if (eq (p, "TUI")) {
+          program.options.tui = A68_TRUE;
+        }
 /* EXECUTE and PRINT execute their argument as Algol 68 text */
-        else if (eq (p, "Execute") || eq (p, "Print")) {
+        else if (eq (p, "EXECute") || eq (p, "X") || eq (p, "Print")) {
           if (cmd_line == A68_FALSE) {
             option_error (start_l, start_c, "command-line-only");
           } else if ((FORWARD (i)) != NULL) {
@@ -1496,7 +1557,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               bufcat (name, ".cmd.a68", BUFFER_SIZE);
               f = fopen (name, "w");
               ABEND (f == NULL, "cannot open temp file", NULL);
-              if (eq (p, "Execute")) {
+              if (eq (p, "Execute") || eq (p, "X")) {
                 fprintf (f, "(%s)\n", i->str);
               } else {
                 fprintf (f, "(print ((%s)))\n", i->str);
@@ -1664,7 +1725,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         }
 /* REGRESSION is an option that sets preferences when running the test suite - undocumented option */
         else if (eq (p, "REGRESSION")) {
-          no_warnings = A68_FALSE;
+          program.options.no_warnings = A68_FALSE;
           program.options.portcheck = A68_TRUE;
           program.options.regression_test = A68_TRUE;
           program.options.time_limit = 30;
@@ -1675,15 +1736,19 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "LOCal")) {
           program.options.local = A68_TRUE;
         }
-/* NOWARNINGS switches warnings off */
+/* NOWARNINGS switches unsuppressible warnings off */
         else if (eq (p, "NOWarnings")) {
-          no_warnings = A68_TRUE;
+          program.options.no_warnings = A68_TRUE;
         } else if (eq (p, "NO-Warnings")) {
-          no_warnings = A68_TRUE;
+          program.options.no_warnings = A68_TRUE;
+        }
+/* QUIET switches all warnings off */
+        else if (eq (p, "Quiet")) {
+          program.options.quiet = A68_TRUE;
         }
 /* WARNINGS switches warnings on */
         else if (eq (p, "Warnings")) {
-          no_warnings = A68_FALSE;
+          program.options.no_warnings = A68_FALSE;
         }
 /* NOPORTCHECK switches portcheck off */
         else if (eq (p, "NOPORTcheck")) {
@@ -1698,7 +1763,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 /* PEDANTIC switches portcheck and warnings on */
         else if (eq (p, "PEDANTIC")) {
           program.options.portcheck = A68_TRUE;
-          no_warnings = A68_FALSE;
+          program.options.no_warnings = A68_FALSE;
         }
 /* PRAGMATS and NOPRAGMATS switch on/off pragmat processing */
         else if (eq (p, "PRagmats")) {
@@ -1722,11 +1787,11 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           program.options.version = A68_TRUE;
         }
 /* XREF and NOXREF switch on/off a cross reference */
-        else if (eq (p, "Xref")) {
+        else if (eq (p, "XREF")) {
           program.options.source_listing = A68_TRUE;
           program.options.cross_reference = A68_TRUE;
           program.options.nodemask |= (CROSS_REFERENCE_MASK | SOURCE_MASK);
-        } else if (eq (p, "NOXref")) {
+        } else if (eq (p, "NOXREF")) {
           program.options.nodemask &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
         } else if (eq (p, "NO-Xref")) {
           program.options.nodemask &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
@@ -2003,22 +2068,9 @@ char *bar[BUFFER_SIZE];
 \return pointer to string
 **/
 
-static char *brief_mode_string (MOID_T * p)
+static void a68g_print_short_mode (FILE_T f, MOID_T * z)
 {
-  static char q[BUFFER_SIZE];
-  ASSERT (snprintf (q, SNPRINTF_SIZE, "MODE_%d", NUMBER (p)) >= 0);
-  return (new_string (q));
-}
-
-/*!
-\brief brief_mode_flat
-\param f file number
-\param z moid to print
-**/
-
-void brief_mode_flat (FILE_T f, MOID_T * z)
-{
-  if (WHETHER (z, STANDARD) || WHETHER (z, INDICANT)) {
+  if (WHETHER (z, STANDARD)) {
     int i = DIM (z);
     if (i > 0) {
       while (i--) {
@@ -2031,9 +2083,57 @@ void brief_mode_flat (FILE_T f, MOID_T * z)
     }
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", SYMBOL (NODE (z))) >= 0);
     WRITE (f, output_line);
-  } else {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", brief_mode_string (z)) >= 0);
+  } else if (WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), STANDARD)) {
+    WRITE (f, "REF ");
+    a68g_print_short_mode (f, SUB (z));
+  } else if (WHETHER (z, PROC_SYMBOL) && PACK (z) == NULL && WHETHER (SUB (z), STANDARD)) {
+    WRITE (f, "PROC ");
+    a68g_print_short_mode (f, SUB (z));
+  } else {  
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#%d", NUMBER (z)) >= 0);
     WRITE (f, output_line);
+  }
+}
+
+/*!
+\brief brief_mode_flat
+\param f file number
+\param z moid to print
+**/
+
+void a68g_print_flat_mode (FILE_T f, MOID_T * z)
+{
+  if (WHETHER (z, STANDARD)) {
+    int i = DIM (z);
+    if (i > 0) {
+      while (i--) {
+        WRITE (f, "LONG ");
+      }
+    } else if (i < 0) {
+      while (i++) {
+        WRITE (f, "SHORT ");
+      }
+    }
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", SYMBOL (NODE (z))) >= 0);
+    WRITE (f, output_line);
+  } else if (WHETHER (z, REF_SYMBOL)) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "REF ") >= 0);
+    WRITE (f, output_line);
+    a68g_print_short_mode (f, SUB (z));
+  } else if (WHETHER (z, PROC_SYMBOL) && DIM (z) == 0) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PROC ") >= 0);
+    WRITE (f, output_line);
+    a68g_print_short_mode (f, SUB (z));
+  } else if (WHETHER (z, ROW_SYMBOL)) {
+    int i = DIM (z);
+    WRITE (f, "[");
+    while (--i) {
+      WRITE (f, ", ");
+    }
+    WRITE (f, "] ");
+    a68g_print_short_mode (f, SUB (z));
+  } else {
+    a68g_print_short_mode (f, z);
   }
 }
 
@@ -2043,14 +2143,14 @@ void brief_mode_flat (FILE_T f, MOID_T * z)
 \param pack pack to print
 **/
 
-static void brief_fields_flat (FILE_T f, PACK_T * pack)
+static void a68g_print_short_pack (FILE_T f, PACK_T * pack)
 {
   if (pack != NULL) {
-    brief_mode_flat (f, MOID (pack));
+    a68g_print_short_mode (f, MOID (pack));
     if (NEXT (pack) != NULL) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", ") >= 0);
       WRITE (f, output_line);
-      brief_fields_flat (f, NEXT (pack));
+      a68g_print_short_pack (f, NEXT (pack));
     }
   }
 }
@@ -2061,19 +2161,21 @@ static void brief_fields_flat (FILE_T f, PACK_T * pack)
 \param z moid to print
 **/
 
-void brief_moid_flat (FILE_T f, MOID_T * z)
+void a68g_print_mode (FILE_T f, MOID_T * z)
 {
   if (z != NULL) {
-    if (WHETHER (z, STANDARD) || WHETHER (z, INDICANT)) {
-      brief_mode_flat (f, z);
+    if (WHETHER (z, STANDARD)) {
+      a68g_print_flat_mode (f, z);
+    } else if (WHETHER (z, INDICANT)) {
+      WRITE (f, SYMBOL (NODE (z)));
     } else if (z == MODE (COLLITEM)) {
       WRITE (f, "\"COLLITEM\"");
     } else if (WHETHER (z, REF_SYMBOL)) {
       WRITE (f, "REF ");
-      brief_mode_flat (f, SUB (z));
+      a68g_print_flat_mode (f, SUB (z));
     } else if (WHETHER (z, FLEX_SYMBOL)) {
       WRITE (f, "FLEX ");
-      brief_mode_flat (f, SUB (z));
+      a68g_print_flat_mode (f, SUB (z));
     } else if (WHETHER (z, ROW_SYMBOL)) {
       int i = DIM (z);
       WRITE (f, "[");
@@ -2081,23 +2183,23 @@ void brief_moid_flat (FILE_T f, MOID_T * z)
         WRITE (f, ", ");
       }
       WRITE (f, "] ");
-      brief_mode_flat (f, SUB (z));
+      a68g_print_flat_mode (f, SUB (z));
     } else if (WHETHER (z, STRUCT_SYMBOL)) {
       WRITE (f, "STRUCT (");
-      brief_fields_flat (f, PACK (z));
+      a68g_print_short_pack (f, PACK (z));
       WRITE (f, ")");
     } else if (WHETHER (z, UNION_SYMBOL)) {
       WRITE (f, "UNION (");
-      brief_fields_flat (f, PACK (z));
+      a68g_print_short_pack (f, PACK (z));
       WRITE (f, ")");
     } else if (WHETHER (z, PROC_SYMBOL)) {
       WRITE (f, "PROC ");
       if (PACK (z) != NULL) {
         WRITE (f, "(");
-        brief_fields_flat (f, PACK (z));
+        a68g_print_short_pack (f, PACK (z));
         WRITE (f, ") ");
       }
-      brief_mode_flat (f, SUB (z));
+      a68g_print_flat_mode (f, SUB (z));
     } else if (WHETHER (z, IN_TYPE_MODE)) {
       WRITE (f, "\"SIMPLIN\"");
     } else if (WHETHER (z, OUT_TYPE_MODE)) {
@@ -2106,11 +2208,11 @@ void brief_moid_flat (FILE_T f, MOID_T * z)
       WRITE (f, "\"ROWS\"");
     } else if (WHETHER (z, SERIES_MODE)) {
       WRITE (f, "\"SERIES\" (");
-      brief_fields_flat (f, PACK (z));
+      a68g_print_short_pack (f, PACK (z));
       WRITE (f, ")");
     } else if (WHETHER (z, STOWED_MODE)) {
       WRITE (f, "\"STOWED\" (");
-      brief_fields_flat (f, PACK (z));
+      a68g_print_short_pack (f, PACK (z));
       WRITE (f, ")");
     }
   }
@@ -2125,41 +2227,46 @@ void brief_moid_flat (FILE_T f, MOID_T * z)
 void print_mode_flat (FILE_T f, MOID_T * m)
 {
   if (m != NULL) {
-    brief_moid_flat (f, m);
+    a68g_print_mode (f, m);
+    if (NODE (m) != NULL && NUMBER (NODE (m)) > 0) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " node %d", NUMBER (NODE (m))) >= 0);
+      WRITE (f, output_line);
+    }
     if (m->equivalent_mode != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", equi: %s", brief_mode_string (EQUIVALENT (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " equi #%d", NUMBER (EQUIVALENT (m))) >= 0);
       WRITE (f, output_line);
     }
     if (SLICE (m) != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", slice: %s", brief_mode_string (SLICE (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " slice #%d", NUMBER (SLICE (m))) >= 0);
       WRITE (f, output_line);
     }
     if (ROWED (m) != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", rowed: %s", brief_mode_string (ROWED (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " rowed #%d", NUMBER (ROWED (m))) >= 0);
       WRITE (f, output_line);
     }
     if (DEFLEXED (m) != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", deflex: %s", brief_mode_string (DEFLEXED (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " deflex #%d", NUMBER (DEFLEXED (m))) >= 0);
       WRITE (f, output_line);
     }
     if (MULTIPLE (m) != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", multiple: %s", brief_mode_string (MULTIPLE (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " multiple #%d", NUMBER (MULTIPLE (m))) >= 0);
       WRITE (f, output_line);
     }
     if (NAME (m) != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", name: %s", brief_mode_string (NAME (m))) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " name #%d", NUMBER (NAME (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (TRIM (m) != NULL) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", trim: %s", brief_mode_string (TRIM (m))) >= 0);
+    if (m->use) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " used") >= 0);
       WRITE (f, output_line);
     }
-    if (m->use == A68_FALSE) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", unused") >= 0);
+    if (m->size > 0) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " size %d", MOID_SIZE (m)) >= 0);
       WRITE (f, output_line);
     }
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", size: %d", MOID_SIZE (m)) >= 0);
-    WRITE (f, output_line);
+    if (m->has_rows) {
+      WRITE (f, " []");
+    }
   }
 }
 
@@ -2181,34 +2288,34 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
       switch (a) {
       case IDENTIFIER:
         {
-          brief_moid_flat (f, MOID (s));
+          a68g_print_mode (f, MOID (s));
           ASSERT (snprintf (output_line, SNPRINTF_SIZE, " %s", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
           break;
         }
       case INDICANT:
         {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Indicant %s ", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "indicant %s ", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
-          brief_moid_flat (f, MOID (s));
+          a68g_print_mode (f, MOID (s));
           break;
         }
       case PRIO_SYMBOL:
         {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Priority %s %d", SYMBOL (NODE (s)), PRIO (s)) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "priority %s %d", SYMBOL (NODE (s)), PRIO (s)) >= 0);
           WRITE (f, output_line);
           break;
         }
       case OP_SYMBOL:
         {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Operator %s ", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "operator %s ", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
-          brief_moid_flat (f, MOID (s));
+          a68g_print_mode (f, MOID (s));
           break;
         }
       case LABEL:
         {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Label %s", SYMBOL (NODE (s))) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "label %s", SYMBOL (NODE (s))) >= 0);
           WRITE (f, output_line);
           break;
         }
@@ -2217,44 +2324,44 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
           switch (PRIO (s)) {
           case ROUTINE_TEXT:
             {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Routine text ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "routine text ") >= 0);
               break;
             }
           case FORMAT_TEXT:
             {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Format text ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "format text ") >= 0);
               break;
             }
           case FORMAT_IDENTIFIER:
             {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Format item ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "format item ") >= 0);
               break;
             }
           case COLLATERAL_CLAUSE:
             {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Display ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "display ") >= 0);
               break;
             }
           case GENERATOR:
             {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Generator ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "generator ") >= 0);
               break;
             }
           case BLOCK_GC_REF:
             {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Sweep protect ") >= 0);
+              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "sweep protect ") >= 0);
               break;
             }
           }
           WRITE (f, output_line);
-          brief_moid_flat (f, MOID (s));
+          a68g_print_mode (f, MOID (s));
           break;
         }
       default:
         {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Internal %d ", a) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "internal %d ", a) >= 0);
           WRITE (f, output_line);
-          brief_moid_flat (f, MOID (s));
+          a68g_print_mode (f, MOID (s));
           break;
         }
       }
@@ -2306,24 +2413,9 @@ static void xref_decs (FILE_T f, SYMBOL_TABLE_T * t)
 
 static void xref1_moid (FILE_T f, MOID_T * p)
 {
-  if (/* USE (p) && */ (EQUIVALENT (p) == NULL || SHOW_EQ)) {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     %s ", brief_mode_string (p)) >= 0);
-    WRITE (f, output_line);
-    print_mode_flat (f, p);
-  }
-}
-
-/*!
-\brief xref_moids
-\param f file number
-\param p moid chain to xref
-**/
-
-static void xref_moids (FILE_T f, MOID_T * p)
-{
-  for (; p != NULL; FORWARD (p)) {
-    xref1_moid (f, p);
-  }
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     #%d ", NUMBER (p)) >= 0);
+  WRITE (f, output_line);
+  print_mode_flat (f, p);
 }
 
 /*!
@@ -2332,10 +2424,10 @@ static void xref_moids (FILE_T f, MOID_T * p)
 \param m moid list to xref
 **/
 
-static void moid_listing (FILE_T f, MOID_LIST_T * m)
+void moid_listing (FILE_T f, MOID_T * m)
 {
   for (; m != NULL; FORWARD (m)) {
-    xref1_moid (f, MOID (m));
+    xref1_moid (f, m);
   }
 }
 
@@ -2352,7 +2444,7 @@ static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
     for (; p != NULL; FORWARD (p)) {
       if (whether_new_lexical_level (p) && l == LINE (p)) {
         SYMBOL_TABLE_T *c = SYMBOL_TABLE (SUB (p));
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n[level %d", LEVEL (c)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n\n[level %d", LEVEL (c)) >= 0);
         WRITE (f, output_line);
         if (PREVIOUS (c) == stand_env) {
           ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", in standard environ") >= 0);
@@ -2362,12 +2454,10 @@ static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
         WRITE (f, output_line);
         ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %d increment]", c->ap_increment) >= 0);
         WRITE (f, output_line);
-        if (c->moids != NULL) {
-          xref_moids (f, c->moids);
-        }
         if (c != NULL) {
           xref_decs (f, c);
         }
+        WRITE (f, "\n");
       }
       cross_reference (f, SUB (p), l);
     }
@@ -2421,12 +2511,17 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
       }
 /* Indent */
       WRITE (f, "\n     ");
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02u %06u p%02u ", (unsigned) x, (unsigned) NUMBER (p), (unsigned) INFO (p)->PROCEDURE_LEVEL) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d %6d p%02d ", x, NUMBER (p), INFO (p)->PROCEDURE_LEVEL) >= 0);
       WRITE (f, output_line);
       if (PREVIOUS (SYMBOL_TABLE (p)) != NULL) {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02u(%02u) ", (unsigned) (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1), (unsigned) LEVEL (PREVIOUS (SYMBOL_TABLE (p)))) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02d(%02d) ", (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1), LEVEL (PREVIOUS (SYMBOL_TABLE (p)))) >= 0);
       } else {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02u    ", (unsigned) (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02d    ", (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1)) >= 0);
+      }
+      if (MOID (q) != NULL) {
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#%04d ", NUMBER (MOID (p))) >= 0);
+      } else {
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "      ") >= 0);
       }
       WRITE (f, output_line);
       for (k = 0; k < (x - *ld); k++) {
@@ -2459,7 +2554,7 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
         WRITE (f, output_line);
       }
       if (GENIE (p) != NULL && GENIE (p)->compile_node > 0) {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %06d", GENIE (p)->compile_node) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %6d", GENIE (p)->compile_node) >= 0);
         WRITE (f, output_line);
       }
       if (GENIE (p) != NULL && GENIE (p)->block_ref != NULL) {
@@ -2525,11 +2620,12 @@ void list_source_line (FILE_T f, SOURCE_LINE_T * line, BOOL_T tree)
   if (tree && program.options.tree_listing) {
     if (program.tree_listing_safe && leaves_to_print (program.top_node, line)) {
       int ld = -1, k2;
-      WRITE (f, "\nSyntax tree");
+      WRITE (f, "\n\nSyntax tree");
       for (k2 = 0; k2 < BUFFER_SIZE; k2++) {
         bar[k2] = " ";
       }
       tree_listing (f, program.top_node, 1, line, &ld);
+      WRITE (f, "\n");
     }
   }
 }
@@ -2616,12 +2712,12 @@ void write_object_listing (void)
 void write_listing (void)
 {
   FILE_T f = program.files.listing.fd;
-  if (program.options.moid_listing && top_moid_list != NULL) {
+  if (program.options.moid_listing) {
     WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nMode listing");
     WRITE (program.files.listing.fd, "\n---- -------");
     WRITE (program.files.listing.fd, NEWLINE_STRING);
-    moid_listing (f, top_moid_list);
+    moid_listing (f, program.top_moid);
   }
   if (program.options.standard_prelude_listing && stand_env != NULL) {
     WRITE (program.files.listing.fd, NEWLINE_STRING);
@@ -2680,7 +2776,6 @@ void write_listing (void)
       WRITE (f, output_line);
     }
   }
-  WRITE (f, NEWLINE_STRING);
 }
 
 /*!
@@ -3059,7 +3154,6 @@ SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T * p)
   z->indicants = NULL;
   z->labels = NULL;
   z->anonymous = NULL;
-  z->moids = NULL;
   z->jump_to = NULL;
   SEQUENCE (z) = NULL;
   return (z);
@@ -3077,12 +3171,8 @@ MOID_T *new_moid (void)
   ATTRIBUTE (z) = 0;
   NUMBER (z) = 0;
   DIM (z) = 0;
-  z->well_formed = A68_FALSE;
   USE (z) = A68_FALSE;
-  z->has_ref = A68_FALSE;
-  z->has_flex = A68_FALSE;
   z->has_rows = A68_FALSE;
-  z->in_standard_environ = A68_FALSE;
   SIZE (z) = 0;
   z->portable = A68_TRUE;
   NODE (z) = NULL;
@@ -3090,10 +3180,9 @@ MOID_T *new_moid (void)
   SUB (z) = NULL;
   z->equivalent_mode = NULL;
   SLICE (z) = NULL;
-  z->deflexed_mode = NULL;
+  DEFLEXED (z) = NULL;
   NAME (z) = NULL;
   z->multiple_mode = NULL;
-  z->trim = NULL;
   NEXT (z) = NULL;
   return (z);
 }
@@ -3348,8 +3437,8 @@ BOOL_T whether_new_lexical_level (NODE_T * p)
   switch (ATTRIBUTE (p)) {
   case ALT_DO_PART:
   case BRIEF_ELIF_PART:
-  case BRIEF_INTEGER_OUSE_PART:
-  case BRIEF_UNITED_OUSE_PART:
+  case BRIEF_OUSE_PART:
+  case BRIEF_CONFORMITY_OUSE_PART:
   case CHOICE:
   case CLOSED_CLAUSE:
   case CONDITIONAL_CLAUSE:
@@ -3357,19 +3446,19 @@ BOOL_T whether_new_lexical_level (NODE_T * p)
   case ELIF_PART:
   case ELSE_PART:
   case FORMAT_TEXT:
-  case INTEGER_CASE_CLAUSE:
-  case INTEGER_CHOICE_CLAUSE:
-  case INTEGER_IN_PART:
-  case INTEGER_OUT_PART:
+  case CASE_CLAUSE:
+  case CASE_CHOICE_CLAUSE:
+  case CASE_IN_PART:
+  case CASE_OUSE_PART:
   case OUT_PART:
   case ROUTINE_TEXT:
   case SPECIFIED_UNIT:
   case THEN_PART:
   case UNTIL_PART:
-  case UNITED_CASE_CLAUSE:
-  case UNITED_CHOICE:
-  case UNITED_IN_PART:
-  case UNITED_OUSE_PART:
+  case CONFORMITY_CLAUSE:
+  case CONFORMITY_CHOICE:
+  case CONFORMITY_IN_PART:
+  case CONFORMITY_OUSE_PART:
   case WHILE_PART:
     {
       return (A68_TRUE);
@@ -3415,7 +3504,7 @@ void init_postulates (void)
 void free_postulate_list (POSTULATE_T *start, POSTULATE_T *stop)
 {
   POSTULATE_T *last;
-  if (start == NULL && stop == NULL) {
+  if (start == stop) {
     return;
   }
   for (last = start; NEXT (last) != stop; FORWARD (last)) {
@@ -3677,31 +3766,33 @@ char *a68g_strrchr (char *str, int c)
 \brief safely append to buffer
 \param dst text buffer
 \param src text to append
-\param siz size of dst
+\param len size of dst
 **/
 
 void bufcat (char *dst, char *src, int len)
 {
-  char *d = dst, *s = src;
-  int n = len, dlen;
-/* Find end of dst and left-adjust; do not go past end */
-  for (; n-- != 0 && d[0] != NULL_CHAR; d++) {
-    ;
-  }
-  dlen = d - dst;
-  n = len - dlen;
-  if (n > 0) {
-    while (s[0] != NULL_CHAR) {
-      if (n != 1) {
-        (d++)[0] = s[0];
-        n--;
-      }
-      s++;
+  if (src != NULL) {
+    char *d = dst, *s = src;
+    int n = len, dlen;
+  /* Find end of dst and left-adjust; do not go past end */
+    for (; n-- != 0 && d[0] != NULL_CHAR; d++) {
+      ;
     }
-    d[0] = NULL_CHAR;
+    dlen = d - dst;
+    n = len - dlen;
+    if (n > 0) {
+      while (s[0] != NULL_CHAR) {
+        if (n != 1) {
+          (d++)[0] = s[0];
+          n--;
+        }
+        s++;
+      }
+      d[0] = NULL_CHAR;
+    }
+  /* Better sure than sorry */
+    dst[len - 1] = NULL_CHAR;
   }
-/* Better sure than sorry */
-  dst[len - 1] = NULL_CHAR;
 }
 
 /*!
@@ -3713,22 +3804,24 @@ void bufcat (char *dst, char *src, int len)
 
 void bufcpy (char *dst, char *src, int len)
 {
-  char *d = dst, *s = src;
-  int n = len;
-/* Copy as many fits */
-  if (n > 0 && --n != 0) {
-    do {
-      if (((d++)[0] = (s++)[0]) == NULL_CHAR) {
-        break;
-      }
-    } while (--n > 0);
+  if (src != NULL) {
+    char *d = dst, *s = src;
+    int n = len;
+  /* Copy as many as fit */
+    if (n > 0 && --n > 0) {
+      do {
+        if (((d++)[0] = (s++)[0]) == NULL_CHAR) {
+          break;
+        }
+      } while (--n > 0);
+    }
+    if (n == 0 && len > 0) {
+  /* Not enough room in dst, so terminate */
+      d[0] = NULL_CHAR;
+    }
+  /* Better sure than sorry */
+    dst[len - 1] = NULL_CHAR;
   }
-  if (n == 0 && len > 0) {
-/* Not enough room in dst, so terminate */
-    d[0] = NULL_CHAR;
-  }
-/* Better sure than sorry */
-  dst[len - 1] = NULL_CHAR;
 }
 
 /*!
@@ -3876,7 +3969,7 @@ static int qsort_strcmp (const void *key, const void *data)
 static BOOL_T is_coda (char *str, int len)
 {
   char str2[BUFFER_SIZE];
-  strncpy (str2, str, BUFFER_SIZE);
+  bufcpy (str2, str, BUFFER_SIZE);
   str2[len] = NULL_CHAR;
   return ((BOOL_T) (bsearch (str2, codas, sizeof (codas) / sizeof (char *), sizeof (char *), qsort_strcmp) != NULL));
 }
@@ -4055,14 +4148,14 @@ void genie_acronym (NODE_T * p)
 /* Translate int attributes to string names */
 
 static char *attribute_names[WILDCARD + 1] = {
-  "NULL",
+  NULL,
   "A68_PATTERN",
   "ACCO_SYMBOL",
   "ACTUAL_DECLARER_MARK",
-  "STYLE_DO_PART",
-  "STYLE_DO_SYMBOL",
-  "STYLE_EQUALS_SYMBOL",
-  "STYLE_FORMAL_BOUNDS_LIST",
+  "ALT_DO_PART",
+  "ALT_DO_SYMBOL",
+  "ALT_EQUALS_SYMBOL",
+  "ALT_FORMAL_BOUNDS_LIST",
   "ANDF_SYMBOL",
   "AND_FUNCTION",
   "ANONYMOUS",
@@ -4079,6 +4172,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "BITS_DENOTATION",
   "BITS_PATTERN",
   "BITS_SYMBOL",
+  "BLOCK_GC_REF",
   "BOLD_COMMENT_SYMBOL",
   "BOLD_PRAGMAT_SYMBOL",
   "BOLD_TAG",
@@ -4087,15 +4181,19 @@ static char *attribute_names[WILDCARD + 1] = {
   "BOUND",
   "BOUNDS",
   "BOUNDS_LIST",
+  "BRIEF_OUSE_PART",
+  "BRIEF_CONFORMITY_OUSE_PART",
   "BRIEF_ELIF_PART",
-  "BRIEF_INTEGER_OUSE_PART",
   "BRIEF_OPERATOR_DECLARATION",
-  "BRIEF_UNITED_OUSE_PART",
   "BUS_SYMBOL",
+  "BYTES_SYMBOL",
   "BY_PART",
   "BY_SYMBOL",
-  "BYTES_SYMBOL",
   "CALL",
+  "CASE_CHOICE_CLAUSE",
+  "CASE_CLAUSE",
+  "CASE_IN_PART",
+  "CASE_OUSE_PART",
   "CASE_PART",
   "CASE_SYMBOL",
   "CAST",
@@ -4120,6 +4218,10 @@ static char *attribute_names[WILDCARD + 1] = {
   "COMPLEX_SYMBOL",
   "COMPL_SYMBOL",
   "CONDITIONAL_CLAUSE",
+  "CONFORMITY_CHOICE",
+  "CONFORMITY_CLAUSE",
+  "CONFORMITY_IN_PART",
+  "CONFORMITY_OUSE_PART",
   "CONSTRUCT",
   "DECLARATION_LIST",
   "DECLARER",
@@ -4131,10 +4233,10 @@ static char *attribute_names[WILDCARD + 1] = {
   "DEREFERENCING",
   "DIAGONAL_FUNCTION",
   "DIAGONAL_SYMBOL",
-  "DO_PART",
-  "DO_SYMBOL",
   "DOTDOT_SYMBOL",
   "DOWNTO_SYMBOL",
+  "DO_PART",
+  "DO_SYMBOL",
   "DYNAMIC_REPLICATOR",
   "EDOC_SYMBOL",
   "ELIF_IF_PART",
@@ -4162,22 +4264,21 @@ static char *attribute_names[WILDCARD + 1] = {
   "FIELD_SELECTION",
   "FILE_SYMBOL",
   "FIRM",
-  "FI_SYMBOL",
   "FIXED_C_PATTERN",
+  "FI_SYMBOL",
   "FLEX_SYMBOL",
   "FLOAT_C_PATTERN",
   "FORMAL_BOUNDS",
   "FORMAL_BOUNDS_LIST",
-  "FORMAL_DECLARER_MARK",
   "FORMAL_DECLARERS",
   "FORMAL_DECLARERS_LIST",
+  "FORMAL_DECLARER_MARK",
   "FORMAT_A_FRAME",
   "FORMAT_CLOSE_SYMBOL",
   "FORMAT_DELIMITER_SYMBOL",
   "FORMAT_D_FRAME",
   "FORMAT_E_FRAME",
   "FORMAT_IDENTIFIER",
-  "FORMAT_I_FRAME",
   "FORMAT_ITEM_A",
   "FORMAT_ITEM_B",
   "FORMAT_ITEM_C",
@@ -4208,6 +4309,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "FORMAT_ITEM_X",
   "FORMAT_ITEM_Y",
   "FORMAT_ITEM_Z",
+  "FORMAT_I_FRAME",
   "FORMAT_OPEN_SYMBOL",
   "FORMAT_PATTERN",
   "FORMAT_POINT_FRAME",
@@ -4224,8 +4326,8 @@ static char *attribute_names[WILDCARD + 1] = {
   "GENERATOR",
   "GENERIC_ARGUMENT",
   "GENERIC_ARGUMENT_LIST",
-  "GO_SYMBOL",
   "GOTO_SYMBOL",
+  "GO_SYMBOL",
   "HEAP_SYMBOL",
   "IDENTIFIER",
   "IDENTITY_DECLARATION",
@@ -4235,16 +4337,12 @@ static char *attribute_names[WILDCARD + 1] = {
   "INDICANT",
   "INITIALISER_SERIES",
   "INSERTION",
-  "IN_SYMBOL",
-  "INT_DENOTATION",
-  "INTEGER_CASE_CLAUSE",
-  "INTEGER_CHOICE_CLAUSE",
-  "INTEGER_IN_PART",
-  "INTEGER_OUT_PART",
   "INTEGRAL_C_PATTERN",
   "INTEGRAL_MOULD",
   "INTEGRAL_PATTERN",
+  "INT_DENOTATION",
   "INT_SYMBOL",
+  "IN_SYMBOL",
   "IN_TYPE_MODE",
   "ISNT_SYMBOL",
   "IS_SYMBOL",
@@ -4272,14 +4370,14 @@ static char *attribute_names[WILDCARD + 1] = {
   "MODE_FILE",
   "MODE_FORMAT",
   "MODE_INT",
-  "MODE_LONG_BITS",
-  "MODE_LONG_BYTES",
-  "MODE_LONG_COMPLEX",
-  "MODE_LONG_INT",
   "MODE_LONGLONG_BITS",
   "MODE_LONGLONG_COMPLEX",
   "MODE_LONGLONG_INT",
   "MODE_LONGLONG_REAL",
+  "MODE_LONG_BITS",
+  "MODE_LONG_BYTES",
+  "MODE_LONG_COMPLEX",
+  "MODE_LONG_INT",
   "MODE_LONG_REAL",
   "MODE_NO_CHECK",
   "MODE_PIPE",
@@ -4304,7 +4402,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "OP_SYMBOL",
   "ORF_SYMBOL",
   "OR_FUNCTION",
-  "OUSE_CASE_PART",
+  "OUSE_PART",
   "OUSE_SYMBOL",
   "OUT_PART",
   "OUT_SYMBOL",
@@ -4314,8 +4412,8 @@ static char *attribute_names[WILDCARD + 1] = {
   "PARAMETER_IDENTIFIER",
   "PARAMETER_LIST",
   "PARAMETER_PACK",
-  "PAR_SYMBOL",
   "PARTICULAR_PROGRAM",
+  "PAR_SYMBOL",
   "PICTURE",
   "PICTURE_LIST",
   "PIPE_SYMBOL",
@@ -4328,7 +4426,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "PROCEDURE_VARIABLE_DECLARATION",
   "PROCEDURING",
   "PROC_SYMBOL",
-  "BLOCK_GC_REF",
   "QUALIFIER",
   "RADIX_FRAME",
   "REAL_DENOTATION",
@@ -4338,12 +4435,12 @@ static char *attribute_names[WILDCARD + 1] = {
   "REPLICATOR",
   "ROUTINE_TEXT",
   "ROUTINE_UNIT",
+  "ROWING",
+  "ROWS_SYMBOL",
   "ROW_ASSIGNATION",
   "ROW_ASSIGN_SYMBOL",
   "ROW_CHAR_DENOTATION",
   "ROW_FUNCTION",
-  "ROWING",
-  "ROWS_SYMBOL",
   "ROW_SYMBOL",
   "SECONDARY",
   "SELECTION",
@@ -4374,12 +4471,12 @@ static char *attribute_names[WILDCARD + 1] = {
   "STRING_PATTERN",
   "STRING_SYMBOL",
   "STRONG",
-  "STRUCT_SYMBOL",
   "STRUCTURED_FIELD",
   "STRUCTURED_FIELD_LIST",
   "STRUCTURE_PACK",
-  "STYLE_I_COMMENT_SYMBOL",
+  "STRUCT_SYMBOL",
   "STYLE_II_COMMENT_SYMBOL",
+  "STYLE_I_COMMENT_SYMBOL",
   "STYLE_I_PRAGMAT_SYMBOL",
   "SUB_SYMBOL",
   "SUB_UNIT",
@@ -4397,10 +4494,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "UNION_PACK",
   "UNION_SYMBOL",
   "UNIT",
-  "UNITED_CASE_CLAUSE",
-  "UNITED_CHOICE",
-  "UNITED_IN_PART",
-  "UNITED_OUSE_PART",
   "UNITING",
   "UNIT_LIST",
   "UNIT_SERIES",
@@ -5199,32 +5292,26 @@ static char *get_severity (int sev)
   switch (sev) {
   case A68_ERROR:
     {
-      program.error_count++;
       return ("error");
     }
   case A68_SYNTAX_ERROR:
     {
-      program.error_count++;
       return ("syntax error");
     }
   case A68_RUNTIME_ERROR:
     {
-      program.error_count++;
       return ("runtime error");
     }
   case A68_MATH_ERROR:
     {
-      program.error_count++;
       return ("math error");
     }
   case A68_WARNING:
     {
-      program.warning_count++;
       return ("warning");
     }
   case A68_SUPPRESS_SEVERITY:
     {
-      program.error_count++;
       return (NULL);
     }
   default:
@@ -5258,6 +5345,7 @@ static void write_diagnostic (int sev, char *b)
 \brief add diagnostic to source line
 \param line source line
 \param pos where to mark
+\param p node to mark
 \param sev severity
 \param b diagnostic text
 */
@@ -5353,12 +5441,69 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
   NEXT (msg) = NULL;
 }
 
+/*!
+\brief add diagnostic to diagnostics file
+\param line source line
+\param pos where to mark
+\param p node to mark
+\param sev severity
+\param b diagnostic text
+*/
+
+static void tui_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T *p, int sev, char *b)
+{
+  FILE_T fd = program.files.diags.fd; 
+  int lin, col;
+  char buff[BUFFER_SIZE];
+  char *txt, *severity = get_severity (sev);
+  if (in_monitor) {
+    return;
+  }
+  if (fd == -1) {
+    return;
+  }
+  if (p != NULL) {
+    lin = NUMBER (LINE (p));
+    txt = LINE (p)->string;
+    pos = INFO (p)->char_in_line;
+  } else if (line != NULL) {
+    lin = NUMBER (line);
+    txt = line->string;
+  } else {
+    lin = 0;
+    txt = NULL;
+  }
+  if (txt != NULL && pos != NULL) {
+    int k = 0;
+    col = 0;
+    while (txt[k] != NULL_CHAR) {
+      if (&(txt[k]) == pos) {
+        col = k;
+        break;
+      }
+      k++;
+    }
+  } else {
+    col = 0;
+  }
+  ASSERT (snprintf(buff, SNPRINTF_SIZE, "%d\n", lin) >= 0);
+  WRITE (fd, buff);
+  ASSERT (snprintf(buff, SNPRINTF_SIZE, "%d\n", col) >= 0);
+  WRITE (fd, buff);
+  if (severity == NULL) {
+    ASSERT (snprintf(buff, SNPRINTF_SIZE, "%s\n", b) >= 0);
+  } else {
+    ASSERT (snprintf(buff, SNPRINTF_SIZE, "%s: %s\n", severity, b) >= 0);
+  }
+  WRITE (fd, buff);
+}
+
 /*
 Legend for special symbols:
 # skip extra syntactical information
-@ node = non terminal
-A att = non terminal
-B kw = keyword
+@ non terminal
+A non terminal
+B keyword
 C context
 D argument in decimal
 E string literal from errno
@@ -5533,7 +5678,10 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
   force = (BOOL_T) ((sev & A68_FORCE_DIAGNOSTICS) != 0);
   sev &= ~A68_FORCE_DIAGNOSTICS;
 /* No warnings? */
-  if (!force && sev == A68_WARNING && no_warnings) {
+  if (!force && sev == A68_WARNING && program.options.no_warnings) {
+    return;
+  }
+  if (sev == A68_WARNING && program.options.quiet) {
     return;
   }
 /* Suppressed? */
@@ -5573,6 +5721,14 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
     }
   }
 /* Construct a diagnostic message */
+  if (sev == A68_WARNING) {
+    program.warning_count++;
+  } else {
+    program.error_count++;
+  }
+  if (program.options.tui) {
+    tui_diagnostic (NULL, NULL, p, sev, b);
+  }
   if (p == NULL) {
     write_diagnostic (sev, b);
   } else {
@@ -5602,7 +5758,10 @@ void diagnostic_line (int sev, SOURCE_LINE_T * line, char *pos, char *loc_str, .
   force = (BOOL_T) ((sev & A68_FORCE_DIAGNOSTICS) != 0);
   sev &= ~A68_FORCE_DIAGNOSTICS;
 /* No warnings? */
-  if (!force && sev == A68_WARNING && no_warnings) {
+  if (!force && sev == A68_WARNING && program.options.no_warnings) {
+    return;
+  }
+  if (sev == A68_WARNING && program.options.quiet) {
     return;
   }
 /* Suppressed? */
@@ -5653,10 +5812,648 @@ void diagnostic_line (int sev, SOURCE_LINE_T * line, char *pos, char *loc_str, .
     }
     bufcat (b, ")", BUFFER_SIZE);
   }
+  if (sev == A68_WARNING) {
+    program.warning_count++;
+  } else {
+    program.error_count++;
+  }
+  if (program.options.tui) {
+    tui_diagnostic (line, pos, NULL, sev, b);
+  }
   if (line == NULL) {
     write_diagnostic (sev, b);
   } else {
     add_diagnostic (line, pos, NULL, sev, b);
   }
   va_end (args);
+}
+
+/*!
+\brief add keyword to the tree
+\param p top keyword
+\param a attribute
+\param t keyword text
+**/
+
+static void add_keyword (KEYWORD_T ** p, int a, char *t)
+{
+  while (*p != NULL) {
+    int k = strcmp (t, TEXT (*p));
+    if (k < 0) {
+      p = &LESS (*p);
+    } else {
+      p = &MORE (*p);
+    }
+  }
+  *p = (KEYWORD_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (KEYWORD_T));
+  ATTRIBUTE (*p) = a;
+  TEXT (*p) = t;
+  LESS (*p) = MORE (*p) = NULL;
+}
+
+/*!
+\brief make tables of keywords and non-terminals
+**/
+
+void set_up_tables (void)
+{
+/* Entries are randomised to balance the tree */
+  if (program.options.strict == A68_FALSE) {
+    add_keyword (&top_keyword, ENVIRON_SYMBOL, "ENVIRON");
+    add_keyword (&top_keyword, DOWNTO_SYMBOL, "DOWNTO");
+    add_keyword (&top_keyword, UNTIL_SYMBOL, "UNTIL");
+    add_keyword (&top_keyword, CLASS_SYMBOL, "CLASS");
+    add_keyword (&top_keyword, NEW_SYMBOL, "NEW");
+    add_keyword (&top_keyword, DIAGONAL_SYMBOL, "DIAG");
+    add_keyword (&top_keyword, TRANSPOSE_SYMBOL, "TRNSP");
+    add_keyword (&top_keyword, ROW_SYMBOL, "ROW");
+    add_keyword (&top_keyword, COLUMN_SYMBOL, "COL");
+    add_keyword (&top_keyword, ROW_ASSIGN_SYMBOL, "::=");
+    add_keyword (&top_keyword, CODE_SYMBOL, "CODE");
+    add_keyword (&top_keyword, EDOC_SYMBOL, "EDOC");
+    add_keyword (&top_keyword, ANDF_SYMBOL, "THEF");
+    add_keyword (&top_keyword, ORF_SYMBOL, "ELSF");
+    add_keyword (&top_keyword, ANDF_SYMBOL, "ANDTH");
+    add_keyword (&top_keyword, ORF_SYMBOL, "OREL");
+    add_keyword (&top_keyword, ANDF_SYMBOL, "ANDF");
+    add_keyword (&top_keyword, ORF_SYMBOL, "ORF");
+  }
+  add_keyword (&top_keyword, POINT_SYMBOL, ".");
+  add_keyword (&top_keyword, COMPLEX_SYMBOL, "COMPLEX");
+  add_keyword (&top_keyword, ACCO_SYMBOL, "{");
+  add_keyword (&top_keyword, OCCA_SYMBOL, "}");
+  add_keyword (&top_keyword, SOUND_SYMBOL, "SOUND");
+  add_keyword (&top_keyword, COLON_SYMBOL, ":");
+  add_keyword (&top_keyword, THEN_BAR_SYMBOL, "|");
+  add_keyword (&top_keyword, SUB_SYMBOL, "[");
+  add_keyword (&top_keyword, BY_SYMBOL, "BY");
+  add_keyword (&top_keyword, OP_SYMBOL, "OP");
+  add_keyword (&top_keyword, COMMA_SYMBOL, ",");
+  add_keyword (&top_keyword, AT_SYMBOL, "AT");
+  add_keyword (&top_keyword, PRIO_SYMBOL, "PRIO");
+  add_keyword (&top_keyword, STYLE_I_COMMENT_SYMBOL, "CO");
+  add_keyword (&top_keyword, END_SYMBOL, "END");
+  add_keyword (&top_keyword, GO_SYMBOL, "GO");
+  add_keyword (&top_keyword, TO_SYMBOL, "TO");
+  add_keyword (&top_keyword, ELSE_BAR_SYMBOL, "|:");
+  add_keyword (&top_keyword, THEN_SYMBOL, "THEN");
+  add_keyword (&top_keyword, TRUE_SYMBOL, "TRUE");
+  add_keyword (&top_keyword, PROC_SYMBOL, "PROC");
+  add_keyword (&top_keyword, FOR_SYMBOL, "FOR");
+  add_keyword (&top_keyword, GOTO_SYMBOL, "GOTO");
+  add_keyword (&top_keyword, WHILE_SYMBOL, "WHILE");
+  add_keyword (&top_keyword, IS_SYMBOL, ":=:");
+  add_keyword (&top_keyword, ASSIGN_TO_SYMBOL, "=:");
+  add_keyword (&top_keyword, COMPL_SYMBOL, "COMPL");
+  add_keyword (&top_keyword, FROM_SYMBOL, "FROM");
+  add_keyword (&top_keyword, BOLD_PRAGMAT_SYMBOL, "PRAGMAT");
+  add_keyword (&top_keyword, BOLD_COMMENT_SYMBOL, "COMMENT");
+  add_keyword (&top_keyword, DO_SYMBOL, "DO");
+  add_keyword (&top_keyword, STYLE_II_COMMENT_SYMBOL, "#");
+  add_keyword (&top_keyword, CASE_SYMBOL, "CASE");
+  add_keyword (&top_keyword, LOC_SYMBOL, "LOC");
+  add_keyword (&top_keyword, CHAR_SYMBOL, "CHAR");
+  add_keyword (&top_keyword, ISNT_SYMBOL, ":/=:");
+  add_keyword (&top_keyword, REF_SYMBOL, "REF");
+  add_keyword (&top_keyword, NIL_SYMBOL, "NIL");
+  add_keyword (&top_keyword, ASSIGN_SYMBOL, ":=");
+  add_keyword (&top_keyword, FI_SYMBOL, "FI");
+  add_keyword (&top_keyword, FILE_SYMBOL, "FILE");
+  add_keyword (&top_keyword, PAR_SYMBOL, "PAR");
+  add_keyword (&top_keyword, ASSERT_SYMBOL, "ASSERT");
+  add_keyword (&top_keyword, OUSE_SYMBOL, "OUSE");
+  add_keyword (&top_keyword, IN_SYMBOL, "IN");
+  add_keyword (&top_keyword, LONG_SYMBOL, "LONG");
+  add_keyword (&top_keyword, SEMI_SYMBOL, ";");
+  add_keyword (&top_keyword, EMPTY_SYMBOL, "EMPTY");
+  add_keyword (&top_keyword, MODE_SYMBOL, "MODE");
+  add_keyword (&top_keyword, IF_SYMBOL, "IF");
+  add_keyword (&top_keyword, OD_SYMBOL, "OD");
+  add_keyword (&top_keyword, OF_SYMBOL, "OF");
+  add_keyword (&top_keyword, STRUCT_SYMBOL, "STRUCT");
+  add_keyword (&top_keyword, STYLE_I_PRAGMAT_SYMBOL, "PR");
+  add_keyword (&top_keyword, BUS_SYMBOL, "]");
+  add_keyword (&top_keyword, SKIP_SYMBOL, "SKIP");
+  add_keyword (&top_keyword, SHORT_SYMBOL, "SHORT");
+  add_keyword (&top_keyword, IS_SYMBOL, "IS");
+  add_keyword (&top_keyword, ESAC_SYMBOL, "ESAC");
+  add_keyword (&top_keyword, CHANNEL_SYMBOL, "CHANNEL");
+  add_keyword (&top_keyword, REAL_SYMBOL, "REAL");
+  add_keyword (&top_keyword, STRING_SYMBOL, "STRING");
+  add_keyword (&top_keyword, BOOL_SYMBOL, "BOOL");
+  add_keyword (&top_keyword, ISNT_SYMBOL, "ISNT");
+  add_keyword (&top_keyword, FALSE_SYMBOL, "FALSE");
+  add_keyword (&top_keyword, UNION_SYMBOL, "UNION");
+  add_keyword (&top_keyword, OUT_SYMBOL, "OUT");
+  add_keyword (&top_keyword, OPEN_SYMBOL, "(");
+  add_keyword (&top_keyword, BEGIN_SYMBOL, "BEGIN");
+  add_keyword (&top_keyword, FLEX_SYMBOL, "FLEX");
+  add_keyword (&top_keyword, VOID_SYMBOL, "VOID");
+  add_keyword (&top_keyword, BITS_SYMBOL, "BITS");
+  add_keyword (&top_keyword, ELSE_SYMBOL, "ELSE");
+  add_keyword (&top_keyword, EXIT_SYMBOL, "EXIT");
+  add_keyword (&top_keyword, HEAP_SYMBOL, "HEAP");
+  add_keyword (&top_keyword, INT_SYMBOL, "INT");
+  add_keyword (&top_keyword, BYTES_SYMBOL, "BYTES");
+  add_keyword (&top_keyword, PIPE_SYMBOL, "PIPE");
+  add_keyword (&top_keyword, FORMAT_SYMBOL, "FORMAT");
+  add_keyword (&top_keyword, SEMA_SYMBOL, "SEMA");
+  add_keyword (&top_keyword, CLOSE_SYMBOL, ")");
+  add_keyword (&top_keyword, AT_SYMBOL, "@");
+  add_keyword (&top_keyword, ELIF_SYMBOL, "ELIF");
+  add_keyword (&top_keyword, FORMAT_DELIMITER_SYMBOL, "$");
+}
+
+/* Next are routines to calculate the size of a mode */
+
+/*!
+\brief reset max simplout size
+**/
+
+void reset_max_simplout_size (void)
+{
+  max_simplout_size = 0;
+}
+
+/*!
+\brief max unitings to simplout
+\param p position in tree
+\param max maximum calculated moid size
+**/
+
+static void max_unitings_to_simplout (NODE_T * p, int *max)
+{
+  for (; p != NO_NODE; FORWARD (p)) {
+    if (WHETHER (p, UNITING) && MOID (p) == MODE (SIMPLOUT)) {
+      MOID_T *q = MOID (SUB (p));
+      if (q != MODE (SIMPLOUT)) {
+        int size = moid_size (q);
+        if (size > *max) {
+          *max = size;
+        }
+      }
+    }
+    max_unitings_to_simplout (SUB (p), max);
+  }
+}
+
+/*!
+\brief get max simplout size
+\param p position in tree
+**/
+
+void get_max_simplout_size (NODE_T * p)
+{
+  max_simplout_size = 0;
+  max_unitings_to_simplout (p, &max_simplout_size);
+}
+
+/*!
+\brief set moid sizes
+\param z moid to start from
+**/
+
+void set_moid_sizes (MOID_T * z)
+{
+  for (; z != NO_MOID; FORWARD (z)) {
+    SIZE (z) = moid_size (z);
+  }
+}
+
+/*!
+\brief moid size 2
+\param p moid to calculate
+\return moid size
+**/
+
+static int moid_size_2 (MOID_T * p)
+{
+  if (p == NO_MOID) {
+    return (0);
+  } else if (EQUIVALENT (p) != NO_MOID) {
+    return (moid_size_2 (EQUIVALENT (p)));
+  } else if (p == MODE (HIP)) {
+    return (0);
+  } else if (p == MODE (VOID)) {
+    return (0);
+  } else if (p == MODE (INT)) {
+    return (ALIGNED_SIZE_OF (A68_INT));
+  } else if (p == MODE (LONG_INT)) {
+    return ((int) size_long_mp ());
+  } else if (p == MODE (LONGLONG_INT)) {
+    return ((int) size_longlong_mp ());
+  } else if (p == MODE (REAL)) {
+    return (ALIGNED_SIZE_OF (A68_REAL));
+  } else if (p == MODE (LONG_REAL)) {
+    return ((int) size_long_mp ());
+  } else if (p == MODE (LONGLONG_REAL)) {
+    return ((int) size_longlong_mp ());
+  } else if (p == MODE (BOOL)) {
+    return (ALIGNED_SIZE_OF (A68_BOOL));
+  } else if (p == MODE (CHAR)) {
+    return (ALIGNED_SIZE_OF (A68_CHAR));
+  } else if (p == MODE (ROW_CHAR)) {
+    return (ALIGNED_SIZE_OF (A68_REF));
+  } else if (p == MODE (BITS)) {
+    return (ALIGNED_SIZE_OF (A68_BITS));
+  } else if (p == MODE (LONG_BITS)) {
+    return ((int) size_long_mp ());
+  } else if (p == MODE (LONGLONG_BITS)) {
+    return ((int) size_longlong_mp ());
+  } else if (p == MODE (BYTES)) {
+    return (ALIGNED_SIZE_OF (A68_BYTES));
+  } else if (p == MODE (LONG_BYTES)) {
+    return (ALIGNED_SIZE_OF (A68_LONG_BYTES));
+  } else if (p == MODE (FILE)) {
+    return (ALIGNED_SIZE_OF (A68_FILE));
+  } else if (p == MODE (CHANNEL)) {
+    return (ALIGNED_SIZE_OF (A68_CHANNEL));
+  } else if (p == MODE (FORMAT)) {
+    return (ALIGNED_SIZE_OF (A68_FORMAT));
+  } else if (p == MODE (SEMA)) {
+    return (ALIGNED_SIZE_OF (A68_REF));
+  } else if (p == MODE (SOUND)) {
+    return (ALIGNED_SIZE_OF (A68_SOUND));
+  } else if (p == MODE (COLLITEM)) {
+    return (ALIGNED_SIZE_OF (A68_COLLITEM));
+  } else if (p == MODE (NUMBER)) {
+    int k = 0;
+    if (ALIGNED_SIZE_OF (A68_INT) > k) {
+      k = ALIGNED_SIZE_OF (A68_INT);
+    }
+    if ((int) size_long_mp () > k) {
+      k = (int) size_long_mp ();
+    }
+    if ((int) size_longlong_mp () > k) {
+      k = (int) size_longlong_mp ();
+    }
+    if (ALIGNED_SIZE_OF (A68_REAL) > k) {
+      k = ALIGNED_SIZE_OF (A68_REAL);
+    }
+    if ((int) size_long_mp () > k) {
+      k = (int) size_long_mp ();
+    }
+    if ((int) size_longlong_mp () > k) {
+      k = (int) size_longlong_mp ();
+    }
+    if (ALIGNED_SIZE_OF (A68_REF) > k) {
+      k = ALIGNED_SIZE_OF (A68_REF);
+    }
+    return (ALIGNED_SIZE_OF (A68_UNION) + k);
+  } else if (p == MODE (SIMPLIN)) {
+    int k = 0;
+    if (ALIGNED_SIZE_OF (A68_REF) > k) {
+      k = ALIGNED_SIZE_OF (A68_REF);
+    }
+    if (ALIGNED_SIZE_OF (A68_FORMAT) > k) {
+      k = ALIGNED_SIZE_OF (A68_FORMAT);
+    }
+    if (ALIGNED_SIZE_OF (A68_PROCEDURE) > k) {
+      k = ALIGNED_SIZE_OF (A68_PROCEDURE);
+    }
+    if (ALIGNED_SIZE_OF (A68_SOUND) > k) {
+      k = ALIGNED_SIZE_OF (A68_SOUND);
+    }
+    return (ALIGNED_SIZE_OF (A68_UNION) + k);
+  } else if (p == MODE (SIMPLOUT)) {
+    return (ALIGNED_SIZE_OF (A68_UNION) + max_simplout_size);
+  } else if (WHETHER (p, REF_SYMBOL)) {
+    return (ALIGNED_SIZE_OF (A68_REF));
+  } else if (WHETHER (p, PROC_SYMBOL)) {
+    return (ALIGNED_SIZE_OF (A68_PROCEDURE));
+  } else if (WHETHER (p, ROW_SYMBOL) && p != MODE (ROWS)) {
+    return (ALIGNED_SIZE_OF (A68_REF));
+  } else if (p == MODE (ROWS)) {
+    return (ALIGNED_SIZE_OF (A68_UNION) + ALIGNED_SIZE_OF (A68_REF));
+  } else if (WHETHER (p, FLEX_SYMBOL)) {
+    return moid_size (SUB (p));
+  } else if (WHETHER (p, STRUCT_SYMBOL)) {
+    PACK_T *z = PACK (p);
+    int size = 0;
+    for (; z != NO_PACK; FORWARD (z)) {
+      size += moid_size (MOID (z));
+    }
+    return (size);
+  } else if (WHETHER (p, UNION_SYMBOL)) {
+    PACK_T *z = PACK (p);
+    int size = 0;
+    for (; z != NO_PACK; FORWARD (z)) {
+      if (moid_size (MOID (z)) > size) {
+        size = moid_size (MOID (z));
+      }
+    }
+    return (ALIGNED_SIZE_OF (A68_UNION) + size);
+  } else if (PACK (p) != NO_PACK) {
+    PACK_T *z = PACK (p);
+    int size = 0;
+    for (; z != NO_PACK; FORWARD (z)) {
+      size += moid_size (MOID (z));
+    }
+    return (size);
+  } else {
+/* ? */
+    return (0);
+  }
+}
+
+/*!
+\brief moid size
+\param p moid to set size
+\return moid size
+**/
+
+int moid_size (MOID_T * p)
+{
+  SIZE (p) = moid_size_2 (p);
+  return (SIZE (p));
+}
+
+/******************************/
+/* A pretty printer for moids */
+/******************************/
+
+/*!
+\brief moid to string 3
+\param dst text buffer
+\param str string to concatenate
+\param w estimated width
+\param idf print indicants if one exists in this range
+**/
+
+static void add_to_moid_text (char *dst, char *str, int *w)
+{
+  bufcat (dst, str, BUFFER_SIZE);
+  (*w) -= (int) strlen (str);
+}
+
+/*!
+\brief find a tag, searching symbol tables towards the root
+\param table symbol table to search
+\param mode mode of the tag
+\return entry in symbol table
+**/
+
+TAG_T *find_indicant_global (SYMBOL_TABLE_T * table, MOID_T * mode)
+{
+  if (table != NULL) {
+    TAG_T *s;
+    for (s = table->indicants; s != NO_TAG; FORWARD (s)) {
+      if (MOID (s) == mode) {
+        return (s);
+      }
+    }
+    return (find_indicant_global (PREVIOUS (table), mode));
+  } else {
+    return (NULL);
+  }
+}
+
+/*!
+\brief pack to string
+\param b text buffer
+\param p pack
+\param w estimated width
+\param text include field names
+\param idf print indicants if one exists in this range
+**/
+
+static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * idf)
+{
+  for (; p != NO_PACK; FORWARD (p)) {
+    moid_to_string_2 (b, MOID (p), w, idf);
+    if (text) {
+      if (TEXT (p) != NULL) {
+        add_to_moid_text (b, " ", w);
+        add_to_moid_text (b, TEXT (p), w);
+      }
+    }
+    if (p != NO_PACK && NEXT (p) != NO_PACK) {
+      add_to_moid_text (b, ", ", w);
+    }
+  }
+}
+
+/*!
+\brief moid to string 2
+\param b text buffer
+\param n moid
+\param w estimated width
+\param idf print indicants if one exists in this range
+**/
+
+static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
+{
+/* Oops. Should not happen */
+  if (n == NO_MOID) {
+    add_to_moid_text (b, "NULL", w);;
+    return;
+  }
+/* Reference to self through REF or PROC */
+  if (whether_postulated (postulates, n)) {
+    add_to_moid_text (b, "SELF", w);
+    return;
+  }
+/* If declared by a mode-declaration, present the indicant */
+  if (idf != NULL && WHETHER_NOT (n, STANDARD)) {
+    TAG_T *indy = find_indicant_global (SYMBOL_TABLE (idf), n);
+    if (indy != NO_TAG) {
+      add_to_moid_text (b, SYMBOL (NODE (indy)), w);
+      return;
+    }
+  }
+/* Write the standard modes */
+  if (n == MODE (HIP)) {
+    add_to_moid_text (b, "HIP", w);
+  } else if (n == MODE (ERROR)) {
+    add_to_moid_text (b, "ERROR", w);
+  } else if (n == MODE (UNDEFINED)) {
+    add_to_moid_text (b, "unresolved", w);
+  } else if (n == MODE (C_STRING)) {
+    add_to_moid_text (b, "C-STRING", w);
+  } else if (n == MODE (COMPLEX) || n == MODE (COMPL)) {
+    add_to_moid_text (b, "COMPLEX", w);
+  } else if (n == MODE (LONG_COMPLEX) || n == MODE (LONG_COMPL)) {
+    add_to_moid_text (b, "LONG COMPLEX", w);
+  } else if (n == MODE (LONGLONG_COMPLEX) || n == MODE (LONGLONG_COMPL)) {
+    add_to_moid_text (b, "LONG LONG COMPLEX", w);
+  } else if (n == MODE (STRING)) {
+    add_to_moid_text (b, "STRING", w);
+  } else if (n == MODE (PIPE)) {
+    add_to_moid_text (b, "PIPE", w);
+  } else if (n == MODE (SOUND)) {
+    add_to_moid_text (b, "SOUND", w);
+  } else if (n == MODE (COLLITEM)) {
+    add_to_moid_text (b, "COLLITEM", w);
+  } else if (WHETHER (n, IN_TYPE_MODE)) {
+    add_to_moid_text (b, "\"SIMPLIN\"", w);
+  } else if (WHETHER (n, OUT_TYPE_MODE)) {
+    add_to_moid_text (b, "\"SIMPLOUT\"", w);
+  } else if (WHETHER (n, ROWS_SYMBOL)) {
+    add_to_moid_text (b, "\"ROWS\"", w);
+  } else if (n == MODE (VACUUM)) {
+    add_to_moid_text (b, "\"VACUUM\"", w);
+  } else if (WHETHER (n, VOID_SYMBOL) || WHETHER (n, STANDARD) || WHETHER (n, INDICANT)) {
+    if (DIM (n) > 0) {
+      int k = DIM (n);
+      if ((*w) >= k * (int) strlen ("LONG ") + (int) strlen (SYMBOL (NODE (n)))) {
+        while (k --) {
+          add_to_moid_text (b, "LONG ", w);
+        }
+        add_to_moid_text (b, SYMBOL (NODE (n)), w);
+      } else {
+        add_to_moid_text (b, "..", w);
+      }
+    } else if (DIM (n) < 0) {
+      int k = -DIM (n);
+      if ((*w) >= k * (int) strlen ("LONG ") + (int) strlen (SYMBOL (NODE (n)))) {
+        while (k --) {
+          add_to_moid_text (b, "LONG ", w);
+        }
+        add_to_moid_text (b, SYMBOL (NODE (n)), w);
+      } else {
+        add_to_moid_text (b, "..", w);
+      }
+    } else if (DIM (n) == 0) {
+      add_to_moid_text (b, SYMBOL (NODE (n)), w);
+    }
+/* Write compounded modes */
+  } else if (WHETHER (n, REF_SYMBOL)) {
+    if ((*w) >= (int) strlen ("REF ..")) {
+      add_to_moid_text (b, "REF ", w);
+      moid_to_string_2 (b, SUB (n), w, idf);
+    } else {
+      add_to_moid_text (b, "REF ..", w);
+    }
+  } else if (WHETHER (n, FLEX_SYMBOL)) {
+    if ((*w) >= (int) strlen ("FLEX ..")) {
+      add_to_moid_text (b, "FLEX ", w);
+      moid_to_string_2 (b, SUB (n), w, idf);
+    } else {
+      add_to_moid_text (b, "FLEX ..", w);
+    }
+  } else if (WHETHER (n, ROW_SYMBOL)) {
+    int j = (int) strlen ("[] ..") + (DIM (n) - 1) * (int) strlen (",");
+    if ((*w) >= j) {
+      int k = DIM (n) - 1;
+      add_to_moid_text (b, "[", w);
+      while (k-- > 0) {
+        add_to_moid_text (b, ",", w);
+      }
+      add_to_moid_text (b, "] ", w);
+      moid_to_string_2 (b, SUB (n), w, idf);
+    } else if (DIM (n) == 1) {
+      add_to_moid_text (b, "[] ..", w);
+    } else {
+      int k = DIM (n);
+      add_to_moid_text (b, "[", w);
+      while (k--) {
+        add_to_moid_text (b, ",", w);
+      }
+      add_to_moid_text (b, "] ..", w);
+    }
+  } else if (WHETHER (n, STRUCT_SYMBOL)) {
+    int j = (int) strlen ("STRUCT ()") + (DIM (n) - 1) * (int) strlen (".., ") + (int) strlen ("..");
+    if ((*w) >= j) {
+      POSTULATE_T *save = postulates;
+      make_postulate (&postulates, n, NULL);
+      add_to_moid_text (b, "STRUCT (", w);
+      pack_to_string (b, PACK (n), w, A68_TRUE, idf);
+      add_to_moid_text (b, ")", w);
+      free_postulate_list (postulates, save);
+      postulates = save;
+    } else {
+      int k = DIM (n);
+      add_to_moid_text (b, "STRUCT (", w);
+      while (k-- > 0) {
+        add_to_moid_text (b, ",", w);
+      }
+      add_to_moid_text (b, ")", w);
+    }
+  } else if (WHETHER (n, UNION_SYMBOL)) {
+    int j = (int) strlen ("UNION ()") + (DIM (n) - 1) * (int) strlen (".., ") + (int) strlen ("..");
+    if ((*w) >= j) {
+      POSTULATE_T *save = postulates;
+      make_postulate (&postulates, n, NULL);
+      add_to_moid_text (b, "UNION (", w);
+      pack_to_string (b, PACK (n), w, A68_FALSE, idf);
+      add_to_moid_text (b, ")", w);
+      free_postulate_list (postulates, save);
+      postulates = save;
+    } else {
+      int k = DIM (n);
+      add_to_moid_text (b, "UNION (", w);
+      while (k-- > 0) {
+        add_to_moid_text (b, ",", w);
+      }
+      add_to_moid_text (b, ")", w);
+    }
+  } else if (WHETHER (n, PROC_SYMBOL) && DIM (n) == 0) {
+    if ((*w) >= (int) strlen ("PROC ..")) {
+      add_to_moid_text (b, "PROC ", w);
+      moid_to_string_2 (b, SUB (n), w, idf);
+    } else {
+      add_to_moid_text (b, "PROC ..", w);
+    }
+  } else if (WHETHER (n, PROC_SYMBOL) && DIM (n) > 0) {
+    int j = (int) strlen ("PROC () ..") + (DIM (n) - 1) * (int) strlen (".., ") + (int) strlen ("..");
+    if ((*w) >= j) {
+      POSTULATE_T *save = postulates;
+      make_postulate (&postulates, n, NULL);
+      add_to_moid_text (b, "PROC (", w);
+      pack_to_string (b, PACK (n), w, A68_FALSE, idf);
+      add_to_moid_text (b, ") ", w);
+      moid_to_string_2 (b, SUB (n), w, idf);
+      free_postulate_list (postulates, save);
+      postulates = save;
+    } else {
+      int k = DIM (n);
+      add_to_moid_text (b, "PROC (", w);
+      while (k-- > 0) {
+        add_to_moid_text (b, ",", w);
+      }
+      add_to_moid_text (b, ") ..", w);
+    }
+  } else if (WHETHER (n, SERIES_MODE) || WHETHER (n, STOWED_MODE)) {
+    int j = (int) strlen ("()") + (DIM (n) - 1) * (int) strlen (".., ") + (int) strlen ("..");
+    if ((*w) >= j) {
+      add_to_moid_text (b, "(", w);
+      pack_to_string (b, PACK (n), w, A68_FALSE, idf);
+      add_to_moid_text (b, ")", w);
+    } else {
+      int k = DIM (n);
+      add_to_moid_text (b, "(", w);
+      while (k-- > 0) {
+        add_to_moid_text (b, ",", w);
+      }
+      add_to_moid_text (b, ")", w);
+    }
+  } else {
+    char str[SMALL_BUFFER_SIZE];
+    ASSERT (snprintf (str, (size_t) SMALL_BUFFER_SIZE, "\\%d", ATTRIBUTE (n)) >= 0);
+    add_to_moid_text (b, str, w);
+  }
+}
+
+/*!
+\brief pretty-formatted mode "n"; "w" is a measure of width
+\param n moid
+\param w estimated width; if w is exceeded, modes are abbreviated
+\param idf print indicants if one exists in this range
+\return text buffer
+**/
+
+char *moid_to_string (MOID_T * n, int w, NODE_T * idf)
+{
+  char a[BUFFER_SIZE];
+  a[0] = NULL_CHAR;
+  if (w >= BUFFER_SIZE) {
+    w = BUFFER_SIZE - 1;
+  }
+  postulates = NULL;
+  if (n != NO_MOID) {
+    moid_to_string_2 (a, n, &w, idf);
+  } else {
+    bufcat (a, "NULL", BUFFER_SIZE);
+  }
+  return (new_string (a));
 }

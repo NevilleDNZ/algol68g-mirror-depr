@@ -1,4 +1,4 @@
-.Dd November 27, 2010
+.Dd July  6, 2011
 .Dt A68G 1 PRM
 .Os LINUX
 .
@@ -16,7 +16,7 @@ a68g
 .Op Fl -clock
 .Op Fl -debug | Fl -monitor
 .Op Fl -echo Ar string
-.Op Fl -execute Ar unit | -e Ar unit
+.Op Fl -execute Ar unit | -x Ar unit
 .Op Fl -extensive
 .Op Fl -frame Ar number
 .Op Fl -handles Ar number
@@ -55,7 +55,7 @@ Algol 68 Genie (Algol68G) is an Algol 68 compiler-interpreter. It can be used fo
 .Pp
 Algol 68 Genie and its documentation can be obtained from
 .Pp
-    www.xs4all.nl/~jmvdveer/algol.html
+    http://jmvdveer.home.xs4all.nl/
 .
 .Sh OPTIONS
 Options are passed to a68g either from the file .a68g.rc in the working directory, the environment variable A68G_OPTIONS, the command-line or from pragmats. 
@@ -94,7 +94,7 @@ Start in the monitor. Invoke the monitor in case a runtime-error occurs; the pro
 .It Fl -echo Ar string
 Echo string to standout.
 .
-.It Fl -execute Ar unit | Fl -e Ar unit
+.It Fl -execute Ar unit | Fl -x Ar unit
 Execute the Algol 68 unit. In this way one-liners can be executed from the command line.
 .
 .It Fl -extensive

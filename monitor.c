@@ -449,10 +449,8 @@ static void deref (NODE_T * p, int k, int context)
 
 static MOID_T *search_mode (int refs, int leng, char *indy)
 {
-  MOID_LIST_T *l = top_moid_list;
-  MOID_T *z = NULL;
-  for (l = top_moid_list; l != NULL; FORWARD (l)) {
-    MOID_T *m = MOID (l);
+  MOID_T *m = NULL, *z = NULL;
+  for (m = program.top_moid; m != NULL; FORWARD (m)) {
     if (NODE (m) != NULL) {
       if (indy == SYMBOL (NODE (m)) && leng == DIM (m)) {
         z = m;
@@ -466,15 +464,13 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
     monitor_error ("unknown indicant", indy);
     return (NULL);
   }
-  for (l = top_moid_list; l != NULL; FORWARD (l)) {
-    MOID_T *m = MOID (l);
+  for (m = program.top_moid; m != NULL; FORWARD (m)) {
     int k = 0;
     while (WHETHER (m, REF_SYMBOL)) {
       k++;
       m = SUB (m);
     }
     if (k == refs && m == z) {
-      z = MOID (l);
       while (EQUIVALENT (z) != NULL) {
         z = EQUIVALENT (z);
       }

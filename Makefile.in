@@ -58,7 +58,8 @@ am_a68g_OBJECTS = a68g-a68g.$(OBJEXT) a68g-code.$(OBJEXT) \
 	a68g-environ.$(OBJEXT) a68g-genie.$(OBJEXT) a68g-gsl.$(OBJEXT) \
 	a68g-monitor.$(OBJEXT) a68g-mp.$(OBJEXT) \
 	a68g-plotutils.$(OBJEXT) a68g-postgresql.$(OBJEXT) \
-	a68g-syntax.$(OBJEXT) a68g-sound.$(OBJEXT) a68g-unix.$(OBJEXT)
+	a68g-syntax.$(OBJEXT) a68g-sound.$(OBJEXT) a68g-unix.$(OBJEXT) \
+	a68g-edit.$(OBJEXT)
 a68g_OBJECTS = $(am_a68g_OBJECTS)
 a68g_LDADD = $(LDADD)
 a68g_LINK = $(CCLD) $(a68g_CFLAGS) $(CFLAGS) $(a68g_LDFLAGS) \
@@ -198,7 +199,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c monitor.c mp.c plotutils.c postgresql.c syntax.c sound.c unix.c
+a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c monitor.c mp.c plotutils.c postgresql.c syntax.c sound.c unix.c edit.c
 a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 TESTS_ENVIRONMENT = ./a68g
 TESTS = check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68
@@ -297,6 +298,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-a68g.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-code.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-edit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-environ.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-genie.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-gsl.Po@am__quote@
@@ -489,6 +491,20 @@ a68g-unix.obj: unix.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='unix.c' object='a68g-unix.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-unix.obj `if test -f 'unix.c'; then $(CYGPATH_W) 'unix.c'; else $(CYGPATH_W) '$(srcdir)/unix.c'; fi`
+
+a68g-edit.o: edit.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-edit.o -MD -MP -MF $(DEPDIR)/a68g-edit.Tpo -c -o a68g-edit.o `test -f 'edit.c' || echo '$(srcdir)/'`edit.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-edit.Tpo $(DEPDIR)/a68g-edit.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='edit.c' object='a68g-edit.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-edit.o `test -f 'edit.c' || echo '$(srcdir)/'`edit.c
+
+a68g-edit.obj: edit.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-edit.obj -MD -MP -MF $(DEPDIR)/a68g-edit.Tpo -c -o a68g-edit.obj `if test -f 'edit.c'; then $(CYGPATH_W) 'edit.c'; else $(CYGPATH_W) '$(srcdir)/edit.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-edit.Tpo $(DEPDIR)/a68g-edit.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='edit.c' object='a68g-edit.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-edit.obj `if test -f 'edit.c'; then $(CYGPATH_W) 'edit.c'; else $(CYGPATH_W) '$(srcdir)/edit.c'; fi`
 install-man1: $(man1_MANS) $(man_MANS)
 	@$(NORMAL_INSTALL)
 	test -z "$(man1dir)" || $(MKDIR_P) "$(DESTDIR)$(man1dir)"

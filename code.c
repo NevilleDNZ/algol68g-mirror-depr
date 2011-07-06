@@ -1789,29 +1789,35 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
       stack_pointer = 0;
       push_unit (p);
       POP_OBJECT (p, &x, A68_REAL);
-/* Avoid printing overflowing or underflowing values */
-      ASSERT (snprintf (line, SNPRINTF_SIZE, "%.*g", REAL_WIDTH, VALUE (&x)) >= 0);
-      errno = 0;
-      conv = strtod (line, NULL);
-      if (errno == ERANGE && conv == 0.0) {
-        undent (out, "0.0");
-      } else if (errno == ERANGE && conv == HUGE_VAL) {
-        diagnostic_node (A68_WARNING, p, WARNING_OVERFLOW, MODE (REAL));
+/* Mind overflowing or underflowing values */
+      if (VALUE (&x) == DBL_MAX) {
         undent (out, "DBL_MAX");
-      } else if (errno == ERANGE && conv == -HUGE_VAL) {
-        diagnostic_node (A68_WARNING, p, WARNING_OVERFLOW, MODE (REAL));
+      } else if (VALUE (&x) == -DBL_MAX) {
         undent (out, "(-DBL_MAX)");
-      } else if (errno == ERANGE && conv >= 0) {
-        diagnostic_node (A68_WARNING, p, WARNING_UNDERFLOW, MODE (REAL));
-        undent (out, "DBL_MIN");
-      } else if (errno == ERANGE && conv < 0) {
-        diagnostic_node (A68_WARNING, p, WARNING_UNDERFLOW, MODE (REAL));
-        undent (out, "(-DBL_MIN)");
       } else {
-        if (strchr (line, '.') == NULL && strchr (line, 'e') == NULL && strchr (line, 'E') == NULL) {
-          strncat (line, ".0", BUFFER_SIZE);
+        ASSERT (snprintf (line, SNPRINTF_SIZE, "%.*g", REAL_WIDTH, VALUE (&x)) >= 0);
+        errno = 0;
+        conv = strtod (line, NULL);
+        if (errno == ERANGE && conv == 0.0) {
+          undent (out, "0.0");
+        } else if (errno == ERANGE && conv == HUGE_VAL) {
+          diagnostic_node (A68_WARNING, p, WARNING_OVERFLOW, MODE (REAL));
+          undent (out, "DBL_MAX");
+        } else if (errno == ERANGE && conv == -HUGE_VAL) {
+          diagnostic_node (A68_WARNING, p, WARNING_OVERFLOW, MODE (REAL));
+          undent (out, "(-DBL_MAX)");
+        } else if (errno == ERANGE && conv >= 0) {
+          diagnostic_node (A68_WARNING, p, WARNING_UNDERFLOW, MODE (REAL));
+          undent (out, "DBL_MIN");
+        } else if (errno == ERANGE && conv < 0) {
+          diagnostic_node (A68_WARNING, p, WARNING_UNDERFLOW, MODE (REAL));
+          undent (out, "(-DBL_MIN)");
+        } else {
+          if (strchr (line, '.') == NULL && strchr (line, 'e') == NULL && strchr (line, 'E') == NULL) {
+            strncat (line, ".0", BUFFER_SIZE);
+          }
+          undent (out, line);
         }
-        undent (out, line);
       }
       ABEND (stack_pointer > 0, "stack not empty", NULL);
     } else if (MOID (p) == MODE (BOOL)) {
@@ -1995,19 +2001,21 @@ static void inline_comment_source (NODE_T * p, FILE_T out)
 
 static void write_prelude (FILE_T out)
 {
-  indentf (out, snprintf (line, SNPRINTF_SIZE, "/* %s */\n", PACKAGE_STRING));
-  indentf (out, snprintf (line, SNPRINTF_SIZE, "/* \"%s\" */\n\n", program.files.object.name));
+  indentf (out, snprintf (line, SNPRINTF_SIZE, "/* \"%s\" %s */\n\n", program.files.object.name, PACKAGE_STRING));
   if (program.options.local) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "#include \"a68g-config.h\"\n"));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "#include \"a68g.h\"\n\n"));
   } else {
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <algol68g/a68g-config.h>\n"));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <algol68g/a68g.h>\n\n"));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <%s/a68g-config.h>\n", PACKAGE));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <%s/a68g.h>\n\n", PACKAGE));
   }
   indent (out, "#define CODE(n) PROPAGATOR_T n (NODE_T * p) {\\\n");
   indent (out, "  PROPAGATOR_T self;\n\n");
   indent (out, "#define EDOC(n, q) self.unit = n;\\\n");
   indent (out, "  self.source = q;\\\n");
+/*
+  indent (out, "  where_in_source (STDOUT_FILENO, (q));\\\n");
+*/
   indent (out, "  (void) p;\\\n");
   indent (out, "  return (self);}\n\n");
   indent (out, "#define DIV_INT(i, j) ((double) (i) / (double) (j))\n");
@@ -2089,6 +2097,29 @@ static void write_fun_postlude (NODE_T * p, FILE_T out, char * fn)
 }
 
 /*!
+\brief code internal a68g mode
+\param m mode to check
+\return same
+**/
+
+static char *internal_mode (MOID_T * m)
+{
+  if (m == MODE (INT)) {
+    return ("MODE (INT)");
+  } else if (m == MODE (REAL)) {
+    return ("MODE (REAL)");
+  } else if (m == MODE (BOOL)) {
+    return ("MODE (BOOL)");
+  } else if (m == MODE (CHAR)) {
+    return ("MODE (CHAR)");
+  } else if (m == MODE (BITS)) {
+    return ("MODE (BITS)");
+  } else {
+    return ("MODE (ERROR)");
+  }
+}
+
+/*!
 \brief code an A68 mode
 \param m mode to code
 \return internal identifier for mode
@@ -2151,15 +2182,22 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
     if (MOID (p) == MODE (INT)) {
       A68_INT z;
       NODE_T *s = WHETHER (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
-      if (genie_string_to_value_internal (p, MODE (INT), SYMBOL (s), (BYTE_T *) & z) == A68_FALSE) {
+      char *den = SYMBOL (s);
+      if (genie_string_to_value_internal (p, MODE (INT), den, (BYTE_T *) & z) == A68_FALSE) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (INT));
       }
       undentf (out, snprintf (line, SNPRINTF_SIZE, "%d", VALUE (&z)));
     } else if (MOID (p) == MODE (REAL)) {
-      if (strchr (SYMBOL (p), '.') == NULL && strchr (SYMBOL (p), 'e') == NULL && strchr (SYMBOL (p), 'E') == NULL) {
-        undentf (out, snprintf (line, SNPRINTF_SIZE, "(double) %s", SYMBOL (p)));
+      A68_REAL z;
+      NODE_T *s = WHETHER (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
+      char *den = SYMBOL (s);
+      if (genie_string_to_value_internal (p, MODE (REAL), den, (BYTE_T *) & z) == A68_FALSE) {
+        diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (REAL));
+      }
+      if (strchr (den, '.') == NULL && strchr (den, 'e') == NULL && strchr (den, 'E') == NULL) {
+        undentf (out, snprintf (line, SNPRINTF_SIZE, "(double) %s", den));
       } else {
-        undentf (out, snprintf (line, SNPRINTF_SIZE, "%s", SYMBOL (p)));
+        undentf (out, snprintf (line, SNPRINTF_SIZE, "%s", den));
       }
     } else if (LONG_MODE (MOID (p))) {
       char acc[NAME_SIZE];
@@ -3771,20 +3809,15 @@ static char * compile_formula (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_unit (p)) {
     static char fn[NAME_SIZE];
-    char pop[NAME_SIZE];
-    (void) make_name (pop, PUP, "", NUMBER (p));
     comment_source (p, out);
     (void) make_name (fn, "_formula", "", NUMBER (p));
     if (compose_fun == A68_MAKE_FUNCTION) {
       write_fun_prelude (p, out, fn);
     }
     root_idf = NULL;
-    (void) add_declaration (&root_idf, "ADDR_T", 0, pop);
     inline_unit (p, out, L_DECLARE);
     print_declarations (out, root_idf);
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
     inline_unit (p, out, L_EXECUTE);
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
     compile_push (p, out);
     if (compose_fun == A68_MAKE_FUNCTION) {
       (void) make_name (fn, "_formula", "", NUMBER (p));
@@ -3835,7 +3868,45 @@ static char * compile_voiding_formula (NODE_T * p, FILE_T out, int compose_fun)
 }
 
 /*!
-\brief compile call
+\brief compile uniting
+\param p starting node
+\param out output file descriptor
+\return function name or NULL
+**/
+
+static char * compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
+{
+  MOID_T *u = MOID (p), *v = MOID (SUB (p));
+  NODE_T *q = SUB (p);
+  if (basic_unit (q) && ATTRIBUTE (v) != UNION_SYMBOL && primitive_mode (v)) {
+    static char fn[NAME_SIZE];
+    char pop0[NAME_SIZE];
+    (void) make_name (pop0, PUP, "0", NUMBER (p));
+    comment_source (p, out);
+    (void) make_name (fn, "_unite", "", NUMBER (p));
+    if (compose_fun == A68_MAKE_FUNCTION) {
+      write_fun_prelude (p, out, fn);
+    }
+    root_idf = NULL;
+    (void) add_declaration (&root_idf, "ADDR_T", 0, pop0);
+    inline_unit (q, out, L_DECLARE);
+    print_declarations (out, root_idf);
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop0));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "PUSH_UNION (N (%d), %s);\n", NUMBER (p), internal_mode (v)));
+    inline_unit (q, out, L_EXECUTE);
+    compile_push (q, out);
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s + %d;\n", pop0, MOID_SIZE (u)));
+    if (compose_fun == A68_MAKE_FUNCTION) {
+      write_fun_postlude (p, out, fn);
+    }
+    return (fn);
+  } else {
+    return (NULL);
+  }
+}
+
+/*!
+\brief compile inline arguments
 \param out output file descriptor
 \param p starting node
 \return function name or NULL
@@ -4380,12 +4451,6 @@ static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, in
     return (NULL);
   }
 }
-/*
-    (void) make_name (pop, PUP, "", NUMBER (p));
-    (void) add_declaration (&root_idf, "ADDR_T", 0, pop);
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
-*/
 
 /*!
 \brief compile identity-relation
@@ -4925,7 +4990,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   } else {
     return (NULL);
   }
-  while (q != NULL && whether_one_of (q, INTEGER_IN_PART, OUT_PART, CHOICE, NULL_ATTRIBUTE)) {
+  while (q != NULL && whether_one_of (q, CASE_IN_PART, OUT_PART, CHOICE, NULL_ATTRIBUTE)) {
     if (SYMBOL_TABLE (NEXT_SUB (q))->labels != NULL) {
       return (NULL);
     }
@@ -4940,7 +5005,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   q = SUB (p);
   if (q != NULL && whether_one_of (q, CASE_PART, OPEN_PART, NULL_ATTRIBUTE)) {
     FORWARD (q);
-    if (q != NULL && whether_one_of (q, INTEGER_IN_PART, CHOICE, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, CASE_IN_PART, CHOICE, NULL_ATTRIBUTE)) {
       last = NULL; units = decs = 0;
       k = 0;
       do {
@@ -5296,7 +5361,7 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
       } else {
         COMPILE (p, out, compile_conditional_clause, compose_fun);
       }
-    } else if (WHETHER (p, INTEGER_CASE_CLAUSE)) {
+    } else if (WHETHER (p, CASE_CLAUSE)) {
       COMPILE (p, out, compile_int_case_clause, compose_fun);
     } else if (WHETHER (p, LOOP_CLAUSE)) {
       COMPILE (p, out, compile_loop_clause, compose_fun);
@@ -5334,6 +5399,8 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
       COMPILE (p, out, compile_voiding_call, compose_fun);
     } else if (WHETHER (p, IDENTITY_RELATION)) {
       COMPILE (p, out, compile_identity_relation, compose_fun);
+    } else if (WHETHER (p, UNITING)) {
+      COMPILE (p, out, compile_uniting, compose_fun);
     }
   }
   if (DEBUG_LEVEL >= 1) {
@@ -5364,13 +5431,9 @@ void compile_units (NODE_T * p, FILE_T out)
 {
   ADDR_T pop_temp_heap_pointer = temp_heap_pointer; /* At the end we discard temporary declarations */
   for (; p != NULL; FORWARD (p)) {
-    if (WHETHER (p, UNIT) || WHETHER (p, TERTIARY)) {
+    if (WHETHER (p, UNIT)) {
       if (compile_unit (p, out, A68_MAKE_FUNCTION) == NULL) {
-        if (WHETHER (p, UNIT) && WHETHER (SUB (p), TERTIARY)) {
-          compile_units (SUB_SUB (p), out);
-        } else {
-          compile_units (SUB (p), out);
-        }
+        compile_units (SUB (p), out);
       } else if (SUB (p) != NULL && GENIE (SUB (p)) != NULL && GENIE (SUB (p))->compile_node > 0) {
         GENIE (p)->compile_node = GENIE (SUB (p))->compile_node;
         GENIE (p)->compile_name = GENIE (SUB (p))->compile_name;

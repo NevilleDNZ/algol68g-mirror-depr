@@ -707,7 +707,7 @@ void genie_file_is_fifo (NODE_T * p)
 
 #endif
 
-#if defined __S_IFLNK
+#if defined S_ISLNK
 
 /*!
 \brief PROC (STRING) BOOL file is link
@@ -1722,6 +1722,78 @@ void genie_grep_in_string (NODE_T * p)
     return;
   }
   rc = regexec (&compiled, get_transput_buffer (STRING_BUFFER), (size_t) nmatch, matches, 0);
+  if (rc != 0) {
+    push_grep_rc (p, rc);
+    regfree (&compiled);
+    return;
+  }
+/* Find widest match. Do not assume it is the first one */
+  widest = 0;
+  max_k = 0;
+  for (k = 0; k < nmatch; k++) {
+    int dif = (int) (matches[k].rm_eo) - (int) (matches[k].rm_so);
+    if (dif > widest) {
+      widest = dif;
+      max_k = k;
+    }
+  }
+  if (!IS_NIL (ref_beg)) {
+    A68_INT *i = (A68_INT *) ADDRESS (&ref_beg);
+    STATUS (i) = INITIALISED_MASK;
+    VALUE (i) = (int) (matches[max_k].rm_so) + (int) (tup->lower_bound);
+  }
+  if (!IS_NIL (ref_end)) {
+    A68_INT *i = (A68_INT *) ADDRESS (&ref_end);
+    STATUS (i) = INITIALISED_MASK;
+    VALUE (i) = (int) (matches[max_k].rm_eo) + (int) (tup->lower_bound) - 1;
+  }
+  free (matches);
+  push_grep_rc (p, 0);
+}
+
+/*!
+\brief PROC grep in substring = (STRING, STRING, REF INT, REF INT) INT
+\param p position in tree
+\return 0: match, 1: no match, 2: no core, 3: other error
+**/
+
+void genie_grep_in_substring (NODE_T * p)
+{
+  A68_REF ref_pat, ref_beg, ref_end, ref_str, row;
+  A68_ARRAY *arr;
+  A68_TUPLE *tup;
+  int rc, nmatch, k, max_k, widest;
+  regex_t compiled;
+  regmatch_t *matches;
+  POP_REF (p, &ref_end);
+  POP_REF (p, &ref_beg);
+  POP_REF (p, &ref_str);
+  POP_REF (p, &ref_pat);
+  row = *(A68_REF *) & ref_str;
+  CHECK_INIT (p, INITIALISED (&row), MODE (ROWS));
+  GET_DESCRIPTOR (arr, tup, &row);
+  reset_transput_buffer (PATTERN_BUFFER);
+  reset_transput_buffer (STRING_BUFFER);
+  add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_pat);
+  add_a_string_transput_buffer (p, STRING_BUFFER, (BYTE_T *) & ref_str);
+  rc = regcomp (&compiled, get_transput_buffer (PATTERN_BUFFER), REG_NEWLINE | REG_EXTENDED);
+  if (rc != 0) {
+    push_grep_rc (p, rc);
+    regfree (&compiled);
+    return;
+  }
+  nmatch = (int) (compiled.re_nsub);
+  if (nmatch == 0) {
+    nmatch = 1;
+  }
+  matches = malloc ((size_t) (nmatch * ALIGNED_SIZE_OF (regmatch_t)));
+  if (nmatch > 0 && matches == NULL) {
+    rc = 2;
+    PUSH_PRIMITIVE (p, rc, A68_INT);
+    regfree (&compiled);
+    return;
+  }
+  rc = regexec (&compiled, get_transput_buffer (STRING_BUFFER), (size_t) nmatch, matches, REG_NOTBOL);
   if (rc != 0) {
     push_grep_rc (p, rc);
     regfree (&compiled);

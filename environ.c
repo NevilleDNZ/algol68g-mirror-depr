@@ -46,7 +46,10 @@ static MOID_T *proc_int, *proc_real, *proc_real_real, *proc_real_real_real, *pro
 
 static void add_stand_env (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T * m, int p, GENIE_PROCEDURE * q)
 {
-#define INSERT_TAG(l, n) {NEXT (n) = *(l); *(l) = (n);}
+#define INSERT_TAG(l, n) {\
+  NEXT (n) = *(l);\
+  *(l) = (n);\
+  }
   TAG_T *new_one = new_tag ();
   INFO (n)->PROCEDURE_LEVEL = 0;
   new_one->use = A68_FALSE;
@@ -83,7 +86,7 @@ static void add_stand_env (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T *
 
 static MOID_T *a68_proc (MOID_T * m, ...)
 {
-  MOID_T *y, **z = &(stand_env->moids);
+  MOID_T *y, **z = &program.top_moid;
   PACK_T *p = NULL, *q = NULL;
   va_list attribute;
   va_start (attribute, m);
@@ -100,8 +103,7 @@ static MOID_T *a68_proc (MOID_T * m, ...)
     q = new_one;
   }
   va_end (attribute);
-  (void) add_mode (z, PROC_SYMBOL, count_pack_members (p), NULL, m, p);
-  return (*z);
+  return (add_mode (z, PROC_SYMBOL, count_pack_members (p), NULL, m, p));
 }
 
 /*!
@@ -125,8 +127,7 @@ static void a68_idf (BOOL_T portable, char *n, MOID_T * m, GENIE_PROCEDURE * q)
 
 static void a68_mode (int p, char *t, MOID_T ** m)
 {
-  (void) add_mode (&stand_env->moids, STANDARD, p, some_node (TEXT (find_keyword (top_keyword, t))), NULL, NULL);
-  *m = stand_env->moids;
+  (*m) = add_mode (&program.top_moid, STANDARD, p, some_node (TEXT (find_keyword (top_keyword, t))), NULL, NULL);
 }
 
 /*!
@@ -158,6 +159,7 @@ static void a68_op (BOOL_T portable, char *n, MOID_T * m, GENIE_PROCEDURE * q)
 
 static void stand_moids (void)
 {
+  MOID_T *m;
   PACK_T *z;
 /* Primitive A68 moids */
   a68_mode (0, "VOID", &MODE (VOID));
@@ -190,191 +192,144 @@ static void stand_moids (void)
   a68_mode (0, "FORMAT", &MODE (FORMAT));
   a68_mode (0, "SEMA", &MODE (SEMA));
   a68_mode (0, "SOUND", &MODE (SOUND));
+  MODE (PIPE)->portable = A68_FALSE;
   MODE (SOUND)->has_rows = A68_TRUE;
+  MODE (SOUND)->portable = A68_FALSE;
 /* ROWS */
-  (void) add_mode (&stand_env->moids, ROWS_SYMBOL, 0, NULL, NULL, NULL);
-  MODE (ROWS) = stand_env->moids;
+  MODE (ROWS) = add_mode (&program.top_moid, ROWS_SYMBOL, 0, NULL, NULL, NULL);
 /* REFs */
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (INT), NULL);
-  MODE (REF_INT) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (REAL), NULL);
-  MODE (REF_REAL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (COMPLEX), NULL);
-  MODE (REF_COMPLEX) = MODE (REF_COMPL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (BITS), NULL);
-  MODE (REF_BITS) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (BYTES), NULL);
-  MODE (REF_BYTES) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (FORMAT), NULL);
-  MODE (REF_FORMAT) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (PIPE), NULL);
-  MODE (REF_PIPE) = stand_env->moids;
+  MODE (REF_INT) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (INT), NULL);
+  MODE (REF_REAL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (REAL), NULL);
+  MODE (REF_COMPLEX) = MODE (REF_COMPL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (COMPLEX), NULL);
+  MODE (REF_BITS) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (BITS), NULL);
+  MODE (REF_BYTES) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (BYTES), NULL);
+  MODE (REF_FORMAT) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (FORMAT), NULL);
+  MODE (REF_PIPE) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (PIPE), NULL);
 /* Multiple precision */
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONG_INT), NULL);
-  MODE (REF_LONG_INT) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONG_REAL), NULL);
-  MODE (REF_LONG_REAL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONG_COMPLEX), NULL);
-  MODE (REF_LONG_COMPLEX) = MODE (REF_LONG_COMPL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONGLONG_INT), NULL);
-  MODE (REF_LONGLONG_INT) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONGLONG_REAL), NULL);
-  MODE (REF_LONGLONG_REAL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONGLONG_COMPLEX), NULL);
-  MODE (REF_LONGLONG_COMPLEX) = MODE (REF_LONGLONG_COMPL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONG_BITS), NULL);
-  MODE (REF_LONG_BITS) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONGLONG_BITS), NULL);
-  MODE (REF_LONGLONG_BITS) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (LONG_BYTES), NULL);
-  MODE (REF_LONG_BYTES) = stand_env->moids;
+  MODE (REF_LONG_INT) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONG_INT), NULL);
+  MODE (REF_LONG_REAL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONG_REAL), NULL);
+  MODE (REF_LONG_COMPLEX) = MODE (REF_LONG_COMPL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONG_COMPLEX), NULL);
+  MODE (REF_LONGLONG_INT) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONGLONG_INT), NULL);
+  MODE (REF_LONGLONG_REAL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONGLONG_REAL), NULL);
+  MODE (REF_LONGLONG_COMPLEX) = MODE (REF_LONGLONG_COMPL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONGLONG_COMPLEX), NULL);
+  MODE (REF_LONG_BITS) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONG_BITS), NULL);
+  MODE (REF_LONGLONG_BITS) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONGLONG_BITS), NULL);
+  MODE (REF_LONG_BYTES) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (LONG_BYTES), NULL);
 /* Other */
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (BOOL), NULL);
-  MODE (REF_BOOL) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (CHAR), NULL);
-  MODE (REF_CHAR) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (FILE), NULL);
-  MODE (REF_FILE) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (REF_FILE), NULL);
-  MODE (REF_REF_FILE) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (SOUND), NULL);
-  MODE (REF_SOUND) = stand_env->moids;
+  MODE (REF_BOOL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (BOOL), NULL);
+  MODE (REF_CHAR) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (CHAR), NULL);
+  MODE (REF_FILE) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (FILE), NULL);
+  MODE (REF_REF_FILE) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (REF_FILE), NULL);
+  MODE (REF_SOUND) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (SOUND), NULL);
 /* [] INT */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (INT), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_INT) = stand_env->moids;
+  MODE (ROW_INT) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (INT), NULL);
+  MODE (ROW_INT)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_INT)) = MODE (INT);
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (ROW_INT), NULL);
-  MODE (REF_ROW_INT) = stand_env->moids;
+  MODE (REF_ROW_INT) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (ROW_INT), NULL);
   NAME (MODE (REF_ROW_INT)) = MODE (REF_INT);
 /* [] REAL */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (REAL), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_REAL) = stand_env->moids;
+  MODE (ROW_REAL) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (REAL), NULL);
+  MODE (ROW_REAL)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_REAL)) = MODE (REAL);
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (ROW_REAL), NULL);
-  MODE (REF_ROW_REAL) = stand_env->moids;
+  MODE (REF_ROW_REAL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (ROW_REAL), NULL);
   NAME (MODE (REF_ROW_REAL)) = MODE (REF_REAL);
 /* [,] REAL */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 2, NULL, MODE (REAL), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROWROW_REAL) = stand_env->moids;
+  MODE (ROWROW_REAL) = add_mode (&program.top_moid, ROW_SYMBOL, 2, NULL, MODE (REAL), NULL);
+  MODE (ROWROW_REAL)->has_rows = A68_TRUE;
   SLICE (MODE (ROWROW_REAL)) = MODE (ROW_REAL);
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (ROWROW_REAL), NULL);
-  MODE (REF_ROWROW_REAL) = stand_env->moids;
+  MODE (REF_ROWROW_REAL) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (ROWROW_REAL), NULL);
   NAME (MODE (REF_ROWROW_REAL)) = MODE (REF_ROW_REAL);
 /* [] COMPLEX */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (COMPLEX), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_COMPLEX) = stand_env->moids;
+  MODE (ROW_COMPLEX) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (COMPLEX), NULL);
+  MODE (ROW_COMPLEX)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_COMPLEX)) = MODE (COMPLEX);
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (ROW_COMPLEX), NULL);
-  MODE (REF_ROW_COMPLEX) = stand_env->moids;
+  MODE (REF_ROW_COMPLEX) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (ROW_COMPLEX), NULL);
   NAME (MODE (REF_ROW_COMPLEX)) = MODE (REF_COMPLEX);
 /* [,] COMPLEX */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 2, NULL, MODE (COMPLEX), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROWROW_COMPLEX) = stand_env->moids;
+  MODE (ROWROW_COMPLEX) = add_mode (&program.top_moid, ROW_SYMBOL, 2, NULL, MODE (COMPLEX), NULL);
+  MODE (ROWROW_COMPLEX)->has_rows = A68_TRUE;
   SLICE (MODE (ROWROW_COMPLEX)) = MODE (ROW_COMPLEX);
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (ROWROW_COMPLEX), NULL);
-  MODE (REF_ROWROW_COMPLEX) = stand_env->moids;
+  MODE (REF_ROWROW_COMPLEX) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (ROWROW_COMPLEX), NULL);
   NAME (MODE (REF_ROWROW_COMPLEX)) = MODE (REF_ROW_COMPLEX);
 /* [] BOOL */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (BOOL), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_BOOL) = stand_env->moids;
+  MODE (ROW_BOOL) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (BOOL), NULL);
+  MODE (ROW_BOOL)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_BOOL)) = MODE (BOOL);
 /* [] BITS */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (BITS), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_BITS) = stand_env->moids;
+  MODE (ROW_BITS) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (BITS), NULL);
+  MODE (ROW_BITS)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_BITS)) = MODE (BITS);
 /* [] LONG BITS */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (LONG_BITS), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_LONG_BITS) = stand_env->moids;
+  MODE (ROW_LONG_BITS) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (LONG_BITS), NULL);
+  MODE (ROW_LONG_BITS)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_LONG_BITS)) = MODE (LONG_BITS);
 /* [] LONG LONG BITS */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (LONGLONG_BITS), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_LONGLONG_BITS) = stand_env->moids;
+  MODE (ROW_LONGLONG_BITS) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (LONGLONG_BITS), NULL);
+  MODE (ROW_LONGLONG_BITS)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_LONGLONG_BITS)) = MODE (LONGLONG_BITS);
 /* [] CHAR */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (CHAR), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_CHAR) = stand_env->moids;
+  MODE (ROW_CHAR) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (CHAR), NULL);
+  MODE (ROW_CHAR)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_CHAR)) = MODE (CHAR);
 /* [][] CHAR */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (ROW_CHAR), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_ROW_CHAR) = stand_env->moids;
+  MODE (ROW_ROW_CHAR) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (ROW_CHAR), NULL);
+  MODE (ROW_ROW_CHAR)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_ROW_CHAR)) = MODE (ROW_CHAR);
 /* MODE STRING = FLEX [] CHAR */
-  (void) add_mode (&stand_env->moids, FLEX_SYMBOL, 0, NULL, MODE (ROW_CHAR), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  stand_env->moids->deflexed_mode = MODE (ROW_CHAR);
-  stand_env->moids->trim = MODE (ROW_CHAR);
-  EQUIVALENT (MODE (STRING)) = stand_env->moids;
-  DEFLEXED (MODE (STRING)) = MODE (ROW_CHAR);
+  m = add_mode (&program.top_moid, FLEX_SYMBOL, 0, NULL, MODE (ROW_CHAR), NULL);
+  m->has_rows = A68_TRUE;
+  MODE (FLEX_ROW_CHAR) = m;
+  EQUIVALENT (MODE (STRING)) = m;
 /* REF [] CHAR */
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, MODE (ROW_CHAR), NULL);
-  MODE (REF_ROW_CHAR) = stand_env->moids;
+  MODE (REF_ROW_CHAR) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, MODE (ROW_CHAR), NULL);
   NAME (MODE (REF_ROW_CHAR)) = MODE (REF_CHAR);
 /* PROC [] CHAR */
-  (void) add_mode (&stand_env->moids, PROC_SYMBOL, 0, NULL, MODE (ROW_CHAR), NULL);
-  MODE (PROC_ROW_CHAR) = stand_env->moids;
+  MODE (PROC_ROW_CHAR) = add_mode (&program.top_moid, PROC_SYMBOL, 0, NULL, MODE (ROW_CHAR), NULL);
 /* REF STRING = REF FLEX [] CHAR */
-  (void) add_mode (&stand_env->moids, REF_SYMBOL, 0, NULL, EQUIVALENT (MODE (STRING)), NULL);
-  MODE (REF_STRING) = stand_env->moids;
+  MODE (REF_STRING) = add_mode (&program.top_moid, REF_SYMBOL, 0, NULL, EQUIVALENT (MODE (STRING)), NULL);
   NAME (MODE (REF_STRING)) = MODE (REF_CHAR);
   DEFLEXED (MODE (REF_STRING)) = MODE (REF_ROW_CHAR);
-  TRIM (MODE (REF_STRING)) = MODE (REF_ROW_CHAR);
 /* [] STRING */
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (STRING), NULL);
-  stand_env->moids->has_rows = A68_TRUE;
-  MODE (ROW_STRING) = stand_env->moids;
+  MODE (ROW_STRING) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (STRING), NULL);
+  MODE (ROW_STRING)->has_rows = A68_TRUE;
   SLICE (MODE (ROW_STRING)) = MODE (STRING);
   DEFLEXED (MODE (ROW_STRING)) = MODE (ROW_ROW_CHAR);
 /* PROC STRING */
-  (void) add_mode (&stand_env->moids, PROC_SYMBOL, 0, NULL, MODE (STRING), NULL);
-  MODE (PROC_STRING) = stand_env->moids;
+  MODE (PROC_STRING) = add_mode (&program.top_moid, PROC_SYMBOL, 0, NULL, MODE (STRING), NULL);
   DEFLEXED (MODE (PROC_STRING)) = MODE (PROC_ROW_CHAR);
 /* COMPLEX */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REAL), TEXT (add_token (&top_token, "im")), NULL);
   (void) add_mode_to_pack (&z, MODE (REAL), TEXT (add_token (&top_token, "re")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  EQUIVALENT (MODE (COMPLEX)) = EQUIVALENT (MODE (COMPL)) = stand_env->moids;
-  MODE (COMPLEX) = MODE (COMPL) = stand_env->moids;
+  m = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
+  EQUIVALENT (MODE (COMPLEX)) = EQUIVALENT (MODE (COMPL)) = m;
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_REAL), TEXT (add_token (&top_token, "im")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_REAL), TEXT (add_token (&top_token, "re")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  NAME (MODE (REF_COMPLEX)) = NAME (MODE (REF_COMPL)) = stand_env->moids;
+  m = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
+  NAME (MODE (REF_COMPLEX)) = NAME (MODE (REF_COMPL)) = m;
 /* LONG COMPLEX */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (LONG_REAL), TEXT (add_token (&top_token, "im")), NULL);
   (void) add_mode_to_pack (&z, MODE (LONG_REAL), TEXT (add_token (&top_token, "re")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  EQUIVALENT (MODE (LONG_COMPLEX)) = EQUIVALENT (MODE (LONG_COMPL)) = stand_env->moids;
-  MODE (LONG_COMPLEX) = MODE (LONG_COMPL) = stand_env->moids;
+  m = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
+  EQUIVALENT (MODE (LONG_COMPLEX)) = EQUIVALENT (MODE (LONG_COMPL)) = m;
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_LONG_REAL), TEXT (add_token (&top_token, "im")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_LONG_REAL), TEXT (add_token (&top_token, "re")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  NAME (MODE (REF_LONG_COMPLEX)) = NAME (MODE (REF_LONG_COMPL)) = stand_env->moids;
+  m = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
+  NAME (MODE (REF_LONG_COMPLEX)) = NAME (MODE (REF_LONG_COMPL)) = m;
 /* LONG_LONG COMPLEX */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (LONGLONG_REAL), TEXT (add_token (&top_token, "im")), NULL);
   (void) add_mode_to_pack (&z, MODE (LONGLONG_REAL), TEXT (add_token (&top_token, "re")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  EQUIVALENT (MODE (LONGLONG_COMPLEX)) = EQUIVALENT (MODE (LONGLONG_COMPL)) = stand_env->moids;
-  MODE (LONGLONG_COMPLEX) = MODE (LONGLONG_COMPL) = stand_env->moids;
+  m = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
+  EQUIVALENT (MODE (LONGLONG_COMPLEX)) = EQUIVALENT (MODE (LONGLONG_COMPL)) = m;
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_LONGLONG_REAL), TEXT (add_token (&top_token, "im")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_LONGLONG_REAL), TEXT (add_token (&top_token, "re")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  NAME (MODE (REF_LONGLONG_COMPLEX)) = NAME (MODE (REF_LONGLONG_COMPL)) = stand_env->moids;
+  m = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
+  NAME (MODE (REF_LONGLONG_COMPLEX)) = NAME (MODE (REF_LONGLONG_COMPL)) = m;
 /* NUMBER */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (INT), NULL, NULL);
@@ -383,59 +338,44 @@ static void stand_moids (void)
   (void) add_mode_to_pack (&z, MODE (REAL), NULL, NULL);
   (void) add_mode_to_pack (&z, MODE (LONG_REAL), NULL, NULL);
   (void) add_mode_to_pack (&z, MODE (LONGLONG_REAL), NULL, NULL);
-  (void) add_mode (&stand_env->moids, UNION_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  MODE (NUMBER) = stand_env->moids;
+  MODE (NUMBER) = add_mode (&program.top_moid, UNION_SYMBOL, count_pack_members (z), NULL, NULL, z);
 /* SEMA */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_INT), NULL, NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  EQUIVALENT (MODE (SEMA)) = stand_env->moids;
-  MODE (SEMA) = stand_env->moids;
+  EQUIVALENT (MODE (SEMA)) = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
 /* PROC VOID */
   z = NULL;
-  (void) add_mode (&stand_env->moids, PROC_SYMBOL, count_pack_members (z), NULL, MODE (VOID), z);
-  MODE (PROC_VOID) = stand_env->moids;
+  MODE (PROC_VOID) =  add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (z), NULL, MODE (VOID), z);
 /* PROC (REAL) REAL */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REAL), NULL, NULL);
-  (void) add_mode (&stand_env->moids, PROC_SYMBOL, count_pack_members (z), NULL, MODE (REAL), z);
-  MODE (PROC_REAL_REAL) = stand_env->moids;
+  MODE (PROC_REAL_REAL) = add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (z), NULL, MODE (REAL), z);
 /* IO: PROC (REF FILE) BOOL */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_FILE), NULL, NULL);
-  (void) add_mode (&stand_env->moids, PROC_SYMBOL, count_pack_members (z), NULL, MODE (BOOL), z);
-  MODE (PROC_REF_FILE_BOOL) = stand_env->moids;
+  MODE (PROC_REF_FILE_BOOL) = add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (z), NULL, MODE (BOOL), z);
 /* IO: PROC (REF FILE) VOID */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_FILE), NULL, NULL);
-  (void) add_mode (&stand_env->moids, PROC_SYMBOL, count_pack_members (z), NULL, MODE (VOID), z);
-  MODE (PROC_REF_FILE_VOID) = stand_env->moids;
+  MODE (PROC_REF_FILE_VOID) = add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (z), NULL, MODE (VOID), z);
 /* IO: SIMPLIN and SIMPLOUT */
-  (void) add_mode (&stand_env->moids, IN_TYPE_MODE, 0, NULL, NULL, NULL);
-  MODE (SIMPLIN) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (SIMPLIN), NULL);
-  MODE (ROW_SIMPLIN) = stand_env->moids;
+  MODE (SIMPLIN) = add_mode (&program.top_moid, IN_TYPE_MODE, 0, NULL, NULL, NULL);
+  MODE (ROW_SIMPLIN) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (SIMPLIN), NULL);
   SLICE (MODE (ROW_SIMPLIN)) = MODE (SIMPLIN);
-  (void) add_mode (&stand_env->moids, OUT_TYPE_MODE, 0, NULL, NULL, NULL);
-  MODE (SIMPLOUT) = stand_env->moids;
-  (void) add_mode (&stand_env->moids, ROW_SYMBOL, 1, NULL, MODE (SIMPLOUT), NULL);
-  MODE (ROW_SIMPLOUT) = stand_env->moids;
+  MODE (SIMPLOUT) = add_mode (&program.top_moid, OUT_TYPE_MODE, 0, NULL, NULL, NULL);
+  MODE (ROW_SIMPLOUT) = add_mode (&program.top_moid, ROW_SYMBOL, 1, NULL, MODE (SIMPLOUT), NULL);
   SLICE (MODE (ROW_SIMPLOUT)) = MODE (SIMPLOUT);
 /* PIPE */
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (INT), TEXT (add_token (&top_token, "pid")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_FILE), TEXT (add_token (&top_token, "write")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_FILE), TEXT (add_token (&top_token, "read")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  EQUIVALENT (MODE (PIPE)) = stand_env->moids;
-  MODE (PIPE) = stand_env->moids;
-  MODE (PIPE)->portable = A68_FALSE;
+  EQUIVALENT (MODE (PIPE)) = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
   z = NULL;
   (void) add_mode_to_pack (&z, MODE (REF_INT), TEXT (add_token (&top_token, "pid")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_REF_FILE), TEXT (add_token (&top_token, "write")), NULL);
   (void) add_mode_to_pack (&z, MODE (REF_REF_FILE), TEXT (add_token (&top_token, "read")), NULL);
-  (void) add_mode (&stand_env->moids, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
-  NAME (MODE (REF_PIPE)) = stand_env->moids;
+  NAME (MODE (REF_PIPE)) = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (z), NULL, NULL, z);
 }
 
 /*!
@@ -534,6 +474,7 @@ static void stand_prelude (void)
   m = proc_real;
   a68_idf (A68_STD, "nextrandom", m, genie_next_random);
   a68_idf (A68_STD, "random", m, genie_next_random);
+  a68_idf (A68_STD, "rnd", m, genie_next_rnd);
   m = a68_proc (MODE (LONG_REAL), NULL);
   a68_idf (A68_STD, "longnextrandom", m, genie_long_next_random);
   a68_idf (A68_STD, "longrandom", m, genie_long_next_random);
@@ -923,8 +864,6 @@ static void stand_prelude (void)
   a68_op (A68_STD, "LE", m, genie_le_string);
   a68_op (A68_STD, "GE", m, genie_ge_string);
   a68_op (A68_STD, "GT", m, genie_gt_string);
-  m = a68_proc (MODE (CHAR), MODE (INT), MODE (STRING), NULL);
-  a68_op (A68_STD, "ELEM", m, genie_elem_string);
   m = a68_proc (MODE (STRING), MODE (CHAR), MODE (CHAR), NULL);
   a68_op (A68_STD, "+", m, genie_add_char);
   m = a68_proc (MODE (STRING), MODE (STRING), MODE (STRING), NULL);
@@ -946,30 +885,8 @@ static void stand_prelude (void)
   a68_op (A68_STD, "*", m, genie_times_int_char);
   m = a68_proc (MODE (STRING), MODE (CHAR), MODE (INT), NULL);
   a68_op (A68_STD, "*", m, genie_times_char_int);
-/* [] CHAR as cross term for STRING */
-  m = a68_proc (MODE (BOOL), MODE (ROW_CHAR), MODE (ROW_CHAR), NULL);
-  a68_op (A68_STD, "=", m, genie_eq_string);
-  a68_op (A68_STD, "/=", m, genie_ne_string);
-  a68_op (A68_STD, "~=", m, genie_ne_string);
-  a68_op (A68_STD, "^=", m, genie_ne_string);
-  a68_op (A68_STD, "<", m, genie_lt_string);
-  a68_op (A68_STD, "<=", m, genie_le_string);
-  a68_op (A68_STD, ">=", m, genie_ge_string);
-  a68_op (A68_STD, ">", m, genie_gt_string);
-  a68_op (A68_STD, "EQ", m, genie_eq_string);
-  a68_op (A68_STD, "NE", m, genie_ne_string);
-  a68_op (A68_STD, "LT", m, genie_lt_string);
-  a68_op (A68_STD, "LE", m, genie_le_string);
-  a68_op (A68_STD, "GE", m, genie_ge_string);
-  a68_op (A68_STD, "GT", m, genie_gt_string);
   m = a68_proc (MODE (CHAR), MODE (INT), MODE (ROW_CHAR), NULL);
   a68_op (A68_STD, "ELEM", m, genie_elem_string);
-  m = a68_proc (MODE (STRING), MODE (ROW_CHAR), MODE (ROW_CHAR), NULL);
-  a68_op (A68_STD, "+", m, genie_add_string);
-  m = a68_proc (MODE (STRING), MODE (ROW_CHAR), MODE (INT), NULL);
-  a68_op (A68_STD, "*", m, genie_times_string_int);
-  m = a68_proc (MODE (STRING), MODE (INT), MODE (ROW_CHAR), NULL);
-  a68_op (A68_STD, "*", m, genie_times_int_string);
 /* SEMA ops */
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
   m = a68_proc (MODE (SEMA), MODE (INT), NULL);
@@ -2194,7 +2111,8 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "complvectorecho", m, genie_vector_complex_echo);
   m = a68_proc (MODE (ROWROW_COMPLEX), MODE (ROWROW_COMPLEX), NULL);
   a68_idf (A68_EXT, "complmatrixecho", m, genie_matrix_complex_echo);
-   /**/ m = a68_proc (MODE (REAL), MODE (ROW_REAL), MODE (ROW_REAL), NULL);
+   /**/ 
+  m = a68_proc (MODE (REAL), MODE (ROW_REAL), MODE (ROW_REAL), NULL);
   a68_op (A68_EXT, "*", m, genie_vector_dot);
   m = a68_proc (MODE (COMPLEX), MODE (ROW_COMPLEX), MODE (ROW_COMPLEX), NULL);
   a68_op (A68_EXT, "*", m, genie_vector_complex_dot);
@@ -2311,6 +2229,7 @@ static void stand_extensions (void)
 #if defined HAVE_REGEX_H
   m = a68_proc (MODE (INT), MODE (STRING), MODE (STRING), MODE (REF_INT), MODE (REF_INT), NULL);
   a68_idf (A68_EXT, "grepinstring", m, genie_grep_in_string);
+  a68_idf (A68_EXT, "grepinsubstring", m, genie_grep_in_substring);
   m = a68_proc (MODE (INT), MODE (STRING), MODE (STRING), MODE (REF_STRING), NULL);
   a68_idf (A68_EXT, "subinstring", m, genie_sub_in_string);
 #endif
@@ -4108,7 +4027,7 @@ void genie_add_string (NODE_T * p)
   l_2 = ROW_SIZE (t_2);
 /* left part */
   POP_REF (p, &a);
-  CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
+  CHECK_REF (p, a, MODE (STRING));
   GET_DESCRIPTOR (a_1, t_1, &a);
   l_1 = ROW_SIZE (t_1);
 /* sum */
@@ -4390,6 +4309,16 @@ void genie_first_random (NODE_T * p)
 void genie_next_random (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, rng_53_bit (), A68_REAL);
+}
+
+/*!
+\brief PROC rnd = REAL
+\param p position in tree
+**/
+
+void genie_next_rnd (NODE_T * p)
+{
+  PUSH_PRIMITIVE (p, 2 * rng_53_bit () - 1, A68_REAL);
 }
 
 /*!
@@ -5975,12 +5904,10 @@ void genie_lj_e_12_6 (NODE_T * p)
   A68_REAL *e, *s, *r;
   double u, u2, u6;
   POP_3_OPERAND_ADDRESSES (p, e, s, r, A68_REAL);
-  RESET_ERRNO;
   u = (VALUE (s) / VALUE (r));
   u2 = u * u;
   u6 = u2 * u2 * u2;
   VALUE (e) = 4.0 * VALUE (e) * u6 * (u6 - 1.0);
-  math_rte (p, errno != 0, MODE (REAL), NULL);
 }
 
 /*!
@@ -5993,12 +5920,10 @@ void genie_lj_f_12_6 (NODE_T * p)
   A68_REAL *e, *s, *r;
   double u, u2, u6;
   POP_3_OPERAND_ADDRESSES (p, e, s, r, A68_REAL);
-  RESET_ERRNO;
   u = (VALUE (s) / VALUE (r));
   u2 = u * u;
   u6 = u2 * u2 * u2;
   VALUE (e) = 24.0 * VALUE (e) * u * u6 * (1.0 - 2.0 * u6);
-  math_rte (p, errno != 0, MODE (REAL), NULL);
 }
 
 #if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
@@ -8465,7 +8390,7 @@ static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, 
     f->identification = heap_generator (p, MODE (C_STRING), len);
     BLOCK_GC_HANDLE (&(f->identification));
     bufcpy ((char *) ADDRESS (&(f->identification)), filename, len);
-    f->fd = -1;
+    f->fd = A68_NO_FILENO;
     f->read_mood = A68_FALSE;
     f->write_mood = A68_FALSE;
     f->char_mood = A68_FALSE;
@@ -8487,6 +8412,7 @@ static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, 
   FORMAT (f) = nil_format;
   f->string = nil_ref;
   f->strpos = 0;
+  f->file_entry = -1;
   set_default_mended_procedures (f);
 }
 
@@ -8513,9 +8439,9 @@ void genie_init_transput (NODE_T * p)
 /* Files */
   init_file (p, &stand_in, stand_in_channel, STDIN_FILENO, A68_TRUE, A68_FALSE, A68_TRUE, "A68G_STANDIN");
   init_file (p, &stand_out, stand_out_channel, STDOUT_FILENO, A68_FALSE, A68_TRUE, A68_TRUE, "A68G_STANDOUT");
-  init_file (p, &stand_back, stand_back_channel, -1, A68_FALSE, A68_FALSE, A68_FALSE, NULL);
+  init_file (p, &stand_back, stand_back_channel, A68_NO_FILENO, A68_FALSE, A68_FALSE, A68_FALSE, NULL);
   init_file (p, &stand_error, stand_error_channel, STDERR_FILENO, A68_FALSE, A68_TRUE, A68_TRUE, "A68G_STANDERROR");
-  init_file (p, &skip_file, skip_channel, -1, A68_FALSE, A68_FALSE, A68_FALSE, NULL);
+  init_file (p, &skip_file, skip_channel, A68_NO_FILENO, A68_FALSE, A68_FALSE, A68_FALSE, NULL);
 }
 
 /*!
@@ -8743,7 +8669,7 @@ void genie_open (NODE_T * p)
   ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->identification)), ref_iden) != NULL);
   file->terminator = nil_ref;
   FORMAT (file) = nil_format;
-  file->fd = -1;
+  file->fd = A68_NO_FILENO;
   if (INITIALISED (&(file->string)) && !IS_NIL (file->string)) {
     UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(file->string)));
   }
@@ -8801,7 +8727,7 @@ void genie_establish (NODE_T * p)
   ASSERT (a_to_c_string (p, (char *) ADDRESS (&(file->identification)), ref_iden) != NULL);
   file->terminator = nil_ref;
   FORMAT (file) = nil_format;
-  file->fd = -1;
+  file->fd = A68_NO_FILENO;
   if (INITIALISED (&(file->string)) && !IS_NIL (file->string)) {
     UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(file->string)));
   }
@@ -8841,7 +8767,7 @@ void genie_create (NODE_T * p)
   file->identification = nil_ref;
   file->terminator = nil_ref;
   FORMAT (file) = nil_format;
-  file->fd = -1;
+  file->fd = A68_NO_FILENO;
   if (INITIALISED (&(file->string)) && !IS_NIL (file->string)) {
     UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(file->string)));
   }
@@ -8890,7 +8816,7 @@ void genie_associate (NODE_T * p)
   file->identification = nil_ref;
   file->terminator = nil_ref;
   FORMAT (file) = nil_format;
-  file->fd = -1;
+  file->fd = A68_NO_FILENO;
   if (INITIALISED (&(file->string)) && !IS_NIL (file->string)) {
     UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(file->string)));
   }
@@ -8925,29 +8851,11 @@ void genie_close (NODE_T * p)
     return;
   }
 #endif /*  */
-  if (file->fd != -1 && close (file->fd) == -1) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_CLOSE);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  } else {
-    file->fd = -1;
-    file->opened = A68_FALSE;
-    unblock_transput_buffer (file->transput_buffer);
-    set_default_mended_procedures (file);
-  }
-  if (file->tmp_file) {
-/* Remove the file if it is temporary */
-    if (!IS_NIL (file->identification)) {
-      char *filename;
-      CHECK_INIT (p, INITIALISED (&(file->identification)), MODE (ROWS));
-      filename = (char *) ADDRESS (&(file->identification));
-      if (remove (filename) != 0) {
-        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_SCRATCH);
-        exit_genie (p, A68_RUNTIME_ERROR);
-      }
-      UNBLOCK_GC_HANDLE (&(file->identification));
-      file->identification = nil_ref;
-    }
-  }
+  file->fd = A68_NO_FILENO;
+  file->opened = A68_FALSE;
+  unblock_transput_buffer (file->transput_buffer);
+  set_default_mended_procedures (file);
+  free_file_entry (p, file->file_entry);
 }
 
 /*!
@@ -8976,29 +8884,16 @@ void genie_lock (NODE_T * p)
 #endif /*  */
   RESET_ERRNO;
   ASSERT (fchmod (file->fd, (mode_t) 0x0) != -1);
-  if (file->fd != -1 && close (file->fd) == -1) {
+  if (file->fd != A68_NO_FILENO && close (file->fd) == -1) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_LOCK);
     exit_genie (p, A68_RUNTIME_ERROR);
   } else {
-    file->fd = -1;
+    file->fd = A68_NO_FILENO;
     file->opened = A68_FALSE;
     unblock_transput_buffer (file->transput_buffer);
     set_default_mended_procedures (file);
   }
-  if (file->tmp_file) {
-/* Remove the file if it is temporary */
-    if (!IS_NIL (file->identification)) {
-      char *filename;
-      CHECK_INIT (p, INITIALISED (&(file->identification)), MODE (ROWS));
-      filename = (char *) ADDRESS (&(file->identification));
-      if (remove (filename) != 0) {
-        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_SCRATCH);
-        exit_genie (p, A68_RUNTIME_ERROR);
-      }
-      UNBLOCK_GC_HANDLE (&(file->identification));
-      file->identification = nil_ref;
-    }
-  }
+  free_file_entry (p, file->file_entry);
 }
 
 /*!
@@ -9025,12 +8920,10 @@ void genie_erase (NODE_T * p)
     return;
   }
 #endif /*  */
-  if (file->fd != -1 && close (file->fd) == -1) {
+  if (file->fd != A68_NO_FILENO && close (file->fd) == -1) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_SCRATCH);
     exit_genie (p, A68_RUNTIME_ERROR);
   } else {
-    file->fd = -1;
-    file->opened = A68_FALSE;
     unblock_transput_buffer (file->transput_buffer);
     set_default_mended_procedures (file);
   }
@@ -9046,6 +8939,7 @@ void genie_erase (NODE_T * p)
     UNBLOCK_GC_HANDLE (&(file->identification));
     file->identification = nil_ref;
   }
+  init_file_entry (file->file_entry);
 }
 
 /*!
@@ -9106,7 +9000,7 @@ void genie_set (NODE_T * p)
       }
     }
     PUSH_PRIMITIVE (p, file->strpos, A68_INT);
-  } else if (file->fd == -1) {
+  } else if (file->fd == A68_NO_FILENO) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_RESET);
     exit_genie (p, A68_RUNTIME_ERROR);
   } else {
@@ -9165,15 +9059,18 @@ void genie_reset (NODE_T * p)
   }
   if (!IS_NIL (file->string)) {
     file->strpos = 1;
-  } else if (file->fd != -1 && close (file->fd) == -1) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_RESET);
-    exit_genie (p, A68_RUNTIME_ERROR);
+  } else {
+    if (file->fd != A68_NO_FILENO && close (file->fd) == -1) {
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_RESET);
+      exit_genie (p, A68_RUNTIME_ERROR);
+    }
+    init_file_entry (file->file_entry);
   }
   file->read_mood = A68_FALSE;
   file->write_mood = A68_FALSE;
   file->char_mood = A68_FALSE;
   file->draw_mood = A68_FALSE;
-  file->fd = -1;
+  file->fd = A68_NO_FILENO;
 /*  set_default_mended_procedures (file); */
 }
 
@@ -9921,6 +9818,71 @@ void scan_string (NODE_T * p, char *term, A68_REF ref_file)
 }
 
 /*!
+\brief make temp file name
+\param fn pointer to string to hold filename
+\param permissions permissions to open file with
+\return whether file is good for use
+**/
+
+BOOL_T a68g_mkstemp (char *fn, int flags, mode_t permissions)
+{
+/* "tmpnam" is not safe, "mkstemp" is Unix, so a68g brings its own tmpnam  */
+#define TMP_SIZE 32
+#define TRIALS 32
+  char tfilename[BUFFER_SIZE], sfn[BUFFER_SIZE];
+  char *letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  int i, k, len = (int) strlen (letters);
+  BOOL_T good_file = A68_FALSE;
+/* 
+Next are prefixes to try.
+First we try /tmp, and if that won't go, the current dir.
+*/
+  char *prefix[2] = {
+    "/tmp/a68g.",
+    "./a68g.",
+  };
+  bufcpy (sfn, program.files.source.name, BUFFER_SIZE);
+  for (i = 0; sfn[i] != NULL_CHAR && i < BUFFER_SIZE; i ++) {
+    if (sfn[i] == '/') {
+      sfn[i] = '_';
+    }
+  }
+  for (i = 0; i < 2; i ++) {
+    for (k = 0; k < TRIALS && good_file == A68_FALSE; k++) {
+      int j, cindex;
+      FILE_T fd;
+      bufcpy (tfilename, prefix[i], BUFFER_SIZE);
+      bufcat (tfilename, sfn, BUFFER_SIZE);
+      bufcat (tfilename, ".", BUFFER_SIZE);
+      
+      for (j = 0; j < TMP_SIZE; j++) {
+        char chars[2];
+        do {
+          cindex = (int) (rng_53_bit () * len);
+        } while (cindex < 0 || cindex >= len);
+        chars[0] = letters[cindex];
+        chars[1] = NULL_CHAR;
+        bufcat (tfilename, chars, BUFFER_SIZE);
+      }
+      RESET_ERRNO;
+      fd = open (tfilename, flags | O_EXCL, permissions);
+      good_file = (BOOL_T) (fd != A68_NO_FILENO && errno == 0);
+      if (good_file) {
+        (void) close (fd);
+      }
+    }
+  }
+  if (good_file) {
+    bufcpy (fn, tfilename, BUFFER_SIZE);
+    return (A68_TRUE);
+  } else {
+    return (A68_FALSE);
+  }
+#undef TMP_SIZE
+#undef TRIALS
+}
+
+/*!
 \brief open a file, or establish it
 \param p position in tree
 \param ref_file fat pointer to A68 file
@@ -9945,37 +9907,14 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
     file->eof = A68_FALSE;
     return (file->fd);
   } else if (IS_NIL (file->identification)) {
-/* No identification, so generate a unique identification.
-  "tmpnam" is not safe, "mkstemp" is Unix, so a68g brings its own tmpnam */
-#define TMP_SIZE 8
-#define TRIALS 32
-#define FNLEN (TMP_SIZE + 32)
-    char tfilename[FNLEN];
-    char *letters = "0123456789abcdefghijklmnopqrstuvwxyz";
-    int k, len = (int) strlen (letters);
-    BOOL_T good_file = A68_FALSE;
-    for (k = 0; k < TRIALS && good_file == A68_FALSE; k++) {
-      int j, cindex;
-      bufcpy (tfilename, a68g_cmd_name, FNLEN);
-      bufcat (tfilename, ".", FNLEN);
-      for (j = 0; j < TMP_SIZE; j++) {
-        char chars[2];
-        do {
-          cindex = (int) (rng_53_bit () * len);
-        } while (cindex < 0 || cindex >= len);
-        chars[0] = letters[cindex];
-        chars[1] = NULL_CHAR;
-        bufcat (tfilename, chars, FNLEN);
-      }
-      bufcat (tfilename, ".tmp", FNLEN);
-      RESET_ERRNO;
-      file->fd = open (tfilename, flags | O_EXCL, permissions);
-      good_file = (BOOL_T) (file->fd != -1 && errno == 0);
-    }
-    if (good_file == A68_FALSE) {
+/* No identification, so generate a unique identification. */
+    char tfilename[BUFFER_SIZE];
+    int len;
+    if (!a68g_mkstemp (tfilename, flags, permissions)) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_NO_TEMP);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
+    file->fd = open (tfilename, flags, permissions);
     len = 1 + (int) strlen (tfilename);
     file->identification = heap_generator (p, MODE (C_STRING), len);
     BLOCK_GC_HANDLE (&(file->identification));
@@ -9984,10 +9923,8 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
     reset_transput_buffer (file->transput_buffer);
     file->eof = A68_FALSE;
     file->tmp_file = A68_TRUE;
+    file->file_entry = store_file_entry (p, file->fd, tfilename, file->tmp_file);
     return (file->fd);
-#undef TMP_SIZE
-#undef TRIALS
-#undef FNLEN
   } else {
 /* Opening an identified file */
     ref_filename = file->identification;
@@ -10004,6 +9941,7 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
     file->transput_buffer = get_unblocked_transput_buffer (p);
     reset_transput_buffer (file->transput_buffer);
     file->eof = A68_FALSE;
+    file->file_entry = store_file_entry (p, file->fd, filename, file->tmp_file);
     return (file->fd);
   }
 }
@@ -10493,7 +10431,7 @@ void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_
     MOID_T *deflexed = DEFLEX (mode);
     A68_ARRAY *arr;
     A68_TUPLE *tup;
-    CHECK_INIT (p, INITIALISED ((A68_REF *) item), MODE (ROWS));
+    CHECK_INIT (p, INITIALISED ((A68_REF *) item), mode);
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
     if (get_row_size (tup, DIM (arr)) != 0) {
       BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
@@ -10552,7 +10490,7 @@ void open_for_reading (NODE_T * p, A68_REF ref_file)
   }
   if (!file->read_mood && !file->write_mood) {
     if (IS_NIL (file->string)) {
-      if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS, 0)) == -1) {
+      if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS, 0)) == A68_NO_FILENO) {
         open_error (p, ref_file, "getting");
       }
     } else {
@@ -10854,7 +10792,7 @@ void open_for_writing (NODE_T * p, A68_REF ref_file)
   }
   if (!file->read_mood && !file->write_mood) {
     if (IS_NIL (file->string)) {
-      if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS, A68_PROTECTION)) == -1) {
+      if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS, A68_PROTECTION)) == A68_NO_FILENO) {
         open_error (p, ref_file, "putting");
       }
     } else {
@@ -11047,7 +10985,7 @@ void genie_read_bin (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!file->read_mood && !file->write_mood) {
-    if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS | O_BINARY, 0)) == -1) {
+    if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS | O_BINARY, 0)) == A68_NO_FILENO) {
       open_error (p, ref_file, "binary getting");
     }
     file->draw_mood = A68_FALSE;
@@ -11128,7 +11066,7 @@ void genie_read_bin_file (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!file->read_mood && !file->write_mood) {
-    if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS | O_BINARY, 0)) == -1) {
+    if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS | O_BINARY, 0)) == A68_NO_FILENO) {
       open_error (p, ref_file, "binary getting");
     }
     file->draw_mood = A68_FALSE;
@@ -11276,7 +11214,7 @@ void genie_write_bin (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!file->read_mood && !file->write_mood) {
-    if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS | O_BINARY, A68_PROTECTION)) == -1) {
+    if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS | O_BINARY, A68_PROTECTION)) == A68_NO_FILENO) {
       open_error (p, ref_file, "binary putting");
     }
     file->draw_mood = A68_FALSE;
@@ -11351,7 +11289,7 @@ void genie_write_bin_file (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!file->read_mood && !file->write_mood) {
-    if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS | O_BINARY, A68_PROTECTION)) == -1) {
+    if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS | O_BINARY, A68_PROTECTION)) == A68_NO_FILENO) {
       open_error (p, ref_file, "binary putting");
     }
     file->draw_mood = A68_FALSE;
@@ -14621,7 +14559,7 @@ void genie_write_file_format (NODE_T * p)
   }
   if (!file->read_mood && !file->write_mood) {
     if (IS_NIL (file->string)) {
-      if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS, A68_PROTECTION)) == -1) {
+      if ((file->fd = open_physical_file (p, ref_file, A68_WRITE_ACCESS, A68_PROTECTION)) == A68_NO_FILENO) {
         open_error (p, ref_file, "putting");
       }
     } else {
@@ -15444,7 +15382,7 @@ void genie_read_file_format (NODE_T * p)
   }
   if (!file->read_mood && !file->write_mood) {
     if (IS_NIL (file->string)) {
-      if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS, 0)) == -1) {
+      if ((file->fd = open_physical_file (p, ref_file, A68_READ_ACCESS, 0)) == A68_NO_FILENO) {
         open_error (p, ref_file, "getting");
       }
     } else {
@@ -15905,5 +15843,129 @@ void a68g_arctan_complex (A68_REAL * z, A68_REAL * x)
     double a = a68g_hypot (r, i + 1), b = a68g_hypot (r, i - 1);
     RE (z) = 0.5 * atan (2 * r / (1 - r * r - i * i));
     IM (z) = 0.5 * log (a / b);
+  }
+}
+
+/* File table handling 
+In a table we record opened files.
+When execution ends, unclosed files are closed, and temps are removed.
+This keeps /tmp free of spurious files :-)
+*/
+
+typedef struct FILE_ENTRY FILE_ENTRY;
+
+struct FILE_ENTRY {
+  NODE_T *p;
+  BOOL_T is_open, is_tmp;
+  FILE_T fd;
+  A68_REF idf;
+};
+
+FILE_ENTRY file_entries[MAX_OPEN_FILES];
+
+/*
+\brief init an entry
+**/
+
+void init_file_entry (int k)
+{
+  if (k >= 0 && k < MAX_OPEN_FILES) {
+    FILE_ENTRY *fe = &(file_entries[k]);
+    fe->p = NULL;
+    fe->is_open = A68_FALSE;
+    fe->is_tmp = A68_FALSE;
+    fe->fd = A68_NO_FILENO;
+    fe->idf = nil_ref;
+  }
+}
+
+/*
+\brief initialise file entry table
+**/
+
+void init_file_entries (void)
+{
+  int k;
+  for (k = 0; k < MAX_OPEN_FILES; k ++) {
+    init_file_entry (k);
+  }
+}
+
+/*
+\brief store file for later closing when not explicitly closed
+\param p entry in syntax tree
+\param fd file descriptor
+\param idf file name
+\param is_tmp whether file is a temp file
+\return entry in table
+**/
+
+int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
+{
+  int k;
+  for (k = 0; k < MAX_OPEN_FILES; k ++)
+  {
+    FILE_ENTRY *fe = &(file_entries[k]);
+    if (!fe->is_open) {
+      int len = 1 + (int) strlen (idf);
+      fe->p = p;
+      fe->is_open = A68_TRUE;
+      fe->is_tmp = is_tmp;
+      fe->fd = fd;
+      fe->idf = heap_generator (p, MODE (C_STRING), len);
+      BLOCK_GC_HANDLE (&(fe->idf));
+      bufcpy ((char *) ADDRESS (&(fe->idf)), idf, len);
+      return (k);
+    }
+  }
+  diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_TOO_MANY_OPEN_FILES);
+  exit_genie (p, A68_RUNTIME_ERROR);
+  return (-1); /* Fool them */
+}
+
+/*
+\brief close file and delete temp file
+\param k entry in table
+**/
+
+void free_file_entry (NODE_T *p, int k)
+{
+  if (k >= 0 && k < MAX_OPEN_FILES) {
+    FILE_ENTRY *fe = &(file_entries[k]);
+    if (fe->is_open) {
+      if (fe->fd != A68_NO_FILENO && close (fe->fd) == -1) {
+        init_file_entry (k);
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_CLOSE);
+        exit_genie (p, A68_RUNTIME_ERROR);
+      }
+      if (fe->fd != A68_NO_FILENO && fe->is_tmp) {
+/* Attempt to remove a temp file, but ignore failure */
+        if (!IS_NIL (fe->idf)) {
+          char *filename;
+          CHECK_INIT (p, INITIALISED (&(fe->idf)), MODE (ROWS));
+          filename = (char *) ADDRESS (&(fe->idf));
+          if (filename != NULL) {
+            (void) remove (filename);
+          }
+        }
+      }
+  /* Restore the fields */
+      if (!IS_NIL (fe->idf)) {
+        UNBLOCK_GC_HANDLE (&(fe->idf));
+      }
+      init_file_entry (k);
+    }
+  }
+}
+
+/*
+\brief close all files and delete all temp files
+**/
+
+void free_file_entries (void)
+{
+  int k;
+  for (k = 0; k < MAX_OPEN_FILES; k ++) {
+    free_file_entry (NULL, k);
   }
 }
