@@ -102,6 +102,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define this if NetBSD was detected */
+#undef HAVE_NETBSD
+
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
@@ -271,7 +274,7 @@
 #undef HAVE_COMPILER
 #elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_LIBDL)
 #define HAVE_COMPILER 1
-#elif defined HAVE_FREEBSD
+#elif (defined HAVE_FREEBSD || defined HAVE_NETBSD)
 #define HAVE_COMPILER 1
 #else
 #undef HAVE_COMPILER

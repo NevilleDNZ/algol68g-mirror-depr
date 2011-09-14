@@ -1,4 +1,4 @@
-# Test recursion using the Ackermann function #
+# Test deep recursion using the Ackermann function #
 
 PR echo "[8] Ackermann function" PR
                 

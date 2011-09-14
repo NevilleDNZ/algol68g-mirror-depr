@@ -89,7 +89,26 @@ void print_bytes (BYTE_T *z, int k)
     printf ("%02x ", z[j]);
     }
   printf ("\n");
-  (void) fflush (stdout);
+  ASSERT (fflush (stdout) == 0); /* print_bytes */
+}
+
+/*!
+\brief unformatted write of z to stdout
+\param str prompt
+\param z mp number to print
+\param digits precision in mp-digits
+**/
+
+void raw_write_mp (char *str, MP_T * z, int digits)
+{
+  int i;
+  printf ("\n%s", str);
+  for (i = 1; i <= digits; i++) {
+    printf (" %07d", (int) MP_DIGIT (z, i));
+  }
+  printf (" ^ %d", (int) MP_EXPONENT (z));
+  printf (" status=%d", (int) MP_STATUS (z));
+  ASSERT (fflush (stdout) == 0); /* raw_write_mp */
 }
 
 /*!
@@ -191,9 +210,10 @@ static void init_before_tokeniser (void)
   init_heap ();
   top_keyword = NULL;
   top_token = NULL;
-  program.top_node = NULL;
-  program.top_moid = NULL;
-  program.top_line = NULL;
+  program.top_node = NO_NODE;
+  program.top_moid = NO_MOID;
+  program.top_line = NO_LINE;
+  program.standenv_moid = NO_MOID;
   set_up_tables ();
 /* Various initialisations */
   program.error_count = program.warning_count = 0;
@@ -270,15 +290,15 @@ int main (int argc, char *argv[])
     get_stack_size ();
 /* Well, let's start */
     program.top_refinement = NULL;
-    program.files.initial_name = NULL;
-    program.files.generic_name = NULL;
-    program.files.source.name = NULL;
-    program.files.listing.name = NULL;
-    program.files.object.name = NULL;
-    program.files.library.name = NULL;
-    program.files.binary.name = NULL;
-    program.files.script.name = NULL;
-    program.files.diags.name = NULL;
+    program.files.initial_name = NO_TEXT;
+    program.files.generic_name = NO_TEXT;
+    program.files.source.name = NO_TEXT;
+    program.files.listing.name = NO_TEXT;
+    program.files.object.name = NO_TEXT;
+    program.files.library.name = NO_TEXT;
+    program.files.binary.name = NO_TEXT;
+    program.files.script.name = NO_TEXT;
+    program.files.diags.name = NO_TEXT;
 /* Options are processed here */
     read_rc_options ();
     read_env_options ();
@@ -452,12 +472,13 @@ static void compiler_interpreter (void)
   program.files.diags.opened = A68_FALSE;
   program.files.diags.writemood = A68_TRUE;
 /*
-Open the source file. Open it for binary reading for systems that require so (Win32).
+Open the source file. 
+Open it for binary reading for systems that require so (Win32).
 Accept various silent extensions.
 */
   errno = 0;
-  program.files.source.name = NULL;
-  program.files.generic_name = NULL;
+  program.files.source.name = NO_TEXT;
+  program.files.generic_name = NO_TEXT;
   open_with_extensions ();
   if (program.files.source.fd == -1) {
     scan_error (NULL, NULL, ERROR_SOURCE_FILE_OPEN);
@@ -545,7 +566,7 @@ Accept various silent extensions.
   }
 /* Final initialisations */
   if (program.error_count == 0) {
-    stand_env = NULL;
+    a68g_standenv = NULL;
     init_postulates ();
     mode_count = 0;
     make_special_mode (&MODE (HIP), mode_count++);
@@ -576,8 +597,8 @@ Accept various silent extensions.
         substitute_brackets (program.top_node);
       }
       symbol_table_count = 0;
-      stand_env = new_symbol_table (NULL);
-      LEVEL (stand_env) = 0;
+      a68g_standenv = new_symbol_table (NULL);
+      LEVEL (a68g_standenv) = 0;
       top_down_parser (program.top_node);
     }
     num = 0;
@@ -587,8 +608,9 @@ Accept various silent extensions.
 /* Standard environment builder */
   if (program.error_count == 0) {
     announce_phase ("standard environ builder");
-    SYMBOL_TABLE (program.top_node) = new_symbol_table (stand_env);
+    TABLE (program.top_node) = new_symbol_table (a68g_standenv);
     make_standard_environ ();
+    program.standenv_moid = program.top_moid;
     verbosity ();
   }
 /* Bottom-up parser */
@@ -606,9 +628,9 @@ Accept various silent extensions.
     victal_checker (program.top_node);
     if (program.error_count == 0) {
       finalise_symbol_table_setup (program.top_node, 2);
-      SYMBOL_TABLE (program.top_node)->nest = symbol_table_count = 3;
+      TABLE (program.top_node)->nest = symbol_table_count = 3;
       reset_symbol_table_nest_count (program.top_node);
-      fill_symbol_table_outer (program.top_node, SYMBOL_TABLE (program.top_node));
+      fill_symbol_table_outer (program.top_node, TABLE (program.top_node));
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
       set_par_level (program.top_node, 0);
 #endif
@@ -656,7 +678,7 @@ Accept various silent extensions.
     reset_max_simplout_size ();
     get_max_simplout_size (program.top_node);
     set_moid_sizes (program.top_moid);
-    assign_offsets_table (stand_env);
+    assign_offsets_table (a68g_standenv);
     assign_offsets (program.top_node);
     assign_offsets_packs (program.top_moid);
     num = 0;
@@ -693,7 +715,7 @@ Accept various silent extensions.
   if (program.error_count == 0) {
     num = 0;
     renumber_nodes (program.top_node, &num);
-    SYMBOL_TABLE (program.top_node)->nest = symbol_table_count = 3;
+    TABLE (program.top_node)->nest = symbol_table_count = 3;
     reset_symbol_table_nest_count (program.top_node);
     verbosity ();
   }
@@ -755,9 +777,9 @@ Build shared library using gcc.
 FIXME: One day this should be all portable between platforms ... 
 */
 /*
-Compilation on Linux or FreeBSD
+Compilation on Linux, FreeBSD or NetBSD
 */
-#if (defined HAVE_LINUX || defined HAVE_FREEBSD)
+#if (defined HAVE_LINUX || defined HAVE_FREEBSD || defined HAVE_NETBSD)
 #if defined HAVE_TUNING
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g", extra_inc, optimisation, HAVE_TUNING) >= 0);
 #else
@@ -975,7 +997,7 @@ static void build_script (void)
 {
   int ret;
   FILE_T script, source;
-  SOURCE_LINE_T *sl;
+  LINE_T *sl;
   char cmd[BUFFER_SIZE];
 #if ! defined HAVE_COMPILER
   return;
@@ -1098,7 +1120,7 @@ static void load_script (void)
 
 static void rewrite_script_source (void)
 {
-  SOURCE_LINE_T * ref_l = NULL;
+  LINE_T * ref_l = NULL;
   FILE_T source;
 /* Rebuild the source file */
   ASSERT (remove (program.files.source.name) == 0);
@@ -1181,7 +1203,7 @@ void default_options (void)
 \param info info text
 **/
 
-static void option_error (SOURCE_LINE_T * l, char *option, char *info)
+static void option_error (LINE_T * l, char *option, char *info)
 {
   int k;
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", option) >= 0);
@@ -1217,7 +1239,7 @@ static char *strip_sign (char *p)
 \param line source line
 **/
 
-void add_option_list (OPTION_LIST_T ** l, char *str, SOURCE_LINE_T * line)
+void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
 {
   if (*l == NULL) {
     *l = (OPTION_LIST_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (OPTION_LIST_T));
@@ -1306,7 +1328,7 @@ void prune_echoes (OPTION_LIST_T * i)
 
 static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
 {
-  SOURCE_LINE_T *start_l = (*i)->line;
+  LINE_T *start_l = (*i)->line;
   char *start_c = (*i)->str;
   char *car = NULL, *num = NULL;
   int k, mult = 1;
@@ -1407,7 +1429,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
     if (cmd_line && skip) {
       FORWARD (i);
     } else {
-      SOURCE_LINE_T *start_l = i->line;
+      LINE_T *start_l = i->line;
       char *start_c = i->str;
       int n = (int) strlen (i->str);
 /* Allow for spaces ending in # to have A68 comment syntax with '#!' */
@@ -1728,7 +1750,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           program.options.no_warnings = A68_FALSE;
           program.options.portcheck = A68_TRUE;
           program.options.regression_test = A68_TRUE;
-          program.options.time_limit = 30;
+          program.options.time_limit = 120;
           program.options.keep = A68_TRUE;
           term_width = MAX_LINE_WIDTH;
         }
@@ -2007,7 +2029,7 @@ void read_env_options (void)
 \param line source line
 **/
 
-void isolate_options (char *p, SOURCE_LINE_T * line)
+void isolate_options (char *p, LINE_T * line)
 {
   char *q;
 /* 'q' points at first significant char in item .*/
@@ -2086,7 +2108,7 @@ static void a68g_print_short_mode (FILE_T f, MOID_T * z)
   } else if (WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), STANDARD)) {
     WRITE (f, "REF ");
     a68g_print_short_mode (f, SUB (z));
-  } else if (WHETHER (z, PROC_SYMBOL) && PACK (z) == NULL && WHETHER (SUB (z), STANDARD)) {
+  } else if (WHETHER (z, PROC_SYMBOL) && PACK (z) == NO_PACK && WHETHER (SUB (z), STANDARD)) {
     WRITE (f, "PROC ");
     a68g_print_short_mode (f, SUB (z));
   } else {  
@@ -2194,7 +2216,7 @@ void a68g_print_mode (FILE_T f, MOID_T * z)
       WRITE (f, ")");
     } else if (WHETHER (z, PROC_SYMBOL)) {
       WRITE (f, "PROC ");
-      if (PACK (z) != NULL) {
+      if (PACK (z) != NO_PACK) {
         WRITE (f, "(");
         a68g_print_short_pack (f, PACK (z));
         WRITE (f, ") ");
@@ -2256,8 +2278,12 @@ void print_mode_flat (FILE_T f, MOID_T * m)
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " name #%d", NUMBER (NAME (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (m->use) {
+    if (USE (m)) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " used") >= 0);
+      WRITE (f, output_line);
+    }
+    if (DERIVATE (m)) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " derivate") >= 0);
       WRITE (f, output_line);
     }
     if (m->size > 0) {
@@ -2281,7 +2307,7 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
 {
   for (; s != NULL; FORWARD (s)) {
     NODE_T *where_tag = NODE (s);
-    if ((where_tag != NULL) && ((STATUS_TEST (where_tag, CROSS_REFERENCE_MASK)) || TAG_TABLE (s) == stand_env)) {
+    if ((where_tag != NULL) && ((STATUS_TEST (where_tag, CROSS_REFERENCE_MASK)) || TAG_TABLE (s) == a68g_standenv)) {
       WRITE (f, "\n     ");
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "tag %d ", NUMBER (s)) >= 0);
       WRITE (f, output_line);
@@ -2383,7 +2409,7 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
 \param t symbol table
 **/
 
-static void xref_decs (FILE_T f, SYMBOL_TABLE_T * t)
+static void xref_decs (FILE_T f, TABLE_T * t)
 {
   if (t->indicants != NULL) {
     xref_tags (f, t->indicants, INDICANT);
@@ -2429,6 +2455,13 @@ void moid_listing (FILE_T f, MOID_T * m)
   for (; m != NULL; FORWARD (m)) {
     xref1_moid (f, m);
   }
+  WRITE (f, "\n");
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     MODE STRING  #%d ", NUMBER (MODE (STRING))) >= 0);
+  WRITE (f, output_line);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     MODE COMPLEX #%d ", NUMBER (MODE (COMPLEX))) >= 0);
+  WRITE (f, output_line);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     MODE SEMA    #%d ", NUMBER (MODE (SEMA))) >= 0);
+  WRITE (f, output_line);
 }
 
 /*!
@@ -2438,15 +2471,15 @@ void moid_listing (FILE_T f, MOID_T * m)
 \param l source line
 **/
 
-static void cross_reference (FILE_T f, NODE_T * p, SOURCE_LINE_T * l)
+static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
 {
   if (p != NULL && program.cross_reference_safe) {
     for (; p != NULL; FORWARD (p)) {
       if (whether_new_lexical_level (p) && l == LINE (p)) {
-        SYMBOL_TABLE_T *c = SYMBOL_TABLE (SUB (p));
+        TABLE_T *c = TABLE (SUB (p));
         ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n\n[level %d", LEVEL (c)) >= 0);
         WRITE (f, output_line);
-        if (PREVIOUS (c) == stand_env) {
+        if (PREVIOUS (c) == a68g_standenv) {
           ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", in standard environ") >= 0);
         } else {
           ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", in level %d", LEVEL (PREVIOUS (c))) >= 0);
@@ -2500,7 +2533,7 @@ static void write_symbols (FILE_T f, NODE_T * p, int *count)
 \param ld index for indenting and drawing bars connecting nodes
 **/
 
-void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
+void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
 {
   for (; q != NULL; FORWARD (q)) {
     NODE_T *p = q;
@@ -2511,13 +2544,21 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
       }
 /* Indent */
       WRITE (f, "\n     ");
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d %6d p%02d ", x, NUMBER (p), INFO (p)->PROCEDURE_LEVEL) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d %06d p%02d ", x, NUMBER (p), INFO (p)->PROCEDURE_LEVEL) >= 0);
       WRITE (f, output_line);
-      if (PREVIOUS (SYMBOL_TABLE (p)) != NULL) {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02d(%02d) ", (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1), LEVEL (PREVIOUS (SYMBOL_TABLE (p)))) >= 0);
+      if (PREVIOUS (TABLE (p)) != NO_TABLE) {
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d-%02d-%02d ", 
+          (TABLE (p) != NO_TABLE ? LEX_LEVEL (p) : 0), 
+          (TABLE (p) != NO_TABLE ? LEVEL (PREVIOUS (TABLE (p))) : 0),
+          (NON_LOCAL (p) != NO_TABLE ? LEVEL (NON_LOCAL (p)) : 0)
+        ) >= 0);
       } else {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "l%02d    ", (SYMBOL_TABLE (p) != NULL ? LEX_LEVEL (p) : -1)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d-  -%02d", 
+          (TABLE (p) != NULL ? LEX_LEVEL (p) : 0),
+          (NON_LOCAL (p) != NULL ? LEVEL (NON_LOCAL (p)) : 0)
+        ) >= 0);
       }
+      WRITE (f, output_line);
       if (MOID (q) != NULL) {
         ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#%04d ", NUMBER (MOID (p))) >= 0);
       } else {
@@ -2545,8 +2586,8 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
           WRITE (f, output_line);
         }
       }
-      if (GENIE (p) != NULL && propagator_name (PROPAGATOR (p).unit) != NULL) {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %s", propagator_name (PROPAGATOR (p).unit)) >= 0);
+      if (GENIE (p) != NULL && propagator_name (PROP (p).unit) != NULL) {
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %s", propagator_name (PROP (p).unit)) >= 0);
         WRITE (f, output_line);
       }
       if (GENIE (p) != NULL && GENIE (p)->compile_name != NULL) {
@@ -2581,7 +2622,7 @@ void tree_listing (FILE_T f, NODE_T * q, int x, SOURCE_LINE_T * l, int *ld)
 \return number of nodes to be printed in tree listing
 **/
 
-static int leaves_to_print (NODE_T * p, SOURCE_LINE_T * l)
+static int leaves_to_print (NODE_T * p, LINE_T * l)
 {
   int z = 0;
   for (; p != NULL && z == 0; FORWARD (p)) {
@@ -2600,7 +2641,7 @@ static int leaves_to_print (NODE_T * p, SOURCE_LINE_T * l)
 \param line source line
 **/
 
-void list_source_line (FILE_T f, SOURCE_LINE_T * line, BOOL_T tree)
+void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
 {
   int k = (int) strlen (line->string) - 1;
   if (NUMBER (line) <= 0) {
@@ -2636,7 +2677,7 @@ void list_source_line (FILE_T f, SOURCE_LINE_T * line, BOOL_T tree)
 
 void write_source_listing (void)
 {
-  SOURCE_LINE_T *line = program.top_line;
+  LINE_T *line = program.top_line;
   FILE_T f = program.files.listing.fd;
   int listed = 0;
   WRITE (program.files.listing.fd, NEWLINE_STRING);
@@ -2666,7 +2707,7 @@ void write_source_listing (void)
 
 void write_tree_listing (void)
 {
-  SOURCE_LINE_T *line = program.top_line;
+  LINE_T *line = program.top_line;
   FILE_T f = program.files.listing.fd;
   int listed = 0;
   WRITE (program.files.listing.fd, NEWLINE_STRING);
@@ -2719,12 +2760,12 @@ void write_listing (void)
     WRITE (program.files.listing.fd, NEWLINE_STRING);
     moid_listing (f, program.top_moid);
   }
-  if (program.options.standard_prelude_listing && stand_env != NULL) {
+  if (program.options.standard_prelude_listing && a68g_standenv != NULL) {
     WRITE (program.files.listing.fd, NEWLINE_STRING);
     WRITE (program.files.listing.fd, "\nStandard prelude listing");
     WRITE (program.files.listing.fd, "\n-------- ------- -------");
     WRITE (program.files.listing.fd, NEWLINE_STRING);
-    xref_decs (f, stand_env);
+    xref_decs (f, a68g_standenv);
   }
   if (program.top_refinement != NULL) {
     REFINEMENT_T *x = program.top_refinement;
@@ -2785,7 +2826,7 @@ void write_listing (void)
 void write_listing_header (void)
 {
   FILE_T f = program.files.listing.fd;
-  SOURCE_LINE_T * z;
+  LINE_T * z;
   state_version (program.files.listing.fd);
   WRITE (program.files.listing.fd, "\nFile \"");
   WRITE (program.files.listing.fd, program.files.source.name);
@@ -3113,7 +3154,7 @@ NODE_T *new_node (void)
   new_nodes++;
   STATUS (z) = NULL_MASK;
   CODEX (z) = NULL_MASK;
-  SYMBOL_TABLE (z) = NULL;
+  TABLE (z) = NULL;
   INFO (z) = NULL;
   GENIE (z) = NULL;
   ATTRIBUTE (z) = 0;
@@ -3123,9 +3164,10 @@ NODE_T *new_node (void)
   PREVIOUS (z) = NULL;
   SUB (z) = NULL;
   NEST (z) = NULL;
+  NON_LOCAL (z) = NULL;
   TAX (z) = NULL;
   SEQUENCE (z) = NULL;
-  PACK (z) = NULL;
+  PACK (z) = NO_PACK;
   return (z);
 }
 
@@ -3135,14 +3177,13 @@ NODE_T *new_node (void)
 \return same
 **/
 
-SYMBOL_TABLE_T *new_symbol_table (SYMBOL_TABLE_T * p)
+TABLE_T *new_symbol_table (TABLE_T * p)
 {
-  SYMBOL_TABLE_T *z = (SYMBOL_TABLE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (SYMBOL_TABLE_T));
+  TABLE_T *z = (TABLE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TABLE_T));
   LEVEL (z) = symbol_table_count++;
   z->nest = symbol_table_count;
   ATTRIBUTE (z) = 0;
   z->ap_increment = 0;
-  z->empty_table = A68_FALSE;
   z->initialise_frame = A68_TRUE;
   z->proc_ops = A68_TRUE;
   z->initialise_anon = A68_TRUE;
@@ -3175,8 +3216,9 @@ MOID_T *new_moid (void)
   z->has_rows = A68_FALSE;
   SIZE (z) = 0;
   z->portable = A68_TRUE;
+  DERIVATE (z) = A68_FALSE;
   NODE (z) = NULL;
-  PACK (z) = NULL;
+  PACK (z) = NO_PACK;
   SUB (z) = NULL;
   z->equivalent_mode = NULL;
   SLICE (z) = NULL;
@@ -3220,7 +3262,7 @@ TAG_T *new_tag (void)
   NODE (z) = NULL;
   z->unit = NULL;
   VALUE (z) = NULL;
-  z->stand_env_proc = 0;
+  z->a68g_standenv_proc = 0;
   PROC (z) = NULL;
   z->scope = PRIMAL_SCOPE;
   z->scope_assigned = A68_FALSE;
@@ -3244,9 +3286,9 @@ TAG_T *new_tag (void)
 \return same
 **/
 
-SOURCE_LINE_T *new_source_line (void)
+LINE_T *new_source_line (void)
 {
-  SOURCE_LINE_T *z = (SOURCE_LINE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (SOURCE_LINE_T));
+  LINE_T *z = (LINE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (LINE_T));
   z->marker[0] = NULL_CHAR;
   z->string = NULL;
   z->filename = NULL;
@@ -3270,7 +3312,7 @@ void make_special_mode (MOID_T ** n, int m)
   (*n) = new_moid ();
   ATTRIBUTE (*n) = 0;
   NUMBER (*n) = m;
-  PACK (*n) = NULL;
+  PACK (*n) = NO_PACK;
   SUB (*n) = NULL;
   EQUIVALENT (*n) = NULL;
   DEFLEXED (*n) = NULL;
@@ -3313,7 +3355,7 @@ BOOL_T whether (NODE_T * p, ...)
   va_list vl;
   int a;
   va_start (vl, p);
-  while ((a = va_arg (vl, int)) != NULL_ATTRIBUTE)
+  while ((a = va_arg (vl, int)) != STOP)
   {
     if (p != NULL && a == WILDCARD) {
       FORWARD (p);
@@ -3348,7 +3390,7 @@ BOOL_T whether_one_of (NODE_T * p, ...)
     int a;
     BOOL_T match = A68_FALSE;
     va_start (vl, p);
-    while ((a = va_arg (vl, int)) != NULL_ATTRIBUTE)
+    while ((a = va_arg (vl, int)) != STOP)
     {
       match = (BOOL_T) (match | (BOOL_T) (WHETHER (p, a)));
     }
@@ -3398,12 +3440,12 @@ void make_sub (NODE_T * p, NODE_T * q, int t)
 \return same
 **/
 
-SYMBOL_TABLE_T *find_level (NODE_T * n, int i)
+TABLE_T *find_level (NODE_T * n, int i)
 {
   if (n == NULL) {
     return (NULL);
   } else {
-    SYMBOL_TABLE_T *s = SYMBOL_TABLE (n);
+    TABLE_T *s = TABLE (n);
     if (s != NULL && LEVEL (s) == i) {
       return (s);
     } else if ((s = find_level (SUB (n), i)) != NULL) {
@@ -4546,206 +4588,13 @@ char *non_terminal_string (char *buf, int att)
 \return name of that what "f" implements
 **/
 
-char *standard_environ_proc_name (GENIE_PROCEDURE f)
+char *standard_environ_proc_name (GENIE_PROC f)
 {
-  TAG_T *i = stand_env->identifiers;
+  TAG_T *i = a68g_standenv->identifiers;
   for (; i != NULL; FORWARD (i)) {
     if (PROC (i) == f) {
       return (SYMBOL (NODE (i)));
     }
-  }
-  return (NULL);
-}
-
-/*!
-\brief propagator_name
-\param p propagator procedure
-\return function name of "p"
-**/
-
-char *propagator_name (PROPAGATOR_PROCEDURE * p)
-{
-  if (p == genie_and_function) {
-    return ("genie_and_function");
-  }
-  if (p == genie_assertion) {
-    return ("genie_assertion");
-  }
-  if (p == genie_assignation) {
-    return ("genie_assignation");
-  }
-  if (p == genie_assignation_constant) {
-    return ("genie_assignation_constant");
-  }
-  if (p == genie_call) {
-    return ("genie_call");
-  }
-  if (p == genie_cast) {
-    return ("genie_cast");
-  }
-  if (p == (PROPAGATOR_PROCEDURE *) genie_closed) {
-    return ("genie_closed");
-  }
-  if (p == genie_coercion) {
-    return ("genie_coercion");
-  }
-  if (p == genie_collateral) {
-    return ("genie_collateral");
-  }
-  if (p == genie_column_function) {
-    return ("genie_column_function");
-  }
-  if (p == (PROPAGATOR_PROCEDURE *) genie_conditional) {
-    return ("genie_conditional");
-  }
-  if (p == genie_constant) {
-    return ("genie_constant");
-  }
-  if (p == genie_denotation) {
-    return ("genie_denotation");
-  }
-  if (p == genie_deproceduring) {
-    return ("genie_deproceduring");
-  }
-  if (p == genie_dereference_frame_identifier) {
-    return ("genie_dereference_frame_identifier");
-  }
-  if (p == genie_dereference_selection_name_quick) {
-    return ("genie_dereference_selection_name_quick");
-  }
-  if (p == genie_dereference_slice_name_quick) {
-    return ("genie_dereference_slice_name_quick");
-  }
-  if (p == genie_dereferencing) {
-    return ("genie_dereferencing");
-  }
-  if (p == genie_dereferencing_quick) {
-    return ("genie_dereferencing_quick");
-  }
-  if (p == genie_diagonal_function) {
-    return ("genie_diagonal_function");
-  }
-  if (p == genie_dyadic) {
-    return ("genie_dyadic");
-  }
-  if (p == genie_dyadic_quick) {
-    return ("genie_dyadic_quick");
-  }
-  if (p == (PROPAGATOR_PROCEDURE *) genie_enclosed) {
-    return ("genie_enclosed");
-  }
-  if (p == genie_format_text) {
-    return ("genie_format_text");
-  }
-  if (p == genie_formula) {
-    return ("genie_formula");
-  }
-  if (p == genie_generator) {
-    return ("genie_generator");
-  }
-  if (p == genie_identifier) {
-    return ("genie_identifier");
-  }
-  if (p == genie_identifier_standenv) {
-    return ("genie_identifier_standenv");
-  }
-  if (p == genie_identifier_standenv_proc) {
-    return ("genie_identifier_standenv_proc");
-  }
-  if (p == genie_identity_relation) {
-    return ("genie_identity_relation");
-  }
-  if (p == (PROPAGATOR_PROCEDURE *) genie_int_case) {
-    return ("genie_int_case");
-  }
-  if (p == genie_field_selection) {
-    return ("genie_field_selection");
-  }
-  if (p == genie_frame_identifier) {
-    return ("genie_frame_identifier");
-  }
-  if (p == (PROPAGATOR_PROCEDURE *) genie_loop) {
-    return ("genie_loop");
-  }
-  if (p == genie_monadic) {
-    return ("genie_monadic");
-  }
-  if (p == genie_nihil) {
-    return ("genie_nihil");
-  }
-  if (p == genie_or_function) {
-    return ("genie_or_function");
-  }
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  if (p == genie_parallel) {
-    return ("genie_parallel");
-  }
-#endif
-  if (p == genie_routine_text) {
-    return ("genie_routine_text");
-  }
-  if (p == genie_row_function) {
-    return ("genie_row_function");
-  }
-  if (p == genie_rowing) {
-    return ("genie_rowing");
-  }
-  if (p == genie_rowing_ref_row_of_row) {
-    return ("genie_rowing_ref_row_of_row");
-  }
-  if (p == genie_rowing_ref_row_row) {
-    return ("genie_rowing_ref_row_row");
-  }
-  if (p == genie_rowing_row_of_row) {
-    return ("genie_rowing_row_of_row");
-  }
-  if (p == genie_rowing_row_row) {
-    return ("genie_rowing_row_row");
-  }
-  if (p == genie_selection) {
-    return ("genie_selection");
-  }
-  if (p == genie_selection_name_quick) {
-    return ("genie_selection_name_quick");
-  }
-  if (p == genie_selection_value_quick) {
-    return ("genie_selection_value_quick");
-  }
-  if (p == genie_skip) {
-    return ("genie_skip");
-  }
-  if (p == genie_slice) {
-    return ("genie_slice");
-  }
-  if (p == genie_slice_name_quick) {
-    return ("genie_slice_name_quick");
-  }
-  if (p == genie_transpose_function) {
-    return ("genie_transpose_function");
-  }
-  if (p == genie_unit) {
-    return ("genie_unit");
-  }
-  if (p == (PROPAGATOR_PROCEDURE *) genie_united_case) {
-    return ("genie_united_case");
-  }
-  if (p == genie_uniting) {
-    return ("genie_uniting");
-  }
-  if (p == genie_voiding) {
-    return ("genie_voiding");
-  }
-  if (p == genie_voiding_assignation) {
-    return ("genie_voiding_assignation");
-  }
-  if (p == genie_voiding_assignation_constant) {
-    return ("genie_voiding_assignation_constant");
-  }
-  if (p == genie_widening) {
-    return ("genie_widening");
-  }
-  if (p == genie_widening_int_to_real) {
-    return ("genie_widening_int_to_real");
   }
   return (NULL);
 }
@@ -5011,7 +4860,7 @@ void abend (char *reason, char *info, char *file, int line)
 \param q node pertaining to "p"
 **/
 
-static char *where_pos (SOURCE_LINE_T * p, NODE_T * q)
+static char *where_pos (LINE_T * p, NODE_T * q)
 {
   char *pos;
   if (q != NULL && p == LINE (q)) {
@@ -5038,7 +4887,7 @@ static char *where_pos (SOURCE_LINE_T * p, NODE_T * q)
 \return pointer to character to mark
 **/
 
-static char *diag_pos (SOURCE_LINE_T * p, DIAGNOSTIC_T * d)
+static char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
 {
   char *pos;
   if (d->where != NULL && p == LINE (d->where)) {
@@ -5066,7 +4915,7 @@ static char *diag_pos (SOURCE_LINE_T * p, DIAGNOSTIC_T * d)
 \param diag whether and how to print diagnostics
 **/
 
-void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
+void write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
 {
   char *c, *c0;
   int continuations = 0;
@@ -5244,7 +5093,7 @@ void write_source_line (FILE_T f, SOURCE_LINE_T * p, NODE_T * nwhere, int diag)
 \param what severity of diagnostics to print
 **/
 
-void diagnostics_to_terminal (SOURCE_LINE_T * p, int what)
+void diagnostics_to_terminal (LINE_T * p, int what)
 {
   for (; p != NULL; FORWARD (p)) {
     if (p->diagnostics != NULL) {
@@ -5271,7 +5120,7 @@ void diagnostics_to_terminal (SOURCE_LINE_T * p, int what)
 \param txt error text
 **/
 
-void scan_error (SOURCE_LINE_T * u, char *v, char *txt)
+void scan_error (LINE_T * u, char *v, char *txt)
 {
   if (errno != 0) {
     diagnostic_line (A68_SUPPRESS_SEVERITY, u, v, txt, ERROR_SPECIFICATION, NULL);
@@ -5350,7 +5199,7 @@ static void write_diagnostic (int sev, char *b)
 \param b diagnostic text
 */
 
-static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
+static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
 {
 /* Add diagnostic and choose GNU style or non-GNU style */
   DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (DIAGNOSTIC_T));
@@ -5450,7 +5299,7 @@ static void add_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T * p, int sev
 \param b diagnostic text
 */
 
-static void tui_diagnostic (SOURCE_LINE_T * line, char *pos, NODE_T *p, int sev, char *b)
+static void tui_diagnostic (LINE_T * line, char *pos, NODE_T *p, int sev, char *b)
 {
   FILE_T fd = program.files.diags.fd; 
   int lin, col;
@@ -5575,7 +5424,7 @@ Z quoted string literal.
       ASSERT (snprintf(d, (size_t) SMALL_BUFFER_SIZE, "\"%c\"", a[0]) >= 0);\
       bufcat (b, d, BUFFER_SIZE);\
     } else if (t[0] == 'L') {\
-      SOURCE_LINE_T *a = va_arg (args, SOURCE_LINE_T *);\
+      LINE_T *a = va_arg (args, LINE_T *);\
       char d[SMALL_BUFFER_SIZE];\
       ABEND (a == NULL, "NULL source line in error", NULL);\
       if (NUMBER (a) == 0) {\
@@ -5594,7 +5443,7 @@ Z quoted string literal.
 	moid = MODE (UNDEFINED);\
       }\
       if (WHETHER (moid, SERIES_MODE)) {\
-	if (PACK (moid) != NULL && NEXT (PACK (moid)) == NULL) {\
+	if (PACK (moid) != NO_PACK && NEXT (PACK (moid)) == NO_PACK) {\
 	  bufcat (b, moid_to_string (MOID (PACK (moid)), MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
 	} else {\
 	  bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
@@ -5616,7 +5465,7 @@ Z quoted string literal.
       if (moid == MODE (VOID)) {\
 	bufcat (b, "UNION (VOID, ..)", BUFFER_SIZE);\
       } else if (WHETHER (moid, SERIES_MODE)) {\
-	if (PACK (moid) != NULL && NEXT (PACK (moid)) == NULL) {\
+	if (PACK (moid) != NO_PACK && NEXT (PACK (moid)) == NO_PACK) {\
 	  bufcat (b, moid_to_string (MOID (PACK (moid)), MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
 	} else {\
 	  bufcat (b, moid_to_string (moid, MOID_ERROR_WIDTH, p), BUFFER_SIZE);\
@@ -5745,7 +5594,7 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
 \param ... various arguments needed by special symbols in loc_str
 **/
 
-void diagnostic_line (int sev, SOURCE_LINE_T * line, char *pos, char *loc_str, ...)
+void diagnostic_line (int sev, LINE_T * line, char *pos, char *loc_str, ...)
 {
   va_list args;
   MOID_T *moid = NULL;
@@ -6193,7 +6042,7 @@ static void add_to_moid_text (char *dst, char *str, int *w)
 \return entry in symbol table
 **/
 
-TAG_T *find_indicant_global (SYMBOL_TABLE_T * table, MOID_T * mode)
+TAG_T *find_indicant_global (TABLE_T * table, MOID_T * mode)
 {
   if (table != NULL) {
     TAG_T *s;
@@ -6255,7 +6104,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
   }
 /* If declared by a mode-declaration, present the indicant */
   if (idf != NULL && WHETHER_NOT (n, STANDARD)) {
-    TAG_T *indy = find_indicant_global (SYMBOL_TABLE (idf), n);
+    TAG_T *indy = find_indicant_global (TABLE (idf), n);
     if (indy != NO_TAG) {
       add_to_moid_text (b, SYMBOL (NODE (indy)), w);
       return;

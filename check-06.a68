@@ -1,4 +1,4 @@
-PR echo "[6] Exact determinant of Hilbert matrices using fractions" PR
+PR echo "(6) Exact determinant of Hilbert matrices using fractions" PR
 
 BEGIN
 
@@ -61,28 +61,28 @@ A fraction has positive denominator; the nominator holds the sign.
   
 # Matrix algebra. #
 
-      OP INNER = ([] FRAC u, v) FRAC:
+      OP INNER = (() FRAC u, v) FRAC:
          # Innerproduct of two arrays of rationals #
          BEGIN FRAC s := zero;
                FOR i TO UPB u
-               DO s +:= u[i] * v[i]
+               DO s +:= u(i) * v(i)
                OD;
                s
          END;
 
       PRIO INNER = 8;
   
-      PROC lu decomposition = (REF [, ] FRAC a, REF [] INT p) VOID:
+      PROC lu decomposition = (REF (, ) FRAC a, REF () INT p) VOID:
            # LU-decomposition cf. Crout, of a matrix of rationals. #
            BEGIN INT n = 1 UPB a;
                  FOR k TO n
                  DO FRAC piv := zero, INT k1 := k - 1;
-                    REF INT pk = p[k];
-                    REF [] FRAC aik = a[, k], aki = a[k,];
+                    REF INT pk = p(k);
+                    REF () FRAC aik = a(, k), aki = a(k,);
                     FOR i FROM k TO n
-                    DO aik[i] -:= a[i, 1 : k1] INNER aik[1 : k1];
-                       IF piv = zero ANDF aik[i] /= zero
-                       THEN piv := aik[i]; 
+                    DO aik(i) -:= a(i, 1 : k1) INNER aik(1 : k1);
+                       IF piv = zero ANDF aik(i) /= zero
+                       THEN piv := aik(i); 
                             pk := i
                        FI
                     OD;
@@ -91,29 +91,29 @@ A fraction has positive denominator; the nominator holds the sign.
                     FI;
                     IF pk /= k
                     THEN FOR i TO n
-                         DO FRAC r = aki[i];
-                            aki[i] := a[pk, i]; 
-                            a[pk, i] := -r
+                         DO FRAC r = aki(i);
+                            aki(i) := a(pk, i); 
+                            a(pk, i) := -r
                          OD
                     FI;
                     FOR i FROM k + 1 TO n
-                    DO aki[i] -:= aki[1 : k1] INNER a[1 : k1, i] /:= piv
+                    DO aki(i) -:= aki(1 : k1) INNER a(1 : k1, i) /:= piv
                     OD 
                  OD
            END;
   
-      PROC determinant = ([,] FRAC a) FRAC:
+      PROC determinant = ((,) FRAC a) FRAC:
            # Determinant of a decomposed matrix is its trace. #
            BEGIN FRAC d := one;
                  FOR i TO 1 UPB a
-                 DO d *:= a[i, i]
+                 DO d *:= a(i, i)
                  OD;
                  d
            END;
 
 # Table of required results. #  
   
-      [] NUM table = BEGIN
+      () NUM table = BEGIN
          1,
          12,
          2 160,
@@ -129,17 +129,17 @@ A fraction has positive denominator; the nominator holds the sign.
 # Compute determinant of Hilbert matrix of increasing rank. #
    
       FOR n TO UPB table
-      DO [1 : n, 1 : n] FRAC a;
+      DO (1 : n, 1 : n) FRAC a;
          FOR i TO n
-         DO a[i, i] := 1 DIV 2 * i - 1;
+         DO a(i, i) := 1 DIV 2 * i - 1;
             FOR j FROM i + 1 TO n
-            DO a[i, j] := a[j, i] := 1 DIV i + j - 1
+            DO a(i, j) := a(j, i) := 1 DIV i + j - 1
             OD
          OD;
-         lu decomposition(a, LOC [1 : n] INT);
+         lu decomposition(a, LOC (1 : n) INT);
          FRAC det = determinant (a);
          print(("Rank ", whole (n, -2), 
                 ", determinant ", whole (N det, 0), " / ", whole (D det, 0),
-                (N det = 1 AND D det = table[n] | ", ok" | ", not ok" ), newline))
+                (N det = 1 AND D det = table(n) | ", ok" | ", not ok" ), newline))
       OD
 END

@@ -1,3 +1,9 @@
+Version 2.3.0, September 2011
+* Implements ghost elements for empty rows.
+* Implements non-local environs.
+* Fixes issues in 2.2.0.
+* Updates documentation.
+
 Version 2.2.0, July 2011
 * Improves the parser.
 * Improves handling of unclosed files.

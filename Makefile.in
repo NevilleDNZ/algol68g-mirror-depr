@@ -58,8 +58,7 @@ am_a68g_OBJECTS = a68g-a68g.$(OBJEXT) a68g-code.$(OBJEXT) \
 	a68g-environ.$(OBJEXT) a68g-genie.$(OBJEXT) a68g-gsl.$(OBJEXT) \
 	a68g-monitor.$(OBJEXT) a68g-mp.$(OBJEXT) \
 	a68g-plotutils.$(OBJEXT) a68g-postgresql.$(OBJEXT) \
-	a68g-syntax.$(OBJEXT) a68g-sound.$(OBJEXT) a68g-unix.$(OBJEXT) \
-	a68g-edit.$(OBJEXT)
+	a68g-syntax.$(OBJEXT) a68g-edit.$(OBJEXT)
 a68g_OBJECTS = $(am_a68g_OBJECTS)
 a68g_LDADD = $(LDADD)
 a68g_LINK = $(CCLD) $(a68g_CFLAGS) $(CFLAGS) $(a68g_LDFLAGS) \
@@ -199,15 +198,15 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c monitor.c mp.c plotutils.c postgresql.c syntax.c sound.c unix.c edit.c
+a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c monitor.c mp.c plotutils.c postgresql.c syntax.c edit.c
 a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 TESTS_ENVIRONMENT = ./a68g
-TESTS = check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68
+TESTS = check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
 @EXPORT_DYNAMIC_TRUE@a68g_LDFLAGS = -Wl,--export-dynamic
 pkginclude_HEADERS = a68g-config.h a68g.h
 man_MANS = a68g.1
-EXTRA_DIST = $(man_MANS) check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68
+EXTRA_DIST = $(man_MANS) check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68
 all: a68g-config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -306,9 +305,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-mp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-plotutils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-postgresql.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-sound.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-syntax.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-unix.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -463,34 +460,6 @@ a68g-syntax.obj: syntax.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='syntax.c' object='a68g-syntax.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-syntax.obj `if test -f 'syntax.c'; then $(CYGPATH_W) 'syntax.c'; else $(CYGPATH_W) '$(srcdir)/syntax.c'; fi`
-
-a68g-sound.o: sound.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-sound.o -MD -MP -MF $(DEPDIR)/a68g-sound.Tpo -c -o a68g-sound.o `test -f 'sound.c' || echo '$(srcdir)/'`sound.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-sound.Tpo $(DEPDIR)/a68g-sound.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='sound.c' object='a68g-sound.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-sound.o `test -f 'sound.c' || echo '$(srcdir)/'`sound.c
-
-a68g-sound.obj: sound.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-sound.obj -MD -MP -MF $(DEPDIR)/a68g-sound.Tpo -c -o a68g-sound.obj `if test -f 'sound.c'; then $(CYGPATH_W) 'sound.c'; else $(CYGPATH_W) '$(srcdir)/sound.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-sound.Tpo $(DEPDIR)/a68g-sound.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='sound.c' object='a68g-sound.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-sound.obj `if test -f 'sound.c'; then $(CYGPATH_W) 'sound.c'; else $(CYGPATH_W) '$(srcdir)/sound.c'; fi`
-
-a68g-unix.o: unix.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-unix.o -MD -MP -MF $(DEPDIR)/a68g-unix.Tpo -c -o a68g-unix.o `test -f 'unix.c' || echo '$(srcdir)/'`unix.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-unix.Tpo $(DEPDIR)/a68g-unix.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='unix.c' object='a68g-unix.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-unix.o `test -f 'unix.c' || echo '$(srcdir)/'`unix.c
-
-a68g-unix.obj: unix.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-unix.obj -MD -MP -MF $(DEPDIR)/a68g-unix.Tpo -c -o a68g-unix.obj `if test -f 'unix.c'; then $(CYGPATH_W) 'unix.c'; else $(CYGPATH_W) '$(srcdir)/unix.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-unix.Tpo $(DEPDIR)/a68g-unix.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='unix.c' object='a68g-unix.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-unix.obj `if test -f 'unix.c'; then $(CYGPATH_W) 'unix.c'; else $(CYGPATH_W) '$(srcdir)/unix.c'; fi`
 
 a68g-edit.o: edit.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-edit.o -MD -MP -MF $(DEPDIR)/a68g-edit.Tpo -c -o a68g-edit.o `test -f 'edit.c' || echo '$(srcdir)/'`edit.c

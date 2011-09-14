@@ -52,15 +52,6 @@ translates into
 
 There are no optimisations that are easily recognised by the back end compiler,
 for instance symbolic simplification.
-
-For comiler debugging purposes a68g accepts also options O1, O2 and O3:
-
-O1: denotations only
-O2: also basic unit compilation 
-O3: also better fetching of data from the stack
-O4: also compile enclosed clauses
-
-The flag "-O" implies "-O4".
 */
 
 /*
@@ -69,6 +60,10 @@ You will find here and there lines
   if (DEBUG_LEVEL >= ...) 
 
 which I use to debug the compiler - MvdV.
+1: denotations only
+2: also basic unit compilation 
+3: also better fetching of data from the stack
+4: also compile enclosed clauses
 Below definition switches everything on.
 */
 
@@ -136,7 +131,7 @@ enum {L_NONE = 0, L_DECLARE = 1, L_INITIALISE, L_EXECUTE, L_EXECUTE_2, L_YIELD, 
 /*********************************************************/
 
 typedef int LEVEL_T;
-typedef struct {GENIE_PROCEDURE * procedure; char * code;} TRANSLATION;
+typedef struct {GENIE_PROC * procedure; char * code;} TRANSLATION;
 
 static TRANSLATION monadics[] = {
   {genie_minus_int, "-"},
@@ -1278,7 +1273,7 @@ static BOOL_T basic_unit (NODE_T * p)
       return (A68_FALSE);
     }
   } else if (WHETHER (p, IDENTIFIER)) {
-    if (TAX (p)->stand_env_proc) {
+    if (TAX (p)->a68g_standenv_proc) {
       int k;
       for (k = 0; constants[k].procedure != NULL; k ++) {
         if (PROC (TAX (p)) == constants[k].procedure) {
@@ -1518,7 +1513,7 @@ static BOOL_T constant_unit (NODE_T * p)
       return (A68_FALSE);
     }
   } else if (WHETHER (p, IDENTIFIER)) {
-    if (TAX (p)->stand_env_proc) {
+    if (TAX (p)->a68g_standenv_proc) {
       int k;
       for (k = 0; constants[k].procedure != NULL; k ++) {
         if (PROC (TAX (p)) == constants[k].procedure) {
@@ -1696,7 +1691,7 @@ static void push_unit (NODE_T * p)
   } else if (WHETHER (p, WIDENING)) {
     push_widening (p);
   } else if (WHETHER (p, IDENTIFIER)) {
-    if (TAX (p)->stand_env_proc) {
+    if (TAX (p)->a68g_standenv_proc) {
       (void) (*(PROC (TAX (p)))) (p);
     } else {
     /* Possible constant folding */
@@ -1860,7 +1855,7 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
     } else if (LONG_MODE (MOID (p))) {
       char acc[NAME_SIZE];
       (void) make_name (acc, CON, "", NUMBER (p));
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) %s", acc));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) %s", acc));
     }
   }
 }
@@ -1873,7 +1868,7 @@ static BOOL_T need_initialise_frame (NODE_T * p)
 {
   TAG_T *tag;
   int count;
-  for (tag = SYMBOL_TABLE (p)->anonymous; tag != NULL; FORWARD (tag)) {
+  for (tag = TABLE (p)->anonymous; tag != NULL; FORWARD (tag)) {
     if (PRIO (tag) == ROUTINE_TEXT) {
       return (A68_TRUE);
     } else if (PRIO (tag) == FORMAT_TEXT) {
@@ -2009,13 +2004,10 @@ static void write_prelude (FILE_T out)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <%s/a68g-config.h>\n", PACKAGE));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "#include <%s/a68g.h>\n\n", PACKAGE));
   }
-  indent (out, "#define CODE(n) PROPAGATOR_T n (NODE_T * p) {\\\n");
-  indent (out, "  PROPAGATOR_T self;\n\n");
+  indent (out, "#define CODE(n) PROP_T n (NODE_T * p) {\\\n");
+  indent (out, "  PROP_T self;\n\n");
   indent (out, "#define EDOC(n, q) self.unit = n;\\\n");
   indent (out, "  self.source = q;\\\n");
-/*
-  indent (out, "  where_in_source (STDOUT_FILENO, (q));\\\n");
-*/
   indent (out, "  (void) p;\\\n");
   indent (out, "  return (self);}\n\n");
   indent (out, "#define DIV_INT(i, j) ((double) (i) / (double) (j))\n");
@@ -2030,8 +2022,8 @@ static void write_prelude (FILE_T out)
 
 static void init_static_frame (FILE_T out, NODE_T * p)
 {
-  if (SYMBOL_TABLE (p)->ap_increment > 0) {
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "FRAME_CLEAR (%d);\n", SYMBOL_TABLE (p)->ap_increment));
+  if (TABLE (p)->ap_increment > 0) {
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "FRAME_CLEAR (%d);\n", TABLE (p)->ap_increment));
   }
   if (LEX_LEVEL (p) == global_level) {
     indent (out, "global_pointer = frame_pointer;\n");
@@ -2276,7 +2268,7 @@ static void inline_widening (NODE_T * p, FILE_T out, int phase)
       inline_unit (SUB (p), out, L_YIELD);
       undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", LONG_MP_DIGITS));
     } else if (phase == L_YIELD) {
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) %s", acc));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) %s", acc));
     }
   } else if (WIDEN_TO (p, REAL, LONG_REAL)) {
     char acc[NAME_SIZE];
@@ -2290,7 +2282,7 @@ static void inline_widening (NODE_T * p, FILE_T out, int phase)
       inline_unit (SUB (p), out, L_YIELD);
       undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", LONG_MP_DIGITS));
     } else if (phase == L_YIELD) {
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) %s", acc));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) %s", acc));
     }
   } else if (WIDEN_TO (p, LONG_INT, LONG_REAL)) {
     inline_unit (SUB (p), out, phase);
@@ -2349,7 +2341,7 @@ static void inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
     } else if (MOID (p) == MODE (COMPLEX)) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "(A68_REAL *) (%s)", idf));
     } else if (LONG_MODE (MOID (p))) {
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) (%s)", idf));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) (%s)", idf));
     } else if (basic_mode (MOID (p))) {
       undent (out, idf);
     }
@@ -2378,7 +2370,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
   if (phase == L_DECLARE) {
     if (signed_in (BOOK_DECL, L_DECLARE, SYMBOL (p)) != NOT_BOOKED) {
       return;
-    } else if (TAX(p)->stand_env_proc) {
+    } else if (TAX(p)->a68g_standenv_proc) {
       return;
     } else {
       char idf[NAME_SIZE];
@@ -2389,7 +2381,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
   } else if (phase == L_EXECUTE) {
     if (signed_in (BOOK_DECL, L_EXECUTE, SYMBOL (p)) != NOT_BOOKED) {
       return;
-    } else if (TAX(p)->stand_env_proc) {
+    } else if (TAX(p)->a68g_standenv_proc) {
       return;
     } else {
       char idf[NAME_SIZE];
@@ -2398,7 +2390,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
       sign_in (BOOK_DECL, L_EXECUTE, SYMBOL (p), NULL, NUMBER (p));
     }
   } else if (phase == L_YIELD) {
-    if (TAX (p)->stand_env_proc) {
+    if (TAX (p)->a68g_standenv_proc) {
       int k;
       for (k = 0; constants[k].procedure != NULL; k ++) {
         if (PROC (TAX (p)) == constants[k].procedure) {
@@ -2419,7 +2411,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
       } else if (MOID (p) == MODE (COMPLEX)) {
         undentf (out, snprintf (line, SNPRINTF_SIZE, "(A68_REAL *) (%s)", idf));
       } else if (LONG_MODE (MOID (p))) {
-        undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) (%s)", idf));
+        undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) (%s)", idf));
       } else if (basic_mode (MOID (p))) {
         undent (out, idf);
       }
@@ -2468,8 +2460,8 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
 {
   NODE_T * prim = SUB (p);
   NODE_T * indx = NEXT (prim);
-  MOID_T * mode = SUB_MOID (p);
   MOID_T * row_mode = DEFLEX (MOID (prim));
+  MOID_T * mode = SUB_SUB (row_mode);
   char * symbol = SYMBOL (SUB (prim));
   char drf[NAME_SIZE], idf[NAME_SIZE], arr[NAME_SIZE], tup[NAME_SIZE], elm[NAME_SIZE];
   int k;
@@ -2539,7 +2531,7 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
     } else if (mode == MODE (COMPLEX)) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "(A68_REAL *) (%s)", drf));
     } else if (LONG_MODE (mode)) {
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) (%s)", drf));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) (%s)", drf));
     } else if (basic_mode (mode)) {
       undent (out, drf);
     } else {
@@ -2708,7 +2700,7 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
     } else if (mode == MODE (COMPLEX)) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "(A68_REAL *) (%s)", drf));
     } else if (LONG_MODE (mode)) {
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) (%s)", drf));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) (%s)", drf));
     } else if (basic_mode (mode)) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "%s", drf));
     } else {
@@ -3187,7 +3179,7 @@ static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
     } else if (SUB_MOID (p) == MODE (COMPLEX)) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "(A68_REAL *) (%s)", sel));
     } else if (LONG_MODE (SUB_MOID (p))) {
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_DIGIT_T *) (%s)", sel));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "(MP_T *) (%s)", sel));
     } else if (basic_mode (SUB_MOID (p))) {
       undent (out, sel);
     } else {
@@ -4081,7 +4073,7 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
     return (NULL);
   } else if (DIM (MOID (proc)) == 0) {
     return (NULL);
-  } else if (TAX (idf)->stand_env_proc) {
+  } else if (TAX (idf)->a68g_standenv_proc) {
     if (basic_call (p)) {
       static char fn[NAME_SIZE];
       char fun[NAME_SIZE];
@@ -4183,7 +4175,7 @@ static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
     return (NULL);
   } else if (DIM (MOID (proc)) == 0) {
     return (NULL);
-  } else if (TAX (idf)->stand_env_proc) {
+  } else if (TAX (idf)->a68g_standenv_proc) {
     return (NULL);
   } else if (!(CODEX (TAX (idf)) & PROC_DECLARATION_MASK)) {
     return (NULL);
@@ -4667,7 +4659,7 @@ static void embed_serial_clause (NODE_T * p, FILE_T out, char * pop)
 static char * compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
   NODE_T *sc = NEXT_SUB (p);
-  if (MOID (p) == MODE (VOID) && SYMBOL_TABLE (sc)->labels == NULL) {
+  if (MOID (p) == MODE (VOID) && TABLE (sc)->labels == NULL) {
     static char fn[NAME_SIZE];
     char pop[NAME_SIZE];
     int units = 0, decs = 0;
@@ -4807,18 +4799,18 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
     return (NULL);
   }
   q = SUB (p);
-  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, NULL_ATTRIBUTE)) {
+  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     if (! basic_serial (NEXT_SUB (q), 1)) {
       return (NULL);
     }
     FORWARD (q);
     while (q != NULL && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
-      if (SYMBOL_TABLE (NEXT_SUB (q))->labels != NULL) {
+      if (TABLE (NEXT_SUB (q))->labels != NULL) {
         return (NULL);
       }
       FORWARD (q);
     }
-    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
     } else if (q != NULL && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
@@ -4826,14 +4818,14 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   }
 /* Generate embedded units */
   q = SUB (p);
-  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, NULL_ATTRIBUTE)) {
+  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     FORWARD (q);
     while (q != NULL && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
       last = NULL; units = decs = 0;
       compile_serial_clause (NEXT_SUB (q), out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
       FORWARD (q);
     }
-    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
     } else if (q != NULL && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
@@ -4848,13 +4840,13 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   }
   root_idf = NULL;
   q = SUB (p);
-  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, NULL_ATTRIBUTE)) {
+  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     inline_unit (SUB (NEXT_SUB (q)), out, L_DECLARE);
     FORWARD (q);
     while (q != NULL && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
       FORWARD (q);
     }
-    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
     } else if (q != NULL && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
@@ -4865,22 +4857,22 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
 /* Generate the function body */
   indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
   q = SUB (p);
-  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, NULL_ATTRIBUTE)) {
+  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     inline_unit (SUB (NEXT_SUB (q)), out, L_EXECUTE);
     FORWARD (q);
     while (q != NULL && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
       FORWARD (q);
     }
-    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
     } else if (q != NULL && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
     }
   }
   q = SUB (p);
-  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, NULL_ATTRIBUTE)) {
+  while (q != NULL && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     BOOL_T else_part = A68_FALSE;
-    if (whether_one_of (q, IF_PART, OPEN_PART, NULL_ATTRIBUTE) ) {
+    if (whether_one_of (q, IF_PART, OPEN_PART, STOP) ) {
       indent (out, "if (");
     } else {
       indent (out, "} else if (");
@@ -4898,7 +4890,7 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
       else_part = A68_TRUE;
       FORWARD (q);
     }
-    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
     } else if (q != NULL && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
@@ -4982,7 +4974,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
     return (NULL);
   }
   q = SUB (p);
-  if (q != NULL && whether_one_of (q, CASE_PART, OPEN_PART, NULL_ATTRIBUTE)) {
+  if (q != NULL && whether_one_of (q, CASE_PART, OPEN_PART, STOP)) {
     if (! basic_serial (NEXT_SUB (q), 1)) {
       return (NULL);
     }
@@ -4990,8 +4982,8 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   } else {
     return (NULL);
   }
-  while (q != NULL && whether_one_of (q, CASE_IN_PART, OUT_PART, CHOICE, NULL_ATTRIBUTE)) {
-    if (SYMBOL_TABLE (NEXT_SUB (q))->labels != NULL) {
+  while (q != NULL && whether_one_of (q, CASE_IN_PART, OUT_PART, CHOICE, STOP)) {
+    if (TABLE (NEXT_SUB (q))->labels != NULL) {
       return (NULL);
     }
     FORWARD (q);
@@ -5003,9 +4995,9 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
 /* Generate embedded units */
   q = SUB (p);
-  if (q != NULL && whether_one_of (q, CASE_PART, OPEN_PART, NULL_ATTRIBUTE)) {
+  if (q != NULL && whether_one_of (q, CASE_PART, OPEN_PART, STOP)) {
     FORWARD (q);
-    if (q != NULL && whether_one_of (q, CASE_IN_PART, CHOICE, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, CASE_IN_PART, CHOICE, STOP)) {
       last = NULL; units = decs = 0;
       k = 0;
       do {
@@ -5014,7 +5006,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
       } while (compile_int_case_units (NEXT_SUB (q), out, NULL, k, & count, A68_MAKE_OTHERS)); 
       FORWARD (q);
     }
-    if (q != NULL && whether_one_of (q, OUT_PART, CHOICE, NULL_ATTRIBUTE)) {
+    if (q != NULL && whether_one_of (q, OUT_PART, CHOICE, STOP)) {
       last = NULL; units = decs = 0;
       compile_serial_clause (NEXT_SUB (q), out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
       FORWARD (q);
@@ -5047,7 +5039,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
     k ++;
   } while (compile_int_case_units (NEXT_SUB (q), out, SUB (q), k, & count, A68_MAKE_FUNCTION)); 
   FORWARD (q);
-  if (q != NULL && whether_one_of (q, OUT_PART, CHOICE, NULL_ATTRIBUTE)) {
+  if (q != NULL && whether_one_of (q, OUT_PART, CHOICE, STOP)) {
     indent (out, "default: {\n");
     indentation ++;
     embed_serial_clause (NEXT_SUB (q), out, pop);
@@ -5148,7 +5140,7 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   } else {
     return (NULL);
   }
-  if (SYMBOL_TABLE (sc)->labels != NULL) {
+  if (TABLE (sc)->labels != NULL) {
     return (NULL);
   }
 /* Loop clause is compiled */
@@ -5271,7 +5263,7 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   units = decs = 0;
   compile_serial_clause (sc, out, &last, &units, &decs, pop, A68_MAKE_FUNCTION);
 /* Re-initialise if necessary */
-  need_reinit = (BOOL_T) (SYMBOL_TABLE (sc)->ap_increment > 0 || need_initialise_frame (sc));
+  need_reinit = (BOOL_T) (TABLE (sc)->ap_increment > 0 || need_initialise_frame (sc));
   if (need_reinit) {
     indent (out, "if (");
     if (to_part == NULL && downto_part == NULL) {
@@ -5287,8 +5279,8 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     }
     undent (out, ") {\n");
     indentation++;
-    if (SYMBOL_TABLE (sc)->ap_increment > 0) {
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "FRAME_CLEAR (%d);\n", SYMBOL_TABLE (sc)->ap_increment));
+    if (TABLE (sc)->ap_increment > 0) {
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "FRAME_CLEAR (%d);\n", TABLE (sc)->ap_increment));
     }
     if (need_initialise_frame (sc)) {
       indentf (out, snprintf (line, SNPRINTF_SIZE, "initialise_frame (N (%d));\n", NUMBER (sc)));
@@ -5338,7 +5330,7 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
   LOW_SYSTEM_STACK_ALERT (p);
   if (p == NULL) {
     return (NULL);
-  } else if (whether_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, ENCLOSED_CLAUSE, NULL_ATTRIBUTE)) {
+  } else if (whether_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, ENCLOSED_CLAUSE, STOP)) {
     COMPILE (SUB (p), out, compile_unit, compose_fun);
   } 
   if (DEBUG_LEVEL >= 3) {

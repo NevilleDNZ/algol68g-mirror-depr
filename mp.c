@@ -90,7 +90,7 @@ short at the penalty of some performance loss.
 As is common practice, mp numbers are represented by a row of digits
 in a large base. Layout of a mp number "z" is:
 
-   MP_DIGIT_T *z;
+   MP_T *z;
    MP_STATUS (z)        Status word
    MP_EXPONENT (z)      Exponent with base MP_RADIX
    MP_DIGIT (z, 1 .. N) Digits 1 .. N
@@ -133,13 +133,13 @@ using the source code provided. See the GNU General Public License for details.
 
 /* Internal mp constants */
 
-static MP_DIGIT_T *ref_mp_pi = NULL;
+static MP_T *ref_mp_pi = NO_MP;
 static int mp_pi_size = -1;
 
-static MP_DIGIT_T *ref_mp_ln_scale = NULL;
+static MP_T *ref_mp_ln_scale = NO_MP;
 static int mp_ln_scale_size = -1;
 
-static MP_DIGIT_T *ref_mp_ln_10 = NULL;
+static MP_T *ref_mp_ln_10 = NO_MP;
 static int mp_ln_10_size = -1;
 
 int varying_mp_digits = 10;
@@ -272,9 +272,9 @@ int get_mp_bits_words (MOID_T * m)
 \return same
 **/
 
-BOOL_T check_long_int (MP_DIGIT_T * z)
+BOOL_T check_long_int (MP_T * z)
 {
-  return ((BOOL_T) ((MP_EXPONENT (z) >= (MP_DIGIT_T) 0) && (MP_EXPONENT (z) < (MP_DIGIT_T) LONG_MP_DIGITS)));
+  return ((BOOL_T) ((MP_EXPONENT (z) >= (MP_T) 0) && (MP_EXPONENT (z) < (MP_T) LONG_MP_DIGITS)));
 }
 
 /*!
@@ -283,9 +283,9 @@ BOOL_T check_long_int (MP_DIGIT_T * z)
 \return same
 **/
 
-BOOL_T check_longlong_int (MP_DIGIT_T * z)
+BOOL_T check_longlong_int (MP_T * z)
 {
-  return ((BOOL_T) ((MP_EXPONENT (z) >= (MP_DIGIT_T) 0) && (MP_EXPONENT (z) < (MP_DIGIT_T) varying_mp_digits)));
+  return ((BOOL_T) ((MP_EXPONENT (z) >= (MP_T) 0) && (MP_EXPONENT (z) < (MP_T) varying_mp_digits)));
 }
 
 /*!
@@ -295,7 +295,7 @@ BOOL_T check_longlong_int (MP_DIGIT_T * z)
 \return same
 **/
 
-BOOL_T check_mp_int (MP_DIGIT_T * z, MOID_T * m)
+BOOL_T check_mp_int (MP_T * z, MOID_T * m)
 {
   if (m == MODE (LONG_INT) || m == MODE (LONG_BITS)) {
     return (check_long_int (z));
@@ -335,14 +335,14 @@ void set_longlong_mp_digits (int n)
 \return result "z"
 **/
 
-MP_DIGIT_T *set_mp_short (MP_DIGIT_T * z, MP_DIGIT_T x, int x_expo, int digits)
+MP_T *set_mp_short (MP_T * z, MP_T x, int x_expo, int digits)
 {
-  MP_DIGIT_T *d = &MP_DIGIT ((z), 2);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
-  MP_EXPONENT (z) = (MP_DIGIT_T) x_expo;
-  MP_DIGIT (z, 1) = (MP_DIGIT_T) x;
+  MP_T *d = &MP_DIGIT ((z), 2);
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_EXPONENT (z) = (MP_T) x_expo;
+  MP_DIGIT (z, 1) = (MP_T) x;
   while (--digits) {
-    *d++ = (MP_DIGIT_T) 0;
+    *d++ = (MP_T) 0;
   }
   return (z);
 }
@@ -356,7 +356,7 @@ MP_DIGIT_T *set_mp_short (MP_DIGIT_T * z, MP_DIGIT_T x, int x_expo, int digits)
 \return same
 **/
 
-static BOOL_T same_mp (NODE_T * p, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+static BOOL_T same_mp (NODE_T * p, MP_T * x, MP_T * y, int digits)
 {
   int k;
   (void) p;
@@ -373,25 +373,6 @@ static BOOL_T same_mp (NODE_T * p, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
 }
 
 /*!
-\brief unformatted write of z to stdout
-\param str prompt
-\param z mp number to print
-\param digits precision in mp-digits
-**/
-
-void raw_write_mp (char *str, MP_DIGIT_T * z, int digits)
-{
-  int i;
-  printf ("\n%s", str);
-  for (i = 1; i <= digits; i++) {
-    printf (" %07d", (int) MP_DIGIT (z, i));
-  }
-  printf (" ^ %d", (int) MP_EXPONENT (z));
-  printf (" status=%d", (int) MP_STATUS (z));
-  ASSERT (fflush (stdout) == 0);
-}
-
-/*!
 \brief align 10-base z in a MP_RADIX mantissa
 \param z mp number
 \param expo
@@ -399,7 +380,7 @@ void raw_write_mp (char *str, MP_DIGIT_T * z, int digits)
 \return result "z"
 **/
 
-static MP_DIGIT_T *align_mp (MP_DIGIT_T * z, int *expo, int digits)
+static MP_T *align_mp (MP_T * z, int *expo, int digits)
 {
   int i, shift;
   if (*expo >= 0) {
@@ -415,7 +396,7 @@ static MP_DIGIT_T *align_mp (MP_DIGIT_T * z, int *expo, int digits)
     int j, carry = 0;
     for (j = 1; j <= digits; j++) {
       int k = (int) MP_DIGIT (z, j) % 10;
-      MP_DIGIT (z, j) = (MP_DIGIT_T) ((int) (MP_DIGIT (z, j) / 10) + carry * (MP_RADIX / 10));
+      MP_DIGIT (z, j) = (MP_T) ((int) (MP_DIGIT (z, j) / 10) + carry * (MP_RADIX / 10));
       carry = k;
     }
   }
@@ -431,7 +412,7 @@ static MP_DIGIT_T *align_mp (MP_DIGIT_T * z, int *expo, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
+MP_T *string_to_mp (NODE_T * p, MP_T * z, char *s, int digits)
 {
   int i, j, sign, weight, sum, comma, power;
   int expo;
@@ -465,7 +446,7 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
       weight /= 10;
       power++;
       if (weight < 1) {
-        MP_DIGIT (z, j++) = (MP_DIGIT_T) sum;
+        MP_DIGIT (z, j++) = (MP_T) sum;
         sum = 0;
         weight = MP_RADIX / 10;
       }
@@ -474,7 +455,7 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
   }
 /* Store the last digits */
   if (j <= digits) {
-    MP_DIGIT (z, j++) = (MP_DIGIT_T) sum;
+    MP_DIGIT (z, j++) = (MP_T) sum;
   }
 /* See if there is an exponent */
   expo = 0;
@@ -494,7 +475,7 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
   if (errno == 0 && ok) {
     return (z);
   } else {
-    return (NULL);
+    return (NO_MP);
   }
 }
 
@@ -507,7 +488,7 @@ MP_DIGIT_T *string_to_mp (NODE_T * p, MP_DIGIT_T * z, char *s, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *int_to_mp (NODE_T * p, MP_DIGIT_T * z, int k, int digits)
+MP_T *int_to_mp (NODE_T * p, MP_T * z, int k, int digits)
 {
   int n = 0, j, sign_k = (k >= 0 ? 1 : -1);
   int k2 = k;
@@ -518,9 +499,9 @@ MP_DIGIT_T *int_to_mp (NODE_T * p, MP_DIGIT_T * z, int k, int digits)
     n++;
   }
   SET_MP_ZERO (z, digits);
-  MP_EXPONENT (z) = (MP_DIGIT_T) n;
+  MP_EXPONENT (z) = (MP_T) n;
   for (j = 1 + n; j >= 1; j--) {
-    MP_DIGIT (z, j) = (MP_DIGIT_T) (k % MP_RADIX);
+    MP_DIGIT (z, j) = (MP_T) (k % MP_RADIX);
     k /= MP_RADIX;
   }
   MP_DIGIT (z, 1) = sign_k * MP_DIGIT (z, 1);
@@ -537,7 +518,7 @@ MP_DIGIT_T *int_to_mp (NODE_T * p, MP_DIGIT_T * z, int k, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *unsigned_to_mp (NODE_T * p, MP_DIGIT_T * z, unsigned k, int digits)
+MP_T *unsigned_to_mp (NODE_T * p, MP_T * z, unsigned k, int digits)
 {
   int n = 0, j;
   unsigned k2 = k;
@@ -545,9 +526,9 @@ MP_DIGIT_T *unsigned_to_mp (NODE_T * p, MP_DIGIT_T * z, unsigned k, int digits)
     n++;
   }
   SET_MP_ZERO (z, digits);
-  MP_EXPONENT (z) = (MP_DIGIT_T) n;
+  MP_EXPONENT (z) = (MP_T) n;
   for (j = 1 + n; j >= 1; j--) {
-    MP_DIGIT (z, j) = (MP_DIGIT_T) (k % MP_RADIX);
+    MP_DIGIT (z, j) = (MP_T) (k % MP_RADIX);
     k /= MP_RADIX;
   }
   CHECK_MP_EXPONENT (p, z);
@@ -562,7 +543,7 @@ MP_DIGIT_T *unsigned_to_mp (NODE_T * p, MP_DIGIT_T * z, unsigned k, int digits)
 \return result "z"
 **/
 
-int mp_to_int (NODE_T * p, MP_DIGIT_T * z, int digits)
+int mp_to_int (NODE_T * p, MP_T * z, int digits)
 {
 /*
 This routines looks a lot like "strtol". 
@@ -604,7 +585,7 @@ We do not use "mp_to_real" since int could be wider than 2 ** 52.
 \return result "z"
 **/
 
-unsigned mp_to_unsigned (NODE_T * p, MP_DIGIT_T * z, int digits)
+unsigned mp_to_unsigned (NODE_T * p, MP_T * z, int digits)
 {
 /*
 This routines looks a lot like "strtol". We do not use "mp_to_real" since int
@@ -642,12 +623,12 @@ could be wider than 2 ** 52.
 \return result "z"
 **/
 
-MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
+MP_T *real_to_mp (NODE_T * p, MP_T * z, double x, int digits)
 {
   int j, k, sign_x, sum, weight;
   int expo;
   double a;
-  MP_DIGIT_T *u;
+  MP_T *u;
   SET_MP_ZERO (z, digits);
   if (x == 0.0) {
     return (z);
@@ -679,7 +660,7 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
     sum += weight * value;
     weight /= 10;
     if (weight < 1) {
-      (u++)[0] = (MP_DIGIT_T) sum;
+      (u++)[0] = (MP_T) sum;
       sum = 0;
       weight = (MP_RADIX / 10);
     }
@@ -687,10 +668,10 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
   }
 /* Store the last digits */
   if (j <= digits) {
-    u[0] = (MP_DIGIT_T) sum;
+    u[0] = (MP_T) sum;
   }
   (void) align_mp (z, &expo, digits);
-  MP_EXPONENT (z) = (MP_DIGIT_T) expo;
+  MP_EXPONENT (z) = (MP_T) expo;
   MP_DIGIT (z, 1) *= sign_x;
   CHECK_MP_EXPONENT (p, z);
   return (z);
@@ -704,11 +685,11 @@ MP_DIGIT_T *real_to_mp (NODE_T * p, MP_DIGIT_T * z, double x, int digits)
 \return result "z"
 **/
 
-double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
+double mp_to_real (NODE_T * p, MP_T * z, int digits)
 {
 /* This routine looks a lot like "strtod" */
   (void) p;
-  if (MP_EXPONENT (z) * (MP_DIGIT_T) LOG_MP_BASE <= (MP_DIGIT_T) DBL_MIN_10_EXP) {
+  if (MP_EXPONENT (z) * (MP_T) LOG_MP_BASE <= (MP_T) DBL_MIN_10_EXP) {
     return (0);
   } else {
     int j;
@@ -731,11 +712,11 @@ double mp_to_real (NODE_T * p, MP_DIGIT_T * z, int digits)
 \return result "z"
 **/
 
-unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
+unsigned *stack_mp_bits (NODE_T * p, MP_T * z, MOID_T * m)
 {
   int digits = get_mp_digits (m), words = get_mp_bits_words (m), k, lim;
   unsigned *row, mask;
-  MP_DIGIT_T *u, *v, *w;
+  MP_T *u, *v, *w;
   row = (unsigned *) STACK_ADDRESS (stack_pointer);
   INCREMENT_STACK_POINTER (p, words * ALIGNED_SIZE_OF (unsigned));
   STACK_MP (u, p, digits);
@@ -751,8 +732,8 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
 /* Convert radix MP_BITS_RADIX number */
   for (k = words - 1; k >= 0; k--) {
     MOVE_MP (w, u, digits);
-    (void) over_mp_digit (p, u, u, (MP_DIGIT_T) MP_BITS_RADIX, digits);
-    (void) mul_mp_digit (p, v, u, (MP_DIGIT_T) MP_BITS_RADIX, digits);
+    (void) over_mp_digit (p, u, u, (MP_T) MP_BITS_RADIX, digits);
+    (void) mul_mp_digit (p, v, u, (MP_T) MP_BITS_RADIX, digits);
     (void) sub_mp (p, v, w, v, digits);
     row[k] = (unsigned) MP_DIGIT (v, 1);
   }
@@ -779,9 +760,9 @@ unsigned *stack_mp_bits (NODE_T * p, MP_DIGIT_T * z, MOID_T * m)
 \param m mode of "u"
 **/
 
-void check_long_bits_value (NODE_T * p, MP_DIGIT_T * u, MOID_T * m)
+void check_long_bits_value (NODE_T * p, MP_T * u, MOID_T * m)
 {
-  if (MP_EXPONENT (u) >= (MP_DIGIT_T) (get_mp_digits (m) - 1)) {
+  if (MP_EXPONENT (u) >= (MP_T) (get_mp_digits (m) - 1)) {
     ADDR_T pop_sp = stack_pointer;
     (void) stack_mp_bits (p, u, m);
     stack_pointer = pop_sp;
@@ -797,11 +778,11 @@ void check_long_bits_value (NODE_T * p, MP_DIGIT_T * u, MOID_T * m)
 \return result "u"
 **/
 
-MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
+MP_T *pack_mp_bits (NODE_T * p, MP_T * u, unsigned *row, MOID_T * m)
 {
   int digits = get_mp_digits (m), words = get_mp_bits_words (m), k, lim;
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v, *w;
+  MP_T *v, *w;
 /* Discard excess bits */
   unsigned mask = 0x1, musk = 0x0;
   STACK_MP (v, p, digits);
@@ -821,15 +802,15 @@ MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
   }
 /* Convert */
   SET_MP_ZERO (u, digits);
-  (void) set_mp_short (v, (MP_DIGIT_T) 1, 0, digits);
+  (void) set_mp_short (v, (MP_T) 1, 0, digits);
   for (k = words - 1; k >= 0; k--) {
-    (void) mul_mp_digit (p, w, v, (MP_DIGIT_T) (musk & row[k]), digits);
+    (void) mul_mp_digit (p, w, v, (MP_T) (musk & row[k]), digits);
     (void) add_mp (p, u, u, w, digits);
     if (k != 0) {
-      (void) mul_mp_digit (p, v, v, (MP_DIGIT_T) MP_BITS_RADIX, digits);
+      (void) mul_mp_digit (p, v, v, (MP_T) MP_BITS_RADIX, digits);
     }
   }
-  MP_STATUS (u) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (u) = (MP_T) INITIALISED_MASK;
   stack_pointer = pop_sp;
   return (u);
 }
@@ -841,17 +822,17 @@ MP_DIGIT_T *pack_mp_bits (NODE_T * p, MP_DIGIT_T * u, unsigned *row, MOID_T * m)
 \param digits precision in mp-digits
 **/
 
-static void norm_mp_light (MP_DIGIT_T * w, int k, int digits)
+static void norm_mp_light (MP_T * w, int k, int digits)
 {
 /* Bring every digit back to [0 .. MP_RADIX> */
   int j;
-  MP_DIGIT_T *z;
+  MP_T *z;
   for (j = digits, z = &MP_DIGIT (w, digits); j >= k; j--, z--) {
     if (z[0] >= MP_RADIX) {
-      z[0] -= (MP_DIGIT_T) MP_RADIX;
+      z[0] -= (MP_T) MP_RADIX;
       z[-1] += 1;
     } else if (z[0] < 0) {
-      z[0] += (MP_DIGIT_T) MP_RADIX;
+      z[0] += (MP_T) MP_RADIX;
       z[-1] -= 1;
     }
   }
@@ -864,19 +845,19 @@ static void norm_mp_light (MP_DIGIT_T * w, int k, int digits)
 \param digits precision in mp-digits
 **/
 
-static void norm_mp (MP_DIGIT_T * w, int k, int digits)
+static void norm_mp (MP_T * w, int k, int digits)
 {
 /* Bring every digit back to [0 .. MP_RADIX> */
   int j;
-  MP_DIGIT_T *z;
+  MP_T *z;
   for (j = digits, z = &MP_DIGIT (w, digits); j >= k; j--, z--) {
-    if (z[0] >= (MP_DIGIT_T) MP_RADIX) {
-      MP_DIGIT_T carry = (MP_DIGIT_T) ((int) (z[0] / (MP_DIGIT_T) MP_RADIX));
-      z[0] -= carry * (MP_DIGIT_T) MP_RADIX;
+    if (z[0] >= (MP_T) MP_RADIX) {
+      MP_T carry = (MP_T) ((int) (z[0] / (MP_T) MP_RADIX));
+      z[0] -= carry * (MP_T) MP_RADIX;
       z[-1] += carry;
-    } else if (z[0] < (MP_DIGIT_T) 0) {
-      MP_DIGIT_T carry = (MP_DIGIT_T) 1 + (MP_DIGIT_T) ((int) ((-z[0] - 1) / (MP_DIGIT_T) MP_RADIX));
-      z[0] += carry * (MP_DIGIT_T) MP_RADIX;
+    } else if (z[0] < (MP_T) 0) {
+      MP_T carry = (MP_T) 1 + (MP_T) ((int) ((-z[0] - 1) / (MP_T) MP_RADIX));
+      z[0] += carry * (MP_T) MP_RADIX;
       z[-1] -= carry;
     }
   }
@@ -889,7 +870,7 @@ static void norm_mp (MP_DIGIT_T * w, int k, int digits)
 \param digits precision in mp-digits
 **/
 
-static void round_internal_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
+static void round_internal_mp (MP_T * z, MP_T * w, int digits)
 {
 /* Assume that w has precision of at least 2 + digits */
   int last = (MP_DIGIT (w, 1) == 0 ? 2 + digits : 1 + digits);
@@ -908,7 +889,7 @@ static void round_internal_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
   }
 /* Zero is zero is zero */
   if (MP_DIGIT (z, 1) == 0) {
-    MP_EXPONENT (z) = (MP_DIGIT_T) 0;
+    MP_EXPONENT (z) = (MP_T) 0;
   }
 }
 
@@ -920,11 +901,11 @@ static void round_internal_mp (MP_DIGIT_T * z, MP_DIGIT_T * w, int digits)
 \param digits precision in mp-digits
 **/
 
-void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+void trunc_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   if (MP_EXPONENT (x) < 0) {
     SET_MP_ZERO (z, digits);
-  } else if (MP_EXPONENT (x) >= (MP_DIGIT_T) digits) {
+  } else if (MP_EXPONENT (x) >= (MP_T) digits) {
     errno = EDOM;
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (WHETHER (MOID (p), PROC_SYMBOL) ? SUB_MOID (p) : MOID (p)));
     exit_genie (p, A68_RUNTIME_ERROR);
@@ -932,7 +913,7 @@ void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     int k;
     MOVE_MP (z, x, digits);
     for (k = (int) (MP_EXPONENT (x) + 2); k <= digits; k++) {
-      MP_DIGIT (z, k) = (MP_DIGIT_T) 0;
+      MP_DIGIT (z, k) = (MP_T) 0;
     }
   }
 }
@@ -947,23 +928,23 @@ void trunc_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *shorten_mp (NODE_T * p, MP_DIGIT_T * z, int digits, MP_DIGIT_T * x, int digits_x)
+MP_T *shorten_mp (NODE_T * p, MP_T * z, int digits, MP_T * x, int digits_x)
 {
   if (digits >= digits_x) {
     errno = EDOM;
-    return (NULL);
+    return (NO_MP);
   } else {
 /* Reserve extra digits for proper rounding */
     int pop_sp = stack_pointer, digits_h = digits + 2;
-    MP_DIGIT_T *w;
+    MP_T *w;
     BOOL_T negative = (BOOL_T) (MP_DIGIT (x, 1) < 0);
     STACK_MP (w, p, digits_h);
     if (negative) {
       MP_DIGIT (x, 1) = -MP_DIGIT (x, 1);
     }
-    MP_STATUS (w) = (MP_DIGIT_T) 0;
+    MP_STATUS (w) = (MP_T) 0;
     MP_EXPONENT (w) = MP_EXPONENT (x) + 1;
-    MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
+    MP_DIGIT (w, 1) = (MP_T) 0;
     MOVE_DIGITS (&MP_DIGIT (w, 2), &MP_DIGIT (x, 1), digits + 1);
     round_internal_mp (z, w, digits);
     if (negative) {
@@ -984,7 +965,7 @@ MP_DIGIT_T *shorten_mp (NODE_T * p, MP_DIGIT_T * z, int digits, MP_DIGIT_T * x, 
 \return result "z"
 **/
 
-MP_DIGIT_T *lengthen_mp (NODE_T * p, MP_DIGIT_T * z, int digits_z, MP_DIGIT_T * x, int digits_x)
+MP_T *lengthen_mp (NODE_T * p, MP_T * z, int digits_z, MP_T * x, int digits_x)
 {
   int j;
   (void) p;
@@ -995,7 +976,7 @@ MP_DIGIT_T *lengthen_mp (NODE_T * p, MP_DIGIT_T * z, int digits_z, MP_DIGIT_T * 
       MP_STATUS (z) = MP_STATUS (x);
     }
     for (j = 1 + digits_x; j <= digits_z; j++) {
-      MP_DIGIT (z, j) = (MP_DIGIT_T) 0;
+      MP_DIGIT (z, j) = (MP_T) 0;
     }
   }
   return (z);
@@ -1011,13 +992,13 @@ MP_DIGIT_T *lengthen_mp (NODE_T * p, MP_DIGIT_T * z, int digits_z, MP_DIGIT_T * 
 \return result "z"
 **/
 
-MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *add_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
 /* Trivial cases */
-  if (MP_DIGIT (x, 1) == (MP_DIGIT_T) 0) {
+  if (MP_DIGIT (x, 1) == (MP_T) 0) {
     MOVE_MP (z, y, digits);
     return (z);
   } else if (MP_DIGIT (y, 1) == 0) {
@@ -1038,29 +1019,29 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 /* Add */
     int j, digits_h = 2 + digits;
     STACK_MP (w, p, digits_h);
-    MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
+    MP_DIGIT (w, 1) = (MP_T) 0;
     if (MP_EXPONENT (x) == MP_EXPONENT (y)) {
-      MP_EXPONENT (w) = (MP_DIGIT_T) 1 + MP_EXPONENT (x);
+      MP_EXPONENT (w) = (MP_T) 1 + MP_EXPONENT (x);
       for (j = 1; j <= digits; j++) {
         MP_DIGIT (w, j + 1) = MP_DIGIT (x, j) + MP_DIGIT (y, j);
       }
-      MP_DIGIT (w, digits_h) = (MP_DIGIT_T) 0;
+      MP_DIGIT (w, digits_h) = (MP_T) 0;
     } else if (MP_EXPONENT (x) > MP_EXPONENT (y)) {
       int shl_y = (int) MP_EXPONENT (x) - (int) MP_EXPONENT (y);
-      MP_EXPONENT (w) = (MP_DIGIT_T) 1 + MP_EXPONENT (x);
+      MP_EXPONENT (w) = (MP_T) 1 + MP_EXPONENT (x);
       for (j = 1; j < digits_h; j++) {
         int i_y = j - (int) shl_y;
-        MP_DIGIT_T x_j = (j > digits ? 0 : MP_DIGIT (x, j));
-        MP_DIGIT_T y_j = (i_y <= 0 || i_y > digits ? 0 : MP_DIGIT (y, i_y));
+        MP_T x_j = (j > digits ? 0 : MP_DIGIT (x, j));
+        MP_T y_j = (i_y <= 0 || i_y > digits ? 0 : MP_DIGIT (y, i_y));
         MP_DIGIT (w, j + 1) = x_j + y_j;
       }
     } else {
       int shl_x = (int) MP_EXPONENT (y) - (int) MP_EXPONENT (x);
-      MP_EXPONENT (w) = (MP_DIGIT_T) 1 + MP_EXPONENT (y);
+      MP_EXPONENT (w) = (MP_T) 1 + MP_EXPONENT (y);
       for (j = 1; j < digits_h; j++) {
         int i_x = j - (int) shl_x;
-        MP_DIGIT_T x_j = (i_x <= 0 || i_x > digits ? 0 : MP_DIGIT (x, i_x));
-        MP_DIGIT_T y_j = (j > digits ? 0 : MP_DIGIT (y, j));
+        MP_T x_j = (i_x <= 0 || i_x > digits ? 0 : MP_DIGIT (x, i_x));
+        MP_T y_j = (j > digits ? 0 : MP_DIGIT (y, j));
         MP_DIGIT (w, j + 1) = x_j + y_j;
       }
     }
@@ -1087,19 +1068,19 @@ MP_DIGIT_T *add_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 \return result "z"
 **/
 
-MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *sub_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int fnz, k;
-  MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
+  MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
   BOOL_T negative = A68_FALSE;
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
 /* Trivial cases */
-  if (MP_DIGIT (x, 1) == (MP_DIGIT_T) 0) {
+  if (MP_DIGIT (x, 1) == (MP_T) 0) {
     MOVE_MP (z, y, digits);
     MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
     return (z);
-  } else if (MP_DIGIT (y, 1) == (MP_DIGIT_T) 0) {
+  } else if (MP_DIGIT (y, 1) == (MP_T) 0) {
     MOVE_MP (z, x, digits);
     return (z);
   }
@@ -1117,29 +1098,29 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 /* Subtract */
     int j, digits_h = 2 + digits;
     STACK_MP (w, p, digits_h);
-    MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
+    MP_DIGIT (w, 1) = (MP_T) 0;
     if (MP_EXPONENT (x) == MP_EXPONENT (y)) {
-      MP_EXPONENT (w) = (MP_DIGIT_T) 1 + MP_EXPONENT (x);
+      MP_EXPONENT (w) = (MP_T) 1 + MP_EXPONENT (x);
       for (j = 1; j <= digits; j++) {
         MP_DIGIT (w, j + 1) = MP_DIGIT (x, j) - MP_DIGIT (y, j);
       }
-      MP_DIGIT (w, digits_h) = (MP_DIGIT_T) 0;
+      MP_DIGIT (w, digits_h) = (MP_T) 0;
     } else if (MP_EXPONENT (x) > MP_EXPONENT (y)) {
       int shl_y = (int) MP_EXPONENT (x) - (int) MP_EXPONENT (y);
-      MP_EXPONENT (w) = (MP_DIGIT_T) 1 + MP_EXPONENT (x);
+      MP_EXPONENT (w) = (MP_T) 1 + MP_EXPONENT (x);
       for (j = 1; j < digits_h; j++) {
         int i_y = j - (int) shl_y;
-        MP_DIGIT_T x_j = (j > digits ? 0 : MP_DIGIT (x, j));
-        MP_DIGIT_T y_j = (i_y <= 0 || i_y > digits ? 0 : MP_DIGIT (y, i_y));
+        MP_T x_j = (j > digits ? 0 : MP_DIGIT (x, j));
+        MP_T y_j = (i_y <= 0 || i_y > digits ? 0 : MP_DIGIT (y, i_y));
         MP_DIGIT (w, j + 1) = x_j - y_j;
       }
     } else {
       int shl_x = (int) MP_EXPONENT (y) - (int) MP_EXPONENT (x);
-      MP_EXPONENT (w) = (MP_DIGIT_T) 1 + MP_EXPONENT (y);
+      MP_EXPONENT (w) = (MP_T) 1 + MP_EXPONENT (y);
       for (j = 1; j < digits_h; j++) {
         int i_x = j - (int) shl_x;
-        MP_DIGIT_T x_j = (i_x <= 0 || i_x > digits ? 0 : MP_DIGIT (x, i_x));
-        MP_DIGIT_T y_j = (j > digits ? 0 : MP_DIGIT (y, j));
+        MP_T x_j = (i_x <= 0 || i_x > digits ? 0 : MP_DIGIT (x, i_x));
+        MP_T y_j = (j > digits ? 0 : MP_DIGIT (y, j));
         MP_DIGIT (w, j + 1) = x_j - y_j;
       }
     }
@@ -1170,7 +1151,7 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
       int j2 = fnz - 1;
       for (k = 1; k <= digits_h - j2; k++) {
         MP_DIGIT (w, k) = MP_DIGIT (w, k + j2);
-        MP_DIGIT (w, k + j2) = (MP_DIGIT_T) 0;
+        MP_DIGIT (w, k + j2) = (MP_T) 0;
       }
       MP_EXPONENT (w) -= j2;
     }
@@ -1200,14 +1181,14 @@ MP_DIGIT_T *sub_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 \return result "z"
 **/
 
-MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *mul_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
-  MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
+  MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
   int i, oflow, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   if (x_1 == 0 || y_1 == 0) {
     stack_pointer = pop_sp;
     MP_DIGIT (x, 1) = x_1;
@@ -1223,12 +1204,12 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
   ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
   if (digits < oflow) {
     for (i = digits; i >= 1; i--) {
-      MP_DIGIT_T yi = MP_DIGIT (y, i);
+      MP_T yi = MP_DIGIT (y, i);
       if (yi != 0) {
         int k = digits_h - i;
         int j = (k > digits ? digits : k);
-        MP_DIGIT_T *u = &MP_DIGIT (w, i + j);
-        MP_DIGIT_T *v = &MP_DIGIT (x, j);
+        MP_T *u = &MP_DIGIT (w, i + j);
+        MP_T *v = &MP_DIGIT (x, j);
         while (j-- >= 1) {
           (u--)[0] += yi * (v--)[0];
         }
@@ -1236,12 +1217,12 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
     }
   } else {
     for (i = digits; i >= 1; i--) {
-      MP_DIGIT_T yi = MP_DIGIT (y, i);
+      MP_T yi = MP_DIGIT (y, i);
       if (yi != 0) {
         int k = digits_h - i;
         int j = (k > digits ? digits : k);
-        MP_DIGIT_T *u = &MP_DIGIT (w, i + j);
-        MP_DIGIT_T *v = &MP_DIGIT (x, j);
+        MP_T *u = &MP_DIGIT (w, i + j);
+        MP_T *v = &MP_DIGIT (x, j);
         if ((digits - i + 1) % oflow == 0) {
           norm_mp (w, 2, digits_h);
         }
@@ -1273,7 +1254,7 @@ MP_DIGIT_T *mul_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 \return result "z"
 **/
 
-MP_DIGIT_T *div_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *div_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
 /*
 This routine is an implementation of
@@ -1286,27 +1267,27 @@ skipping most of the intermediate normalisation and recovering from wrong
 guesses without separate correction steps.
 */
   double xd;
-  MP_DIGIT_T *t, *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
+  MP_T *t, *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
   int k, oflow, digits_w = 4 + digits;
   ADDR_T pop_sp = stack_pointer;
   if (y_1 == 0) {
     errno = ERANGE;
-    return (NULL);
+    return (NO_MP);
   }
 /* Determine normalisation interval assuming that q < 2b in each step */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
   ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
 /* `w' will be the working nominator in which the quotient develops */
   STACK_MP (w, p, digits_w);
   MP_EXPONENT (w) = MP_EXPONENT (x) - MP_EXPONENT (y);
-  MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
+  MP_DIGIT (w, 1) = (MP_T) 0;
   MOVE_DIGITS (&MP_DIGIT (w, 2), &MP_DIGIT (x, 1), digits);
-  MP_DIGIT (w, digits + 2) = (MP_DIGIT_T) 0;
-  MP_DIGIT (w, digits + 3) = (MP_DIGIT_T) 0;
-  MP_DIGIT (w, digits + 4) = (MP_DIGIT_T) 0;
+  MP_DIGIT (w, digits + 2) = (MP_T) 0;
+  MP_DIGIT (w, digits + 3) = (MP_T) 0;
+  MP_DIGIT (w, digits + 4) = (MP_T) 0;
 /* Estimate the denominator. Take four terms to also suit small MP_RADIX */
   xd = (MP_DIGIT (y, 1) * MP_RADIX + MP_DIGIT (y, 2)) * MP_RADIX + MP_DIGIT (y, 3) + MP_DIGIT (y, 4) / MP_RADIX;
   t = &MP_DIGIT (w, 2);
@@ -1321,7 +1302,7 @@ guesses without separate correction steps.
 /* Correct the nominator */
         int j, len = k + digits + 1;
         int lim = (len < digits_w ? len : digits_w);
-        MP_DIGIT_T *u = t, *v = &MP_DIGIT (y, 1);
+        MP_T *u = t, *v = &MP_DIGIT (y, 1);
         for (j = first; j <= lim; j++) {
           (u++)[0] -= q * (v++)[0];
         }
@@ -1343,7 +1324,7 @@ guesses without separate correction steps.
 /* Correct the nominator */
         int j, len = k + digits + 1;
         int lim = (len < digits_w ? len : digits_w);
-        MP_DIGIT_T *u = t, *v = &MP_DIGIT (y, 1);
+        MP_T *u = t, *v = &MP_DIGIT (y, 1);
         for (j = first; j <= lim; j++) {
           (u++)[0] -= q * (v++)[0];
         }
@@ -1374,14 +1355,14 @@ guesses without separate correction steps.
 \return result "z"
 **/
 
-MP_DIGIT_T *over_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *over_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   int digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   ADDR_T pop_sp = stack_pointer;
   if (MP_DIGIT (y, 1) == 0) {
     errno = ERANGE;
-    return (NULL);
+    return (NO_MP);
   }
   STACK_MP (x_g, p, digits_g);
   STACK_MP (y_g, p, digits_g);
@@ -1391,7 +1372,7 @@ MP_DIGIT_T *over_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y,
   (void) div_mp (p, z_g, x_g, y_g, digits_g);
   trunc_mp (p, z_g, z_g, digits_g);
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
 /* Restore and exit */
   stack_pointer = pop_sp;
   return (z);
@@ -1407,14 +1388,14 @@ MP_DIGIT_T *over_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y,
 \return result "z"
 **/
 
-MP_DIGIT_T *mod_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *mod_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   int digits_g = FUN_DIGITS (digits);
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   if (MP_DIGIT (y, 1) == 0) {
     errno = EDOM;
-    return (NULL);
+    return (NO_MP);
   }
   STACK_MP (x_g, p, digits_g);
   STACK_MP (y_g, p, digits_g);
@@ -1441,14 +1422,14 @@ MP_DIGIT_T *mod_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, 
 \return result "z"
 **/
 
-MP_DIGIT_T *mul_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
+MP_T *mul_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
 {
 /* This is an O(N) routine for multiplication by a short value */
-  MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = y, *u, *v;
+  MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = y, *u, *v;
   int j, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   y = ABS (y_1);
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
@@ -1479,13 +1460,13 @@ MP_DIGIT_T *mul_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
 \return result "z"
 **/
 
-MP_DIGIT_T *half_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *half_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
-  MP_DIGIT_T *w, z_1, x_1 = MP_DIGIT (x, 1), *u, *v;
+  MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), *u, *v;
   int j, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
 /* Calculate x * 0.5 */
@@ -1517,30 +1498,30 @@ MP_DIGIT_T *half_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
+MP_T *div_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
 {
   double xd;
-  MP_DIGIT_T *t, *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = y;
+  MP_T *t, *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = y;
   int k, oflow, digits_w = 4 + digits;
   ADDR_T pop_sp = stack_pointer;
   if (y == 0) {
     errno = ERANGE;
-    return (NULL);
+    return (NO_MP);
   }
 /* Determine normalisation interval assuming that q < 2b in each step */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
   ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
 /* Work with positive operands */
   MP_DIGIT (x, 1) = ABS (x_1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   y = ABS (y_1);
   STACK_MP (w, p, digits_w);
   MP_EXPONENT (w) = MP_EXPONENT (x);
-  MP_DIGIT (w, 1) = (MP_DIGIT_T) 0;
+  MP_DIGIT (w, 1) = (MP_T) 0;
   MOVE_DIGITS (&MP_DIGIT (w, 2), &MP_DIGIT (x, 1), digits);
-  MP_DIGIT (w, digits + 2) = (MP_DIGIT_T) 0;
-  MP_DIGIT (w, digits + 3) = (MP_DIGIT_T) 0;
-  MP_DIGIT (w, digits + 4) = (MP_DIGIT_T) 0;
+  MP_DIGIT (w, digits + 2) = (MP_T) 0;
+  MP_DIGIT (w, digits + 3) = (MP_T) 0;
+  MP_DIGIT (w, digits + 4) = (MP_T) 0;
 /* Estimate the denominator */
   xd = (double) y *MP_RADIX * MP_RADIX;
   t = &MP_DIGIT (w, 2);
@@ -1589,14 +1570,14 @@ MP_DIGIT_T *div_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T
 \return result "z"
 **/
 
-MP_DIGIT_T *over_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T y, int digits)
+MP_T *over_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
 {
   int digits_g = FUN_DIGITS (digits);
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *x_g, *z_g;
+  MP_T *x_g, *z_g;
   if (y == 0) {
     errno = ERANGE;
-    return (NULL);
+    return (NO_MP);
   }
   STACK_MP (x_g, p, digits_g);
   STACK_MP (z_g, p, digits_g);
@@ -1618,16 +1599,16 @@ MP_DIGIT_T *over_mp_digit (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_
 \return result "z"
 **/
 
-MP_DIGIT_T *rec_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *rec_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *one;
+  MP_T *one;
   if (MP_DIGIT (x, 1) == 0) {
     errno = ERANGE;
-    return (NULL);
+    return (NO_MP);
   }
   STACK_MP (one, p, digits);
-  (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
+  (void) set_mp_short (one, (MP_T) 1, 0, digits);
   (void) div_mp (p, z, one, x, digits);
 /* Restore and exit */
   stack_pointer = pop_sp;
@@ -1644,14 +1625,14 @@ MP_DIGIT_T *rec_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *pow_mp_int (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int n, int digits)
+MP_T *pow_mp_int (NODE_T * p, MP_T * z, MP_T * x, int n, int digits)
 {
   int pop_sp = stack_pointer, bit, digits_g = FUN_DIGITS (digits);
   BOOL_T negative;
-  MP_DIGIT_T *z_g, *x_g;
+  MP_T *z_g, *x_g;
   STACK_MP (z_g, p, digits_g);
   STACK_MP (x_g, p, digits_g);
-  (void) set_mp_short (z_g, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (z_g, (MP_T) 1, 0, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
   negative = (BOOL_T) (n < 0);
   if (negative) {
@@ -1684,15 +1665,15 @@ MP_DIGIT_T *pow_mp_int (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int n, int d
 \return result "z"
 **/
 
-MP_DIGIT_T *mp_ten_up (NODE_T * p, MP_DIGIT_T * z, int n, int digits)
+MP_T *mp_ten_up (NODE_T * p, MP_T * z, int n, int digits)
 {
   int pop_sp = stack_pointer, bit, digits_g = FUN_DIGITS (digits);
   BOOL_T negative;
-  MP_DIGIT_T *z_g, *x_g;
+  MP_T *z_g, *x_g;
   STACK_MP (z_g, p, digits_g);
   STACK_MP (x_g, p, digits_g);
-  (void) set_mp_short (x_g, (MP_DIGIT_T) 10, 0, digits_g);
-  (void) set_mp_short (z_g, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (x_g, (MP_T) 10, 0, digits_g);
+  (void) set_mp_short (z_g, (MP_T) 1, 0, digits_g);
   negative = (BOOL_T) (n < 0);
   if (negative) {
     n = -n;
@@ -1721,7 +1702,7 @@ MP_DIGIT_T *mp_ten_up (NODE_T * p, MP_DIGIT_T * z, int n, int digits)
 \return result "z"
 **/
 
-static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
+static BOOL_T eps_mp (MP_T * z, int digits)
 {
   if (MP_DIGIT (z, 1) == 0) {
     return (A68_FALSE);
@@ -1770,10 +1751,10 @@ static BOOL_T eps_mp (MP_DIGIT_T * z, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *sqrt_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits), digits_h;
-  MP_DIGIT_T *tmp, *x_g, *z_g;
+  MP_T *tmp, *x_g, *z_g;
   BOOL_T reciprocal = A68_FALSE;
   if (MP_DIGIT (x, 1) == 0) {
     stack_pointer = pop_sp;
@@ -1783,7 +1764,7 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   if (MP_DIGIT (x, 1) < 0) {
     stack_pointer = pop_sp;
     errno = EDOM;
-    return (NULL);
+    return (NO_MP);
   }
   STACK_MP (z_g, p, digits_g);
   STACK_MP (x_g, p, digits_g);
@@ -1796,9 +1777,9 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   if (ABS (MP_EXPONENT (x_g)) >= 2) {
 /* For extreme arguments we want accurate results as well */
     int expo = (int) MP_EXPONENT (x_g);
-    MP_EXPONENT (x_g) = (MP_DIGIT_T) (expo % 2);
+    MP_EXPONENT (x_g) = (MP_T) (expo % 2);
     (void) sqrt_mp (p, z_g, x_g, digits_g);
-    MP_EXPONENT (z_g) += (MP_DIGIT_T) (expo / 2);
+    MP_EXPONENT (z_g) += (MP_T) (expo / 2);
   } else {
 /* Argument is in range. Estimate the root as double */
     int decimals;
@@ -1832,10 +1813,10 @@ MP_DIGIT_T *sqrt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *curt_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits), digits_h;
-  MP_DIGIT_T *tmp, *x_g, *z_g;
+  MP_T *tmp, *x_g, *z_g;
   BOOL_T reciprocal = A68_FALSE, change_sign = A68_FALSE;
   if (MP_DIGIT (x, 1) == 0) {
     stack_pointer = pop_sp;
@@ -1857,9 +1838,9 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   if (ABS (MP_EXPONENT (x_g)) >= 3) {
 /* For extreme arguments we want accurate results as well */
     int expo = (int) MP_EXPONENT (x_g);
-    MP_EXPONENT (x_g) = (MP_DIGIT_T) (expo % 3);
+    MP_EXPONENT (x_g) = (MP_T) (expo % 3);
     (void) curt_mp (p, z_g, x_g, digits_g);
-    MP_EXPONENT (z_g) += (MP_DIGIT_T) (expo / 3);
+    MP_EXPONENT (z_g) += (MP_T) (expo / 3);
   } else {
 /* Argument is in range. Estimate the root as double */
     int decimals;
@@ -1873,7 +1854,7 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       (void) div_mp (p, tmp, x_g, tmp, digits_h);
       (void) add_mp (p, tmp, z_g, tmp, digits_h);
       (void) add_mp (p, tmp, z_g, tmp, digits_h);
-      (void) div_mp_digit (p, z_g, tmp, (MP_DIGIT_T) 3, digits_h);
+      (void) div_mp_digit (p, z_g, tmp, (MP_T) 3, digits_h);
     } while (decimals < digits_g * LOG_MP_BASE);
   }
   if (reciprocal) {
@@ -1898,10 +1879,10 @@ MP_DIGIT_T *curt_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *hypot_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *hypot_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *t, *u, *v;
+  MP_T *t, *u, *v;
   STACK_MP (t, p, digits);
   STACK_MP (u, p, digits);
   STACK_MP (v, p, digits);
@@ -1914,7 +1895,7 @@ MP_DIGIT_T *hypot_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y
   } else if (IS_ZERO_MP (v)) {
     MOVE_MP (z, u, digits);
   } else {
-    (void) set_mp_short (t, (MP_DIGIT_T) 1, 0, digits);
+    (void) set_mp_short (t, (MP_T) 1, 0, digits);
     (void) sub_mp (p, z, u, v, digits);
     if (MP_DIGIT (z, 1) > 0) {
       (void) div_mp (p, z, v, u, digits);
@@ -1943,14 +1924,14 @@ MP_DIGIT_T *hypot_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y
 \return result "z"
 **/
 
-MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *exp_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
 /* Argument is reduced by using exp (z / (2 ** n)) ** (2 ** n) = exp(z) */
   int m, n, pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *sum, *a68g_pow, *fac, *tmp;
+  MP_T *x_g, *sum, *a68g_pow, *fac, *tmp;
   BOOL_T iterate;
   if (MP_DIGIT (x, 1) == 0) {
-    (void) set_mp_short (z, (MP_DIGIT_T) 1, 0, digits);
+    (void) set_mp_short (z, (MP_T) 1, 0, digits);
     return (z);
   }
   STACK_MP (x_g, p, digits_g);
@@ -1967,38 +1948,38 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   }
 /* Calculate Taylor sum
    exp (z) = 1 + z / 1 ! + z ** 2 / 2 ! + .. */
-  (void) set_mp_short (sum, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (sum, (MP_T) 1, 0, digits_g);
   (void) add_mp (p, sum, sum, x_g, digits_g);
   (void) mul_mp (p, a68g_pow, x_g, x_g, digits_g);
 #if (MP_RADIX == DEFAULT_MP_RADIX)
   (void) half_mp (p, tmp, a68g_pow, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 6, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 6, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 24, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 24, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 120, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 120, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 720, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 720, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 5040, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 5040, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 40320, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 40320, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 362880, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 362880, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) set_mp_short (fac, (MP_DIGIT_T) (MP_DIGIT_T) 3628800, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) (MP_T) 3628800, 0, digits_g);
   n = 10;
 #else
-  (void) set_mp_short (fac, (MP_DIGIT_T) 2, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) 2, 0, digits_g);
   n = 2;
 #endif
   iterate = (BOOL_T) (MP_DIGIT (a68g_pow, 1) != 0);
@@ -2010,7 +1991,7 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       (void) add_mp (p, sum, sum, tmp, digits_g);
       (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
       n++;
-      (void) mul_mp_digit (p, fac, fac, (MP_DIGIT_T) n, digits_g);
+      (void) mul_mp_digit (p, fac, fac, (MP_T) n, digits_g);
     }
   }
 /* Square exp (x) up */
@@ -2032,13 +2013,13 @@ MP_DIGIT_T *exp_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *expm1_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   int n, pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *sum, *a68g_pow, *fac, *tmp;
+  MP_T *x_g, *sum, *a68g_pow, *fac, *tmp;
   BOOL_T iterate;
   if (MP_DIGIT (x, 1) == 0) {
-    (void) set_mp_short (z, (MP_DIGIT_T) 1, 0, digits);
+    (void) set_mp_short (z, (MP_T) 1, 0, digits);
     return (z);
   }
   STACK_MP (x_g, p, digits_g);
@@ -2055,31 +2036,31 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   (void) half_mp (p, tmp, a68g_pow, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 6, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 6, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 24, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 24, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 120, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 120, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 720, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 720, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 5040, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 5040, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 40320, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 40320, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 362880, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 362880, digits_g);
   (void) add_mp (p, sum, sum, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
-  (void) set_mp_short (fac, (MP_DIGIT_T) (MP_DIGIT_T) 3628800, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) (MP_T) 3628800, 0, digits_g);
   n = 10;
 #else
-  (void) set_mp_short (fac, (MP_DIGIT_T) 2, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) 2, 0, digits_g);
   n = 2;
 #endif
   iterate = (BOOL_T) (MP_DIGIT (a68g_pow, 1) != 0);
@@ -2091,7 +2072,7 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
       (void) add_mp (p, sum, sum, tmp, digits_g);
       (void) mul_mp (p, a68g_pow, a68g_pow, x_g, digits_g);
       n++;
-      (void) mul_mp_digit (p, fac, fac, (MP_DIGIT_T) n, digits_g);
+      (void) mul_mp_digit (p, fac, fac, (MP_T) n, digits_g);
     }
   }
   (void) shorten_mp (p, z, digits, sum, digits_g);
@@ -2108,19 +2089,19 @@ MP_DIGIT_T *expm1_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *mp_ln_scale (NODE_T * p, MP_DIGIT_T * z, int digits)
+MP_T *mp_ln_scale (NODE_T * p, MP_T * z, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *z_g;
+  MP_T *z_g;
   STACK_MP (z_g, p, digits_g);
 /* First see if we can restore a previous calculation */
   if (digits_g <= mp_ln_scale_size) {
     MOVE_MP (z_g, ref_mp_ln_scale, digits_g);
   } else {
 /* No luck with the kept value, we generate a longer one */
-    (void) set_mp_short (z_g, (MP_DIGIT_T) 1, 1, digits_g);
+    (void) set_mp_short (z_g, (MP_T) 1, 1, digits_g);
     (void) ln_mp (p, z_g, z_g, digits_g);
-    ref_mp_ln_scale = (MP_DIGIT_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
+    ref_mp_ln_scale = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
     MOVE_MP (ref_mp_ln_scale, z_g, digits_g);
     mp_ln_scale_size = digits_g;
   }
@@ -2137,19 +2118,19 @@ MP_DIGIT_T *mp_ln_scale (NODE_T * p, MP_DIGIT_T * z, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *mp_ln_10 (NODE_T * p, MP_DIGIT_T * z, int digits)
+MP_T *mp_ln_10 (NODE_T * p, MP_T * z, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *z_g;
+  MP_T *z_g;
   STACK_MP (z_g, p, digits_g);
 /* First see if we can restore a previous calculation */
   if (digits_g <= mp_ln_10_size) {
     MOVE_MP (z_g, ref_mp_ln_10, digits_g);
   } else {
 /* No luck with the kept value, we generate a longer one */
-    (void) set_mp_short (z_g, (MP_DIGIT_T) 10, 0, digits_g);
+    (void) set_mp_short (z_g, (MP_T) 10, 0, digits_g);
     (void) ln_mp (p, z_g, z_g, digits_g);
-    ref_mp_ln_10 = (MP_DIGIT_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
+    ref_mp_ln_10 = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
     MOVE_MP (ref_mp_ln_10, z_g, digits_g);
     mp_ln_10_size = digits_g;
   }
@@ -2167,15 +2148,15 @@ MP_DIGIT_T *mp_ln_10 (NODE_T * p, MP_DIGIT_T * z, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *ln_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
 /* Depending on the argument we choose either Taylor or Newton */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   BOOL_T negative, scale;
-  MP_DIGIT_T *x_g, *z_g, expo = 0;
+  MP_T *x_g, *z_g, expo = 0;
   if (MP_DIGIT (x, 1) <= 0) {
     errno = EDOM;
-    return (NULL);
+    return (NO_MP);
   }
   STACK_MP (x_g, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
@@ -2190,25 +2171,25 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   scale = (BOOL_T) (ABS (MP_EXPONENT (x_g)) >= 2);
   if (scale) {
     expo = MP_EXPONENT (x_g);
-    MP_EXPONENT (x_g) = (MP_DIGIT_T) 0;
+    MP_EXPONENT (x_g) = (MP_T) 0;
   }
   if (MP_EXPONENT (x_g) == 0 && MP_DIGIT (x_g, 1) == 1 && MP_DIGIT (x_g, 2) == 0) {
 /* Taylor sum for x close to unity.
    ln (x) = (x - 1) - (x - 1) ** 2 / 2 + (x - 1) ** 3 / 3 - ...
    This is faster for small x and avoids cancellation */
-    MP_DIGIT_T *one, *tmp, *a68g_pow;
+    MP_T *one, *tmp, *a68g_pow;
     int n = 2;
     BOOL_T iterate;
     STACK_MP (one, p, digits_g);
     STACK_MP (tmp, p, digits_g);
     STACK_MP (a68g_pow, p, digits_g);
-    (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (one, (MP_T) 1, 0, digits_g);
     (void) sub_mp (p, x_g, x_g, one, digits_g);
     (void) mul_mp (p, a68g_pow, x_g, x_g, digits_g);
     MOVE_MP (z_g, x_g, digits_g);
     iterate = (BOOL_T) (MP_DIGIT (a68g_pow, 1) != 0);
     while (iterate) {
-      (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) n, digits_g);
+      (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) n, digits_g);
       if (MP_EXPONENT (tmp) <= (MP_EXPONENT (z_g) - digits_g)) {
         iterate = A68_FALSE;
       } else {
@@ -2220,12 +2201,12 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     }
   } else {
 /* Newton's method: x<n+1> = x<n> - 1 + a / exp (x<n>) */
-    MP_DIGIT_T *tmp, *z_0, *one;
+    MP_T *tmp, *z_0, *one;
     int decimals;
     STACK_MP (tmp, p, digits_g);
     STACK_MP (one, p, digits_g);
     STACK_MP (z_0, p, digits_g);
-    (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (one, (MP_T) 1, 0, digits_g);
     SET_MP_ZERO (z_0, digits_g);
 /* Construct an estimate */
     (void) real_to_mp (p, z_g, log (mp_to_real (p, x_g, digits_g)), digits_g);
@@ -2243,10 +2224,10 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 /* Inverse scaling */
   if (scale) {
 /* ln (x * MP_RADIX ** n) = ln (x) + n * ln (MP_RADIX) */
-    MP_DIGIT_T *ln_base;
+    MP_T *ln_base;
     STACK_MP (ln_base, p, digits_g);
     (void) mp_ln_scale (p, ln_base, digits_g);
-    (void) mul_mp_digit (p, ln_base, ln_base, (MP_DIGIT_T) expo, digits_g);
+    (void) mul_mp_digit (p, ln_base, ln_base, (MP_T) expo, digits_g);
     (void) add_mp (p, z_g, z_g, ln_base, digits_g);
   }
   if (negative) {
@@ -2267,14 +2248,14 @@ MP_DIGIT_T *ln_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *log_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *log_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   int pop_sp = stack_pointer;
-  MP_DIGIT_T *ln_10;
+  MP_T *ln_10;
   STACK_MP (ln_10, p, digits);
-  if (ln_mp (p, z, x, digits) == NULL) {
+  if (ln_mp (p, z, x, digits) == NO_MP) {
     errno = EDOM;
-    return (NULL);
+    return (NO_MP);
   }
   (void) mp_ln_10 (p, ln_10, digits);
   (void) div_mp (p, z, z, ln_10, digits);
@@ -2292,10 +2273,10 @@ MP_DIGIT_T *log_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *hyp_mp (NODE_T * p, MP_DIGIT_T * sh, MP_DIGIT_T * ch, MP_DIGIT_T * z, int digits)
+MP_T *hyp_mp (NODE_T * p, MP_T * sh, MP_T * ch, MP_T * z, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   STACK_MP (x_g, p, digits);
   STACK_MP (y_g, p, digits);
   STACK_MP (z_g, p, digits);
@@ -2325,11 +2306,11 @@ MP_DIGIT_T *hyp_mp (NODE_T * p, MP_DIGIT_T * sh, MP_DIGIT_T * ch, MP_DIGIT_T * z
 \return result "z"
 **/
 
-MP_DIGIT_T *sinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *sinh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   STACK_MP (x_g, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
   STACK_MP (y_g, p, digits_g);
@@ -2349,7 +2330,7 @@ MP_DIGIT_T *sinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *asinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *asinh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   if (IS_ZERO_MP (x)) {
     SET_MP_ZERO (z, digits);
@@ -2357,7 +2338,7 @@ MP_DIGIT_T *asinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   } else {
     ADDR_T pop_sp = stack_pointer;
     int digits_g;
-    MP_DIGIT_T *x_g, *y_g, *z_g;
+    MP_T *x_g, *y_g, *z_g;
     if (MP_EXPONENT (x) >= -1) {
       digits_g = FUN_DIGITS (digits);
     } else {
@@ -2369,7 +2350,7 @@ MP_DIGIT_T *asinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     STACK_MP (y_g, p, digits_g);
     STACK_MP (z_g, p, digits_g);
     (void) mul_mp (p, z_g, x_g, x_g, digits_g);
-    (void) set_mp_short (y_g, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (y_g, (MP_T) 1, 0, digits_g);
     (void) add_mp (p, y_g, z_g, y_g, digits_g);
     (void) sqrt_mp (p, y_g, y_g, digits_g);
     (void) add_mp (p, y_g, y_g, x_g, digits_g);
@@ -2393,11 +2374,11 @@ MP_DIGIT_T *asinh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *cosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *cosh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   STACK_MP (x_g, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
   STACK_MP (y_g, p, digits_g);
@@ -2417,11 +2398,11 @@ MP_DIGIT_T *cosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *acosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *acosh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int digits_g;
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   if (MP_DIGIT (x, 1) == 1 && MP_DIGIT (x, 2) == 0) {
 /* Extra precision when x^2-1 gets close to 0 */
     digits_g = 2 * FUN_DIGITS (digits);
@@ -2433,7 +2414,7 @@ MP_DIGIT_T *acosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (y_g, p, digits_g);
   STACK_MP (z_g, p, digits_g);
   (void) mul_mp (p, z_g, x_g, x_g, digits_g);
-  (void) set_mp_short (y_g, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (y_g, (MP_T) 1, 0, digits_g);
   (void) sub_mp (p, y_g, z_g, y_g, digits_g);
   (void) sqrt_mp (p, y_g, y_g, digits_g);
   (void) add_mp (p, y_g, y_g, x_g, digits_g);
@@ -2452,11 +2433,11 @@ MP_DIGIT_T *acosh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *tanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *tanh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   STACK_MP (x_g, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
   STACK_MP (y_g, p, digits_g);
@@ -2477,16 +2458,16 @@ MP_DIGIT_T *tanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *atanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *atanh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *y_g, *z_g;
+  MP_T *x_g, *y_g, *z_g;
   STACK_MP (x_g, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
   STACK_MP (y_g, p, digits_g);
   STACK_MP (z_g, p, digits_g);
-  (void) set_mp_short (y_g, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (y_g, (MP_T) 1, 0, digits_g);
   (void) add_mp (p, z_g, y_g, x_g, digits_g);
   (void) sub_mp (p, y_g, y_g, x_g, digits_g);
   (void) div_mp (p, y_g, z_g, y_g, digits_g);
@@ -2506,11 +2487,11 @@ MP_DIGIT_T *atanh_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "api"
 **/
 
-MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
+MP_T *mp_pi (NODE_T * p, MP_T * api, int mult, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
   BOOL_T iterate;
-  MP_DIGIT_T *pi_g, *one, *two, *x_g, *y_g, *u_g, *v_g;
+  MP_T *pi_g, *one, *two, *x_g, *y_g, *u_g, *v_g;
   STACK_MP (pi_g, p, digits_g);
 /* First see if we can restore a previous calculation */
   if (digits_g <= mp_pi_size) {
@@ -2525,9 +2506,9 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
     STACK_MP (y_g, p, digits_g);
     STACK_MP (u_g, p, digits_g);
     STACK_MP (v_g, p, digits_g);
-    (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
-    (void) set_mp_short (two, (MP_DIGIT_T) 2, 0, digits_g);
-    (void) set_mp_short (x_g, (MP_DIGIT_T) 2, 0, digits_g);
+    (void) set_mp_short (one, (MP_T) 1, 0, digits_g);
+    (void) set_mp_short (two, (MP_T) 2, 0, digits_g);
+    (void) set_mp_short (x_g, (MP_T) 2, 0, digits_g);
     (void) sqrt_mp (p, x_g, x_g, digits_g);
     (void) add_mp (p, pi_g, x_g, two, digits_g);
     (void) sqrt_mp (p, y_g, x_g, digits_g);
@@ -2558,7 +2539,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
       }
     }
 /* Keep the result for future restore */
-    ref_mp_pi = (MP_DIGIT_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
+    ref_mp_pi = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digits_g));
     MOVE_MP (ref_mp_pi, pi_g, digits_g);
     mp_pi_size = digits_g;
   }
@@ -2569,7 +2550,7 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
     }
   case MP_TWO_PI:
     {
-      (void) mul_mp_digit (p, pi_g, pi_g, (MP_DIGIT_T) 2, digits_g);
+      (void) mul_mp_digit (p, pi_g, pi_g, (MP_T) 2, digits_g);
       break;
     }
   case MP_HALF_PI:
@@ -2592,12 +2573,12 @@ MP_DIGIT_T *mp_pi (NODE_T * p, MP_DIGIT_T * api, int mult, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *sin_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
 /* Use triple-angle relation to reduce argument */
   int pop_sp = stack_pointer, m, n, digits_g = FUN_DIGITS (digits);
   BOOL_T flip, negative, iterate, even;
-  MP_DIGIT_T *x_g, *pi, *tpi, *hpi, *sqr, *tmp, *a68g_pow, *fac, *z_g;
+  MP_T *x_g, *pi, *tpi, *hpi, *sqr, *tmp, *a68g_pow, *fac, *z_g;
 /* We will use "pi" */
   STACK_MP (pi, p, digits_g);
   STACK_MP (tpi, p, digits_g);
@@ -2631,7 +2612,7 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   m = 0;
   while (eps_mp (x_g, digits_g)) {
     m++;
-    (void) div_mp_digit (p, x_g, x_g, (MP_DIGIT_T) 3, digits_g);
+    (void) div_mp_digit (p, x_g, x_g, (MP_T) 3, digits_g);
   }
 /* Taylor sum */
   STACK_MP (sqr, p, digits_g);
@@ -2642,20 +2623,20 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   (void) mul_mp (p, a68g_pow, sqr, x_g, digits_g);      /* pow = x ** 3 */
   MOVE_MP (z_g, x_g, digits_g);
 #if (MP_RADIX == DEFAULT_MP_RADIX)
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 6, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 6, digits_g);
   (void) sub_mp (p, z_g, z_g, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, sqr, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 120, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 120, digits_g);
   (void) add_mp (p, z_g, z_g, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, sqr, digits_g);
-  (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) 5040, digits_g);
+  (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) 5040, digits_g);
   (void) sub_mp (p, z_g, z_g, tmp, digits_g);
   (void) mul_mp (p, a68g_pow, a68g_pow, sqr, digits_g);
-  (void) set_mp_short (fac, (MP_DIGIT_T) 362880, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) 362880, 0, digits_g);
   n = 9;
   even = A68_TRUE;
 #else
-  (void) set_mp_short (fac, (MP_DIGIT_T) 6, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) 6, 0, digits_g);
   n = 3;
   even = A68_FALSE;
 #endif
@@ -2673,16 +2654,16 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
         even = A68_TRUE;
       }
       (void) mul_mp (p, a68g_pow, a68g_pow, sqr, digits_g);
-      (void) mul_mp_digit (p, fac, fac, (MP_DIGIT_T) (++n), digits_g);
-      (void) mul_mp_digit (p, fac, fac, (MP_DIGIT_T) (++n), digits_g);
+      (void) mul_mp_digit (p, fac, fac, (MP_T) (++n), digits_g);
+      (void) mul_mp_digit (p, fac, fac, (MP_T) (++n), digits_g);
     }
   }
 /* Inverse scaling using sin (3x) = sin (x) * (3 - 4 sin ** 2 (x))
    Use existing mp's for intermediates */
-  (void) set_mp_short (fac, (MP_DIGIT_T) 3, 0, digits_g);
+  (void) set_mp_short (fac, (MP_T) 3, 0, digits_g);
   while (m--) {
     (void) mul_mp (p, a68g_pow, z_g, z_g, digits_g);
-    (void) mul_mp_digit (p, a68g_pow, a68g_pow, (MP_DIGIT_T) 4, digits_g);
+    (void) mul_mp_digit (p, a68g_pow, a68g_pow, (MP_T) 4, digits_g);
     (void) sub_mp (p, a68g_pow, fac, a68g_pow, digits_g);
     (void) mul_mp (p, z_g, a68g_pow, z_g, digits_g);
   }
@@ -2704,14 +2685,14 @@ MP_DIGIT_T *sin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *cos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *cos_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
 /*
 Use cos (x) = sin (pi / 2 - x).
 Compute x mod 2 pi before subtracting to avoid cancellation.
 */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *hpi, *tpi, *x_g, *y;
+  MP_T *hpi, *tpi, *x_g, *y;
   STACK_MP (hpi, p, digits_g);
   STACK_MP (tpi, p, digits_g);
   STACK_MP (x_g, p, digits_g);
@@ -2736,11 +2717,11 @@ Compute x mod 2 pi before subtracting to avoid cancellation.
 \return result "z"
 **/
 
-MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *tan_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
 /* Use tan (x) = sin (x) / sqrt (1 - sin ^ 2 (x)) */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *sns, *cns, *one, *pi, *hpi, *x_g, *y_g;
+  MP_T *sns, *cns, *one, *pi, *hpi, *x_g, *y_g;
   BOOL_T negate;
   STACK_MP (one, p, digits);
   STACK_MP (pi, p, digits_g);
@@ -2764,14 +2745,14 @@ MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   (void) shorten_mp (p, x, digits, x_g, digits_g);
 /* tan(x) = sin(x) / sqrt (1 - sin ** 2 (x)) */
   (void) sin_mp (p, sns, x, digits);
-  (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits);
+  (void) set_mp_short (one, (MP_T) 1, 0, digits);
   (void) mul_mp (p, cns, sns, sns, digits);
   (void) sub_mp (p, cns, one, cns, digits);
   (void) sqrt_mp (p, cns, cns, digits);
-  if (div_mp (p, z, sns, cns, digits) == NULL) {
+  if (div_mp (p, z, sns, cns, digits) == NO_MP) {
     errno = EDOM;
     stack_pointer = pop_sp;
-    return (NULL);
+    return (NO_MP);
   }
   stack_pointer = pop_sp;
   if (negate) {
@@ -2789,22 +2770,22 @@ MP_DIGIT_T *tan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *asin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *asin_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *one, *x_g, *y, *z_g;
+  MP_T *one, *x_g, *y, *z_g;
   STACK_MP (y, p, digits);
   STACK_MP (x_g, p, digits_g);
   STACK_MP (z_g, p, digits_g);
   STACK_MP (one, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
-  (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (one, (MP_T) 1, 0, digits_g);
   (void) mul_mp (p, z_g, x_g, x_g, digits_g);
   (void) sub_mp (p, z_g, one, z_g, digits_g);
-  if (sqrt_mp (p, z_g, z_g, digits) == NULL) {
+  if (sqrt_mp (p, z_g, z_g, digits) == NO_MP) {
     errno = EDOM;
     stack_pointer = pop_sp;
-    return (NULL);
+    return (NO_MP);
   }
   if (MP_DIGIT (z_g, 1) == 0) {
     (void) mp_pi (p, z, MP_HALF_PI, digits);
@@ -2812,10 +2793,10 @@ MP_DIGIT_T *asin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     stack_pointer = pop_sp;
     return (z);
   }
-  if (div_mp (p, x_g, x_g, z_g, digits_g) == NULL) {
+  if (div_mp (p, x_g, x_g, z_g, digits_g) == NO_MP) {
     errno = EDOM;
     stack_pointer = pop_sp;
-    return (NULL);
+    return (NO_MP);
   }
   (void) shorten_mp (p, y, digits, x_g, digits_g);
   (void) atan_mp (p, z, y, digits);
@@ -2832,10 +2813,10 @@ MP_DIGIT_T *asin_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *acos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *acos_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *one, *x_g, *y, *z_g;
+  MP_T *one, *x_g, *y, *z_g;
   BOOL_T negative = (BOOL_T) (MP_DIGIT (x, 1) < 0);
   if (MP_DIGIT (x, 1) == 0) {
     (void) mp_pi (p, z, MP_HALF_PI, digits);
@@ -2847,18 +2828,18 @@ MP_DIGIT_T *acos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
   STACK_MP (z_g, p, digits_g);
   STACK_MP (one, p, digits_g);
   (void) lengthen_mp (p, x_g, digits_g, x, digits);
-  (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
+  (void) set_mp_short (one, (MP_T) 1, 0, digits_g);
   (void) mul_mp (p, z_g, x_g, x_g, digits_g);
   (void) sub_mp (p, z_g, one, z_g, digits_g);
-  if (sqrt_mp (p, z_g, z_g, digits) == NULL) {
+  if (sqrt_mp (p, z_g, z_g, digits) == NO_MP) {
     errno = EDOM;
     stack_pointer = pop_sp;
-    return (NULL);
+    return (NO_MP);
   }
-  if (div_mp (p, x_g, z_g, x_g, digits_g) == NULL) {
+  if (div_mp (p, x_g, z_g, x_g, digits_g) == NO_MP) {
     errno = EDOM;
     stack_pointer = pop_sp;
-    return (NULL);
+    return (NO_MP);
   }
   (void) shorten_mp (p, y, digits, x_g, digits_g);
   (void) atan_mp (p, z, y, digits);
@@ -2879,11 +2860,11 @@ MP_DIGIT_T *acos_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *atan_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
 /* Depending on the argument we choose either Taylor or Newton */
   int pop_sp = stack_pointer, digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *x_g, *z_g;
+  MP_T *x_g, *z_g;
   BOOL_T flip, negative;
   STACK_MP (x_g, p, digits_g);
   STACK_MP (z_g, p, digits_g);
@@ -2906,7 +2887,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 /* Taylor sum for x close to zero.
    arctan (x) = x - x ** 3 / 3 + x ** 5 / 5 - x ** 7 / 7 + ..
    This is faster for small x and avoids cancellation */
-    MP_DIGIT_T *tmp, *a68g_pow, *sqr;
+    MP_T *tmp, *a68g_pow, *sqr;
     int n = 3;
     BOOL_T iterate, even;
     STACK_MP (tmp, p, digits_g);
@@ -2918,7 +2899,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     even = A68_FALSE;
     iterate = (BOOL_T) (MP_DIGIT (a68g_pow, 1) != 0);
     while (iterate) {
-      (void) div_mp_digit (p, tmp, a68g_pow, (MP_DIGIT_T) n, digits_g);
+      (void) div_mp_digit (p, tmp, a68g_pow, (MP_T) n, digits_g);
       if (MP_EXPONENT (tmp) <= (MP_EXPONENT (z_g) - digits_g)) {
         iterate = A68_FALSE;
       } else {
@@ -2935,7 +2916,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     }
   } else {
 /* Newton's method: x<n+1> = x<n> - cos (x<n>) * (sin (x<n>) - a cos (x<n>)) */
-    MP_DIGIT_T *tmp, *z_0, *sns, *cns, *one;
+    MP_T *tmp, *z_0, *sns, *cns, *one;
     int decimals, digits_h;
     STACK_MP (tmp, p, digits_g);
     STACK_MP (z_0, p, digits_g);
@@ -2943,7 +2924,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     STACK_MP (cns, p, digits_g);
     STACK_MP (one, p, digits_g);
     SET_MP_ZERO (z_0, digits_g);
-    (void) set_mp_short (one, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (one, (MP_T) 1, 0, digits_g);
 /* Construct an estimate */
     (void) real_to_mp (p, z_g, atan (mp_to_real (p, x_g, digits_g)), digits_g);
     decimals = DOUBLE_ACCURACY;
@@ -2961,7 +2942,7 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     } while (decimals < digits_g * LOG_MP_BASE);
   }
   if (flip) {
-    MP_DIGIT_T *hpi;
+    MP_T *hpi;
     STACK_MP (hpi, p, digits_g);
     (void) sub_mp (p, z_g, mp_pi (p, hpi, MP_HALF_PI, digits_g), z_g, digits_g);
   }
@@ -2982,15 +2963,15 @@ MP_DIGIT_T *atan_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return result "z"
 **/
 
-MP_DIGIT_T *atan2_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+MP_T *atan2_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *t;
+  MP_T *t;
   STACK_MP (t, p, digits);
   if (MP_DIGIT (x, 1) == 0 && MP_DIGIT (y, 1) == 0) {
     errno = EDOM;
     stack_pointer = pop_sp;
-    return (NULL);
+    return (NO_MP);
   } else {
     BOOL_T flip = (BOOL_T) (MP_DIGIT (y, 1) < 0);
     MP_DIGIT (y, 1) = ABS (MP_DIGIT (y, 1));
@@ -3025,11 +3006,11 @@ MP_DIGIT_T *atan2_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, MP_DIGIT_T * y
 \return real part of result
 **/
 
-MP_DIGIT_T *cmul_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c, MP_DIGIT_T * d, int digits)
+MP_T *cmul_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   int digits_g = FUN_DIGITS (digits);
-  MP_DIGIT_T *la, *lb, *lc, *ld, *ac, *bd, *ad, *bc;
+  MP_T *la, *lb, *lc, *ld, *ac, *bd, *ad, *bc;
   STACK_MP (la, p, digits_g);
   STACK_MP (lb, p, digits_g);
   STACK_MP (lc, p, digits_g);
@@ -3065,10 +3046,10 @@ MP_DIGIT_T *cmul_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c,
 \return real part of result
 **/
 
-MP_DIGIT_T *cdiv_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c, MP_DIGIT_T * d, int digits)
+MP_T *cdiv_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *q, *r;
+  MP_T *q, *r;
   STACK_MP (q, p, digits);
   STACK_MP (r, p, digits);
   MOVE_MP (q, c, digits);
@@ -3077,9 +3058,9 @@ MP_DIGIT_T *cdiv_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c,
   MP_DIGIT (r, 1) = ABS (MP_DIGIT (r, 1));
   (void) sub_mp (p, q, q, r, digits);
   if (MP_DIGIT (q, 1) >= 0) {
-    if (div_mp (p, q, d, c, digits) == NULL) {
+    if (div_mp (p, q, d, c, digits) == NO_MP) {
       errno = ERANGE;
-      return (NULL);
+      return (NO_MP);
     }
     (void) mul_mp (p, r, d, q, digits);
     (void) add_mp (p, r, r, c, digits);
@@ -3090,9 +3071,9 @@ MP_DIGIT_T *cdiv_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c,
     (void) sub_mp (p, d, b, d, digits);
     (void) div_mp (p, d, d, r, digits);
   } else {
-    if (div_mp (p, q, c, d, digits) == NULL) {
+    if (div_mp (p, q, c, d, digits) == NO_MP) {
       errno = ERANGE;
-      return (NULL);
+      return (NO_MP);
     }
     (void) mul_mp (p, r, c, q, digits);
     (void) add_mp (p, r, r, d, digits);
@@ -3118,10 +3099,10 @@ MP_DIGIT_T *cdiv_mp (NODE_T * p, MP_DIGIT_T * a, MP_DIGIT_T * b, MP_DIGIT_T * c,
 \return real part of result
 **/
 
-MP_DIGIT_T *csqrt_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *csqrt_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im;
+  MP_T *re, *im;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3131,7 +3112,7 @@ MP_DIGIT_T *csqrt_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
     SET_MP_ZERO (re, digits_g);
     SET_MP_ZERO (im, digits_g);
   } else {
-    MP_DIGIT_T *c1, *t, *x, *y, *u, *v, *w;
+    MP_T *c1, *t, *x, *y, *u, *v, *w;
     STACK_MP (c1, p, digits_g);
     STACK_MP (t, p, digits_g);
     STACK_MP (x, p, digits_g);
@@ -3139,7 +3120,7 @@ MP_DIGIT_T *csqrt_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
     STACK_MP (u, p, digits_g);
     STACK_MP (v, p, digits_g);
     STACK_MP (w, p, digits_g);
-    (void) set_mp_short (c1, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (c1, (MP_T) 1, 0, digits_g);
     MOVE_MP (x, re, digits_g);
     MOVE_MP (y, im, digits_g);
     MP_DIGIT (x, 1) = ABS (MP_DIGIT (x, 1));
@@ -3194,10 +3175,10 @@ MP_DIGIT_T *csqrt_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *cexp_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *cexp_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im, *u;
+  MP_T *re, *im, *u;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3224,10 +3205,10 @@ MP_DIGIT_T *cexp_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *cln_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *cln_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im, *u, *v, *s, *t;
+  MP_T *re, *im, *u, *v, *s, *t;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3260,10 +3241,10 @@ MP_DIGIT_T *cln_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *csin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *csin_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im, *s, *c, *sh, *ch;
+  MP_T *re, *im, *s, *c, *sh, *ch;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3298,10 +3279,10 @@ MP_DIGIT_T *csin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *ccos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *ccos_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im, *s, *c, *sh, *ch;
+  MP_T *re, *im, *s, *c, *sh, *ch;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3337,10 +3318,10 @@ MP_DIGIT_T *ccos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *ctan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *ctan_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *s, *t, *u, *v;
+  MP_T *s, *t, *u, *v;
   RESET_ERRNO;
   STACK_MP (s, p, digits);
   STACK_MP (t, p, digits);
@@ -3370,10 +3351,10 @@ MP_DIGIT_T *ctan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *casin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *casin_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im;
+  MP_T *re, *im;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3382,9 +3363,9 @@ MP_DIGIT_T *casin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
   if (IS_ZERO_MP (im)) {
     (void) asin_mp (p, re, re, digits_g);
   } else {
-    MP_DIGIT_T *c1, *u, *v, *a, *b;
+    MP_T *c1, *u, *v, *a, *b;
     STACK_MP (c1, p, digits_g);
-    (void) set_mp_short (c1, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (c1, (MP_T) 1, 0, digits_g);
     STACK_MP (u, p, digits_g);
     STACK_MP (v, p, digits_g);
     STACK_MP (a, p, digits_g);
@@ -3422,10 +3403,10 @@ MP_DIGIT_T *casin_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *cacos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *cacos_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im;
+  MP_T *re, *im;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3434,9 +3415,9 @@ MP_DIGIT_T *cacos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
   if (IS_ZERO_MP (im)) {
     (void) acos_mp (p, re, re, digits_g);
   } else {
-    MP_DIGIT_T *c1, *u, *v, *a, *b;
+    MP_T *c1, *u, *v, *a, *b;
     STACK_MP (c1, p, digits_g);
-    (void) set_mp_short (c1, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (c1, (MP_T) 1, 0, digits_g);
     STACK_MP (u, p, digits_g);
     STACK_MP (v, p, digits_g);
     STACK_MP (a, p, digits_g);
@@ -3475,10 +3456,10 @@ MP_DIGIT_T *cacos_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return real part of result
 **/
 
-MP_DIGIT_T *catan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
+MP_T *catan_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *re, *im, *u, *v;
+  MP_T *re, *im, *u, *v;
   int digits_g = FUN_DIGITS (digits);
   STACK_MP (re, p, digits_g);
   STACK_MP (im, p, digits_g);
@@ -3490,9 +3471,9 @@ MP_DIGIT_T *catan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
     (void) atan_mp (p, u, re, digits_g);
     SET_MP_ZERO (v, digits_g);
   } else {
-    MP_DIGIT_T *c1, *a, *b;
+    MP_T *c1, *a, *b;
     STACK_MP (c1, p, digits_g);
-    (void) set_mp_short (c1, (MP_DIGIT_T) 1, 0, digits_g);
+    (void) set_mp_short (c1, (MP_T) 1, 0, digits_g);
     STACK_MP (a, p, digits_g);
     STACK_MP (b, p, digits_g);
 /* a=sqrt(r^2+(i+1)^2), b=sqrt(r^2+(i-1)^2) */
@@ -3529,10 +3510,10 @@ MP_DIGIT_T *catan_mp (NODE_T * p, MP_DIGIT_T * r, MP_DIGIT_T * i, int digits)
 \return whether x = y
 **/
 
-void eq_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+void eq_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v;
+  MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
   STATUS (z) = INITIALISED_MASK;
@@ -3549,10 +3530,10 @@ void eq_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits
 \return whether x != y
 **/
 
-void ne_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+void ne_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v;
+  MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
   STATUS (z) = INITIALISED_MASK;
@@ -3569,10 +3550,10 @@ void ne_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits
 \return whether x < y
 **/
 
-void lt_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+void lt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v;
+  MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
   STATUS (z) = INITIALISED_MASK;
@@ -3589,10 +3570,10 @@ void lt_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits
 \return whether x <= y
 **/
 
-void le_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+void le_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v;
+  MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
   STATUS (z) = INITIALISED_MASK;
@@ -3609,10 +3590,10 @@ void le_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits
 \return whether x > y
 **/
 
-void gt_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+void gt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v;
+  MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
   STATUS (z) = INITIALISED_MASK;
@@ -3629,10 +3610,10 @@ void gt_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits
 \return whether x >= y
 **/
 
-void ge_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits)
+void ge_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
-  MP_DIGIT_T *v;
+  MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
   STATUS (z) = INITIALISED_MASK;
@@ -3649,11 +3630,11 @@ void ge_mp (NODE_T * p, A68_BOOL * z, MP_DIGIT_T * x, MP_DIGIT_T * y, int digits
 \return round (x)
 **/
 
-MP_DIGIT_T *round_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *round_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
-  MP_DIGIT_T *y;
+  MP_T *y;
   STACK_MP (y, p, digits);
-  (void) set_mp_short (y, (MP_DIGIT_T) (MP_RADIX / 2), -1, digits);
+  (void) set_mp_short (y, (MP_T) (MP_RADIX / 2), -1, digits);
   if (MP_DIGIT (x, 1) >= 0) {
     (void) add_mp (p, z, x, y, digits);
     (void) trunc_mp (p, z, z, digits);
@@ -3661,7 +3642,7 @@ MP_DIGIT_T *round_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
     (void) sub_mp (p, z, x, y, digits);
     (void) trunc_mp (p, z, z, digits);
   }
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   return (z);
 }
 
@@ -3674,22 +3655,22 @@ MP_DIGIT_T *round_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return entier (x)
 **/
 
-MP_DIGIT_T *entier_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *entier_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   if (MP_DIGIT (x, 1) >= 0) {
     (void) trunc_mp (p, z, x, digits);
   } else {
-    MP_DIGIT_T *y;
+    MP_T *y;
     STACK_MP (y, p, digits);
     MOVE_MP (y, z, digits);
     (void) trunc_mp (p, z, x, digits);
     (void) sub_mp (p, y, y, z, digits);
     if (MP_DIGIT (y, 1) != 0) {
-      (void) set_mp_short (y, (MP_DIGIT_T) 1, 0, digits);
+      (void) set_mp_short (y, (MP_T) 1, 0, digits);
       (void) sub_mp (p, z, z, y, digits);
     }
   }
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   return (z);
 }
 
@@ -3702,14 +3683,14 @@ MP_DIGIT_T *entier_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return |x|
 **/
 
-MP_DIGIT_T *abs_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *abs_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   (void) p;
   if (x != z) {
     MOVE_MP (z, x, digits);
   }
   MP_DIGIT (z, 1) = fabs (MP_DIGIT (z, 1));
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   return (z);
 }
 
@@ -3722,13 +3703,13 @@ MP_DIGIT_T *abs_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
 \return -x
 **/
 
-MP_DIGIT_T *minus_mp (NODE_T * p, MP_DIGIT_T * z, MP_DIGIT_T * x, int digits)
+MP_T *minus_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
 {
   (void) p;
   if (x != z) {
     MOVE_MP (z, x, digits);
   }
   MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
-  MP_STATUS (z) = (MP_DIGIT_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
   return (z);
 }

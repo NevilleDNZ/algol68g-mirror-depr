@@ -540,7 +540,7 @@ static A68_REF dereference_ref_row (NODE_T * p, MOID_T * m, ADDR_T par_size)
 \param op operation to be performed
 **/
 
-static void op_ab (NODE_T * p, MOID_T * m, MOID_T * n, GENIE_PROCEDURE * op)
+static void op_ab (NODE_T * p, MOID_T * m, MOID_T * n, GENIE_PROC * op)
 {
   ADDR_T par_size = MOID_SIZE (m) + MOID_SIZE (n);
   A68_REF u, *v;

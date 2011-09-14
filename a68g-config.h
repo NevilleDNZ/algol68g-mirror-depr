@@ -103,6 +103,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define this if NetBSD was detected */
+/* #undef HAVE_NETBSD */
+
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
 
@@ -176,19 +179,19 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 2.2.0"
+#define PACKAGE_STRING "algol68g 2.3.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.2.0"
+#define PACKAGE_VERSION "2.3.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.2.0"
+#define VERSION "2.3.0"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
@@ -272,7 +275,7 @@
 /* #undef HAVE_COMPILER */
 #elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_LIBDL)
 #define HAVE_COMPILER 1
-#elif defined HAVE_FREEBSD
+#elif (defined HAVE_FREEBSD || defined HAVE_NETBSD)
 #define HAVE_COMPILER 1
 #else
 /* #undef HAVE_COMPILER */

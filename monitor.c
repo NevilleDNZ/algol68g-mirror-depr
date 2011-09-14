@@ -339,7 +339,7 @@ static void scan_sym (FILE_T f, NODE_T * p)
 \return entry in symbol table or NULL
 **/
 
-static TAG_T *find_tag (SYMBOL_TABLE_T * table, int a, char *name)
+static TAG_T *find_tag (TABLE_T * table, int a, char *name)
 {
   if (table != NULL) {
     TAG_T *s = NULL;
@@ -376,7 +376,7 @@ static TAG_T *find_tag (SYMBOL_TABLE_T * table, int a, char *name)
 
 static int prio (FILE_T f, NODE_T * p)
 {
-  TAG_T *s = find_tag (stand_env, PRIO_SYMBOL, symbol);
+  TAG_T *s = find_tag (a68g_standenv, PRIO_SYMBOL, symbol);
   (void) p;
   (void) f;
   if (s == NULL) {
@@ -491,7 +491,7 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
 static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
 {
   TAG_T *t;
-  for (t = stand_env->operators; t != NULL; FORWARD (t)) {
+  for (t = a68g_standenv->operators; t != NULL; FORWARD (t)) {
     if (strcmp (SYMBOL (NODE (t)), sym) == 0) {
       PACK_T *p = PACK (MOID (t));
       if (x == MOID (p)) {
@@ -538,7 +538,7 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
     if (current_frame == 0 || (current_frame == FRAME_NUMBER (a68g_link))) {
       NODE_T *u = FRAME_TREE (a68g_link);
       if (u != NULL) {
-        SYMBOL_TABLE_T *q = SYMBOL_TABLE (u);
+        TABLE_T *q = TABLE (u);
         TAG_T *i = q->identifiers;
         for (; i != NULL; FORWARD (i)) {
           if (strcmp (SYMBOL (NODE (i)), sym) == 0) {
@@ -553,7 +553,7 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
     }
     search_identifier (f, p, dynamic_a68g_link, sym);
   } else {
-    SYMBOL_TABLE_T *q = stand_env;
+    TABLE_T *q = a68g_standenv;
     TAG_T *i = q->identifiers;
     for (; i != NULL; FORWARD (i)) {
       if (strcmp (SYMBOL (NODE (i)), sym) == 0) {
@@ -796,7 +796,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
   if (name) {
     z = ARRAY (arr);
     OFFSET (&z) += address;
-    SET_REF_SCOPE (&z, PRIMAL_SCOPE);
+    REF_SCOPE (&z) = PRIMAL_SCOPE;
     PUSH_REF (p, z);
   } else {
     PUSH (p, ADDRESS (&(ARRAY (arr))) + address, MOID_SIZE (res));
@@ -992,13 +992,13 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     }
     if (m != NULL) {
       int digits = get_mp_digits (m);
-      MP_DIGIT_T *z;
+      MP_T *z;
       STACK_MP (z, p, digits);
       if (genie_string_to_value_internal (p, m, symbol, (BYTE_T *) z) == A68_FALSE) {
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_IN_DENOTATION, m);
         exit_genie (p, A68_RUNTIME_ERROR);
       }
-      z[0] = (MP_DIGIT_T) (INITIALISED_MASK | CONSTANT_MASK);
+      z[0] = (MP_T) (INITIALISED_MASK | CONSTANT_MASK);
       push_mode (f, m);
       SCAN_CHECK (f, p);
     } else {
@@ -1276,7 +1276,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONG_REAL:
   case MODE_LONG_BITS:
     {
-      MP_DIGIT_T *z = (MP_DIGIT_T *) w;
+      MP_T *z = (MP_T *) w;
       initialised = (BOOL_T) ((unsigned) z[0] & INITIALISED_MASK);
       recognised = A68_TRUE;
       break;
@@ -1285,23 +1285,23 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONGLONG_REAL:
   case MODE_LONGLONG_BITS:
     {
-      MP_DIGIT_T *z = (MP_DIGIT_T *) w;
+      MP_T *z = (MP_T *) w;
       initialised = (BOOL_T) ((unsigned) z[0] & INITIALISED_MASK);
       recognised = A68_TRUE;
       break;
     }
   case MODE_LONG_COMPLEX:
     {
-      MP_DIGIT_T *r = (MP_DIGIT_T *) w;
-      MP_DIGIT_T *i = (MP_DIGIT_T *) (w + size_long_mp ());
+      MP_T *r = (MP_T *) w;
+      MP_T *i = (MP_T *) (w + size_long_mp ());
       initialised = (BOOL_T) (((unsigned) r[0] & INITIALISED_MASK) && ((unsigned) i[0] & INITIALISED_MASK));
       recognised = A68_TRUE;
       break;
     }
   case MODE_LONGLONG_COMPLEX:
     {
-      MP_DIGIT_T *r = (MP_DIGIT_T *) w;
-      MP_DIGIT_T *i = (MP_DIGIT_T *) (w + size_long_mp ());
+      MP_T *r = (MP_T *) w;
+      MP_T *i = (MP_T *) (w + size_long_mp ());
       initialised = (BOOL_T) (((unsigned) r[0] & INITIALISED_MASK) && ((unsigned) i[0] & INITIALISED_MASK));
       recognised = A68_TRUE;
       break;
@@ -1385,7 +1385,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
 \param mode mode of object
 **/
 
-static void print_item (NODE_T * p, FILE_T f, BYTE_T * item, MOID_T * mode)
+void print_item (NODE_T * p, FILE_T f, BYTE_T * item, MOID_T * mode)
 {
   A68_REF nil_file = nil_ref;
   reset_transput_buffer (UNFORMATTED_BUFFER);
@@ -1456,9 +1456,6 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
           WRITE (STDOUT_FILENO, output_line);
         } else if (IS_IN_STACK (z)) {
           ASSERT (snprintf (output_line, SNPRINTF_SIZE, "stack(%d)", REF_OFFSET (z)) >= 0);
-          WRITE (STDOUT_FILENO, output_line);
-        } else if (IS_IN_HANDLE (z)) {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, "handle(%p)", ADDRESS (z)) >= 0);
           WRITE (STDOUT_FILENO, output_line);
         }
       } else {
@@ -1650,7 +1647,7 @@ static void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q,
 
 static void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *printed)
 {
-  SYMBOL_TABLE_T *q = SYMBOL_TABLE (p);
+  TABLE_T *q = TABLE (p);
   if (*printed > 0) {
     WRITELN (f, "");
   }
@@ -1672,7 +1669,7 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *print
 {
 /* show the frame starting at frame pointer 'a68g_link', using symbol table from p as a map */
   if (p != NULL) {
-    SYMBOL_TABLE_T *q = SYMBOL_TABLE (p);
+    TABLE_T *q = TABLE (p);
     intro_frame (f, p, a68g_link, printed);
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Dynamic link=frame(%d), static link=frame(%d), parameters=frame(%d)", FRAME_DYNAMIC_LINK (a68g_link), FRAME_STATIC_LINK (a68g_link), FRAME_PARAMETERS (a68g_link)) >= 0);
     WRITELN (STDOUT_FILENO, output_line);
@@ -1700,15 +1697,15 @@ static void list (FILE_T f, NODE_T * p, int n, int m)
 {
   if (p != NULL) {
     if (m == 0) {
-      SOURCE_LINE_T *r = INFO (p)->line;
-      SOURCE_LINE_T *l = program.top_line;
+      LINE_T *r = INFO (p)->line;
+      LINE_T *l = program.top_line;
       for (; l != NULL; FORWARD (l)) {
         if (NUMBER (l) > 0 && abs (NUMBER (r) - NUMBER (l)) <= n) {
           write_source_line (f, l, NULL, A68_TRUE);
         }
       }
     } else {
-      SOURCE_LINE_T *l = program.top_line;
+      LINE_T *l = program.top_line;
       for (; l != NULL; FORWARD (l)) {
         if (NUMBER (l) > 0 && NUMBER (l) >= n && NUMBER (l) <= m) {
           write_source_line (f, l, NULL, A68_TRUE);
@@ -1757,7 +1754,7 @@ void stack_dump_current (FILE_T f, ADDR_T a68g_link)
   if (a68g_link > 0) {
     int dynamic_a68g_link = FRAME_DYNAMIC_LINK (a68g_link);
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL && LEVEL (SYMBOL_TABLE (p)) > 3) {
+    if (p != NULL && LEVEL (TABLE (p)) > 3) {
       if (FRAME_NUMBER (a68g_link) == current_frame) {
         int printed = 0;
         show_stack_frame (f, p, a68g_link, &printed);
@@ -1780,7 +1777,7 @@ void stack_a68g_link_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
 {
   if (depth > 0 && a68g_link > 0) {
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL && LEVEL (SYMBOL_TABLE (p)) > 3) {
+    if (p != NULL && LEVEL (TABLE (p)) > 3) {
       show_stack_frame (f, p, a68g_link, printed);
       stack_a68g_link_dump (f, FRAME_STATIC_LINK (a68g_link), depth - 1, printed);
     }
@@ -1799,7 +1796,7 @@ void stack_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
 {
   if (depth > 0 && a68g_link > 0) {
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL && LEVEL (SYMBOL_TABLE (p)) > 3) {
+    if (p != NULL && LEVEL (TABLE (p)) > 3) {
       show_stack_frame (f, p, a68g_link, printed);
       stack_dump (f, FRAME_DYNAMIC_LINK (a68g_link), depth - 1, printed);
     }
@@ -1860,7 +1857,7 @@ void examine_stack (FILE_T f, ADDR_T a68g_link, char *sym, int *printed)
     int dynamic_a68g_link = FRAME_DYNAMIC_LINK (a68g_link);
     NODE_T *p = FRAME_TREE (a68g_link);
     if (p != NULL) {
-      SYMBOL_TABLE_T *q = SYMBOL_TABLE (p);
+      TABLE_T *q = TABLE (p);
       examine_tags (f, p, a68g_link, q->identifiers, sym, printed);
       examine_tags (f, p, a68g_link, q->operators, sym, printed);
     }
@@ -1928,7 +1925,7 @@ static void list_breakpoints (NODE_T * p, int *listed)
     list_breakpoints (SUB (p), listed);
     if (STATUS_TEST (p, BREAKPOINT_MASK)) {
       (*listed)++;
-      where_in_source (STDOUT_FILENO, p);
+      WIS (p);
       if (INFO (p)->expr != NULL) {
         WRITELN (STDOUT_FILENO, "breakpoint condition \"");
         WRITE (STDOUT_FILENO, INFO (p)->expr);
@@ -2263,7 +2260,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
       return (A68_FALSE);
     }
   } else if (match_string (cmd, "Where", NULL_CHAR)) {
-    where_in_source (STDOUT_FILENO, p);
+    WIS (p);
     return (A68_FALSE);
   } else if (strcmp (cmd, "?") == 0) {
     apropos (STDOUT_FILENO, prompt, "monitor");
@@ -2280,7 +2277,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     return (A68_FALSE);
   } else if (match_string (cmd, "XRef", NULL_CHAR)) {
     int k = NUMBER (LINE (p));
-    SOURCE_LINE_T *line = program.top_line;
+    LINE_T *line = program.top_line;
     for (; line != NULL; FORWARD (line)) {
       if (NUMBER (line) > 0 && NUMBER (line) == k) {
         list_source_line (STDOUT_FILENO, line, A68_TRUE);
@@ -2288,7 +2285,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "XRef", BLANK_CHAR)) {
-    SOURCE_LINE_T *line = program.top_line;
+    LINE_T *line = program.top_line;
     int k = get_num_arg (cmd, NULL);
     if (k == NOT_A_NUM) {
       monitor_error ("line number expected", NULL);
@@ -2405,10 +2402,10 @@ void single_step (NODE_T * p, unsigned mask)
 #endif
   if (mask == (unsigned) BREAKPOINT_ERROR_MASK) {
     WRITELN (STDOUT_FILENO, "Monitor entered after an error");
-    where_in_source (STDOUT_FILENO, (p));
+    WIS ((p));
   } else if ((mask & BREAKPOINT_INTERRUPT_MASK) != 0) {
     WRITELN (STDOUT_FILENO, NEWLINE_STRING);
-    where_in_source (STDOUT_FILENO, (p));
+    WIS ((p));
     if (do_confirm_exit && confirm_exit ()) {
       exit_genie ((p), A68_RUNTIME_ERROR + A68_FORCE_QUIT);
     }
@@ -2422,14 +2419,14 @@ void single_step (NODE_T * p, unsigned mask)
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Breakpoint") >= 0);
     }
     WRITELN (STDOUT_FILENO, output_line);
-    where_in_source (STDOUT_FILENO, p);
+    WIS (p);
   } else if ((mask & BREAKPOINT_TEMPORARY_MASK) != 0) {
     if (break_proc_level != 0 && INFO (p)->PROCEDURE_LEVEL > break_proc_level) {
       return;
     }
     change_masks (program.top_node, BREAKPOINT_TEMPORARY_MASK, A68_FALSE);
     WRITELN (STDOUT_FILENO, "Temporary breakpoint (now removed)");
-    where_in_source (STDOUT_FILENO, p);
+    WIS (p);
   } else if ((mask & BREAKPOINT_WATCH_MASK) != 0) {
     if (!evaluate_watchpoint_expression (p)) {
       return;
@@ -2440,17 +2437,17 @@ void single_step (NODE_T * p, unsigned mask)
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Watchpoint (now removed)") >= 0);
     }
     WRITELN (STDOUT_FILENO, output_line);
-    where_in_source (STDOUT_FILENO, p);
+    WIS (p);
   } else if ((mask & BREAKPOINT_TRACE_MASK) != 0) {
-    PROPAGATOR_T *prop = &PROPAGATOR (p);
-    where_in_source (STDOUT_FILENO, (p));
+    PROP_T *prop = &PROP (p);
+    WIS ((p));
     if (propagator_name (prop->unit) != NULL) {
       WRITELN (STDOUT_FILENO, propagator_name (prop->unit));
     }
     return;
   } else {
     WRITELN (STDOUT_FILENO, "Monitor entered with no valid reason (continuing execution)");
-    where_in_source (STDOUT_FILENO, (p));
+    WIS ((p));
     return;
   }
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)

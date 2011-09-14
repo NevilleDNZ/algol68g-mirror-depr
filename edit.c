@@ -22,14 +22,19 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 /*
 This is an experimental curses-based UNIX approximation of big-iron editors 
-like the XEDIT/ISPF editors. It is still undocumented as it is not fully debugged.
+like the XEDIT/ISPF editors. 
+
+It is still undocumented as it is not sufficiently debugged.
+
 I already use it for daily editing work, but you might still loose your work.
 Don't say I did not warn you!
 
-The editor is a very basic IDE for Algol 68 Genie, it can for instance take you
-to diagnostic positions in the code.
+The editor is also a very basic IDE for Algol 68 Genie, it can for instance 
+take you to diagnostic positions in the code.
+
 This editor is meant for maintaining small to intermediate sized source code.
 The command set is small, and there is no huge file support.
+
 The editor supports prefix commands and text folding, like the
 XEDIT/ISPF editors.
 
@@ -46,16 +51,18 @@ XEDIT/ISPF editors.
 | FILE    Save file [to target filename] and quit
 | FOLD    [[TO] target] Folds lines either up TO target, or matching target.
 | MESSAGE visualise a message from RUN or SYNTAX
-| MOVE    target target [n]  Up to 1st target to after 2nd target, n copies
+| MOVE    target target [n] Up to 1st target to after 2nd target, n copies
 | PAGE    [[+-]n|*] Forward or backward paging
-| QQUIT   Categorically quit
+| PFn cmd Binds function key n to cmd
+| QQUIT   Categorically quit, does not ask if you are sure or not! 
 | READ    Insert filename after current line
 | RESET   Reset prefixes
 | RUN     run text with a68g
 | SCALE   Put the sacle [OFF] or at line [n]
+| SHELL   target cmd Filter lines using cmd
 | S       Change command /find/replace/ [target [n|* [m|*]]]
-| SYNTAX  alias for run --pedantic --norun
-| TOGGLE  Toggle between current line and command line
+| SYNTAX  Alias for run --pedantic --norun
+| TOGGLE  Toggle between current line and command line (F1, F12 do the same)
 | UNDO    Undo until last command that made a back-up copy
 | WRITE   [target filename]
 | 
@@ -88,7 +95,7 @@ XEDIT/ISPF editors.
 | CC   Copy block of lines marker; use P (after) or Q (before) for destination
 | D[n] Delete lines
 | DD   Delete block of lines marker
-| I    Indent line to column [<|>][n]
+| I    Indent line relative to column or to absolute column [<|>][n]
 | II   Indent block of lines
 | J    Join with next line
 | P[n] Add n copies after this line
@@ -110,14 +117,16 @@ XEDIT/ISPF editors.
 
 #define TEXT_COLOUR 1
 #define HILIGHT_COLOUR 2
-#define SYSTEM_COLOUR 3
+#define DARK_COLOUR 3
+#define INFO_COLOUR 4
+#define CMD_COLOUR 5
 
 #define BACKSPACE 127
 #define BLANK  "       "
 #define BLOCK_SIZE 4
 #define BOTSTR "* * * End of Data * * *"
 #define DATE_STRING "%a %d-%b-%Y %H:%M"
-#define EMPTY_STRING(s) ((s) == NULL || (s)[0] == NULL_CHAR)
+#define EMPTY_STRING(s) ((s) == NO_TEXT || (s)[0] == NULL_CHAR)
 #define FD_READ 0
 #define FD_WRITE 1
 #define HISTORY 16
@@ -128,7 +137,7 @@ XEDIT/ISPF editors.
 #define MAX_PF 64
 #define NOT_EOF(z) ((z) != NULL && NEXT (z) != NULL)
 #define NOT_TOF(z) ((z) != NULL && PREVIOUS (z) != NULL)
-#define PREFIX "====== "
+#define PREFIX "****** "
 #define PROMPT "=====> "
 #define PROTECTED(s) ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cursor in protected area", (s)) >= 0)
 #define SELECT(p) ((p)->select)
@@ -452,40 +461,40 @@ struct KEY dec_key[] = {
   {-1, -1, NULL}
 };
 
-typedef struct LINE LINE;
-struct LINE {
+typedef struct EDLIN_T EDLIN_T;
+struct EDLIN_T {
   int number, reserved;
   char precmd[MARGIN + 1];
   char *text;
-  LINE *next, *previous;
+  EDLIN_T *next, *previous;
   BOOL_T select;
 };
 
-typedef struct CURSOR CURSOR;
-struct CURSOR {
+typedef struct CURSOR_T CURSOR_T;
+struct CURSOR_T {
   int row, col, row0, col0, index;
-  LINE *line, *last;
+  EDLIN_T *line, *last;
   BOOL_T in_forbidden, in_prefix, in_text, in_cmd;
   BOOL_T sync;
   int sync_index;
-  LINE *sync_line;
+  EDLIN_T *sync_line;
   unsigned bstate;
 };
 
-typedef struct DISPLAY DISPLAY;
-struct DISPLAY {
+typedef struct DISPLAY_T DISPLAY_T;
+struct DISPLAY_T {
   int scale_row, cmd_row, pf_row;
-  LINE *last_line;
+  EDLIN_T *last_line;
   char status[BUFFER_SIZE];
   char tmp_text[BUFFER_SIZE];
   char cmd[BUFFER_SIZE];
   char dl0[BUFFER_SIZE];
-  CURSOR curs;
+  CURSOR_T curs;
   BOOL_T ins_mode;
 };
 
-typedef struct REGEXP REGEXP;
-struct REGEXP {
+typedef struct REGEXP_T REGEXP_T;
+struct REGEXP_T {
   BOOL_T is_compiled;
   char pattern[BUFFER_SIZE];
   regex_t compiled;
@@ -493,23 +502,23 @@ struct REGEXP {
   size_t num_match;
 };
 
-typedef struct DATASET DATASET;
-struct DATASET {
+typedef struct DATASET_T DATASET_T;
+struct DATASET_T {
   mode_t perms;
   char name[BUFFER_SIZE];
   char perm[BUFFER_SIZE];
   char date[BUFFER_SIZE];
   char undo[BUFFER_SIZE];
   int size, alts, tabs, num, undo_line, search;
-  LINE *tof; /* top-of-file */
+  EDLIN_T *tof; /* top-of-file */
   BOOL_T new_file;
   BOOL_T subset;
   BOOL_T refresh;
   BOOL_T collect;
-  DISPLAY display;
-  LINE *curr; /* Current line, above the scale */
-  LINE *bl_start, *bl_end; /* block at last copy or move */
-  REGEXP targ1, targ2, find, repl;
+  DISPLAY_T display;
+  EDLIN_T *curr; /* Current line, above the scale */
+  EDLIN_T *bl_start, *bl_end; /* block at last copy or move */
+  REGEXP_T targ1, targ2, find, repl;
   char oper; /* regexp operator: & or | */
   FILE_T msgs;
   ADDR_T heap_pointer;
@@ -520,12 +529,12 @@ struct DATASET {
 
 /* Forward routines */
 
-static void edit_do_cmd (DATASET *);
-static void edit_do_prefix (DATASET *);
-static void edit_loop (DATASET *);
-static void edit_dataset (DATASET *, int, char *, char *);
-static void edit_garbage_collect (DATASET *, char *);
-static void set_current (DATASET *, char *, char *);
+static void edit_do_cmd (DATASET_T *);
+static void edit_do_prefix (DATASET_T *);
+static void edit_loop (DATASET_T *);
+static void edit_dataset (DATASET_T *, int, char *, char *);
+static void edit_garbage_collect (DATASET_T *, char *);
+static void set_current (DATASET_T *, char *, char *);
 
 /*
 \brief store command in a cyclic buffer
@@ -561,13 +570,13 @@ static BOOL_T heap_full (int as)
 \return pointer to same
 **/
 
-static BYTE_T *edit_get_heap (DATASET *dd, size_t s)
+static BYTE_T *edit_get_heap (DATASET_T *dd, size_t s)
 {
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   BYTE_T *z;
   int as = A68_ALIGN ((int) s);
   XABEND (heap_is_fluid == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
-  /* If there is no space left, we collect garbage */
+/* If there is no space left, we collect garbage */
   if (heap_full (as) && dd->collect) {
     edit_garbage_collect (dd, "edit");
   }
@@ -575,7 +584,7 @@ static BYTE_T *edit_get_heap (DATASET *dd, size_t s)
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: out of memory") >= 0);
     return (NULL);
   }
-  /* Allocate space */
+/* Allocate space */
   z = HEAP_ADDRESS (fixed_heap_pointer);
   fixed_heap_pointer += as;
   return (z);
@@ -589,7 +598,7 @@ static BYTE_T *edit_get_heap (DATASET *dd, size_t s)
 \param pos position to add ch
 **/
 
-static void add_linbuf (DATASET *dd, char ch, int pos)
+static void add_linbuf (DATASET_T *dd, char ch, int pos)
 {
   if (dd->linbuf == NULL || pos >= dd->linsiz - 1) {
     char *oldb = dd->linbuf;
@@ -613,7 +622,7 @@ static void add_linbuf (DATASET *dd, char ch, int pos)
 \param re regexp to initialise
 **/
 
-static void init_regexp (REGEXP *re)
+static void init_regexp (REGEXP_T *re)
 {
   re->is_compiled = A68_FALSE;
   re->pattern[0] = NULL_CHAR;
@@ -626,7 +635,7 @@ static void init_regexp (REGEXP *re)
 \param re regexp to initialise
 **/
 
-static void reset_regexp (REGEXP *re)
+static void reset_regexp (REGEXP_T *re)
 {
   re->is_compiled = A68_FALSE;
   re->pattern[0] = NULL_CHAR;
@@ -645,9 +654,9 @@ static void reset_regexp (REGEXP *re)
 \return return code
 **/
 
-static int compile_regexp (DATASET *dd, REGEXP *re, char *cmd)
+static int compile_regexp (DATASET_T *dd, REGEXP_T *re, char *cmd)
 {
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   int rc;
   char buffer[BUFFER_SIZE];
   re->is_compiled = A68_FALSE;
@@ -678,9 +687,9 @@ static int compile_regexp (DATASET *dd, REGEXP *re, char *cmd)
 \return whether match
 **/
 
-static BOOL_T match_regex (DATASET *dd, LINE *z, int eflags, char *cmd)
+static BOOL_T match_regex (DATASET_T *dd, EDLIN_T *z, int eflags, char *cmd)
 {
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   int rc1 = REG_NOMATCH, rc2 = REG_NOMATCH;
   char *str = TEXT (z);
 /* Match first regex if present */
@@ -744,9 +753,9 @@ static int tab_reps (int pos, int tabs)
 \return same
 **/
 
-static BOOL_T reserved_row (DATASET *dd, int row)
+static BOOL_T reserved_row (DATASET_T *dd, int row)
 {
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   return (row == scr->cmd_row ||
           row == scr->scale_row ||
           row == scr->pf_row);
@@ -758,7 +767,7 @@ static BOOL_T reserved_row (DATASET *dd, int row)
 \return same
 **/
 
-static int count_reserved (DATASET *dd)
+static int count_reserved (DATASET_T *dd)
 {
   int k, n = 0;
   for (k = 0; k < LINES; k++) {
@@ -776,7 +785,7 @@ static int count_reserved (DATASET *dd)
 \return same
 **/
 
-static int lines_on_scr (DATASET *dd, LINE * lin)
+static int lines_on_scr (DATASET_T *dd, EDLIN_T * lin)
 {
   int k = 0, row = 1, col = MARGIN;
   char *txt = TEXT (lin);
@@ -808,24 +817,19 @@ static int lines_on_scr (DATASET *dd, LINE * lin)
 \param dd current dataset
 **/
 
-static void edit_init_curses (DATASET *dd)
+static void edit_init_curses (DATASET_T *dd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   int res = count_reserved (dd);
   initscr ();
   XABEND (has_colors () == A68_FALSE, "edit requires colour display", NULL);
   start_color ();
-/* Next works for instance on the Linux console
-  if (can_change_color ()) {
-    init_color (COLOR_WHITE, 1000, 1000, 1000);
-    init_color (COLOR_GREEN, 600, 600, 600);
-    init_color (COLOR_RED, 300, 300, 300);
-  }
-*/
-  init_pair (TEXT_COLOUR, COLOR_GREEN, COLOR_BLACK);
-  init_pair (HILIGHT_COLOUR, COLOR_WHITE, COLOR_BLACK);
-  init_pair (SYSTEM_COLOUR, COLOR_RED, COLOR_BLACK);
+  init_pair (TEXT_COLOUR, COLOR_CYAN, COLOR_BLACK);
+  init_pair (HILIGHT_COLOUR, COLOR_YELLOW, COLOR_BLACK);
+  init_pair (DARK_COLOUR, COLOR_BLUE, COLOR_BLACK);
+  init_pair (INFO_COLOUR, COLOR_RED, COLOR_BLACK);
+  init_pair (CMD_COLOUR, COLOR_WHITE, COLOR_BLACK);
   raw ();
   keypad (stdscr, TRUE);
   noecho ();
@@ -838,7 +842,7 @@ static void edit_init_curses (DATASET *dd)
   scr->pf_row = LINES - 2;
   curs->row = curs->col = -1;
   curs->sync = A68_FALSE;
-  clear ();
+  wclear (stdscr);
   refresh ();
 }
 
@@ -863,9 +867,9 @@ int get_buffer (FILE_T fd, char *buffer)
 \return new line
 **/
 
-LINE *new_line (DATASET *dd)
+EDLIN_T *new_line (DATASET_T *dd)
 {
-  LINE *newl = (LINE *) edit_get_heap (dd, (size_t) sizeof (LINE));
+  EDLIN_T *newl = (EDLIN_T *) edit_get_heap (dd, (size_t) sizeof (EDLIN_T));
   if (newl == NULL) {
     return (NULL);
   }
@@ -883,7 +887,7 @@ LINE *new_line (DATASET *dd)
 \param z line to forward
 **/
 
-static void forward_line (LINE **z)
+static void forward_line (EDLIN_T **z)
 {
   if (*z == NULL) {
     return;
@@ -898,7 +902,7 @@ static void forward_line (LINE **z)
 \param z line to "backward"
 **/
 
-static void backward_line (LINE **z)
+static void backward_line (EDLIN_T **z)
 {
   if (*z == NULL) {
     return;
@@ -913,10 +917,10 @@ static void backward_line (LINE **z)
 \param dd current dataset
 **/
 
-static void align_current (DATASET *dd)
+static void align_current (DATASET_T *dd)
 {
   if (IS_TOF (dd->curr)) {
-    LINE *z = dd->curr;
+    EDLIN_T *z = dd->curr;
     forward_line (&z);
     if (NOT_EOF (z)) {
       dd->curr = z;
@@ -925,7 +929,7 @@ static void align_current (DATASET *dd)
     if (IS_TOF (PREVIOUS (dd->curr))) {
       dd->curr = dd->tof;
     } else {
-      LINE *z = dd->curr;
+      EDLIN_T *z = dd->curr;
       backward_line (&z);
       (dd)->curr = z;
     }
@@ -940,7 +944,7 @@ static void align_current (DATASET *dd)
 \param eat pointer to old lines, use string if fits
 **/
 
-static void new_edit_string (DATASET *dd, LINE *l, char *txt, LINE *eat)
+static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
 {
   if (txt == NULL || strlen(txt) == 0) {
     l->reserved = 1;
@@ -954,13 +958,12 @@ static void new_edit_string (DATASET *dd, LINE *l, char *txt, LINE *eat)
     }
     if (eat != NULL && eat->reserved >= res) {
       l->reserved = eat->reserved;
-ABEND (l->reserved > 9999, "Strange length", NO_TEXT);
       TEXT (l) = TEXT (eat);
     } else {
       l->reserved = res;
       TEXT (l) = (char *) edit_get_heap (dd, (size_t) res);
     }
-    if (TEXT (l) == NULL) {
+    if (TEXT (l) == NO_TEXT) {
       return;
     }
     bufcpy (TEXT (l), txt, res);
@@ -973,7 +976,7 @@ ABEND (l->reserved > 9999, "Strange length", NO_TEXT);
 \param l line to set
 **/
 
-static void set_prefix (LINE *l)
+static void set_prefix (EDLIN_T *l)
 {
   bufcpy (l->precmd, BLANK, (strlen (BLANK) + 1));
 }
@@ -983,10 +986,10 @@ static void set_prefix (LINE *l)
 \param dd current dataset
 **/
 
-static void edit_reset (DATASET *dd)
+static void edit_reset (DATASET_T *dd)
 {
   int k = 0;
-  LINE *z;
+  EDLIN_T *z;
   for (z = dd->tof; z != NULL; FORWARD (z)) {
     if (NUMBER (z) != 0) {
       k++;
@@ -1002,11 +1005,11 @@ static void edit_reset (DATASET *dd)
 \param dd current dataset
 **/
 
-static void cdelete (DATASET *dd)
+static void cdelete (DATASET_T *dd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *lin = curs->line;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *lin = curs->line;
   if (lin != NULL && curs->index < (int) strlen (TEXT (lin))) {
     TEXT (lin)[curs->index] = NULL_CHAR;
   }
@@ -1018,17 +1021,17 @@ static void cdelete (DATASET *dd)
 \param cmd command that calls this routine
 **/
 
-static void split_line (DATASET *dd, char *cmd)
+static void split_line (DATASET_T *dd, char *cmd)
 {
 /* We reset later so this routine can be repeated cheaply */
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *lin = curs->line, *newl;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *lin = curs->line, *newl;
   if (NEXT (lin) == NULL) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot split line", cmd) >= 0);
     return;
   }
-  clear ();
+/*  wclear (stdscr); */
   dd->bl_start = dd->bl_end = NULL;
   dd->alts++;
   dd->size++;
@@ -1069,18 +1072,18 @@ static void split_line (DATASET *dd, char *cmd)
 \param cmd command that calls this
 **/
 
-static void join_line (DATASET *dd, char *cmd)
+static void join_line (DATASET_T *dd, char *cmd)
 {
 /* We reset later so this routine can be repeated cheaply */
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *lin = curs->line, *prv, *u;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *lin = curs->line, *prv, *u;
   int len, lcur, lprv;
   if (NUMBER (lin) == 0) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot join line", cmd) >= 0);
     return;
   }
-  clear ();
+/*  wclear (stdscr); */
   dd->bl_start = dd->bl_end = NULL;
   prv = PREVIOUS (lin);
   dd->alts++;
@@ -1170,7 +1173,7 @@ static char * perm_str (mode_t st_mode)
 \param cmd command that calls this routine
 **/
 
-static void edit_read_string (DATASET *dd, FILE_T fd)
+static void edit_read_string (DATASET_T *dd, FILE_T fd)
 {
   int bytes, posl;
   char ch;
@@ -1205,14 +1208,14 @@ static void edit_read_string (DATASET *dd, FILE_T fd)
 \param eat old dataset lines to consume
 **/
 
-static void edit_read (DATASET * dd, char *cmd, char *fname, LINE *eat)
+static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   FILE_T fd;
   int bytes, posl;
   char ch;
-  LINE *curr = dd->curr;
+  EDLIN_T *curr = dd->curr;
 /* Open the file */
   RESET_ERRNO;
   if ((int) strlen (fname) > 0) {
@@ -1271,12 +1274,12 @@ static void edit_read (DATASET * dd, char *cmd, char *fname, LINE *eat)
 \param cmd command that calls this routine
 **/
 
-static void edit_read_initial (DATASET * dd, char *cmd)
+static void edit_read_initial (DATASET_T * dd, char *cmd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   FILE_T fd;
-  LINE *curr;
+  EDLIN_T *curr;
   struct stat statbuf;
 /* Initialisations */
   scr->cmd[0] = NULL_CHAR;
@@ -1362,12 +1365,12 @@ static void edit_read_initial (DATASET * dd, char *cmd)
 \param v write upto, but not including, this line
 **/
 
-static void edit_write (DATASET * dd, char *cmd, char *fname, LINE *u, LINE *v)
+static void edit_write (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *u, EDLIN_T *v)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   FILE_T fd;
-  LINE *curr;
+  EDLIN_T *curr;
 /* Backwards range */
   if (NOT_EOF (v) && (NUMBER (v) < NUMBER (u))) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", cmd) >= 0);
@@ -1403,7 +1406,7 @@ static void edit_write (DATASET * dd, char *cmd, char *fname, LINE *u, LINE *v)
 \param cmd command that calls this routine
 **/
 
-static void edit_write_undo_file (DATASET * dd, char *cmd)
+static void edit_write_undo_file (DATASET_T * dd, char *cmd)
 {
   if ((dd->undo)[0] == NULL_CHAR) {
     return;
@@ -1418,12 +1421,12 @@ static void edit_write_undo_file (DATASET * dd, char *cmd)
 \param cmd command that calls this routine
 **/
 
-static void edit_read_undo_file (DATASET *dd, char *cmd)
+static void edit_read_undo_file (DATASET_T *dd, char *cmd)
 {
   FILE_T fd;
   struct stat statbuf;
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   if ((dd->undo)[0] == NULL_CHAR) {
     return;
   }
@@ -1433,7 +1436,7 @@ static void edit_read_undo_file (DATASET *dd, char *cmd)
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot recover", cmd) >= 0);
     return;
   } else {
-    LINE *eat = NULL, *curr;
+    EDLIN_T *eat = NULL, *curr;
     if (dd->tof != NULL) {
       eat = NEXT (dd->tof);
     }
@@ -1494,7 +1497,7 @@ static void edit_read_undo_file (DATASET *dd, char *cmd)
 \param cmd current command under execution
 **/
 
-static void edit_garbage_collect (DATASET *dd, char *cmd)
+static void edit_garbage_collect (DATASET_T *dd, char *cmd)
 {
   RESET_ERRNO;
   edit_write_undo_file (dd, cmd);
@@ -1519,10 +1522,10 @@ static void edit_garbage_collect (DATASET *dd, char *cmd)
 \param dd_index current index in text (of ch)
 **/
 
-static void putch (int row, int col, char ch, DATASET *dd, LINE *dd_line, int dd_index)
+static void putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_line, int dd_index)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   BOOL_T forbidden = reserved_row (dd, row);
   BOOL_T text_area = (!forbidden) && col >= MARGIN;
   BOOL_T prefix_area = (!forbidden) && col < MARGIN;
@@ -1587,14 +1590,14 @@ static void putch (int row, int col, char ch, DATASET *dd, LINE *dd_line, int dd
 \param dd current dataset
 **/
 
-static void edit_draw (DATASET *dd)
+static void edit_draw (DATASET_T *dd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *run, *tos;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *run, *tos;
   int row, k, virt_scal, lin_abo, lin_dif;
   char *prompt = PROMPT;
-  LINE *z;
+  EDLIN_T *z;
 /* Initialisations */
   if (curs->line != NULL) {
     curs->last = curs->line;
@@ -1635,20 +1638,21 @@ static void edit_draw (DATASET *dd)
 We now raster the screen  - first reserved rows 
 */
   for (row = 0; row < LINES; ) {
-  /* COMMAND ROW - ====> Forward */
+/* COMMAND ROW - ====> Forward */
     if (row == scr->cmd_row) {
       int col = 0, ind = 0;
-      attron (COLOR_PAIR (TEXT_COLOUR));
+      attron (COLOR_PAIR (CMD_COLOUR));
       for (ind = 0; ind < MARGIN; ind++) {
         putch (row, col, prompt[ind], dd, NULL, 0);
         col++;
       }
-  /* Set initial cursor position at start up */
+/* Set initial cursor position at start up */
       if (curs->row == -1) {
         curs->row = row;
         curs->col = col;
       }
-  /* Show command */
+/* Show command */
+      attron (COLOR_PAIR (CMD_COLOUR));
       for (ind = 0; ind < TEXT_WIDTH && IS_PRINT (scr->cmd[ind]); ind++) {
         putch (row, col, scr->cmd[ind], dd, NULL, ind);
         col++;
@@ -1659,12 +1663,12 @@ We now raster the screen  - first reserved rows
       attron (COLOR_PAIR (TEXT_COLOUR));
       row++;
     } else if (row == scr->pf_row) {
-  /* PF ROW - Program Function key help */
-  /* ... but if there is important stuff, it is overridden! */
+/* PF ROW - Program Function key help */
+/* ... but if there is important stuff, it is overridden! */
       if (strcmp (scr->dl0, "help") == 0) {
         int col = 0, ind = 0, pfk, space = (COLS - MARGIN - 4 * 8) / 8;
         char pft[BUFFER_SIZE];
-        attron (COLOR_PAIR (SYSTEM_COLOUR));
+        attron (COLOR_PAIR (INFO_COLOUR));
         if (space < 4) {
           space = 4; /* Tant pis */
         }
@@ -1689,18 +1693,20 @@ We now raster the screen  - first reserved rows
         int col = 0, ind = 0;
         if (strlen (scr->dl0) == 0) {
           ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, 
-            "%06d lines \"%s\" %s %s file %d (%d%%)", 
-            dd->size, dd->name, dd->perm, dd->date, dd->num,
-            (int) (100 * (double) fixed_heap_pointer / (double) temp_heap_pointer)) >= 0);
-          attron (COLOR_PAIR (SYSTEM_COLOUR));
+            "%06d Lines (%d%%) File %d \"%s %s %s\"", 
+            dd->size, 
+            (int) (100 * (double) fixed_heap_pointer 
+                   / (double) temp_heap_pointer),
+            dd->num,
+            dd->perm, dd->name, dd->date) >= 0);
+          attron (COLOR_PAIR (INFO_COLOUR));
         } else {
-          attron (COLOR_PAIR (SYSTEM_COLOUR));
+          attron (COLOR_PAIR (INFO_COLOUR));
           for (ind = 0; ind < MARGIN - 1; ind++) {
             putch (row, col, '-', dd, NULL, 0);
             col++;
           }
           putch (row, col, BLANK_CHAR, dd, NULL, ind);
-          attron (COLOR_PAIR (HILIGHT_COLOUR));
           col++;
         }
         for (ind = 0; ind < COLS && IS_PRINT (scr->dl0[ind]); ind++) {
@@ -1717,6 +1723,7 @@ We now raster the screen  - first reserved rows
       row++;
     }
   }
+  wrefresh (stdscr);
 /* 
 Draw text lines 
 */
@@ -1724,18 +1731,18 @@ Draw text lines
     if (reserved_row (dd, row)) {
       row++; 
     } else {
-  /* RASTER A TEXT LINE */
+/* Raster a text line */
       BOOL_T cont;
       scr->last_line = run;
       if (run == NULL) {
-  /* Draw blank line to balance the screen */
+/* Draw blank line to balance the screen */
         int col;
         for (col = 0; col < COLS; col++) {
           putch (row, col, BLANK_CHAR, dd, NULL, col);
         }
         row++;
       } else if (lin_dif > 0) {
-  /* Draw blank line to balance the screen */
+/* Draw blank line to balance the screen */
         int col;
         for (col = 0; col < COLS; col++) {
           putch (row, col, BLANK_CHAR, dd, NULL, col);
@@ -1749,7 +1756,7 @@ Draw text lines
       } else {
         int col = 0, ind = 0, conts = 0;
         char *txt = TEXT (run);
-  /* Draw prefix */
+/* Draw prefix */
         int pn = NUMBER (run) % 1000000;
         char *pdigits = "0123456789";
         char prefix[MARGIN + 1];
@@ -1758,7 +1765,7 @@ Draw text lines
         if (pn == 0) {
           bufcpy (prefix, PREFIX, (strlen (PREFIX) + 1));
         } else {
-          /* Next is a cheap print int */
+/* Next is a cheap print int */
           int pk;
           for (pk = MARGIN - 2; pk >= 0; pk--) {
             prefix[pk] = pdigits[pn % 10];
@@ -1768,7 +1775,7 @@ Draw text lines
         for (ind = 0; ind < MARGIN; ind++) {
           char chc = run->precmd[ind], chp = prefix[ind];
           if (chc == BLANK_CHAR) {
-            attron (COLOR_PAIR (SYSTEM_COLOUR));
+            attron (COLOR_PAIR (DARK_COLOUR));
             putch (row, col, chp, dd, run, ind);
           } else {
             attron (COLOR_PAIR (HILIGHT_COLOUR));
@@ -1776,7 +1783,7 @@ Draw text lines
           }
           col++;
         }
-  /* Draw text */
+/* Draw text */
         attron (COLOR_PAIR (TEXT_COLOUR));
         ind = 0;
         cont = A68_TRUE;
@@ -1792,7 +1799,7 @@ Draw text lines
             reps = 1;
           }
           for (n = 0; n < reps; n++) {
-  /* Take new line if needed, if lines are left */
+/* Take new line if needed, if lines are left */
             if (col == COLS) {
               int num;
               char connum[MARGIN + 16];
@@ -1809,14 +1816,14 @@ Draw text lines
                 row = k;
                 goto text_end;
               }
-  /* Write a continuation number in the prefix area */
+/* Write a continuation number in the prefix area */
               conts++;
               connum[MARGIN - 1] = BLANK_CHAR;
               for (num = conts, k = MARGIN - 2; k >= 0; k--) {
                 connum[k] = digits[num % 10];
                 num = num / 10;
               }
-              attron (COLOR_PAIR (SYSTEM_COLOUR));
+              attron (COLOR_PAIR (DARK_COLOUR));
               connum[0] = '+';
               col = 0;
               for (k = 0; k < MARGIN; k++) {
@@ -1825,17 +1832,17 @@ Draw text lines
               }
               attron (COLOR_PAIR (TEXT_COLOUR));
             }
-  /* Put the character */
+/* Put the character */
             if (!IS_PRINT (ch)) {
               char nch = (char) TO_UCHAR ((int) 0x40 + (int) ch);
-              attron (COLOR_PAIR (SYSTEM_COLOUR));
+              attron (COLOR_PAIR (DARK_COLOUR));
               if (IS_PRINT (nch)) {
                 putch (row, col, nch, dd, run, ind); col++;
               } else {
                 putch (row, col, '*', dd, run, ind); col++;
               }
             } else if (IS_TOF (run) || IS_EOF (run)) {
-              attron (COLOR_PAIR (SYSTEM_COLOUR));
+              attron (COLOR_PAIR (INFO_COLOUR));
               putch (row, col, ch, dd, run, ind); col++;
             } else if (run == dd->curr) {
               attron (COLOR_PAIR (HILIGHT_COLOUR));
@@ -1847,7 +1854,7 @@ Draw text lines
           }
           ind++;
         }
-  /* Fill the line */
+/* Fill the line */
         text_end:
         for (k = col; k < COLS; k++, col++, ind++) {
           putch (row, col, BLANK_CHAR, dd, run, ind);
@@ -1858,54 +1865,65 @@ Draw text lines
       }
     }
   }
+  wrefresh (stdscr);
 /* Write the scale row now all data is complete */
   for (row = 0; row < LINES; ) {
     if (row == scr->scale_row) {
-  /* SCALE ROW - ----+----1----+----2 */
+/* SCALE ROW - ----+----1----+----2 */
       int col = 0, ind = 0;
       char pos[BUFFER_SIZE];
-      attron (COLOR_PAIR (SYSTEM_COLOUR));
-  /* Insert - or overwrite mode */
+/* Insert - or overwrite mode */
+      attron (COLOR_PAIR (DARK_COLOUR));
       putch (row, col, '-', dd, NULL, ind);
       col++;
       if (!curs->in_prefix && scr->ins_mode) {
+        attron (COLOR_PAIR (INFO_COLOUR));
         putch (row, col, 'I', dd, NULL, ind);
         col++;
       } else {
+        attron (COLOR_PAIR (INFO_COLOUR));
         putch (row, col, 'O', dd, NULL, ind);
         col++;
       }
-  /* Altered or not */
+/* Altered or not */
       if (dd->alts > 0) {
+        attron (COLOR_PAIR (INFO_COLOUR));
         putch (row, col, 'A', dd, NULL, ind);
         col++;
       } else {
+        attron (COLOR_PAIR (DARK_COLOUR));
         putch (row, col, '-', dd, NULL, ind);
         col++;
       }
-  /* Position in line */
+/* Position in line */
       ASSERT (snprintf (pos, SNPRINTF_SIZE, "%3d", curs->index + 1) >= 0)
       for (ind = 0; ind < TEXT_WIDTH && IS_PRINT (pos[ind]); ind++) {
         if (pos[ind] == BLANK_CHAR) {
+          attron (COLOR_PAIR (DARK_COLOUR));
           putch (row, col, '-', dd, NULL, ind);
         } else {
+          attron (COLOR_PAIR (INFO_COLOUR));
           putch (row, col, pos[ind], dd, NULL, ind);
         }
         col++;
       }
       putch (row, col, BLANK_CHAR, dd, NULL, ind);
       col++;
-  /* Scale */
+/* Scale */
       for (ind = 0; ind < TEXT_WIDTH; ind++) {
         k = ind + 1;
         if (k % 10 == 0) {
           char *digits = "0123456789";
+          attron (COLOR_PAIR (INFO_COLOUR));
           putch (row, col, digits[(k % 100) / 10], dd, NULL, 0);
         } else if (k % 5 == 0) {
+          attron (COLOR_PAIR (INFO_COLOUR));
           putch (row, col, '+', dd, NULL, 0);
         } else if (k == 1 || k == TEXT_WIDTH) {
+          attron (COLOR_PAIR (DARK_COLOUR));
           putch (row, col, '-', dd, NULL, 0);
         } else {
+          attron (COLOR_PAIR (DARK_COLOUR));
           putch (row, col, '-', dd, NULL, 0);
         }
         col++;
@@ -1914,7 +1932,7 @@ Draw text lines
     }
     row++;
   }
-  move (curs->row, curs->col);
+  wrefresh (stdscr);
 }
 
 /* Routines to edit various parts of the screen */
@@ -1925,16 +1943,16 @@ Draw text lines
 \param ch typed character
 **/
 
-static void edit_prefix (DATASET *dd, int ch)
+static void edit_prefix (DATASET_T *dd, int ch)
 {
 /*
 Prefix editing is very basic. You type in overwrite mode.
 DEL erases the character under the cursor.
 BACKSPACE erases the character left of the cursor.
 */
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *lin = curs->line;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *lin = curs->line;
   if (lin == NULL) {
     return;
   }
@@ -1961,7 +1979,7 @@ BACKSPACE erases the character left of the cursor.
 \param ch typed character
 **/
 
-static void edit_cmd (DATASET *dd, int ch)
+static void edit_cmd (DATASET_T *dd, int ch)
 {
 /*
 Command editing is in insert or overwrite mode.
@@ -1970,8 +1988,8 @@ If the cursor is outside the command string the latter is lengthened.
 DEL erases the character under the cursor.
 BACKSPACE erases the character to the left of the cursor.
 */
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   if (ch <= UCHAR_MAX && IS_PRINT (ch) && (int) strlen (scr->cmd) < (int) TEXT_WIDTH) {
     int j, k;
     while ((int) curs->index > (int) strlen (scr->cmd)) {
@@ -2012,7 +2030,7 @@ BACKSPACE erases the character to the left of the cursor.
 \param ch typed character
 **/
 
-static void edit_text (DATASET *dd, int ch)
+static void edit_text (DATASET_T *dd, int ch)
 {
 /*
 Text editing is in insert or overwrite mode.
@@ -2021,10 +2039,10 @@ If the cursor is outside the string the latter is lengthened.
 DEL erases the character under the cursor.
 BACKSPACE erases the character to the left of the cursor.
 */
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   int llen = 0;
-  LINE *lin = curs->line;
+  EDLIN_T *lin = curs->line;
   if (lin == NULL) {
     return;
   }
@@ -2038,7 +2056,7 @@ BACKSPACE erases the character to the left of the cursor.
   if (ch <= UCHAR_MAX && (IS_PRINT (ch) || ch == '\t')) {
     int j, k, len = (int) strlen (TEXT (lin));
     if (lin->reserved <= len + 2 || lin->reserved <= curs->index + 2) {
-  /* Not enough room */
+/* Not enough room */
       char *txt = TEXT (lin);
       int l1 = (lin->reserved <= len + 2 ? len + 2 : 0);
       int l2 = (lin->reserved <= curs->index + 2 ? curs->index + 2 : 0);
@@ -2053,7 +2071,7 @@ BACKSPACE erases the character to the left of the cursor.
       }
       bufcpy (TEXT (lin), txt, res);
     }
-  /* Pad with spaces to cursor position if needed */
+/* Pad with spaces to cursor position if needed */
     while (curs->index > (len = (int) strlen (TEXT (lin)))) {
       TEXT (lin)[len] = BLANK_CHAR;
       TEXT (lin)[len + 1] = NULL_CHAR;
@@ -2160,9 +2178,9 @@ BOOL_T match_cmd (char *x, char *c, char **args)
 \return argument value: default is 1 if no value is present, or -1 if an error occurs
 **/
 
-static int int_arg (DATASET *dd, char *cmd, char *arg, char **rest, int def)
+static int int_arg (DATASET_T *dd, char *cmd, char *arg, char **rest, int def)
 {
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   char *suffix;
   int k;
 /* Fetch argument */
@@ -2197,10 +2215,10 @@ static int int_arg (DATASET *dd, char *cmd, char *arg, char **rest, int def)
 \param rest will point to trialing text
 **/
 
-static BOOL_T get_subst (DATASET *dd, char *cmd, char *arg, char **rest)
+static BOOL_T get_subst (DATASET_T *dd, char *cmd, char *arg, char **rest)
 {
 /* Get the find and replacement string in a substitute command */
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   char delim, *q, *pat1, *pat2;
   int rc;
   if (EMPTY_STRING (arg)) {
@@ -2278,9 +2296,9 @@ static BOOL_T get_subst (DATASET *dd, char *cmd, char *arg, char **rest)
 \param cmd command that calls this routine
 **/
 
-static int substitute (DATASET *dd, LINE *z, int rep, int start, char *cmd)
+static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, char *cmd)
 {
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   int k, subs = 0, newt = 0, matcnt = 0;
 /* Initialisation */
   for (k = 0; k < rep; k ++)
@@ -2371,7 +2389,7 @@ static int substitute (DATASET *dd, LINE *z, int rep, int start, char *cmd)
       }
       z->reserved = res;
       TEXT (z) = (char *) edit_get_heap (dd, (size_t) res);
-      if (TEXT (z) == NULL) {
+      if (TEXT (z) == NO_TEXT) {
         return (SUBST_ERROR);
       }
       bufcpy (TEXT (z), dd->linbuf, res);
@@ -2393,7 +2411,7 @@ static int substitute (DATASET *dd, LINE *z, int rep, int start, char *cmd)
 \param compile must compile or has been compiled
 **/
 
-static LINE * get_regexp (DATASET *dd, char *cmd, char *arg, char **rest, BOOL_T compile)
+static EDLIN_T * get_regexp (DATASET_T *dd, char *cmd, char *arg, char **rest, BOOL_T compile)
 {
 /*
 Target is of form
@@ -2402,7 +2420,7 @@ Target is of form
 	[+|-]/regexp/|/regexp/ one or both must match
 	[+|-]/regexp/^/regexp/ one must match, but not both
 */
-  DISPLAY *scr = &(dd->display);
+  DISPLAY_T *scr = &(dd->display);
   char delim, *q, *pat1, *pat2;
   int rc;
   BOOL_T forward;
@@ -2421,7 +2439,7 @@ Target is of form
       ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
       return (NULL);
     }
-  /* Initialise */
+/* Initialise */
     reset_regexp (&(dd->targ1));
     reset_regexp (&(dd->targ2));
     dd->oper = NULL_CHAR;
@@ -2440,7 +2458,7 @@ Target is of form
       dd->search = 1;
     }
     delim = *(q++);
-  /* Get first regexp */
+/* Get first regexp */
     pat1 = dd->targ1.pattern;
     pat1[0] = NULL_CHAR;
     while (q[0] != delim && q[0] != NULL_CHAR) {
@@ -2460,7 +2478,7 @@ Target is of form
     if (rc != 0) {
       return (NULL);
     }
-  /* Get operator and 2nd regexp, if present */
+/* Get operator and 2nd regexp, if present */
     if (q[0] == delim && (q[1] == '&' || q[1] == '|' || q[1] == '^')) {
       dd->oper = q[1];
       if (q[2] != delim) {
@@ -2497,10 +2515,10 @@ Target is of form
   }
 /* Find the first line matching the regex */
   if (forward) {
-    LINE *u = dd->curr;
+    EDLIN_T *u = dd->curr;
     forward_line (&u);
     if (NOT_EOF (u)) {
-      LINE *z = u;
+      EDLIN_T *z = u;
       for (z = u; NOT_EOF (z); forward_line (&z)) {
         if (match_regex (dd, z, 0, cmd)) {
           return (z);
@@ -2508,10 +2526,10 @@ Target is of form
       }
     }
   } else {
-    LINE *u = dd->curr;
+    EDLIN_T *u = dd->curr;
     backward_line (&u);
     if (NOT_TOF (u)) {
-      LINE *z = u;
+      EDLIN_T *z = u;
       for (z = u; NOT_TOF (z); backward_line (&z)) {
         if (match_regex (dd, z, 0, cmd)) {
           return (z);
@@ -2531,10 +2549,10 @@ Target is of form
 \param rest will point to text after arguments
 **/
 
-LINE *get_target (DATASET *dd, char *cmd, char *args, char **rest, BOOL_T offset)
+EDLIN_T *get_target (DATASET_T *dd, char *cmd, char *args, char **rest, BOOL_T offset)
 {
-  DISPLAY *scr = &(dd->display);
-  LINE *z = NULL;
+  DISPLAY_T *scr = &(dd->display);
+  EDLIN_T *z = NULL;
   SKIP_WHITE (args);
   if (IS_DIGIT (args[0])) {
 /* n	Relative displacement down */
@@ -2600,7 +2618,7 @@ LINE *get_target (DATASET *dd, char *cmd, char *args, char **rest, BOOL_T offset
     SKIP_WHITE (*rest);
   } else if (args[0] == '.') {
 /* .IDF	Prefix identifier */
-    LINE *u;
+    EDLIN_T *u;
     char idf[8] = {'.', NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR};
     int k;
     for (k = 1; IS_ALNUM (args[k]) && k < MARGIN - 1; k++) {
@@ -2675,12 +2693,12 @@ LINE *get_target (DATASET *dd, char *cmd, char *args, char **rest, BOOL_T offset
 \param argv shell command
 **/
 
-static void edit_filter (DATASET *dd, char *cmd, char *argv, LINE *u)
+static void edit_filter (DATASET_T *dd, char *cmd, char *argv, EDLIN_T *u)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   char shell[BUFFER_SIZE];
-  LINE *z;
+  EDLIN_T *z;
 /* Write selected lines ... */
   edit_write (dd, cmd, ".a68g.edit.out", dd->curr, u);
 /* Delete the original lines */
@@ -2718,11 +2736,11 @@ static void edit_filter (DATASET *dd, char *cmd, char *argv, LINE *u)
 \param cmd_move move or copy 
 **/
 
-static void move_copy (DATASET *dd, char *cmd, char *args, BOOL_T cmd_move)
+static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *u, *v, *w, *x, *z, *bl_start = NULL, *bl_end = NULL;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *u, *v, *w, *x, *z, *bl_start = NULL, *bl_end = NULL;
   char *cmdn, *rest = NULL;
   int j, n, count;
   if (cmd_move) {
@@ -2760,39 +2778,39 @@ static void move_copy (DATASET *dd, char *cmd, char *args, BOOL_T cmd_move)
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  /* Out of range */
+/* Out of range */
   if (IS_EOF (w)) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot add after end-of-data", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  /* Backwards range */
+/* Backwards range */
   if (NOT_EOF (v) && (NUMBER (v) < NUMBER (u))) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  /* Copy to within range */
+/* Copy to within range */
   if (NUMBER (u) <= NUMBER (w) && NUMBER (w) < NUMBER (v) - 1) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target within selected range", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
   edit_write_undo_file (dd, cmdn);
-  /* Count */
+/* Count */
   for (count = 0, z = u; z != v; FORWARD (z)) {
     count++;
   }
-  /* Copy */
+/* Copy */
   for (j = 0; j < n; j++) {
-    /* Add lines */
+/* Add lines */
     int k;
     for (k = 0, z = u; k < count && IN_TEXT (z); k++, FORWARD (z)) {
       curs->line = w;
       curs->index = (int) strlen (TEXT (w));
       split_line (dd, cmd);
     }
-    /* Copy text */
+/* Copy text */
     bl_start = NEXT (w);
     for (k = 0, x = NEXT (w), z = u; k < count && IN_TEXT (z); k++, FORWARD (x), FORWARD (z)) {
       char *txt = TEXT (z);
@@ -2804,13 +2822,13 @@ static void move_copy (DATASET *dd, char *cmd, char *args, BOOL_T cmd_move)
       bl_end = x;
       x->reserved = res;
       TEXT (x) = (char *) edit_get_heap (dd, (size_t) res);
-      if (TEXT (x) == NULL) {
+      if (TEXT (x) == NO_TEXT) {
         return;
       }
       bufcpy (TEXT (x), txt, res);
     }
   }
-  /* Delete the original lines */
+/* Delete the original lines */
   if (cmd_move) {
     for (z = u; z != v && IN_TEXT (z); FORWARD (z)) {
       curs->line = z;
@@ -2820,7 +2838,7 @@ static void move_copy (DATASET *dd, char *cmd, char *args, BOOL_T cmd_move)
       join_line (dd, cmd);
     }
   }
-  /* Done */
+/* Done */
   edit_reset (dd);
   if ((count * n) == 0) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s no lines", cmdn, (cmd_move ? "moved" : "copied")) >= 0);
@@ -2852,11 +2870,11 @@ static void move_copy (DATASET *dd, char *cmd, char *args, BOOL_T cmd_move)
 \param args points to arguments
 **/
 
-static void indent (DATASET *dd, char *cmd, char *args)
+static void indent (DATASET_T *dd, char *cmd, char *args)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *u, *v, *z;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *u, *v, *z;
   char *rest = NULL;
   int dir, k, n, m, count;
   if (dd->subset) {
@@ -2896,13 +2914,13 @@ static void indent (DATASET *dd, char *cmd, char *args)
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  /* Backwards range */
+/* Backwards range */
   if (NOT_EOF (v) && (NUMBER (v) < NUMBER (u))) {
     ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  /* Align */
+/* Align */
   edit_write_undo_file (dd, cmd);
   k = -1;
   count = 0;
@@ -2956,14 +2974,14 @@ static void indent (DATASET *dd, char *cmd, char *args)
         }
       }
       new_edit_string (dd, z, dd->linbuf, NULL);
-      if (TEXT (z) == NULL) {
+      if (TEXT (z) == NO_TEXT) {
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
       count++;
     }
   }
-  /* Done */
+/* Done */
   edit_reset (dd);
   dd->bl_start = dd->bl_end = NULL;
   if (count == 0) {
@@ -2987,12 +3005,12 @@ static void indent (DATASET *dd, char *cmd, char *args)
 \param target to point current line to
 **/
 
-static void set_current (DATASET *dd, char *cmd, char *target)
+static void set_current (DATASET_T *dd, char *cmd, char *target)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   char *rest = NULL;
-  LINE *z = get_target (dd, cmd, target, &rest, A68_TRUE);
+  EDLIN_T *z = get_target (dd, cmd, target, &rest, A68_TRUE);
   if (!EMPTY_STRING (rest)) {
     TRAILING (cmd);
     CURSOR_TO_COMMAND (dd, curs);
@@ -3012,12 +3030,12 @@ static void set_current (DATASET *dd, char *cmd, char *target)
 \param target to point current line to
 **/
 
-static void set_current_store (DATASET *dd, char *cmd, char *target)
+static void set_current_store (DATASET_T *dd, char *cmd, char *target)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   char *rest = NULL;
-  LINE *z;
+  EDLIN_T *z;
   z = get_target (dd, cmd, target, &rest, A68_TRUE);
   if (!EMPTY_STRING (rest)) {
     TRAILING (cmd);
@@ -3109,10 +3127,10 @@ static char *full_cmd (char *cmd)
 \param dd current dataset
 **/
 
-static void edit_do_cmd (DATASET *dd)
+static void edit_do_cmd (DATASET_T *dd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   char *cmd = scr->cmd, *args = NULL, *rest = NULL;
   char *fcmd = full_cmd (cmd);
 /* Initial white space is meaningless */
@@ -3147,8 +3165,7 @@ static void edit_do_cmd (DATASET *dd)
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } 
-/* Commands that are stored */
-  edit_add_history (cmd); 
+/* Commands that may be stored */
 /* Target commands that set the current line */
   if (IS_DIGIT (cmd[0])) {
     set_current (dd, "edit", cmd);
@@ -3197,7 +3214,7 @@ static void edit_do_cmd (DATASET *dd)
   }
   if (match_cmd (cmd, "AGain", &args)) {
 /* AGAIN: repeat last search */
-    LINE *z;
+    EDLIN_T *z;
     NO_ARGS (fcmd, args);
     z = get_regexp (dd, cmd, args, &rest, A68_FALSE);
     if (z != NULL) {
@@ -3226,6 +3243,7 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "CDelete", &args)) {
 /* CDELETE: delete to end of line */
+    edit_add_history (cmd); 
     NO_ARGS (fcmd, args);
     if (curs->in_text) {
       cdelete (dd);
@@ -3236,6 +3254,7 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "RESet", &args)) {
     NO_ARGS (fcmd, args);
+    edit_add_history (cmd); 
     edit_reset (dd);
     dd->bl_start = dd->bl_end = NULL;
     bufcpy (scr->cmd, "", BUFFER_SIZE);
@@ -3255,10 +3274,10 @@ static void edit_do_cmd (DATASET *dd)
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
-  /* Count */
+/* Count */
     for (k = 0; k < abs (n); k++) {
       int lin = count_reserved (dd);
-      LINE *z = dd->curr, *u = z;
+      EDLIN_T *z = dd->curr, *u = z;
       for (; IN_TEXT (z);) {
         lin += lines_on_scr (dd, z);
         if (lin > LINES) {
@@ -3279,7 +3298,7 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "CAse", &args)) {
 /* CASE: switch case of character under cursor */
-    LINE *lin = curs->line;
+    EDLIN_T *lin = curs->line;
     NO_ARGS (fcmd, args);
     if (lin != NULL && curs->index < (int) strlen (TEXT (lin))) {
       if (IS_UPPER (TEXT (lin)[curs->index])) {
@@ -3303,8 +3322,9 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "Add", &args)) {
 /* ADD [repetition]: add lines */
-    LINE *z = dd->curr;
+    EDLIN_T *z = dd->curr;
     int k, n = int_arg (dd, fcmd, args, &rest, 1);
+    edit_add_history (cmd); 
     if (!EMPTY_STRING (rest)) {
       TRAILING (fcmd);
       CURSOR_TO_COMMAND (dd, curs);
@@ -3318,7 +3338,7 @@ static void edit_do_cmd (DATASET *dd)
       }
       edit_reset (dd);
       dd->bl_start = dd->bl_end = NULL;
-  /* Cursor goes to next appended line, not the current line */
+/* Cursor goes to next appended line, not the current line */
       curs->line = NEXT (z);
       SELECT (curs->line) = A68_TRUE;
       curs->index = 0;
@@ -3333,8 +3353,9 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "DELete", &args)) {
 /* DELETE [/target/]: delete lines */
-    LINE *u, *z;
+    EDLIN_T *u, *z;
     int dels = 0;
+    edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
       u = dd->curr;
       forward_line (&u);
@@ -3346,7 +3367,7 @@ static void edit_do_cmd (DATASET *dd)
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
-  /* Backwards range */
+/* Backwards range */
     if (NOT_EOF (u) && (NUMBER (u) < NUMBER (dd->curr))) {
       ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
@@ -3383,7 +3404,7 @@ static void edit_do_cmd (DATASET *dd)
       bufcpy (scr->cmd, "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
     } else {
-      LINE *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
+      EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       SKIP_WHITE (rest);
       if (EMPTY_STRING (rest)) {
         ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
@@ -3405,6 +3426,7 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "Read", &args)) {
 /* READ: read a dataset */
+    edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
       ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
@@ -3430,6 +3452,7 @@ static void edit_do_cmd (DATASET *dd)
     }
   } else if (match_cmd (cmd, "SAve", &args) || match_cmd (cmd, "Write", &args)) {
 /* Write: save the dataset */
+    edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
       edit_write (dd, fcmd, dd->name, dd->tof, NULL);
       dd->alts = 0;
@@ -3437,7 +3460,7 @@ static void edit_do_cmd (DATASET *dd)
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
-      LINE *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
+      EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       SKIP_WHITE (rest);
       if (EMPTY_STRING (rest)) {
         ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
@@ -3452,7 +3475,8 @@ static void edit_do_cmd (DATASET *dd)
   } else if (match_cmd (cmd, "RUN", &args)) {
     char ccmd[BUFFER_SIZE];
     int ret;
-    LINE *cursav = dd->curr;
+    EDLIN_T *cursav = dd->curr;
+    edit_add_history (cmd); 
     if (dd->msgs != -1) {
       close (dd->msgs);
       dd->msgs = -1;
@@ -3476,13 +3500,15 @@ static void edit_do_cmd (DATASET *dd)
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "SYntax", &args)) {
+    edit_add_history (cmd); 
     ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "run --pedantic --norun") >= 0);
     edit_do_cmd (dd);
     return;
   } else if (match_cmd (cmd, "MEssage", &args)) {
+    edit_add_history (cmd); 
     NO_ARGS (fcmd, args);
     if (dd->msgs == -1) {
-      /* Open the file */
+/* Open the file */
       RESET_ERRNO;
       dd->msgs = open (A68_DIAGNOSTICS_FILE, A68_READ_ACCESS);
       if (dd->msgs == -1 || errno != 0) {
@@ -3493,7 +3519,7 @@ static void edit_do_cmd (DATASET *dd)
     }
     if (dd->msgs != -1) {
       int n, m;
-      LINE *z;
+      EDLIN_T *z;
       edit_read_string (dd, dd->msgs);
       if (strlen (dd->linbuf) == 0) {
         ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no diagnostic to display", fcmd) >= 0);
@@ -3537,6 +3563,7 @@ static void edit_do_cmd (DATASET *dd)
     }
   } else if (match_cmd (cmd, "SCale", &args)) {
 /* SCALE OFF|n: set scale row */
+    edit_add_history (cmd); 
     if (match_cmd (args, "OFF", &rest)) {
       if (!EMPTY_STRING (rest)) {
         TRAILING (fcmd);
@@ -3574,6 +3601,7 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "Undo", &args)) {
 /* UNDO: restore to state last saved, if any */
+    edit_add_history (cmd); 
     edit_read_undo_file (dd, fcmd);
     bufcpy (scr->cmd, "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
@@ -3606,7 +3634,8 @@ static void edit_do_cmd (DATASET *dd)
     return;
   } else if (match_cmd (cmd, "Edit", &args) || match_cmd (cmd, "Xedit", &args)) {
 /* EDIT filename: recursively edit another file */
-    DATASET dataset;
+    DATASET_T dataset;
+    edit_add_history (cmd); 
     edit_write_undo_file (dd, fcmd);
     edit_dataset (&dataset, dd->num + 1, args, NULL);
     fixed_heap_pointer = dd->heap_pointer;
@@ -3621,10 +3650,11 @@ static void edit_do_cmd (DATASET *dd)
 /* Commands with targets */
   if (match_cmd (cmd, "FOld", &args)) {
 /* FOLD [[TO] /target/]: select lines */
-    LINE *z;
+    EDLIN_T *z;
+    edit_add_history (cmd); 
     if (!EMPTY_STRING (args) && match_cmd (args, "TO", &rest)) {
-  /* Select all lines upto matching target */
-      LINE *u;
+/* Select all lines upto matching target */
+      EDLIN_T *u;
       args = rest;
       u = get_target (dd, fcmd, args, &rest, A68_FALSE);
       if (!EMPTY_STRING (rest)) {
@@ -3636,13 +3666,13 @@ static void edit_do_cmd (DATASET *dd)
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-  /* Backwards range */
+/* Backwards range */
       if (NOT_EOF (u) && (NUMBER (u) < NUMBER (dd->curr))) {
         ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-  /* Empty range */
+/* Empty range */
       if (u == dd->curr) {
         ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: empty range", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
@@ -3659,11 +3689,11 @@ static void edit_do_cmd (DATASET *dd)
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
-  /* FOLD [/target/]: select lines matching a target */
-    /* Reset all lines */
+/* FOLD [/target/]: select lines matching a target */
+/* Reset all lines */
       if (!EMPTY_STRING (args)) {
-    /* Select all lines that match target */
-        LINE *u = get_target (dd, fcmd, args, &rest, A68_FALSE);
+/* Select all lines that match target */
+        EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_FALSE);
         if (!EMPTY_STRING (rest)) {
           TRAILING (fcmd);
           CURSOR_TO_COMMAND (dd, curs);
@@ -3682,7 +3712,7 @@ static void edit_do_cmd (DATASET *dd)
         }
         dd->subset = A68_TRUE;
       } else {
-  /* UNFOLD */
+/* UNFOLD */
         for (z = dd->tof; z != NULL; FORWARD (z)) {
           SELECT (z) = A68_TRUE;
         }
@@ -3696,18 +3726,21 @@ static void edit_do_cmd (DATASET *dd)
     }
   } else if (match_cmd (cmd, "Move", &args)) {
 /* MOVE /target/ /target/ [n]: move lines */
+    edit_add_history (cmd); 
     move_copy (dd, cmd, args, A68_TRUE);
     return;
   } else if (match_cmd (cmd, "COpy", &args)) {
 /* COPY /target/ /target/ [n]: copy lines */
+    edit_add_history (cmd); 
     move_copy (dd, cmd, args, A68_FALSE);
   } else if (match_cmd (cmd, "SHell", &args)) {
+    edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
       ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing arguments", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
-      LINE *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
+      EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       SKIP_WHITE (rest);
       if (EMPTY_STRING (rest)) {
         ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing shell command", fcmd) >= 0);
@@ -3722,11 +3755,13 @@ static void edit_do_cmd (DATASET *dd)
     }
   } else if (match_cmd (cmd, "Indent", &args)) {
 /* INDENT target column: indent lines to column */
+    edit_add_history (cmd); 
     indent (dd, fcmd, args);
     return;
   } else if (match_cmd (cmd, "S", &args) || match_cmd (cmd, "C", &args)) {
 /* SUBSTITUTE /find/replace/ [/target/] [repetition]: replace substrings */
     int reps, start, subs = 0;
+    edit_add_history (cmd); 
     if (!get_subst (dd, fcmd, args, &rest)) {
       ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: unrecognised syntax", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
@@ -3738,9 +3773,10 @@ static void edit_do_cmd (DATASET *dd)
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
+      dd->alts++;
       subs = m;
     } else {
-      LINE *u, *z;
+      EDLIN_T *u, *z;
       int m;
       if (! EMPTY_STRING (rest)) {
         args = rest;
@@ -3779,6 +3815,7 @@ static void edit_do_cmd (DATASET *dd)
           CURSOR_TO_COMMAND (dd, curs);
           return;
         }
+        dd->alts++;
         subs += m;
       }
       if (IN_TEXT (z)) {
@@ -3807,12 +3844,12 @@ static void edit_do_cmd (DATASET *dd)
 \param dd current dataset
 **/
 
-static void edit_do_prefix (DATASET *dd)
+static void edit_do_prefix (DATASET_T *dd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   int as, cs, ccs, ds, dds, is, iis, js, xs, xxs, ps, qs, divs, total;
-  LINE *z;
+  EDLIN_T *z;
   char *arg;
 /* Check prefix command */
   as = cs = ccs = ds = dds = is = iis = js = xs = xxs = ps = qs = divs = total = 0;
@@ -3881,7 +3918,7 @@ static void edit_do_prefix (DATASET *dd)
 /* ADD */
     for (z = dd->tof; z != NULL; FORWARD (z)) {
       char *p = z->precmd;
-      LINE *cursavi = dd->curr;
+      EDLIN_T *cursavi = dd->curr;
       SKIP_WHITE (p);
       if (match_cmd (p, "A", &arg)) {
         dd->curr = z;
@@ -3899,7 +3936,7 @@ static void edit_do_prefix (DATASET *dd)
 /* INDENT */
     for (z = dd->tof; z != NULL; FORWARD (z)) {
       char *p = z->precmd;
-      LINE *cursavi = dd->curr;
+      EDLIN_T *cursavi = dd->curr;
       SKIP_WHITE (p);
       if (match_cmd (p, "I", &arg)) {
         dd->curr = z;
@@ -3916,10 +3953,10 @@ static void edit_do_prefix (DATASET *dd)
 /* JOIN */
     for (z = dd->tof; z != NULL; FORWARD (z)) {
       char *p = z->precmd;
-      LINE *cursavi = dd->curr;
+      EDLIN_T *cursavi = dd->curr;
       SKIP_WHITE (p);
       if (match_cmd (p, "J", &arg)) {
-        LINE *x = NEXT (z);
+        EDLIN_T *x = NEXT (z);
         NO_ARGS ("J", arg);
         if (NUMBER (z) == 0 || x == NULL || NUMBER (x) == 0) {
           ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "join: cannot join") >= 0);
@@ -3940,10 +3977,10 @@ static void edit_do_prefix (DATASET *dd)
     }
   } else if (ds == 1 && total == 1) {
 /* DELETE */
-    LINE *w;
+    EDLIN_T *w;
     for (z = dd->tof; z != NULL; FORWARD (z)) {
       char *p = z->precmd;
-      LINE *cursavi = dd->curr;
+      EDLIN_T *cursavi = dd->curr;
       SKIP_WHITE (p);
       if (match_cmd (p, "D", &arg)) {
         w = dd->curr;
@@ -3982,7 +4019,7 @@ static void edit_do_prefix (DATASET *dd)
     }
   } else if (dds == 2 && total == 2) {
 /* DELETE block */
-    LINE *u = NULL, *v = NULL, *w, *cursavi = dd->curr;
+    EDLIN_T *u = NULL, *v = NULL, *w, *cursavi = dd->curr;
     for (z = dd->tof; z != NULL; FORWARD (z)) {
       char *p = z->precmd;
       SKIP_WHITE (p);
@@ -4016,7 +4053,7 @@ static void edit_do_prefix (DATASET *dd)
     return;
   } else if (iis == 2 && total == 2) {
 /* INDENT block */
-    LINE *u = NULL, *v = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = NULL, *v = NULL, *cursavi = dd->curr;
     char upto[BUFFER_SIZE];
     char *rep = NULL;
     for (z = dd->tof; z != NULL; FORWARD (z)) {
@@ -4051,7 +4088,7 @@ static void edit_do_prefix (DATASET *dd)
     return;
   } else if ((ccs == 2 || xxs == 2) && (ps == 1 || qs == 1) && total == 3) {
 /* COPY or MOVE block */
-    LINE *u = NULL, *v = NULL, *w = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = NULL, *v = NULL, *w = NULL, *cursavi = dd->curr;
     char upto[BUFFER_SIZE], ins[BUFFER_SIZE];
     char *cmd = NULL, *delim = NULL, *rep = NULL;
     if (ccs == 2) {
@@ -4107,7 +4144,7 @@ static void edit_do_prefix (DATASET *dd)
     return;
   } else if ((cs == 1 || xs == 1) && (ps == 1 || qs == 1) && total == 2) {
 /* COPY or MOVE line */
-    LINE *u = NULL, *w = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = NULL, *w = NULL, *cursavi = dd->curr;
     char ins[BUFFER_SIZE];
     char *cmd = NULL, *delim = NULL, *target = NULL, *rep = NULL;
     if (cs == 1) {
@@ -4159,7 +4196,7 @@ static void edit_do_prefix (DATASET *dd)
     return;
   } else if ((ps == 1 || qs == 1) && total == 1) {
 /* COPY previous block */
-    LINE *u = dd->bl_start, *v = dd->bl_end, *w = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = dd->bl_start, *v = dd->bl_end, *w = NULL, *cursavi = dd->curr;
     char upto[BUFFER_SIZE], ins[BUFFER_SIZE];
     char *cmd = "copy", *rep = NULL;
     if (u == NULL || v == NULL) {
@@ -4215,11 +4252,11 @@ static void edit_do_prefix (DATASET *dd)
 \param cmd command bound to key
 **/
 
-static void key_command (DATASET *dd, char *cmd)
+static void key_command (DATASET_T *dd, char *cmd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
-  LINE *old = dd->curr;
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
+  EDLIN_T *old = dd->curr;
   SAVE_CURSOR (dd, curs);
   bufcpy (scr->cmd, cmd, BUFFER_SIZE);
   edit_do_cmd (dd);
@@ -4227,7 +4264,7 @@ static void key_command (DATASET *dd, char *cmd)
   if (old == dd->curr) {
     dd->refresh = A68_FALSE;
   } else {
-    clear ();
+    wclear (stdscr);
   }
 }
 
@@ -4236,15 +4273,18 @@ static void key_command (DATASET *dd, char *cmd)
 \param dd current dataset
 **/
 
-static void edit_loop (DATASET *dd)
+static void edit_loop (DATASET_T *dd)
 {
-  DISPLAY *scr = &(dd->display);
-  CURSOR *curs = &(scr->curs);
+  DISPLAY_T *scr = &(dd->display);
+  CURSOR_T *curs = &(scr->curs);
   for (;;) {
     int ch, k;
     if (dd->refresh) {
+/* Redraw the screen ... */
       edit_draw (dd);
-      refresh ();
+/* ... and set the cursor like this or else ncurses can misplace it :-( */
+      wmove (stdscr, curs->row, curs->col);
+      wrefresh (stdscr);
     }
     dd->refresh = A68_TRUE;
     bufcpy (scr->dl0, "", BUFFER_SIZE);
@@ -4262,7 +4302,6 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       BOOL_T cont = A68_TRUE;
       while (cont && j < 6) {
         esc[j] = (char) ch;
-        /* mvprintw (j, 0, "'%d'", ch); */
         n = 0;
         for (k = 0; dec_key[k].code >= 0; k++) {
           if (strncmp (dec_key[k].name, esc, (size_t) (j + 1)) == 0) {
@@ -4323,7 +4362,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       SAVE_CURSOR (dd, curs);
       edit_do_prefix (dd);
       CURSOR_TO_SAVE (dd, curs);
-      clear ();
+      wclear (stdscr);
 /* Command line editing */
     } else if (ch <= UCHAR_MAX && IS_PRINT (ch) && curs->in_cmd) {
       edit_cmd (dd, ch);
@@ -4331,7 +4370,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       edit_cmd (dd, ch);
     } else if (ch == NEWLINE_CHAR && curs->in_cmd) {
       edit_do_cmd (dd);
-      clear ();
+      wclear (stdscr);
       curs->row = -1;
       curs->col = -1;
 /* Text editing */
@@ -4479,7 +4518,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
 \param target optional target for initial current line
 **/
 
-static void edit_dataset (DATASET *dd, int num, char *filename, char *target)
+static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
 {
 /* Init ncurses */
   edit_init_curses (dd);
@@ -4504,7 +4543,7 @@ static void edit_dataset (DATASET *dd, int num, char *filename, char *target)
   dd->bl_start = dd->bl_end = NULL;
   if (target != NULL && (int) (strlen (target)) > 0) {
     char *rest;
-    LINE *z = get_target (dd, "edit", target, &rest, A68_TRUE);
+    EDLIN_T *z = get_target (dd, "edit", target, &rest, A68_TRUE);
     if (z != NULL) {
       dd->curr = z;
     } else {
@@ -4528,7 +4567,7 @@ static void edit_dataset (DATASET *dd, int num, char *filename, char *target)
 
 void edit (char *start_text)
 {
-  DATASET dataset;
+  DATASET_T dataset;
   int k;
   (void) start_text;
   genie_init_rng ();
@@ -4554,7 +4593,7 @@ void edit (char *start_text)
   }
   edit_dataset (&dataset, 1, program.files.initial_name, program.options.target);
 /* Exit edit */
-  clear ();
+  wclear (stdscr);
   refresh ();
   endwin ();
   (void) remove (A68_DIAGNOSTICS_FILE);

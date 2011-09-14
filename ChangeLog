@@ -1,4 +1,28 @@
-03.07.2001 - 2.2.0
+11.09.2011 - 2.3.0
+Fixed minor issue in code generator.
+
+09.09.2011 - 2.3.0
+Fixed medium issue in mode checker.
+
+06.09.2011 - 2.3.0
+Fixed minor issue in the scanner.
+
+02.09.2011 - 2.3.0
+24.08.2011 - 2.3.0
+Fixed minor issues in mode checker.
+
+18.07.2011 - 2.3.0
+Alpha: non-local environs.
+
+14.07.2011 - 2.3.0
+Alpha: ghost elements for empty rows.
+
+09.07.2011 - 2.3.0
+New self-consistency criterion for the mode table builder.
+
+------
+
+03.07.2011 - 2.2.0
 Improved the parser.
 
 30.06.2011 - 2.2.0

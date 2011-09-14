@@ -62,7 +62,7 @@ void genie_pq_connectdb (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_SCOPE_DYNAMIC_1, MODE (REF_STRING));
     exit_genie (p, A68_RUNTIME_ERROR);
   } else if (IS_IN_FRAME (&ref_file) && IS_IN_FRAME (&ref_string)) {
-    if (GET_REF_SCOPE (&ref_string) > GET_REF_SCOPE (&ref_file)) {
+    if (REF_SCOPE (&ref_string) > REF_SCOPE (&ref_file)) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_SCOPE_DYNAMIC_1, MODE (REF_STRING));
       exit_genie (p, A68_RUNTIME_ERROR);
     }
