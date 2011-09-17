@@ -1,3 +1,8 @@
+Version 2.3.1, September 2011
+* Adds building on NetBSD.
+* Fixes minor issues in 2.3.0.
+* Lint-free source code.
+
 Version 2.3.0, September 2011
 * Implements ghost elements for empty rows.
 * Implements non-local environs.

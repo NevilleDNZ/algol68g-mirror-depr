@@ -1226,7 +1226,7 @@ struct MOID_T
   BOOL_T has_rows, use, portable, derivate;
   NODE_T *node;
   PACK_T *pack;
-  MOID_T *sub, *equivalent_mode, *slice, *deflexed_mode, *name, *multiple_mode, *next, *rowed;
+  MOID_T *sub, *equivalent_mode, *slice, *deflexed_mode, *name, *multiple_mode, *next, *rowed, *trim;
 };
 #define NO_MOID ((MOID_T *) NULL)
 
@@ -3072,6 +3072,7 @@ extern GENIE_PROC genie_pq_user;
 #define TAG_TABLE(p) ((p)->symbol_table)
 #define TAX(p) ((p)->tag)
 #define TEXT(p) ((p)->text)
+#define TRIM(p) ((p)->trim)
 #define UNION_OFFSET (ALIGNED_SIZE_OF (A68_UNION))
 #define UPB(p) ((p)->upper_bound)
 #define USE(p) ((p)->use)

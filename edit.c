@@ -825,8 +825,8 @@ static void edit_init_curses (DATASET_T *dd)
   initscr ();
   XABEND (has_colors () == A68_FALSE, "edit requires colour display", NULL);
   start_color ();
-  init_pair (TEXT_COLOUR, COLOR_CYAN, COLOR_BLACK);
-  init_pair (HILIGHT_COLOUR, COLOR_YELLOW, COLOR_BLACK);
+  init_pair (TEXT_COLOUR, COLOR_GREEN, COLOR_BLACK);
+  init_pair (HILIGHT_COLOUR, COLOR_WHITE, COLOR_BLACK);
   init_pair (DARK_COLOUR, COLOR_BLUE, COLOR_BLACK);
   init_pair (INFO_COLOUR, COLOR_RED, COLOR_BLACK);
   init_pair (CMD_COLOUR, COLOR_WHITE, COLOR_BLACK);

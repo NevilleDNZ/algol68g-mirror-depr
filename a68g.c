@@ -2248,33 +2248,37 @@ void a68g_print_mode (FILE_T f, MOID_T * z)
 
 void print_mode_flat (FILE_T f, MOID_T * m)
 {
-  if (m != NULL) {
+  if (m != NO_MOID) {
     a68g_print_mode (f, m);
     if (NODE (m) != NULL && NUMBER (NODE (m)) > 0) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " node %d", NUMBER (NODE (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (m->equivalent_mode != NULL) {
+    if (m->equivalent_mode != NO_MOID) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " equi #%d", NUMBER (EQUIVALENT (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (SLICE (m) != NULL) {
+    if (SLICE (m) != NO_MOID) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " slice #%d", NUMBER (SLICE (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (ROWED (m) != NULL) {
+    if (TRIM (m) != NO_MOID) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " trim #%d", NUMBER (TRIM (m))) >= 0);
+      WRITE (f, output_line);
+    }
+    if (ROWED (m) != NO_MOID) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " rowed #%d", NUMBER (ROWED (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (DEFLEXED (m) != NULL) {
+    if (DEFLEXED (m) != NO_MOID) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " deflex #%d", NUMBER (DEFLEXED (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (MULTIPLE (m) != NULL) {
+    if (MULTIPLE (m) != NO_MOID) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " multiple #%d", NUMBER (MULTIPLE (m))) >= 0);
       WRITE (f, output_line);
     }
-    if (NAME (m) != NULL) {
+    if (NAME (m) != NO_MOID) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, " name #%d", NUMBER (NAME (m))) >= 0);
       WRITE (f, output_line);
     }
@@ -3219,13 +3223,14 @@ MOID_T *new_moid (void)
   DERIVATE (z) = A68_FALSE;
   NODE (z) = NULL;
   PACK (z) = NO_PACK;
-  SUB (z) = NULL;
-  z->equivalent_mode = NULL;
-  SLICE (z) = NULL;
-  DEFLEXED (z) = NULL;
-  NAME (z) = NULL;
-  z->multiple_mode = NULL;
-  NEXT (z) = NULL;
+  SUB (z) = NO_MOID;
+  z->equivalent_mode = NO_MOID;
+  SLICE (z) = NO_MOID;
+  TRIM (z) = NO_MOID;
+  DEFLEXED (z) = NO_MOID;
+  NAME (z) = NO_MOID;
+  z->multiple_mode = NO_MOID;
+  NEXT (z) = NO_MOID;
   return (z);
 }
 

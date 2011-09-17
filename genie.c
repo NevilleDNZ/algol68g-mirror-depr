@@ -119,8 +119,6 @@ static PROP_T genie_widening_int_to_real (NODE_T *);
 static PROP_T genie_widening (NODE_T *);
 static PROP_T genie_assignation_quick (NODE_T * p);
 static PROP_T genie_loop (volatile NODE_T *);
-static PROP_T genie_voiding_assignation_constant (NODE_T * p);
-static PROP_T genie_voiding_assignation (NODE_T * p);
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
 static PROP_T genie_parallel (NODE_T *);
@@ -6211,8 +6209,9 @@ it has implicit bounds
     if (rsiz == 0) {
 /* Generate a ghost element */
       ADDR_T top_sp = *cur_sp;
+      BYTE_T *elem;
       ARRAY (arr) = heap_generator (p, rmod, esiz);
-      BYTE_T *elem = ADDRESS (&(ARRAY (arr)));
+      elem = ADDRESS (&(ARRAY (arr)));
       if (alloc_sub) {
         genie_generator_stowed (NEXT (p), &(elem[0]), NULL, cur_sp);
         top_sp = *cur_sp;
@@ -6222,8 +6221,9 @@ it has implicit bounds
       (*cur_sp) = top_sp;
     } else {
       ADDR_T pop_sp = *cur_sp, top_sp = *cur_sp;
+      BYTE_T *elem;
       ARRAY (arr) = heap_generator (p, rmod, rsiz * esiz);
-      BYTE_T *elem = ADDRESS (&(ARRAY (arr)));
+      elem = ADDRESS (&(ARRAY (arr)));
       for (k = 0; k < rsiz; k++) {
         if (alloc_sub) {
           (*cur_sp) = pop_sp;

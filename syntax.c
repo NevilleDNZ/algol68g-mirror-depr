@@ -6562,8 +6562,10 @@ static BOOL_T whether_united_packs_equivalent (PACK_T * s, PACK_T * t)
 
 BOOL_T whether_modes_equivalent (MOID_T * a, MOID_T * b)
 {
-  ABEND (a == NO_MOID || b == NO_MOID, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
-  if (a == b) {
+  if (a == NO_MOID || b == NO_MOID) {
+/* Modes can be NO_MOID in partial argument lists */
+    return (A68_FALSE);
+  } else if (a == b) {
     return (A68_TRUE);
   } else if (a == MODE (ERROR) || b == MODE (ERROR)) {
     return (A68_FALSE);
@@ -7499,6 +7501,7 @@ static void resolve_eq_members (MOID_T * q)
   resolve_equivalent (&MULTIPLE (q));
   resolve_equivalent (&NAME (q));
   resolve_equivalent (&SLICE (q));
+  resolve_equivalent (&TRIM (q));
   resolve_equivalent (&ROWED (q));
   for (p = PACK (q); p != NO_PACK; FORWARD (p)) {
     resolve_equivalent (&MOID (p));
@@ -7737,6 +7740,14 @@ static void compute_derived_modes (MODULE_T *mod)
         if (WHETHER (SUB (z), STRUCT_SYMBOL)) {
           MULTIPLE (z) = make_multiple_struct (SUB (z), &mod->top_moid, DIM (z));
         }
+      }
+    }
+    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+      if (TRIM (z) == NO_MOID && WHETHER (z, FLEX_SYMBOL)) {
+        TRIM (z) = SUB (z);
+      }
+      if (TRIM (z) == NO_MOID && WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), FLEX_SYMBOL)) {
+        TRIM (z) = add_mode (&mod->top_moid, REF_SYMBOL, 0, NODE (z), SUB_SUB (z), NO_PACK);
       }
     }
 /* Fill out stuff for rows, f.i. inverse relations */
@@ -12495,6 +12506,7 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
   }
+
   MOID (p) = n;
   subs = trims = 0;
   mode_check_indexer (SUB_NEXT (p), &subs, &trims);
@@ -12527,8 +12539,9 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
       subs--;
     }
 /* A trim cannot be but deflexed */
-    if (ANNOTATION (NEXT (p)) == TRIMMER) {
-      make_soid (y, SORT (x), DEFLEX (m), 0);
+    if (ANNOTATION (NEXT (p)) == TRIMMER && TRIM (m) != NO_MOID) {
+      ABEND (TRIM (m) == NO_MOID, ERROR_INTERNAL_CONSISTENCY, NULL);
+      make_soid (y, SORT (x), TRIM (m), 0);
     } else {
       make_soid (y, SORT (x), m, 0);
     }
