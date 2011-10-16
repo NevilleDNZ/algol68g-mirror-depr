@@ -490,7 +490,7 @@ MP_T *string_to_mp (NODE_T * p, MP_T * z, char *s, int digits)
 
 MP_T *int_to_mp (NODE_T * p, MP_T * z, int k, int digits)
 {
-  int n = 0, j, sign_k = (k >= 0 ? 1 : -1);
+  int n = 0, j, sign_k = SIGN (k);
   int k2 = k;
   if (k < 0) {
     k = -k;
@@ -637,7 +637,7 @@ MP_T *real_to_mp (NODE_T * p, MP_T * z, double x, int digits)
   if (ABS (x) < MP_RADIX && (double) (int) x == x) {
     return (int_to_mp (p, z, (int) x, digits));
   }
-  sign_x = (x > 0 ? 1 : -1);
+  sign_x = SIGN (x);
 /* Scale to [0, 0.1> */
   a = x = ABS (x);
   expo = (int) log10 (a);
@@ -1201,7 +1201,7 @@ MP_T *mul_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   SET_MP_ZERO (w, digits_h);
   MP_EXPONENT (w) = MP_EXPONENT (x) + MP_EXPONENT (y) + 1;
   oflow = (int) (floor) ((double) MAX_REPR_INT / (2 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
-  ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
+  ABEND (oflow <= 1, "inadequate MP_RADIX", NO_TEXT);
   if (digits < oflow) {
     for (i = digits; i >= 1; i--) {
       MP_T yi = MP_DIGIT (y, i);
@@ -1276,7 +1276,7 @@ guesses without separate correction steps.
   }
 /* Determine normalisation interval assuming that q < 2b in each step */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
-  ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
+  ABEND (oflow <= 1, "inadequate MP_RADIX", NO_TEXT);
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
   MP_STATUS (z) = (MP_T) INITIALISED_MASK;
@@ -1510,7 +1510,7 @@ MP_T *div_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
   }
 /* Determine normalisation interval assuming that q < 2b in each step */
   oflow = (int) (floor) ((double) MAX_REPR_INT / (3 * (double) MP_RADIX * (double) MP_RADIX)) - 1;
-  ABEND (oflow <= 1, "inadequate MP_RADIX", NULL);
+  ABEND (oflow <= 1, "inadequate MP_RADIX", NO_TEXT);
 /* Work with positive operands */
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_STATUS (z) = (MP_T) INITIALISED_MASK;
@@ -3050,6 +3050,10 @@ MP_T *cdiv_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   MP_T *q, *r;
+  if (MP_DIGIT (c, 1) == (MP_T) 0 && MP_DIGIT (d, 1) == (MP_T) 0) {
+    errno = ERANGE;
+    return (NO_MP);
+  }
   STACK_MP (q, p, digits);
   STACK_MP (r, p, digits);
   MOVE_MP (q, c, digits);

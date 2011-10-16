@@ -44,6 +44,9 @@ Error codes:
 #define ERROR_NOT_CONNECTED "not connected to a database"
 #define ERROR_NO_QUERY_RESULT "no query result available"
 
+#define NO_PGCONN ((PGconn *) NULL)
+#define NO_PGRESULT ((PGresult *) NULL)
+
 /*!
 \brief PROC pg connect db (REF FILE, STRING, REF STRING) INT
 \param p position in tree
@@ -69,43 +72,43 @@ void genie_pq_connectdb (NODE_T * p)
   }
 /* Initialise the file */
   file = FILE_DEREF (&ref_file);
-  if (file->opened) {
+  if (OPENED (file)) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_ALREADY_OPEN);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   STATUS (file) = INITIALISED_MASK;
-  file->channel = associate_channel;
-  file->opened = A68_TRUE;
-  file->open_exclusive = A68_FALSE;
-  file->read_mood = A68_FALSE;
-  file->write_mood = A68_FALSE;
-  file->char_mood = A68_FALSE;
-  file->draw_mood = A68_FALSE;
-  file->tmp_file = A68_FALSE;
-  if (INITIALISED (&(file->identification)) && !IS_NIL (file->identification)) {
-    UNBLOCK_GC_HANDLE (&(file->identification));
+  CHANNEL (file) = associate_channel;
+  OPENED (file) = A68_TRUE;
+  OPEN_EXCLUSIVE (file) = A68_FALSE;
+  READ_MOOD (file) = A68_FALSE;
+  WRITE_MOOD (file) = A68_FALSE;
+  CHAR_MOOD (file) = A68_FALSE;
+  DRAW_MOOD (file) = A68_FALSE;
+  TMP_FILE (file) = A68_FALSE;
+  if (INITIALISED (&(IDENTIFICATION (file))) && !IS_NIL (IDENTIFICATION (file))) {
+    UNBLOCK_GC_HANDLE (&(IDENTIFICATION (file)));
   }
-  file->identification = nil_ref;
-  file->terminator = nil_ref;
+  IDENTIFICATION (file) = nil_ref;
+  TERMINATOR (file) = nil_ref;
   FORMAT (file) = nil_format;
-  file->fd = -1;
-  if (INITIALISED (&(file->string)) && !IS_NIL (file->string)) {
-    UNBLOCK_GC_HANDLE (&(file->string));
+  FD (file) = -1;
+  if (INITIALISED (&(STRING (file))) && !IS_NIL (STRING (file))) {
+    UNBLOCK_GC_HANDLE (&(STRING (file)));
   }
-  file->string = ref_string;
-  BLOCK_GC_HANDLE (&(file->string));
-  file->strpos = 1;
-  file->device.stream = NULL;
+  STRING (file) = ref_string;
+  BLOCK_GC_HANDLE (&(STRING (file)));
+  STRPOS (file) = 1;
+  STREAM (&DEVICE (file)) = NULL;
   set_default_mended_procedures (file);
 /* Establish a connection */
   ref_z = heap_generator (p, MODE (C_STRING), 1 + a68_string_size (p, conninfo));
-  file->connection = PQconnectdb (a_to_c_string (p, (char *) ADDRESS (&ref_z), conninfo));
-  file->result = NULL;
-  if (file->connection == NULL) {
+  CONNECTION (file) = PQconnectdb (a_to_c_string (p, (char *) ADDRESS (&ref_z), conninfo));
+  RESULT (file) = NO_PGRESULT;
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   }
-  (void) PQsetErrorVerbosity (file->connection, PQERRORS_DEFAULT);
-  if (PQstatus (file->connection) != CONNECTION_OK) {
+  (void) PQsetErrorVerbosity (CONNECTION (file), PQERRORS_DEFAULT);
+  if (PQstatus (CONNECTION (file)) != CONNECTION_OK) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, 0, A68_INT);
@@ -125,16 +128,16 @@ void genie_pq_finish (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result != NULL) {
-    PQclear (file->result);
+  if (RESULT (file) != NO_PGRESULT) {
+    PQclear (RESULT (file));
   }
-  PQfinish (file->connection);
-  file->connection = NULL;
-  file->result = NULL;
+  PQfinish (CONNECTION (file));
+  CONNECTION (file) = NO_PGCONN;
+  RESULT (file) = NO_PGRESULT;
   PUSH_PRIMITIVE (p, 0, A68_INT);
 }
 
@@ -151,14 +154,14 @@ void genie_pq_reset (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result != NULL) {
-    PQclear (file->result);
+  if (RESULT (file) != NO_PGRESULT) {
+    PQclear (RESULT (file));
   }
-  PQreset (file->connection);
+  PQreset (CONNECTION (file));
   PUSH_PRIMITIVE (p, 0, A68_INT);
 }
 
@@ -177,17 +180,17 @@ void genie_pq_exec (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result != NULL) {
-    PQclear (file->result);
+  if (RESULT (file) != NO_PGRESULT) {
+    PQclear (RESULT (file));
   }
   ref_z = heap_generator (p, MODE (C_STRING), 1 + a68_string_size (p, query));
-  file->result = PQexec (file->connection, a_to_c_string (p, (char *) ADDRESS (&ref_z), query));
-  if ((PQresultStatus (file->result) != PGRES_TUPLES_OK)
-      && (PQresultStatus (file->result) != PGRES_COMMAND_OK)) {
+  RESULT (file) = PQexec (CONNECTION (file), a_to_c_string (p, (char *) ADDRESS (&ref_z), query));
+  if ((PQresultStatus (RESULT (file)) != PGRES_TUPLES_OK)
+      && (PQresultStatus (RESULT (file)) != PGRES_COMMAND_OK)) {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, 0, A68_INT);
@@ -209,13 +212,13 @@ void genie_pq_parameterstatus (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
   ref_z = heap_generator (p, MODE (C_STRING), 1 + a68_string_size (p, parameter));
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, (char *) PQparameterStatus (file->connection, a_to_c_string (p, (char *) ADDRESS (&ref_z), parameter)));
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, (char *) PQparameterStatus (CONNECTION (file), a_to_c_string (p, (char *) ADDRESS (&ref_z), parameter)), DEFAULT_WIDTH);
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -235,17 +238,17 @@ void genie_pq_cmdstatus (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQcmdStatus (file->result));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQcmdStatus (RESULT (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -265,17 +268,17 @@ void genie_pq_cmdtuples (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQcmdTuples (file->result));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQcmdTuples (RESULT (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -295,15 +298,15 @@ void genie_pq_ntuples (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  PUSH_PRIMITIVE (p, (PQresultStatus (file->result)) == PGRES_TUPLES_OK ? PQntuples (file->result) : -3, A68_INT);
+  PUSH_PRIMITIVE (p, (PQresultStatus (RESULT (file))) == PGRES_TUPLES_OK ? PQntuples (RESULT (file)) : -3, A68_INT);
 }
 
 /*!
@@ -319,15 +322,15 @@ void genie_pq_nfields (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  PUSH_PRIMITIVE (p, (PQresultStatus (file->result)) == PGRES_TUPLES_OK ? PQnfields (file->result) : -3, A68_INT);
+  PUSH_PRIMITIVE (p, (PQresultStatus (RESULT (file))) == PGRES_TUPLES_OK ? PQnfields (RESULT (file)) : -3, A68_INT);
 }
 
 /*!
@@ -347,22 +350,22 @@ void genie_pq_fname (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  upb = (PQresultStatus (file->result) == PGRES_TUPLES_OK ? PQnfields (file->result) : 0);
+  upb = (PQresultStatus (RESULT (file)) == PGRES_TUPLES_OK ? PQnfields (RESULT (file)) : 0);
   if (VALUE (&a68g_index) < 1 || VALUE (&a68g_index) > upb) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQfname (file->result, VALUE (&a68g_index) - 1));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQfname (RESULT (file), VALUE (&a68g_index) - 1), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
   }
   PUSH_PRIMITIVE (p, 0, A68_INT);
 }
@@ -383,16 +386,16 @@ void genie_pq_fnumber (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
   ref_z = heap_generator (p, MODE (C_STRING), 1 + a68_string_size (p, name));
-  k = PQfnumber (file->result, a_to_c_string (p, (char *) ADDRESS (&ref_z), name));
+  k = PQfnumber (RESULT (file), a_to_c_string (p, (char *) ADDRESS (&ref_z), name));
   if (k == -1) {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   } else {
@@ -417,20 +420,20 @@ void genie_pq_fformat (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  upb = (PQresultStatus (file->result) == PGRES_TUPLES_OK ? PQnfields (file->result) : 0);
+  upb = (PQresultStatus (RESULT (file)) == PGRES_TUPLES_OK ? PQnfields (RESULT (file)) : 0);
   if (VALUE (&a68g_index) < 1 || VALUE (&a68g_index) > upb) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  PUSH_PRIMITIVE (p, PQfformat (file->result, VALUE (&a68g_index) - 1), A68_INT);
+  PUSH_PRIMITIVE (p, PQfformat (RESULT (file), VALUE (&a68g_index) - 1), A68_INT);
 }
 
 /*!
@@ -453,32 +456,32 @@ void genie_pq_getvalue (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  upb = (PQresultStatus (file->result) == PGRES_TUPLES_OK ? PQnfields (file->result) : 0);
+  upb = (PQresultStatus (RESULT (file)) == PGRES_TUPLES_OK ? PQnfields (RESULT (file)) : 0);
   if (VALUE (&column) < 1 || VALUE (&column) > upb) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  upb = (PQresultStatus (file->result) == PGRES_TUPLES_OK ? PQntuples (file->result) : 0);
+  upb = (PQresultStatus (RESULT (file)) == PGRES_TUPLES_OK ? PQntuples (RESULT (file)) : 0);
   if (VALUE (&row) < 1 || VALUE (&row) > upb) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  str = PQgetvalue (file->result, VALUE (&row) - 1, VALUE (&column) - 1);
+  str = PQgetvalue (RESULT (file), VALUE (&row) - 1, VALUE (&column) - 1);
   if (str == NULL) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_NO_QUERY_RESULT);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, str);
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -504,25 +507,25 @@ void genie_pq_getisnull (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  upb = (PQresultStatus (file->result) == PGRES_TUPLES_OK ? PQnfields (file->result) : 0);
+  upb = (PQresultStatus (RESULT (file)) == PGRES_TUPLES_OK ? PQnfields (RESULT (file)) : 0);
   if (VALUE (&column) < 1 || VALUE (&column) > upb) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  upb = (PQresultStatus (file->result) == PGRES_TUPLES_OK ? PQntuples (file->result) : 0);
+  upb = (PQresultStatus (RESULT (file)) == PGRES_TUPLES_OK ? PQntuples (RESULT (file)) : 0);
   if (VALUE (&row) < 1 || VALUE (&row) > upb) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  PUSH_PRIMITIVE (p, PQgetisnull (file->result, VALUE (&row) - 1, VALUE (&column) - 1), A68_INT);
+  PUSH_PRIMITIVE (p, PQgetisnull (RESULT (file), VALUE (&row) - 1, VALUE (&column) - 1), A68_INT);
 }
 
 /*!
@@ -593,15 +596,15 @@ void genie_pq_errormessage (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
+  if (!IS_NIL (STRING (file))) {
     char str[BUFFER_SIZE];
     int upb;
-    if (PQerrorMessage (file->connection) != NULL) {
-      bufcpy (str, pq_edit (PQerrorMessage (file->connection)), BUFFER_SIZE);
+    if (PQerrorMessage (CONNECTION (file)) != NULL) {
+      bufcpy (str, pq_edit (PQerrorMessage (CONNECTION (file))), BUFFER_SIZE);
       upb = (int) strlen (str);
       if (upb > 0 && str[upb - 1] == NEWLINE_CHAR) {
         str[upb - 1] = NULL_CHAR;
@@ -609,8 +612,8 @@ void genie_pq_errormessage (NODE_T * p)
     } else {
       bufcpy (str, "no error message available", BUFFER_SIZE);
     }
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, str);
-    file->strpos = 1;
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -630,19 +633,19 @@ void genie_pq_resulterrormessage (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (file->result == NULL) {
+  if (RESULT (file) == NO_PGRESULT) {
     PUSH_PRIMITIVE (p, -2, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
+  if (!IS_NIL (STRING (file))) {
     char str[BUFFER_SIZE];
     int upb;
-    if (PQresultErrorMessage (file->result) != NULL) {
-      bufcpy (str, pq_edit (PQresultErrorMessage (file->result)), BUFFER_SIZE);
+    if (PQresultErrorMessage (RESULT (file)) != NULL) {
+      bufcpy (str, pq_edit (PQresultErrorMessage (RESULT (file))), BUFFER_SIZE);
       upb = (int) strlen (str);
       if (upb > 0 && str[upb - 1] == NEWLINE_CHAR) {
         str[upb - 1] = NULL_CHAR;
@@ -650,8 +653,8 @@ void genie_pq_resulterrormessage (NODE_T * p)
     } else {
       bufcpy (str, "no error message available", BUFFER_SIZE);
     }
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, str);
-    file->strpos = 1;
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -671,13 +674,13 @@ void genie_pq_db (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQdb (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQdb (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -697,13 +700,13 @@ void genie_pq_user (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQuser (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQuser (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -723,13 +726,13 @@ void genie_pq_pass (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQpass (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQpass (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -749,13 +752,13 @@ void genie_pq_host (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQhost (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQhost (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -775,13 +778,13 @@ void genie_pq_port (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQport (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQport (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -801,13 +804,13 @@ void genie_pq_tty (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQtty (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQtty (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -827,13 +830,13 @@ void genie_pq_options (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    *(A68_REF *) ADDRESS (&file->string) = c_to_a_string (p, PQoptions (file->connection));
-    file->strpos = 1;
+  if (!IS_NIL (STRING (file))) {
+    *(A68_REF *) ADDRESS (&STRING (file)) = c_to_a_string (p, PQoptions (CONNECTION (file)), DEFAULT_WIDTH);
+    STRPOS (file) = 1;
     PUSH_PRIMITIVE (p, 0, A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
@@ -853,12 +856,12 @@ void genie_pq_protocolversion (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    PUSH_PRIMITIVE (p, PQprotocolVersion (file->connection), A68_INT);
+  if (!IS_NIL (STRING (file))) {
+    PUSH_PRIMITIVE (p, PQprotocolVersion (CONNECTION (file)), A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   }
@@ -877,12 +880,12 @@ void genie_pq_serverversion (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    PUSH_PRIMITIVE (p, PQserverVersion (file->connection), A68_INT);
+  if (!IS_NIL (STRING (file))) {
+    PUSH_PRIMITIVE (p, PQserverVersion (CONNECTION (file)), A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   }
@@ -901,12 +904,12 @@ void genie_pq_socket (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    PUSH_PRIMITIVE (p, PQsocket (file->connection), A68_INT);
+  if (!IS_NIL (STRING (file))) {
+    PUSH_PRIMITIVE (p, PQsocket (CONNECTION (file)), A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   }
@@ -925,12 +928,12 @@ void genie_pq_backendpid (NODE_T * p)
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (file->connection == NULL) {
+  if (CONNECTION (file) == NO_PGCONN) {
     PUSH_PRIMITIVE (p, -1, A68_INT);
     return;
   }
-  if (!IS_NIL (file->string)) {
-    PUSH_PRIMITIVE (p, PQbackendPID (file->connection), A68_INT);
+  if (!IS_NIL (STRING (file))) {
+    PUSH_PRIMITIVE (p, PQbackendPID (CONNECTION (file)), A68_INT);
   } else {
     PUSH_PRIMITIVE (p, -3, A68_INT);
   }

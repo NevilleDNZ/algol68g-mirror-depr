@@ -22,27 +22,50 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 /*
 This is an experimental curses-based UNIX approximation of big-iron editors 
-like the XEDIT/ISPF editors. 
+as the XEDIT/ISPF editors. 
+It is meant for maintaining small to intermediate sized source code. The 
+command set is small, and there is no huge file support: the text is in core
+which makes for a *fast* editor.
 
-It is still undocumented as it is not sufficiently debugged.
+It is still undocumented as it is not fully debugged and not feature-complete. 
+I use it for daily editing work, but you *might* loose your work. 
+Do not say I did not warn you!
 
-I already use it for daily editing work, but you might still loose your work.
-Don't say I did not warn you!
+The editor is modeless. If you are in text, what you type goes into the file.
+What you type in the prefix, will be a prefix command. What you type on the
+command line, is a command. No input-modes or command-mode or escapes.
 
 The editor is also a very basic IDE for Algol 68 Genie, it can for instance 
 take you to diagnostic positions in the code.
 
-This editor is meant for maintaining small to intermediate sized source code.
-The command set is small, and there is no huge file support.
-
 The editor supports prefix commands and text folding, like the
-XEDIT/ISPF editors.
+XEDIT/ISPF editors. Especially the folding is a nice feature.
+
+Your screen looks like this:
+
++-----------------------------------------------------+
+| filename file=1 size=n col=n alt=n                  |<--Id/Message Line
+|===== * * * Top of Data * * *                        |
+|    1                                                |
+|    2                                                |
+|    3                                                |<--Current Line
+|      |...+....1....+....2... ... ...6....+....7....||<--Scale
+|    4                                                |
+|    5                                                |
+|    6                                                |
+|===== * * * End of Data * * *                        |
+|====>                                                |<--Command Line
++-----------------------------------------------------+
+ |   | |                                             |
+ +---+ +---------------------------------------------+
+   |                         |
+ Prefix Area              File Area
+
 
 +-- Command overview ---
 | target  A target as command, sets the current line
 | ADD [n] Add n lines
 | AGAIN   Repeat last search
-| C       Change command /find/replace/ [target [n|* [m|*]]]
 | CASE    Switch case of character under cursor
 | CDELETE Delete to end of line
 | COPY    Copy up to 1st target to after 2nd target, [n] copies
@@ -57,11 +80,11 @@ XEDIT/ISPF editors.
 | QQUIT   Categorically quit, does not ask if you are sure or not! 
 | READ    Insert filename after current line
 | RESET   Reset prefixes
-| RUN     run text with a68g
-| SCALE   Put the sacle [OFF] or at line [n]
+| RUN     run with a68g
+| SCALE   Put the scale [OFF] or at line [n]
 | SHELL   target cmd Filter lines using cmd
-| S       Change command /find/replace/ [target [n|* [m|*]]]
-| SYNTAX  Alias for run --pedantic --norun
+| S       Substitute command /find/replace/ [C][target [n|* [m|*]]]
+| SYNTAX  Alias for a68g --pedantic --norun
 | TOGGLE  Toggle between current line and command line (F1, F12 do the same)
 | UNDO    Undo until last command that made a back-up copy
 | WRITE   [target filename]
@@ -82,11 +105,17 @@ XEDIT/ISPF editors.
 |
 | All targets can have [+k|-k] relative offset, f.i. /IF/+1
 |
-| For POSIX BRE regular expressions REGEXP we have:
-| /regexp/          regexp must match
-| /regexp/&/regexp/ both must match
-| /regexp/|/regexp/ one or both must match
-| /regexp/^/regexp/ one must match, but not both
+| The editor uses POSIX ERE regular expression syntax.
+| A prefix ~ to a regexp matches lines not matching regexp.
+|
+| [~]/regexp/             regexp must [not] match
+| [~]/regexp/&[~]/regexp/ both lines must [not] match
+| [~]/regexp/|[~]/regexp/ one or both must [not] match
+| [~]/regexp/^[~]/regexp/ at most one regexp must [not] match
+|
+| In substitution you can specify matched subexpression with \1 .. \9
+| syntax; furthermore you can specify \a .. \j or \A .. \J which will cast
+| the subexpression to either lower - or upper case respectively.
 |
 | Prefix commands
 | /    Make line the current line
@@ -100,6 +129,7 @@ XEDIT/ISPF editors.
 | J    Join with next line
 | P[n] Add n copies after this line
 | Q[n] Add n copies before this line
+| U    Unselect line from editing
 | X[n] Move lines; use P (after) or Q (before) for destination
 | XX   Move block of lines marker; use P (after) or Q (before) for destination
 +---
@@ -113,94 +143,93 @@ XEDIT/ISPF editors.
 
 /* Without CURSES or REGEX, we have no editor, so: */
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES && HAVE_REGEX_H)
-
-#define TEXT_COLOUR 1
-#define HILIGHT_COLOUR 2
-#define DARK_COLOUR 3
-#define INFO_COLOUR 4
-#define CMD_COLOUR 5
+#if defined HAVE_EDITOR
 
 #define BACKSPACE 127
 #define BLANK  "       "
 #define BLOCK_SIZE 4
 #define BOTSTR "* * * End of Data * * *"
-#define DATE_STRING "%a %d-%b-%Y %H:%M"
+#define DATE_STRING "%d-%m-%y %H:%M"
 #define EMPTY_STRING(s) ((s) == NO_TEXT || (s)[0] == NULL_CHAR)
 #define FD_READ 0
 #define FD_WRITE 1
-#define HISTORY 16
-#define IN_TEXT(z) ((z) != NULL && NUMBER (z) > 0)
+#define HISTORY 64
+#define IS_IN_TEXT(z) ((z) != NO_EDLIN && NUMBER (z) > 0)
 #define IS_EOF(z) (!NOT_EOF(z))
 #define IS_TOF(z) (!NOT_TOF(z))
 #define MARGIN 7
 #define MAX_PF 64
-#define NOT_EOF(z) ((z) != NULL && NEXT (z) != NULL)
-#define NOT_TOF(z) ((z) != NULL && PREVIOUS (z) != NULL)
-#define PREFIX "****** "
+#define NOT_EOF(z) ((z) != NO_EDLIN && NEXT (z) != NO_EDLIN)
+#define NOT_TOF(z) ((z) != NO_EDLIN && PREVIOUS (z) != NO_EDLIN)
+#define PREFIX "====== "
 #define PROMPT "=====> "
-#define PROTECTED(s) ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cursor in protected area", (s)) >= 0)
-#define SELECT(p) ((p)->select)
+#define PROTECTED(s) ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cursor in protected area", (s)) >= 0)
 #define SUBST_ERROR -1
 #define TAB_STOP 8
 #define TEXT_WIDTH (COLS - MARGIN)
 #define TOPSTR "* * * Top of Data * * *"
-#define TRAILING(s) ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: trailing text", (s)) >= 0)
+#define TRAILING(s) ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: trailing text", (s)) >= 0)
 #define WRONG_TARGET -1
+
+#if defined HAVE_WIN32
+#define REDRAW(s) {clearok ((s), 1);}
+#else
+#define REDRAW(s) {clearok ((s), true);}
+#endif /* defined HAVE_WIN32 */
 
 static char pf_bind[MAX_PF][BUFFER_SIZE];
 static char history[HISTORY][BUFFER_SIZE];
-static int histix = 0;
+static int histcurr = -1, histnext = -1, histprev = -1;
 
 #define KEY_CTRL(n) TO_UCHAR ((int) n - 0x40)
 
 #define SAVE_CURSOR(dd, curs) {\
-  curs->row0 = curs->row;\
-  curs->col0 = curs->col;\
+  ROW0 (curs) = ROW (curs);\
+  COL0 (curs) = COL (curs);\
   }
 
 #define CURSOR_TO_SAVE(dd, curs) {\
-  curs->row = curs->row0;\
-  curs->col = curs->col0;\
+  ROW (curs) = ROW0 (curs);\
+  COL (curs) = COL0 (curs);\
   }
 
 #define CURSOR_TO_CURRENT(dd, curs) {\
-  curs->sync_line = dd->curr;\
-  curs->sync_index = 0;\
-  curs->sync = A68_TRUE;\
+  SYNC_LINE (curs) = CURR (dd);\
+  SYNC_INDEX (curs) = 0;\
+  SYNC (curs) = A68_TRUE;\
   }
 
 #define CURSOR_TO_COMMAND(dd, curs) {\
-  curs->row = dd->display.cmd_row;\
-  curs->col = MARGIN;\
-  curs->sync = A68_FALSE;\
+  ROW (curs) = CMD_ROW (&DISPLAY (dd));\
+  COL (curs) = MARGIN;\
+  SYNC (curs) = A68_FALSE;\
   }
 
 #define CHECK_ERRNO(cmd) {\
   if (errno != 0) {\
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s", cmd, ERROR_SPECIFICATION) >= 0);\
-    bufcpy (scr->dl0, ERROR_SPECIFICATION, BUFFER_SIZE);\
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s", cmd, ERROR_SPECIFICATION) >= 0);\
+    bufcpy (DL0 (scr), ERROR_SPECIFICATION, BUFFER_SIZE);\
     return;\
   }}
 
 #define SKIP_WHITE(w) {\
-  while ((w) != NULL && (w)[0] != NULL_CHAR && IS_SPACE ((w)[0])) {\
+  while ((w) != NO_TEXT && (w)[0] != NULL_CHAR && IS_SPACE ((w)[0])) {\
     (w)++;\
   }}
 
 #define NO_ARGS(c, z) {\
-  if ((z) != NULL && (z)[0] != NULL_CHAR) {\
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: unexpected argument", c) >= 0);\
-    curs->row = scr->cmd_row;\
-    curs->col = MARGIN;\
+  if ((z) != NO_TEXT && (z)[0] != NULL_CHAR) {\
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: unexpected argument", c) >= 0);\
+    ROW (curs) = CMD_ROW (scr);\
+    COL (curs) = MARGIN;\
     return;\
   }}
 
 #define ARGS(c, z) {\
-  if ((z) == NULL || (z)[0] == NULL_CHAR) {\
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing argument", c) >= 0);\
-    curs->row = scr->cmd_row;\
-    curs->col = MARGIN;\
+  if ((z) == NO_TEXT || (z)[0] == NULL_CHAR) {\
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: missing argument", c) >= 0);\
+    ROW (curs) = CMD_ROW (scr);\
+    COL (curs) = MARGIN;\
     return;\
   }}
 
@@ -226,7 +255,7 @@ KEY trans_tab[] = {
   {531, 261, "KEY_RIGHT"},
   {532, 258, "KEY_DOWN"},
   {KEY_ENTER, 10, "LF Line feed"},
-  {-1, -1, NULL}
+  {-1, -1, NO_TEXT}
 };
 
 /* Keys defined by curses */
@@ -420,7 +449,7 @@ KEY key_tab[] = {
   {409, 409, "KEY_MOUSE"},
   {410, 410, "KEY_RESIZE"},
   {511, 511, "KEY_MAX"},
-  {-1, -1, NULL}
+  {-1, -1, NO_TEXT}
 };
 
 /* VT100 numeric keypad */
@@ -458,7 +487,14 @@ struct KEY dec_key[] = {
   {KEY_B2, KEY_B2, "\033[E"},
   {KEY_END, KEY_END, "\033[4~"},
   {KEY_HOME, KEY_HOME, "\033[1~"},
-  {-1, -1, NULL}
+  {-1, -1, NO_TEXT}
+};
+
+KEY regexp_tab[] = {
+  {'d', -1, "[+-]?[0-9]+"},
+  {'f', -1, "[+-]?[0-9]*\\.?[0-9]+([eEdDqQ][+-]?[0-9]+)?"},
+  {'w', -1, "[A-Za-z_][A-Za-z0-9_]*"},
+  {-1, -1, NO_TEXT}
 };
 
 typedef struct EDLIN_T EDLIN_T;
@@ -467,7 +503,7 @@ struct EDLIN_T {
   char precmd[MARGIN + 1];
   char *text;
   EDLIN_T *next, *previous;
-  BOOL_T select;
+  BOOL_T select, modified;
 };
 
 typedef struct CURSOR_T CURSOR_T;
@@ -483,7 +519,7 @@ struct CURSOR_T {
 
 typedef struct DISPLAY_T DISPLAY_T;
 struct DISPLAY_T {
-  int scale_row, cmd_row, pf_row;
+  int scale_row, cmd_row, idf_row;
   EDLIN_T *last_line;
   char status[BUFFER_SIZE];
   char tmp_text[BUFFER_SIZE];
@@ -495,7 +531,7 @@ struct DISPLAY_T {
 
 typedef struct REGEXP_T REGEXP_T;
 struct REGEXP_T {
-  BOOL_T is_compiled;
+  BOOL_T is_compiled, negate;
   char pattern[BUFFER_SIZE];
   regex_t compiled;
   regmatch_t *match;
@@ -509,7 +545,7 @@ struct DATASET_T {
   char perm[BUFFER_SIZE];
   char date[BUFFER_SIZE];
   char undo[BUFFER_SIZE];
-  int size, alts, tabs, num, undo_line, search;
+  int size, alts, tabs, num, undo_line, search, m_so, m_eo;
   EDLIN_T *tof; /* top-of-file */
   BOOL_T new_file;
   BOOL_T subset;
@@ -517,6 +553,7 @@ struct DATASET_T {
   BOOL_T collect;
   DISPLAY_T display;
   EDLIN_T *curr; /* Current line, above the scale */
+  EDLIN_T *match; /* Last line to match a regular expression */
   EDLIN_T *bl_start, *bl_end; /* block at last copy or move */
   REGEXP_T targ1, targ2, find, repl;
   char oper; /* regexp operator: & or | */
@@ -535,6 +572,28 @@ static void edit_loop (DATASET_T *);
 static void edit_dataset (DATASET_T *, int, char *, char *);
 static void edit_garbage_collect (DATASET_T *, char *);
 static void set_current (DATASET_T *, char *, char *);
+static void backward_line (EDLIN_T **);
+static void forward_line (EDLIN_T **);
+static int int_arg (DATASET_T *, char *, char *, char **, int);
+
+/*
+\brief set pointers to track history
+*/
+
+static void edit_set_history (int ref)
+{
+  histprev = ref - 1;
+  if (histprev < 0) {
+    histprev = HISTORY - 1;
+    while (histprev > 0 && strlen (history[histprev]) == 0) {
+      histprev --;
+    }
+  }
+  histnext = ref + 1;
+  if (histprev >= HISTORY - 1 || strlen (history[histnext]) == 0) {
+    histnext = 0;
+  }
+}
 
 /*
 \brief store command in a cyclic buffer
@@ -543,10 +602,69 @@ static void set_current (DATASET_T *, char *, char *);
 
 static void edit_add_history (char *cmd)
 {
-  bufcpy (history[histix], cmd, BUFFER_SIZE); 
-  histix ++;
-  if (histix == HISTORY) {
-    histix = 0;
+  histcurr ++;
+  if (histcurr == HISTORY) {
+    histcurr = 0;
+  }
+  bufcpy (history[histcurr], cmd, BUFFER_SIZE); 
+  histprev = histnext = histcurr;
+}
+
+/*
+\brief restore history
+*/
+
+void read_history (void)
+{
+  FILE *f = fopen (A68_HISTORY_FILE, "r");
+  if (f != NO_FILE) {
+    int k;
+    for (k = 0; k < MAX_PF; k++) {
+      if (fgets (input_line, BUFFER_SIZE, f) != NO_TEXT) {
+        if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
+          input_line[strlen (input_line) - 1] = NULL_CHAR;
+        }
+        if ((int) strlen (input_line) > 0) {
+          bufcpy (pf_bind[k], input_line, BUFFER_SIZE);
+        }
+      }
+    }
+    histcurr = histnext = histprev = -1;
+    while (!feof (f)) {
+      if (fgets (input_line, BUFFER_SIZE, f) != NO_TEXT) {
+        if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
+          input_line[strlen (input_line) - 1] = NULL_CHAR;
+        }
+        edit_add_history (input_line);
+      }
+    }
+    ASSERT (fclose (f) == 0);
+  } else {
+/* Laissez-passer */
+    histcurr = histnext = histprev = -1;
+    RESET_ERRNO;
+  }
+}
+
+/*
+\brief store history
+*/
+
+void write_history (void)
+{
+  FILE *f = fopen (A68_HISTORY_FILE, "w");
+  if (f != NO_FILE) {
+    int k;
+    for (k = 0; k < MAX_PF; k++) {
+      fprintf (f, "%s\n", pf_bind[k]);
+    }
+    for (k = 0; k <= histcurr; k ++) {
+      fprintf (f, "%s\n", history[k]);
+    }
+    ASSERT (fclose (f) == 0);
+  } else {
+/* Laissez-passer */
+    RESET_ERRNO;
   }
 }
 
@@ -572,17 +690,17 @@ static BOOL_T heap_full (int as)
 
 static BYTE_T *edit_get_heap (DATASET_T *dd, size_t s)
 {
-  DISPLAY_T *scr = &(dd->display);
+  DISPLAY_T *scr = &(DISPLAY (dd));
   BYTE_T *z;
   int as = A68_ALIGN ((int) s);
-  XABEND (heap_is_fluid == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NULL);
+  XABEND (heap_is_fluid == A68_FALSE, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
 /* If there is no space left, we collect garbage */
-  if (heap_full (as) && dd->collect) {
+  if (heap_full (as) && COLLECT (dd)) {
     edit_garbage_collect (dd, "edit");
   }
   if (heap_full (as)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: out of memory") >= 0);
-    return (NULL);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: out of memory") >= 0);
+    return (NO_BYTE);
   }
 /* Allocate space */
   z = HEAP_ADDRESS (fixed_heap_pointer);
@@ -600,19 +718,19 @@ static BYTE_T *edit_get_heap (DATASET_T *dd, size_t s)
 
 static void add_linbuf (DATASET_T *dd, char ch, int pos)
 {
-  if (dd->linbuf == NULL || pos >= dd->linsiz - 1) {
-    char *oldb = dd->linbuf;
-    dd->linsiz += BUFFER_SIZE;
-    dd->linbuf = (char *) edit_get_heap (dd, (size_t) (dd->linsiz));
-    XABEND (dd->linbuf == NULL, "Insufficient memory", NULL);
-    if (oldb == NULL) {
-      (dd->linbuf)[0] = NULL_CHAR;
+  if (LINBUF (dd) == NO_TEXT || pos >= LINSIZ (dd) - 1) {
+    char *oldb = LINBUF (dd);
+    LINSIZ (dd) += BUFFER_SIZE;
+    LINBUF (dd) = (char *) edit_get_heap (dd, (size_t) (LINSIZ (dd)));
+    XABEND (LINBUF (dd) == NO_TEXT, "Insufficient memory", NO_TEXT);
+    if (oldb == NO_TEXT) {
+      (LINBUF (dd))[0] = NULL_CHAR;
     } else {
-      bufcpy (dd->linbuf, oldb, dd->linsiz);
+      bufcpy (LINBUF (dd), oldb, LINSIZ (dd));
     }
   }
-  (dd->linbuf)[pos] = ch;
-  (dd->linbuf)[pos + 1] = NULL_CHAR;
+  (LINBUF (dd))[pos] = ch;
+  (LINBUF (dd))[pos + 1] = NULL_CHAR;
 }
 
 /* REGULAR EXPRESSION SUPPORT */
@@ -624,10 +742,10 @@ static void add_linbuf (DATASET_T *dd, char ch, int pos)
 
 static void init_regexp (REGEXP_T *re)
 {
-  re->is_compiled = A68_FALSE;
-  re->pattern[0] = NULL_CHAR;
-  re->match = NULL;
-  re->num_match = 0;
+  IS_COMPILED (re) = A68_FALSE;
+  PATTERN (re)[0] = NULL_CHAR;
+  MATCH (re) = NO_REGMATCH;
+  NUM_MATCH (re) = 0;
 }
 
 /*
@@ -637,13 +755,13 @@ static void init_regexp (REGEXP_T *re)
 
 static void reset_regexp (REGEXP_T *re)
 {
-  re->is_compiled = A68_FALSE;
-  re->pattern[0] = NULL_CHAR;
-  if (re->match != NULL) {
-    free (re->match);
+  IS_COMPILED (re) = A68_FALSE;
+  PATTERN (re)[0] = NULL_CHAR;
+  if (MATCH (re) != NO_REGMATCH) {
+    free (MATCH (re));
   }
-  re->match = NULL;
-  re->num_match = 0;
+  MATCH (re) = NO_REGMATCH;
+  NUM_MATCH (re) = 0;
 }
 
 /*
@@ -656,26 +774,26 @@ static void reset_regexp (REGEXP_T *re)
 
 static int compile_regexp (DATASET_T *dd, REGEXP_T *re, char *cmd)
 {
-  DISPLAY_T *scr = &(dd->display);
+  DISPLAY_T *scr = &(DISPLAY (dd));
   int rc;
   char buffer[BUFFER_SIZE];
-  re->is_compiled = A68_FALSE;
-  rc = regcomp (&(re->compiled), re->pattern, REG_NEWLINE);
+  IS_COMPILED (re) = A68_FALSE;
+  rc = regcomp (&(COMPILED (re)), PATTERN (re), REG_EXTENDED | REG_NEWLINE);
   if (rc != 0) {
-    (void) regerror (rc, &(re->compiled), buffer, BUFFER_SIZE);
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s", cmd, buffer) >= 0);
-    regfree (&(re->compiled));
+    (void) regerror (rc, &(COMPILED (re)), buffer, BUFFER_SIZE);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s", cmd, buffer) >= 0);
+    regfree (&(COMPILED (re)));
     return (rc);
   } else {
-    re->num_match = 1 + re->compiled.re_nsub;
-    re->match = malloc ((size_t) (re->num_match * sizeof (regmatch_t)));
-    if (re->match == NULL) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s", cmd, ERROR_OUT_OF_CORE) >= 0);
-      regfree (&(re->compiled));
+    NUM_MATCH (re) = 1 + RE_NSUB (&COMPILED (re));
+    MATCH (re) = malloc ((size_t) (NUM_MATCH (re) * sizeof (regmatch_t)));
+    if (MATCH (re) == NO_REGMATCH) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s", cmd, ERROR_OUT_OF_CORE) >= 0);
+      regfree (&(COMPILED (re)));
       return (-1);
     }
   }
-  re->is_compiled = A68_TRUE;
+  IS_COMPILED (re) = A68_TRUE;
   return (0);
 }
 
@@ -689,49 +807,381 @@ static int compile_regexp (DATASET_T *dd, REGEXP_T *re, char *cmd)
 
 static BOOL_T match_regex (DATASET_T *dd, EDLIN_T *z, int eflags, char *cmd)
 {
-  DISPLAY_T *scr = &(dd->display);
+  DISPLAY_T *scr = &(DISPLAY (dd));
   int rc1 = REG_NOMATCH, rc2 = REG_NOMATCH;
+  BOOL_T m1 = A68_FALSE, m2 = A68_FALSE;
   char *str = TEXT (z);
 /* Match first regex if present */
-  if (dd->targ1.is_compiled) {
-    rc1 = regexec (&(dd->targ1.compiled), str, dd->targ1.num_match, dd->targ1.match, eflags);
+  if (IS_COMPILED (&TARG1 (dd))) {
+    rc1 = regexec (&(COMPILED (&TARG1 (dd))), str, NUM_MATCH (&TARG1 (dd)), MATCH (&TARG1 (dd)), eflags);
     if (rc1 != 0 && rc1 != REG_NOMATCH) {
       char buffer[BUFFER_SIZE];
-      (void) regerror (rc1, &(dd->targ1.compiled), buffer, BUFFER_SIZE);
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s", cmd, buffer) >= 0);
-      if (dd->targ1.match != NULL) {
-        free (dd->targ1.match);
-        dd->targ1.match = NULL;
+      (void) regerror (rc1, &(COMPILED (&TARG1 (dd))), buffer, BUFFER_SIZE);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s", cmd, buffer) >= 0);
+      if (MATCH (&TARG1 (dd)) != NO_REGMATCH) {
+        free (MATCH (&TARG1 (dd)));
+        MATCH (&TARG1 (dd)) = NO_REGMATCH;
       }
       return (A68_FALSE);
+    }
+    if (NEGATE (&TARG1 (dd))) {
+      m1 = (rc1 == REG_NOMATCH);
+    } else {
+      m1 = (rc1 != REG_NOMATCH);
     }
   }
 /* Match 2nd regex if present */
-  if (dd->targ2.is_compiled) {
-    rc2 = regexec (&(dd->targ2.compiled), str, dd->targ2.num_match, dd->targ2.match, eflags);
+  if (IS_COMPILED (&TARG2 (dd))) {
+    rc2 = regexec (&(COMPILED (&TARG2 (dd))), str, NUM_MATCH (&TARG2 (dd)), MATCH (&TARG2 (dd)), eflags);
     if (rc2 != 0 && rc2 != REG_NOMATCH) {
       char buffer[BUFFER_SIZE];
-      (void) regerror (rc2, &(dd->targ2.compiled), buffer, BUFFER_SIZE);
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s", cmd, buffer) >= 0);
-      if (dd->targ2.match != NULL) {
-        free (dd->targ2.match);
-        dd->targ2.match = NULL;
+      (void) regerror (rc2, &(COMPILED (&TARG2 (dd))), buffer, BUFFER_SIZE);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s", cmd, buffer) >= 0);
+      if (MATCH (&TARG2 (dd)) != NO_REGMATCH) {
+        free (MATCH (&TARG2 (dd)));
+        MATCH (&TARG2 (dd)) = NO_REGMATCH;
       }
       return (A68_FALSE);
     }
+    if (NEGATE (&TARG2 (dd))) {
+      m2 = (rc2 == REG_NOMATCH);
+    } else {
+      m2 = (rc2 != REG_NOMATCH);
+    }
   }
 /* Form a result */
-  if (dd->oper == NULL_CHAR) {
-    return (rc1 != REG_NOMATCH);
-  } else if (dd->oper == '|') {
-    return ((rc1 != REG_NOMATCH) | (rc2 != REG_NOMATCH));
-  } else if (dd->oper == '&') {
-    return ((rc1 != REG_NOMATCH) & (rc2 != REG_NOMATCH));
-  } else if (dd->oper == '^') {
-    return ((rc1 != REG_NOMATCH) ^ (rc2 != REG_NOMATCH));
+  M_MATCH (dd) = NO_EDLIN;
+  M_SO (dd) = M_EO (dd) = -1;
+  if (m1 && !NEGATE (&TARG1 (dd))) {
+    M_MATCH (dd) = z;
+    M_SO (dd) = RM_SO (&(MATCH (&TARG1 (dd))[0]));      
+    M_EO (dd) = RM_EO (&(MATCH (&TARG1 (dd))[0]));      
+  } else if (m2 && !NEGATE (&TARG2 (dd))) {
+    M_MATCH (dd) = z;
+    M_SO (dd) = RM_SO (&(MATCH (&TARG2 (dd))[0]));      
+    M_EO (dd) = RM_EO (&(MATCH (&TARG2 (dd))[0]));      
+  }
+  if (OPER (dd) == NULL_CHAR) {
+    return (m1);
+  } else if (OPER (dd) == '|') {
+    return (m1 | m2);
+  } else if (OPER (dd) == '&') {
+    return (m1 & m2);
+  } else if (OPER (dd) == '^') {
+    return (m1 ^ m2);
   } else {
     return (A68_FALSE);
   }
+}
+
+/*!
+\brief get regular expression from string
+\param re regular expression structure to use
+\param str pointer in string to regular expression, set to end upon return
+\param delim char to store regular expression delimiter
+**/
+
+static void copy_regexp (REGEXP_T *re, char **str, char *delim)
+{
+  char *pat = PATTERN (re), *q = *str;
+  if (q[0] == '~') {
+    NEGATE (re) = A68_TRUE;
+    q++;
+  } else {
+    NEGATE (re) = A68_FALSE;
+  }
+  *delim = q[0];
+  q++;
+  while (q[0] != *delim && q[0] != NULL_CHAR) {
+    if (q[0] == '\\') {
+      int k;
+      BOOL_T found = A68_FALSE;
+      for (k = 0; !found && NAME (&regexp_tab[k]) != NO_TEXT; k ++) {
+        if (q[1] == CODE (&regexp_tab[k])) {
+          char *r = NAME (&regexp_tab[k]);
+          while (*r != NULL_CHAR) {
+            *(pat)++ = *(r)++;
+          }
+          found = A68_TRUE;
+          q += 2;
+        }
+      }
+      if (!found) {
+        *(pat)++ = *q++;
+        *(pat)++ = *q++;
+      }
+    } else {
+      *(pat)++ = *q++;
+    }
+  }
+  pat[0] = NULL_CHAR;
+  *str = q;
+}
+
+/*!
+\brief get regexp and find target with respect to the current line
+\param dd current dataset
+\param cmd command that calls this routine
+\param arg points to arguments
+\param rest will point to text after arguments
+\param compile must compile or has been compiled
+**/
+
+static EDLIN_T * get_regexp (DATASET_T *dd, char *cmd, char *arg, char **rest, BOOL_T compile)
+{
+/*
+Target is of form
+	[+|-]/regexp/ or
+	[+|-]/regexp/&/regexp/ both must match
+	[+|-]/regexp/|/regexp/ one or both must match
+	[+|-]/regexp/^/regexp/ one must match, but not both
+*/
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  char *q, delim;
+  int rc;
+  BOOL_T forward;
+  if (compile == A68_FALSE) {
+    if (IS_COMPILED (&(TARG1 (dd))) == A68_FALSE || SEARCH (dd) == 0) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
+      return (NO_EDLIN);
+    }
+    if (SEARCH (dd) == 1) {
+      forward = A68_TRUE;
+    } else {
+      forward = A68_FALSE;
+    }
+  } else {
+    if (EMPTY_STRING (arg)) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
+      return (NO_EDLIN);
+    }
+/* Initialise */
+    reset_regexp (&(TARG1 (dd)));
+    reset_regexp (&(TARG2 (dd)));
+    OPER (dd) = NULL_CHAR;
+    (*rest) = NO_TEXT;
+    SKIP_WHITE (arg);
+    q = arg;
+    if (q[0] == '+') {
+      forward = A68_TRUE;
+      q++;
+    } else if (q[0] == '-') {
+      forward = A68_FALSE;
+      SEARCH (dd) = -1;
+      q++;
+    } else {
+      forward = A68_TRUE;
+      SEARCH (dd) = 1;
+    }
+/* Get first regexp */
+    copy_regexp (&TARG1 (dd), &q, &delim);
+    if ((int) strlen (PATTERN (&TARG1 (dd))) == 0) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
+      return (NO_EDLIN);
+    }
+    rc = compile_regexp (dd, &(TARG1 (dd)), cmd);
+    if (rc != 0) {
+      return (NO_EDLIN);
+    }
+/* Get operator and 2nd regexp, if present */
+    if (q[0] == delim && (q[1] == '&' || q[1] == '|' || q[1] == '^')) {
+      q++;
+      OPER (dd) = q[0];
+      q++;
+      copy_regexp (&TARG2 (dd), &q, &delim);
+      if ((int) strlen (PATTERN (&TARG2 (dd))) == 0) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
+        return (NO_EDLIN);
+      }
+      rc = compile_regexp (dd, &(TARG2 (dd)), cmd);
+      if (rc != 0) {
+        return (0);
+      }
+    }
+    if (q[0] == delim) {
+      (*rest) = &(q[1]);
+      SKIP_WHITE (*rest);
+    } else {
+      (*rest) = &(q[0]);
+      SKIP_WHITE (*rest);
+    }
+  }
+/* Find the first line matching the regex */
+  if (forward) {
+    EDLIN_T *u = CURR (dd);
+    forward_line (&u);
+    if (NOT_EOF (u)) {
+      EDLIN_T *z = u;
+      for (z = u; NOT_EOF (z); forward_line (&z)) {
+        if (match_regex (dd, z, 0, cmd)) {
+          return (z);
+        }
+      }
+    }
+  } else {
+    EDLIN_T *u = CURR (dd);
+    backward_line (&u);
+    if (NOT_TOF (u)) {
+      EDLIN_T *z = u;
+      for (z = u; NOT_TOF (z); backward_line (&z)) {
+        if (match_regex (dd, z, 0, cmd)) {
+          return (z);
+        }
+      }
+    }
+  }
+  ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: not found", cmd) >= 0)
+  return (NO_EDLIN);
+}
+
+/*!
+\brief get target with respect to the current line
+\param dd current dataset
+\param cmd command that calls this routine
+\param arg points to arguments
+\param rest will point to text after arguments
+**/
+
+EDLIN_T *get_target (DATASET_T *dd, char *cmd, char *args, char **rest, BOOL_T offset)
+{
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  EDLIN_T *z = NO_EDLIN;
+  SKIP_WHITE (args);
+  if (IS_DIGIT (args[0])) {
+/* n	Relative displacement down */
+    int n = int_arg (dd, cmd, args, rest, 1);
+    if (n == WRONG_TARGET) {
+      return (NO_EDLIN);
+    } else {
+      int k;
+      for (z = CURR (dd), k = 0; z != NO_EDLIN && k < n; forward_line (&z), k++) {;}
+      if (z == NO_EDLIN) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target beyond end-of-data", cmd) >= 0);
+      }
+    }
+  } else if (args[0] == '+' && IS_DIGIT (args[1])) {
+/* +n	Relative displacement down */
+    int n = int_arg (dd, cmd, &args[1], rest, 1);
+    if (n == WRONG_TARGET) {
+      return (NO_EDLIN);
+    } else {
+      int k;
+      for (z = CURR (dd), k = 0; z != NO_EDLIN && k < n; forward_line (&z), k++) {;}
+      if (z == NO_EDLIN) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target beyond end-of-data", cmd) >= 0);
+      }
+    }
+  } else if (args[0] == ':') {
+/*:n	Absolute line number */
+    int n = int_arg (dd, cmd, &args[1], rest, 1);
+    if (n == WRONG_TARGET) {
+      return (NO_EDLIN);
+    } else {
+      for (z = TOF (dd); z != NO_EDLIN && NUMBER (z) != n; forward_line (&z)) {;}
+      if (z == NO_EDLIN) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target outside selected lines", cmd) >= 0);
+      }
+    }
+  } else if (args[0] == '-' && IS_DIGIT (args[1])) {
+/* -n	Relative displacement up */
+    int n = int_arg (dd, cmd, &args[1], rest, 1);
+    if (n == WRONG_TARGET) {
+      return (NO_EDLIN);
+    } else {
+      int k;
+      for (z = CURR (dd), k = 0; z != NO_EDLIN && k < n; backward_line (&z), k++) {;}
+      if (z == NO_EDLIN) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target before top-of-data", cmd) >= 0);
+      }
+    }
+  } else if (args[0] == '*' || args[0] == '$') {
+/* *	end-of-data */
+    for (z = TOF (dd); NOT_EOF (z) ; forward_line (&z)) {;}
+    (*rest) = (&args[1]);
+    SKIP_WHITE (*rest);
+  } else if (args[0] == '+' && args[1] == '*') {
+/* *	end-of-data */
+    for (z = TOF (dd); NOT_EOF (z) ; forward_line (&z)) {;}
+    (*rest) = (&args[2]);
+    SKIP_WHITE (*rest);
+  } else if (args[0] == '-' && args[1] == '*') {
+/* *	top-of-data */
+    for (z = CURR (dd); NOT_TOF (z); backward_line (&z)) {;}
+    (*rest) = (&args[2]);
+    SKIP_WHITE (*rest);
+  } else if (args[0] == '.') {
+/* .IDF	Prefix identifier */
+    EDLIN_T *u;
+    char idf[8] = {'.', NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR};
+    int k;
+    for (k = 1; IS_ALNUM (args[k]) && k < MARGIN - 1; k++) {
+      idf[k] = args[k];
+    }
+    (*rest) = (&args[k]);
+    SKIP_WHITE (*rest);
+/* Scan all file to check multiple definitions */
+    for (u = TOF (dd), z = NO_EDLIN; u != NO_EDLIN; forward_line (&u)) {
+      char *v = PRECMD (u);
+      SKIP_WHITE (v);
+      if (strncmp (v, idf, (size_t) (k - 1)) == 0) {
+        if (z != NO_EDLIN) {
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: multiple targets %s", cmd, idf) >= 0);
+          return (NO_EDLIN);
+        } else {
+          z = u;
+        }
+      }
+    }
+    if (z == NO_EDLIN) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no target %s", cmd, idf) >= 0);
+    }
+  } else if (args[0] == '/') {
+    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
+  } else if (args[0] == '~' && args[1] == '/') {
+    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
+  } else if (args[0] == '-' && args[1] == '/') {
+    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
+  } else if (args[0] == '+' && args[1] == '/') {
+    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
+  } else if (args[0] == '-' && args[1] == '~' && args[2] == '/') {
+    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
+  } else if (args[0] == '+' && args[1] == '~' && args[2] == '/') {
+    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
+  } else {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: unrecognised target syntax", cmd) >= 0);
+    return (NO_EDLIN);
+  }
+/* A target can have an offset +-m */
+  if (!offset) {
+    return (z);
+  }
+  args = *rest;
+  if (args != NO_TEXT && args[0] == '+' && IS_DIGIT (args[1])) {
+/* +n	Relative displacement down */
+    int n = int_arg (dd, cmd, &args[1], rest, 1);
+    if (n == WRONG_TARGET) {
+      return (NO_EDLIN);
+    } else {
+      int k;
+      for (k = 0; z != NO_EDLIN && k < n; forward_line (&z), k++) {;}
+      if (z == NO_EDLIN) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target beyond end-of-data", cmd) >= 0);
+      }
+    }
+  } else if (args != NO_TEXT && args[0] == '-' && IS_DIGIT (args[1])) {
+/* -n	Relative displacement up */
+    int n = int_arg (dd, cmd, &args[1], rest, 1);
+    if (n == WRONG_TARGET) {
+      return (NO_EDLIN);
+    } else {
+      int k;
+      for (k = 0; z != NO_EDLIN && k < n; backward_line (&z), k++) {;}
+      if (z == NO_EDLIN) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target before top-of-data", cmd) >= 0);
+      }
+    }
+  }
+  return (z);
 }
 
 /*
@@ -755,10 +1205,9 @@ static int tab_reps (int pos, int tabs)
 
 static BOOL_T reserved_row (DATASET_T *dd, int row)
 {
-  DISPLAY_T *scr = &(dd->display);
-  return (row == scr->cmd_row ||
-          row == scr->scale_row ||
-          row == scr->pf_row);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  return (row == CMD_ROW (scr) || row == SCALE_ROW (scr) ||
+          row == IDF_ROW (scr));
 }
 
 /*
@@ -792,7 +1241,7 @@ static int lines_on_scr (DATASET_T *dd, EDLIN_T * lin)
   while (txt[k] != NULL_CHAR) {
     int reps, n;
     if (txt[k] == '\t') {
-      reps = tab_reps (col - MARGIN, dd->tabs);
+      reps = tab_reps (col - MARGIN, TABS (dd));
     } else {
       reps = 1;
     }
@@ -819,29 +1268,24 @@ static int lines_on_scr (DATASET_T *dd, EDLIN_T * lin)
 
 static void edit_init_curses (DATASET_T *dd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   int res = count_reserved (dd);
   initscr ();
-  XABEND (has_colors () == A68_FALSE, "edit requires colour display", NULL);
-  start_color ();
-  init_pair (TEXT_COLOUR, COLOR_GREEN, COLOR_BLACK);
-  init_pair (HILIGHT_COLOUR, COLOR_WHITE, COLOR_BLACK);
-  init_pair (DARK_COLOUR, COLOR_BLUE, COLOR_BLACK);
-  init_pair (INFO_COLOUR, COLOR_RED, COLOR_BLACK);
-  init_pair (CMD_COLOUR, COLOR_WHITE, COLOR_BLACK);
   raw ();
   keypad (stdscr, TRUE);
   noecho ();
   nonl ();
   meta (stdscr, TRUE);
+#if ! defined HAVE_WIN32
   mousemask (ALL_MOUSE_EVENTS, NULL);
+#endif /* ! defined HAVE_WIN32 */
   curs_set (1);
-  scr->scale_row = res / 2 + (LINES - res) / 2;
-  scr->cmd_row = LINES - 1;
-  scr->pf_row = LINES - 2;
-  curs->row = curs->col = -1;
-  curs->sync = A68_FALSE;
+  SCALE_ROW (scr) = res / 2 + (LINES - res) / 2;
+  CMD_ROW (scr) = LINES - 1;
+  IDF_ROW (scr) = 0;
+  ROW (curs) = COL (curs) = -1;
+  SYNC (curs) = A68_FALSE;
   wclear (stdscr);
   refresh ();
 }
@@ -870,16 +1314,33 @@ int get_buffer (FILE_T fd, char *buffer)
 EDLIN_T *new_line (DATASET_T *dd)
 {
   EDLIN_T *newl = (EDLIN_T *) edit_get_heap (dd, (size_t) sizeof (EDLIN_T));
-  if (newl == NULL) {
-    return (NULL);
+  if (newl == NO_EDLIN) {
+    return (NO_EDLIN);
   }
-  newl->precmd[0] = NULL_CHAR;
+  PRECMD (newl)[0] = NULL_CHAR;
   SELECT (newl) = A68_TRUE;
-  NEXT (newl) = NULL;
-  PREVIOUS (newl) = NULL;
-  TEXT (newl) = NULL;
+  NEXT (newl) = NO_EDLIN;
+  PREVIOUS (newl) = NO_EDLIN;
+  TEXT (newl) = NO_TEXT;
   NUMBER (newl) = 0;
+  MODIFIED (newl) = A68_FALSE;
   return (newl);
+}
+
+/*
+\brief mark line as altered
+\param dd current dataset
+\return new line
+**/
+
+static void alt_line (DATASET_T *dd, EDLIN_T *z)
+{
+  if (!MODIFIED (z)) {
+    MODIFIED (z) = A68_TRUE;
+    ALTS (dd)++;
+  }
+  M_MATCH (dd) = NO_EDLIN;
+  M_SO (dd) = M_EO (dd) = -1;
 }
 
 /*
@@ -889,12 +1350,12 @@ EDLIN_T *new_line (DATASET_T *dd)
 
 static void forward_line (EDLIN_T **z)
 {
-  if (*z == NULL) {
+  if (*z == NO_EDLIN) {
     return;
   }
   do {
     FORWARD (*z);
-  } while (*z != NULL && ! (SELECT (*z) || NUMBER (*z) == 0));
+  } while (*z != NO_EDLIN && ! (SELECT (*z) || NUMBER (*z) == 0));
 }
 
 /*
@@ -904,12 +1365,12 @@ static void forward_line (EDLIN_T **z)
 
 static void backward_line (EDLIN_T **z)
 {
-  if (*z == NULL) {
+  if (*z == NO_EDLIN) {
     return;
   }
   do {
     BACKWARD (*z);
-  } while (*z != NULL && ! (SELECT (*z) || NUMBER (*z) == 0));
+  } while (*z != NO_EDLIN && ! (SELECT (*z) || NUMBER (*z) == 0));
 }
 
 /*
@@ -919,19 +1380,19 @@ static void backward_line (EDLIN_T **z)
 
 static void align_current (DATASET_T *dd)
 {
-  if (IS_TOF (dd->curr)) {
-    EDLIN_T *z = dd->curr;
+  if (IS_TOF (CURR (dd))) {
+    EDLIN_T *z = CURR (dd);
     forward_line (&z);
     if (NOT_EOF (z)) {
-      dd->curr = z;
+      CURR (dd) = z;
     }
-  } else if (IS_EOF (dd->curr)) {
-    if (IS_TOF (PREVIOUS (dd->curr))) {
-      dd->curr = dd->tof;
+  } else if (IS_EOF (CURR (dd))) {
+    if (IS_TOF (PREVIOUS (CURR (dd)))) {
+      CURR (dd) = TOF (dd);
     } else {
-      EDLIN_T *z = dd->curr;
+      EDLIN_T *z = CURR (dd);
       backward_line (&z);
-      (dd)->curr = z;
+      CURR (dd) = z;
     }
   }
 }
@@ -946,28 +1407,28 @@ static void align_current (DATASET_T *dd)
 
 static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
 {
-  if (txt == NULL || strlen(txt) == 0) {
-    l->reserved = 1;
-    TEXT (l) = (char *) edit_get_heap (dd, (size_t) l->reserved);
+  if (txt == NO_TEXT || strlen(txt) == 0) {
+    RESERVED (l) = 1;
+    TEXT (l) = (char *) edit_get_heap (dd, (size_t) RESERVED (l));
     TEXT (l)[0] = NULL_CHAR;
-    bufcpy (l->precmd, BLANK, (strlen (BLANK) + 1));
+    bufcpy (PRECMD (l), BLANK, (strlen (BLANK) + 1));
   } else {
     int res = 1 + (int) strlen (txt);
     if (res % BLOCK_SIZE > 0) {
       res += (BLOCK_SIZE - res % BLOCK_SIZE);
     }
-    if (eat != NULL && eat->reserved >= res) {
-      l->reserved = eat->reserved;
+    if (eat != NO_EDLIN && RESERVED (eat) >= res) {
+      RESERVED (l) = RESERVED (eat);
       TEXT (l) = TEXT (eat);
     } else {
-      l->reserved = res;
+      RESERVED (l) = res;
       TEXT (l) = (char *) edit_get_heap (dd, (size_t) res);
     }
     if (TEXT (l) == NO_TEXT) {
       return;
     }
     bufcpy (TEXT (l), txt, res);
-    bufcpy (l->precmd, BLANK, (strlen (BLANK) + 1));
+    bufcpy (PRECMD (l), BLANK, (strlen (BLANK) + 1));
   }
 }
 
@@ -978,7 +1439,7 @@ static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
 
 static void set_prefix (EDLIN_T *l)
 {
-  bufcpy (l->precmd, BLANK, (strlen (BLANK) + 1));
+  bufcpy (PRECMD (l), BLANK, (strlen (BLANK) + 1));
 }
 
 /*
@@ -990,14 +1451,14 @@ static void edit_reset (DATASET_T *dd)
 {
   int k = 0;
   EDLIN_T *z;
-  for (z = dd->tof; z != NULL; FORWARD (z)) {
+  for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
     if (NUMBER (z) != 0) {
       k++;
       NUMBER (z) = k;
     }
     set_prefix (z);
   }
-  dd->size = k;
+  SIZE (dd) = k;
 }
 
 /*
@@ -1007,11 +1468,11 @@ static void edit_reset (DATASET_T *dd)
 
 static void cdelete (DATASET_T *dd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *lin = curs->line;
-  if (lin != NULL && curs->index < (int) strlen (TEXT (lin))) {
-    TEXT (lin)[curs->index] = NULL_CHAR;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *lin = LINE (curs);
+  if (lin != NO_EDLIN && INDEX (curs) < (int) strlen (TEXT (lin))) {
+    TEXT (lin)[INDEX (curs)] = NULL_CHAR;
   }
 }
 
@@ -1024,31 +1485,31 @@ static void cdelete (DATASET_T *dd)
 static void split_line (DATASET_T *dd, char *cmd)
 {
 /* We reset later so this routine can be repeated cheaply */
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *lin = curs->line, *newl;
-  if (NEXT (lin) == NULL) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot split line", cmd) >= 0);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *lin = LINE (curs), *newl;
+  if (NEXT (lin) == NO_EDLIN) {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot split line", cmd) >= 0);
     return;
   }
 /*  wclear (stdscr); */
-  dd->bl_start = dd->bl_end = NULL;
-  dd->alts++;
-  dd->size++;
+  BL_START (dd) = BL_END (dd) = NO_EDLIN;
+  ALTS (dd)++;
+  SIZE (dd)++;
 /* Insert a new line */
   newl = new_line (dd);
-  if (newl == NULL) {
+  if (newl == NO_EDLIN) {
     return;
   }
-  if ((curs->index < (int) strlen (TEXT (lin))) && IN_TEXT (lin)) {
-    new_edit_string (dd, newl, &(TEXT (lin)[curs->index]), NULL);
-    if (TEXT (newl) == NULL) {
+  if ((INDEX (curs) < (int) strlen (TEXT (lin))) && IS_IN_TEXT (lin)) {
+    new_edit_string (dd, newl, &(TEXT (lin)[INDEX (curs)]), NO_EDLIN);
+    if (TEXT (newl) == NO_TEXT) {
       return;
     }
-    TEXT (lin)[curs->index] = NULL_CHAR;
+    TEXT (lin)[INDEX (curs)] = NULL_CHAR;
   } else {
-    new_edit_string (dd, newl, "", NULL);
-    if (TEXT (newl) == NULL) {
+    new_edit_string (dd, newl, "", NO_EDLIN);
+    if (TEXT (newl) == NO_TEXT) {
       return;
     }
   }
@@ -1058,11 +1519,11 @@ static void split_line (DATASET_T *dd, char *cmd)
   PREVIOUS (NEXT (newl)) = newl;
   NUMBER (newl) = NUMBER (lin) + 1;
 /* Position the cursor at the start of the new line */
-  curs->sync_index = 0;
-  curs->sync_line = newl;
-  curs->sync = A68_TRUE;
-  if (lin == scr->last_line) {
-    forward_line (&dd->curr);
+  SYNC_INDEX (curs) = 0;
+  SYNC_LINE (curs) = newl;
+  SYNC (curs) = A68_TRUE;
+  if (lin == LAST_LINE (scr)) {
+    forward_line (&CURR (dd));
   }
 }
 
@@ -1075,42 +1536,42 @@ static void split_line (DATASET_T *dd, char *cmd)
 static void join_line (DATASET_T *dd, char *cmd)
 {
 /* We reset later so this routine can be repeated cheaply */
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *lin = curs->line, *prv, *u;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *lin = LINE (curs), *prv, *u;
   int len, lcur, lprv;
   if (NUMBER (lin) == 0) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot join line", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot join line", cmd) >= 0);
     return;
   }
 /*  wclear (stdscr); */
-  dd->bl_start = dd->bl_end = NULL;
+  BL_START (dd) = BL_END (dd) = NO_EDLIN;
   prv = PREVIOUS (lin);
-  dd->alts++;
-  dd->size--;
+  ALTS (dd)++;
+  SIZE (dd)--;
 /* Join line with the previous one */
-  if (prv == dd->tof) {
+  if (prv == TOF (dd)) {
 /* Express case */
-    NEXT (dd->tof) = NEXT (lin);
+    NEXT (TOF (dd)) = NEXT (lin);
     PREVIOUS (NEXT (prv)) = prv;
-    curs->sync_index = 0;
-    curs->sync_line = dd->tof;
-    curs->sync = A68_TRUE;
+    SYNC_INDEX (curs) = 0;
+    SYNC_LINE (curs) = TOF (dd);
+    SYNC (curs) = A68_TRUE;
     return;
   }
   lcur = (int) strlen (TEXT (lin));
   lprv = (int) strlen (TEXT (prv));
   len = lcur + lprv;
-  if (prv->reserved <= len + 1) {
+  if (RESERVED (prv) <= len + 1) {
 /* Not enough room */
     int res = len + 1;
     char *txt = TEXT (prv);
     if (res % BLOCK_SIZE > 0) {
       res += (BLOCK_SIZE - res % BLOCK_SIZE);
     }
-    prv->reserved = res;
+    RESERVED (prv) = res;
     TEXT (prv) = (char *) edit_get_heap (dd, (size_t) res);
-    if (TEXT (prv) == NULL) {
+    if (TEXT (prv) == NO_TEXT) {
       return;
     }
     bufcpy (TEXT (prv), txt, res);
@@ -1122,49 +1583,23 @@ static void join_line (DATASET_T *dd, char *cmd)
 /* Position the cursor at the the new line on the screen */
   u = lin;
   backward_line (&u);
-  if (u == NULL) {
-    u = dd->tof;
+  if (u == NO_EDLIN) {
+    u = TOF (dd);
   }
-  if (dd->curr == lin) {
-    dd->curr = u;
+  if (CURR (dd) == lin) {
+    CURR (dd) = u;
   }
-  curs->sync_line = u;
-  if (IN_TEXT (u)) {
+  SYNC_LINE (curs) = u;
+  if (IS_IN_TEXT (u)) {
     if (u == prv) {
-      curs->sync_index = lprv;
+      SYNC_INDEX (curs) = lprv;
     } else {
-      curs->sync_index = (int) strlen (TEXT (u));
+      SYNC_INDEX (curs) = (int) strlen (TEXT (u));
     }
   } else {
-    curs->sync_index = 0;
+    SYNC_INDEX (curs) = 0;
   }
-  curs->sync = A68_TRUE;
-}
-
-/*
-\brief compose permission string
-\param dd current dataset
-\return same
-**/
-
-static char * perm_str (mode_t st_mode)
-{
-  static char perms[16];
-  bufcpy (perms, "----------", 10);
-  if (S_ISDIR (st_mode)) {perms[0] = 'd';};
-#if defined S_ISLNK
-  if (S_ISLNK (st_mode)) {perms[0] = 'l';};
-#endif
-  if (st_mode & S_IRUSR) {perms[1] = 'r';};
-  if (st_mode & S_IWUSR) {perms[2] = 'w';};
-  if (st_mode & S_IXUSR) {perms[3] = 'x';};
-  if (st_mode & S_IRGRP) {perms[4] = 'r';};
-  if (st_mode & S_IWGRP) {perms[5] = 'w';};
-  if (st_mode & S_IXGRP) {perms[6] = 'x';};
-  if (st_mode & S_IROTH) {perms[7] = 'r';};
-  if (st_mode & S_IWOTH) {perms[8] = 'w';};
-  if (st_mode & S_IXOTH) {perms[9] = 'x';};
-  return (perms);
+  SYNC (curs) = A68_TRUE;
 }
 
 /*
@@ -1178,7 +1613,7 @@ static void edit_read_string (DATASET_T *dd, FILE_T fd)
   int bytes, posl;
   char ch;
 /* Set up for reading */
-  (dd->linbuf)[0] = NULL_CHAR;
+  (LINBUF (dd))[0] = NULL_CHAR;
   if (fd == -1) {
     return;
   }
@@ -1191,7 +1626,7 @@ static void edit_read_string (DATASET_T *dd, FILE_T fd)
       return;
     } else {
       add_linbuf (dd, ch, posl);
-      if (dd->linbuf == NULL) {
+      if (LINBUF (dd) == NO_TEXT) {
         return;
       }
       posl++;
@@ -1210,18 +1645,18 @@ static void edit_read_string (DATASET_T *dd, FILE_T fd)
 
 static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   FILE_T fd;
   int bytes, posl;
   char ch;
-  EDLIN_T *curr = dd->curr;
+  EDLIN_T *curr = CURR (dd);
 /* Open the file */
   RESET_ERRNO;
   if ((int) strlen (fname) > 0) {
     fd = open (fname, A68_READ_ACCESS);
   } else {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot open file for reading", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot open file for reading", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -1235,27 +1670,29 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
     }
     if (ch == NEWLINE_CHAR) {
 /* Link line */
-      curs->line = curr;
-      curs->index = (int) strlen (TEXT (curr));
+      LINE (curs) = curr;
+      INDEX (curs) = (int) strlen (TEXT (curr));
       split_line (dd, cmd);
       FORWARD (curr);
-      if (eat != NULL) {
-        new_edit_string (dd, curr, dd->linbuf, eat);
+      if (eat != NO_EDLIN) {
+        new_edit_string (dd, curr, LINBUF (dd), eat);
         FORWARD (eat);
       } else {
-        new_edit_string (dd, curr, dd->linbuf, curr);
+        new_edit_string (dd, curr, LINBUF (dd), curr);
       }
-      if (TEXT (curr) == NULL) {
+      if (TEXT (curr) == NO_TEXT) {
+        ASSERT (close (fd) == 0);
         return;
       }
 /* Reinit line buffer */
       posl = 0;
-      if (dd->linbuf != NULL) {
-        (dd->linbuf)[0] = NULL_CHAR;
+      if (LINBUF (dd) != NO_TEXT) {
+        (LINBUF (dd))[0] = NULL_CHAR;
       }
     } else {
       add_linbuf (dd, ch, posl);
-      if (dd->linbuf == NULL) {
+      if (LINBUF (dd) == NO_TEXT) {
+        ASSERT (close (fd) == 0);
         return;
       }
       posl++;
@@ -1263,8 +1700,9 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
     bytes = io_read (fd, &ch, 1);
   }
   end:
+  ASSERT (close (fd) == 0);
   edit_reset (dd);
-  dd->bl_start = dd->bl_end = NULL;
+  BL_START (dd) = BL_END (dd) = NO_EDLIN;
   align_current (dd);
 }
 
@@ -1276,49 +1714,49 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
 
 static void edit_read_initial (DATASET_T * dd, char *cmd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   FILE_T fd;
   EDLIN_T *curr;
   struct stat statbuf;
 /* Initialisations */
-  scr->cmd[0] = NULL_CHAR;
-  init_regexp (&(dd->targ1));
-  init_regexp (&(dd->targ2));
-  init_regexp (&(dd->find));
-  init_regexp (&(dd->repl));
-  dd->subset = A68_FALSE;
-  dd->alts = 0;
-  curs->index = 0;
+  CMD (scr)[0] = NULL_CHAR;
+  init_regexp (&(TARG1 (dd)));
+  init_regexp (&(TARG2 (dd)));
+  init_regexp (&(FIND (dd)));
+  init_regexp (&(REPL (dd)));
+  SUBSET (dd) = A68_FALSE;
+  ALTS (dd) = 0;
+  INDEX (curs) = 0;
 /* Add TOF */
-  dd->tof = new_line (dd);
-  if (dd->tof == NULL) {
+  TOF (dd) = new_line (dd);
+  if (TOF (dd) == NO_EDLIN) {
     return;
   }
-  new_edit_string (dd, dd->tof, TOPSTR, NULL);
-  if (TEXT (dd->tof) == NULL) {
+  new_edit_string (dd, TOF (dd), TOPSTR, NO_EDLIN);
+  if (TEXT (TOF (dd)) == NO_TEXT) {
     return;
   }
-  NUMBER (dd->tof) = 0;
-  set_prefix (dd->tof);
+  NUMBER (TOF (dd)) = 0;
+  set_prefix (TOF (dd));
 /* Add EOF */
   curr = new_line (dd);
-  if (curr == NULL) {
+  if (curr == NO_EDLIN) {
     return;
   }
-  new_edit_string (dd, curr, BOTSTR, NULL);
-  if (TEXT (curr) == NULL) {
+  new_edit_string (dd, curr, BOTSTR, NO_EDLIN);
+  if (TEXT (curr) == NO_TEXT) {
     return;
   }
   NUMBER (curr) = 0;
   set_prefix (curr);
-  PREVIOUS (curr) = dd->tof;
-  NEXT (dd->tof) = curr;
-  dd->curr = dd->tof;
+  PREVIOUS (curr) = TOF (dd);
+  NEXT (TOF (dd)) = curr;
+  CURR (dd) = TOF (dd);
 /* Open the file */
   RESET_ERRNO;
-  if ((int) strlen (dd->name) > 0) {
-    fd = open (dd->name, A68_READ_ACCESS);
+  if ((int) strlen (NAME (dd)) > 0) {
+    fd = open (NAME (dd), A68_READ_ACCESS);
   } else {
     fd = -1;
   }
@@ -1326,34 +1764,32 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
     char datestr[BUFFER_SIZE];
     time_t rt;
     struct tm *tm;
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: creating new file", cmd) >= 0);
-    dd->size = 0;
-    dd->perms = A68_PROTECTION;
-    dd->new_file = A68_TRUE;
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: creating new file", cmd) >= 0);
+    SIZE (dd) = 0;
+    PERMS (dd) = A68_PROTECTION;
+    NEW_FILE (dd) = A68_TRUE;
     time (&rt);
     ASSERT ((tm = localtime (&rt)) != NULL);
     ASSERT ((strftime (datestr, BUFFER_SIZE, DATE_STRING, tm)) > 0);
-    ASSERT (snprintf (dd->perm, SNPRINTF_SIZE, "%s", perm_str (dd->perms)) >= 0);
-    ASSERT (snprintf (dd->date, SNPRINTF_SIZE, "%s", datestr) >= 0);
+    ASSERT (snprintf (DATE (dd), SNPRINTF_SIZE, "%s", datestr) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
   CHECK_ERRNO (cmd);
 /* Collect file information; we display file date and permissions */
-  dd->new_file = A68_FALSE;
-  if (stat (dd->name, &statbuf) != -1) {
+  NEW_FILE (dd) = A68_FALSE;
+  if (stat (NAME (dd), &statbuf) != -1) {
     struct tm *tm;
     char datestr[BUFFER_SIZE];
-    dd->perms = statbuf.st_mode;
-    ASSERT ((tm = localtime (&statbuf.st_mtime)) != NULL);
+    PERMS (dd) = ST_MODE (&statbuf);
+    ASSERT ((tm = localtime (&ST_MTIME (&statbuf))) != NULL);
     ASSERT ((strftime (datestr, BUFFER_SIZE, DATE_STRING, tm)) > 0);
-    ASSERT (snprintf (dd->perm, SNPRINTF_SIZE, "%s", perm_str (dd->perms)) >= 0);
-    ASSERT (snprintf (dd->date, SNPRINTF_SIZE, "%s", datestr) >= 0);
+    ASSERT (snprintf (DATE (dd), SNPRINTF_SIZE, "%s", datestr) >= 0);
   }
 /* Set up for reading */
-  edit_read (dd, cmd, dd->name, NULL);
-  dd->alts = 0; /* Again, since edit_read inserts lines! */
-  dd->curr = NEXT (dd->tof);
+  edit_read (dd, cmd, NAME (dd), NO_EDLIN);
+  ALTS (dd) = 0; /* Again, since edit_read inserts lines! */
+  CURR (dd) = NEXT (TOF (dd));
 }
 
 /*
@@ -1367,13 +1803,13 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
 
 static void edit_write (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *u, EDLIN_T *v)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   FILE_T fd;
   EDLIN_T *curr;
 /* Backwards range */
   if (NOT_EOF (v) && (NUMBER (v) < NUMBER (u))) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: backward range", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -1382,21 +1818,21 @@ static void edit_write (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *u, EDLI
   fd = open (fname, A68_WRITE_ACCESS, A68_PROTECTION);
   CHECK_ERRNO (cmd);
   if (fd == -1) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot open file for writing", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot open file for writing", cmd) >= 0);
     return;
   }
   for (curr = u; curr != v; FORWARD (curr)) {
-    if (IN_TEXT (curr)) {
+    if (IS_IN_TEXT (curr)) {
       if ((int) strlen (TEXT (curr)) > 0) {
         WRITE (fd, TEXT (curr));
       }
-      if (NEXT (curr) != NULL) {
+      if (NEXT (curr) != NO_EDLIN) {
         WRITE (fd, "\n");
       }
     }
   }
   RESET_ERRNO;
-  close (fd);
+  ASSERT (close (fd) == 0);
   CHECK_ERRNO (cmd);
 }
 
@@ -1408,11 +1844,11 @@ static void edit_write (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *u, EDLI
 
 static void edit_write_undo_file (DATASET_T * dd, char *cmd)
 {
-  if ((dd->undo)[0] == NULL_CHAR) {
+  if ((UNDO (dd))[0] == NULL_CHAR) {
     return;
   }
-  edit_write (dd, cmd, dd->undo, dd->tof, NULL);
-  dd->undo_line = NUMBER (dd->curr);
+  edit_write (dd, cmd, UNDO (dd), TOF (dd), NO_EDLIN);
+  UNDO_LINE (dd) = NUMBER (CURR (dd));
 }
 
 /*
@@ -1425,66 +1861,66 @@ static void edit_read_undo_file (DATASET_T *dd, char *cmd)
 {
   FILE_T fd;
   struct stat statbuf;
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  if ((dd->undo)[0] == NULL_CHAR) {
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  if ((UNDO (dd))[0] == NULL_CHAR) {
     return;
   }
   RESET_ERRNO;
-  fd = open (dd->undo, A68_READ_ACCESS);
+  fd = open (UNDO (dd), A68_READ_ACCESS);
   if (fd == -1 || errno != 0) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot recover", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot recover", cmd) >= 0);
     return;
   } else {
-    EDLIN_T *eat = NULL, *curr;
-    if (dd->tof != NULL) {
-      eat = NEXT (dd->tof);
+    EDLIN_T *eat = NO_EDLIN, *curr;
+    if (TOF (dd) != NO_EDLIN) {
+      eat = NEXT (TOF (dd));
     }
-    close (fd);
-    dd->subset = A68_FALSE;
-    curs->index = 0;
-    dd->tof = new_line (dd);
-    if (dd->tof == NULL) {
+    ASSERT (close (fd) == 0);
+    SUBSET (dd) = A68_FALSE;
+    INDEX (curs) = 0;
+    TOF (dd) = new_line (dd);
+    if (TOF (dd) == NO_EDLIN) {
       return;
     }
-    new_edit_string (dd, dd->tof, TOPSTR, NULL);
-    if (TEXT (dd->tof) == NULL) {
+    new_edit_string (dd, TOF (dd), TOPSTR, NO_EDLIN);
+    if (TEXT (TOF (dd)) == NO_TEXT) {
       return;
     }
-    NUMBER (dd->tof) = 0;
-    set_prefix (dd->tof);
+    NUMBER (TOF (dd)) = 0;
+    set_prefix (TOF (dd));
     curr = new_line (dd);
-    if (curr == NULL) {
+    if (curr == NO_EDLIN) {
       return;
     }
-    new_edit_string (dd, curr, BOTSTR, NULL);
-    if (TEXT (curr) == NULL) {
+    new_edit_string (dd, curr, BOTSTR, NO_EDLIN);
+    if (TEXT (curr) == NO_TEXT) {
       return;
     }
     NUMBER (curr) = 0;
     set_prefix (curr);
-    PREVIOUS (curr) = dd->tof;
-    NEXT (dd->tof) = curr;
-    dd->curr = dd->tof;
-    edit_read (dd, cmd, dd->undo, eat);
-    if (stat (dd->undo, &statbuf) != -1) {
+    PREVIOUS (curr) = TOF (dd);
+    NEXT (TOF (dd)) = curr;
+    CURR (dd) = TOF (dd);
+    edit_read (dd, cmd, UNDO (dd), eat);
+    if (stat (UNDO (dd), &statbuf) != -1) {
       struct tm *tm;
       char datestr[BUFFER_SIZE];
-      dd->perms = statbuf.st_mode;
-      ASSERT ((tm = localtime (&statbuf.st_mtime)) != NULL);
+      PERMS (dd) = ST_MODE (&statbuf);
+      ASSERT ((tm = localtime (&ST_MTIME (&statbuf))) != NULL);
       ASSERT ((strftime (datestr, BUFFER_SIZE, DATE_STRING, tm)) > 0);
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: \"%s\" restored to state at %s", cmd, dd->name, datestr) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s restored to state at %s", cmd, NAME (dd), datestr) >= 0);
     }
-    if (remove (dd->undo) != 0) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s", cmd, ERROR_FILE_SCRATCH) >= 0);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+    if (remove (UNDO (dd)) != 0) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s", cmd, ERROR_FILE_SCRATCH) >= 0);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
     } else {
       char cmd2[BUFFER_SIZE];
-      ASSERT (snprintf (cmd2, SNPRINTF_SIZE, ":%d", dd->undo_line) >= 0);
+      ASSERT (snprintf (cmd2, SNPRINTF_SIZE, ":%d", UNDO_LINE (dd)) >= 0);
       set_current (dd, cmd, cmd2);
       align_current (dd);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
     }
     return;
@@ -1504,10 +1940,10 @@ static void edit_garbage_collect (DATASET_T *dd, char *cmd)
   if (errno != 0) {
     return;
   }
-  fixed_heap_pointer = dd->heap_pointer;
-  dd->tof = NULL;
-  dd->linbuf = NULL;
-  dd->linsiz = 0;
+  fixed_heap_pointer = HEAP_POINTER (dd);
+  TOF (dd) = NO_EDLIN;
+  LINBUF (dd) = NO_TEXT;
+  LINSIZ (dd) = 0;
   edit_read_undo_file (dd, cmd);
   return;
 }
@@ -1522,10 +1958,10 @@ static void edit_garbage_collect (DATASET_T *dd, char *cmd)
 \param dd_index current index in text (of ch)
 **/
 
-static void putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_line, int dd_index)
+static void edit_putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_line, int dd_index)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   BOOL_T forbidden = reserved_row (dd, row);
   BOOL_T text_area = (!forbidden) && col >= MARGIN;
   BOOL_T prefix_area = (!forbidden) && col < MARGIN;
@@ -1538,48 +1974,48 @@ static void putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_line, i
   if (col < 0 || col >= COLS) {
     return;
   }
-  if (row == scr->cmd_row && curs->row == row) {
-    if (curs->col < MARGIN) {
-      curs->in_forbidden = A68_TRUE;
-      curs->in_text = A68_FALSE;
-      curs->in_prefix = A68_FALSE;
-      curs->in_cmd = A68_FALSE;
+  if (row == CMD_ROW (scr) && ROW (curs) == row) {
+    if (COL (curs) < MARGIN) {
+      IN_FORBIDDEN (curs) = A68_TRUE;
+      IN_TEXT (curs) = A68_FALSE;
+      IN_PREFIX (curs) = A68_FALSE;
+      IN_CMD (curs) = A68_FALSE;
     } else {
-      curs->in_cmd = A68_TRUE;
-      curs->in_text = A68_FALSE;
-      curs->in_prefix = A68_FALSE;
-      if (curs->col == col) {
-        curs->index = dd_index;
+      IN_CMD (curs) = A68_TRUE;
+      IN_TEXT (curs) = A68_FALSE;
+      IN_PREFIX (curs) = A68_FALSE;
+      if (COL (curs) == col) {
+        INDEX (curs) = dd_index;
       }
     }
-    curs->line = NULL;
-  } else if (forbidden && curs->row == row) {
-    curs->in_forbidden = A68_TRUE;
-    curs->line = NULL;
-  } else if (text_area && curs->sync && curs->sync_line == dd_line && curs->sync_index == dd_index) {
-    curs->row = row;
-    curs->col = col;
-    curs->sync = A68_FALSE;
-    curs->in_text = A68_TRUE;
-    curs->in_prefix = A68_FALSE;
-    curs->in_cmd = A68_FALSE;
-    curs->index = dd_index;
-    curs->line = dd_line;
-  } else if (text_area && curs->row == row && curs->col == col) {
-    curs->in_text = A68_TRUE;
-    curs->in_prefix = A68_FALSE;
-    curs->in_cmd = A68_FALSE;
-    curs->index = dd_index;
-    if (dd_line != NULL) {
-      curs->line = dd_line;
+    LINE (curs) = NO_EDLIN;
+  } else if (forbidden && ROW (curs) == row) {
+    IN_FORBIDDEN (curs) = A68_TRUE;
+    LINE (curs) = NO_EDLIN;
+  } else if (text_area && SYNC (curs) && SYNC_LINE (curs) == dd_line && SYNC_INDEX (curs) == dd_index) {
+    ROW (curs) = row;
+    COL (curs) = col;
+    SYNC (curs) = A68_FALSE;
+    IN_TEXT (curs) = A68_TRUE;
+    IN_PREFIX (curs) = A68_FALSE;
+    IN_CMD (curs) = A68_FALSE;
+    INDEX (curs) = dd_index;
+    LINE (curs) = dd_line;
+  } else if (text_area && ROW (curs) == row && COL (curs) == col) {
+    IN_TEXT (curs) = A68_TRUE;
+    IN_PREFIX (curs) = A68_FALSE;
+    IN_CMD (curs) = A68_FALSE;
+    INDEX (curs) = dd_index;
+    if (dd_line != NO_EDLIN) {
+      LINE (curs) = dd_line;
     }
-  } else if (prefix_area && curs->row == row && curs->col == col) {
-    curs->in_text = A68_FALSE;
-    curs->in_cmd = A68_FALSE;
-    curs->in_prefix = A68_TRUE;
-    curs->index = dd_index;
-    if (dd_line != NULL) {
-      curs->line = dd_line;
+  } else if (prefix_area && ROW (curs) == row && COL (curs) == col) {
+    IN_TEXT (curs) = A68_FALSE;
+    IN_CMD (curs) = A68_FALSE;
+    IN_PREFIX (curs) = A68_TRUE;
+    INDEX (curs) = dd_index;
+    if (dd_line != NO_EDLIN) {
+      LINE (curs) = dd_line;
     }
   }
   mvaddch (row, col, (chtype) ch);
@@ -1592,21 +2028,20 @@ static void putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_line, i
 
 static void edit_draw (DATASET_T *dd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *run, *tos;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *run, *tos, *lin = NO_EDLIN, *z;
   int row, k, virt_scal, lin_abo, lin_dif;
   char *prompt = PROMPT;
-  EDLIN_T *z;
 /* Initialisations */
-  if (curs->line != NULL) {
-    curs->last = curs->line;
+  if (LINE (curs) != NO_EDLIN) {
+    LAST (curs) = LINE (curs);
   }
-  curs->line = NULL;
-  curs->in_forbidden = curs->in_prefix = curs->in_text = curs->in_cmd = A68_FALSE;
+  LINE (curs) = NO_EDLIN;
+  IN_FORBIDDEN (curs) = IN_PREFIX (curs) = IN_TEXT (curs) = IN_CMD (curs) = A68_FALSE;
 /* We locate the top-of-screen with respect to the current line */
-  if (scr->scale_row > 0 && scr->scale_row < LINES) {
-    virt_scal = scr->scale_row;
+  if (SCALE_ROW (scr) > 0 && SCALE_ROW (scr) < LINES) {
+    virt_scal = SCALE_ROW (scr);
   } else {
     int res = count_reserved (dd);
     virt_scal = res / 2 + (LINES - res) / 2;
@@ -1617,8 +2052,8 @@ static void edit_draw (DATASET_T *dd)
       lin_abo++;
     }
   }
-  for (z = dd->curr; z != NULL && lin_abo < virt_scal; ) {
-    if (z == dd->curr) {
+  for (z = CURR (dd); z != NO_EDLIN && lin_abo < virt_scal; ) {
+    if (z == CURR (dd)) {
       lin_abo ++;
     } else {
       lin_abo += lines_on_scr (dd, z);
@@ -1627,131 +2062,65 @@ static void edit_draw (DATASET_T *dd)
       backward_line (&z);
     }
   }
-  if (z == NULL) {
-    run = dd->tof;
+  if (z == NO_EDLIN) {
+    run = TOF (dd);
   } else {
     run = z;
   }
   tos = run;
   lin_dif = virt_scal - lin_abo;
-/* 
-We now raster the screen  - first reserved rows 
-*/
+/* We now raster the screen  - first reserved rows */
   for (row = 0; row < LINES; ) {
 /* COMMAND ROW - ====> Forward */
-    if (row == scr->cmd_row) {
+    if (row == CMD_ROW (scr)) {
       int col = 0, ind = 0;
-      attron (COLOR_PAIR (CMD_COLOUR));
       for (ind = 0; ind < MARGIN; ind++) {
-        putch (row, col, prompt[ind], dd, NULL, 0);
+        edit_putch (row, col, prompt[ind], dd, NO_EDLIN, 0);
         col++;
       }
 /* Set initial cursor position at start up */
-      if (curs->row == -1) {
-        curs->row = row;
-        curs->col = col;
+      if (ROW (curs) == -1) {
+        ROW (curs) = row;
+        COL (curs) = col;
       }
 /* Show command */
-      attron (COLOR_PAIR (CMD_COLOUR));
-      for (ind = 0; ind < TEXT_WIDTH && IS_PRINT (scr->cmd[ind]); ind++) {
-        putch (row, col, scr->cmd[ind], dd, NULL, ind);
+      for (ind = 0; ind < TEXT_WIDTH && IS_PRINT (CMD (scr)[ind]); ind++) {
+        edit_putch (row, col, CMD (scr)[ind], dd, NO_EDLIN, ind);
         col++;
       }
       for (ind = col; ind < COLS; col++, ind++) {
-        putch (row, col, BLANK_CHAR, dd, NULL, ind - MARGIN);
+        edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind - MARGIN);
       }
-      attron (COLOR_PAIR (TEXT_COLOUR));
       row++;
-    } else if (row == scr->pf_row) {
-/* PF ROW - Program Function key help */
-/* ... but if there is important stuff, it is overridden! */
-      if (strcmp (scr->dl0, "help") == 0) {
-        int col = 0, ind = 0, pfk, space = (COLS - MARGIN - 4 * 8) / 8;
-        char pft[BUFFER_SIZE];
-        attron (COLOR_PAIR (INFO_COLOUR));
-        if (space < 4) {
-          space = 4; /* Tant pis */
-        }
-        for (ind = 0; ind < MARGIN - 1; ind++) {
-          putch (row, col, '-', dd, NULL, 0);
-          col++;
-        }
-        putch (row, col, BLANK_CHAR, dd, NULL, ind);
-        col++;
-        for (pfk = 0; pfk < 8; pfk++) {
-          ASSERT (snprintf (pft, SNPRINTF_SIZE, "F%1d=%-*s ", pfk + 1, space, pf_bind[pfk]) >= 0);
-          for (k = 0; k < (int) strlen (pft); col++, k++) {
-            putch (row, col, pft[k], dd, NULL, k - MARGIN);
-          }
-        }
-        for (ind = col; ind < COLS; col++, ind++) {
-          putch (row, col, BLANK_CHAR, dd, NULL, ind);
-        }
-        attron (COLOR_PAIR (TEXT_COLOUR));
-        row++;
-      } else {
-        int col = 0, ind = 0;
-        if (strlen (scr->dl0) == 0) {
-          ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, 
-            "%06d Lines (%d%%) File %d \"%s %s %s\"", 
-            dd->size, 
-            (int) (100 * (double) fixed_heap_pointer 
-                   / (double) temp_heap_pointer),
-            dd->num,
-            dd->perm, dd->name, dd->date) >= 0);
-          attron (COLOR_PAIR (INFO_COLOUR));
-        } else {
-          attron (COLOR_PAIR (INFO_COLOUR));
-          for (ind = 0; ind < MARGIN - 1; ind++) {
-            putch (row, col, '-', dd, NULL, 0);
-            col++;
-          }
-          putch (row, col, BLANK_CHAR, dd, NULL, ind);
-          col++;
-        }
-        for (ind = 0; ind < COLS && IS_PRINT (scr->dl0[ind]); ind++) {
-          putch (row, col, scr->dl0[ind], dd, NULL, 0);
-          col++;
-        }
-        for (ind = col; ind < COLS; col++, ind++) {
-          putch (row, col, BLANK_CHAR, dd, NULL, ind);
-        }
-        attron (COLOR_PAIR (TEXT_COLOUR));
-        row++;
-      }
     } else {
       row++;
     }
   }
   wrefresh (stdscr);
-/* 
-Draw text lines 
-*/
+/* Draw text lines */
   for (row = 0; row < LINES; ) {
     if (reserved_row (dd, row)) {
       row++; 
     } else {
 /* Raster a text line */
       BOOL_T cont;
-      scr->last_line = run;
-      if (run == NULL) {
+      LAST_LINE (scr) = run;
+      if (run == NO_EDLIN) {
 /* Draw blank line to balance the screen */
         int col;
         for (col = 0; col < COLS; col++) {
-          putch (row, col, BLANK_CHAR, dd, NULL, col);
+          edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, col);
         }
         row++;
       } else if (lin_dif > 0) {
 /* Draw blank line to balance the screen */
         int col;
         for (col = 0; col < COLS; col++) {
-          putch (row, col, BLANK_CHAR, dd, NULL, col);
+          edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, col);
         }
         lin_dif--;
         row++;
-      } else if (run->precmd == NULL) {
-        row++;
-      } else if (TEXT (run) == NULL) {
+      } else if (TEXT (run) == NO_TEXT) {
         row++;
       } else {
         int col = 0, ind = 0, conts = 0;
@@ -1762,6 +2131,9 @@ Draw text lines
         char prefix[MARGIN + 1];
         prefix[MARGIN] = NULL_CHAR;
         prefix[MARGIN - 1] = BLANK_CHAR;
+        if (ROW (curs) == row) {
+          lin = run;
+        }
         if (pn == 0) {
           bufcpy (prefix, PREFIX, (strlen (PREFIX) + 1));
         } else {
@@ -1771,20 +2143,20 @@ Draw text lines
             prefix[pk] = pdigits[pn % 10];
             pn /= 10;
           }
+          for (pk = 0; pk < MARGIN - 2 && prefix[pk] == '0'; pk ++) {
+            prefix[pk] = BLANK_CHAR;
+          }
         }
         for (ind = 0; ind < MARGIN; ind++) {
-          char chc = run->precmd[ind], chp = prefix[ind];
+          char chc = PRECMD (run)[ind], chp = prefix[ind];
           if (chc == BLANK_CHAR) {
-            attron (COLOR_PAIR (DARK_COLOUR));
-            putch (row, col, chp, dd, run, ind);
+            edit_putch (row, col, chp, dd, run, ind);
           } else {
-            attron (COLOR_PAIR (HILIGHT_COLOUR));
-            putch (row, col, chc, dd, run, ind);
+            edit_putch (row, col, chc, dd, run, ind);
           }
           col++;
         }
 /* Draw text */
-        attron (COLOR_PAIR (TEXT_COLOUR));
         ind = 0;
         cont = A68_TRUE;
         while (cont) {
@@ -1792,7 +2164,7 @@ Draw text lines
           char ch;
           if (txt[ind] == '\t') {
             ch = BLANK_CHAR;
-            reps = tab_reps (col - MARGIN, dd->tabs);
+            reps = tab_reps (col - MARGIN, TABS (dd));
           } else {
             cont = (txt[ind] != NULL_CHAR);
             ch = (char) TO_UCHAR (cont ? txt[ind] : (char) BLANK_CHAR);
@@ -1816,6 +2188,9 @@ Draw text lines
                 row = k;
                 goto text_end;
               }
+              if (ROW (curs) == row) {
+                lin = run;
+              }
 /* Write a continuation number in the prefix area */
               conts++;
               connum[MARGIN - 1] = BLANK_CHAR;
@@ -1823,33 +2198,44 @@ Draw text lines
                 connum[k] = digits[num % 10];
                 num = num / 10;
               }
-              attron (COLOR_PAIR (DARK_COLOUR));
+              for (k = 0; k < MARGIN - 2 && connum[k] == '0'; k ++) {
+                connum[k] = ' ';
+              }
               connum[0] = '+';
               col = 0;
               for (k = 0; k < MARGIN; k++) {
-                putch (row, col, connum[k], dd, run, k);
+                edit_putch (row, col, connum[k], dd, run, k);
                 col++;
               }
-              attron (COLOR_PAIR (TEXT_COLOUR));
             }
 /* Put the character */
             if (!IS_PRINT (ch)) {
               char nch = (char) TO_UCHAR ((int) 0x40 + (int) ch);
-              attron (COLOR_PAIR (DARK_COLOUR));
               if (IS_PRINT (nch)) {
-                putch (row, col, nch, dd, run, ind); col++;
+                edit_putch (row, col, nch, dd, run, ind); col++;
               } else {
-                putch (row, col, '*', dd, run, ind); col++;
+                edit_putch (row, col, '*', dd, run, ind); col++;
               }
             } else if (IS_TOF (run) || IS_EOF (run)) {
-              attron (COLOR_PAIR (INFO_COLOUR));
-              putch (row, col, ch, dd, run, ind); col++;
-            } else if (run == dd->curr) {
-              attron (COLOR_PAIR (HILIGHT_COLOUR));
-              putch (row, col, ch, dd, run, ind); col++;
+              edit_putch (row, col, ch, dd, run, ind); col++;
+            } else if (run == CURR (dd)) {
+              if (run == M_MATCH (dd)) {
+                if (ind == M_SO (dd)) {
+                  ROW (curs) = row;
+                  COL (curs) = col;
+                }
+                if (ind > M_SO (dd) && ind < M_EO (dd)) {
+                  attron (A_REVERSE);
+                  edit_putch (row, col, ch, dd, run, ind); col++;
+                  attroff (A_REVERSE);
+                } else {
+                  edit_putch (row, col, ch, dd, run, ind); col++;
+                }
+              } else {
+                edit_putch (row, col, ch, dd, run, ind); col++;
+              }
             } else {
-              attron (COLOR_PAIR (TEXT_COLOUR));
-              putch (row, col, ch, dd, run, ind); col++;
+              edit_putch (row, col, ch, dd, run, ind); col++;
             }
           }
           ind++;
@@ -1857,9 +2243,8 @@ Draw text lines
 /* Fill the line */
         text_end:
         for (k = col; k < COLS; k++, col++, ind++) {
-          putch (row, col, BLANK_CHAR, dd, run, ind);
+          edit_putch (row, col, BLANK_CHAR, dd, run, ind);
         }
-        attron (COLOR_PAIR (TEXT_COLOUR));
         forward_line (&run);
         row++;
       }
@@ -1868,70 +2253,118 @@ Draw text lines
   wrefresh (stdscr);
 /* Write the scale row now all data is complete */
   for (row = 0; row < LINES; ) {
-    if (row == scr->scale_row) {
+    if (row == SCALE_ROW (scr)) {
 /* SCALE ROW - ----+----1----+----2 */
       int col = 0, ind = 0;
-      char pos[BUFFER_SIZE];
-/* Insert - or overwrite mode */
-      attron (COLOR_PAIR (DARK_COLOUR));
-      putch (row, col, '-', dd, NULL, ind);
-      col++;
-      if (!curs->in_prefix && scr->ins_mode) {
-        attron (COLOR_PAIR (INFO_COLOUR));
-        putch (row, col, 'I', dd, NULL, ind);
-        col++;
-      } else {
-        attron (COLOR_PAIR (INFO_COLOUR));
-        putch (row, col, 'O', dd, NULL, ind);
+      for (ind = 0; ind < MARGIN - 1; ind++) {
+        edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, 0);
         col++;
       }
-/* Altered or not */
-      if (dd->alts > 0) {
-        attron (COLOR_PAIR (INFO_COLOUR));
-        putch (row, col, 'A', dd, NULL, ind);
-        col++;
-      } else {
-        attron (COLOR_PAIR (DARK_COLOUR));
-        putch (row, col, '-', dd, NULL, ind);
-        col++;
-      }
-/* Position in line */
-      ASSERT (snprintf (pos, SNPRINTF_SIZE, "%3d", curs->index + 1) >= 0)
-      for (ind = 0; ind < TEXT_WIDTH && IS_PRINT (pos[ind]); ind++) {
-        if (pos[ind] == BLANK_CHAR) {
-          attron (COLOR_PAIR (DARK_COLOUR));
-          putch (row, col, '-', dd, NULL, ind);
-        } else {
-          attron (COLOR_PAIR (INFO_COLOUR));
-          putch (row, col, pos[ind], dd, NULL, ind);
-        }
-        col++;
-      }
-      putch (row, col, BLANK_CHAR, dd, NULL, ind);
+      edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
       col++;
 /* Scale */
       for (ind = 0; ind < TEXT_WIDTH; ind++) {
         k = ind + 1;
         if (k % 10 == 0) {
           char *digits = "0123456789";
-          attron (COLOR_PAIR (INFO_COLOUR));
-          putch (row, col, digits[(k % 100) / 10], dd, NULL, 0);
+          edit_putch (row, col, digits[(k % 100) / 10], dd, NO_EDLIN, 0);
         } else if (k % 5 == 0) {
-          attron (COLOR_PAIR (INFO_COLOUR));
-          putch (row, col, '+', dd, NULL, 0);
-        } else if (k == 1 || k == TEXT_WIDTH) {
-          attron (COLOR_PAIR (DARK_COLOUR));
-          putch (row, col, '-', dd, NULL, 0);
+          edit_putch (row, col, '+', dd, NO_EDLIN, 0);
         } else {
-          attron (COLOR_PAIR (DARK_COLOUR));
-          putch (row, col, '-', dd, NULL, 0);
+          edit_putch (row, col, '-', dd, NO_EDLIN, 0);
         }
         col++;
       }
-      attron (COLOR_PAIR (TEXT_COLOUR));
+      row++;
+    } else if (row == IDF_ROW (scr)) {
+/* IDF ROW - Identification, unless there is important stuff to show */
+      if (strcmp (DL0 (scr), "help") == 0) {
+        int col = 0, ind = 0, pfk, space = (COLS - MARGIN - 4 * 8) / 8;
+        char pft[BUFFER_SIZE];
+        if (space < 4) {
+          space = 4; /* Tant pis */
+        }
+        for (ind = 0; ind < MARGIN - 1; ind++) {
+          edit_putch (row, col, '-', dd, NO_EDLIN, 0);
+          col++;
+        }
+        edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
+        col++;
+        for (pfk = 0; pfk < 8; pfk++) {
+          ASSERT (snprintf (pft, SNPRINTF_SIZE, "f%1d=%-*s ", pfk + 1, space, pf_bind[pfk]) >= 0);
+          for (k = 0; k < (int) strlen (pft); col++, k++) {
+            edit_putch (row, col, pft[k], dd, NO_EDLIN, k - MARGIN);
+          }
+        }
+        for (ind = col; ind < COLS; col++, ind++) {
+          edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
+        }
+        row++;
+      } else {
+        int col = 0, ind = 0;
+        if (strlen (DL0 (scr)) == 0) {
+/* Write file identification line */ 
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "\"%s\" file=%d size=%-6d", 
+            NAME (dd), NUM (dd), SIZE (dd)) >= 0);
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+          if ((IN_TEXT (curs) || IN_PREFIX (curs)) && lin != NO_EDLIN && NUMBER (lin) > 0) {
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " line=%-4d", 
+              NUMBER (lin) % 10000) >= 0);
+          } else {
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "          ") >= 0);
+          }
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+          if (IN_CMD (curs) || lin != NO_EDLIN) {
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " col=%-4d", 
+              (INDEX (curs) + 1) % 10000) >= 0);
+          } else {
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "         ") >= 0);
+          }
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " alt=%-4d", 
+            ALTS (dd) % 10000) >= 0);
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+          if (INS_MODE (scr)) {
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " ins") >= 0);
+          } else {
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " ovr") >= 0);
+          }
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+        } else {
+/* Write message in stead of identification */ 
+          attron (A_REVERSE);
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+          attroff (A_REVERSE);
+        }
+        for (ind = col; ind < COLS; col++, ind++) {
+          edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
+        }
+        row++;
+      }
+    } else {
+      row++;
     }
-    row++;
   }
+  M_MATCH (dd) = NO_EDLIN;
+  M_SO (dd) = M_EO (dd) = -1;
   wrefresh (stdscr);
 }
 
@@ -1950,25 +2383,25 @@ Prefix editing is very basic. You type in overwrite mode.
 DEL erases the character under the cursor.
 BACKSPACE erases the character left of the cursor.
 */
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *lin = curs->line;
-  if (lin == NULL) {
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *lin = LINE (curs);
+  if (lin == NO_EDLIN) {
     return;
   }
-  if (ch <= UCHAR_MAX && IS_PRINT (ch) && curs->index < MARGIN - 1) {
-    lin->precmd[curs->index] = (char) TO_UCHAR (ch);
-    curs->col = (curs->col == MARGIN - 1 ? MARGIN - 1 : curs->col + 1);
-  } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE) && curs->col > 0) {
+  if (ch <= UCHAR_MAX && IS_PRINT (ch) && INDEX (curs) < MARGIN - 1) {
+    PRECMD (lin)[INDEX (curs)] = (char) TO_UCHAR (ch);
+    COL (curs) = (COL (curs) == MARGIN - 1 ? MARGIN - 1 : COL (curs) + 1);
+  } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE) && COL (curs) > 0) {
     int i;
-    curs->index = curs->col = (curs->col == 0 ? 0 : curs->col - 1);
-    for (i = curs->index; i < MARGIN - 1; i++) {
-      lin->precmd[i] = lin->precmd[i + 1];
+    INDEX (curs) = COL (curs) = (COL (curs) == 0 ? 0 : COL (curs) - 1);
+    for (i = INDEX (curs); i < MARGIN - 1; i++) {
+      PRECMD (lin)[i] = PRECMD (lin)[i + 1];
     }
-  } else if (ch == KEY_DC && curs->col < MARGIN - 1) {
+  } else if (ch == KEY_DC && COL (curs) < MARGIN - 1) {
     int i;
-    for (i = curs->index; i < MARGIN - 1; i++) {
-      lin->precmd[i] = lin->precmd[i + 1];
+    for (i = INDEX (curs); i < MARGIN - 1; i++) {
+      PRECMD (lin)[i] = PRECMD (lin)[i + 1];
     }
   }
 }
@@ -1988,38 +2421,38 @@ If the cursor is outside the command string the latter is lengthened.
 DEL erases the character under the cursor.
 BACKSPACE erases the character to the left of the cursor.
 */
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  if (ch <= UCHAR_MAX && IS_PRINT (ch) && (int) strlen (scr->cmd) < (int) TEXT_WIDTH) {
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  if (ch <= UCHAR_MAX && IS_PRINT (ch) && (int) strlen (CMD (scr)) < (int) TEXT_WIDTH) {
     int j, k;
-    while ((int) curs->index > (int) strlen (scr->cmd)) {
-      k = (int) strlen (scr->cmd);
-      scr->cmd[k] = BLANK_CHAR;
-      scr->cmd[k + 1] = NULL_CHAR;
+    while ((int) INDEX (curs) > (int) strlen (CMD (scr))) {
+      k = (int) strlen (CMD (scr));
+      CMD (scr)[k] = BLANK_CHAR;
+      CMD (scr)[k + 1] = NULL_CHAR;
     }
-    if (scr->ins_mode) {
-      k = (int) strlen (scr->cmd);
-      for (j = k + 1; j > curs->index; j--) {
-        scr->cmd[j] = scr->cmd[j - 1];
+    if (INS_MODE (scr)) {
+      k = (int) strlen (CMD (scr));
+      for (j = k + 1; j > INDEX (curs); j--) {
+        CMD (scr)[j] = CMD (scr)[j - 1];
       }
     }
-    scr->cmd[curs->index] = (char) TO_UCHAR (ch);
-    curs->col = (curs->col == COLS - 1 ? 0 : curs->col + 1);
-  } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE) && curs->index > 0) {
+    CMD (scr)[INDEX (curs)] = (char) TO_UCHAR (ch);
+    COL (curs) = (COL (curs) == COLS - 1 ? 0 : COL (curs) + 1);
+  } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE) && INDEX (curs) > 0) {
     int k;
-    if (curs->index == 0) {
+    if (INDEX (curs) == 0) {
       return;
     } else {
-      curs->index--;
-      curs->col--;
+      INDEX (curs)--;
+      COL (curs)--;
     }
-    for (k = curs->index; k < (int) strlen (scr->cmd); k++) {
-      scr->cmd[k] = scr->cmd[k + 1];
+    for (k = INDEX (curs); k < (int) strlen (CMD (scr)); k++) {
+      CMD (scr)[k] = CMD (scr)[k + 1];
     }
-  } else if (ch == KEY_DC && curs->col < COLS - 1) {
+  } else if (ch == KEY_DC && COL (curs) < COLS - 1) {
     int k;
-    for (k = curs->index; k < (int) strlen (scr->cmd); k++) {
-      scr->cmd[k] = scr->cmd[k + 1];
+    for (k = INDEX (curs); k < (int) strlen (CMD (scr)); k++) {
+      CMD (scr)[k] = CMD (scr)[k + 1];
     }
   }
 }
@@ -2039,83 +2472,83 @@ If the cursor is outside the string the latter is lengthened.
 DEL erases the character under the cursor.
 BACKSPACE erases the character to the left of the cursor.
 */
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   int llen = 0;
-  EDLIN_T *lin = curs->line;
-  if (lin == NULL) {
+  EDLIN_T *lin = LINE (curs);
+  if (lin == NO_EDLIN) {
     return;
   }
   if (IS_TOF (lin) || IS_EOF (lin)) {
     return;
   }
-  if (lin == scr->last_line) {
+  if (lin == LAST_LINE (scr)) {
     llen = lines_on_scr (dd, lin);
   }
-  dd->alts++;
+  alt_line (dd, lin);
   if (ch <= UCHAR_MAX && (IS_PRINT (ch) || ch == '\t')) {
     int j, k, len = (int) strlen (TEXT (lin));
-    if (lin->reserved <= len + 2 || lin->reserved <= curs->index + 2) {
+    if (RESERVED (lin) <= len + 2 || RESERVED (lin) <= INDEX (curs) + 2) {
 /* Not enough room */
       char *txt = TEXT (lin);
-      int l1 = (lin->reserved <= len + 2 ? len + 2 : 0);
-      int l2 = (lin->reserved <= curs->index + 2 ? curs->index + 2 : 0);
+      int l1 = (RESERVED (lin) <= len + 2 ? len + 2 : 0);
+      int l2 = (RESERVED (lin) <= INDEX (curs) + 2 ? INDEX (curs) + 2 : 0);
       int res = (l1 > l2 ? l1 : l2) + BLOCK_SIZE;
       if (res % BLOCK_SIZE > 0) {
         res += (BLOCK_SIZE - res % BLOCK_SIZE);
       }
-      lin->reserved = res;
+      RESERVED (lin) = res;
       TEXT (lin) = (char *) edit_get_heap (dd, (size_t) res);
-      if (TEXT (lin) == NULL) {
+      if (TEXT (lin) == NO_TEXT) {
         return;
       }
       bufcpy (TEXT (lin), txt, res);
     }
 /* Pad with spaces to cursor position if needed */
-    while (curs->index > (len = (int) strlen (TEXT (lin)))) {
+    while (INDEX (curs) > (len = (int) strlen (TEXT (lin)))) {
       TEXT (lin)[len] = BLANK_CHAR;
       TEXT (lin)[len + 1] = NULL_CHAR;
     }
-    if (scr->ins_mode) {
+    if (INS_MODE (scr)) {
       k = (int) strlen (TEXT (lin));
-      for (j = k + 1; j > curs->index; j--) {
+      for (j = k + 1; j > INDEX (curs); j--) {
         TEXT (lin)[j] = TEXT (lin)[j - 1];
       }
     }
-    TEXT (lin)[curs->index] = (char) TO_UCHAR (ch);
-    curs->sync_index = curs->index + 1;
-    curs->sync_line = lin;
-    curs->sync = A68_TRUE;
+    TEXT (lin)[INDEX (curs)] = (char) TO_UCHAR (ch);
+    SYNC_INDEX (curs) = INDEX (curs) + 1;
+    SYNC_LINE (curs) = lin;
+    SYNC (curs) = A68_TRUE;
   } else if (ch == KEY_BACKSPACE || ch == BACKSPACE) {
     int k;
     char del;
-    if (curs->index == 0) {
+    if (INDEX (curs) == 0) {
       join_line (dd, "edit");
       edit_reset (dd);
-      dd->bl_start = dd->bl_end = NULL;
+      BL_START (dd) = BL_END (dd) = NO_EDLIN;
       return;
     } else {
-      curs->index--;
-      del = TEXT (lin)[curs->index];
+      INDEX (curs)--;
+      del = TEXT (lin)[INDEX (curs)];
     }
-    for (k = curs->index; k < (int) strlen (TEXT (lin)); k++) {
+    for (k = INDEX (curs); k < (int) strlen (TEXT (lin)); k++) {
       TEXT (lin)[k] = TEXT (lin)[k + 1];
     }
-/* Song and dance to avoid problems with deleting tabs that span end-of-screen */
-    curs->sync_index = curs->index;
-    curs->sync_line = lin;
-    curs->sync = A68_TRUE;
-  } else if (ch == KEY_DC && curs->col < COLS) {
+/* Song and dance to avoid problems deleting tabs spanning end-of-screen */
+    SYNC_INDEX (curs) = INDEX (curs);
+    SYNC_LINE (curs) = lin;
+    SYNC (curs) = A68_TRUE;
+  } else if (ch == KEY_DC && COL (curs) < COLS) {
     int k;
-    for (k = curs->index; k < (int) strlen (TEXT (lin)); k++) {
+    for (k = INDEX (curs); k < (int) strlen (TEXT (lin)); k++) {
       TEXT (lin)[k] = TEXT (lin)[k + 1];
     }
-    curs->sync_index = curs->index;
-    curs->sync_line = lin;
-    curs->sync = A68_TRUE;
+    SYNC_INDEX (curs) = INDEX (curs);
+    SYNC_LINE (curs) = lin;
+    SYNC (curs) = A68_TRUE;
   }
-  if (lin == scr->last_line && lines_on_scr (dd, lin) > llen) {
-    forward_line (&dd->curr);
+  if (lin == LAST_LINE (scr) && lines_on_scr (dd, lin) > llen) {
+    forward_line (&CURR (dd));
   }
 }
 
@@ -2129,20 +2562,20 @@ BACKSPACE erases the character to the left of the cursor.
 
 BOOL_T match_cmd (char *x, char *c, char **args)
 {
-#define TERM(c) (c == NULL_CHAR || IS_DIGIT (c) || IS_SPACE (c) || IS_PUNCT (c))
+#define TRM(c) (c == NULL_CHAR || IS_DIGIT (c) || IS_SPACE (c) || IS_PUNCT (c))
   BOOL_T match = A68_TRUE; /* Until proven otherwise */
-  if (x == NULL || c == NULL) {
+  if (x == NO_TEXT || c == NO_TEXT) {
     return (A68_FALSE);
   }
 /* Single-symbol commands as '?' or '='. */
   if (IS_PUNCT (c[0])) {
     match = (BOOL_T) (x[0] == c[0]);
-    if (args != NULL) {
+    if (args != NO_VAR) {
       if (match && x[1] != NULL_CHAR) {
         (*args) = &x[1];
         SKIP_WHITE (*args);
       } else {
-        (*args) = NULL;
+        (*args) = NO_TEXT;
       }
     }
     return ((BOOL_T) match);
@@ -2150,25 +2583,25 @@ BOOL_T match_cmd (char *x, char *c, char **args)
 /* First the required letters */
   while (IS_UPPER (c[0]) && match) {
     match = (BOOL_T) (match & (TO_LOWER (x[0]) == TO_LOWER ((c++)[0])));
-    if (! TERM (x[0])) {
+    if (! TRM (x[0])) {
       x++;
     }
   }
 /* Then the facultative part */
-  while (! TERM (x[0]) && c[0] != NULL_CHAR && match) {
+  while (! TRM (x[0]) && c[0] != NULL_CHAR && match) {
     match = (BOOL_T) (match & (TO_LOWER ((x++)[0]) == TO_LOWER ((c++)[0])));
   }
 /* Determine the args (arguments, counts) */
-  if (args != NULL) {
+  if (args != NO_VAR) {
     if (match && x[0] != NULL_CHAR) {
       (*args) = &x[0];
       SKIP_WHITE (*args);
     } else {
-      (*args) = NULL;
+      (*args) = NO_TEXT;
     }
   }
   return ((BOOL_T) match);
-#undef TERM
+#undef TRM
 }
 
 /*!
@@ -2180,7 +2613,7 @@ BOOL_T match_cmd (char *x, char *c, char **args)
 
 static int int_arg (DATASET_T *dd, char *cmd, char *arg, char **rest, int def)
 {
-  DISPLAY_T *scr = &(dd->display);
+  DISPLAY_T *scr = &(DISPLAY (dd));
   char *suffix;
   int k;
 /* Fetch argument */
@@ -2197,7 +2630,7 @@ static int int_arg (DATASET_T *dd, char *cmd, char *arg, char **rest, int def)
     RESET_ERRNO;
     k = strtol (arg, &suffix, 0);      /* Accept also octal and hex */
     if (errno != 0 || suffix == arg) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: invalid integral argument", cmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: invalid integral argument", cmd) >= 0);
       return (WRONG_TARGET);
     } else {
       (*rest) = suffix;
@@ -2218,28 +2651,28 @@ static int int_arg (DATASET_T *dd, char *cmd, char *arg, char **rest, int def)
 static BOOL_T get_subst (DATASET_T *dd, char *cmd, char *arg, char **rest)
 {
 /* Get the find and replacement string in a substitute command */
-  DISPLAY_T *scr = &(dd->display);
+  DISPLAY_T *scr = &(DISPLAY (dd));
   char delim, *q, *pat1, *pat2;
   int rc;
   if (EMPTY_STRING (arg)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
     return (A68_FALSE);
   }
 /* Initialise */
-  reset_regexp (&(dd->find));
-  reset_regexp (&(dd->repl));
-  (*rest) = NULL;
+  reset_regexp (&(FIND (dd)));
+  reset_regexp (&(REPL (dd)));
+  (*rest) = NO_TEXT;
   SKIP_WHITE (arg);
   q = arg;
   delim = *(q++);
 /* Get find regexp */
-  pat1 = dd->find.pattern;
+  pat1 = PATTERN (&FIND (dd));
   pat1[0] = NULL_CHAR;
   while (q[0] != delim && q[0] != NULL_CHAR) {
     if (q[0] == '\\') {
       *(pat1)++ = *q++;
       if (q[0] == NULL_CHAR) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: invalid regular expression", cmd) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: invalid regular expression", cmd) >= 0);
         *(pat1) = NULL_CHAR;
         return (A68_FALSE);
       }
@@ -2249,27 +2682,27 @@ static BOOL_T get_subst (DATASET_T *dd, char *cmd, char *arg, char **rest)
     }
   }
   *(pat1) = NULL_CHAR;
-  if ((int) strlen (dd->find.pattern) == 0) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
+  if ((int) strlen (PATTERN (&FIND (dd))) == 0) {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
     return (A68_FALSE);
   }
-  rc = compile_regexp (dd, &(dd->find), cmd);
+  rc = compile_regexp (dd, &(FIND (dd)), cmd);
   if (rc != 0) {
     return (A68_FALSE);
   }
 /* Get replacement string */
   if (q[0] != delim) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: unrecognised regular expression syntax", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: unrecognised regular expression syntax", cmd) >= 0);
     return (A68_FALSE);
   }
   q = &q[1];
-  pat2 = dd->repl.pattern;
+  pat2 = PATTERN (&REPL (dd));
   pat2[0] = NULL_CHAR;
   while (q[0] != delim && q[0] != NULL_CHAR) {
     if (q[0] == '\\') {
       *(pat2)++ = *q++;
       if (q[0] == NULL_CHAR) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: invalid regular expression", cmd) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: invalid regular expression", cmd) >= 0);
         *(pat2) = NULL_CHAR;
         return (A68_FALSE);
       }
@@ -2288,50 +2721,91 @@ static BOOL_T get_subst (DATASET_T *dd, char *cmd, char *arg, char **rest)
 }
 
 /*!
-\brief substitute target
+\brief substitute target in one line
 \param dd current dataset
 \param z line to substitute
 \param rep number of substitutions ...
 \param start ... starting at this occurence
+\param confirm confirm each change
 \param cmd command that calls this routine
 **/
 
-static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, char *cmd)
+static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, BOOL_T *confirm, char *cmd)
 {
-  DISPLAY_T *scr = &(dd->display);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   int k, subs = 0, newt = 0, matcnt = 0;
 /* Initialisation */
   for (k = 0; k < rep; k ++)
   {
     int i, lenn, lens, lent, nnwt, pos = 0;
     char *txt = &(TEXT (z)[newt]);
-    int rc = regexec (&(dd->find.compiled), txt, dd->find.num_match, dd->find.match, (k == 0 ? 0 : REG_NOTBOL));
+    int rc = regexec (&(COMPILED (&FIND (dd))), txt, NUM_MATCH (&FIND (dd)), MATCH (&FIND (dd)), (k == 0 ? 0 : REG_NOTBOL));
     if (rc == REG_NOMATCH) {
       goto subst_end;
     }
     matcnt++;
     if (matcnt < start) {
-      newt += dd->find.match[0].rm_eo;
+      newt += RM_EO (&(MATCH (&FIND (dd))[0]));
       continue;
     }
+    if (*confirm) {
+      char ch;
+      BOOL_T loop;
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: [A]ll, [S]ubstitute, [N]ext or [Q]uit?", cmd) >= 0);
+      CURR (dd) = z;
+      edit_reset (dd);
+      align_current (dd);
+      M_MATCH (dd) = z;
+      M_SO (dd) = newt + RM_SO (&(MATCH (&FIND (dd))[0]));      
+      M_EO (dd) = newt + RM_EO (&(MATCH (&FIND (dd))[0]));      
+      CURSOR_TO_COMMAND (dd, curs);
+      edit_draw (dd);
+      wmove (stdscr, ROW (curs), COL (curs));
+      wrefresh (stdscr);
+      M_MATCH (dd) = NO_EDLIN;
+      M_SO (dd) = -1;
+      M_EO (dd) = -1;
+      loop = A68_TRUE;
+      while (loop) {
+        ch = TO_LOWER (wgetch (stdscr));
+        switch (ch) {
+          case 'a': {loop = A68_FALSE; *confirm = A68_FALSE; break;}
+          case 's': {loop = A68_FALSE; break;}
+          case 'q': {
+            bufcpy (DL0 (scr), "", BUFFER_SIZE);
+            bufcpy (CMD (scr), "", BUFFER_SIZE);
+            return (SUBST_ERROR);
+          }
+          case 'n': {
+            newt += RM_EO (&(MATCH (&FIND (dd))[0]));
+            goto do_nothing;
+          }
+        }
+      }      
+    }
 /* Part before match */
-    (dd->linbuf)[0] = NULL_CHAR;
+    (LINBUF (dd))[0] = NULL_CHAR;
     lent = (int) strlen (TEXT (z));
-    for (i = 0; i < newt + dd->find.match[0].rm_so; i ++) {
+    for (i = 0; i < newt + RM_SO (&(MATCH (&FIND (dd))[0])); i ++) {
       add_linbuf (dd, TEXT (z)[i], pos);
-      if (dd->linbuf == NULL) {
+      if (LINBUF (dd) == NO_TEXT) {
         return (SUBST_ERROR);
       }
       pos++;
     }
 /* Insert substitution string */
-    lens = (int) strlen (dd->repl.pattern);
+    lens = (int) strlen (PATTERN (&REPL (dd)));
     i = 0;
-    while (i < lens && dd->repl.pattern[i] != NULL_CHAR) {
-      if (dd->repl.pattern[i] == '\\' && IS_DIGIT (dd->repl.pattern[i + 1])) {
-        int n = 0, j;
-        switch (dd->repl.pattern[i + 1]) {
-          case '0': {n = 0; break;}
+    while (i < lens && PATTERN (&REPL (dd))[i] != NULL_CHAR) {
+      if (PATTERN (&REPL (dd))[i] == '\\' && (
+            IS_DIGIT (PATTERN (&REPL (dd))[i + 1]) ||
+            IS_UPPER (PATTERN (&REPL (dd))[i + 1]) ||
+            IS_LOWER (PATTERN (&REPL (dd))[i + 1])
+          )
+        ) {
+        int n = 0, strop = 0, j;
+        switch (PATTERN (&REPL (dd))[i + 1]) {
           case '1': {n = 1; break;}
           case '2': {n = 2; break;}
           case '3': {n = 3; break;}
@@ -2341,22 +2815,56 @@ static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, char *cmd)
           case '7': {n = 7; break;}
           case '8': {n = 8; break;}
           case '9': {n = 9; break;}
+          case 'A': {n = 1; strop = 1; break;}
+          case 'B': {n = 2; strop = 1; break;}
+          case 'C': {n = 3; strop = 1; break;}
+          case 'D': {n = 4; strop = 1; break;}
+          case 'E': {n = 5; strop = 1; break;}
+          case 'F': {n = 6; strop = 1; break;}
+          case 'G': {n = 7; strop = 1; break;}
+          case 'H': {n = 8; strop = 1; break;}
+          case 'I': {n = 9; strop = 1; break;}
+          case 'a': {n = 1; strop = -1; break;}
+          case 'b': {n = 2; strop = -1; break;}
+          case 'c': {n = 3; strop = -1; break;}
+          case 'd': {n = 4; strop = -1; break;}
+          case 'e': {n = 5; strop = -1; break;}
+          case 'f': {n = 6; strop = -1; break;}
+          case 'g': {n = 7; strop = -1; break;}
+          case 'h': {n = 8; strop = -1; break;}
+          case 'i': {n = 9; strop = -1; break;}
+          default: {
+            if (n >= (int) NUM_MATCH (&FIND (dd))) {
+              ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: invalid group \\%d", cmd, PATTERN (&REPL (dd))[i + 1]) >= 0);
+              return (SUBST_ERROR);
+            }
+          }
         }
-        if (n >= (int) dd->find.num_match) {
-          ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no group \\%d in regular expression", cmd, n) >= 0);
+        if (n >= (int) NUM_MATCH (&FIND (dd))) {
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no group \\%d in regular expression", cmd, n) >= 0);
           return (SUBST_ERROR);
         }
-        for (j = dd->find.match[n].rm_so; j < dd->find.match[n].rm_eo; j ++) {
-          add_linbuf (dd, TEXT (z)[newt + j], pos);
-          if (dd->linbuf == NULL) {
+        if (RM_SO (&(MATCH (&FIND (dd))[n])) == -1 && RM_EO (&(MATCH (&FIND (dd))[n])) == -1) {
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: group \\%d in regular expression not set", cmd, n) >= 0);
+          return (SUBST_ERROR);
+        }
+        for (j = RM_SO (&(MATCH (&FIND (dd))[n])); j < RM_EO (&(MATCH (&FIND (dd))[n])); j ++) {
+          if (strop == -1) {
+            add_linbuf (dd, TO_LOWER (TEXT (z)[newt + j]), pos);
+          } else if (strop == 1) {
+            add_linbuf (dd, TO_UPPER (TEXT (z)[newt + j]), pos);
+          } else {
+            add_linbuf (dd, TEXT (z)[newt + j], pos);
+          }
+          if (LINBUF (dd) == NO_TEXT) {
             return (SUBST_ERROR);
           }
           pos++;
         }
         i++; /* Skip digit in \n */
       } else {
-        add_linbuf (dd, dd->repl.pattern[i], pos);
-        if (dd->linbuf == NULL) {
+        add_linbuf (dd, PATTERN (&REPL (dd))[i], pos);
+        if (LINBUF (dd) == NO_TEXT) {
           return (SUBST_ERROR);
         }
         pos++;
@@ -2365,324 +2873,43 @@ static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, char *cmd)
     }
     nnwt = pos;
 /* Part after match */
-    for (i = newt + dd->find.match[0].rm_eo; i < lent; i ++) {
+    for (i = newt + RM_EO (&(MATCH (&FIND (dd))[0])); i < lent; i ++) {
       add_linbuf (dd, TEXT (z)[i], pos);
-      if (dd->linbuf == NULL) {
+      if (LINBUF (dd) == NO_TEXT) {
         return (SUBST_ERROR);
       }
       pos++;
     }
     add_linbuf (dd, NULL_CHAR, pos);
-    if (dd->linbuf == NULL) {
+    if (LINBUF (dd) == NO_TEXT) {
       return (SUBST_ERROR);
     }
 /* Copy the new line */
     newt = nnwt;
     subs++;
-    lenn = (int) strlen (dd->linbuf);
-    if (z->reserved >= lenn + 1) {
-      bufcpy (TEXT (z), dd->linbuf, z->reserved);
+    lenn = (int) strlen (LINBUF (dd));
+    if (RESERVED (z) >= lenn + 1) {
+      bufcpy (TEXT (z), LINBUF (dd), RESERVED (z));
     } else {
       int res = lenn + 1;
       if (res % BLOCK_SIZE > 0) {
         res += (BLOCK_SIZE - res % BLOCK_SIZE);
       }
-      z->reserved = res;
+      RESERVED (z) = res;
       TEXT (z) = (char *) edit_get_heap (dd, (size_t) res);
       if (TEXT (z) == NO_TEXT) {
         return (SUBST_ERROR);
       }
-      bufcpy (TEXT (z), dd->linbuf, res);
+      bufcpy (TEXT (z), LINBUF (dd), res);
     }
+    ALTS (dd)++;
     if (TEXT (z)[newt] == NULL_CHAR) {
       goto subst_end;
     }
+    do_nothing: /* skip */;
   }
   subst_end:
   return (subs);
-}
-
-/*!
-\brief get target with respect to the current line
-\param dd current dataset
-\param cmd command that calls this routine
-\param arg points to arguments
-\param rest will point to text after arguments
-\param compile must compile or has been compiled
-**/
-
-static EDLIN_T * get_regexp (DATASET_T *dd, char *cmd, char *arg, char **rest, BOOL_T compile)
-{
-/*
-Target is of form
-	[+|-]/regexp/ or
-	[+|-]/regexp/&/regexp/ both must match
-	[+|-]/regexp/|/regexp/ one or both must match
-	[+|-]/regexp/^/regexp/ one must match, but not both
-*/
-  DISPLAY_T *scr = &(dd->display);
-  char delim, *q, *pat1, *pat2;
-  int rc;
-  BOOL_T forward;
-  if (compile == A68_FALSE) {
-    if ((dd->targ1).is_compiled == A68_FALSE || dd->search == 0) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
-      return (NULL);
-    }
-    if (dd->search == 1) {
-      forward = A68_TRUE;
-    } else {
-      forward = A68_FALSE;
-    }
-  } else {
-    if (EMPTY_STRING (arg)) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
-      return (NULL);
-    }
-/* Initialise */
-    reset_regexp (&(dd->targ1));
-    reset_regexp (&(dd->targ2));
-    dd->oper = NULL_CHAR;
-    (*rest) = NULL;
-    SKIP_WHITE (arg);
-    q = arg;
-    if (q[0] == '+') {
-      forward = A68_TRUE;
-      q++;
-    } else if (q[0] == '-') {
-      forward = A68_FALSE;
-      dd->search = -1;
-      q++;
-    } else {
-      forward = A68_TRUE;
-      dd->search = 1;
-    }
-    delim = *(q++);
-/* Get first regexp */
-    pat1 = dd->targ1.pattern;
-    pat1[0] = NULL_CHAR;
-    while (q[0] != delim && q[0] != NULL_CHAR) {
-      if (q[0] == '\\') {
-        *(pat1)++ = *q++;
-        *(pat1)++ = *q++;
-      } else {
-        *(pat1)++ = *q++;
-      }
-    }
-    *(pat1) = NULL_CHAR;
-    if ((int) strlen (dd->targ1.pattern) == 0) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
-      return (NULL);
-    }
-    rc = compile_regexp (dd, &(dd->targ1), cmd);
-    if (rc != 0) {
-      return (NULL);
-    }
-/* Get operator and 2nd regexp, if present */
-    if (q[0] == delim && (q[1] == '&' || q[1] == '|' || q[1] == '^')) {
-      dd->oper = q[1];
-      if (q[2] != delim) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: unrecognised regular expression syntax", cmd) >= 0);
-      }
-      q = &q[3];
-      pat2 = dd->targ2.pattern;
-      pat2[0] = NULL_CHAR;
-      while (q[0] != delim && q[0] != NULL_CHAR) {
-        if (q[0] == '\\') {
-          *(pat2)++ = *q++;
-          *(pat2)++ = *q++;
-        } else {
-          *(pat2)++ = *q++;
-        }
-      }
-      *(pat2) = NULL_CHAR;
-      if ((int) strlen (dd->targ2.pattern) == 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no regular expression", cmd) >= 0);
-        return (NULL);
-      }
-      rc = compile_regexp (dd, &(dd->targ2), cmd);
-      if (rc != 0) {
-        return (0);
-      }
-    }
-    if (q[0] == delim) {
-      (*rest) = &(q[1]);
-      SKIP_WHITE (*rest);
-    } else {
-      (*rest) = &(q[0]);
-      SKIP_WHITE (*rest);
-    }
-  }
-/* Find the first line matching the regex */
-  if (forward) {
-    EDLIN_T *u = dd->curr;
-    forward_line (&u);
-    if (NOT_EOF (u)) {
-      EDLIN_T *z = u;
-      for (z = u; NOT_EOF (z); forward_line (&z)) {
-        if (match_regex (dd, z, 0, cmd)) {
-          return (z);
-        }
-      }
-    }
-  } else {
-    EDLIN_T *u = dd->curr;
-    backward_line (&u);
-    if (NOT_TOF (u)) {
-      EDLIN_T *z = u;
-      for (z = u; NOT_TOF (z); backward_line (&z)) {
-        if (match_regex (dd, z, 0, cmd)) {
-          return (z);
-        }
-      }
-    }
-  }
-  ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target not found", cmd) >= 0);
-  return (NULL);
-}
-
-/*!
-\brief get target with respect to the current line
-\param dd current dataset
-\param cmd command that calls this routine
-\param arg points to arguments
-\param rest will point to text after arguments
-**/
-
-EDLIN_T *get_target (DATASET_T *dd, char *cmd, char *args, char **rest, BOOL_T offset)
-{
-  DISPLAY_T *scr = &(dd->display);
-  EDLIN_T *z = NULL;
-  SKIP_WHITE (args);
-  if (IS_DIGIT (args[0])) {
-/* n	Relative displacement down */
-    int n = int_arg (dd, cmd, args, rest, 1);
-    if (n == WRONG_TARGET) {
-      return (NULL);
-    } else {
-      int k;
-      for (z = dd->curr, k = 0; z != NULL && k < n; forward_line (&z), k++) {;}
-      if (z == NULL) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target beyond end-of-data", cmd) >= 0);
-      }
-    }
-  } else if (args[0] == '+' && IS_DIGIT (args[1])) {
-/* +n	Relative displacement down */
-    int n = int_arg (dd, cmd, &args[1], rest, 1);
-    if (n == WRONG_TARGET) {
-      return (NULL);
-    } else {
-      int k;
-      for (z = dd->curr, k = 0; z != NULL && k < n; forward_line (&z), k++) {;}
-      if (z == NULL) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target beyond end-of-data", cmd) >= 0);
-      }
-    }
-  } else if (args[0] == ':') {
-/*:n	Absolute line number */
-    int n = int_arg (dd, cmd, &args[1], rest, 1);
-    if (n == WRONG_TARGET) {
-      return (NULL);
-    } else {
-      for (z = dd->tof; z != NULL && NUMBER (z) != n; forward_line (&z)) {;}
-      if (z == NULL) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target outside selected lines", cmd) >= 0);
-      }
-    }
-  } else if (args[0] == '-' && IS_DIGIT (args[1])) {
-/* -n	Relative displacement up */
-    int n = int_arg (dd, cmd, &args[1], rest, 1);
-    if (n == WRONG_TARGET) {
-      return (NULL);
-    } else {
-      int k;
-      for (z = dd->curr, k = 0; z != NULL && k < n; backward_line (&z), k++) {;}
-      if (z == NULL) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target before top-of-data", cmd) >= 0);
-      }
-    }
-  } else if (args[0] == '*' || args[0] == '$') {
-/* *	end-of-data */
-    for (z = dd->tof; NOT_EOF (z) ; forward_line (&z)) {;}
-    (*rest) = (&args[1]);
-    SKIP_WHITE (*rest);
-  } else if (args[0] == '+' && args[1] == '*') {
-/* *	end-of-data */
-    for (z = dd->tof; NOT_EOF (z) ; forward_line (&z)) {;}
-    (*rest) = (&args[2]);
-    SKIP_WHITE (*rest);
-  } else if (args[0] == '-' && args[1] == '*') {
-/* *	top-of-data */
-    for (z = dd->curr; NOT_TOF (z); backward_line (&z)) {;}
-    (*rest) = (&args[2]);
-    SKIP_WHITE (*rest);
-  } else if (args[0] == '.') {
-/* .IDF	Prefix identifier */
-    EDLIN_T *u;
-    char idf[8] = {'.', NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR, NULL_CHAR};
-    int k;
-    for (k = 1; IS_ALNUM (args[k]) && k < MARGIN - 1; k++) {
-      idf[k] = args[k];
-    }
-    (*rest) = (&args[k]);
-    SKIP_WHITE (*rest);
-/* Scan all file to check multiple definitions */
-    for (u = dd->tof, z = NULL; u != NULL; forward_line (&u)) {
-      char *v = u->precmd;
-      SKIP_WHITE (v);
-      if (strncmp (v, idf, (size_t) (k - 1)) == 0) {
-        if (z != NULL) {
-          ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: multiple targets %s", cmd, idf) >= 0);
-          return (NULL);
-        } else {
-          z = u;
-        }
-      }
-    }
-    if (z == NULL) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no target %s", cmd, idf) >= 0);
-    }
-  } else if (args[0] == '/') {
-    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
-  } else if (args[0] == '-' && args[1] == '/') {
-    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
-  } else if (args[0] == '+' && args[1] == '/') {
-    z = get_regexp (dd, cmd, args, rest, A68_TRUE);
-  } else {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: unrecognised target syntax", cmd) >= 0);
-    return (NULL);
-  }
-/* A target can have an offset +-m */
-  if (!offset) {
-    return (z);
-  }
-  args = *rest;
-  if (args != NULL && args[0] == '+' && IS_DIGIT (args[1])) {
-/* +n	Relative displacement down */
-    int n = int_arg (dd, cmd, &args[1], rest, 1);
-    if (n == WRONG_TARGET) {
-      return (NULL);
-    } else {
-      int k;
-      for (k = 0; z != NULL && k < n; forward_line (&z), k++) {;}
-      if (z == NULL) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target beyond end-of-data", cmd) >= 0);
-      }
-    }
-  } else if (args != NULL && args[0] == '-' && IS_DIGIT (args[1])) {
-/* -n	Relative displacement up */
-    int n = int_arg (dd, cmd, &args[1], rest, 1);
-    if (n == WRONG_TARGET) {
-      return (NULL);
-    } else {
-      int k;
-      for (k = 0; z != NULL && k < n; backward_line (&z), k++) {;}
-      if (z == NULL) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target before top-of-data", cmd) >= 0);
-      }
-    }
-  }
-  return (z);
 }
 
 /*
@@ -2695,24 +2922,24 @@ EDLIN_T *get_target (DATASET_T *dd, char *cmd, char *args, char **rest, BOOL_T o
 
 static void edit_filter (DATASET_T *dd, char *cmd, char *argv, EDLIN_T *u)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   char shell[BUFFER_SIZE];
   EDLIN_T *z;
 /* Write selected lines ... */
-  edit_write (dd, cmd, ".a68g.edit.out", dd->curr, u);
+  edit_write (dd, cmd, ".a68g.edit.out", CURR (dd), u);
 /* Delete the original lines */
-  for (z = dd->curr; z != u && IN_TEXT (z); forward_line (&z)) {
-    curs->line = z;
-    curs->last = z;
-    curs->index = 0;
+  for (z = CURR (dd); z != u && IS_IN_TEXT (z); forward_line (&z)) {
+    LINE (curs) = z;
+    LAST (curs) = z;
+    INDEX (curs) = 0;
     cdelete (dd);
     join_line (dd, cmd);
   }
-  if (IN_TEXT (z)) {
-    dd->curr = PREVIOUS (z);
+  if (IS_IN_TEXT (z)) {
+    CURR (dd) = PREVIOUS (z);
   } else {
-    dd->curr = dd->tof;
+    CURR (dd) = TOF (dd);
   }
   align_current (dd);
 /* ... process the lines ... */
@@ -2721,9 +2948,9 @@ static void edit_filter (DATASET_T *dd, char *cmd, char *argv, EDLIN_T *u)
   system (shell);
   CHECK_ERRNO (cmd);
 /* ... and read lines */
-  edit_read (dd, cmd, ".a68g.edit.in", NULL);
+  edit_read (dd, cmd, ".a68g.edit.in", NO_EDLIN);
 /* Done */
-  bufcpy (scr->cmd, "", BUFFER_SIZE);
+  bufcpy (CMD (scr), "", BUFFER_SIZE);
   CURSOR_TO_COMMAND (dd, curs);
   return;
 }
@@ -2738,31 +2965,31 @@ static void edit_filter (DATASET_T *dd, char *cmd, char *argv, EDLIN_T *u)
 
 static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *u, *v, *w, *x, *z, *bl_start = NULL, *bl_end = NULL;
-  char *cmdn, *rest = NULL;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *u, *v, *w, *x, *z, *bl_start = NO_EDLIN, *bl_end = NO_EDLIN;
+  char *cmdn, *rest = NO_TEXT;
   int j, n, count;
   if (cmd_move) {
     cmdn = "move";
   } else {
     cmdn = "copy";
   }
-  if (dd->subset) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: fold disables %s", cmdn, cmdn) >= 0);
+  if (SUBSET (dd)) {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: fold disables %s", cmdn, cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  u = dd->curr;
+  u = CURR (dd);
   if (EMPTY_STRING (args)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: insufficient arguments", cmdn) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: insufficient arguments", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
   v = get_target (dd, cmd, args, &rest, A68_TRUE);
   args = rest;
   if (EMPTY_STRING (args)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: insufficient arguments", cmdn) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: insufficient arguments", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -2780,19 +3007,19 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
   }
 /* Out of range */
   if (IS_EOF (w)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot add after end-of-data", cmdn) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot add after end-of-data", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
 /* Backwards range */
   if (NOT_EOF (v) && (NUMBER (v) < NUMBER (u))) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", cmdn) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: backward range", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
 /* Copy to within range */
   if (NUMBER (u) <= NUMBER (w) && NUMBER (w) < NUMBER (v) - 1) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: target within selected range", cmdn) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: target within selected range", cmdn) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -2805,14 +3032,14 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
   for (j = 0; j < n; j++) {
 /* Add lines */
     int k;
-    for (k = 0, z = u; k < count && IN_TEXT (z); k++, FORWARD (z)) {
-      curs->line = w;
-      curs->index = (int) strlen (TEXT (w));
+    for (k = 0, z = u; k < count && IS_IN_TEXT (z); k++, FORWARD (z)) {
+      LINE (curs) = w;
+      INDEX (curs) = (int) strlen (TEXT (w));
       split_line (dd, cmd);
     }
 /* Copy text */
     bl_start = NEXT (w);
-    for (k = 0, x = NEXT (w), z = u; k < count && IN_TEXT (z); k++, FORWARD (x), FORWARD (z)) {
+    for (k = 0, x = NEXT (w), z = u; k < count && IS_IN_TEXT (z); k++, FORWARD (x), FORWARD (z)) {
       char *txt = TEXT (z);
       int len = 1 + (int) strlen (txt);
       int res = len;
@@ -2820,7 +3047,7 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
         res += (BLOCK_SIZE - res % BLOCK_SIZE);
       }
       bl_end = x;
-      x->reserved = res;
+      RESERVED (x) = res;
       TEXT (x) = (char *) edit_get_heap (dd, (size_t) res);
       if (TEXT (x) == NO_TEXT) {
         return;
@@ -2830,10 +3057,10 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
   }
 /* Delete the original lines */
   if (cmd_move) {
-    for (z = u; z != v && IN_TEXT (z); FORWARD (z)) {
-      curs->line = z;
-      curs->last = z;
-      curs->index = 0;
+    for (z = u; z != v && IS_IN_TEXT (z); FORWARD (z)) {
+      LINE (curs) = z;
+      LAST (curs) = z;
+      INDEX (curs) = 0;
       cdelete (dd);
       join_line (dd, cmd);
     }
@@ -2841,24 +3068,24 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
 /* Done */
   edit_reset (dd);
   if ((count * n) == 0) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s no lines", cmdn, (cmd_move ? "moved" : "copied")) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s no lines", cmdn, (cmd_move ? "moved" : "copied")) >= 0);
   } else if ((count * n) == 1) {
-    dd->bl_start = bl_start;
-    dd->bl_end = bl_end;
-    dd->alts++;
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s 1 line", cmdn, (cmd_move ? "moved" : "copied")) >= 0);
+    BL_START (dd) = bl_start;
+    BL_END (dd) = bl_end;
+    ALTS (dd)++;
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s 1 line", cmdn, (cmd_move ? "moved" : "copied")) >= 0);
   } else if (n == 1) {
-    dd->bl_start = bl_start;
-    dd->bl_end = bl_end;
-    dd->alts++;
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s %d lines", cmdn, (cmd_move ? "moved" : "copied"), count * n) >= 0);
+    BL_START (dd) = bl_start;
+    BL_END (dd) = bl_end;
+    ALTS (dd)++;
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s %d lines", cmdn, (cmd_move ? "moved" : "copied"), count * n) >= 0);
   } else {
-    dd->bl_start = bl_start;
-    dd->bl_end = bl_end;
-    dd->alts++;
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %s %d lines %d times", cmdn, (cmd_move ? "moved" : "copied"), count, n) >= 0);
+    BL_START (dd) = bl_start;
+    BL_END (dd) = bl_end;
+    ALTS (dd)++;
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %s %d lines %d times", cmdn, (cmd_move ? "moved" : "copied"), count, n) >= 0);
   }
-  bufcpy (scr->cmd, "", BUFFER_SIZE);
+  bufcpy (CMD (scr), "", BUFFER_SIZE);
   CURSOR_TO_COMMAND (dd, curs);
   return;
 }
@@ -2872,26 +3099,26 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
 
 static void indent (DATASET_T *dd, char *cmd, char *args)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   EDLIN_T *u, *v, *z;
-  char *rest = NULL;
+  char *rest = NO_TEXT;
   int dir, k, n, m, count;
-  if (dd->subset) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: folded dataset", cmd) >= 0);
+  if (SUBSET (dd)) {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: folded dataset", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  u = dd->curr;
+  u = CURR (dd);
   if (EMPTY_STRING (args)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: insufficient arguments", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: insufficient arguments", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
   v = get_target (dd, cmd, args, &rest, A68_TRUE);
   args = rest;
   if (EMPTY_STRING (args)) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: insufficient arguments", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: insufficient arguments", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -2916,7 +3143,7 @@ static void indent (DATASET_T *dd, char *cmd, char *args)
   }
 /* Backwards range */
   if (NOT_EOF (v) && (NUMBER (v) < NUMBER (u))) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: backward range", cmd) >= 0);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -2939,26 +3166,26 @@ static void indent (DATASET_T *dd, char *cmd, char *args)
       m = k + n;
     } else if (dir == 0) {
       m = n - 1;
-    } else if (dir == -1) {
+    } else /* if (dir == -1) */ {
       m = k - n;
     }
 /* Align the line, if we can */
     if (k >= 0 && NUMBER (z) != 0) {
       int delta = m - k, i, j;
       char *t = TEXT (z);
-      (dd->linbuf)[0] = 0;
+      (LINBUF (dd))[0] = 0;
       i = 0;
       if (delta >= 0) {
         for (j = 0; j < delta; j ++) {
           add_linbuf (dd, BLANK_CHAR, i++);
-          if (dd->linbuf == NULL) {
+          if (LINBUF (dd) == NO_TEXT) {
             CURSOR_TO_COMMAND (dd, curs);
             return;
           }
         }
         for (j = 0; t[j] != NULL_CHAR; j++) {
           add_linbuf (dd, t[j], i++);
-          if (dd->linbuf == NULL) {
+          if (LINBUF (dd) == NO_TEXT) {
             CURSOR_TO_COMMAND (dd, curs);
             return;
           }
@@ -2967,13 +3194,14 @@ static void indent (DATASET_T *dd, char *cmd, char *args)
         for (j = 0; j < -delta && t[j] != NULL_CHAR && IS_SPACE (t[j]); j ++) {;}
         for (; t[j] != NULL_CHAR; j++) {
           add_linbuf (dd, t[j], i++);
-          if (dd->linbuf == NULL) {
+          if (LINBUF (dd) == NO_TEXT) {
             CURSOR_TO_COMMAND (dd, curs);
             return;
           }
         }
       }
-      new_edit_string (dd, z, dd->linbuf, NULL);
+      new_edit_string (dd, z, LINBUF (dd), NO_EDLIN);
+      alt_line (dd, z);
       if (TEXT (z) == NO_TEXT) {
         CURSOR_TO_COMMAND (dd, curs);
         return;
@@ -2983,17 +3211,15 @@ static void indent (DATASET_T *dd, char *cmd, char *args)
   }
 /* Done */
   edit_reset (dd);
-  dd->bl_start = dd->bl_end = NULL;
+  BL_START (dd) = BL_END (dd) = NO_EDLIN;
   if (count == 0) {
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: indented no lines", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: indented no lines", cmd) >= 0);
   } else if (count == 1) {
-    dd->alts++;
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: indented 1 line", cmd) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: indented 1 line", cmd) >= 0);
   } else {
-    dd->alts++;
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: indented %d lines", cmd, count) >= 0);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: indented %d lines", cmd, count) >= 0);
   }
-  bufcpy (scr->cmd, "", BUFFER_SIZE);
+  bufcpy (CMD (scr), "", BUFFER_SIZE);
   CURSOR_TO_COMMAND (dd, curs);
   return;
 }
@@ -3007,19 +3233,19 @@ static void indent (DATASET_T *dd, char *cmd, char *args)
 
 static void set_current (DATASET_T *dd, char *cmd, char *target)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  char *rest = NULL;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  char *rest = NO_TEXT;
   EDLIN_T *z = get_target (dd, cmd, target, &rest, A68_TRUE);
   if (!EMPTY_STRING (rest)) {
     TRAILING (cmd);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  if (z != NULL) {
-    dd->curr = z;
+  if (z != NO_EDLIN) {
+    CURR (dd) = z;
   }
-  bufcpy (scr->cmd, "", BUFFER_SIZE);
+  bufcpy (CMD (scr), "", BUFFER_SIZE);
   CURSOR_TO_COMMAND (dd, curs);
 }
 
@@ -3032,9 +3258,9 @@ static void set_current (DATASET_T *dd, char *cmd, char *target)
 
 static void set_current_store (DATASET_T *dd, char *cmd, char *target)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  char *rest = NULL;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  char *rest = NO_TEXT;
   EDLIN_T *z;
   z = get_target (dd, cmd, target, &rest, A68_TRUE);
   if (!EMPTY_STRING (rest)) {
@@ -3042,10 +3268,10 @@ static void set_current_store (DATASET_T *dd, char *cmd, char *target)
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
-  if (z != NULL) {
-    dd->curr = z;
+  if (z != NO_EDLIN) {
+    CURR (dd) = z;
   }
-  bufcpy (scr->cmd, "", BUFFER_SIZE);
+  bufcpy (CMD (scr), "", BUFFER_SIZE);
   CURSOR_TO_COMMAND (dd, curs);
 }
 
@@ -3057,65 +3283,65 @@ static void set_current_store (DATASET_T *dd, char *cmd, char *target)
 
 static char *full_cmd (char *cmd)
 {
-  if (match_cmd (cmd, "Add", NULL)) {
+  if (match_cmd (cmd, "Add", NO_VAR)) {
     return ("add");
-  } else if (match_cmd (cmd, "AGain", NULL)) {
+  } else if (match_cmd (cmd, "AGain", NO_VAR)) {
     return ("again");
-  } else if (match_cmd (cmd, "Indent", NULL)) {
+  } else if (match_cmd (cmd, "Indent", NO_VAR)) {
     return ("indent");
-  } else if (match_cmd (cmd, "CAse", NULL)) {
+  } else if (match_cmd (cmd, "CAse", NO_VAR)) {
     return ("case");
-  } else if (match_cmd (cmd, "CDelete", NULL)) {
+  } else if (match_cmd (cmd, "CDelete", NO_VAR)) {
     return ("cdelete");
-  } else if (match_cmd (cmd, "RUN", NULL)) {
+  } else if (match_cmd (cmd, "RUN", NO_VAR)) {
     return ("run");
-  } else if (match_cmd (cmd, "COpy", NULL)) {
+  } else if (match_cmd (cmd, "COpy", NO_VAR)) {
     return ("copy");
-  } else if (match_cmd (cmd, "C", NULL)) {
-    return ("change");
-  } else if (match_cmd (cmd, "DELete", NULL)) {
+  } else if (match_cmd (cmd, "DELete", NO_VAR)) {
     return ("delete");
-  } else if (match_cmd (cmd, "Edit", NULL)) {
+  } else if (match_cmd (cmd, "Edit", NO_VAR)) {
     return ("edit");
-  } else if (match_cmd (cmd, "FILE", NULL)) {
+  } else if (match_cmd (cmd, "FILE", NO_VAR)) {
     return ("file");
-  } else if (match_cmd (cmd, "FOld", NULL)) {
+  } else if (match_cmd (cmd, "FOld", NO_VAR)) {
     return ("fold");
-  } else if (match_cmd (cmd, "MEssage", NULL)) {
+  } else if (match_cmd (cmd, "MEssage", NO_VAR)) {
     return ("message");
-  } else if (match_cmd (cmd, "MOve", NULL)) {
+  } else if (match_cmd (cmd, "MOve", NO_VAR)) {
     return ("move");
-  } else if (match_cmd (cmd, "Page", NULL)) {
+  } else if (match_cmd (cmd, "Page", NO_VAR)) {
     return ("page");
-  } else if (match_cmd (cmd, "PF", NULL)) {
+  } else if (match_cmd (cmd, "PF", NO_VAR)) {
     return ("pf");
-  } else if (match_cmd (cmd, "QQuit", NULL)) {
+  } else if (match_cmd (cmd, "QQuit", NO_VAR)) {
     return ("qquit");
-  } else if (match_cmd (cmd, "Read", NULL)) {
+  } else if (match_cmd (cmd, "Read", NO_VAR)) {
     return ("read");
-  } else if (match_cmd (cmd, "RESet", NULL)) {
+  } else if (match_cmd (cmd, "RESet", NO_VAR)) {
     return ("reset");
-  } else if (match_cmd (cmd, "SAve", NULL)) {
+  } else if (match_cmd (cmd, "SAve", NO_VAR)) {
     return ("save");
-  } else if (match_cmd (cmd, "SCale", NULL)) {
+  } else if (match_cmd (cmd, "SCale", NO_VAR)) {
     return ("scale");
-  } else if (match_cmd (cmd, "SHell", NULL)) {
+  } else if (match_cmd (cmd, "SHell", NO_VAR)) {
     return ("shell");
-  } else if (match_cmd (cmd, "Help", NULL)) {
+  } else if (match_cmd (cmd, "Help", NO_VAR)) {
     return ("help");
-  } else if (match_cmd (cmd, "SYntax", NULL)) {
+  } else if (match_cmd (cmd, "SYntax", NO_VAR)) {
     return ("syntax");
-  } else if (match_cmd (cmd, "S", NULL)) {
+  } else if (match_cmd (cmd, "S", NO_VAR)) {
     return ("substitute");
-  } else if (match_cmd (cmd, "TOGgle", NULL)) {
+  } else if (match_cmd (cmd, "S", NO_VAR)) {
+    return ("sc");
+  } else if (match_cmd (cmd, "TOGgle", NO_VAR)) {
     return ("toggle");
-  } else if (match_cmd (cmd, "Undo", NULL)) {
+  } else if (match_cmd (cmd, "Undo", NO_VAR)) {
     return ("undo");
-  } else if (match_cmd (cmd, "WQ", NULL)) {
+  } else if (match_cmd (cmd, "WQ", NO_VAR)) {
     return ("wq");
-  } else if (match_cmd (cmd, "Write", NULL)) {
+  } else if (match_cmd (cmd, "Write", NO_VAR)) {
     return ("write");
-  } else if (match_cmd (cmd, "Xedit", NULL)) {
+  } else if (match_cmd (cmd, "Xedit", NO_VAR)) {
     return ("xedit");
   } else {
     return (cmd);
@@ -3129,9 +3355,9 @@ static char *full_cmd (char *cmd)
 
 static void edit_do_cmd (DATASET_T *dd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  char *cmd = scr->cmd, *args = NULL, *rest = NULL;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  char *cmd = CMD (scr), *args = NO_TEXT, *rest = NO_TEXT;
   char *fcmd = full_cmd (cmd);
 /* Initial white space is meaningless */
   SKIP_WHITE (cmd);
@@ -3145,27 +3371,30 @@ static void edit_do_cmd (DATASET_T *dd)
 /* Execute the command but leave it in the buffer */
     char cp[BUFFER_SIZE];
     bufcpy (cp, cmd, BUFFER_SIZE);
-    bufcpy (scr->cmd, &cp[1], BUFFER_SIZE);
+    bufcpy (CMD (scr), &cp[1], BUFFER_SIZE);
     edit_do_cmd (dd);
-    bufcpy (scr->cmd, cp, BUFFER_SIZE);
+    bufcpy (CMD (scr), cp, BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "?", &args)) {
 /* Restore last command; do not execute */
     NO_ARGS ("?", args);
-    bufcpy (scr->cmd, history[histix], BUFFER_SIZE);
+    if (histcurr >= 0) {
+      bufcpy (CMD (scr), history[histcurr], BUFFER_SIZE);
+    }
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "=", &args)) {
     NO_ARGS ("=", args);
 /* Repeat last command on "=" */
-    bufcpy (scr->cmd, history[histix], BUFFER_SIZE);
-    edit_do_cmd (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    if (histcurr >= 0) {
+      bufcpy (CMD (scr), history[histcurr], BUFFER_SIZE);
+      edit_do_cmd (dd);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+    }
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } 
-/* Commands that may be stored */
 /* Target commands that set the current line */
   if (IS_DIGIT (cmd[0])) {
     set_current (dd, "edit", cmd);
@@ -3200,14 +3429,32 @@ static void edit_do_cmd (DATASET_T *dd)
     align_current (dd);
     return;
   } else if (cmd[0] == '/') {
+    edit_add_history (cmd);
+    set_current_store (dd, "edit", cmd);
+    align_current (dd);
+    return;
+  } else if (cmd[0] == '~' && cmd[1] == '/') {
+    edit_add_history (cmd);
     set_current_store (dd, "edit", cmd);
     align_current (dd);
     return;
   } else if (cmd[0] == '-' && cmd[1] == '/') {
+    edit_add_history (cmd);
     set_current_store (dd, "edit", cmd);
     align_current (dd);
     return;
   } else if (cmd[0] == '+' && cmd[1] == '/') {
+    edit_add_history (cmd);
+    set_current_store (dd, "edit", cmd);
+    align_current (dd);
+    return;
+  } else if (cmd[0] == '-' && cmd[1] == '~' && cmd[2] == '/') {
+    edit_add_history (cmd);
+    set_current_store (dd, "edit", cmd);
+    align_current (dd);
+    return;
+  } else if (cmd[0] == '+' && cmd[1] == '~' && cmd[2] == '/') {
+    edit_add_history (cmd);
     set_current_store (dd, "edit", cmd);
     align_current (dd);
     return;
@@ -3217,55 +3464,64 @@ static void edit_do_cmd (DATASET_T *dd)
     EDLIN_T *z;
     NO_ARGS (fcmd, args);
     z = get_regexp (dd, cmd, args, &rest, A68_FALSE);
-    if (z != NULL) {
-      dd->curr = z;
+    if (z != NO_EDLIN) {
+      CURR (dd) = z;
     }
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "TOGgle", &args)) {
 /* TOGGLE: switch between prefix/text and command line */
     NO_ARGS (fcmd, args);
-    if (curs->in_cmd) {
+    if (IN_CMD (curs)) {
       CURSOR_TO_CURRENT (dd, curs);
-    } else if (! curs->in_forbidden) {
+    } else if (! IN_FORBIDDEN (curs)) {
       CURSOR_TO_COMMAND (dd, curs);
     } else {
       CURSOR_TO_COMMAND (dd, curs);
     }
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if (match_cmd (cmd, "Help", &args)) {
 /* HELP: Give some rudimentary help */
     NO_ARGS (fcmd, args);
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "help") > 0);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "help") > 0);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if (match_cmd (cmd, "CDelete", &args)) {
 /* CDELETE: delete to end of line */
     edit_add_history (cmd); 
     NO_ARGS (fcmd, args);
-    if (curs->in_text) {
+    if (IN_TEXT (curs)) {
       cdelete (dd);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
-    } else if (curs->in_cmd) {
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+    } else if (IN_CMD (curs)) {
       CURSOR_TO_COMMAND (dd, curs);
     }
     return;
+/* RESET: reset prefix commands */
   } else if (match_cmd (cmd, "RESet", &args)) {
     NO_ARGS (fcmd, args);
     edit_add_history (cmd); 
     edit_reset (dd);
-    dd->bl_start = dd->bl_end = NULL;
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    BL_START (dd) = BL_END (dd) = NO_EDLIN;
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if (match_cmd (cmd, "QQuit", &args)) {
-/* QQUIT: quit immediately - live with it like a Klingon  */
+/* QQUIT: quit immediately - live with it like a Klingon */
     NO_ARGS (fcmd, args);
-    if ((dd->undo[0]) != NULL_CHAR) {
-      (void) remove (dd->undo);
+    if (ALTS (dd) > 0) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: file not saved", fcmd) >= 0);
+      ALTS (dd) = 0;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+      CURSOR_TO_COMMAND (dd, curs);
+      return;
+    } else {
+      if ((UNDO (dd)[0]) != NULL_CHAR) {
+        (void) remove (UNDO (dd));
+      }
+      longjmp (EDIT_EXIT_LABEL (dd), 1);
     }
-    longjmp (dd->edit_exit_label, 1);
   } else if (match_cmd (cmd, "Page", &args)) {
 /* PAGE n: trace forward or backward by "drawing" the screen */
     int k, n = int_arg (dd, fcmd, args, &rest, 1);
@@ -3277,8 +3533,8 @@ static void edit_do_cmd (DATASET_T *dd)
 /* Count */
     for (k = 0; k < abs (n); k++) {
       int lin = count_reserved (dd);
-      EDLIN_T *z = dd->curr, *u = z;
-      for (; IN_TEXT (z);) {
+      EDLIN_T *z = CURR (dd), *u = z;
+      for (; IS_IN_TEXT (z);) {
         lin += lines_on_scr (dd, z);
         if (lin > LINES) {
           break;
@@ -3287,42 +3543,42 @@ static void edit_do_cmd (DATASET_T *dd)
         (n > 0 ? forward_line (&z) : backward_line (&z));
       }
       if (lin > LINES) {
-        dd->curr = u;
+        CURR (dd) = u;
       } else {
-        dd->curr = z;
+        CURR (dd) = z;
       }
       align_current (dd);
     }
     CURSOR_TO_COMMAND (dd, curs);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if (match_cmd (cmd, "CAse", &args)) {
 /* CASE: switch case of character under cursor */
-    EDLIN_T *lin = curs->line;
+    EDLIN_T *lin = LINE (curs);
     NO_ARGS (fcmd, args);
-    if (lin != NULL && curs->index < (int) strlen (TEXT (lin))) {
-      if (IS_UPPER (TEXT (lin)[curs->index])) {
-        TEXT (lin)[curs->index] = TO_LOWER (TEXT (lin)[curs->index]);
-        curs->index++;
-        curs->sync_line = lin;
-        curs->sync_index = curs->index;
-        curs->sync = A68_TRUE;
-        dd->alts++;
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
-      } else if (IS_LOWER (TEXT (lin)[curs->index])) {
-        TEXT (lin)[curs->index] = TO_UPPER (TEXT (lin)[curs->index]);
-        curs->index++;
-        curs->sync_line = lin;
-        curs->sync_index = curs->index;
-        curs->sync = A68_TRUE;
-        dd->alts++;
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+    if (lin != NO_EDLIN && INDEX (curs) < (int) strlen (TEXT (lin))) {
+      if (IS_UPPER (TEXT (lin)[INDEX (curs)])) {
+        TEXT (lin)[INDEX (curs)] = TO_LOWER (TEXT (lin)[INDEX (curs)]);
+        INDEX (curs)++;
+        SYNC_LINE (curs) = lin;
+        SYNC_INDEX (curs) = INDEX (curs);
+        SYNC (curs) = A68_TRUE;
+        alt_line (dd, lin);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
+      } else if (IS_LOWER (TEXT (lin)[INDEX (curs)])) {
+        TEXT (lin)[INDEX (curs)] = TO_UPPER (TEXT (lin)[INDEX (curs)]);
+        INDEX (curs)++;
+        SYNC_LINE (curs) = lin;
+        SYNC_INDEX (curs) = INDEX (curs);
+        SYNC (curs) = A68_TRUE;
+        alt_line (dd, lin);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
       }
     }
     return;
   } else if (match_cmd (cmd, "Add", &args)) {
 /* ADD [repetition]: add lines */
-    EDLIN_T *z = dd->curr;
+    EDLIN_T *z = CURR (dd);
     int k, n = int_arg (dd, fcmd, args, &rest, 1);
     edit_add_history (cmd); 
     if (!EMPTY_STRING (rest)) {
@@ -3330,24 +3586,24 @@ static void edit_do_cmd (DATASET_T *dd)
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
-    if (z != NULL && NOT_EOF (z)) {
+    if (z != NO_EDLIN && NOT_EOF (z)) {
       for (k = 0; k < n; k ++) {
-        curs->line = z;
-        curs->index = (int) strlen (TEXT (z));
+        LINE (curs) = z;
+        INDEX (curs) = (int) strlen (TEXT (z));
         split_line (dd, fcmd);
       }
       edit_reset (dd);
-      dd->bl_start = dd->bl_end = NULL;
+      BL_START (dd) = BL_END (dd) = NO_EDLIN;
 /* Cursor goes to next appended line, not the current line */
-      curs->line = NEXT (z);
-      SELECT (curs->line) = A68_TRUE;
-      curs->index = 0;
-      curs->sync_line = curs->line;
-      curs->sync_index = 0;
-      curs->sync = A68_TRUE;
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      LINE (curs) = NEXT (z);
+      SELECT (LINE (curs)) = A68_TRUE;
+      INDEX (curs) = 0;
+      SYNC_LINE (curs) = LINE (curs);
+      SYNC_INDEX (curs) = 0;
+      SYNC (curs) = A68_TRUE;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
     } else {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot add lines here", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot add lines here", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
     }
     return;
@@ -3357,7 +3613,7 @@ static void edit_do_cmd (DATASET_T *dd)
     int dels = 0;
     edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
-      u = dd->curr;
+      u = CURR (dd);
       forward_line (&u);
     } else {
       u = get_target (dd, fcmd, args, &rest, A68_TRUE);
@@ -3368,58 +3624,58 @@ static void edit_do_cmd (DATASET_T *dd)
       return;
     }
 /* Backwards range */
-    if (NOT_EOF (u) && (NUMBER (u) < NUMBER (dd->curr))) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
+    if (NOT_EOF (u) && (NUMBER (u) < NUMBER (CURR (dd)))) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
     edit_write_undo_file (dd, fcmd);
-    for (z = dd->curr; z != u && IN_TEXT (z); forward_line (&z)) {
-      curs->line = z;
-      curs->last = z;
-      curs->index = 0;
+    for (z = CURR (dd); z != u && IS_IN_TEXT (z); forward_line (&z)) {
+      LINE (curs) = z;
+      LAST (curs) = z;
+      INDEX (curs) = 0;
       cdelete (dd);
       join_line (dd, fcmd);
       dels++;
     }
-    dd->curr = z;
+    CURR (dd) = z;
     align_current (dd);
     edit_reset (dd);
-    dd->bl_start = dd->bl_end = NULL;
+    BL_START (dd) = BL_END (dd) = NO_EDLIN;
     if (dels == 0) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: deleted no lines", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: deleted no lines", fcmd) >= 0);
     } else if (dels == 1) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: deleted 1 line", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: deleted 1 line", fcmd) >= 0);
     } else {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: deleted %d lines", fcmd, dels) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: deleted %d lines", fcmd, dels) >= 0);
     }
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "FILE", &args) || match_cmd (cmd, "WQ", &args)) {
 /* FILE: save and quit */
     if (EMPTY_STRING (args)) {
-      edit_write (dd, fcmd, dd->name, dd->tof, NULL);
-      dd->alts = 0;
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      edit_write (dd, fcmd, NAME (dd), TOF (dd), NO_EDLIN);
+      ALTS (dd) = 0;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
     } else {
       EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       SKIP_WHITE (rest);
       if (EMPTY_STRING (rest)) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      edit_write (dd, fcmd, rest, dd->curr, u);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      edit_write (dd, fcmd, rest, CURR (dd), u);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
     }
     if (errno == 0) {
-      if ((dd->undo[0]) != NULL_CHAR) {
-        (void) remove (dd->undo);
+      if ((UNDO (dd)[0]) != NULL_CHAR) {
+        (void) remove (UNDO (dd));
       }
-      longjmp (dd->edit_exit_label, 1);
+      longjmp (EDIT_EXIT_LABEL (dd), 1);
     } else {
       CURSOR_TO_COMMAND (dd, curs);
     }
@@ -3428,25 +3684,25 @@ static void edit_do_cmd (DATASET_T *dd)
 /* READ: read a dataset */
     edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
       edit_write_undo_file (dd, fcmd);
-      edit_read (dd, fcmd, args, NULL);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      edit_read (dd, fcmd, args, NO_EDLIN);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
   } else if (match_cmd (cmd, "PF", &args)) {
     int n = int_arg (dd, fcmd, args, &rest, 1);
     if (n < 1 || n > MAX_PF) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot set f%d", fcmd, n) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot set f%d", fcmd, n) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
       ASSERT (snprintf (pf_bind[n - 1], SNPRINTF_SIZE, "%s", rest) >= 0);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
@@ -3454,32 +3710,33 @@ static void edit_do_cmd (DATASET_T *dd)
 /* Write: save the dataset */
     edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
-      edit_write (dd, fcmd, dd->name, dd->tof, NULL);
-      dd->alts = 0;
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      edit_write (dd, fcmd, NAME (dd), TOF (dd), NO_EDLIN);
+      ALTS (dd) = 0;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
       EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       SKIP_WHITE (rest);
       if (EMPTY_STRING (rest)) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: missing filename", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      edit_write (dd, fcmd, rest, dd->curr, u);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      edit_write (dd, fcmd, rest, CURR (dd), u);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
+/* RUN: run a program with a68g */
   } else if (match_cmd (cmd, "RUN", &args)) {
     char ccmd[BUFFER_SIZE];
     int ret;
-    EDLIN_T *cursav = dd->curr;
+    EDLIN_T *cursav = CURR (dd);
     edit_add_history (cmd); 
-    if (dd->msgs != -1) {
-      close (dd->msgs);
-      dd->msgs = -1;
+    if (MSGS (dd) != -1) {
+      ASSERT (close (MSGS (dd)) == 0);
+      MSGS (dd) = -1;
     }
     (void) remove (A68_DIAGNOSTICS_FILE);
     if (EMPTY_STRING (args)) {
@@ -3487,91 +3744,92 @@ static void edit_do_cmd (DATASET_T *dd)
     } else {
       ASSERT (snprintf (ccmd, SNPRINTF_SIZE, "a68g %s --tui %s", args, A68_CHECK_FILE) >= 0);
     }
-    dd->curr = NEXT (dd->tof);
-    ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "write * %s", A68_CHECK_FILE) >= 0);
+    CURR (dd) = NEXT (TOF (dd));
+    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "write * %s", A68_CHECK_FILE) >= 0);
     edit_do_cmd (dd);
     endwin ();
     ret = system (ccmd);
     edit_init_curses (dd);
-    dd->curr = cursav;
-    ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "message") >= 0);
+    CURR (dd) = cursav;
+    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "message") >= 0);
     edit_do_cmd (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
+/* SYNTAX: check syntax of an a68 program using a68g */  
   } else if (match_cmd (cmd, "SYntax", &args)) {
     edit_add_history (cmd); 
-    ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "run --pedantic --norun") >= 0);
+    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "run --pedantic --norun") >= 0);
     edit_do_cmd (dd);
     return;
+/* MESSAGE: hop through diagnostics of a68g */
   } else if (match_cmd (cmd, "MEssage", &args)) {
     edit_add_history (cmd); 
     NO_ARGS (fcmd, args);
-    if (dd->msgs == -1) {
-/* Open the file */
+    if (MSGS (dd) == -1) {
+    /* Open the file */
       RESET_ERRNO;
-      dd->msgs = open (A68_DIAGNOSTICS_FILE, A68_READ_ACCESS);
-      if (dd->msgs == -1 || errno != 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot open diagnostics file for reading", fcmd) >= 0);
+      MSGS (dd) = open (A68_DIAGNOSTICS_FILE, A68_READ_ACCESS);
+      if (MSGS (dd) == -1 || errno != 0) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot open diagnostics file for reading", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
     }
-    if (dd->msgs != -1) {
+    if (MSGS (dd) != -1) {
       int n, m;
       EDLIN_T *z;
-      edit_read_string (dd, dd->msgs);
-      if (strlen (dd->linbuf) == 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: no diagnostic to display", fcmd) >= 0);
-        (void) close (dd->msgs);
-        dd->msgs = -1;
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+      edit_read_string (dd, MSGS (dd));
+      if (strlen (LINBUF (dd)) == 0) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no diagnostic to display", fcmd) >= 0);
+        ASSERT (close (MSGS (dd)) == 0);
+        MSGS (dd) = -1;
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }  
-      n = int_arg (dd, cmd, &((dd->linbuf)[0]), &rest, 1);
+      n = int_arg (dd, cmd, &((LINBUF (dd))[0]), &rest, 1);
       if (n == WRONG_TARGET) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: wrong target in file", fcmd) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: wrong target in file", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       } else {
-        for (z = dd->tof; z != NULL && NUMBER (z) != n; forward_line (&z)) {;}
-        if (z != NULL) {
-          dd->curr = z;
+        for (z = TOF (dd); z != NO_EDLIN && NUMBER (z) != n; forward_line (&z)) {;}
+        if (z != NO_EDLIN) {
+          CURR (dd) = z;
           align_current (dd);
         }
       }
-      edit_read_string (dd, dd->msgs);
-      curs->sync_index = 0;
+      edit_read_string (dd, MSGS (dd));
+      SYNC_INDEX (curs) = 0;
       if (n != 0 && n != WRONG_TARGET) {
-        m = int_arg (dd, cmd, &((dd->linbuf)[0]), &rest, 1);
-        if (m >= 0 && m < (int) strlen (TEXT (dd->curr))) {
-          curs->sync_index = m;
+        m = int_arg (dd, cmd, &((LINBUF (dd))[0]), &rest, 1);
+        if (m >= 0 && m < (int) strlen (TEXT (CURR (dd)))) {
+          SYNC_INDEX (curs) = m;
         }
       }
-      curs->sync_line = dd->curr;
-      curs->sync = A68_TRUE;
-      edit_read_string (dd, dd->msgs);
-      if ((int) strlen (dd->linbuf) >= COLS) {
-        (dd->linbuf)[COLS - 4] = NULL_CHAR;
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s ...", dd->linbuf) >= 0);
+      SYNC_LINE (curs) = CURR (dd);
+      SYNC (curs) = A68_TRUE;
+      edit_read_string (dd, MSGS (dd));
+      if ((int) strlen (LINBUF (dd)) >= COLS) {
+        (LINBUF (dd))[COLS - 4] = NULL_CHAR;
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s ...", LINBUF (dd)) >= 0);
       } else {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s", dd->linbuf) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s", LINBUF (dd)) >= 0);
       }
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       return;
     }
   } else if (match_cmd (cmd, "SCale", &args)) {
 /* SCALE OFF|n: set scale row */
-    edit_add_history (cmd); 
     if (match_cmd (args, "OFF", &rest)) {
       if (!EMPTY_STRING (rest)) {
         TRAILING (fcmd);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      scr->scale_row = A68_MAX_INT;
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      SCALE_ROW (scr) = A68_MAX_INT;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
@@ -3582,28 +3840,27 @@ static void edit_do_cmd (DATASET_T *dd)
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      if ((reserved_row (dd, n - 1) && (n - 1) != scr->scale_row) || n < 2 || n > LINES) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot place scale at row %d", fcmd, n) >= 0);
+      if ((reserved_row (dd, n - 1) && (n - 1) != SCALE_ROW (scr)) || n < 2 || n > LINES) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot place scale at row %d", fcmd, n) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      scr->scale_row = n - 1;
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      SCALE_ROW (scr) = n - 1;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
   } else if (match_cmd (cmd, "MSG", &args)) {
 /* MSG: display its argument in the message area */
     ARGS (fcmd, args);
-    bufcpy (scr->dl0, args, BUFFER_SIZE);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (DL0 (scr), args, BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "Undo", &args)) {
 /* UNDO: restore to state last saved, if any */
-    edit_add_history (cmd); 
     edit_read_undo_file (dd, fcmd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "DUmp", &args)) {
@@ -3615,7 +3872,7 @@ static void edit_do_cmd (DATASET_T *dd)
     fd = open (".a68g.edit.dump", A68_WRITE_ACCESS, A68_PROTECTION);
     CHECK_ERRNO (fcmd);
     if (fd == -1) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: cannot open file for writing", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot open file for writing", fcmd) >= 0);
       return;
     }
     for (j = 0; j < LINES; j++) {
@@ -3627,9 +3884,9 @@ static void edit_do_cmd (DATASET_T *dd)
       WRITE (fd, "\n");
     }
     RESET_ERRNO;
-    close (fd);
+    ASSERT (close (fd) == 0);
     CHECK_ERRNO (fcmd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "Edit", &args) || match_cmd (cmd, "Xedit", &args)) {
@@ -3637,13 +3894,13 @@ static void edit_do_cmd (DATASET_T *dd)
     DATASET_T dataset;
     edit_add_history (cmd); 
     edit_write_undo_file (dd, fcmd);
-    edit_dataset (&dataset, dd->num + 1, args, NULL);
-    fixed_heap_pointer = dd->heap_pointer;
-    dd->linbuf = NULL;
-    dd->linsiz = 0;
-    dd->tof = NULL;
+    edit_dataset (&dataset, NUM (dd) + 1, args, NO_TEXT);
+    fixed_heap_pointer = HEAP_POINTER (dd);
+    LINBUF (dd) = NO_TEXT;
+    LINSIZ (dd) = 0;
+    TOF (dd) = NO_EDLIN;
     edit_read_undo_file (dd, fcmd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -3662,31 +3919,33 @@ static void edit_do_cmd (DATASET_T *dd)
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      if (!IN_TEXT (u)) {
+      if (!IS_IN_TEXT (u)) {
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
 /* Backwards range */
-      if (NOT_EOF (u) && (NUMBER (u) < NUMBER (dd->curr))) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
+      if (NOT_EOF (u) && (NUMBER (u) < NUMBER (CURR (dd)))) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
 /* Empty range */
-      if (u == dd->curr) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: empty range", fcmd) >= 0);
+      if (u == CURR (dd)) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: empty range", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      for (z = dd->tof; z != NULL; FORWARD (z)) {
+      for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
         SELECT (z) = A68_FALSE;
       }
-      for (z = dd->curr; z != u; FORWARD (z)) {
+      for (z = CURR (dd); z != u; FORWARD (z)) {
         SELECT (z) = A68_TRUE;
       }
-      dd->subset = A68_TRUE;
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      SUBSET (dd) = A68_TRUE;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
+      M_MATCH (dd) = NO_EDLIN;
+      M_SO (dd) = M_EO (dd) = -1; /* Show no match */
       return;
     } else {
 /* FOLD [/target/]: select lines matching a target */
@@ -3699,29 +3958,31 @@ static void edit_do_cmd (DATASET_T *dd)
           CURSOR_TO_COMMAND (dd, curs);
           return;
         }
-        if (!IN_TEXT (u)) {
+        if (!IS_IN_TEXT (u)) {
           CURSOR_TO_COMMAND (dd, curs);
           return;
         }
-        for (z = dd->tof; z != NULL; FORWARD (z)) {
+        for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
           SELECT (z) = A68_FALSE;
         }
         SELECT (u) = A68_TRUE;
-        for (z = NEXT (u); z != NULL; FORWARD (z)) {
+        for (z = NEXT (u); z != NO_EDLIN; FORWARD (z)) {
           SELECT (z) = match_regex (dd, z, 0, fcmd);
         }
-        dd->subset = A68_TRUE;
+        SUBSET (dd) = A68_TRUE;
       } else {
 /* UNFOLD */
-        for (z = dd->tof; z != NULL; FORWARD (z)) {
+        for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
           SELECT (z) = A68_TRUE;
         }
-        dd->subset = A68_FALSE;
+        SUBSET (dd) = A68_FALSE;
       }
-      dd->curr = dd->tof;
-      forward_line (&(dd->curr));
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      CURR (dd) = TOF (dd);
+      forward_line (&(CURR (dd)));
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
+      M_MATCH (dd) = NO_EDLIN;
+      M_SO (dd) = M_EO (dd) = -1; /* Show no match */
       return;
     }
   } else if (match_cmd (cmd, "Move", &args)) {
@@ -3736,20 +3997,20 @@ static void edit_do_cmd (DATASET_T *dd)
   } else if (match_cmd (cmd, "SHell", &args)) {
     edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing arguments", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: missing arguments", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     } else {
       EDLIN_T *u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       SKIP_WHITE (rest);
       if (EMPTY_STRING (rest)) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: missing shell command", fcmd) >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: missing shell command", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
       edit_write_undo_file (dd, fcmd);
       edit_filter (dd, fcmd, rest, u);
-      bufcpy (scr->cmd, "", BUFFER_SIZE);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
@@ -3758,33 +4019,35 @@ static void edit_do_cmd (DATASET_T *dd)
     edit_add_history (cmd); 
     indent (dd, fcmd, args);
     return;
-  } else if (match_cmd (cmd, "S", &args) || match_cmd (cmd, "C", &args)) {
-/* SUBSTITUTE /find/replace/ [/target/] [repetition]: replace substrings */
+  } else if (match_cmd (cmd, "S", &args)) {
+/* SUBSTITUTE /find/replace/ [C] [/target/] [repetition]: replace substrings */
     int reps, start, subs = 0;
     edit_add_history (cmd); 
+    BOOL_T confirm = A68_FALSE;
     if (!get_subst (dd, fcmd, args, &rest)) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: unrecognised syntax", fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: unrecognised syntax", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
     if (EMPTY_STRING (rest)) {
-      int m = substitute (dd, dd->curr, A68_MAX_INT, 1, fcmd);
+      int m;
+      confirm = A68_FALSE;
+      m = substitute (dd, CURR (dd), A68_MAX_INT, 1, &confirm, fcmd);
       if (m == SUBST_ERROR) {
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
-      dd->alts++;
       subs = m;
     } else {
       EDLIN_T *u, *z;
       int m;
-      if (! EMPTY_STRING (rest)) {
-        args = rest;
-        u = get_target (dd, fcmd, args, &rest, A68_TRUE);
-      } else {
-        u = dd->curr;
-        forward_line (&u);
+      SKIP_WHITE (rest);
+      if (TO_LOWER (rest[0]) == 'c') {
+        confirm = A68_TRUE;
+        rest++;
       }
+      args = rest;
+      u = get_target (dd, fcmd, args, &rest, A68_TRUE);
       if (! EMPTY_STRING (rest)) {
         args = rest;
         reps = int_arg (dd, fcmd, args, &rest, A68_MAX_INT);
@@ -3803,37 +4066,37 @@ static void edit_do_cmd (DATASET_T *dd)
         return;
       }
 /* Backwards range */
-      if (NOT_EOF (u) && (NUMBER (u) < NUMBER (dd->curr))) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
+      if (NOT_EOF (u) && (NUMBER (u) < NUMBER (CURR (dd)))) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: backward range", fcmd) >= 0);
         CURSOR_TO_COMMAND (dd, curs);
         return;
       }
       edit_write_undo_file (dd, fcmd);
-      for (z = dd->curr; z != u && IN_TEXT (z); forward_line (&z)) {
-        m = substitute (dd, z, reps, start, fcmd);
+      for (z = CURR (dd); z != u && IS_IN_TEXT (z); forward_line (&z)) {
+        m = substitute (dd, z, reps, start, &confirm, fcmd);
         if (m == SUBST_ERROR) {
           CURSOR_TO_COMMAND (dd, curs);
           return;
         }
-        dd->alts++;
         subs += m;
       }
-      if (IN_TEXT (z)) {
-        dd->curr = z;
+      if (IS_IN_TEXT (z)) {
+        CURR (dd) = z;
       }
     }
     if (subs == 1) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %d occurences %sd", fcmd, subs, fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %d occurences %sd", fcmd, subs, fcmd) >= 0);
     } else {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "%s: %d occurences %sd", fcmd, subs, fcmd) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: %d occurences %sd", fcmd, subs, fcmd) >= 0);
     }
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   } else {
 /* Give error and clear the last command - sorry for the inconvenience */
-    ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: undefined command \"%s\"", cmd) >= 0);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    edit_add_history (cmd);
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined command \"%s\"", cmd) >= 0);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
   }
@@ -3846,40 +4109,40 @@ static void edit_do_cmd (DATASET_T *dd)
 
 static void edit_do_prefix (DATASET_T *dd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  int as, cs, ccs, ds, dds, is, iis, js, xs, xxs, ps, qs, divs, total;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  int as, cs, ccs, ds, dds, is, iis, js, xs, xxs, ps, qs, divs, us, total;
   EDLIN_T *z;
   char *arg;
 /* Check prefix command */
-  as = cs = ccs = ds = dds = is = iis = js = xs = xxs = ps = qs = divs = total = 0;
-  for (z = dd->tof; z != NULL; FORWARD (z)) {
-    char *p = z->precmd;
+  as = cs = ccs = ds = dds = is = iis = js = xs = xxs = ps = qs = divs = us = total = 0;
+  for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+    char *p = PRECMD (z);
     SKIP_WHITE (p);
     if (match_cmd (p, "CC", &arg)) {
       if (NUMBER (z) == 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "copy: CC in invalid line") >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "copy: CC in invalid line") >= 0);
       } else {
         ccs++;
         total++;
       }
     } else if (match_cmd (p, "DD", &arg)) {
       if (NUMBER (z) == 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "delete: DD in invalid line") >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "delete: DD in invalid line") >= 0);
       } else {
         dds++;
         total++;
       }
     } else if (match_cmd (p, "II", &arg)) {
       if (NUMBER (z) == 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "indent: II in invalid line") >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "indent: II in invalid line") >= 0);
       } else {
         iis++;
         total++;
       }
     } else if (match_cmd (p, "XX", &arg)) {
       if (NUMBER (z) == 0) {
-        ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "move: XX in invalid line") >= 0);
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "move: XX in invalid line") >= 0);
       } else {
         xxs++;
         total++;
@@ -3905,6 +4168,9 @@ static void edit_do_prefix (DATASET_T *dd)
     } else if (match_cmd (p, "Q", &arg)) {
       qs++;
       total++;
+    } else if (match_cmd (p, "U", &arg)) {
+      us++;
+      total++;
     } else if (match_cmd (p, "X", &arg)) {
       xs++;
       total++;
@@ -3916,151 +4182,168 @@ static void edit_do_prefix (DATASET_T *dd)
 /* Execute the command */
   if (as == 1 && total == 1) {
 /* ADD */
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
-      EDLIN_T *cursavi = dd->curr;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
+      EDLIN_T *cursavi = CURR (dd);
       SKIP_WHITE (p);
       if (match_cmd (p, "A", &arg)) {
-        dd->curr = z;
-        ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "add %s", arg) >= 0);
+        CURR (dd) = z;
+        ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "add %s", arg) >= 0);
         edit_do_cmd (dd);
         edit_reset (dd);
-        dd->bl_start = dd->bl_end = NULL;
-        dd->curr = cursavi;
+        BL_START (dd) = BL_END (dd) = NO_EDLIN;
+        CURR (dd) = cursavi;
         align_current (dd);
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
         return;
       }
     }
   } else if (is == 1 && total == 1) {
 /* INDENT */
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
-      EDLIN_T *cursavi = dd->curr;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
+      EDLIN_T *cursavi = CURR (dd);
       SKIP_WHITE (p);
       if (match_cmd (p, "I", &arg)) {
-        dd->curr = z;
-        ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "indent 1 %s", arg) >= 0);
+        CURR (dd) = z;
+        ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "indent 1 %s", arg) >= 0);
         edit_do_cmd (dd);
         edit_reset (dd);
-        dd->curr = cursavi;
+        CURR (dd) = cursavi;
         align_current (dd);
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
         return;
       }
     }
   } else if (js == 1 && total == 1) {
 /* JOIN */
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
-      EDLIN_T *cursavi = dd->curr;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
+      EDLIN_T *cursavi = CURR (dd);
       SKIP_WHITE (p);
       if (match_cmd (p, "J", &arg)) {
         EDLIN_T *x = NEXT (z);
         NO_ARGS ("J", arg);
-        if (NUMBER (z) == 0 || x == NULL || NUMBER (x) == 0) {
-          ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "join: cannot join") >= 0);
+        if (NUMBER (z) == 0 || x == NO_EDLIN || NUMBER (x) == 0) {
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "join: cannot join") >= 0);
         } else {
-          dd->curr = x;
-          curs->line = x;
-          curs->last = x;
-          curs->index = 0;
+          CURR (dd) = x;
+          LINE (curs) = x;
+          LAST (curs) = x;
+          INDEX (curs) = 0;
           join_line (dd, "join");
         } 
         edit_reset (dd);
-        dd->bl_start = dd->bl_end = NULL;
-        dd->curr = cursavi;
+        BL_START (dd) = BL_END (dd) = NO_EDLIN;
+        CURR (dd) = cursavi;
         align_current (dd);
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
         return;
       }
     }
   } else if (ds == 1 && total == 1) {
 /* DELETE */
     EDLIN_T *w;
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
-      EDLIN_T *cursavi = dd->curr;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
+      EDLIN_T *cursavi = CURR (dd);
       SKIP_WHITE (p);
       if (match_cmd (p, "D", &arg)) {
-        w = dd->curr;
-        dd->curr = z;
+        w = CURR (dd);
+        CURR (dd) = z;
         if (EMPTY_STRING (arg)) {
-          ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "delete") >= 0);
+          ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "delete") >= 0);
         } else {
-          ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "delete %s", arg) >= 0);
+          ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "delete %s", arg) >= 0);
         }
         edit_do_cmd (dd);
         if (w == z) {
           forward_line (&w);
         }
-        dd->curr = w;
+        CURR (dd) = w;
         edit_reset (dd);
-        dd->bl_start = dd->bl_end = NULL;
-        dd->curr = cursavi;
+        BL_START (dd) = BL_END (dd) = NO_EDLIN;
+        CURR (dd) = cursavi;
         align_current (dd);
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
+        return;
+      }
+    }
+  } else if (us == 1 && total == 1) {
+/* UNSELECT */
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
+      EDLIN_T *cursavi = CURR (dd);
+      SKIP_WHITE (p);
+      if (match_cmd (p, "U", &arg)) {
+        NO_ARGS ("U", arg);
+        SELECT (z) = A68_FALSE;
+        edit_reset (dd);
+        BL_START (dd) = BL_END (dd) = NO_EDLIN;
+        CURR (dd) = cursavi;
+        align_current (dd);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
         return;
       }
     }
   } else if (divs == 1 && total == 1) {
 /* Set current line */
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
       SKIP_WHITE (p);
       if (match_cmd (p, "/", &arg)) {
         NO_ARGS ("/", arg);
-        dd->curr = z;
+        CURR (dd) = z;
         edit_reset (dd);
         align_current (dd);
-        bufcpy (scr->cmd, "", BUFFER_SIZE);
+        bufcpy (CMD (scr), "", BUFFER_SIZE);
         return;
       }
     }
   } else if (dds == 2 && total == 2) {
 /* DELETE block */
-    EDLIN_T *u = NULL, *v = NULL, *w, *cursavi = dd->curr;
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
+    EDLIN_T *u = NO_EDLIN, *v = NO_EDLIN, *w, *cursavi = CURR (dd);
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
       SKIP_WHITE (p);
       if (match_cmd (p, "DD", &arg)) {
         NO_ARGS ("DD", arg);
-        if (u == NULL) {
+        if (u == NO_EDLIN) {
           u = z;
         } else {
           v = z;
         }
       }
     }
-    w = dd->curr;
-    dd->curr = u;
+    w = CURR (dd);
+    CURR (dd) = u;
     if (IS_EOF (v)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "delete *") >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "delete *") >= 0);
     } else {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "delete :%d+1", NUMBER (v)) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "delete :%d+1", NUMBER (v)) >= 0);
     }
     edit_do_cmd (dd);
     if (NUMBER (u) <= NUMBER (w) && NUMBER (w) <= NUMBER (v)) {
-      dd->curr = PREVIOUS (w);
+      CURR (dd) = PREVIOUS (w);
     } else {
-      dd->curr = w;
+      CURR (dd) = w;
     }
-    dd->curr = cursavi;
+    CURR (dd) = cursavi;
     edit_reset (dd);
-    dd->bl_start = dd->bl_end = NULL;
+    BL_START (dd) = BL_END (dd) = NO_EDLIN;
     align_current (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if (iis == 2 && total == 2) {
 /* INDENT block */
-    EDLIN_T *u = NULL, *v = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = NO_EDLIN, *v = NO_EDLIN, *cursavi = CURR (dd);
     char upto[BUFFER_SIZE];
-    char *rep = NULL;
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
+    char *rep = NO_TEXT;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
       SKIP_WHITE (p);
       if (match_cmd (p, "II", &arg)) {
-        if (u == NULL) {
+        if (u == NO_EDLIN) {
           rep = arg;
           u = z;
         } else {
@@ -4069,28 +4352,28 @@ static void edit_do_prefix (DATASET_T *dd)
         }
       }
     }
-    dd->curr = u;
+    CURR (dd) = u;
     if (IS_EOF (v)) {
       ASSERT (snprintf (upto, BUFFER_SIZE - 1, "*") >= 0);
     } else if (NOT_EOF (v)) {
       ASSERT (snprintf (upto, BUFFER_SIZE - 1, ":%d+1", NUMBER (v)) >= 0);
     }
     if (EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "indent: expected column number") >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "indent: expected column number") >= 0);
     } else {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "indent %s %s", upto, rep) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "indent %s %s", upto, rep) >= 0);
       edit_do_cmd (dd);
       edit_reset (dd);
     }
-    dd->curr = cursavi;
+    CURR (dd) = cursavi;
     align_current (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if ((ccs == 2 || xxs == 2) && (ps == 1 || qs == 1) && total == 3) {
 /* COPY or MOVE block */
-    EDLIN_T *u = NULL, *v = NULL, *w = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = NO_EDLIN, *v = NO_EDLIN, *w = NO_EDLIN, *cursavi = CURR (dd);
     char upto[BUFFER_SIZE], ins[BUFFER_SIZE];
-    char *cmd = NULL, *delim = NULL, *rep = NULL;
+    char *cmd = NO_TEXT, *delim = NO_TEXT, *rep = NO_TEXT;
     if (ccs == 2) {
       cmd = "copy";
       delim = "CC";
@@ -4098,12 +4381,12 @@ static void edit_do_prefix (DATASET_T *dd)
       cmd = "move";
       delim = "XX";
     }
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
       SKIP_WHITE (p);
       if (match_cmd (p, delim, &arg)) {
         NO_ARGS (delim, arg);
-        if (u == NULL) {
+        if (u == NO_EDLIN) {
           u = z;
         } else {
           v = z;
@@ -4116,7 +4399,7 @@ static void edit_do_prefix (DATASET_T *dd)
         w = z;
       }
     }
-    dd->curr = u;
+    CURR (dd) = u;
     if (IS_EOF (v)) {
       ASSERT (snprintf (upto, BUFFER_SIZE - 1, "*") >= 0);
     } else if (NOT_EOF (v)) {
@@ -4132,21 +4415,21 @@ static void edit_do_prefix (DATASET_T *dd)
       ASSERT (snprintf (ins, BUFFER_SIZE - 1, ":%d-1", NUMBER (w)) >= 0);
     }
     if (EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s %s %s", cmd, upto, ins) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s %s %s", cmd, upto, ins) >= 0);
     } else {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s %s %s %s", cmd, upto, ins, rep) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s %s %s %s", cmd, upto, ins, rep) >= 0);
     }
     edit_do_cmd (dd);
     edit_reset (dd);
-    dd->curr = cursavi;
+    CURR (dd) = cursavi;
     align_current (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if ((cs == 1 || xs == 1) && (ps == 1 || qs == 1) && total == 2) {
 /* COPY or MOVE line */
-    EDLIN_T *u = NULL, *w = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = NO_EDLIN, *w = NO_EDLIN, *cursavi = CURR (dd);
     char ins[BUFFER_SIZE];
-    char *cmd = NULL, *delim = NULL, *target = NULL, *rep = NULL;
+    char *cmd = NO_TEXT, *delim = NO_TEXT, *target = NO_TEXT, *rep = NO_TEXT;
     if (cs == 1) {
       cmd = "copy";
       delim = "C";
@@ -4154,8 +4437,8 @@ static void edit_do_prefix (DATASET_T *dd)
       cmd = "move";
       delim = "X";
     }
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
       SKIP_WHITE (p);
       if (match_cmd (p, delim, &arg)) {
         target = arg;
@@ -4168,7 +4451,7 @@ static void edit_do_prefix (DATASET_T *dd)
         w = z;
       }
     }
-    dd->curr = u;
+    CURR (dd) = u;
     if (IS_EOF (w) && ps == 1) {
       ASSERT (snprintf (ins, BUFFER_SIZE - 1, "*") >= 0);
     } else if (IS_EOF (w) && qs == 1) {
@@ -4179,32 +4462,32 @@ static void edit_do_prefix (DATASET_T *dd)
       ASSERT (snprintf (ins, BUFFER_SIZE - 1, ":%d-1", NUMBER (w)) >= 0);
     }
     if (EMPTY_STRING (target) && EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s 1 %s", cmd, ins) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s 1 %s", cmd, ins) >= 0);
     } else if (EMPTY_STRING (target) && !EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s 1 %s %s", cmd, ins, rep) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s 1 %s %s", cmd, ins, rep) >= 0);
     } else if (!EMPTY_STRING (target) && EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s %s %s", cmd, target, ins) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s %s %s", cmd, target, ins) >= 0);
     } else if (!EMPTY_STRING (target) && !EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s %s %s %s", cmd, target, ins, rep) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s %s %s %s", cmd, target, ins, rep) >= 0);
     }
-    ASSERT (snprintf (scr->tmp_text, SNPRINTF_SIZE, "%s", scr->cmd) >= 0);
+    ASSERT (snprintf (TMP_TEXT (scr), SNPRINTF_SIZE, "%s", CMD (scr)) >= 0);
     edit_do_cmd (dd);
     edit_reset (dd);
-    dd->curr = cursavi;
+    CURR (dd) = cursavi;
     align_current (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if ((ps == 1 || qs == 1) && total == 1) {
 /* COPY previous block */
-    EDLIN_T *u = dd->bl_start, *v = dd->bl_end, *w = NULL, *cursavi = dd->curr;
+    EDLIN_T *u = BL_START (dd), *v = BL_END (dd), *w = NO_EDLIN, *cursavi = CURR (dd);
     char upto[BUFFER_SIZE], ins[BUFFER_SIZE];
-    char *cmd = "copy", *rep = NULL;
-    if (u == NULL || v == NULL) {
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "copy: no previous block") >= 0);
+    char *cmd = "copy", *rep = NO_TEXT;
+    if (u == NO_EDLIN || v == NO_EDLIN) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "copy: no previous block") >= 0);
       return;
     }
-    for (z = dd->tof; z != NULL; FORWARD (z)) {
-      char *p = z->precmd;
+    for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
+      char *p = PRECMD (z);
       SKIP_WHITE (p);
       if (match_cmd (p, "P", &arg)) {
         rep = arg;
@@ -4214,7 +4497,7 @@ static void edit_do_prefix (DATASET_T *dd)
         w = z;
       }
     }
-    dd->curr = u;
+    CURR (dd) = u;
     if (IS_EOF (v)) {
       ASSERT (snprintf (upto, BUFFER_SIZE - 1, "*") >= 0);
     } else if (u == v) {
@@ -4232,18 +4515,18 @@ static void edit_do_prefix (DATASET_T *dd)
       ASSERT (snprintf (ins, BUFFER_SIZE - 1, ":%d-1", NUMBER (w)) >= 0);
     }
     if (EMPTY_STRING (rep)) {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s %s %s", cmd, upto, ins) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s %s %s", cmd, upto, ins) >= 0);
     } else {
-      ASSERT (snprintf (scr->cmd, SNPRINTF_SIZE, "%s %s %s %s", cmd, upto, ins, rep) >= 0);
+      ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "%s %s %s %s", cmd, upto, ins, rep) >= 0);
     }
     edit_do_cmd (dd);
     edit_reset (dd);
-    dd->curr = cursavi;
+    CURR (dd) = cursavi;
     align_current (dd);
-    bufcpy (scr->cmd, "", BUFFER_SIZE);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   }
-  ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: unrecognised prefix command") >= 0);
+  ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: unrecognised prefix command") >= 0);
 }
 
 /*
@@ -4254,17 +4537,17 @@ static void edit_do_prefix (DATASET_T *dd)
 
 static void key_command (DATASET_T *dd, char *cmd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
-  EDLIN_T *old = dd->curr;
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  EDLIN_T *old = CURR (dd);
   SAVE_CURSOR (dd, curs);
-  bufcpy (scr->cmd, cmd, BUFFER_SIZE);
+  bufcpy (CMD (scr), cmd, BUFFER_SIZE);
   edit_do_cmd (dd);
   CURSOR_TO_SAVE (dd, curs);
-  if (old == dd->curr) {
-    dd->refresh = A68_FALSE;
+  if (old == CURR (dd)) {
+    REFRESH (dd) = A68_FALSE;
   } else {
-    wclear (stdscr);
+    REDRAW (stdscr);
   }
 }
 
@@ -4275,19 +4558,19 @@ static void key_command (DATASET_T *dd, char *cmd)
 
 static void edit_loop (DATASET_T *dd)
 {
-  DISPLAY_T *scr = &(dd->display);
-  CURSOR_T *curs = &(scr->curs);
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
   for (;;) {
     int ch, k;
-    if (dd->refresh) {
+    if (REFRESH (dd)) {
 /* Redraw the screen ... */
       edit_draw (dd);
 /* ... and set the cursor like this or else ncurses can misplace it :-( */
-      wmove (stdscr, curs->row, curs->col);
+      wmove (stdscr, ROW (curs), COL (curs));
       wrefresh (stdscr);
     }
-    dd->refresh = A68_TRUE;
-    bufcpy (scr->dl0, "", BUFFER_SIZE);
+    REFRESH (dd) = A68_TRUE;
+    bufcpy (DL0 (scr), "", BUFFER_SIZE);
     ch = wgetch (stdscr);
     if (ch == ESCAPE_CHAR) {
 /*
@@ -4303,25 +4586,25 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       while (cont && j < 6) {
         esc[j] = (char) ch;
         n = 0;
-        for (k = 0; dec_key[k].code >= 0; k++) {
-          if (strncmp (dec_key[k].name, esc, (size_t) (j + 1)) == 0) {
+        for (k = 0; CODE (&dec_key[k]) >= 0; k++) {
+          if (strncmp (NAME (&dec_key[k]), esc, (size_t) (j + 1)) == 0) {
             n++;
             m = k;
           }
         }
         if (n == 0) {
           ch = '~';
-          ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: undefined escape sequence %s", &esc[1]) >= 1);
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined escape sequence %s", &esc[1]) >= 1);
           cont = A68_FALSE;
         } else if (n == 1) {
-          for (j++ ; j != (int) strlen (dec_key[m].name); j++) {
+          for (j++ ; j != (int) strlen (NAME (&dec_key[m])); j++) {
             esc[j] = (char) wgetch (stdscr);
           }
-          if (strcmp (dec_key[m].name, esc) == 0) {
-            ch = dec_key[m].code;
+          if (strcmp (NAME (&dec_key[m]), esc) == 0) {
+            ch = CODE (&dec_key[m]);
           } else {
             ch = '~';
-            ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: undefined escape sequence %s", &esc[1]) >= 1);
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined escape sequence %s", &esc[1]) >= 1);
           }
           cont = A68_FALSE;
         } else if (n > 1) {
@@ -4331,9 +4614,9 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       }
     }
 /* Substitute keys for uniform behaviour */
-    for (k = 0; trans_tab[k].code >= 0; k++) {
-      if (ch == trans_tab[k].code) {
-        ch = trans_tab[k].trans;
+    for (k = 0; CODE (&trans_tab[k]) >= 0; k++) {
+      if (ch == CODE (&trans_tab[k])) {
+        ch = TRANS (&trans_tab[k]);
       }
     }
 /* Interprete the key */
@@ -4342,48 +4625,48 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       for (k = 0; k < 24; k++) {
         if (ch == KEY_F0 + k + 1) {
           if ((int) strlen (pf_bind[k]) == 0) {
-            ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: PF%02d has no command", k + 1) >= 0);
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: PF%02d has no command", k + 1) >= 0);
           } else {
             SAVE_CURSOR (dd, curs);
-            bufcpy (scr->cmd, pf_bind[k], BUFFER_SIZE);
+            bufcpy (CMD (scr), pf_bind[k], BUFFER_SIZE);
             edit_do_cmd (dd);
-            if (! match_cmd (pf_bind[k], "TOGGLE", NULL) && ! match_cmd (pf_bind[k], "CASE", NULL)) {
+            if (! match_cmd (pf_bind[k], "TOGGLE", NO_VAR) && ! match_cmd (pf_bind[k], "CASE", NO_VAR)) {
               CURSOR_TO_SAVE (dd, curs);
             }
           }
         }
       }
 /* Prefix editing */
-    } else if (ch <= UCHAR_MAX && IS_PRINT (ch) && curs->in_prefix) {
+    } else if (ch <= UCHAR_MAX && IS_PRINT (ch) && IN_PREFIX (curs)) {
       edit_prefix (dd, ch);
-    } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE || ch == KEY_DC) && curs->in_prefix) {
+    } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE || ch == KEY_DC) && IN_PREFIX (curs)) {
       edit_prefix (dd, ch);
-    } else if (ch == NEWLINE_CHAR && curs->in_prefix) {
+    } else if (ch == NEWLINE_CHAR && IN_PREFIX (curs)) {
       SAVE_CURSOR (dd, curs);
       edit_do_prefix (dd);
       CURSOR_TO_SAVE (dd, curs);
-      wclear (stdscr);
+      REDRAW (stdscr);
 /* Command line editing */
-    } else if (ch <= UCHAR_MAX && IS_PRINT (ch) && curs->in_cmd) {
+    } else if (ch <= UCHAR_MAX && IS_PRINT (ch) && IN_CMD (curs)) {
       edit_cmd (dd, ch);
-    } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE || ch == KEY_DC) && curs->in_cmd) {
+    } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE || ch == KEY_DC) && IN_CMD (curs)) {
       edit_cmd (dd, ch);
-    } else if (ch == NEWLINE_CHAR && curs->in_cmd) {
+    } else if (ch == NEWLINE_CHAR && IN_CMD (curs)) {
       edit_do_cmd (dd);
-      wclear (stdscr);
-      curs->row = -1;
-      curs->col = -1;
+      REDRAW (stdscr);
+      ROW (curs) = -1;
+      COL (curs) = -1;
 /* Text editing */
-    } else if (ch <= UCHAR_MAX && (IS_PRINT (ch) || ch == '\t') && curs->in_text) {
+    } else if (ch <= UCHAR_MAX && (IS_PRINT (ch) || ch == '\t') && IN_TEXT (curs)) {
       edit_text (dd, ch);
-    } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE || ch == KEY_DC) &&  !curs->in_forbidden) {
+    } else if ((ch == KEY_BACKSPACE || ch == BACKSPACE || ch == KEY_DC) &&  !IN_FORBIDDEN (curs)) {
       edit_text (dd, ch);
-    } else if (ch == NEWLINE_CHAR && !curs->in_forbidden) {
+    } else if (ch == NEWLINE_CHAR && !IN_FORBIDDEN (curs)) {
       split_line (dd, "edit");
       edit_reset (dd);
-      dd->bl_start = dd->bl_end = NULL;
-      if (dd->size == 1) {
-        dd->curr = NEXT (dd->tof);
+      BL_START (dd) = BL_END (dd) = NO_EDLIN;
+      if (SIZE (dd) == 1) {
+        CURR (dd) = NEXT (TOF (dd));
       }
     } else if (ch == KEY_RESIZE) {
 /* Resize event triggers reinitialisation */
@@ -4391,66 +4674,56 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       edit_init_curses (dd);
     } else if (ch == KEY_MOUSE) {
 /* Mouse control is basic: you can point with the cursor but little else */
+#if ! defined HAVE_WIN32
       MEVENT event;
       if (getmouse (&event) == OK) {
-        curs->bstate = event.bstate;
-        if (event.bstate & (BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED | 
+        BSTATE (curs) = BSTATE (&event);
+        if (BSTATE (&event) & (BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED | 
                             BUTTON1_PRESSED | BUTTON1_RELEASED)) {
-          if (reserved_row (dd, event.y) && event.y != scr->cmd_row) {
+          if (reserved_row (dd, Y (&event)) && Y (&event) != CMD_ROW (scr)) {
             PROTECTED ("edit");
           } else {
-            curs->row = event.y;
-            curs->col = event.x;
+            ROW (curs) = Y (&event);
+            COL (curs) = X (&event);
           }
-        } else if (event.bstate & (BUTTON3_CLICKED | BUTTON3_DOUBLE_CLICKED | 
+        } else if (BSTATE (&event) & (BUTTON3_CLICKED | BUTTON3_DOUBLE_CLICKED | 
                                    BUTTON3_PRESSED | BUTTON3_RELEASED)) {
-          if (reserved_row (dd, event.y) && event.y != scr->cmd_row) {
+          if (reserved_row (dd, Y (&event)) && Y (&event) != CMD_ROW (scr)) {
             PROTECTED ("edit");
           } else {
-            curs->row = event.y;
-            curs->col = event.x;
+            ROW (curs) = Y (&event);
+            COL (curs) = X (&event);
           }
         }
       }
+#endif /* ! defined HAVE_WIN32 */
 /* Keyboard control keys */
     } else if (ch == KEY_UP) {
-      int u = curs->row;
+      int u = ROW (curs);
       do {
         u = (u == 0 ? LINES - 1 : u - 1);
-      } while (reserved_row (dd, u) && u != scr->cmd_row);
-      curs->row = u;
+      } while (reserved_row (dd, u) && u != CMD_ROW (scr));
+      ROW (curs) = u;
     } else if (ch == KEY_DOWN) {
-      int u = curs->row;
+      int u = ROW (curs);
       do {
         u = (u == LINES - 1 ? 0 : u + 1);
-      } while (reserved_row (dd, u) && u != scr->cmd_row);
-      curs->row = u;
-    } else if (ch == KEY_SR || ch == KEY_CTRL('W')) {
-      int h = histix;
-      if (h == 0) {
-        h = HISTORY - 1;
-      } else {
-        h --;
+      } while (reserved_row (dd, u) && u != CMD_ROW (scr));
+      ROW (curs) = u;
+    } else if (ch == KEY_CTRL('W') && histcurr >= 0) {
+      if (histprev >= 0) {
+        bufcpy (CMD (scr), history[histprev], BUFFER_SIZE);
+        edit_set_history (histprev);
       }
-      if ((int) strlen (history[h]) != 0) {
-        bufcpy (scr->cmd, history[h], BUFFER_SIZE);
-        histix = h;
-      }
-    } else if (ch == KEY_SF || ch == KEY_CTRL ('X')) {
-      int h = histix;
-      if (h == HISTORY - 1) {
-        h = 0;
-      } else {
-        h ++;
-      }
-      if ((int) strlen (history[h]) != 0) {
-        bufcpy (scr->cmd, history[h], BUFFER_SIZE);
-        histix = h;
+    } else if (ch == KEY_CTRL('X') && histcurr >= 0) {
+      if (histnext >= 0) {
+        bufcpy (CMD (scr), history[histnext], BUFFER_SIZE);
+        edit_set_history (histnext);
       }
     } else if (ch == KEY_RIGHT) {
-      curs->col = (curs->col == COLS - 1 ? 0 : curs->col + 1);
+      COL (curs) = (COL (curs) == COLS - 1 ? 0 : COL (curs) + 1);
     } else if (ch == KEY_LEFT) {
-      curs->col = (curs->col == 0 ? COLS - 1 : curs->col - 1);
+      COL (curs) = (COL (curs) == 0 ? COLS - 1 : COL (curs) - 1);
     } else if (ch == KEY_NPAGE || ch == KEY_C3) {
       key_command (dd, "page +1");
     } else if (ch == KEY_PPAGE || ch == KEY_A3) {
@@ -4460,51 +4733,51 @@ Get some CSI/SS2/SS3 sequences from different terminals.
     } else if (ch == KEY_END || ch == KEY_C1) {
       key_command (dd, "+*");
     } else if (ch == KEY_SLEFT || ch == KEY_CTRL('A')) {
-      if (curs->in_text || curs->in_cmd) {
-        curs->index = 0;
-        curs->col = MARGIN;
+      if (IN_TEXT (curs) || IN_CMD (curs)) {
+        INDEX (curs) = 0;
+        COL (curs) = MARGIN;
       } else {
         PROTECTED ("edit");
       }
     } else if (ch == KEY_SRIGHT || ch == KEY_CTRL ('D')) {
-      if (curs->in_text) {
-        curs->index = (int) strlen (TEXT (curs->line));
-        curs->sync_index = curs->index;
-        curs->sync_line = curs->line;
-        curs->sync = A68_TRUE;
-      } else if (curs->in_cmd) {
-        curs->index = (int) strlen (scr->cmd);
-        curs->col = MARGIN + curs->index;
+      if (IN_TEXT (curs)) {
+        INDEX (curs) = (int) strlen (TEXT (LINE (curs)));
+        SYNC_INDEX (curs) = INDEX (curs);
+        SYNC_LINE (curs) = LINE (curs);
+        SYNC (curs) = A68_TRUE;
+      } else if (IN_CMD (curs)) {
+        INDEX (curs) = (int) strlen (CMD (scr));
+        COL (curs) = MARGIN + INDEX (curs);
       } else {
         PROTECTED ("edit");
       }
     } else if (ch == KEY_B2) {
-      if (curs->in_text) {
-        if (curs->line != NULL && NUMBER (curs->line) > 0) {
-          dd->curr = curs->line;
-          curs->sync_index = 0;
-          curs->sync_line = dd->curr;
-          curs->sync = A68_TRUE;
+      if (IN_TEXT (curs)) {
+        if (LINE (curs) != NO_EDLIN && NUMBER (LINE (curs)) > 0) {
+          CURR (dd) = LINE (curs);
+          SYNC_INDEX (curs) = 0;
+          SYNC_LINE (curs) = CURR (dd);
+          SYNC (curs) = A68_TRUE;
         }
       } else {
         PROTECTED ("edit");
       }
 /* Other keys */
     } else if (ch == KEY_IC) {
-      scr->ins_mode = !scr->ins_mode;
+      INS_MODE (scr) = !INS_MODE (scr);
 /* Alas, unknown. File a complaint. */
     } else if (ch > 127) {
-      if (curs->in_forbidden) {
+      if (IN_FORBIDDEN (curs)) {
         PROTECTED ("edit");
         goto end;
       }
-      for (k = 0; key_tab[k].code >= 0; k++) {
-        if (ch == key_tab[k].code) {
-          ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: undefined key %s", key_tab[k].name) >= 1);
+      for (k = 0; CODE (&key_tab[k]) >= 0; k++) {
+        if (ch == CODE (&key_tab[k])) {
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined key %s", NAME (&key_tab[k])) >= 1);
           goto end;
         }
       }
-      ASSERT (snprintf (scr->dl0, SNPRINTF_SIZE, "edit: undefined key %d", ch) >= 0);
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined key %d", ch) >= 0);
     }
   end: continue;
   }
@@ -4522,40 +4795,42 @@ static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
 {
 /* Init ncurses */
   edit_init_curses (dd);
-  bufcpy (dd->name, filename, BUFFER_SIZE);
-  dd->tabs = TAB_STOP;
-  dd->heap_pointer = fixed_heap_pointer;
+  bufcpy (NAME (dd), filename, BUFFER_SIZE);
+  TABS (dd) = TAB_STOP;
+  HEAP_POINTER (dd) = fixed_heap_pointer;
 /* Init edit */
-  dd->display.dl0[0] = NULL_CHAR;
-  dd->display.cmd[0] = NULL_CHAR;
-  dd->linbuf = NULL;
-  dd->linsiz = 0;
-  dd->collect = A68_FALSE;
+  DL0 (&DISPLAY (dd))[0] = NULL_CHAR;
+  CMD (&DISPLAY (dd))[0] = NULL_CHAR;
+  LINBUF (dd) = NO_TEXT;
+  LINSIZ (dd) = 0;
+  COLLECT (dd) = A68_FALSE;
   edit_read_initial (dd, "edit");
-  XABEND (heap_full (BUFFER_SIZE), "out of memory", NULL);
-  dd->collect = A68_TRUE;
-  dd->display.ins_mode = A68_TRUE;
-  dd->refresh = A68_TRUE;
-  dd->msgs = -1; /* File not open */
-  dd->num = num;
-  dd->undo_line = 0;
-  dd->search = 0;
-  dd->bl_start = dd->bl_end = NULL;
-  if (target != NULL && (int) (strlen (target)) > 0) {
+  XABEND (heap_full (BUFFER_SIZE), "out of memory", NO_TEXT);
+  COLLECT (dd) = A68_TRUE;
+  INS_MODE (&DISPLAY (dd)) = A68_TRUE;
+  REFRESH (dd) = A68_TRUE;
+  MSGS (dd) = -1; /* File not open */
+  NUM (dd) = num;
+  UNDO_LINE (dd) = 0;
+  SEARCH (dd) = 0;
+  BL_START (dd) = BL_END (dd) = NO_EDLIN;
+  M_MATCH (dd) = NO_EDLIN;
+  M_SO (dd) = M_EO (dd) = -1; /* No match */
+  if (target != NO_TEXT && (int) (strlen (target)) > 0) {
     char *rest;
     EDLIN_T *z = get_target (dd, "edit", target, &rest, A68_TRUE);
-    if (z != NULL) {
-      dd->curr = z;
+    if (z != NO_EDLIN) {
+      CURR (dd) = z;
     } else {
-      ASSERT (snprintf (dd->display.dl0, SNPRINTF_SIZE, "edit: optional target not set") >= 0);
+      ASSERT (snprintf (DL0 (&DISPLAY (dd)), SNPRINTF_SIZE, "edit: optional target not set") >= 0);
     }
   }
-  if (!a68g_mkstemp (dd->undo, A68_WRITE_ACCESS, A68_PROTECTION)) {
-    (dd->undo)[0] = NULL_CHAR;
-    ASSERT (snprintf (dd->display.dl0, SNPRINTF_SIZE, "edit: cannot open temporary file for undo") >= 0);
+  if (!a68g_mkstemp (UNDO (dd), A68_WRITE_ACCESS, A68_PROTECTION)) {
+    (UNDO (dd))[0] = NULL_CHAR;
+    ASSERT (snprintf (DL0 (&DISPLAY (dd)), SNPRINTF_SIZE, "edit: cannot open temporary file for undo") >= 0);
   }
-  remove (dd->undo);
-  if (setjmp (dd->edit_exit_label) == 0) {
+  remove (UNDO (dd));
+  if (setjmp (EDIT_EXIT_LABEL (dd)) == 0) {
     edit_loop (dd);
   }
 }
@@ -4574,7 +4849,6 @@ void edit (char *start_text)
   for (k = 0; k < HISTORY; k++) {
     bufcpy (history[k], "", BUFFER_SIZE);
   }
-  histix = 0;
   for (k = 0; k < MAX_PF; k++) {
     pf_bind[k][0] = NULL_CHAR;
   }
@@ -4587,12 +4861,16 @@ void edit (char *start_text)
   ASSERT (snprintf (pf_bind[6], SNPRINTF_SIZE, "syntax") >= 0);
   ASSERT (snprintf (pf_bind[7], SNPRINTF_SIZE, "message") >= 0);
   ASSERT (snprintf (pf_bind[11], SNPRINTF_SIZE, "toggle") >= 0);
-  if (program.files.initial_name == NULL) {
+  if (FILE_INITIAL_NAME (&program) == NO_TEXT) {
+#if ! defined HAVE_WIN32
     errno = ENOTSUP;
-    SCAN_ERROR (A68_TRUE, NULL, NULL, "edit: no filename");
+#endif /* ! defined HAVE_WIN32 */
+    SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, "edit: no filename");
   }
-  edit_dataset (&dataset, 1, program.files.initial_name, program.options.target);
+  read_history ();
+  edit_dataset (&dataset, 1, FILE_INITIAL_NAME (&program), OPTION_TARGET (&program));
 /* Exit edit */
+  write_history ();
   wclear (stdscr);
   refresh ();
   endwin ();
@@ -4600,4 +4878,4 @@ void edit (char *start_text)
   exit (EXIT_SUCCESS);
 }
 
-#endif /* defined HAVE_CURSES_H && defined HAVE_LIBNCURSES && defined HAVE_REGEX_H) */
+#endif /* HAVE_EDITOR */

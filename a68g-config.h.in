@@ -215,62 +215,62 @@
 #undef uint16_t
 
 /* In case of incomplete GSL installation - tant pis */
-#if ! defined  HAVE_LIBGSLCBLAS
+#if ! defined HAVE_LIBGSLCBLAS
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_BLAS_H
+#if ! defined HAVE_GSL_GSL_BLAS_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_COMPLEX_H
+#if ! defined HAVE_GSL_GSL_COMPLEX_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_COMPLEX_MATH_H
+#if ! defined HAVE_GSL_GSL_COMPLEX_MATH_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_ERRNO_H
+#if ! defined HAVE_GSL_GSL_ERRNO_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_FFT_COMPLEX_H
+#if ! defined HAVE_GSL_GSL_FFT_COMPLEX_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_INTEGRATION_H
+#if ! defined HAVE_GSL_GSL_INTEGRATION_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_LINALG_H
+#if ! defined HAVE_GSL_GSL_LINALG_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_MATH_H
+#if ! defined HAVE_GSL_GSL_MATH_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_MATRIX_H
+#if ! defined HAVE_GSL_GSL_MATRIX_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_PERMUTATION_H
+#if ! defined HAVE_GSL_GSL_PERMUTATION_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_SF_H
+#if ! defined HAVE_GSL_GSL_SF_H
 #undef HAVE_LIBGSL
 #endif
 
-#if ! defined  HAVE_GSL_GSL_VECTOR_H
+#if ! defined HAVE_GSL_GSL_VECTOR_H
 #undef HAVE_LIBGSL
 #endif
 
 /* Do we have a compiler? */
 #if (! defined HAVE_GCC || defined NO_MINUS_C_MINUS_O || ! defined HAVE_DLFCN_H)
 #undef HAVE_COMPILER
-#elif ! defined HAVE_EXPORT_DYNAMIC
+#elif (! HAVE_MAC_OS_X && ! defined HAVE_EXPORT_DYNAMIC)
 #undef HAVE_COMPILER
 #elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_LIBDL)
 #define HAVE_COMPILER 1

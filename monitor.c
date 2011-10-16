@@ -50,7 +50,7 @@ extern char term_buffer[];
 
 ADDR_T finish_frame_pointer = 0;
 BOOL_T in_monitor = A68_FALSE;
-char *watchpoint_expression = NULL;
+char *watchpoint_expression = NO_TEXT;
 int break_proc_level = 0;
 
 static BOOL_T check_initialisation (NODE_T *, BYTE_T *, MOID_T *, BOOL_T *);
@@ -83,11 +83,11 @@ static void parse (FILE_T, NODE_T *, int);
 
 #define CHECK_MON_REF(p, z, m)\
   if (! INITIALISED (&z)) {\
-    ASSERT (snprintf(edit_line, SNPRINTF_SIZE, "%s", moid_to_string ((m), MOID_WIDTH, NULL)) >= 0);\
+    ASSERT (snprintf(edit_line, SNPRINTF_SIZE, "%s", moid_to_string ((m), MOID_WIDTH, NO_NODE)) >= 0);\
     monitor_error (NO_VALUE, edit_line);\
     QUIT_ON_ERROR;\
   } else if (IS_NIL (z)) {\
-    ASSERT (snprintf(edit_line, SNPRINTF_SIZE, "%s", moid_to_string ((m), MOID_WIDTH, NULL)) >= 0);\
+    ASSERT (snprintf(edit_line, SNPRINTF_SIZE, "%s", moid_to_string ((m), MOID_WIDTH, NO_NODE)) >= 0);\
     monitor_error ("accessing NIL name", edit_line);\
     QUIT_ON_ERROR;\
   }
@@ -152,7 +152,7 @@ void monitor_error (char *msg, char *info)
   WRITELN (STDOUT_FILENO, a68g_cmd_name);
   WRITE (STDOUT_FILENO, ": monitor error: ");
   WRITE (STDOUT_FILENO, error_text);
-  if (info != NULL) {
+  if (info != NO_TEXT) {
     WRITE (STDOUT_FILENO, " (");
     WRITE (STDOUT_FILENO, info);
     WRITE (STDOUT_FILENO, ")");
@@ -234,7 +234,7 @@ static void scan_sym (FILE_T f, NODE_T * p)
     }
     symbol[k] = NULL_CHAR;
     kw = find_keyword (top_keyword, symbol);
-    if (kw != NULL) {
+    if (kw != NO_KEYWORD) {
       attr = ATTRIBUTE (kw);
     } else {
       attr = OPERATOR;
@@ -279,9 +279,9 @@ static void scan_sym (FILE_T f, NODE_T * p)
     symbol[k] = NULL_CHAR;
     attr = REAL_DENOTATION;
     return;
-  } else if (a68g_strchr (MONADS, expr[pos]) != NULL || a68g_strchr (NOMADS, expr[pos]) != NULL) {
+  } else if (a68g_strchr (MONADS, expr[pos]) != NO_TEXT || a68g_strchr (NOMADS, expr[pos]) != NO_TEXT) {
     symbol[k++] = expr[pos++];
-    if (a68g_strchr (NOMADS, expr[pos]) != NULL) {
+    if (a68g_strchr (NOMADS, expr[pos]) != NO_TEXT) {
       symbol[k++] = expr[pos++];
     }
     if (expr[pos] == ':') {
@@ -336,34 +336,34 @@ static void scan_sym (FILE_T f, NODE_T * p)
 \param table symbol table
 \param a attribute
 \param name name of token
-\return entry in symbol table or NULL
+\return entry in symbol table
 **/
 
 static TAG_T *find_tag (TABLE_T * table, int a, char *name)
 {
-  if (table != NULL) {
-    TAG_T *s = NULL;
+  if (table != NO_TABLE) {
+    TAG_T *s = NO_TAG;
     if (a == OP_SYMBOL) {
-      s = table->operators;
+      s = OPERATORS (table);
     } else if (a == PRIO_SYMBOL) {
       s = PRIO (table);
     } else if (a == IDENTIFIER) {
-      s = table->identifiers;
+      s = IDENTIFIERS (table);
     } else if (a == INDICANT) {
-      s = table->indicants;
+      s = INDICANTS (table);
     } else if (a == LABEL) {
-      s = table->labels;
+      s = LABELS (table);
     } else {
-      ABEND (A68_TRUE, "impossible state in find_tag_global", NULL);
+      ABEND (A68_TRUE, "impossible state in find_tag_global", NO_TEXT);
     }
-    for (; s != NULL; FORWARD (s)) {
-      if (strcmp (SYMBOL (NODE (s)), name) == 0) {
+    for (; s != NO_TAG; FORWARD (s)) {
+      if (strcmp (NSYMBOL (NODE (s)), name) == 0) {
         return (s);
       }
     }
     return (find_tag_global (PREVIOUS (table), a, name));
   } else {
-    return (NULL);
+    return (NO_TAG);
   }
 }
 
@@ -379,7 +379,7 @@ static int prio (FILE_T f, NODE_T * p)
   TAG_T *s = find_tag (a68g_standenv, PRIO_SYMBOL, symbol);
   (void) p;
   (void) f;
-  if (s == NULL) {
+  if (s == NO_TAG) {
     monitor_error ("unknown operator, cannot set priority", symbol);
     return (0);
   }
@@ -398,7 +398,7 @@ static void push_mode (FILE_T f, MOID_T * m)
   if (_m_sp < STACK_SIZE) {
     _m_stack[_m_sp++] = m;
   } else {
-    monitor_error ("expression too complex", NULL);
+    monitor_error ("expression too complex", NO_TEXT);
   }
 }
 
@@ -412,7 +412,7 @@ static void push_mode (FILE_T f, MOID_T * m)
 static BOOL_T deref_condition (int k, int context)
 {
   MOID_T *u = _m_stack[k];
-  if (context == WEAK && SUB (u) != NULL) {
+  if (context == WEAK && SUB (u) != NO_MOID) {
     MOID_T *v = SUB (u);
     BOOL_T stowed = (BOOL_T) (WHETHER (v, FLEX_SYMBOL) || WHETHER (v, ROW_SYMBOL) || WHETHER (v, STRUCT_SYMBOL));
     return ((BOOL_T) (WHETHER (u, REF_SYMBOL) && !stowed));
@@ -444,40 +444,40 @@ static void deref (NODE_T * p, int k, int context)
 \param refs whether we look for a REF indicant
 \param leng sizety of indicant
 \param indy indicant name
-\return moid or NULL
+\return moiD
 **/
 
 static MOID_T *search_mode (int refs, int leng, char *indy)
 {
-  MOID_T *m = NULL, *z = NULL;
-  for (m = program.top_moid; m != NULL; FORWARD (m)) {
-    if (NODE (m) != NULL) {
-      if (indy == SYMBOL (NODE (m)) && leng == DIM (m)) {
+  MOID_T *m = NO_MOID, *z = NO_MOID;
+  for (m = TOP_MOID (&program); m != NO_MOID; FORWARD (m)) {
+    if (NODE (m) != NO_NODE) {
+      if (indy == NSYMBOL (NODE (m)) && leng == DIM (m)) {
         z = m;
-        while (EQUIVALENT (z) != NULL) {
+        while (EQUIVALENT (z) != NO_MOID) {
           z = EQUIVALENT (z);
         }
       }
     }
   }
-  if (z == NULL) {
+  if (z == NO_MOID) {
     monitor_error ("unknown indicant", indy);
-    return (NULL);
+    return (NO_MOID);
   }
-  for (m = program.top_moid; m != NULL; FORWARD (m)) {
+  for (m = TOP_MOID (&program); m != NO_MOID; FORWARD (m)) {
     int k = 0;
     while (WHETHER (m, REF_SYMBOL)) {
       k++;
       m = SUB (m);
     }
     if (k == refs && m == z) {
-      while (EQUIVALENT (z) != NULL) {
+      while (EQUIVALENT (z) != NO_MOID) {
         z = EQUIVALENT (z);
       }
       return (z);
     }
   }
-  return (NULL);
+  return (NO_MOID);
 }
 
 /*!
@@ -491,15 +491,15 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
 static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
 {
   TAG_T *t;
-  for (t = a68g_standenv->operators; t != NULL; FORWARD (t)) {
-    if (strcmp (SYMBOL (NODE (t)), sym) == 0) {
+  for (t = OPERATORS (a68g_standenv); t != NO_TAG; FORWARD (t)) {
+    if (strcmp (NSYMBOL (NODE (t)), sym) == 0) {
       PACK_T *p = PACK (MOID (t));
       if (x == MOID (p)) {
         FORWARD (p);
-        if (p == NULL && y == NULL) {
+        if (p == NO_PACK && y == NO_MOID) {
 /* Matched in case of a monad */
           return (t);
-        } else if (p != NULL && y != NULL && y == MOID (p)) {
+        } else if (p != NO_PACK && y != NO_MOID && y == MOID (p)) {
 /* Matched in case of a nomad */
           return (t);
         }
@@ -510,17 +510,17 @@ static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
   if (WHETHER (x, REF_SYMBOL)) {
     return (search_operator (sym, SUB (x), y));
   }
-  if (y != NULL && WHETHER (y, REF_SYMBOL)) {
+  if (y != NO_MOID && WHETHER (y, REF_SYMBOL)) {
     return (search_operator (sym, x, SUB (y)));
   }
 /* Not found. Grrrr. Give a message */
-  if (y == NULL) {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s %s", sym, moid_to_string (x, MOID_WIDTH, NULL)) >= 0);
+  if (y == NO_MOID) {
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s %s", sym, moid_to_string (x, MOID_WIDTH, NO_NODE)) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s %s %s", moid_to_string (x, MOID_WIDTH, NULL), sym, moid_to_string (y, MOID_WIDTH, NULL)) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s %s %s", moid_to_string (x, MOID_WIDTH, NO_NODE), sym, moid_to_string (y, MOID_WIDTH, NO_NODE)) >= 0);
   }
   monitor_error ("cannot find operator in standard environ", edit_line);
-  return (NULL);
+  return (NO_TAG);
 }
 
 /*!
@@ -537,11 +537,11 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
     int dynamic_a68g_link = FRAME_DYNAMIC_LINK (a68g_link);
     if (current_frame == 0 || (current_frame == FRAME_NUMBER (a68g_link))) {
       NODE_T *u = FRAME_TREE (a68g_link);
-      if (u != NULL) {
+      if (u != NO_NODE) {
         TABLE_T *q = TABLE (u);
-        TAG_T *i = q->identifiers;
-        for (; i != NULL; FORWARD (i)) {
-          if (strcmp (SYMBOL (NODE (i)), sym) == 0) {
+        TAG_T *i = IDENTIFIERS (q);
+        for (; i != NO_TAG; FORWARD (i)) {
+          if (strcmp (NSYMBOL (NODE (i)), sym) == 0) {
             ADDR_T posit = a68g_link + FRAME_INFO_SIZE + OFFSET (i);
             MOID_T *m = MOID (i);
             PUSH (p, FRAME_ADDRESS (posit), MOID_SIZE (m));
@@ -554,20 +554,20 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
     search_identifier (f, p, dynamic_a68g_link, sym);
   } else {
     TABLE_T *q = a68g_standenv;
-    TAG_T *i = q->identifiers;
-    for (; i != NULL; FORWARD (i)) {
-      if (strcmp (SYMBOL (NODE (i)), sym) == 0) {
+    TAG_T *i = IDENTIFIERS (q);
+    for (; i != NO_TAG; FORWARD (i)) {
+      if (strcmp (NSYMBOL (NODE (i)), sym) == 0) {
         if (WHETHER (MOID (i), PROC_SYMBOL)) {
           static A68_PROCEDURE z;
           STATUS (&z) = (STATUS_MASK) (INITIALISED_MASK | STANDENV_PROC_MASK);
-          (BODY (&z)).proc = PROC (i);
+          PROCEDURE (&(BODY (&z))) = PROCEDURE (i);
           ENVIRON (&z) = 0;
-          LOCALE (&z) = NULL;
+          LOCALE (&z) = NO_HANDLE;
           MOID (&z) = MOID (i);
           PUSH_PROCEDURE (p, z);
         } else {
           UP_BLOCK_GC;
-          (*(PROC (i))) (p);
+          (*(PROCEDURE (i))) (p);
           DOWN_BLOCK_GC;
         }
         push_mode (f, MOID (i));
@@ -591,7 +591,7 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
   ADDR_T sp_2 = top_sp;
   (void) f;
   if ((top - bot) != DIM (proc)) {
-    monitor_error ("invalid procedure argument count", NULL);
+    monitor_error ("invalid procedure argument count", NO_TEXT);
   }
   QUIT_ON_ERROR;
   for (k = bot, u = PACK (proc); k < top; k++, FORWARD (u)) {
@@ -604,11 +604,11 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
       sp_2 += ALIGNED_SIZE_OF (A68_REF);
       deref (p, k, STRONG);
       if (_m_stack[k] != MOID (u)) {
-        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s to %s", moid_to_string (_m_stack[k], MOID_WIDTH, NULL), moid_to_string (MOID (u), MOID_WIDTH, NULL)) >= 0);
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s to %s", moid_to_string (_m_stack[k], MOID_WIDTH, NO_NODE), moid_to_string (MOID (u), MOID_WIDTH, NO_NODE)) >= 0);
         monitor_error ("invalid argument mode", edit_line);
       }
     } else {
-      ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s to %s", moid_to_string (_m_stack[k], MOID_WIDTH, NULL), moid_to_string (MOID (u), MOID_WIDTH, NULL)) >= 0);
+      ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s to %s", moid_to_string (_m_stack[k], MOID_WIDTH, NO_NODE), moid_to_string (MOID (u), MOID_WIDTH, NO_NODE)) >= 0);
       monitor_error ("cannot coerce argument", edit_line);
     }
     QUIT_ON_ERROR;
@@ -631,7 +631,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
   PACK_T *u, *v;
   SCAN_CHECK (f, p);
   if (attr != IDENTIFIER && attr != OPEN_SYMBOL) {
-    monitor_error ("invalid selection syntax", NULL);
+    monitor_error ("invalid selection syntax", NO_TEXT);
   }
   QUIT_ON_ERROR;
   PARSE_CHECK (f, p, MAX_PRIORITY + 1);
@@ -648,10 +648,10 @@ static void selection (FILE_T f, NODE_T * p, char *field)
     v = PACK (moid);
   }
   if (WHETHER_NOT (moid, STRUCT_SYMBOL)) {
-    monitor_error ("invalid selection mode", moid_to_string (moid, MOID_WIDTH, NULL));
+    monitor_error ("invalid selection mode", moid_to_string (moid, MOID_WIDTH, NO_NODE));
   }
   QUIT_ON_ERROR;
-  for (; u != NULL; FORWARD (u), FORWARD (v)) {
+  for (; u != NO_PACK; FORWARD (u), FORWARD (v)) {
     if (strcmp (field, TEXT (u)) == 0) {
       if (name) {
         A68_REF *z = (A68_REF *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REF)));
@@ -689,7 +689,7 @@ static void call (FILE_T f, NODE_T * p, int depth)
   proc = _m_stack[--_m_sp];
   old_m_sp = _m_sp;
   if (WHETHER_NOT (proc, PROC_SYMBOL)) {
-    monitor_error ("invalid procedure mode", moid_to_string (proc, MOID_WIDTH, NULL));
+    monitor_error ("invalid procedure mode", moid_to_string (proc, MOID_WIDTH, NO_NODE));
   }
   QUIT_ON_ERROR;
   POP_PROCEDURE (p, &z);
@@ -701,7 +701,7 @@ static void call (FILE_T f, NODE_T * p, int depth)
       PARSE_CHECK (f, p, 0);
     } while (attr == COMMA_SYMBOL);
     if (attr != CLOSE_SYMBOL) {
-      monitor_error ("unmatched parenthesis", NULL);
+      monitor_error ("unmatched parenthesis", NO_TEXT);
     }
     SCAN_CHECK (f, p);
   }
@@ -709,12 +709,12 @@ static void call (FILE_T f, NODE_T * p, int depth)
   if (STATUS (&z) & STANDENV_PROC_MASK) {
     MOID (&q) = _m_stack[--_m_sp];
     INFO (&q) = INFO (p);
-    SYMBOL (&q) = SYMBOL (p);
-    (void) (((*(BODY (&z)).proc)) (&q));
+    NSYMBOL (&q) = NSYMBOL (p);
+    (void) ((*PROCEDURE (&(BODY (&z)))) (&q));
     _m_sp = old_m_sp;
     push_mode (f, SUB_MOID (&z));
   } else {
-    monitor_error ("can only call standard environ routines", NULL);
+    monitor_error ("can only call standard environ routines", NO_TEXT);
   }
 }
 
@@ -748,7 +748,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
     res = SUB (moid);
   }
   if (WHETHER_NOT (moid, ROW_SYMBOL) && WHETHER_NOT (moid, FLEX_SYMBOL)) {
-    monitor_error ("invalid row mode", moid_to_string (moid, MOID_WIDTH, NULL));
+    monitor_error ("invalid row mode", moid_to_string (moid, MOID_WIDTH, NO_NODE));
   }
   QUIT_ON_ERROR;
 /* Get descriptor */
@@ -768,12 +768,12 @@ static void slice (FILE_T f, NODE_T * p, int depth)
       PARSE_CHECK (f, p, 0);
     } while (attr == COMMA_SYMBOL);
     if (attr != BUS_SYMBOL) {
-      monitor_error ("unmatched parenthesis", NULL);
+      monitor_error ("unmatched parenthesis", NO_TEXT);
     }
     SCAN_CHECK (f, p);
   }
   if ((_m_sp - args) != dim) {
-    monitor_error ("invalid slice index count", NULL);
+    monitor_error ("invalid slice index count", NO_TEXT);
   }
   QUIT_ON_ERROR;
   for (k = 0, iindex = 0; k < dim; k++, _m_sp--) {
@@ -781,16 +781,16 @@ static void slice (FILE_T f, NODE_T * p, int depth)
     A68_INT i;
     deref (p, _m_sp - 1, MEEK);
     if (TOP_MODE != MODE (INT)) {
-      monitor_error ("invalid indexer mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+      monitor_error ("invalid indexer mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
     }
     QUIT_ON_ERROR;
     POP_OBJECT (p, &i, A68_INT);
-    if (VALUE (&i) < t->lower_bound || VALUE (&i) > t->upper_bound) {
+    if (VALUE (&i) < LOWER_BOUND (t) || VALUE (&i) > UPPER_BOUND (t)) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_INDEX_OUT_OF_BOUNDS);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     QUIT_ON_ERROR;
-    iindex += t->span * VALUE (&i) - t->shift;
+    iindex += SPAN (t) * VALUE (&i) - SHIFT (t);
   }
   address = ROW_ELEMENT (arr, iindex);
   if (name) {
@@ -844,18 +844,18 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         int op = attr;
         if (TOP_MODE != MODE (HIP)
             && WHETHER_NOT (TOP_MODE, REF_SYMBOL)) {
-          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
         }
         SCAN_CHECK (f, p);
         PARSE_CHECK (f, p, 1);
         if (TOP_MODE != MODE (HIP)
             && WHETHER_NOT (TOP_MODE, REF_SYMBOL)) {
-          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+          monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
         }
         QUIT_ON_ERROR;
         if (TOP_MODE != MODE (HIP) && _m_stack[_m_sp - 2] != MODE (HIP)) {
           if (TOP_MODE != _m_stack[_m_sp - 2]) {
-            monitor_error ("invalid identity relation operand mode", NULL);
+            monitor_error ("invalid identity relation operand mode", NO_TEXT);
           }
         }
         QUIT_ON_ERROR;
@@ -886,9 +886,9 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         _m_sp -= 2;
         MOID (&q) = MOID (opt);
         INFO (&q) = INFO (p);
-        SYMBOL (&q) = SYMBOL (p);
+        NSYMBOL (&q) = NSYMBOL (p);
         UP_BLOCK_GC;
-        (void) ((*(PROC (opt)))) (&q);
+        (void) ((*(PROCEDURE (opt)))) (&q);
         DOWN_BLOCK_GC;
         push_mode (f, SUB_MOID (opt));
       }
@@ -904,20 +904,20 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     top_sp = stack_pointer;
     SCAN_CHECK (f, p);
     PARSE_CHECK (f, p, depth);
-    opt = search_operator (name, TOP_MODE, NULL);
+    opt = search_operator (name, TOP_MODE, NO_MOID);
     QUIT_ON_ERROR;
     coerce_arguments (f, p, MOID (opt), args, _m_sp, top_sp);
     _m_sp--;
     MOID (&q) = MOID (opt);
     INFO (&q) = INFO (p);
-    SYMBOL (&q) = SYMBOL (p);
+    NSYMBOL (&q) = NSYMBOL (p);
     UP_BLOCK_GC;
-    (void) ((*(PROC (opt))) (&q));
+    (void) ((*(PROCEDURE (opt))) (&q));
     DOWN_BLOCK_GC;
     push_mode (f, SUB_MOID (opt));
   } else if (attr == REF_SYMBOL) {
     int refs = 0, length = 0;
-    MOID_T *m = NULL;
+    MOID_T *m = NO_MOID;
     while (attr == REF_SYMBOL) {
       refs++;
       SCAN_CHECK (f, p);
@@ -928,17 +928,17 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     }
     m = search_mode (refs, length, symbol);
     QUIT_ON_ERROR;
-    if (m == NULL) {
-      monitor_error ("unknown reference to mode", NULL);
+    if (m == NO_MOID) {
+      monitor_error ("unknown reference to mode", NO_TEXT);
     }
     SCAN_CHECK (f, p);
     if (attr != OPEN_SYMBOL) {
-      monitor_error ("cast expects open-symbol", NULL);
+      monitor_error ("cast expects open-symbol", NO_TEXT);
     }
     SCAN_CHECK (f, p);
     PARSE_CHECK (f, p, 0);
     if (attr != CLOSE_SYMBOL) {
-      monitor_error ("cast expects close-symbol", NULL);
+      monitor_error ("cast expects close-symbol", NO_TEXT);
     }
     SCAN_CHECK (f, p);
     while (WHETHER (TOP_MODE, REF_SYMBOL) && TOP_MODE != m) {
@@ -950,7 +950,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       TOP_MODE = sub;
     }
     if (TOP_MODE != m) {
-      monitor_error ("invalid cast mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+      monitor_error ("invalid cast mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
     }
   } else if (attr == LONG_SYMBOL) {
     int length = 0;
@@ -965,16 +965,16 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       MOID_T *r = (length == 1 ? MODE (LONG_REAL) : MODE (LONGLONG_REAL));
       SCAN_CHECK (f, p);
       if (attr != OPEN_SYMBOL) {
-        monitor_error ("cast expects open-symbol", NULL);
+        monitor_error ("cast expects open-symbol", NO_TEXT);
       }
       SCAN_CHECK (f, p);
       PARSE_CHECK (f, p, 0);
       if (attr != CLOSE_SYMBOL) {
-        monitor_error ("cast expects close-symbol", NULL);
+        monitor_error ("cast expects close-symbol", NO_TEXT);
       }
       SCAN_CHECK (f, p);
       if (TOP_MODE != i) {
-        monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+        monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
       }
       QUIT_ON_ERROR;
       TOP_MODE = r;
@@ -988,9 +988,9 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     } else if (attr == BITS_DENOTATION) {
       m = (length == 1 ? MODE (LONG_BITS) : MODE (LONGLONG_BITS));
     } else {
-      m = NULL;
+      m = NO_MOID;
     }
-    if (m != NULL) {
+    if (m != NO_MOID) {
       int digits = get_mp_digits (m);
       MP_T *z;
       STACK_MP (z, p, digits);
@@ -1002,7 +1002,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       push_mode (f, m);
       SCAN_CHECK (f, p);
     } else {
-      monitor_error ("invalid mode", NULL);
+      monitor_error ("invalid mode", NO_TEXT);
     }
   } else if (attr == INT_DENOTATION) {
     A68_INT z;
@@ -1039,7 +1039,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       A68_REF z;
       A68_ARRAY *arr;
       A68_TUPLE *tup;
-      z = c_to_a_string (p, symbol);
+      z = c_to_a_string (p, symbol, DEFAULT_WIDTH);
       GET_DESCRIPTOR (arr, tup, &z);
       BLOCK_GC_HANDLE (&z);
       BLOCK_GC_HANDLE (&(ARRAY (arr)));
@@ -1063,16 +1063,16 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     A68_INT k;
     SCAN_CHECK (f, p);
     if (attr != OPEN_SYMBOL) {
-      monitor_error ("cast expects open-symbol", NULL);
+      monitor_error ("cast expects open-symbol", NO_TEXT);
     }
     SCAN_CHECK (f, p);
     PARSE_CHECK (f, p, 0);
     if (attr != CLOSE_SYMBOL) {
-      monitor_error ("cast expects close-symbol", NULL);
+      monitor_error ("cast expects close-symbol", NO_TEXT);
     }
     SCAN_CHECK (f, p);
     if (TOP_MODE != MODE (INT)) {
-      monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+      monitor_error ("invalid cast argument mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
     }
     QUIT_ON_ERROR;
     POP_OBJECT (p, &k, A68_INT);
@@ -1099,7 +1099,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         monitor_error (NO_VALUE, name);
       }
     } else {
-      monitor_error ("cannot process value of mode", moid_to_string (moid, MOID_WIDTH, NULL));
+      monitor_error ("cannot process value of mode", moid_to_string (moid, MOID_WIDTH, NO_NODE));
     }
   } else if (attr == OPEN_SYMBOL) {
     do {
@@ -1107,12 +1107,12 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       PARSE_CHECK (f, p, 0);
     } while (attr == COMMA_SYMBOL);
     if (attr != CLOSE_SYMBOL) {
-      monitor_error ("unmatched parenthesis", NULL);
+      monitor_error ("unmatched parenthesis", NO_TEXT);
     }
     SCAN_CHECK (f, p);
     call_or_slice (f, p, depth);
   } else {
-    monitor_error ("invalid expression syntax", NULL);
+    monitor_error ("invalid expression syntax", NO_TEXT);
   }
 }
 
@@ -1130,7 +1130,7 @@ static void assign (FILE_T f, NODE_T * p)
     MOID_T *m = _m_stack[--_m_sp];
     A68_REF z;
     if (WHETHER_NOT (m, REF_SYMBOL)) {
-      monitor_error ("invalid destination mode", moid_to_string (m, MOID_WIDTH, NULL));
+      monitor_error ("invalid destination mode", moid_to_string (m, MOID_WIDTH, NO_NODE));
     }
     QUIT_ON_ERROR;
     POP_REF (p, &z);
@@ -1147,7 +1147,7 @@ static void assign (FILE_T f, NODE_T * p)
       TOP_MODE = sub;
     }
     if (TOP_MODE != SUB (m) && TOP_MODE != MODE (HIP)) {
-      monitor_error ("invalid source mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
+      monitor_error ("invalid source mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
     }
     QUIT_ON_ERROR;
     POP (p, ADDRESS (&z), MOID_SIZE (TOP_MODE));
@@ -1167,7 +1167,7 @@ static void evaluate (FILE_T f, NODE_T * p, char *str)
 {
   LOW_STACK_ALERT (p);
   _m_sp = 0;
-  _m_stack[0] = NULL;
+  _m_stack[0] = NO_MOID;
   pos = 0;
   bufcpy (expr, str, BUFFER_SIZE);
   SCAN_CHECK (f, p);
@@ -1188,10 +1188,10 @@ static int get_num_arg (char *num, char **rest)
 {
   char *end;
   int k;
-  if (rest != NULL) {
-    *rest = NULL;
+  if (rest != NO_VAR) {
+    *rest = NO_TEXT;
   }
-  if (num == NULL) {
+  if (num == NO_TEXT) {
     return (NOT_A_NUM);
   }
   SKIP_ONE_SYMBOL (num);
@@ -1199,7 +1199,7 @@ static int get_num_arg (char *num, char **rest)
     RESET_ERRNO;
     k = (int) a68g_strtoul (num, &end, 10);
     if (end != num && errno == 0) {
-      if (rest != NULL) {
+      if (rest != NO_VAR) {
         *rest = end;
       }
       return (k);
@@ -1228,7 +1228,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
 {
   BOOL_T initialised = A68_FALSE, recognised = A68_FALSE;
   (void) p;
-  switch (q->short_id) {
+  switch (SHORT_ID (q)) {
   case MODE_NO_CHECK:
   case UNION_SYMBOL:
     {
@@ -1371,7 +1371,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
       recognised = A68_TRUE;
     }
   }
-  if (result != NULL) {
+  if (result != NO_BOOL) {
     *result = initialised;
   }
   return (recognised);
@@ -1431,7 +1431,7 @@ static void indent_crlf (FILE_T f)
 
 static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
 {
-  if (item == NULL || mode == NULL) {
+  if (item == NO_BYTE || mode == NO_MOID) {
     return;
   }
   if (WHETHER (mode, REF_SYMBOL)) {
@@ -1509,26 +1509,26 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
   } else if (WHETHER (mode, STRUCT_SYMBOL)) {
     PACK_T *q = PACK (mode);
     tabs++;
-    for (; q != NULL; FORWARD (q)) {
+    for (; q != NO_PACK; FORWARD (q)) {
       BYTE_T *elem = &item[OFFSET (q)];
       indent_crlf (f);
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     %s \"%s\"", moid_to_string (MOID (q), MOID_WIDTH, NULL), TEXT (q)) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     %s \"%s\"", moid_to_string (MOID (q), MOID_WIDTH, NO_NODE), TEXT (q)) >= 0);
       WRITE (STDOUT_FILENO, output_line);
       show_item (f, p, elem, MOID (q));
     }
     tabs--;
   } else if (WHETHER (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NULL)) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NO_NODE)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
     show_item (f, p, &item[ALIGNED_SIZE_OF (A68_UNION)], (MOID_T *) (VALUE (z)));
   } else if (mode == MODE (SIMPLIN)) {
     A68_UNION *z = (A68_UNION *) item;
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NULL)) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NO_NODE)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
   } else if (mode == MODE (SIMPLOUT)) {
     A68_UNION *z = (A68_UNION *) item;
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NULL)) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NO_NODE)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
   } else {
     BOOL_T init;
@@ -1536,38 +1536,38 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
       if (init) {
         if (WHETHER (mode, PROC_SYMBOL)) {
           A68_PROCEDURE *z = (A68_PROCEDURE *) item;
-          if (z != NULL && STATUS (z) & STANDENV_PROC_MASK) {
-            char *fname = standard_environ_proc_name (*(BODY (z).proc));
+          if (z != NO_PROCEDURE && STATUS (z) & STANDENV_PROC_MASK) {
+            char *fname = standard_environ_proc_name (*(PROCEDURE (&BODY (z))));
             WRITE (STDOUT_FILENO, " standenv procedure");
-            if (fname != NULL) {
+            if (fname != NO_TEXT) {
               WRITE (STDOUT_FILENO, " (");
               WRITE (STDOUT_FILENO, fname);
               WRITE (STDOUT_FILENO, ")");
             }
-          } else if (z != NULL && STATUS (z) & SKIP_PROCEDURE_MASK) {
+          } else if (z != NO_PROCEDURE && STATUS (z) & SKIP_PROCEDURE_MASK) {
             WRITE (STDOUT_FILENO, " skip procedure");
-          } else if (z != NULL && (BODY (z).proc) != NULL) {
-            ASSERT (snprintf (output_line, SNPRINTF_SIZE, " line %d, environ at frame(%d), locale %p", LINE_NUMBER ((NODE_T *) (BODY (z)).node), ENVIRON (z), (void *) LOCALE (z)) >= 0);
+          } else if (z != NO_PROCEDURE && (PROCEDURE (&BODY (z))) != NO_GPROC) {
+            ASSERT (snprintf (output_line, SNPRINTF_SIZE, " line %d, environ at frame(%d), locale %p", LINE_NUMBER ((NODE_T *) NODE (&BODY (z))), ENVIRON (z), (void *) LOCALE (z)) >= 0);
             WRITE (STDOUT_FILENO, output_line);
           } else {
             WRITE (STDOUT_FILENO, " cannot show value");
           }
         } else if (mode == MODE (FORMAT)) {
           A68_FORMAT *z = (A68_FORMAT *) item;
-          if (z != NULL && BODY (z) != NULL) {
+          if (z != NO_FORMAT && BODY (z) != NO_NODE) {
             ASSERT (snprintf (output_line, SNPRINTF_SIZE, " line %d, environ at frame(%d)", LINE_NUMBER (BODY (z)), ENVIRON (z)) >= 0);
             WRITE (STDOUT_FILENO, output_line);
           } else {
-            monitor_error (CANNOT_SHOW, NULL);
+            monitor_error (CANNOT_SHOW, NO_TEXT);
           }
         } else if (mode == MODE (SOUND)) {
           A68_SOUND *z = (A68_SOUND *) item;
-          if (z != NULL) {
-            ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%u channels, %u bits, %u rate, %u samples", z->num_channels, z->bits_per_sample, z->sample_rate, z->num_samples) >= 0);
+          if (z != NO_SOUND) {
+            ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%u channels, %u bits, %u rate, %u samples", NUM_CHANNELS (z), BITS_PER_SAMPLE (z), SAMPLE_RATE (z), NUM_SAMPLES (z)) >= 0);
             WRITE (STDOUT_FILENO, output_line);
 
           } else {
-            monitor_error (CANNOT_SHOW, NULL);
+            monitor_error (CANNOT_SHOW, NO_TEXT);
           }
         } else {
           print_item (p, f, item, mode);
@@ -1576,7 +1576,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
         WRITE (STDOUT_FILENO, NO_VALUE);
       }
     } else {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " mode %s, %s", moid_to_string (mode, MOID_WIDTH, NULL), CANNOT_SHOW) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " mode %s, %s", moid_to_string (mode, MOID_WIDTH, NO_NODE), CANNOT_SHOW) >= 0);
       WRITE (STDOUT_FILENO, output_line);
     }
   }
@@ -1598,20 +1598,20 @@ static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, 
   (void) p;
   indent_crlf (STDOUT_FILENO);
   if (modif != ANONYMOUS) {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     frame(%d=%d+%d) %s \"%s\"", addr, a68g_link, loc, moid_to_string (MOID (q), MOID_WIDTH, NULL), SYMBOL (NODE (q))) >= 0);
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     frame(%d=%d+%d) %s \"%s\"", addr, a68g_link, loc, moid_to_string (MOID (q), MOID_WIDTH, NO_NODE), NSYMBOL (NODE (q))) >= 0);
     WRITE (STDOUT_FILENO, output_line);
     show_item (f, p, FRAME_ADDRESS (addr), MOID (q));
   } else {
     switch (PRIO (q)) {
     case GENERATOR:
       {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     frame(%d=%d+%d) LOC %s", addr, a68g_link, loc, moid_to_string (MOID (q), MOID_WIDTH, NULL)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     frame(%d=%d+%d) LOC %s", addr, a68g_link, loc, moid_to_string (MOID (q), MOID_WIDTH, NO_NODE)) >= 0);
         WRITE (STDOUT_FILENO, output_line);
         break;
       }
     default:
       {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     frame(%d=%d+%d) internal %s", addr, a68g_link, loc, moid_to_string (MOID (q), MOID_WIDTH, NULL)) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "     frame(%d=%d+%d) internal %s", addr, a68g_link, loc, moid_to_string (MOID (q), MOID_WIDTH, NO_NODE)) >= 0);
         WRITE (STDOUT_FILENO, output_line);
         break;
       }
@@ -1632,7 +1632,7 @@ static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, 
 static void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, int modif)
 {
   (void) p;
-  for (; q != NULL; FORWARD (q)) {
+  for (; q != NO_TAG; FORWARD (q)) {
     show_frame_item (f, p, a68g_link, q, modif);
   }
 }
@@ -1668,7 +1668,7 @@ static void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *printed)
 static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *printed)
 {
 /* show the frame starting at frame pointer 'a68g_link', using symbol table from p as a map */
-  if (p != NULL) {
+  if (p != NO_NODE) {
     TABLE_T *q = TABLE (p);
     intro_frame (f, p, a68g_link, printed);
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Dynamic link=frame(%d), static link=frame(%d), parameters=frame(%d)", FRAME_DYNAMIC_LINK (a68g_link), FRAME_STATIC_LINK (a68g_link), FRAME_PARAMETERS (a68g_link)) >= 0);
@@ -1679,9 +1679,9 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *print
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Thread id=%u", (unsigned) FRAME_THREAD_ID (a68g_link)) >= 0);
     WRITELN (STDOUT_FILENO, output_line);
 #endif
-    show_frame_items (f, p, a68g_link, q->identifiers, IDENTIFIER);
-    show_frame_items (f, p, a68g_link, q->operators, OPERATOR);
-    show_frame_items (f, p, a68g_link, q->anonymous, ANONYMOUS);
+    show_frame_items (f, p, a68g_link, IDENTIFIERS (q), IDENTIFIER);
+    show_frame_items (f, p, a68g_link, OPERATORS (q), OPERATOR);
+    show_frame_items (f, p, a68g_link, ANONYMOUS (q), ANONYMOUS);
   }
 }
 
@@ -1695,20 +1695,20 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *print
 
 static void list (FILE_T f, NODE_T * p, int n, int m)
 {
-  if (p != NULL) {
+  if (p != NO_NODE) {
     if (m == 0) {
-      LINE_T *r = INFO (p)->line;
-      LINE_T *l = program.top_line;
-      for (; l != NULL; FORWARD (l)) {
+      LINE_T *r = LINE (INFO (p));
+      LINE_T *l = TOP_LINE (&program);
+      for (; l != NO_LINE; FORWARD (l)) {
         if (NUMBER (l) > 0 && abs (NUMBER (r) - NUMBER (l)) <= n) {
-          write_source_line (f, l, NULL, A68_TRUE);
+          write_source_line (f, l, NO_NODE, A68_TRUE);
         }
       }
     } else {
-      LINE_T *l = program.top_line;
-      for (; l != NULL; FORWARD (l)) {
+      LINE_T *l = TOP_LINE (&program);
+      for (; l != NO_LINE; FORWARD (l)) {
         if (NUMBER (l) > 0 && NUMBER (l) >= n && NUMBER (l) <= m) {
-          write_source_line (f, l, NULL, A68_TRUE);
+          write_source_line (f, l, NO_NODE, A68_TRUE);
         }
       }
     }
@@ -1730,11 +1730,11 @@ void show_heap (FILE_T f, NODE_T * p, A68_HANDLE * z, int top, int n)
   (void) p;
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "size=%d available=%d garbage collections=%d", heap_size, heap_available (), garbage_collects) >= 0);
   WRITELN (f, output_line);
-  for (; z != NULL; FORWARD (z), k++) {
+  for (; z != NO_HANDLE; FORWARD (z), k++) {
     if (n > 0 && sum <= top) {
       n--;
       indent_crlf (f);
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "heap(%p+%d) %s", POINTER (z), SIZE (z), moid_to_string (MOID (z), MOID_WIDTH, NULL)) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "heap(%p+%d) %s", POINTER (z), SIZE (z), moid_to_string (MOID (z), MOID_WIDTH, NO_NODE)) >= 0);
       WRITE (f, output_line);
       sum += SIZE (z);
     }
@@ -1754,7 +1754,7 @@ void stack_dump_current (FILE_T f, ADDR_T a68g_link)
   if (a68g_link > 0) {
     int dynamic_a68g_link = FRAME_DYNAMIC_LINK (a68g_link);
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL && LEVEL (TABLE (p)) > 3) {
+    if (p != NO_NODE && LEVEL (TABLE (p)) > 3) {
       if (FRAME_NUMBER (a68g_link) == current_frame) {
         int printed = 0;
         show_stack_frame (f, p, a68g_link, &printed);
@@ -1777,7 +1777,7 @@ void stack_a68g_link_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
 {
   if (depth > 0 && a68g_link > 0) {
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL && LEVEL (TABLE (p)) > 3) {
+    if (p != NO_NODE && LEVEL (TABLE (p)) > 3) {
       show_stack_frame (f, p, a68g_link, printed);
       stack_a68g_link_dump (f, FRAME_STATIC_LINK (a68g_link), depth - 1, printed);
     }
@@ -1796,7 +1796,7 @@ void stack_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
 {
   if (depth > 0 && a68g_link > 0) {
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL && LEVEL (TABLE (p)) > 3) {
+    if (p != NO_NODE && LEVEL (TABLE (p)) > 3) {
       show_stack_frame (f, p, a68g_link, printed);
       stack_dump (f, FRAME_DYNAMIC_LINK (a68g_link), depth - 1, printed);
     }
@@ -1836,8 +1836,8 @@ void stack_trace (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
 
 void examine_tags (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, char *sym, int *printed)
 {
-  for (; q != NULL; FORWARD (q)) {
-    if (NODE (q) != NULL && strcmp (SYMBOL (NODE (q)), sym) == 0) {
+  for (; q != NO_TAG; FORWARD (q)) {
+    if (NODE (q) != NO_NODE && strcmp (NSYMBOL (NODE (q)), sym) == 0) {
       intro_frame (f, p, a68g_link, printed);
       show_frame_item (f, p, a68g_link, q, PRIO (q));
     }
@@ -1856,10 +1856,10 @@ void examine_stack (FILE_T f, ADDR_T a68g_link, char *sym, int *printed)
   if (a68g_link > 0) {
     int dynamic_a68g_link = FRAME_DYNAMIC_LINK (a68g_link);
     NODE_T *p = FRAME_TREE (a68g_link);
-    if (p != NULL) {
+    if (p != NO_NODE) {
       TABLE_T *q = TABLE (p);
-      examine_tags (f, p, a68g_link, q->identifiers, sym, printed);
-      examine_tags (f, p, a68g_link, q->operators, sym, printed);
+      examine_tags (f, p, a68g_link, IDENTIFIERS (q), sym, printed);
+      examine_tags (f, p, a68g_link, OPERATORS (q), sym, printed);
     }
     examine_stack (f, dynamic_a68g_link, sym, printed);
   }
@@ -1875,39 +1875,39 @@ void examine_stack (FILE_T f, ADDR_T a68g_link, char *sym, int *printed)
 
 void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * whether_set, char *loc_expr)
 {
-  for (; p != NULL; FORWARD (p)) {
+  for (; p != NO_NODE; FORWARD (p)) {
     change_breakpoints (SUB (p), set, num, whether_set, loc_expr);
     if (set == BREAKPOINT_MASK) {
       if (LINE_NUMBER (p) == num && (STATUS_TEST (p, INTERRUPTIBLE_MASK)) && num != 0) {
         STATUS_SET (p, BREAKPOINT_MASK);
-        if (INFO (p)->expr != NULL) {
-          free (INFO (p)->expr);
+        if (EXPR (INFO (p)) != NO_TEXT) {
+          free (EXPR (INFO (p)));
         }
-        INFO (p)->expr = loc_expr;
+        EXPR (INFO (p)) = loc_expr;
         *whether_set = A68_TRUE;
       }
     } else if (set == BREAKPOINT_TEMPORARY_MASK) {
       if (LINE_NUMBER (p) == num && (STATUS_TEST (p, INTERRUPTIBLE_MASK)) && num != 0) {
         STATUS_SET (p, BREAKPOINT_TEMPORARY_MASK);
-        if (INFO (p)->expr != NULL) {
-          free (INFO (p)->expr);
+        if (EXPR (INFO (p)) != NO_TEXT) {
+          free (EXPR (INFO (p)));
         }
-        INFO (p)->expr = loc_expr;
+        EXPR (INFO (p)) = loc_expr;
         *whether_set = A68_TRUE;
       }
     } else if (set == NULL_MASK) {
       if (LINE_NUMBER (p) != num) {
         STATUS_CLEAR (p, (BREAKPOINT_MASK | BREAKPOINT_TEMPORARY_MASK));
-        if (INFO (p)->expr == NULL) {
-          free (INFO (p)->expr);
+        if (EXPR (INFO (p)) == NO_TEXT) {
+          free (EXPR (INFO (p)));
         }
-        INFO (p)->expr = NULL;
+        EXPR (INFO (p)) = NO_TEXT;
       } else if (num == 0) {
         STATUS_CLEAR (p, (BREAKPOINT_MASK | BREAKPOINT_TEMPORARY_MASK));
-        if (INFO (p)->expr != NULL) {
-          free (INFO (p)->expr);
+        if (EXPR (INFO (p)) != NO_TEXT) {
+          free (EXPR (INFO (p)));
         }
-        INFO (p)->expr = NULL;
+        EXPR (INFO (p)) = NO_TEXT;
       }
     }
   }
@@ -1921,14 +1921,14 @@ void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * whether_set
 
 static void list_breakpoints (NODE_T * p, int *listed)
 {
-  for (; p != NULL; FORWARD (p)) {
+  for (; p != NO_NODE; FORWARD (p)) {
     list_breakpoints (SUB (p), listed);
     if (STATUS_TEST (p, BREAKPOINT_MASK)) {
       (*listed)++;
       WIS (p);
-      if (INFO (p)->expr != NULL) {
+      if (EXPR (INFO (p)) != NO_TEXT) {
         WRITELN (STDOUT_FILENO, "breakpoint condition \"");
-        WRITE (STDOUT_FILENO, INFO (p)->expr);
+        WRITE (STDOUT_FILENO, EXPR (INFO (p)));
         WRITE (STDOUT_FILENO, "\"");
       }
     }
@@ -1953,7 +1953,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     cmd[strlen (cmd) - 1] = NULL_CHAR;
   }
   if (match_string (cmd, "CAlls", BLANK_CHAR)) {
-    int k = get_num_arg (cmd, NULL);
+    int k = get_num_arg (cmd, NO_VAR);
     int printed = 0;
     if (k > 0) {
       stack_trace (STDOUT_FILENO, frame_pointer, k, &printed);
@@ -1973,7 +1973,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "ELems", BLANK_CHAR)) {
-    int k = get_num_arg (cmd, NULL);
+    int k = get_num_arg (cmd, NO_VAR);
     if (k > 0) {
       max_row_elems = k;
     }
@@ -1990,7 +1990,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         while (cont) {
           res = _m_stack[0];
           WRITELN (STDOUT_FILENO, "(");
-          WRITE (STDOUT_FILENO, moid_to_string (res, MOID_WIDTH, NULL));
+          WRITE (STDOUT_FILENO, moid_to_string (res, MOID_WIDTH, NO_NODE));
           WRITE (STDOUT_FILENO, ")");
           show_item (STDOUT_FILENO, p, STACK_ADDRESS (old_sp), res);
           cont = (BOOL_T) (WHETHER (res, REF_SYMBOL) && !IS_NIL (*(A68_REF *) STACK_ADDRESS (old_sp)));
@@ -2002,7 +2002,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
           }
         }
       } else {
-        monitor_error (CANNOT_SHOW, NULL);
+        monitor_error (CANNOT_SHOW, NO_TEXT);
       }
       stack_pointer = old_sp;
       _m_sp = 0;
@@ -2018,7 +2018,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         monitor_error ("tag not found", sym);
       }
     } else {
-      monitor_error ("tag expected", NULL);
+      monitor_error ("tag expected", NO_TEXT);
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "EXIt", NULL_CHAR) || match_string (cmd, "HX", NULL_CHAR) || match_string (cmd, "Quit", NULL_CHAR) || strcmp (cmd, LOGOUT_STRING) == 0) {
@@ -2035,12 +2035,12 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "Frame", BLANK_CHAR)) {
-    int n = get_num_arg (cmd, NULL);
+    int n = get_num_arg (cmd, NO_VAR);
     current_frame = (n > 0 ? n : 0);
     stack_dump_current (STDOUT_FILENO, frame_pointer);
     return (A68_FALSE);
   } else if (match_string (cmd, "HEAp", BLANK_CHAR)) {
-    int top = get_num_arg (cmd, NULL);
+    int top = get_num_arg (cmd, NO_VAR);
     if (top <= 0) {
       top = heap_size;
     }
@@ -2048,7 +2048,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     {
       char *mon_tty_type = getenv ("TERM");
       int term_lines;
-      if (mon_tty_type == NULL) {
+      if (mon_tty_type == NO_TEXT) {
         term_lines = 24;
       } else if (tgetent (term_buffer, mon_tty_type) < 0) {
         term_lines = 24;
@@ -2062,12 +2062,12 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
 #endif
     return (A68_FALSE);
   } else if (match_string (cmd, "APropos", NULL_CHAR) || match_string (cmd, "Help", NULL_CHAR) || match_string (cmd, "INfo", NULL_CHAR)) {
-    apropos (STDOUT_FILENO, NULL, "monitor");
+    apropos (STDOUT_FILENO, NO_TEXT, "monitor");
     return (A68_FALSE);
   } else if (match_string (cmd, "APropos", BLANK_CHAR) || match_string (cmd, "Help", BLANK_CHAR) || match_string (cmd, "INfo", BLANK_CHAR)) {
     char *sym = cmd;
     SKIP_ONE_SYMBOL (sym);
-    apropos (STDOUT_FILENO, NULL, sym);
+    apropos (STDOUT_FILENO, NO_TEXT, sym);
     return (A68_FALSE);
   } else if (match_string (cmd, "HT", NULL_CHAR)) {
     halt_typing = A68_TRUE;
@@ -2082,11 +2082,11 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     SKIP_ONE_SYMBOL (sym);
     if (sym[0] == NULL_CHAR) {
       int listed = 0;
-      list_breakpoints (program.top_node, &listed);
+      list_breakpoints (TOP_NODE (&program), &listed);
       if (listed == 0) {
         WRITELN (STDOUT_FILENO, "No breakpoints set");
       }
-      if (watchpoint_expression != NULL) {
+      if (watchpoint_expression != NO_TEXT) {
         WRITELN (STDOUT_FILENO, "Watchpoint condition \"");
         WRITE (STDOUT_FILENO, watchpoint_expression);
         WRITE (STDOUT_FILENO, "\"");
@@ -2099,30 +2099,30 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
       SKIP_SPACE (mod);
       if (mod[0] == NULL_CHAR) {
         BOOL_T set = A68_FALSE;
-        change_breakpoints (program.top_node, BREAKPOINT_MASK, k, &set, NULL);
+        change_breakpoints (TOP_NODE (&program), BREAKPOINT_MASK, k, &set, NULL);
         if (set == A68_FALSE) {
-          monitor_error ("cannot set breakpoint in that line", NULL);
+          monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         }
       } else if (match_string (mod, "IF", BLANK_CHAR)) {
         char *cexpr = mod;
         BOOL_T set = A68_FALSE;
         SKIP_ONE_SYMBOL (cexpr);
-        change_breakpoints (program.top_node, BREAKPOINT_MASK, k, &set, new_string (cexpr));
+        change_breakpoints (TOP_NODE (&program), BREAKPOINT_MASK, k, &set, new_string (cexpr));
         if (set == A68_FALSE) {
-          monitor_error ("cannot set breakpoint in that line", NULL);
+          monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         }
       } else if (match_string (mod, "Clear", NULL_CHAR)) {
-        change_breakpoints (program.top_node, NULL_MASK, k, NULL, NULL);
+        change_breakpoints (TOP_NODE (&program), NULL_MASK, k, NULL, NULL);
       } else {
-        monitor_error ("invalid breakpoint command", NULL);
+        monitor_error ("invalid breakpoint command", NO_TEXT);
       }
     } else if (match_string (sym, "List", NULL_CHAR)) {
       int listed = 0;
-      list_breakpoints (program.top_node, &listed);
+      list_breakpoints (TOP_NODE (&program), &listed);
       if (listed == 0) {
         WRITELN (STDOUT_FILENO, "No breakpoints set");
       }
-      if (watchpoint_expression != NULL) {
+      if (watchpoint_expression != NO_TEXT) {
         WRITELN (STDOUT_FILENO, "Watchpoint condition \"");
         WRITE (STDOUT_FILENO, watchpoint_expression);
         WRITE (STDOUT_FILENO, "\"");
@@ -2132,48 +2132,48 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     } else if (match_string (sym, "Watch", BLANK_CHAR)) {
       char *cexpr = sym;
       SKIP_ONE_SYMBOL (cexpr);
-      if (watchpoint_expression != NULL) {
+      if (watchpoint_expression != NO_TEXT) {
         free (watchpoint_expression);
-        watchpoint_expression = NULL;
+        watchpoint_expression = NO_TEXT;
       }
       watchpoint_expression = new_string (cexpr);
-      change_masks (program.top_node, BREAKPOINT_WATCH_MASK, A68_TRUE);
+      change_masks (TOP_NODE (&program), BREAKPOINT_WATCH_MASK, A68_TRUE);
     } else if (match_string (sym, "Clear", BLANK_CHAR)) {
       char *mod = sym;
       SKIP_ONE_SYMBOL (mod);
       if (mod[0] == NULL_CHAR) {
-        change_breakpoints (program.top_node, NULL_MASK, 0, NULL, NULL);
-        if (watchpoint_expression != NULL) {
+        change_breakpoints (TOP_NODE (&program), NULL_MASK, 0, NULL, NULL);
+        if (watchpoint_expression != NO_TEXT) {
           free (watchpoint_expression);
-          watchpoint_expression = NULL;
+          watchpoint_expression = NO_TEXT;
         }
-        change_masks (program.top_node, BREAKPOINT_WATCH_MASK, A68_FALSE);
+        change_masks (TOP_NODE (&program), BREAKPOINT_WATCH_MASK, A68_FALSE);
       } else if (match_string (mod, "ALL", NULL_CHAR)) {
-        change_breakpoints (program.top_node, NULL_MASK, 0, NULL, NULL);
-        if (watchpoint_expression != NULL) {
+        change_breakpoints (TOP_NODE (&program), NULL_MASK, 0, NULL, NULL);
+        if (watchpoint_expression != NO_TEXT) {
           free (watchpoint_expression);
-          watchpoint_expression = NULL;
+          watchpoint_expression = NO_TEXT;
         }
-        change_masks (program.top_node, BREAKPOINT_WATCH_MASK, A68_FALSE);
+        change_masks (TOP_NODE (&program), BREAKPOINT_WATCH_MASK, A68_FALSE);
       } else if (match_string (mod, "Breakpoints", NULL_CHAR)) {
-        change_breakpoints (program.top_node, NULL_MASK, 0, NULL, NULL);
+        change_breakpoints (TOP_NODE (&program), NULL_MASK, 0, NULL, NULL);
       } else if (match_string (mod, "Watchpoint", NULL_CHAR)) {
-        if (watchpoint_expression != NULL) {
+        if (watchpoint_expression != NO_TEXT) {
           free (watchpoint_expression);
-          watchpoint_expression = NULL;
+          watchpoint_expression = NO_TEXT;
         }
-        change_masks (program.top_node, BREAKPOINT_WATCH_MASK, A68_FALSE);
+        change_masks (TOP_NODE (&program), BREAKPOINT_WATCH_MASK, A68_FALSE);
       } else {
-        monitor_error ("invalid breakpoint command", NULL);
+        monitor_error ("invalid breakpoint command", NO_TEXT);
       }
     } else {
-      monitor_error ("invalid breakpoint command", NULL);
+      monitor_error ("invalid breakpoint command", NO_TEXT);
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "List", BLANK_CHAR)) {
     char *cwhere;
     int n = get_num_arg (cmd, &cwhere);
-    int m = get_num_arg (cwhere, NULL);
+    int m = get_num_arg (cwhere, NO_VAR);
     if (m == NOT_A_NUM) {
       if (n > 0) {
         list (STDOUT_FILENO, p, n, 0);
@@ -2204,17 +2204,17 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     return (A68_FALSE);
   } else if (match_string (cmd, "RESET", NULL_CHAR)) {
     if (confirm_exit ()) {
-      change_breakpoints (program.top_node, NULL_MASK, 0, NULL, NULL);
-      if (watchpoint_expression != NULL) {
+      change_breakpoints (TOP_NODE (&program), NULL_MASK, 0, NULL, NULL);
+      if (watchpoint_expression != NO_TEXT) {
         free (watchpoint_expression);
-        watchpoint_expression = NULL;
+        watchpoint_expression = NO_TEXT;
       }
-      change_masks (program.top_node, BREAKPOINT_WATCH_MASK, A68_FALSE);
+      change_masks (TOP_NODE (&program), BREAKPOINT_WATCH_MASK, A68_FALSE);
       exit_genie (p, A68_RERUN);
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "LINk", BLANK_CHAR)) {
-    int k = get_num_arg (cmd, NULL);
+    int k = get_num_arg (cmd, NO_VAR);
     int printed = 0;
     if (k > 0) {
       stack_a68g_link_dump (STDOUT_FILENO, frame_pointer, k, &printed);
@@ -2223,7 +2223,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "STAck", BLANK_CHAR) || match_string (cmd, "BT", BLANK_CHAR)) {
-    int k = get_num_arg (cmd, NULL);
+    int k = get_num_arg (cmd, NO_VAR);
     int printed = 0;
     if (k > 0) {
       stack_dump (STDOUT_FILENO, frame_pointer, k, &printed);
@@ -2232,12 +2232,12 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "Next", NULL_CHAR)) {
-    change_masks (program.top_node, BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
+    change_masks (TOP_NODE (&program), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
     do_confirm_exit = A68_FALSE;
-    break_proc_level = INFO (p)->PROCEDURE_LEVEL;
+    break_proc_level = PROCEDURE_LEVEL (INFO (p));
     return (A68_TRUE);
   } else if (match_string (cmd, "STEp", NULL_CHAR)) {
-    change_masks (program.top_node, BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
+    change_masks (TOP_NODE (&program), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
     do_confirm_exit = A68_FALSE;
     return (A68_TRUE);
   } else if (match_string (cmd, "FINish", NULL_CHAR) || match_string (cmd, "OUT", NULL_CHAR)) {
@@ -2245,18 +2245,18 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     do_confirm_exit = A68_FALSE;
     return (A68_TRUE);
   } else if (match_string (cmd, "Until", BLANK_CHAR)) {
-    int k = get_num_arg (cmd, NULL);
+    int k = get_num_arg (cmd, NO_VAR);
     if (k > 0) {
       BOOL_T set = A68_FALSE;
-      change_breakpoints (program.top_node, BREAKPOINT_TEMPORARY_MASK, k, &set, NULL);
+      change_breakpoints (TOP_NODE (&program), BREAKPOINT_TEMPORARY_MASK, k, &set, NULL);
       if (set == A68_FALSE) {
-        monitor_error ("cannot set breakpoint in that line", NULL);
+        monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         return (A68_FALSE);
       }
       do_confirm_exit = A68_FALSE;
       return (A68_TRUE);
     } else {
-      monitor_error ("line number expected", NULL);
+      monitor_error ("line number expected", NO_TEXT);
       return (A68_FALSE);
     }
   } else if (match_string (cmd, "Where", NULL_CHAR)) {
@@ -2276,21 +2276,21 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     WRITELN (STDOUT_FILENO, output_line);
     return (A68_FALSE);
   } else if (match_string (cmd, "XRef", NULL_CHAR)) {
-    int k = NUMBER (LINE (p));
-    LINE_T *line = program.top_line;
-    for (; line != NULL; FORWARD (line)) {
+    int k = LINE_NUMBER (p);
+    LINE_T *line = TOP_LINE (&program);
+    for (; line != NO_LINE; FORWARD (line)) {
       if (NUMBER (line) > 0 && NUMBER (line) == k) {
         list_source_line (STDOUT_FILENO, line, A68_TRUE);
       }
     }
     return (A68_FALSE);
   } else if (match_string (cmd, "XRef", BLANK_CHAR)) {
-    LINE_T *line = program.top_line;
-    int k = get_num_arg (cmd, NULL);
+    LINE_T *line = TOP_LINE (&program);
+    int k = get_num_arg (cmd, NO_VAR);
     if (k == NOT_A_NUM) {
-      monitor_error ("line number expected", NULL);
+      monitor_error ("line number expected", NO_TEXT);
     } else {
-      for (; line != NULL; FORWARD (line)) {
+      for (; line != NO_LINE; FORWARD (line)) {
         if (NUMBER (line) > 0 && NUMBER (line) == k) {
           list_source_line (STDOUT_FILENO, line, A68_TRUE);
         }
@@ -2300,7 +2300,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
   } else if (strlen (cmd) == 0) {
     return (A68_FALSE);
   } else {
-    monitor_error ("unrecognised command", NULL);
+    monitor_error ("unrecognised command", NO_TEXT);
     return (A68_FALSE);
   }
 }
@@ -2317,26 +2317,26 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
   volatile BOOL_T res = A68_FALSE;
   UP_BLOCK_GC;
   mon_errors = 0;
-  if (INFO (p)->expr != NULL) {
-    evaluate (STDOUT_FILENO, p, INFO (p)->expr);
+  if (EXPR (INFO (p)) != NO_TEXT) {
+    evaluate (STDOUT_FILENO, p, EXPR (INFO (p)));
     if (_m_sp != 1 || mon_errors != 0) {
       mon_errors = 0;
-      monitor_error ("deleted invalid breakpoint expression", NULL);
-      if (INFO (p)->expr != NULL) {
-        free (INFO (p)->expr);
+      monitor_error ("deleted invalid breakpoint expression", NO_TEXT);
+      if (EXPR (INFO (p)) != NO_TEXT) {
+        free (EXPR (INFO (p)));
       }
-      INFO (p)->expr = expr;
+      EXPR (INFO (p)) = expr;
       res = A68_TRUE;
     } else if (TOP_MODE == MODE (BOOL)) {
       A68_BOOL z;
       POP_OBJECT (p, &z, A68_BOOL);
       res = (BOOL_T) (STATUS (&z) == INITIALISED_MASK && VALUE (&z) == A68_TRUE);
     } else {
-      monitor_error ("deleted invalid breakpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
-      if (INFO (p)->expr != NULL) {
-        free (INFO (p)->expr);
+      monitor_error ("deleted invalid breakpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
+      if (EXPR (INFO (p)) != NO_TEXT) {
+        free (EXPR (INFO (p)));
       }
-      INFO (p)->expr = expr;
+      EXPR (INFO (p)) = expr;
       res = A68_TRUE;
     }
   }
@@ -2356,14 +2356,14 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
   volatile BOOL_T res = A68_FALSE;
   UP_BLOCK_GC;
   mon_errors = 0;
-  if (watchpoint_expression != NULL) {
+  if (watchpoint_expression != NO_TEXT) {
     evaluate (STDOUT_FILENO, p, watchpoint_expression);
     if (_m_sp != 1 || mon_errors != 0) {
       mon_errors = 0;
-      monitor_error ("deleted invalid watchpoint expression", NULL);
-      if (watchpoint_expression != NULL) {
+      monitor_error ("deleted invalid watchpoint expression", NO_TEXT);
+      if (watchpoint_expression != NO_TEXT) {
         free (watchpoint_expression);
-        watchpoint_expression = NULL;
+        watchpoint_expression = NO_TEXT;
       }
       res = A68_TRUE;
     }
@@ -2372,10 +2372,10 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
       POP_OBJECT (p, &z, A68_BOOL);
       res = (BOOL_T) (STATUS (&z) == INITIALISED_MASK && VALUE (&z) == A68_TRUE);
     } else {
-      monitor_error ("deleted invalid watchpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NULL));
-      if (watchpoint_expression != NULL) {
+      monitor_error ("deleted invalid watchpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
+      if (watchpoint_expression != NO_TEXT) {
         free (watchpoint_expression);
-        watchpoint_expression = NULL;
+        watchpoint_expression = NO_TEXT;
       }
       res = A68_TRUE;
     }
@@ -2398,7 +2398,7 @@ void single_step (NODE_T * p, unsigned mask)
     return;
   }
 #if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
-  genie_curses_end (NULL);
+  genie_curses_end (NO_NODE);
 #endif
   if (mask == (unsigned) BREAKPOINT_ERROR_MASK) {
     WRITELN (STDOUT_FILENO, "Monitor entered after an error");
@@ -2410,28 +2410,28 @@ void single_step (NODE_T * p, unsigned mask)
       exit_genie ((p), A68_RUNTIME_ERROR + A68_FORCE_QUIT);
     }
   } else if ((mask & BREAKPOINT_MASK) != 0) {
-    if (INFO (p)->expr != NULL) {
+    if (EXPR (INFO (p)) != NO_TEXT) {
       if (!evaluate_breakpoint_expression (p)) {
         return;
       }
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Breakpoint (%s)", INFO (p)->expr) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Breakpoint (%s)", EXPR (INFO (p))) >= 0);
     } else {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Breakpoint") >= 0);
     }
     WRITELN (STDOUT_FILENO, output_line);
     WIS (p);
   } else if ((mask & BREAKPOINT_TEMPORARY_MASK) != 0) {
-    if (break_proc_level != 0 && INFO (p)->PROCEDURE_LEVEL > break_proc_level) {
+    if (break_proc_level != 0 && PROCEDURE_LEVEL (INFO (p)) > break_proc_level) {
       return;
     }
-    change_masks (program.top_node, BREAKPOINT_TEMPORARY_MASK, A68_FALSE);
+    change_masks (TOP_NODE (&program), BREAKPOINT_TEMPORARY_MASK, A68_FALSE);
     WRITELN (STDOUT_FILENO, "Temporary breakpoint (now removed)");
     WIS (p);
   } else if ((mask & BREAKPOINT_WATCH_MASK) != 0) {
     if (!evaluate_watchpoint_expression (p)) {
       return;
     }
-    if (watchpoint_expression != NULL) {
+    if (watchpoint_expression != NO_TEXT) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Watchpoint (%s)", watchpoint_expression) >= 0);
     } else {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Watchpoint (now removed)") >= 0);
@@ -2439,10 +2439,10 @@ void single_step (NODE_T * p, unsigned mask)
     WRITELN (STDOUT_FILENO, output_line);
     WIS (p);
   } else if ((mask & BREAKPOINT_TRACE_MASK) != 0) {
-    PROP_T *prop = &PROP (p);
+    PROP_T *prop = &GPROP (p);
     WIS ((p));
-    if (propagator_name (prop->unit) != NULL) {
-      WRITELN (STDOUT_FILENO, propagator_name (prop->unit));
+    if (propagator_name (UNIT (prop)) != NO_TEXT) {
+      WRITELN (STDOUT_FILENO, propagator_name (UNIT (prop)));
     }
     return;
   } else {
@@ -2465,8 +2465,8 @@ void single_step (NODE_T * p, unsigned mask)
   in_monitor = A68_TRUE;
   UP_BLOCK_GC;
   break_proc_level = 0;
-  change_masks (program.top_node, BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
-  STATUS_CLEAR (program.top_node, BREAKPOINT_INTERRUPT_MASK);
+  change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
+  STATUS_CLEAR (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK);
   while (do_cmd) {
     char *cmd;
     stack_pointer = top_sp;
@@ -2511,7 +2511,7 @@ void genie_debug (NODE_T * p)
 void genie_break (NODE_T * p)
 {
   (void) p;
-  change_masks (program.top_node, BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
+  change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
 }
 
 /*!
@@ -2531,14 +2531,14 @@ void genie_evaluate (NODE_T * p)
   CHECK_MON_REF (p, u, MODE (STRING));
   reset_transput_buffer (UNFORMATTED_BUFFER);
   add_a_string_transput_buffer (p, UNFORMATTED_BUFFER, (BYTE_T *) & u);
-  v = c_to_a_string (p, get_transput_buffer (UNFORMATTED_BUFFER));
+  v = c_to_a_string (p, get_transput_buffer (UNFORMATTED_BUFFER), DEFAULT_WIDTH);
 /* Evaluate in the monitor */
   in_monitor = A68_TRUE;
   mon_errors = 0;
   evaluate (STDOUT_FILENO, p, get_transput_buffer (UNFORMATTED_BUFFER));
   in_monitor = A68_FALSE;
   if (_m_sp != 1) {
-    monitor_error ("invalid expression", NULL);
+    monitor_error ("invalid expression", NO_TEXT);
   }
   if (mon_errors == 0) {
     MOID_T *res;
@@ -2555,7 +2555,7 @@ void genie_evaluate (NODE_T * p)
     }
     reset_transput_buffer (UNFORMATTED_BUFFER);
     genie_write_standard (p, TOP_MODE, STACK_ADDRESS (top_sp), nil_ref);
-    v = c_to_a_string (p, get_transput_buffer (UNFORMATTED_BUFFER));
+    v = c_to_a_string (p, get_transput_buffer (UNFORMATTED_BUFFER), DEFAULT_WIDTH);
   }
   stack_pointer = top_sp;
   PUSH_REF (p, v);

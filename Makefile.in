@@ -56,7 +56,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_a68g_OBJECTS = a68g-a68g.$(OBJEXT) a68g-code.$(OBJEXT) \
 	a68g-environ.$(OBJEXT) a68g-genie.$(OBJEXT) a68g-gsl.$(OBJEXT) \
-	a68g-monitor.$(OBJEXT) a68g-mp.$(OBJEXT) \
+	a68g-inet.$(OBJEXT) a68g-monitor.$(OBJEXT) a68g-mp.$(OBJEXT) \
 	a68g-plotutils.$(OBJEXT) a68g-postgresql.$(OBJEXT) \
 	a68g-syntax.$(OBJEXT) a68g-edit.$(OBJEXT)
 a68g_OBJECTS = $(am_a68g_OBJECTS)
@@ -198,13 +198,13 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c monitor.c mp.c plotutils.c postgresql.c syntax.c edit.c
+a68g_SOURCES = a68g.c code.c environ.c genie.c gsl.c inet.c monitor.c mp.c plotutils.c postgresql.c syntax.c edit.c
 a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 TESTS_ENVIRONMENT = ./a68g
 TESTS = check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
 @EXPORT_DYNAMIC_TRUE@a68g_LDFLAGS = -Wl,--export-dynamic
-pkginclude_HEADERS = a68g-config.h a68g.h
+pkginclude_HEADERS = a68g.h
 man_MANS = a68g.1
 EXTRA_DIST = $(man_MANS) check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68
 all: a68g-config.h
@@ -301,6 +301,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-environ.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-genie.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-gsl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-inet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-monitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-mp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/a68g-plotutils.Po@am__quote@
@@ -390,6 +391,20 @@ a68g-gsl.obj: gsl.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gsl.c' object='a68g-gsl.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-gsl.obj `if test -f 'gsl.c'; then $(CYGPATH_W) 'gsl.c'; else $(CYGPATH_W) '$(srcdir)/gsl.c'; fi`
+
+a68g-inet.o: inet.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-inet.o -MD -MP -MF $(DEPDIR)/a68g-inet.Tpo -c -o a68g-inet.o `test -f 'inet.c' || echo '$(srcdir)/'`inet.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-inet.Tpo $(DEPDIR)/a68g-inet.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='inet.c' object='a68g-inet.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-inet.o `test -f 'inet.c' || echo '$(srcdir)/'`inet.c
+
+a68g-inet.obj: inet.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-inet.obj -MD -MP -MF $(DEPDIR)/a68g-inet.Tpo -c -o a68g-inet.obj `if test -f 'inet.c'; then $(CYGPATH_W) 'inet.c'; else $(CYGPATH_W) '$(srcdir)/inet.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/a68g-inet.Tpo $(DEPDIR)/a68g-inet.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='inet.c' object='a68g-inet.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o a68g-inet.obj `if test -f 'inet.c'; then $(CYGPATH_W) 'inet.c'; else $(CYGPATH_W) '$(srcdir)/inet.c'; fi`
 
 a68g-monitor.o: monitor.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT a68g-monitor.o -MD -MP -MF $(DEPDIR)/a68g-monitor.Tpo -c -o a68g-monitor.o `test -f 'monitor.c' || echo '$(srcdir)/'`monitor.c

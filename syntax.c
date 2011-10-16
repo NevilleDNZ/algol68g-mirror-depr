@@ -170,8 +170,6 @@ struct SCOPE_T
   SCOPE_T *next;
 };
 
-#define NO_SCOPE ((SCOPE_T *) NULL)
-
 enum
 { NOT_TRANSIENT = 0, TRANSIENT };
 
@@ -205,9 +203,6 @@ static void coerce_unit (NODE_T *, SOID_T *);
 
 #define IN_PRELUDE(p) (LINE_NUMBER (p) <= 0)
 #define EOL(c) ((c) == NEWLINE_CHAR || (c) == NULL_CHAR)
-
-#define NO_TICK ((BOOL_T *) NULL)
-#define NO_NOTE ((void (*) (NODE_T *)) NULL)
 
 static BOOL_T stop_scanner = A68_FALSE, read_error = A68_FALSE, no_preprocessing = A68_FALSE;
 static char *scan_buf;
@@ -413,9 +408,9 @@ static void resolve_equivalent (MOID_T ** m)
 
 static void save_state (LINE_T * ref_l, char *ref_s, char ch)
 {
-  program.scan_state.save_l = ref_l;
-  program.scan_state.save_s = ref_s;
-  program.scan_state.save_c = ch;
+  SCAN_STATE_L (&program) = ref_l;
+  SCAN_STATE_S (&program) = ref_s;
+  SCAN_STATE_C (&program) = ch;
 }
 
 /*!
@@ -427,9 +422,9 @@ static void save_state (LINE_T * ref_l, char *ref_s, char ch)
 
 static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 {
-  *ref_l = program.scan_state.save_l;
-  *ref_s = program.scan_state.save_s;
-  *ch = program.scan_state.save_c;
+  *ref_l = SCAN_STATE_L (&program);
+  *ref_s = SCAN_STATE_S (&program);
+  *ch = SCAN_STATE_C (&program);
 }
 
 /**************************************/
@@ -466,16 +461,16 @@ static void concatenate_lines (LINE_T * top)
     ;
   }
   for (; q != NO_LINE; BACKWARD (q)) {
-    char *z = q->string;
+    char *z = STRING (q);
     int len = (int) strlen (z);
-    if (len >= 2 && z[len - 2] == BACKSLASH_CHAR && z[len - 1] == NEWLINE_CHAR && NEXT (q) != NO_LINE && NEXT (q)->string != NO_TEXT) {
+    if (len >= 2 && z[len - 2] == BACKSLASH_CHAR && z[len - 1] == NEWLINE_CHAR && NEXT (q) != NO_LINE && STRING (NEXT (q)) != NO_TEXT) {
       z[len - 2] = NULL_CHAR;
-      len += (int) strlen (NEXT (q)->string);
+      len += (int) strlen (STRING (NEXT (q)));
       z = (char *) get_fixed_heap_space ((size_t) (len + 1));
-      bufcpy (z, q->string, len + 1);
-      bufcat (z, NEXT (q)->string, len + 1);
-      NEXT (q)->string[0] = NULL_CHAR;
-      q->string = z;
+      bufcpy (z, STRING (q), len + 1);
+      bufcat (z, STRING (NEXT (q)), len + 1);
+      STRING (NEXT (q))[0] = NULL_CHAR;
+      STRING (q) = z;
     }
   }
 }
@@ -491,7 +486,7 @@ static void concatenate_lines (LINE_T * top)
 static BOOL_T whether_bold (char *u, char *v)
 {
   unsigned len = (unsigned) strlen (v);
-  if (program.options.stropping == QUOTE_STROPPING) {
+  if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
     if (u[0] == '\'') {
       return ((BOOL_T) (strncmp (++u, v, len) == 0 && u[len] == '\''));
     } else {
@@ -528,7 +523,7 @@ static BOOL_T skip_string (LINE_T ** top, char **ch)
     }
     FORWARD (u);
     if (u != NO_LINE) {
-      v = &(u->string[0]);
+      v = &(STRING (u)[0]);
     } else {
       v = NO_TEXT;
     }
@@ -569,7 +564,7 @@ static BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
     }
     FORWARD (u);
     if (u != NO_LINE) {
-      v = &(u->string[0]);
+      v = &(STRING (u)[0]);
     } else {
       v = NO_TEXT;
     }
@@ -616,7 +611,7 @@ static BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespa
     }
     FORWARD (u);
     if (u != NO_LINE) {
-      v = &(u->string[0]);
+      v = &(STRING (u)[0]);
     } else {
       v = NO_TEXT;
     }
@@ -647,7 +642,7 @@ static char *get_pragmat_item (LINE_T ** top, char **ch)
     }
     FORWARD (u);
     if (u != NO_LINE) {
-      v = &(u->string[0]);
+      v = &(STRING (u)[0]);
     } else {
       v = NO_TEXT;
     }
@@ -752,7 +747,7 @@ static char *next_preprocessor_item (LINE_T ** top, char **ch, int *delim)
     }
     FORWARD (u);
     if (u != NO_LINE) {
-      v = &(u->string[0]);
+      v = &(STRING (u)[0]);
     } else {
       v = NO_TEXT;
     }
@@ -782,7 +777,7 @@ been included will not be included a second time - it will be ignored.
   BOOL_T make_pass = A68_TRUE;
   while (make_pass) {
     LINE_T *s, *t, *u = top;
-    char *v = &(u->string[0]);
+    char *v = &(STRING (u)[0]);
     make_pass = A68_FALSE;
     RESET_ERRNO;
     while (u != NO_LINE) {
@@ -833,13 +828,13 @@ been included will not be included a second time - it will be ignored.
         SCAN_ERROR (!skip_pragmat (&u, &v, pr_lim, A68_TRUE), start_l, start_c, ERROR_UNTERMINATED_PRAGMAT);
 /* Filename valid? */
         SCAN_ERROR (n == 0, start_l, start_c, ERROR_INCORRECT_FILENAME);
-        fnwid = (int) strlen (program.files.path) + (int) strlen (fnb) + 1;
+        fnwid = (int) strlen (FILE_PATH (&program)) + (int) strlen (fnb) + 1;
         fn = (char *) get_fixed_heap_space ((size_t) fnwid);
-        bufcpy (fn, program.files.path, fnwid);
+        bufcpy (fn, FILE_PATH (&program), fnwid);
         bufcat (fn, fnb, fnwid);
 /* Recursive include? Then *ignore* the file */
         for (t = top; t != NO_LINE; t = NEXT (t)) {
-          if (strcmp (t->filename, fn) == 0) {
+          if (strcmp (FILENAME (t), fn) == 0) {
             goto search_next_pragmat; /* Eeek! */
           }
         }
@@ -915,22 +910,22 @@ static void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char 
 /* Allow shell command in first line, f.i. "#!/usr/share/bin/a68g" */
   if (*line_num == 1) {
     if (strlen (str) >= 2 && strncmp (str, "#!", 2) == 0) {
-      ABEND (strstr (str, "run-script") != NO_TEXT, ERROR_SHELL_SCRIPT, NULL);
+      ABEND (strstr (str, "run-script") != NO_TEXT, ERROR_SHELL_SCRIPT, NO_TEXT);
       (*line_num)++;
       return;
     }
   }
 /* Link line into the chain */
-  z->string = new_fixed_string (str);
-  z->filename = filename;
+  STRING (z) = new_fixed_string (str);
+  FILENAME (z) = filename;
   NUMBER (z) = (*line_num)++;
-  z->print_status = NOT_PRINTED;
-  z->list = A68_TRUE;
-  z->diagnostics = NULL;
+  PRINT_STATUS (z) = NOT_PRINTED;
+  LIST (z) = A68_TRUE;
+  DIAGNOSTICS (z) = NO_DIAGNOSTIC;
   NEXT (z) = NO_LINE;
   PREVIOUS (z) = *ref_l;
-  if (program.top_line == NO_LINE) {
-    program.top_line = z;
+  if (TOP_LINE (&program) == NO_LINE) {
+    TOP_LINE (&program) = z;
   }
   if (*ref_l != NO_LINE) {
     NEXT (*ref_l) = z;
@@ -945,7 +940,7 @@ static void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char 
 
 static int get_source_size (void)
 {
-  FILE_T f = program.files.source.fd;
+  FILE_T f = FILE_SOURCE_FD (&program);
 /* This is why WIN32 must open as "read binary" */
   return ((int) lseek (f, 0, SEEK_END));
 }
@@ -987,8 +982,8 @@ static BOOL_T read_script_file (void)
   char filename[BUFFER_SIZE], linenum[BUFFER_SIZE];
   char ch, * fn, * line; 
   char * buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
-  FILE_T source = program.files.source.fd;
-  ABEND (source == -1, "source file not open", NULL);
+  FILE_T source = FILE_SOURCE_FD (&program);
+  ABEND (source == -1, "source file not open", NO_TEXT);
   buffer[0] = NULL_CHAR;
   n = 0;
   len = (unsigned) (8 + source_file_size);
@@ -1017,15 +1012,15 @@ static BOOL_T read_script_file (void)
       ASSERT (io_read (source, &ch, 1) == 1);
     }
     linenum[k] = NULL_CHAR;
-    num = strtol (linenum, NULL, 10);
-    ABEND (errno == ERANGE, "strange line number", NULL);
+    num = strtol (linenum, NO_VAR, 10);
+    ABEND (errno == ERANGE, "strange line number", NO_TEXT);
 /* COPY original line into buffer */
     ASSERT (io_read (source, &ch, 1) == 1);
     line = &buffer[n];
     while (ch != NEWLINE_CHAR) {
       buffer[n++] = ch;
       ASSERT (io_read (source, &ch, 1) == 1);
-      ABEND ((unsigned) n >= len, "buffer overflow", NULL);
+      ABEND ((unsigned) n >= len, "buffer overflow", NO_TEXT);
     }
     buffer[n++] = NEWLINE_CHAR;
     buffer[n] = NULL_CHAR;
@@ -1044,13 +1039,13 @@ static BOOL_T read_source_file (void)
   LINE_T *ref_l = NO_LINE;
   int line_num = 0, k, bytes_read;
   ssize_t l;
-  FILE_T f = program.files.source.fd;
+  FILE_T f = FILE_SOURCE_FD (&program);
   char *prelude_start, *postlude, *buffer;
 /* Prelude */
-  if (program.options.stropping == UPPER_STROPPING) {
+  if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
     prelude_start = bold_prelude_start;
     postlude = bold_postlude;
-  } else if (program.options.stropping == QUOTE_STROPPING) {
+  } else if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
     prelude_start = quote_prelude_start;
     postlude = quote_postlude;
   } else {
@@ -1062,10 +1057,10 @@ static BOOL_T read_source_file (void)
   buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
   RESET_ERRNO;
   ASSERT (lseek (f, 0, SEEK_SET) >= 0);
-  ABEND (errno != 0, "error while reading source file", NULL);
+  ABEND (errno != 0, "error while reading source file", NO_TEXT);
   RESET_ERRNO;
   bytes_read = (int) io_read (f, buffer, (size_t) source_file_size);
-  ABEND (errno != 0 || bytes_read != source_file_size, "error while reading source file", NULL);
+  ABEND (errno != 0 || bytes_read != source_file_size, "error while reading source file", NO_TEXT);
 /* Link all lines into the list */
   k = 0;
   while (k < source_file_size) {
@@ -1084,15 +1079,15 @@ static BOOL_T read_source_file (void)
     if (k < source_file_size) {
       k++;
     }
-    append_source_line (scan_buf, &ref_l, &line_num, program.files.source.name);
+    append_source_line (scan_buf, &ref_l, &line_num, FILE_SOURCE_NAME (&program));
     SCAN_ERROR (l != (ssize_t) strlen (scan_buf), NO_LINE, NO_TEXT, ERROR_FILE_SOURCE_CTRL);
   }
 /* Postlude */
   append_environ (postlude, &ref_l, &line_num, "postlude");
 /* Concatenate lines */
-  concatenate_lines (program.top_line);
+  concatenate_lines (TOP_LINE (&program));
 /* Include files */
-  include_files (program.top_line);
+  include_files (TOP_LINE (&program));
   return (A68_TRUE);
 }
 
@@ -1110,19 +1105,19 @@ static char next_char (LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
 #if defined NO_TYPO
   allow_typo = A68_FALSE;
 #endif
-  LOW_STACK_ALERT (NULL);
+  LOW_STACK_ALERT (NO_NODE);
 /* Source empty? */
   if (*ref_l == NO_LINE) {
     return (STOP_CHAR);
   } else {
-    (*ref_l)->list = (BOOL_T) (program.options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+    LIST (*ref_l) = (BOOL_T) (OPTION_NODEMASK (&program) & SOURCE_MASK ? A68_TRUE : A68_FALSE);
 /* Take new line? */
     if ((*ref_s)[0] == NEWLINE_CHAR || (*ref_s)[0] == NULL_CHAR) {
       *ref_l = NEXT (*ref_l);
       if (*ref_l == NO_LINE) {
         return (STOP_CHAR);
       }
-      *ref_s = (*ref_l)->string;
+      *ref_s = STRING (*ref_l);
     } else {
       (*ref_s)++;
     }
@@ -1145,7 +1140,7 @@ static void get_good_char (char *ref_c, LINE_T ** ref_l, char **ref_s)
 {
   while (*ref_c != STOP_CHAR && (IS_SPACE (*ref_c) || (*ref_c == NULL_CHAR))) {
     if (*ref_l != NO_LINE) {
-      (*ref_l)->list = (BOOL_T) (program.options.nodemask & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+      LIST (*ref_l) = (BOOL_T) (OPTION_NODEMASK (&program) & SOURCE_MASK ? A68_TRUE : A68_FALSE);
     }
     *ref_c = next_char (ref_l, ref_s, A68_FALSE);
   }
@@ -1167,7 +1162,7 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
   int term_s_length, chars_in_buf;
   BOOL_T stop;
 /* Set terminator */
-  if (program.options.stropping == UPPER_STROPPING) {
+  if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
       term_s = "CO";
     } else if (type == STYLE_II_COMMENT_SYMBOL) {
@@ -1179,7 +1174,7 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
     } else if (type == BOLD_PRAGMAT_SYMBOL) {
       term_s = "PRAGMAT";
     }
-  } else if (program.options.stropping == QUOTE_STROPPING) {
+  } else if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
       term_s = "'CO'";
     } else if (type == STYLE_II_COMMENT_SYMBOL) {
@@ -1200,7 +1195,7 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
   while (stop == A68_FALSE) {
     SCAN_ERROR (c == STOP_CHAR, start_l, start_c, ERROR_UNTERMINATED_PRAGMENT);
 /* A ".." or '..' delimited string in a PRAGMAT */
-    if ((c == QUOTE_CHAR || (c == '\'' && program.options.stropping == UPPER_STROPPING))
+    if ((c == QUOTE_CHAR || (c == '\'' && OPTION_STROPPING (&program) == UPPER_STROPPING))
         && (type == STYLE_I_PRAGMAT_SYMBOL || type == BOLD_PRAGMAT_SYMBOL)) {
       char delim = c;
       BOOL_T eos = A68_FALSE;
@@ -1321,7 +1316,7 @@ static BOOL_T whether_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   char exp_syms[3];
-  if (program.options.stropping == UPPER_STROPPING) {
+  if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
     exp_syms[0] = EXPONENT_CHAR;
     exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
     exp_syms[2] = NULL_CHAR;
@@ -1351,7 +1346,7 @@ static BOOL_T whether_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   save_state (*ref_l, *ref_s, *ch);
-  if (program.options.stropping == QUOTE_STROPPING) {
+  if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
     if (*ch == TO_UPPER (RADIX_CHAR)) {
       *ch = next_char (ref_l, ref_s, A68_TRUE);
       ret = (BOOL_T) (strchr ("0123456789ABCDEF", *ch) != NO_TEXT);
@@ -1380,7 +1375,7 @@ static BOOL_T whether_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
   save_state (*ref_l, *ref_s, *ch);
   if (*ch == POINT_CHAR) {
     char exp_syms[3];
-    if (program.options.stropping == UPPER_STROPPING) {
+    if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
       exp_syms[0] = EXPONENT_CHAR;
       exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
       exp_syms[2] = NULL_CHAR;
@@ -1429,9 +1424,9 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
 /***************/
   if (in_format) {
     char *format_items;
-    if (program.options.stropping == UPPER_STROPPING) {
+    if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
       format_items = "/%\\+-.abcdefghijklmnopqrstuvwxyz";
-    } else {/* if (program.options.stropping == QUOTE_STROPPING) */
+    } else {/* if (OPTION_STROPPING (&program) == QUOTE_STROPPING) */
       format_items = "/%\\+-.ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     }
     if (a68g_strchr (format_items, c) != NO_TEXT) {
@@ -1454,7 +1449,7 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
 /* Not in a format */
 /*******************/
   if (IS_UPPER (c)) {
-    if (program.options.stropping == UPPER_STROPPING) {
+    if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
 /* Upper case word - bold tag */
       while (IS_UPPER (c) || c == '_') {
         (sym++)[0] = c;
@@ -1462,7 +1457,7 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
       }
       sym[0] = NULL_CHAR;
       *att = BOLD_TAG;
-    } else if (program.options.stropping == QUOTE_STROPPING) {
+    } else if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
       while (IS_UPPER (c) || IS_DIGIT (c) || c == '_') {
         (sym++)[0] = c;
         c = next_char (ref_l, ref_s, A68_TRUE);
@@ -1543,7 +1538,7 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
     } else if (whether_radix_char (ref_l, ref_s, &c)) {
       (sym++)[0] = c;
       c = next_char (ref_l, ref_s, A68_TRUE);
-      if (program.options.stropping == UPPER_STROPPING) {
+      if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
         while (IS_DIGIT (c) || strchr ("abcdef", c) != NO_TEXT) {
           (sym++)[0] = c;
           c = next_char (ref_l, ref_s, A68_TRUE);
@@ -1595,7 +1590,7 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
     }
     sym[0] = NULL_CHAR;
     *att = 0;
-  } else if (c == '!' && program.options.stropping == QUOTE_STROPPING) {
+  } else if (c == '!' && OPTION_STROPPING (&program) == QUOTE_STROPPING) {
 /* Bar, will be replaced with modern variant.
    For this reason ! is not a MONAD with quote-stropping */
     (sym++)[0] = '|';
@@ -1784,7 +1779,7 @@ static void make_lower_case (char *p)
 
 static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, char **s, LINE_T ** start_l, char **start_c)
 {
-  while (l != NULL && !stop_scanner) {
+  while (l != NO_VAR && !stop_scanner) {
     int att = 0;
     get_next_token (in_format, l, s, start_l, start_c, &att);
     if (scan_buf[0] == STOP_CHAR) {
@@ -1794,7 +1789,7 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
       char *c = NO_TEXT;
       BOOL_T make_node = A68_TRUE;
       char *trailing = NO_TEXT;
-      if (!(kw != NULL && att != ROW_CHAR_DENOTATION)) {
+      if (!(kw != NO_KEYWORD && att != ROW_CHAR_DENOTATION)) {
         if (att == IDENTIFIER) {
           make_lower_case (scan_buf);
         }
@@ -1812,7 +1807,7 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
 /* Merge GO and TO to GOTO */
           if (*root != NO_NODE && WHETHER (*root, GO_SYMBOL)) {
             ATTRIBUTE (*root) = GOTO_SYMBOL;
-            SYMBOL (*root) = TEXT (find_keyword (top_keyword, "GOTO"));
+            NSYMBOL (*root) = TEXT (find_keyword (top_keyword, "GOTO"));
             make_node = A68_FALSE;
           } else {
             att = ATTRIBUTE (kw);
@@ -1831,7 +1826,7 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
             pragment (ATTRIBUTE (kw), l, s);
             if (!stop_scanner) {
               isolate_options (scan_buf, *start_l);
-              (void) set_options (program.options.list, A68_FALSE);
+              (void) set_options (OPTION_LIST (&program), A68_FALSE);
               make_node = A68_FALSE;
             }
           }
@@ -1855,21 +1850,21 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
           case DOTDOT_SYMBOL:
           case SEMI_SYMBOL: 
           {
-            GENIE (q) = NULL;
+            GINFO (q) = NO_GINFO;
             break;
           }
           default: {
-            GENIE (q) = new_genie_info ();
+            GINFO (q) = new_genie_info ();
             break;
           }
         }
-        STATUS (q) = program.options.nodemask;
-        LINE (q) = *start_l;
-        INFO (q)->char_in_line = *start_c;
+        STATUS (q) = OPTION_NODEMASK (&program);
+        LINE (INFO (q)) = *start_l;
+        CHAR_IN_LINE (INFO (q)) = *start_c;
         PRIO (INFO (q)) = 0;
-        INFO (q)->PROCEDURE_LEVEL = 0;
+        PROCEDURE_LEVEL (INFO (q)) = 0;
         ATTRIBUTE (q) = att;
-        SYMBOL (q) = c;
+        NSYMBOL (q) = c;
         PREVIOUS (q) = *root;
         SUB (q) = NEXT (q) = NO_NODE;
         TABLE (q) = NO_TABLE;
@@ -1878,8 +1873,8 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
         if (*root != NO_NODE) {
           NEXT (*root) = q;
         }
-        if (program.top_node == NO_NODE) {
-          program.top_node = q;
+        if (TOP_NODE (&program) == NO_NODE) {
+          TOP_NODE (&program) = q;
         }
         *root = q;
         if (trailing != NO_TEXT) {
@@ -1896,13 +1891,13 @@ to know when it scans a format text and when not.
         tokenise_source (root, level + 1, A68_TRUE, l, s, start_l, start_c);
       } else if (in_format && open_nested_clause (att)) {
         NODE_T *z = PREVIOUS (*root);
-        if (z != NULL && whether_one_of (z, FORMAT_ITEM_N, FORMAT_ITEM_G, FORMAT_ITEM_H, FORMAT_ITEM_F)) {
+        if (z != NO_NODE && whether_one_of (z, FORMAT_ITEM_N, FORMAT_ITEM_G, FORMAT_ITEM_H, FORMAT_ITEM_F)) {
           tokenise_source (root, level, A68_FALSE, l, s, start_l, start_c);
         } else if (att == OPEN_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
-        } else if (program.options.brackets && att == SUB_SYMBOL) {
+        } else if (OPTION_BRACKETS (&program) && att == SUB_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
-        } else if (program.options.brackets && att == ACCO_SYMBOL) {
+        } else if (OPTION_BRACKETS (&program) && att == ACCO_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
         }
       } else if (!in_format && level > 0 && open_nested_clause (att)) {
@@ -1911,9 +1906,9 @@ to know when it scans a format text and when not.
         return;
       } else if (in_format && att == CLOSE_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
-      } else if (program.options.brackets && in_format && att == BUS_SYMBOL) {
+      } else if (OPTION_BRACKETS (&program) && in_format && att == BUS_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
-      } else if (program.options.brackets && in_format && att == OCCA_SYMBOL) {
+      } else if (OPTION_BRACKETS (&program) && in_format && att == OCCA_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
       }
     }
@@ -1930,13 +1925,13 @@ BOOL_T lexical_analyser (void)
   LINE_T *l, *start_l = NO_LINE;
   char *s = NO_TEXT, *start_c = NO_TEXT;
   NODE_T *root = NO_NODE;
-  scan_buf = NULL;
+  scan_buf = NO_TEXT;
   max_scan_buf_length = source_file_size = get_source_size ();
 /* Errors in file? */
   if (max_scan_buf_length == 0) {
     return (A68_FALSE);
   }
-  if (program.options.run_script) {
+  if (OPTION_RUN_SCRIPT (&program)) {
     scan_buf = (char *) get_temp_heap_space ((unsigned) (8 + max_scan_buf_length));
     if (!read_script_file ()) {
       return (A68_FALSE);
@@ -1954,8 +1949,8 @@ BOOL_T lexical_analyser (void)
 /* Start tokenising */
   read_error = A68_FALSE;
   stop_scanner = A68_FALSE;
-  if ((l = program.top_line) != NO_LINE) {
-    s = l->string;
+  if ((l = TOP_LINE (&program)) != NO_LINE) {
+    s = STRING (l);
   }
   tokenise_source (&root, 0, A68_FALSE, &l, &s, &start_l, &start_c);
   return (A68_TRUE);
@@ -1991,8 +1986,8 @@ static BOOL_T whether_refinement_terminator (NODE_T * p)
 
 void get_refinements (void)
 {
-  NODE_T *p = program.top_node;
-  program.top_refinement = NO_REFINEMENT;
+  NODE_T *p = TOP_NODE (&program);
+  TOP_REFINEMENT (&program) = NO_REFINEMENT;
 /* First look where the prelude ends */
   while (p != NO_NODE && IN_PRELUDE (p)) {
     FORWARD (p);
@@ -2014,47 +2009,47 @@ void get_refinements (void)
     REFINEMENT_T *new_one = (REFINEMENT_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (REFINEMENT_T)), *x;
     BOOL_T exists;
     NEXT (new_one) = NO_REFINEMENT;
-    NAME (new_one) = SYMBOL (p);
-    new_one->applications = 0;
-    new_one->line_defined = LINE (p);
-    new_one->line_applied = NO_LINE;
-    new_one->node_defined = p;
-    new_one->begin = new_one->end = NO_NODE;
+    NAME (new_one) = NSYMBOL (p);
+    APPLICATIONS (new_one) = 0;
+    LINE_DEFINED (new_one) = LINE (INFO (p));
+    LINE_APPLIED (new_one) = NO_LINE;
+    NODE_DEFINED (new_one) = p;
+    BEGIN (new_one) = END (new_one) = NO_NODE;
     p = NEXT_NEXT (p);
     if (p == NO_NODE) {
-      diagnostic_node (A68_SYNTAX_ERROR, NULL, ERROR_REFINEMENT_EMPTY, NULL);
+      diagnostic_node (A68_SYNTAX_ERROR, NO_NODE, ERROR_REFINEMENT_EMPTY);
       return;
     } else {
-      new_one->begin = p;
+      BEGIN (new_one) = p;
     }
     while (p != NO_NODE && ATTRIBUTE (p) != POINT_SYMBOL) {
-      new_one->end = p;
+      END (new_one) = p;
       FORWARD (p);
     }
     if (p == NO_NODE) {
-      diagnostic_node (A68_SYNTAX_ERROR, NULL, ERROR_SYNTAX_EXPECTED, POINT_SYMBOL, NULL);
+      diagnostic_node (A68_SYNTAX_ERROR, NO_NODE, ERROR_SYNTAX_EXPECTED, POINT_SYMBOL);
       return;
     } else {
       FORWARD (p);
     }
 /* Do we already have one by this name */
-    x = program.top_refinement;
+    x = TOP_REFINEMENT (&program);
     exists = A68_FALSE;
-    while (x != NULL && !exists) {
+    while (x != NO_REFINEMENT && !exists) {
       if (NAME (x) == NAME (new_one)) {
-        diagnostic_node (A68_SYNTAX_ERROR, new_one->node_defined, ERROR_REFINEMENT_DEFINED, NULL);
+        diagnostic_node (A68_SYNTAX_ERROR, NODE_DEFINED (new_one), ERROR_REFINEMENT_DEFINED);
         exists = A68_TRUE;
       }
       FORWARD (x);
     }
 /* Straight insertion in chain */
     if (!exists) {
-      NEXT (new_one) = program.top_refinement;
-      program.top_refinement = new_one;
+      NEXT (new_one) = TOP_REFINEMENT (&program);
+      TOP_REFINEMENT (&program) = new_one;
     }
   }
   if (p != NO_NODE && !IN_PRELUDE (p)) {
-    diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_REFINEMENT_INVALID, NULL);
+    diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_REFINEMENT_INVALID);
   }
 }
 
@@ -2068,34 +2063,34 @@ void put_refinements (void)
   REFINEMENT_T *x;
   NODE_T *p, *point;
 /* If there are no refinements, there's little to do */
-  if (program.top_refinement == NO_REFINEMENT) {
+  if (TOP_REFINEMENT (&program) == NO_REFINEMENT) {
     return;
   }
 /* Initialisation */
-  x = program.top_refinement;
+  x = TOP_REFINEMENT (&program);
   while (x != NO_REFINEMENT) {
-    x->applications = 0;
+    APPLICATIONS (x) = 0;
     FORWARD (x);
   }
 /* Before we introduce infinite loops, find where closing-prelude starts */
-  p = program.top_node;
+  p = TOP_NODE (&program);
   while (p != NO_NODE && IN_PRELUDE (p)) {
     FORWARD (p);
   }
   while (p != NO_NODE && !IN_PRELUDE (p)) {
     FORWARD (p);
   }
-  ABEND (p == NO_NODE, ERROR_INTERNAL_CONSISTENCY, NULL);
+  ABEND (p == NO_NODE, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
   point = p;
 /* We need to substitute until the first point */
-  p = program.top_node;
+  p = TOP_NODE (&program);
   while (p != NO_NODE && ATTRIBUTE (p) != POINT_SYMBOL) {
     if (WHETHER (p, IDENTIFIER)) {
 /* See if we can find its definition */
       REFINEMENT_T *y = NO_REFINEMENT;
-      x = program.top_refinement;
+      x = TOP_REFINEMENT (&program);
       while (x != NO_REFINEMENT && y == NO_REFINEMENT) {
-        if (NAME (x) == SYMBOL (p)) {
+        if (NAME (x) == NSYMBOL (p)) {
           y = x;
         } else {
           FORWARD (x);
@@ -2103,26 +2098,26 @@ void put_refinements (void)
       }
       if (y != NO_REFINEMENT) {
 /* We found its definition */
-        y->applications++;
-        if (y->applications > 1) {
-          diagnostic_node (A68_SYNTAX_ERROR, y->node_defined, ERROR_REFINEMENT_APPLIED, NULL);
+        APPLICATIONS (y)++;
+        if (APPLICATIONS (y) > 1) {
+          diagnostic_node (A68_SYNTAX_ERROR, NODE_DEFINED (y), ERROR_REFINEMENT_APPLIED);
           FORWARD (p);
         } else {
 /* Tie the definition in the tree */
-          y->line_applied = LINE (p);
+          LINE_APPLIED (y) = LINE (INFO (p));
           if (PREVIOUS (p) != NO_NODE) {
-            NEXT (PREVIOUS (p)) = y->begin;
+            NEXT (PREVIOUS (p)) = BEGIN (y);
           }
-          if (y->begin != NO_NODE) {
-            PREVIOUS (y->begin) = PREVIOUS (p);
+          if (BEGIN (y) != NO_NODE) {
+            PREVIOUS (BEGIN (y)) = PREVIOUS (p);
           }
           if (NEXT (p) != NO_NODE) {
-            PREVIOUS (NEXT (p)) = y->end;
+            PREVIOUS (NEXT (p)) = END (y);
           }
-          if (y->end != NO_NODE) {
-            NEXT (y->end) = NEXT (p);
+          if (END (y) != NO_NODE) {
+            NEXT (END (y)) = NEXT (p);
           }
-          p = y->begin; /* So we can substitute the refinements within */
+          p = BEGIN (y); /* So we can substitute the refinements within */
         }
       } else {
         FORWARD (p);
@@ -2140,14 +2135,14 @@ void put_refinements (void)
       PREVIOUS (point) = PREVIOUS (p);
     }
   } else {
-    diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX_EXPECTED, POINT_SYMBOL, NULL);
+    diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX_EXPECTED, POINT_SYMBOL);
   }
 /* Has the programmer done it well? */
-  if (program.error_count == 0) {
-    x = program.top_refinement;
+  if (ERROR_COUNT (&program) == 0) {
+    x = TOP_REFINEMENT (&program);
     while (x != NO_REFINEMENT) {
-      if (x->applications == 0) {
-        diagnostic_node (A68_SYNTAX_ERROR, x->node_defined, ERROR_REFINEMENT_NOT_APPLIED, NULL);
+      if (APPLICATIONS (x) == 0) {
+        diagnostic_node (A68_SYNTAX_ERROR, NODE_DEFINED (x), ERROR_REFINEMENT_NOT_APPLIED);
       }
       FORWARD (x);
     }
@@ -2168,8 +2163,8 @@ static void insert_node (NODE_T * p, int att)
 {
   NODE_T *q = new_node ();
   *q = *p;
-  if (GENIE (p) != NULL) {
-    GENIE (q) = new_genie_info ();
+  if (GINFO (p) != NO_GINFO) {
+    GINFO (q) = new_genie_info ();
   }
   ATTRIBUTE (q) = att;
   NEXT (p) = q;
@@ -2471,7 +2466,7 @@ char *phrase_to_text (NODE_T * p, NODE_T ** w)
 Where to put the error message? Bob Uzgalis noted that actual content of a 
 diagnostic is not as important as accurately indicating *were* the problem is! 
 */
-      if (w != NULL) {
+      if (w != NO_VAR) {
         if (count == 0 || (*w) == NO_NODE) {
           *w = p;
         } else if (dont_mark_here (*w)) {
@@ -2480,7 +2475,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
       }
 /* Add initiation */
       if (count == 0) {
-        if (w != NULL) {
+        if (w != NO_VAR) {
           bufcat (buffer, "construct beginning with", BUFFER_SIZE);
         }
       } else if (count == 1) {
@@ -2493,7 +2488,7 @@ diagnostic is not as important as accurately indicating *were* the problem is!
 /* Attribute or symbol */
       if (z != NO_TEXT && SUB (p) != NO_NODE) {
         if (gatt == IDENTIFIER || gatt == OPERATOR || gatt == DENOTATION) {
-          ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+          ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", NSYMBOL (p)) >= 0);
           bufcat (buffer, edit_line, BUFFER_SIZE);
         } else {
           if (strchr ("aeio", z[0]) != NO_TEXT) {
@@ -2505,10 +2500,10 @@ diagnostic is not as important as accurately indicating *were* the problem is!
           bufcat (buffer, edit_line, BUFFER_SIZE);
         }
       } else if (z != NO_TEXT && SUB (p) == NO_NODE) {
-        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", NSYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
-      } else if (SYMBOL (p) != NO_TEXT) {
-        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", SYMBOL (p)) >= 0);
+      } else if (NSYMBOL (p) != NO_TEXT) {
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", NSYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       }
 /* Add "starting in line nn" */
@@ -2762,7 +2757,7 @@ static NODE_T *bracket_check_parse (NODE_T * top, NODE_T * p)
       longjmp (top_down_crash_exit, 1);
     } else {
       char *diag = bracket_check_diagnose (top);
-      diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_PARENTHESIS_2, ATTRIBUTE (q), LINE (q), ket, (strlen (diag) > 0 ? diag : INFO_MISSING_KEYWORDS));
+      diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_PARENTHESIS_2, ATTRIBUTE (q), LINE (INFO (q)), ket, (strlen (diag) > 0 ? diag : INFO_MISSING_KEYWORDS));
       longjmp (top_down_crash_exit, 1);
     }
   }
@@ -2778,7 +2773,7 @@ void check_parenthesis (NODE_T * top)
 {
   if (!setjmp (top_down_crash_exit)) {
     if (bracket_check_parse (top, top) != NO_NODE) {
-      diagnostic_node (A68_SYNTAX_ERROR, top, ERROR_PARENTHESIS, INFO_MISSING_KEYWORDS, NULL);
+      diagnostic_node (A68_SYNTAX_ERROR, top, ERROR_PARENTHESIS, INFO_MISSING_KEYWORDS);
     }
   }
 }
@@ -2800,9 +2795,9 @@ static void top_down_diagnose (NODE_T * start, NODE_T * posit, int clause, int e
 {
   NODE_T *issue = (posit != NO_NODE ? posit : start);
   if (expected != 0) {
-    diagnostic_node (A68_SYNTAX_ERROR, issue, ERROR_EXPECTED_NEAR, expected, clause, SYMBOL (start), start->info->line, NULL);
+    diagnostic_node (A68_SYNTAX_ERROR, issue, ERROR_EXPECTED_NEAR, expected, clause, NSYMBOL (start), LINE (INFO (start)));
   } else {
-    diagnostic_node (A68_SYNTAX_ERROR, issue, ERROR_UNBALANCED_KEYWORD, clause, SYMBOL (start), LINE (start), NULL);
+    diagnostic_node (A68_SYNTAX_ERROR, issue, ERROR_UNBALANCED_KEYWORD, clause, NSYMBOL (start), LINE (INFO (start)));
   }
 }
 
@@ -3433,7 +3428,7 @@ void top_down_parser (NODE_T * p)
 static void detect_redefined_keyword (NODE_T * p, int construct)
 {
   if (p != NO_NODE && whether (p, KEYWORD, EQUALS_SYMBOL, STOP)) {
-    diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_REDEFINED_KEYWORD, SYMBOL (p), construct, NULL);
+    diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_REDEFINED_KEYWORD, NSYMBOL (p), construct);
   }
 }
 
@@ -3515,8 +3510,8 @@ Filling in gives one format for such construct; this helps later passes.
 */
   NODE_T *z = new_node ();
   *z = *p;
-  if (GENIE (p) != NULL) {
-    GENIE (z) = new_genie_info ();
+  if (GINFO (p) != NO_GINFO) {
+    GINFO (z) = new_genie_info ();
   }
   PREVIOUS (z) = p;
   SUB (z) = NO_NODE;
@@ -3535,10 +3530,10 @@ Filling in gives one format for such construct; this helps later passes.
 
 static void a68_extension (NODE_T * p)
 {
-  if (program.options.portcheck) {
-    diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION, NULL);
+  if (OPTION_PORTCHECK (&program)) {
+    diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION);
   } else {
-    diagnostic_node (A68_WARNING, p, WARNING_EXTENSION, NULL);
+    diagnostic_node (A68_WARNING, p, WARNING_EXTENSION);
   }
 }
 
@@ -3629,15 +3624,15 @@ static int find_tag_definition (TABLE_T * table, char *name)
     TAG_T *s;
     BOOL_T found;
     found = A68_FALSE;
-    for (s = table->indicants; s != NO_TAG && !found; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = INDICANTS (table); s != NO_TAG && !found; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         ret += INDICANT;
         found = A68_TRUE;
       }
     }
     found = A68_FALSE;
-    for (s = table->operators; s != NO_TAG && !found; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = OPERATORS (table); s != NO_TAG && !found; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         ret += OPERATOR;
         found = A68_TRUE;
       }
@@ -3662,7 +3657,7 @@ static void elaborate_bold_tags (NODE_T * p)
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
     if (WHETHER (q, BOLD_TAG)) {
-      switch (find_tag_definition (TABLE (q), SYMBOL (q))) {
+      switch (find_tag_definition (TABLE (q), NSYMBOL (q))) {
       case 0:
         {
           diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_UNDECLARED_TAG);
@@ -3724,7 +3719,7 @@ static void extract_indicants (NODE_T * p)
    Position of definition (q) connects to this lexical level! 
 */
           ASSERT (add_tag (TABLE (p), INDICANT, q, NO_MOID, STOP) != NO_TAG);
-          ASSERT (add_mode (&program.top_moid, INDICANT, 0, q, NO_MOID, NO_PACK) != NO_MOID);
+          ASSERT (add_mode (&TOP_MOID (&program), INDICANT, 0, q, NO_MOID, NO_PACK) != NO_MOID);
           ATTRIBUTE (q) = DEFINING_INDICANT;
           FORWARD (q);
           ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
@@ -3742,12 +3737,12 @@ static void extract_indicants (NODE_T * p)
 
 #define GET_PRIORITY(q, k)\
   RESET_ERRNO;\
-  (k) = atoi (SYMBOL (q));\
+  (k) = atoi (NSYMBOL (q));\
   if (errno != 0) {\
-    diagnostic_node (A68_SYNTAX_ERROR, (q), ERROR_INVALID_PRIORITY, NULL);\
+    diagnostic_node (A68_SYNTAX_ERROR, (q), ERROR_INVALID_PRIORITY);\
     (k) = MAX_PRIORITY;\
   } else if ((k) < 1 || (k) > MAX_PRIORITY) {\
-    diagnostic_node (A68_SYNTAX_ERROR, (q), ERROR_INVALID_PRIORITY, NULL);\
+    diagnostic_node (A68_SYNTAX_ERROR, (q), ERROR_INVALID_PRIORITY);\
     (k) = MAX_PRIORITY;\
   }
 
@@ -3769,7 +3764,7 @@ static void extract_priorities (NODE_T * p)
         if (whether (q, OPERATOR, OPERATOR, STOP)) {
           int k;
           NODE_T *y = q;
-          diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG, NULL);
+          diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG);
           ATTRIBUTE (q) = DEFINING_OPERATOR;
 /* Remove one superfluous operator, and hope it was only one.   	 */
           NEXT (q) = NEXT_NEXT (q);
@@ -3810,15 +3805,15 @@ static void extract_priorities (NODE_T * p)
                    whether (q, OPERATOR, INT_DENOTATION, STOP) || 
                    whether (q, EQUALS_SYMBOL, INT_DENOTATION, STOP)) {
 /* The scanner cannot separate operator and "=" sign so we do this here */
-          int len = (int) strlen (SYMBOL (q));
-          if (len > 1 && SYMBOL (q)[len - 1] == '=') {
+          int len = (int) strlen (NSYMBOL (q));
+          if (len > 1 && NSYMBOL (q)[len - 1] == '=') {
             int k;
             NODE_T *y = q;
             char *sym = (char *) get_temp_heap_space ((size_t) (len + 1));
-            bufcpy (sym, SYMBOL (q), len + 1);
+            bufcpy (sym, NSYMBOL (q), len + 1);
             sym[len - 1] = NULL_CHAR;
-            SYMBOL (q) = TEXT (add_token (&top_token, sym));
-            if (len > 2 && SYMBOL (q)[len - 2] == ':' && SYMBOL (q)[len - 3] != '=') {
+            NSYMBOL (q) = TEXT (add_token (&top_token, sym));
+            if (len > 2 && NSYMBOL (q)[len - 2] == ':' && NSYMBOL (q)[len - 3] != '=') {
               diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_OPERATOR_INVALID_END);
             }
             ATTRIBUTE (q) = DEFINING_OPERATOR;
@@ -3865,7 +3860,7 @@ static void extract_operators (NODE_T * p)
           detect_redefined_keyword (q, OPERATOR_DECLARATION);
 /* An unacceptable operator tag like ++ or && gives strange errors so we catch it here */
           if (whether (q, OPERATOR, OPERATOR, STOP)) {
-            diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG, NULL);
+            diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG);
             ATTRIBUTE (q) = DEFINING_OPERATOR;
             ASSERT (add_tag (TABLE (p), OP_SYMBOL, q, NO_MOID, STOP) != NO_TAG);
             NEXT (q) = NEXT_NEXT (q); /* Remove one superfluous operator, and hope it was only one */
@@ -3890,13 +3885,13 @@ static void extract_operators (NODE_T * p)
             q = skip_unit (q);
           } else if (q != NO_NODE && (whether_one_of (q, OPERATOR, BOLD_TAG, EQUALS_SYMBOL, STOP))) {
 /* The scanner cannot separate operator and "=" sign so we do this here */
-            int len = (int) strlen (SYMBOL (q));
-            if (len > 1 && SYMBOL (q)[len - 1] == '=') {
+            int len = (int) strlen (NSYMBOL (q));
+            if (len > 1 && NSYMBOL (q)[len - 1] == '=') {
               char *sym = (char *) get_temp_heap_space ((size_t) (len + 1));
-              bufcpy (sym, SYMBOL (q), len + 1);
+              bufcpy (sym, NSYMBOL (q), len + 1);
               sym[len - 1] = NULL_CHAR;
-              SYMBOL (q) = TEXT (add_token (&top_token, sym));
-              if (len > 2 && SYMBOL (q)[len - 2] == ':' && SYMBOL (q)[len - 3] != '=') {
+              NSYMBOL (q) = TEXT (add_token (&top_token, sym));
+              if (len > 2 && NSYMBOL (q)[len - 2] == ':' && NSYMBOL (q)[len - 3] != '=') {
                 diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_OPERATOR_INVALID_END);
               }
               ATTRIBUTE (q) = DEFINING_OPERATOR;
@@ -3931,7 +3926,7 @@ static void extract_labels (NODE_T * p, int expect)
       if (whether (q, IDENTIFIER, COLON_SYMBOL, STOP)) {
         TAG_T *z = add_tag (TABLE (p), LABEL, q, NO_MOID, LOCAL_LABEL);
         ATTRIBUTE (q) = DEFINING_IDENTIFIER;
-        z->unit = NO_NODE;
+        UNIT (z) = NO_NODE;
       }
     }
   }
@@ -4019,7 +4014,7 @@ static void extract_proc_identities (NODE_T * p)
         FORWARD (q);
         if (whether (q, IDENTIFIER, EQUALS_SYMBOL, STOP)) {
           TAG_T *t = add_tag (TABLE (p), IDENTIFIER, q, NO_MOID, NORMAL_IDENTIFIER);
-          t->in_proc = A68_TRUE;
+          IN_PROC (t) = A68_TRUE;
           ATTRIBUTE (q) = DEFINING_IDENTIFIER;
           ATTRIBUTE (FORWARD (q)) = ALT_EQUALS_SYMBOL;
           q = skip_unit (q);
@@ -4120,8 +4115,8 @@ static void extract_declarations (NODE_T * p)
 /* Give priorities to operators */
   for (q = p; q != NO_NODE; FORWARD (q)) {
     if (WHETHER (q, OPERATOR)) {
-      if (find_tag_global (TABLE (q), OP_SYMBOL, SYMBOL (q))) {
-        TAG_T *s = find_tag_global (TABLE (q), PRIO_SYMBOL, SYMBOL (q));
+      if (find_tag_global (TABLE (q), OP_SYMBOL, NSYMBOL (q))) {
+        TAG_T *s = find_tag_global (TABLE (q), PRIO_SYMBOL, NSYMBOL (q));
         if (s != NO_TAG) {
           PRIO (INFO (q)) = PRIO (s);
         } else {
@@ -4173,7 +4168,7 @@ static void reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
     }
   }
 /* Print parser reductions */
-  if (head != NO_NODE && program.options.reductions && LINE_NUMBER (head) > 0) {
+  if (head != NO_NODE && OPTION_REDUCTIONS (&program) && LINE_NUMBER (head) > 0) {
     NODE_T *q;
     int count = 0;
     reductions++;
@@ -4189,11 +4184,11 @@ static void reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
       if (str != NO_TEXT) {
         WRITE (STDOUT_FILENO, str);
         if (gatt == IDENTIFIER || gatt == OPERATOR || gatt == DENOTATION || gatt == INDICANT) {
-          ASSERT (snprintf (output_line, SNPRINTF_SIZE, " \"%s\"", SYMBOL (q)) >= 0);
+          ASSERT (snprintf (output_line, SNPRINTF_SIZE, " \"%s\"", NSYMBOL (q)) >= 0);
           WRITE (STDOUT_FILENO, output_line);
         }
       } else {
-        WRITE (STDOUT_FILENO, SYMBOL (q));
+        WRITE (STDOUT_FILENO, NSYMBOL (q));
       }
     }
   }
@@ -4245,7 +4240,7 @@ void bottom_up_parser (NODE_T * p)
   if (p != NO_NODE) {
     if (!setjmp (bottom_up_crash_exit)) {
       NODE_T *q;
-      int error_count_0 = program.error_count;
+      int error_count_0 = ERROR_COUNT (&program);
       ignore_superfluous_semicolons (p);
 /* A program is "label sequence; particular program" */
       extract_labels (p, SERIAL_CLAUSE/* a fake here, but ok */ );
@@ -4282,7 +4277,7 @@ void bottom_up_parser (NODE_T * p)
       reduce (q, NO_NOTE, NO_TICK, PARTICULAR_PROGRAM, LABEL, ENCLOSED_CLAUSE, STOP);
       reduce (q, NO_NOTE, NO_TICK, PARTICULAR_PROGRAM, ENCLOSED_CLAUSE, STOP);
       if (SUB (p) == NO_NODE || NEXT (p) != NO_NODE) {
-        recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((program.error_count - error_count_0) > MAX_ERRORS));
+        recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((ERROR_COUNT (&program) - error_count_0) > MAX_ERRORS));
       }
     }
   }
@@ -4302,7 +4297,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
 */
   if (q != NO_NODE && SUB (q) != NO_NODE) {
     NODE_T *p = SUB (q), *u = NO_NODE;
-    int error_count_0 = program.error_count, error_count_02;
+    int error_count_0 = ERROR_COUNT (&program), error_count_02;
     BOOL_T declarer_pack = A68_FALSE, no_error;
     switch (expect) {
       case STRUCTURE_PACK:
@@ -4320,18 +4315,18 @@ as the parser can repair some faults. This gives less spurious diagnostics.
       extract_priorities (p);
       extract_operators (p);
     }
-    error_count_02 = program.error_count;
+    error_count_02 = ERROR_COUNT (&program);
     elaborate_bold_tags (p);
-    if ((program.error_count - error_count_02) > 0) {
+    if ((ERROR_COUNT (&program) - error_count_02) > 0) {
       longjmp (bottom_up_crash_exit, 1);
     }
 /* Now we can reduce declarers, knowing which bold tags are indicants */
     reduce_declarers (p, expect);
 /* Parse the phrase, as appropriate */
     if (!declarer_pack) {
-      error_count_02 = program.error_count;
+      error_count_02 = ERROR_COUNT (&program);
       extract_declarations (p);
-      if ((program.error_count - error_count_02) > 0) {
+      if ((ERROR_COUNT (&program) - error_count_02) > 0) {
         longjmp (bottom_up_crash_exit, 1);
       }
       extract_labels (p, expect);
@@ -4411,7 +4406,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
     }
 /* Do something if parsing failed */
     if (SUB (p) == NO_NODE || NEXT (p) != NO_NODE) {
-      recover_from_error (p, expect, (BOOL_T) ((program.error_count - error_count_0) > MAX_ERRORS));
+      recover_from_error (p, expect, (BOOL_T) ((ERROR_COUNT (&program) - error_count_0) > MAX_ERRORS));
       no_error = A68_FALSE;
     } else {
       no_error = A68_TRUE;
@@ -5194,7 +5189,7 @@ static void reduce_secondaries (NODE_T * p)
 
 static int operator_with_priority (NODE_T * q, int k)
 {
-  return (NEXT (q) != NO_NODE && ATTRIBUTE (NEXT (q)) == OPERATOR && PRIO (NEXT (q)->info) == k);
+  return (NEXT (q) != NO_NODE && ATTRIBUTE (NEXT (q)) == OPERATOR && PRIO (INFO (NEXT (q))) == k);
 }
 
 /*!
@@ -5229,7 +5224,7 @@ static void reduce_formulae (NODE_T * p)
           reduce (q, NO_NOTE, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, FORMULA, STOP);
         }
         if (priority == 0 && siga) {
-          diagnostic_node (A68_SYNTAX_ERROR, op, ERROR_NO_PRIORITY, NULL);
+          diagnostic_node (A68_SYNTAX_ERROR, op, ERROR_NO_PRIORITY);
         }
         siga = A68_TRUE;
         while (siga) {
@@ -5245,7 +5240,7 @@ static void reduce_formulae (NODE_T * p)
             reduce (q, NO_NOTE, &siga, FORMULA, FORMULA, OPERATOR, FORMULA, STOP);
           }
           if (priority == 0 && siga) {
-            diagnostic_node (A68_SYNTAX_ERROR, op2, ERROR_NO_PRIORITY, NULL);
+            diagnostic_node (A68_SYNTAX_ERROR, op2, ERROR_NO_PRIORITY);
           }
         }
       }
@@ -5417,7 +5412,7 @@ static void reduce_generic_arguments (NODE_T * p)
     }
   }
   q = NEXT (p);
-  ABEND (q == NO_NODE, "erroneous parser state", NULL);
+  ABEND (q == NO_NODE, "erroneous parser state", NO_TEXT);
   reduce (q, NO_NOTE, NO_TICK, GENERIC_ARGUMENT_LIST, UNIT, STOP);
   reduce (q, NO_NOTE, NO_TICK, GENERIC_ARGUMENT_LIST, TRIMMER, STOP);
   do {
@@ -5938,13 +5933,13 @@ static void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
     NODE_T *w = p;
     char *seq = phrase_to_text (p, &w);
     if (strlen (seq) == 0) {
-      if (program.error_count == 0) {
-        diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_SYNTAX_EXPECTED, expect, NULL);
+      if (ERROR_COUNT (&program) == 0) {
+        diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_SYNTAX_EXPECTED, expect);
       }
     } else {
-      diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_INVALID_SEQUENCE, seq, expect, NULL);
+      diagnostic_node (A68_SYNTAX_ERROR, w, ERROR_INVALID_SEQUENCE, seq, expect);
     }
-    if (program.error_count >= MAX_ERRORS) {
+    if (ERROR_COUNT (&program) >= MAX_ERRORS) {
       longjmp (bottom_up_crash_exit, 1);
     }
   }
@@ -6045,7 +6040,7 @@ void bottom_up_error_check (NODE_T * p)
       int k = 0;
       count_pictures (SUB (p), &k);
       if (!(k == 0 || k == 2)) {
-        diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_FORMAT_PICTURE_NUMBER, ATTRIBUTE (p), NULL);
+        diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_FORMAT_PICTURE_NUMBER, ATTRIBUTE (p));
       }
     } else {
       bottom_up_error_check (SUB (p));
@@ -6073,7 +6068,7 @@ void rearrange_goto_less_jumps (NODE_T * p)
           if (q != NO_NODE && WHETHER (q, PRIMARY)) {
             q = SUB (q);
             if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-              if (whether_identifier_or_label_global (TABLE (q), SYMBOL (q)) == LABEL) {
+              if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
                 ATTRIBUTE (tertiary) = JUMP;
                 SUB (tertiary) = q;
               }
@@ -6089,7 +6084,7 @@ void rearrange_goto_less_jumps (NODE_T * p)
         if (q != NO_NODE && WHETHER (q, PRIMARY)) {
           q = SUB (q);
           if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-            if (whether_identifier_or_label_global (TABLE (q), SYMBOL (q)) == LABEL) {
+            if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
               ATTRIBUTE (secondary) = JUMP;
               SUB (secondary) = q;
             }
@@ -6102,7 +6097,7 @@ void rearrange_goto_less_jumps (NODE_T * p)
         NODE_T *primary = q;
         q = SUB (q);
         if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-          if (whether_identifier_or_label_global (TABLE (q), SYMBOL (q)) == LABEL) {
+          if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
             ATTRIBUTE (primary) = JUMP;
             SUB (primary) = q;
           }
@@ -6111,7 +6106,7 @@ void rearrange_goto_less_jumps (NODE_T * p)
     } else if (WHETHER (p, PRIMARY)) {
       NODE_T *q = SUB (p);
       if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-        if (whether_identifier_or_label_global (TABLE (q), SYMBOL (q)) == LABEL) {
+        if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
           make_sub (q, q, JUMP);
         }
       }
@@ -6648,7 +6643,7 @@ static BOOL_T prove_moid_equivalence (MOID_T * p, MOID_T * q)
 
 static MOID_T *register_extra_mode (MOID_T ** z, MOID_T * u)
 {
-  MOID_T *head = program.top_moid;
+  MOID_T *head = TOP_MOID (&program);
 /* If we already know this mode, return the existing entry; otherwise link it in */
   for (; head != NO_MOID; FORWARD (head)) {
     if (prove_moid_equivalence (head, u)) {
@@ -6683,7 +6678,7 @@ MOID_T *add_mode (MOID_T ** z, int att, int dim, NODE_T * node, MOID_T * sub, PA
   ATTRIBUTE (new_mode) = att;
   DIM (new_mode) = dim;
   NODE (new_mode) = node;
-  new_mode->has_rows = (BOOL_T) (att == ROW_SYMBOL);
+  HAS_ROWS (new_mode) = (BOOL_T) (att == ROW_SYMBOL);
   SUB (new_mode) = sub;
   PACK (new_mode) = pack;
   NEXT (new_mode) = NO_MOID;
@@ -6815,7 +6810,7 @@ static MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
   add_mode_to_pack (&(PACK (x)), v, NO_TEXT, NODE (v));
   absorb_series_pack (&x);
   DIM (x) = count_pack_members (PACK (x));
-  (void) register_extra_mode (&program.top_moid, x);
+  (void) register_extra_mode (&TOP_MOID (&program), x);
   if (DIM (x) == 1) {
     return (MOID (PACK (x)));
   } else {
@@ -6900,7 +6895,7 @@ static MOID_T *make_united_mode (MOID_T * m)
   if (DIM (u) == 1) {
     return (MOID (PACK (u)));
   } else {
-    return (register_extra_mode (&program.top_moid, u));
+    return (register_extra_mode (&TOP_MOID (&program), u));
   }
 }
 
@@ -7024,10 +7019,10 @@ static void contract_unions (MOID_T * m)
 
 static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
 {
-  MOID_T *p = program.top_moid;
+  MOID_T *p = TOP_MOID (&program);
 /* Search standard mode */
   for (; p != NO_MOID; FORWARD (p)) {
-    if (WHETHER (p, STANDARD) && DIM (p) == sizety && SYMBOL (NODE (p)) == SYMBOL (indicant)) {
+    if (WHETHER (p, STANDARD) && DIM (p) == sizety && NSYMBOL (NODE (p)) == NSYMBOL (indicant)) {
       return (p);
     }
   }
@@ -7057,7 +7052,7 @@ static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
   if (p != NO_NODE) {
     if (WHETHER (p, IDENTIFIER)) {
         ATTRIBUTE (p) = FIELD_IDENTIFIER;
-        (void) add_mode_to_pack (u, NO_MOID, SYMBOL (p), p);
+        (void) add_mode_to_pack (u, NO_MOID, NSYMBOL (p), p);
     } else if (WHETHER (p, DECLARER)) {
         MOID_T *new_one = get_mode_from_declarer (p);
         PACK_T *t;
@@ -7145,7 +7140,7 @@ static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
 \brief collect MODE from DECLARER
 \param p position in tree
 \param put_where insert in symbol table from "p" or in its parent
-\return mode table entry or NULL on error
+\return mode table entry
 **/
 
 static MOID_T *get_mode_from_declarer (NODE_T * p)
@@ -7185,40 +7180,40 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
           MOID (p) = q;
         } else {
 /* Position of definition tells indicants apart */
-          TAG_T *y = find_tag_global (TABLE (p), INDICANT, SYMBOL (p));
+          TAG_T *y = find_tag_global (TABLE (p), INDICANT, NSYMBOL (p));
           if (y == NO_TAG) {
-            diagnostic_node (A68_ERROR, p, ERROR_UNDECLARED_TAG_2, SYMBOL (p));
+            diagnostic_node (A68_ERROR, p, ERROR_UNDECLARED_TAG_2, NSYMBOL (p));
           } else {
-            MOID (p) = add_mode (&program.top_moid, INDICANT, 0, NODE (y), NO_MOID, NO_PACK);
+            MOID (p) = add_mode (&TOP_MOID (&program), INDICANT, 0, NODE (y), NO_MOID, NO_PACK);
           }
         }
         return (MOID (p));
       } else if (WHETHER (p, REF_SYMBOL)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_mode (&program.top_moid, REF_SYMBOL, 0, p, new_one, NO_PACK);
+        MOID (p) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, p, new_one, NO_PACK);
         return (MOID (p));
       } else if (WHETHER (p, FLEX_SYMBOL)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_mode (&program.top_moid, FLEX_SYMBOL, 0, p, new_one, NO_PACK);
+        MOID (p) = add_mode (&TOP_MOID (&program), FLEX_SYMBOL, 0, p, new_one, NO_PACK);
         SLICE (MOID (p)) = SLICE (new_one);
         return (MOID (p));
       } else if (WHETHER (p, FORMAL_BOUNDS)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_row (&program.top_moid, 1 + count_formal_bounds (SUB (p)), new_one, p, A68_FALSE);
+        MOID (p) = add_row (&TOP_MOID (&program), 1 + count_formal_bounds (SUB (p)), new_one, p, A68_FALSE);
         return (MOID (p));
       } else if (WHETHER (p, BOUNDS)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_row (&program.top_moid, count_bounds (SUB (p)), new_one, p, A68_FALSE);
+        MOID (p) = add_row (&TOP_MOID (&program), count_bounds (SUB (p)), new_one, p, A68_FALSE);
         return (MOID (p));
       } else if (WHETHER (p, STRUCT_SYMBOL)) {
         PACK_T *u = NO_PACK;
         get_mode_from_struct_field (NEXT (p), &u);
-        MOID (p) = add_mode (&program.top_moid, STRUCT_SYMBOL, count_pack_members (u), p, NO_MOID, u);
+        MOID (p) = add_mode (&TOP_MOID (&program), STRUCT_SYMBOL, count_pack_members (u), p, NO_MOID, u);
         return (MOID (p));
       } else if (WHETHER (p, UNION_SYMBOL)) {
         PACK_T *u = NO_PACK;
         get_mode_from_union_pack (NEXT (p), &u);
-        MOID (p) = add_mode (&program.top_moid, UNION_SYMBOL, count_pack_members (u), p, NO_MOID, u);
+        MOID (p) = add_mode (&TOP_MOID (&program), UNION_SYMBOL, count_pack_members (u), p, NO_MOID, u);
         return (MOID (p));
       } else if (WHETHER (p, PROC_SYMBOL)) {
         NODE_T *save = p;
@@ -7229,7 +7224,7 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
           FORWARD (p);
         }
         new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (u), save, new_one, u);
+        MOID (p) = add_mode (&TOP_MOID (&program), PROC_SYMBOL, count_pack_members (u), save, new_one, u);
         MOID (save) = MOID (p);
         return (MOID (p));
       } else {
@@ -7255,7 +7250,7 @@ static MOID_T *get_mode_from_routine_text (NODE_T * p)
     FORWARD (p);
   }
   n = get_mode_from_declarer (p);
-  return (add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (u), q, n, u));
+  return (add_mode (&TOP_MOID (&program), PROC_SYMBOL, count_pack_members (u), q, n, u));
 }
 
 /*!
@@ -7274,7 +7269,7 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
     FORWARD (p);
   }
   new_one = get_mode_from_declarer (NEXT (p));
-  MOID (p) = add_mode (&program.top_moid, PROC_SYMBOL, count_pack_members (u), save, new_one, u);
+  MOID (p) = add_mode (&TOP_MOID (&program), PROC_SYMBOL, count_pack_members (u), save, new_one, u);
   return (MOID (p));
 }
 
@@ -7288,7 +7283,7 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
 {
   if (p != NO_NODE) {
     if (WHETHER (p, ROW_CHAR_DENOTATION)) {
-      if (strlen (SYMBOL (p)) == 1) {
+      if (strlen (NSYMBOL (p)) == 1) {
         MOID (p) = MODE (CHAR);
       } else {
         MOID (p) = MODE (ROW_CHAR);
@@ -7349,7 +7344,7 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
     } else if (WHETHER (q, DECLARER)) {
       if (attribute == VARIABLE_DECLARATION) {
         MOID_T *new_one = get_mode_from_declarer (q);
-        MOID (q) = add_mode (&program.top_moid, REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
+        MOID (q) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
       } else {
         MOID (q) = get_mode_from_declarer (q);
       }
@@ -7357,11 +7352,11 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
       MOID (q) = get_mode_from_routine_text (SUB (q));
     } else if (WHETHER (q, OPERATOR_PLAN)) {
       MOID (q) = get_mode_from_operator (SUB (q));
-    } else if (whether_one_of (q, LOC_SYMBOL, HEAP_SYMBOL, NEW_SYMBOL, NULL)) {
+    } else if (whether_one_of (q, LOC_SYMBOL, HEAP_SYMBOL, NEW_SYMBOL, STOP)) {
       if (attribute == GENERATOR) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (q));
         MOID (NEXT (q)) = new_one;
-        MOID (q) = add_mode (&program.top_moid, REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
+        MOID (q) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
       }
     } else {
       if (attribute == DENOTATION) {
@@ -7393,7 +7388,7 @@ static void get_mode_from_proc_variables (NODE_T * p)
       get_mode_from_proc_variables (NEXT (p));
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
       MOID_T *new_one = MOID (NEXT_NEXT (p));
-      MOID (p) = add_mode (&program.top_moid, REF_SYMBOL, 0, p, new_one, NO_PACK);
+      MOID (p) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, p, new_one, NO_PACK);
     }
   }
 }
@@ -7533,7 +7528,7 @@ static void bind_modes (NODE_T * p)
     resolve_equivalent (& MOID (p));
     if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
       TABLE_T *s = TABLE (SUB (p));
-      TAG_T *z = s->indicants;
+      TAG_T *z = INDICANTS (s);
       for (; z != NO_TAG; FORWARD (z)) {
         if (NODE (z) != NO_NODE) {
           resolve_equivalent (& MOID (NEXT_NEXT (NODE (z))));
@@ -7582,7 +7577,7 @@ static void make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** 
   if (src != NO_PACK) {
     MOID_T *z;
     make_flex_multiple_row_pack (NEXT (src), dst, p, dim);
-    z = add_row (p, dim, MOID (src), NULL, A68_FALSE);
+    z = add_row (p, dim, MOID (src), NO_NODE, A68_FALSE);
     z = add_mode (p, FLEX_SYMBOL, 0, NO_NODE, z, NO_PACK);
     (void) add_mode_to_pack (dst, z, TEXT (src), NODE (src));
   }
@@ -7632,7 +7627,7 @@ static void make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, in
 {
   if (src != NO_PACK) {
     make_multiple_row_pack (NEXT (src), dst, p, dim);
-    (void) add_mode_to_pack (dst, add_row (p, dim, MOID (src), NULL, A68_FALSE), TEXT (src), NODE (src));
+    (void) add_mode_to_pack (dst, add_row (p, dim, MOID (src), NO_NODE, A68_FALSE), TEXT (src), NODE (src));
   }
 }
 
@@ -7678,12 +7673,12 @@ static BOOL_T whether_mode_has_row (MOID_T * m)
     BOOL_T k = A68_FALSE;
     PACK_T *p = PACK (m);
     for (; p != NO_PACK && k == A68_FALSE; FORWARD (p)) {
-      MOID (p)->has_rows = whether_mode_has_row (MOID (p));
-      k |= (MOID (p)->has_rows);
+      HAS_ROWS (MOID (p)) = whether_mode_has_row (MOID (p));
+      k |= (HAS_ROWS (MOID (p)));
     }
     return (k);
   } else {
-    return ((BOOL_T) (m->has_rows || WHETHER (m, ROW_SYMBOL) || WHETHER (m, FLEX_SYMBOL)));
+    return ((BOOL_T) (HAS_ROWS (m) || WHETHER (m, ROW_SYMBOL) || WHETHER (m, FLEX_SYMBOL)));
   }
 }
 
@@ -7697,19 +7692,19 @@ static void compute_derived_modes (MODULE_T *mod)
   MOID_T *z;
   int k, len = 0, nlen = 1;
 /* UNION things */
-  absorb_unions (mod->top_moid);
-  contract_unions (mod->top_moid);
+  absorb_unions (TOP_MOID (mod));
+  contract_unions (TOP_MOID (mod));
 /* The for-statement below prevents an endless loop */
   for (k = 1; k <= 10 && len != nlen; k ++) {
 /* Make deflexed modes */
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (SUB (z) != NO_MOID) {
         if (WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), FLEX_SYMBOL) && DEFLEXED (SUB_SUB (z)) != NO_MOID) {
-          DEFLEXED (z) = add_mode (&mod->top_moid, REF_SYMBOL, 0, NODE (z), DEFLEXED (SUB_SUB (z)), NO_PACK);
+          DEFLEXED (z) = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), DEFLEXED (SUB_SUB (z)), NO_PACK);
         } else if (WHETHER (z, REF_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
-          DEFLEXED (z) = add_mode (&mod->top_moid, REF_SYMBOL, 0, NODE (z), DEFLEXED (SUB (z)), NO_PACK);
+          DEFLEXED (z) = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), DEFLEXED (SUB (z)), NO_PACK);
         } else if (WHETHER (z, ROW_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
-          DEFLEXED (z) = add_mode (&mod->top_moid, ROW_SYMBOL, DIM (z), NODE (z), DEFLEXED (SUB (z)), NO_PACK);
+          DEFLEXED (z) = add_mode (&TOP_MOID (mod), ROW_SYMBOL, DIM (z), NODE (z), DEFLEXED (SUB (z)), NO_PACK);
         } else if (WHETHER (z, FLEX_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
           DEFLEXED (z) = DEFLEXED (SUB (z));
         } else if (WHETHER (z, FLEX_SYMBOL)) {
@@ -7720,47 +7715,47 @@ static void compute_derived_modes (MODULE_T *mod)
       }
     }
 /* Derived modes for stowed modes */
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (NAME (z) == NO_MOID && WHETHER (z, REF_SYMBOL)) {
         if (WHETHER (SUB (z), STRUCT_SYMBOL)) {
-          NAME (z) = make_name_struct (SUB (z), &mod->top_moid);
+          NAME (z) = make_name_struct (SUB (z), &TOP_MOID (mod));
         } else if (WHETHER (SUB (z), ROW_SYMBOL)) {
-          NAME (z) = make_name_row (SUB (z), &mod->top_moid);
+          NAME (z) = make_name_row (SUB (z), &TOP_MOID (mod));
         } else if (WHETHER (SUB (z), FLEX_SYMBOL) && SUB_SUB (z) != NO_MOID) {
-          NAME (z) = make_name_row (SUB_SUB (z), &mod->top_moid);
+          NAME (z) = make_name_row (SUB_SUB (z), &TOP_MOID (mod));
         }
       }
       if (MULTIPLE (z) != NO_MOID) {
         ;
       } else if (WHETHER (z, REF_SYMBOL)) {
         if (MULTIPLE (SUB (z)) != NO_MOID) {
-          MULTIPLE (z) = make_name_struct (MULTIPLE (SUB (z)), &mod->top_moid);
+          MULTIPLE (z) = make_name_struct (MULTIPLE (SUB (z)), &TOP_MOID (mod));
         }
       } else if (WHETHER (z, ROW_SYMBOL)) {
         if (WHETHER (SUB (z), STRUCT_SYMBOL)) {
-          MULTIPLE (z) = make_multiple_struct (SUB (z), &mod->top_moid, DIM (z));
+          MULTIPLE (z) = make_multiple_struct (SUB (z), &TOP_MOID (mod), DIM (z));
         }
       }
     }
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (TRIM (z) == NO_MOID && WHETHER (z, FLEX_SYMBOL)) {
         TRIM (z) = SUB (z);
       }
       if (TRIM (z) == NO_MOID && WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), FLEX_SYMBOL)) {
-        TRIM (z) = add_mode (&mod->top_moid, REF_SYMBOL, 0, NODE (z), SUB_SUB (z), NO_PACK);
+        TRIM (z) = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), SUB_SUB (z), NO_PACK);
       }
     }
 /* Fill out stuff for rows, f.i. inverse relations */
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (WHETHER (z, ROW_SYMBOL) && DIM (z) > 0 && SUB (z) != NO_MOID && ! DERIVATE (z)) {
-        (void) add_row (&mod->top_moid, DIM (z) + 1, SUB (z), NODE (z), A68_TRUE);
+        (void) add_row (&TOP_MOID (mod), DIM (z) + 1, SUB (z), NODE (z), A68_TRUE);
       } else if (WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), ROW_SYMBOL) && ! DERIVATE (SUB (z))) {
-        MOID_T *x = add_row (&mod->top_moid, DIM (SUB (z)) + 1, SUB_SUB (z), NODE (SUB (z)), A68_TRUE);
-        MOID_T *y = add_mode (&mod->top_moid, REF_SYMBOL, 0, NODE (z), x, NO_PACK);
+        MOID_T *x = add_row (&TOP_MOID (mod), DIM (SUB (z)) + 1, SUB_SUB (z), NODE (SUB (z)), A68_TRUE);
+        MOID_T *y = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), x, NO_PACK);
         NAME (y) = z;
       }
     }
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (WHETHER (z, ROW_SYMBOL) && SLICE (z) != NO_MOID) {
         ROWED (SLICE (z)) = z;
       }
@@ -7771,18 +7766,18 @@ static void compute_derived_modes (MODULE_T *mod)
         }
       }
     }
-    bind_modes (mod->top_node);
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    bind_modes (TOP_NODE (mod));
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (WHETHER (z, INDICANT) && NODE (z) != NO_NODE) {
         EQUIVALENT (z) = MOID (NODE (z));
       }
     }
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       resolve_eq_members (z);
     }
-    resolve_eq_tags (a68g_standenv->indicants);
-    resolve_eq_tags (a68g_standenv->identifiers);
-    resolve_eq_tags (a68g_standenv->operators);
+    resolve_eq_tags (INDICANTS (a68g_standenv));
+    resolve_eq_tags (IDENTIFIERS (a68g_standenv));
+    resolve_eq_tags (OPERATORS (a68g_standenv));
     resolve_equivalent (&MODE (STRING));
     resolve_equivalent (&MODE (COMPLEX));
     resolve_equivalent (&MODE (COMPL));
@@ -7793,18 +7788,18 @@ static void compute_derived_modes (MODULE_T *mod)
     resolve_equivalent (&MODE (SEMA));
     resolve_equivalent (&MODE (PIPE));
 /* UNION members could be resolved */
-    absorb_unions (mod->top_moid);
-    contract_unions (mod->top_moid);
+    absorb_unions (TOP_MOID (mod));
+    contract_unions (TOP_MOID (mod));
 /* FLEX INDICANT could be resolved */
-    for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (WHETHER (z, FLEX_SYMBOL) && SUB (z) != NO_MOID) {
         if (SUB_SUB (z) != NO_MOID && WHETHER (SUB_SUB (z), STRUCT_SYMBOL)) {
-          MULTIPLE (z) = make_flex_multiple_struct (SUB_SUB (z), &mod->top_moid, DIM (SUB (z)));
+          MULTIPLE (z) = make_flex_multiple_struct (SUB_SUB (z), &TOP_MOID (mod), DIM (SUB (z)));
         }
       }
     }
 /* See what new known modes we have generated by resolving. */
-    for (z = mod->top_moid; z != program.standenv_moid; FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != STANDENV_MOID (&program); FORWARD (z)) {
       MOID_T *v;
       for (v = NEXT (z); v != NO_MOID; FORWARD (v)) {
         if (prove_moid_equivalence (z, v)) {
@@ -7815,23 +7810,23 @@ static void compute_derived_modes (MODULE_T *mod)
     }
 /* Count the modes to check self consistency */
     len = nlen;
-    for (nlen = 0, z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+    for (nlen = 0, z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       nlen++;
     }
   }
-  ABEND (MODE (STRING) != MODE (FLEX_ROW_CHAR), "equivalencing is broken", NULL);
+  ABEND (MODE (STRING) != MODE (FLEX_ROW_CHAR), "equivalencing is broken", NO_TEXT);
 /* Find out what modes contain rows */
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
-    z->has_rows = whether_mode_has_row (z);
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
+    HAS_ROWS (z) = whether_mode_has_row (z);
   }
 /* Check flexible modes */
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     if (WHETHER (z, FLEX_SYMBOL) && WHETHER_NOT (SUB (z), ROW_SYMBOL)) {
       diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
     }
   }
 /* Check on fields in structured modes f.i. STRUCT (REAL x, INT n, REAL x) is wrong */
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     if (WHETHER (z, STRUCT_SYMBOL) && EQUIVALENT (z) == NO_MOID) {
       PACK_T *s = PACK (z);
       for (; s != NO_PACK; FORWARD (s)) {
@@ -7850,7 +7845,7 @@ static void compute_derived_modes (MODULE_T *mod)
     }
   }
 /* Various union test */
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     if (WHETHER (z, UNION_SYMBOL) && EQUIVALENT (z) == NO_MOID) {
       PACK_T *s = PACK (z);
 /* Discard unions with one member */
@@ -7880,14 +7875,14 @@ static void compute_derived_modes (MODULE_T *mod)
 /* Wrap up and exit */
 /* Overwrite old equivalent modes now */
 /*
-  for (u = &mod->top_moid; (*u) != NO_MOID; u = & NEXT (*u)) {
+  for (u = &TOP_MOID (mod); (*u) != NO_MOID; u = & NEXT (*u)) {
     while ((*u) != NO_MOID && EQUIVALENT (*u) != NO_MOID) {
       (*u) = NEXT (*u);
     }
   }
 */
-  free_postulate_list (top_postulate, NULL);
-  top_postulate = NULL;
+  free_postulate_list (top_postulate, NO_POSTULATE);
+  top_postulate = NO_POSTULATE;
 }
 
 /*!
@@ -7899,11 +7894,11 @@ void make_moid_list (MODULE_T *mod)
 {
   MOID_T *z;
 /* Collect modes from the syntax tree */
-  reset_moid_tree (mod->top_node);
-  get_modes_from_tree (mod->top_node, STOP);
-  get_mode_from_proc_var_declarations_tree (mod->top_node);
+  reset_moid_tree (TOP_NODE (mod));
+  get_modes_from_tree (TOP_NODE (mod), STOP);
+  get_mode_from_proc_var_declarations_tree (TOP_NODE (mod));
 /* Connect indicants to their declarers */
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     if (WHETHER (z, INDICANT)) {
       NODE_T *u = NODE (z);
       ABEND (NEXT (u) == NO_NODE, "error in mode table", NO_TEXT);
@@ -7913,10 +7908,10 @@ void make_moid_list (MODULE_T *mod)
     }
   }
 /* Checks on wrong declarations */
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     USE (z) = A68_FALSE;
   }
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     if (WHETHER (z, INDICANT) && EQUIVALENT (z) != NO_MOID) {
       if (!whether_well_formed (z, EQUIVALENT (z), A68_FALSE, A68_FALSE, A68_TRUE)) {
         diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
@@ -7927,10 +7922,10 @@ void make_moid_list (MODULE_T *mod)
       }
     }
   }
-  for (z = mod->top_moid; z != NO_MOID; FORWARD (z)) {
+  for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
     ABEND (USE (z), ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
   }
-  if (mod->error_count != 0) {
+  if (ERROR_COUNT (mod) != 0) {
     return;
   }
   compute_derived_modes (mod);
@@ -7950,7 +7945,7 @@ void make_moid_list (MODULE_T *mod)
 void set_proc_level (NODE_T * p, int n)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    INFO (p)->PROCEDURE_LEVEL = n;
+    PROCEDURE_LEVEL (INFO (p)) = n;
     if (WHETHER (p, ROUTINE_TEXT)) {
       set_proc_level (SUB (p), n + 1);
     } else {
@@ -7971,17 +7966,17 @@ void set_nest (NODE_T * p, NODE_T * s)
     NEST (p) = s;
     if (WHETHER (p, PARTICULAR_PROGRAM)) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CLOSED_CLAUSE) && NUMBER (LINE (p)) != 0) {
+    } else if (WHETHER (p, CLOSED_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, COLLATERAL_CLAUSE) && NUMBER (LINE (p)) != 0) {
+    } else if (WHETHER (p, COLLATERAL_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CONDITIONAL_CLAUSE) && NUMBER (LINE (p)) != 0) {
+    } else if (WHETHER (p, CONDITIONAL_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CASE_CLAUSE) && NUMBER (LINE (p)) != 0) {
+    } else if (WHETHER (p, CASE_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CONFORMITY_CLAUSE) && NUMBER (LINE (p)) != 0) {
+    } else if (WHETHER (p, CONFORMITY_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, LOOP_CLAUSE) && NUMBER (LINE (p)) != 0) {
+    } else if (WHETHER (p, LOOP_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
     } else {
       set_nest (SUB (p), s);
@@ -8008,28 +8003,28 @@ int first_tag_global (TABLE_T * table, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s = NO_TAG;
-    for (s = table->identifiers; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = IDENTIFIERS (table); s != NO_TAG; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (IDENTIFIER);
       }
     }
-    for (s = table->indicants; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = INDICANTS (table); s != NO_TAG; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (INDICANT);
       }
     }
-    for (s = table->labels; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = LABELS (table); s != NO_TAG; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (LABEL);
       }
     }
-    for (s = table->operators; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = OPERATORS (table); s != NO_TAG; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (OP_SYMBOL);
       }
     }
     for (s = PRIO (table); s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (PRIO_SYMBOL);
       }
     }
@@ -8041,7 +8036,7 @@ int first_tag_global (TABLE_T * table, char *name)
 
 #define PORTCHECK_TAX(p, q) {\
   if (q == A68_FALSE) {\
-    diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_TAG_NOT_PORTABLE, NULL);\
+    diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_TAG_NOT_PORTABLE);\
   }}
 
 /*!
@@ -8053,16 +8048,16 @@ void portcheck (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     portcheck (SUB (p));
-    if (program.options.portcheck) {
+    if (OPTION_PORTCHECK (&program)) {
       if (WHETHER (p, INDICANT) && MOID (p) != NO_MOID) {
-        PORTCHECK_TAX (p, MOID (p)->portable);
-        MOID (p)->portable = A68_TRUE;
+        PORTCHECK_TAX (p, PORTABLE (MOID (p)));
+        PORTABLE (MOID (p)) = A68_TRUE;
       } else if (WHETHER (p, IDENTIFIER)) {
-        PORTCHECK_TAX (p, TAX (p)->portable);
-        TAX (p)->portable = A68_TRUE;
+        PORTCHECK_TAX (p, PORTABLE (TAX (p)));
+        PORTABLE (TAX (p)) = A68_TRUE;
       } else if (WHETHER (p, OPERATOR)) {
-        PORTCHECK_TAX (p, TAX (p)->portable);
-        TAX (p)->portable = A68_TRUE;
+        PORTCHECK_TAX (p, PORTABLE (TAX (p)));
+        PORTABLE (TAX (p)) = A68_TRUE;
       }
     }
   }
@@ -8164,10 +8159,10 @@ static void bind_identifier_tag_to_symbol_table (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     bind_identifier_tag_to_symbol_table (SUB (p));
     if (whether_one_of (p, IDENTIFIER, DEFINING_IDENTIFIER, STOP)) {
-      int att = first_tag_global (TABLE (p), SYMBOL (p));
+      int att = first_tag_global (TABLE (p), NSYMBOL (p));
       TAG_T *z;
       if (att == STOP) {
-        if ((z = bind_lengthety_identifier (SYMBOL (p))) != NO_TAG) {
+        if ((z = bind_lengthety_identifier (NSYMBOL (p))) != NO_TAG) {
           MOID (p) = MOID (z);
 /*
         } else {
@@ -8178,12 +8173,12 @@ static void bind_identifier_tag_to_symbol_table (NODE_T * p)
         }
         TAX (p) = z;
       } else {
-        z = find_tag_global (TABLE (p), att, SYMBOL (p));
+        z = find_tag_global (TABLE (p), att, NSYMBOL (p));
         if (att == IDENTIFIER && z != NO_TAG) {
           MOID (p) = MOID (z);
         } else if (att == LABEL && z != NO_TAG) {
           ;
-        } else if ((z = bind_lengthety_identifier (SYMBOL (p))) != NO_TAG) {
+        } else if ((z = bind_lengthety_identifier (NSYMBOL (p))) != NO_TAG) {
           MOID (p) = MOID (z);
         } else {
           diagnostic_node (A68_ERROR, p, ERROR_UNDECLARED_TAG);
@@ -8209,7 +8204,7 @@ static void bind_indicant_tag_to_symbol_table (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     bind_indicant_tag_to_symbol_table (SUB (p));
     if (whether_one_of (p, INDICANT, DEFINING_INDICANT, STOP)) {
-      TAG_T *z = find_tag_global (TABLE (p), INDICANT, SYMBOL (p));
+      TAG_T *z = find_tag_global (TABLE (p), INDICANT, NSYMBOL (p));
       if (z != NO_TAG) {
         MOID (p) = MOID (z);
         TAX (p) = z;
@@ -8255,8 +8250,8 @@ static void tax_specifier_list (NODE_T * p)
       tax_specifiers (SUB (p));
       tax_specifier_list (NEXT (p));
 /* last identifier entry is identifier with this declarer */
-      if (TABLE (p)->identifiers != NO_TAG && PRIO (TABLE (p)->identifiers) == SPECIFIER_IDENTIFIER)
-        MOID (TABLE (p)->identifiers) = MOID (p);
+      if (IDENTIFIERS (TABLE (p)) != NO_TAG && PRIO (IDENTIFIERS (TABLE (p))) == SPECIFIER_IDENTIFIER)
+        MOID (IDENTIFIERS (TABLE (p))) = MOID (p);
     }
   }
 }
@@ -8300,7 +8295,7 @@ static void tax_parameter_list (NODE_T * p)
       TAG_T *s;
       tax_parameter_list (NEXT (p));
 /* last identifier entries are identifiers with this declarer */
-      for (s = TABLE (p)->identifiers; s != NO_TAG && MOID (s) == NO_MOID; FORWARD (s)) {
+      for (s = IDENTIFIERS (TABLE (p)); s != NO_TAG && MOID (s) == NO_MOID; FORWARD (s)) {
         MOID (s) = MOID (p);
       }
       tax_parameters (SUB (p));
@@ -8412,9 +8407,9 @@ static void tax_generators (NODE_T * p)
 static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T * r, TAG_T * self)
 {
   if (c != NO_TABLE) {
-    TAG_T *s = c->operators;
+    TAG_T *s = OPERATORS (c);
     for (; s != NO_TAG; FORWARD (s)) {
-      if (s != self && SYMBOL (NODE (s)) == n) {
+      if (s != self && NSYMBOL (NODE (s)) == n) {
         PACK_T *t = PACK (MOID (s));
         if (t != NO_PACK && whether_firm (MOID (t), l)) {
 /* catch monadic operator */
@@ -8424,7 +8419,7 @@ static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T *
             }
           } else {
 /* catch dyadic operator */
-            if (r != NULL && whether_firm (MOID (t), r)) {
+            if (r != NO_MOID && whether_firm (MOID (t), r)) {
               return (s);
             }
           }
@@ -8446,18 +8441,18 @@ static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
   if (s != NO_TAG) {
     PACK_T *u = PACK (MOID (s));
     MOID_T *l = MOID (u);
-    MOID_T *r = (NEXT (u) != NO_PACK ? MOID (NEXT (u)) : NULL);
-    TAG_T *t = find_firmly_related_op (TAG_TABLE (s), SYMBOL (NODE (s)), l, r, s);
+    MOID_T *r = (NEXT (u) != NO_PACK ? MOID (NEXT (u)) : NO_MOID);
+    TAG_T *t = find_firmly_related_op (TAG_TABLE (s), NSYMBOL (NODE (s)), l, r, s);
     if (t != NO_TAG) {
       if (TAG_TABLE (t) == a68g_standenv) {
-        diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), SYMBOL (NODE (s)), MOID (t), SYMBOL (NODE (t)), NULL);
-        ABEND (A68_TRUE, "standard environ error", NULL);
+        diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), NSYMBOL (NODE (s)), MOID (t), NSYMBOL (NODE (t)));
+        ABEND (A68_TRUE, "standard environ error", NO_TEXT);
       } else {
-        diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), SYMBOL (NODE (s)), MOID (t), SYMBOL (NODE (t)), NULL);
+        diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), NSYMBOL (NODE (s)), MOID (t), NSYMBOL (NODE (t)));
       }
     }
     if (NEXT (s) != NO_TAG) {
-      test_firmly_related_ops_local ((p == NO_NODE ? NULL : NODE (NEXT (s))), NEXT (s));
+      test_firmly_related_ops_local ((p == NO_NODE ? NO_NODE : NODE (NEXT (s))), NEXT (s));
     }
   }
 }
@@ -8471,7 +8466,7 @@ static void test_firmly_related_ops (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
-      TAG_T *oops = TABLE (SUB (p))->operators;
+      TAG_T *oops = OPERATORS (TABLE (SUB (p)));
       if (oops != NO_TAG) {
         test_firmly_related_ops_local (NODE (oops), oops);
       }
@@ -8498,7 +8493,7 @@ void collect_taxes (NODE_T * p)
   bind_identifier_tag_to_symbol_table (p);
   bind_indicant_tag_to_symbol_table (p);
   test_firmly_related_ops (p);
-  test_firmly_related_ops_local (NULL, a68g_standenv->operators);
+  test_firmly_related_ops_local (NO_NODE, OPERATORS (a68g_standenv));
 }
 
 /*!
@@ -8509,7 +8504,7 @@ void collect_taxes (NODE_T * p)
 
 static void already_declared (NODE_T * n, int a)
 {
-  if (find_tag_local (TABLE (n), a, SYMBOL (n)) != NO_TAG) {
+  if (find_tag_local (TABLE (n), a, NSYMBOL (n)) != NO_TAG) {
     diagnostic_node (A68_ERROR, n, ERROR_MULTIPLE_TAG);
   }
 }
@@ -8523,14 +8518,14 @@ static void already_declared (NODE_T * n, int a)
 static void already_declared_hidden (NODE_T * n, int a)
 {
   TAG_T *s;
-  if (find_tag_local (TABLE (n), a, SYMBOL (n)) != NO_TAG) {
+  if (find_tag_local (TABLE (n), a, NSYMBOL (n)) != NO_TAG) {
     diagnostic_node (A68_ERROR, n, ERROR_MULTIPLE_TAG);
   }
-  if ((s = find_tag_global (PREVIOUS (TABLE (n)), a, SYMBOL (n))) != NO_TAG) {
+  if ((s = find_tag_global (PREVIOUS (TABLE (n)), a, NSYMBOL (n))) != NO_TAG) {
     if (TAG_TABLE (s) == a68g_standenv) {
-      diagnostic_node (A68_WARNING, n, WARNING_HIDES_PRELUDE, MOID (s), SYMBOL (n));
+      diagnostic_node (A68_WARNING, n, WARNING_HIDES_PRELUDE, MOID (s), NSYMBOL (n));
     } else {
-      diagnostic_node (A68_WARNING, n, WARNING_HIDES, SYMBOL (n));
+      diagnostic_node (A68_WARNING, n, WARNING_HIDES, NSYMBOL (n));
     }
   }
 }
@@ -8559,25 +8554,25 @@ TAG_T *add_tag (TABLE_T * s, int a, NODE_T * n, MOID_T * m, int p)
     case IDENTIFIER:{
         already_declared_hidden (n, IDENTIFIER);
         already_declared_hidden (n, LABEL);
-        INSERT_TAG (&s->identifiers, z);
+        INSERT_TAG (&IDENTIFIERS (s), z);
         break;
       }
     case INDICANT:{
         already_declared_hidden (n, INDICANT);
         already_declared (n, OP_SYMBOL);
         already_declared (n, PRIO_SYMBOL);
-        INSERT_TAG (&s->indicants, z);
+        INSERT_TAG (&INDICANTS (s), z);
         break;
       }
     case LABEL:{
         already_declared_hidden (n, LABEL);
         already_declared_hidden (n, IDENTIFIER);
-        INSERT_TAG (&s->labels, z);
+        INSERT_TAG (&LABELS (s), z);
         break;
       }
     case OP_SYMBOL:{
         already_declared (n, INDICANT);
-        INSERT_TAG (&s->operators, z);
+        INSERT_TAG (&OPERATORS (s), z);
         break;
       }
     case PRIO_SYMBOL:{
@@ -8587,7 +8582,7 @@ TAG_T *add_tag (TABLE_T * s, int a, NODE_T * n, MOID_T * m, int p)
         break;
       }
     case ANONYMOUS:{
-        INSERT_TAG (&s->anonymous, z);
+        INSERT_TAG (&ANONYMOUS (s), z);
         break;
       }
     default:{
@@ -8614,19 +8609,19 @@ TAG_T *find_tag_global (TABLE_T * table, int a, char *name)
     TAG_T *s = NO_TAG;
     switch (a) {
     case IDENTIFIER:{
-        s = table->identifiers;
+        s = IDENTIFIERS (table);
         break;
       }
     case INDICANT:{
-        s = table->indicants;
+        s = INDICANTS (table);
         break;
       }
     case LABEL:{
-        s = table->labels;
+        s = LABELS (table);
         break;
       }
     case OP_SYMBOL:{
-        s = table->operators;
+        s = OPERATORS (table);
         break;
       }
     case PRIO_SYMBOL:{
@@ -8634,12 +8629,12 @@ TAG_T *find_tag_global (TABLE_T * table, int a, char *name)
         break;
       }
     default:{
-        ABEND (A68_TRUE, "impossible state in find_tag_global", NULL);
+        ABEND (A68_TRUE, "impossible state in find_tag_global", NO_TEXT);
         break;
       }
     }
     for (; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (s);
       }
     }
@@ -8660,13 +8655,13 @@ int whether_identifier_or_label_global (TABLE_T * table, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s;
-    for (s = table->identifiers; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = IDENTIFIERS (table); s != NO_TAG; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (IDENTIFIER);
       }
     }
-    for (s = table->labels; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+    for (s = LABELS (table); s != NO_TAG; FORWARD (s)) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (LABEL);
       }
     }
@@ -8689,20 +8684,20 @@ TAG_T *find_tag_local (TABLE_T * table, int a, char *name)
   if (table != NO_TABLE) {
     TAG_T *s = NO_TAG;
     if (a == OP_SYMBOL) {
-      s = table->operators;
+      s = OPERATORS (table);
     } else if (a == PRIO_SYMBOL) {
       s = PRIO (table);
     } else if (a == IDENTIFIER) {
-      s = table->identifiers;
+      s = IDENTIFIERS (table);
     } else if (a == INDICANT) {
-      s = table->indicants;
+      s = INDICANTS (table);
     } else if (a == LABEL) {
-      s = table->labels;
+      s = LABELS (table);
     } else {
-      ABEND (A68_TRUE, "impossible state in find_tag_local", NULL);
+      ABEND (A68_TRUE, "impossible state in find_tag_local", NO_TEXT);
     }
     for (; s != NO_TAG; FORWARD (s)) {
-      if (SYMBOL (NODE (s)) == name) {
+      if (NSYMBOL (NODE (s)) == name) {
         return (s);
       }
     }
@@ -8750,12 +8745,12 @@ static void tax_identity_dec (NODE_T * p, MOID_T ** m)
     } else if (WHETHER (p, COMMA_SYMBOL)) {
       tax_identity_dec (NEXT (p), m);
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
-      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, SYMBOL (p));
+      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       MOID (p) = *m;
       HEAP (entry) = LOC_SYMBOL;
       TAX (p) = entry;
       MOID (entry) = *m;
-      if ((*m)->attribute == REF_SYMBOL) {
+      if (ATTRIBUTE (*m) == REF_SYMBOL) {
         HEAP (entry) = tab_qualifier (NEXT_NEXT (p));
       }
       tax_identity_dec (NEXT_NEXT (p), m);
@@ -8788,7 +8783,7 @@ static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
     } else if (WHETHER (p, COMMA_SYMBOL)) {
       tax_variable_dec (NEXT (p), q, m);
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
-      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, SYMBOL (p));
+      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       MOID (p) = *m;
       TAX (p) = entry;
       HEAP (entry) = *q;
@@ -8826,7 +8821,7 @@ static void tax_proc_variable_dec (NODE_T * p, int *q)
     } else if (whether_one_of (p, PROC_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_proc_variable_dec (NEXT (p), q);
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
-      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, SYMBOL (p));
+      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       TAX (p) = entry;
       HEAP (entry) = *q;
       MOID (entry) = MOID (p);
@@ -8859,7 +8854,7 @@ static void tax_proc_dec (NODE_T * p)
     } else if (whether_one_of (p, PROC_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_proc_dec (NEXT (p));
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
-      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, SYMBOL (p));
+      TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       MOID_T *m = MOID (NEXT_NEXT (p));
       MOID (p) = m;
       TAX (p) = entry;
@@ -8890,9 +8885,9 @@ static void check_operator_dec (NODE_T * p)
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_OPERAND_NUMBER);
     k = 0;
   }
-  if (k == 1 && a68g_strchr (NOMADS, SYMBOL (p)[0]) != NO_TEXT) {
+  if (k == 1 && a68g_strchr (NOMADS, NSYMBOL (p)[0]) != NO_TEXT) {
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_OPERATOR_INVALID, NOMADS);
-  } else if (k == 2 && !find_tag_global (TABLE (p), PRIO_SYMBOL, SYMBOL (p))) {
+  } else if (k == 2 && !find_tag_global (TABLE (p), PRIO_SYMBOL, NSYMBOL (p))) {
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_DYADIC_PRIORITY);
   }
 }
@@ -8918,7 +8913,7 @@ static void tax_op_dec (NODE_T * p, MOID_T ** m)
     } else if (WHETHER (p, COMMA_SYMBOL)) {
       tax_op_dec (NEXT (p), m);
     } else if (WHETHER (p, DEFINING_OPERATOR)) {
-      TAG_T *entry = TABLE (p)->operators;
+      TAG_T *entry = OPERATORS (TABLE (p));
       check_operator_dec (p);
       while (entry != NO_TAG && NODE (entry) != p) {
         FORWARD (entry);
@@ -8948,7 +8943,7 @@ static void tax_brief_op_dec (NODE_T * p)
     } else if (whether_one_of (p, OP_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_brief_op_dec (NEXT (p));
     } else if (WHETHER (p, DEFINING_OPERATOR)) {
-      TAG_T *entry = TABLE (p)->operators;
+      TAG_T *entry = OPERATORS (TABLE (p));
       MOID_T *m = MOID (NEXT_NEXT (p));
       check_operator_dec (p);
       while (entry != NO_TAG && NODE (entry) != p) {
@@ -9032,7 +9027,7 @@ void reset_symbol_table_nest_count (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
-      TABLE (SUB (p))->nest = symbol_table_count++;
+      NEST (TABLE (SUB (p))) = symbol_table_count++;
     }
     reset_symbol_table_nest_count (SUB (p));
   }
@@ -9165,7 +9160,7 @@ void finalise_symbol_table_setup (NODE_T * p, int l)
 /* FOR identifiers are in the DO ... OD range */
   for (q = p; q != NO_NODE; FORWARD (q)) {
     if (WHETHER (q, FOR_SYMBOL)) {
-      TABLE (NEXT (q)) = TABLE (NEXT (q)->sequence);
+      TABLE (NEXT (q)) = TABLE (SEQUENCE (NEXT (q)));
     }
   }
 }
@@ -9298,7 +9293,7 @@ void preliminary_symbol_table_setup (NODE_T * p)
         for (; r != NO_NODE && TABLE (NEXT (q)) == NO_TABLE; FORWARD (r)) {
           if ((whether_one_of (r, WHILE_SYMBOL, ALT_DO_SYMBOL, STOP)) && (NEXT (q) != NO_NODE && SUB (r) != NO_NODE)) {
             TABLE (NEXT (q)) = TABLE (SUB (r));
-            NEXT (q)->sequence = SUB (r);
+            SEQUENCE (NEXT (q)) = SUB (r);
           }
         }
       }
@@ -9359,11 +9354,11 @@ routines in transput.
       if (TAX (p) != NO_TAG) {
         USE (TAX (p)) = A68_TRUE;
       }
-      if ((z = find_tag_global (TABLE (p), PRIO_SYMBOL, SYMBOL (p))) != NO_TAG) {
+      if ((z = find_tag_global (TABLE (p), PRIO_SYMBOL, NSYMBOL (p))) != NO_TAG) {
         USE (z) = A68_TRUE;
       }
     } else if (WHETHER (p, INDICANT)) {
-      TAG_T *z = find_tag_global (TABLE (p), INDICANT, SYMBOL (p));
+      TAG_T *z = find_tag_global (TABLE (p), INDICANT, NSYMBOL (p));
       if (z != NO_TAG) {
         TAX (p) = z;
         USE (z) = A68_TRUE;
@@ -9400,11 +9395,11 @@ void warn_for_unused_tags (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
       if (whether_new_lexical_level (p) && ATTRIBUTE (TABLE (SUB (p))) != ENVIRON_SYMBOL) {
-        unused (TABLE (SUB (p))->operators);
+        unused (OPERATORS (TABLE (SUB (p))));
         unused (PRIO (TABLE (SUB (p))));
-        unused (TABLE (SUB (p))->identifiers);
-        unused (TABLE (SUB (p))->labels);
-        unused (TABLE (SUB (p))->indicants);
+        unused (IDENTIFIERS (TABLE (SUB (p))));
+        unused (LABELS (TABLE (SUB (p))));
+        unused (INDICANTS (TABLE (SUB (p))));
       }
     }
     warn_for_unused_tags (SUB (p));
@@ -9450,7 +9445,7 @@ void jumps_from_procs (NODE_T * p)
       if (WHETHER (u, GOTO_SYMBOL)) {
         FORWARD (u);
       }
-      if ((TAX (u) == NO_TAG) && (MOID (u) == NO_MOID) && (find_tag_global (TABLE (u), LABEL, SYMBOL (u)) == NO_TAG)) {
+      if ((TAX (u) == NO_TAG) && (MOID (u) == NO_MOID) && (find_tag_global (TABLE (u), LABEL, NSYMBOL (u)) == NO_TAG)) {
         (void) add_tag (TABLE (u), LABEL, u, NO_MOID, LOCAL_LABEL);
         diagnostic_node (A68_ERROR, u, ERROR_UNDECLARED_TAG);
       } else {
@@ -9473,10 +9468,10 @@ static ADDR_T assign_offset_tags (TAG_T * t, ADDR_T base)
 {
   ADDR_T sum = base;
   for (; t != NO_TAG; FORWARD (t)) {
-if (MOID (t) == NO_MOID) {printf ("\n%d", NUMBER (NODE (t)));}
-    ABEND (MOID (t) == NO_MOID, "tag has no mode", SYMBOL (NODE (t)));
+    if (MOID (t) == NO_MOID) {printf ("\n%d", NUMBER (NODE (t)));}
+    ABEND (MOID (t) == NO_MOID, "tag has no mode", NSYMBOL (NODE (t)));
     SIZE (t) = moid_size (MOID (t));
-    if (VALUE (t) == NULL) {
+    if (VALUE (t) == NO_TEXT) {
       OFFSET (t) = sum;
       sum += SIZE (t);
     }
@@ -9491,10 +9486,10 @@ if (MOID (t) == NO_MOID) {printf ("\n%d", NUMBER (NODE (t)));}
 
 void assign_offsets_table (TABLE_T * c)
 {
-  c->ap_increment = assign_offset_tags (c->identifiers, 0);
-  c->ap_increment = assign_offset_tags (c->operators, c->ap_increment);
-  c->ap_increment = assign_offset_tags (c->anonymous, c->ap_increment);
-  c->ap_increment = A68_ALIGN (c->ap_increment);
+  AP_INCREMENT (c) = assign_offset_tags (IDENTIFIERS (c), 0);
+  AP_INCREMENT (c) = assign_offset_tags (OPERATORS (c), AP_INCREMENT (c));
+  AP_INCREMENT (c) = assign_offset_tags (ANONYMOUS (c), AP_INCREMENT (c));
+  AP_INCREMENT (c) = A68_ALIGN (AP_INCREMENT (c));
 }
 
 /*!
@@ -9720,7 +9715,7 @@ void coercion_inserter (NODE_T * p)
 
 /*!
 \brief whether mode is not well defined
-\param p mode, may be NULL
+\param p mode
 \return same
 **/
 
@@ -9814,7 +9809,7 @@ static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
     *p = t;
     p = &NEXT (t);
   }
-  (void) register_extra_mode (&program.top_moid, x);
+  (void) register_extra_mode (&TOP_MOID (&program), x);
   return (x);
 }
 
@@ -10100,7 +10095,7 @@ static BOOL_T whether_name_struct (MOID_T * p)
 
 MOID_T *unites_to (MOID_T * m, MOID_T * u)
 {
-/* Uniting m->u */
+/* Uniting U (m) */
   MOID_T *v = NO_MOID;
   PACK_T *p;
   if (u == MODE (SIMPLIN) || u == MODE (SIMPLOUT)) {
@@ -11012,7 +11007,7 @@ static void make_void (NODE_T * p, MOID_T * q)
           if (WHETHER (z, REF_SYMBOL)) {
             make_coercion (p, DEREFERENCING, SUB (z));
           }
-          if (WHETHER (z, PROC_SYMBOL) && NODE_PACK (p) == NULL) {
+          if (WHETHER (z, PROC_SYMBOL) && NODE_PACK (p) == NO_PACK) {
             make_coercion (p, DEPROCEDURING, SUB (z));
           }
           z = SUB (z);
@@ -11625,7 +11620,7 @@ static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
     if (SORT (x) == STRONG) {
       MOID_T *z = (WHETHER (MOID (x), FLEX_SYMBOL) ? SUB_MOID (x) : MOID (x));
       make_soid (y, STRONG, MODE (VACUUM), 0);
-      if (SUB (z) != NO_MOID && SUB (z)->has_rows) {
+      if (SUB (z) != NO_MOID && HAS_ROWS (SUB (z))) {
         diagnostic_node (A68_ERROR, p, ERROR_VACUUM, "REF", MOID (x));
       }
     } else {
@@ -11846,7 +11841,7 @@ void mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
 \param n name of operator
 \param x lhs mode
 \param y rhs mode
-\return tag entry or NULL
+\return tag entry
 **/
 
 static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T * y)
@@ -11857,7 +11852,7 @@ static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T 
     return (error_tag);
   }
   for (; t != NO_TAG; FORWARD (t)) {
-    if (SYMBOL (NODE (t)) == n) {
+    if (NSYMBOL (NODE (t)) == n) {
       PACK_T *p = PACK (MOID (t));
       if (whether_coercible (x, MOID (p), FIRM, ALIAS_DEFLEXING)) {
         FORWARD (p);
@@ -11880,7 +11875,7 @@ static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T 
 \param n name of token
 \param x lhs mode
 \param y rhs mode
-\return tag entry or NULL
+\return tag entry
 **/
 
 static TAG_T *search_table_chain_for_operator (TABLE_T * s, char * n, MOID_T * x, MOID_T * y)
@@ -11891,7 +11886,7 @@ static TAG_T *search_table_chain_for_operator (TABLE_T * s, char * n, MOID_T * x
     return (error_tag);
   }
   while (s != NO_TABLE) {
-    TAG_T *z = search_table_for_operator (s->operators, n, x, y);
+    TAG_T *z = search_table_for_operator (OPERATORS (s), n, x, y);
     if (z != NO_TAG) {
       return (z);
     }
@@ -11906,7 +11901,7 @@ static TAG_T *search_table_chain_for_operator (TABLE_T * s, char * n, MOID_T * x
 \param n name of token
 \param x lhs mode
 \param y rhs mode
-\return tag entry or NULL
+\return tag entry
 **/
 
 static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
@@ -11924,25 +11919,25 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
   }
 /* (B) MONADs */
   if (x != NO_MOID && y == NO_MOID) {
-    z = search_table_chain_for_operator (s, n, x, NULL);
+    z = search_table_chain_for_operator (s, n, x, NO_MOID);
     if (z != NO_TAG) {
       return (z);
     } else {
 /* (B.2) A little trick to allow - (0, 1) or ABS (1, long pi) */
       if (whether_coercible (x, MODE (COMPLEX), STRONG, SAFE_DEFLEXING)) {
-        z = search_table_for_operator (a68g_standenv->operators, n, MODE (COMPLEX), NULL);
+        z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (COMPLEX), NO_MOID);
         if (z != NO_TAG) {
           return (z);
         }
       }
       if (whether_coercible (x, MODE (LONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
-        z = search_table_for_operator (a68g_standenv->operators, n, MODE (LONG_COMPLEX), NULL);
+        z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONG_COMPLEX), NO_MOID);
         if (z != NO_TAG) {
           return (z);
         }
       }
       if (whether_coercible (x, MODE (LONGLONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
-        z = search_table_for_operator (a68g_standenv->operators, n, MODE (LONGLONG_COMPLEX), NULL);
+        z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONGLONG_COMPLEX), NO_MOID);
       }
     }
     return (NO_TAG);
@@ -11960,30 +11955,30 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
       || (u == MODE (ROW_COMPLEX) || u == MODE (ROWROW_COMPLEX))
       || (v == MODE (ROW_COMPLEX) || v == MODE (ROWROW_COMPLEX))) {
     if (u == MODE (INT)) {
-      z = search_table_for_operator (a68g_standenv->operators, n, MODE (REAL), y);
+      z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (REAL), y);
       if (z != NO_TAG) {
         return (z);
       }
-      z = search_table_for_operator (a68g_standenv->operators, n, MODE (COMPLEX), y);
+      z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (COMPLEX), y);
       if (z != NO_TAG) {
         return (z);
       }
     } else if (v == MODE (INT)) {
-      z = search_table_for_operator (a68g_standenv->operators, n, x, MODE (REAL));
+      z = search_table_for_operator (OPERATORS (a68g_standenv), n, x, MODE (REAL));
       if (z != NO_TAG) {
         return (z);
       }
-      z = search_table_for_operator (a68g_standenv->operators, n, x, MODE (COMPLEX));
+      z = search_table_for_operator (OPERATORS (a68g_standenv), n, x, MODE (COMPLEX));
       if (z != NO_TAG) {
         return (z);
       }
     } else if (u == MODE (REAL)) {
-      z = search_table_for_operator (a68g_standenv->operators, n, MODE (COMPLEX), y);
+      z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (COMPLEX), y);
       if (z != NO_TAG) {
         return (z);
       }
     } else if (v == MODE (REAL)) {
-      z = search_table_for_operator (a68g_standenv->operators, n, x, MODE (COMPLEX));
+      z = search_table_for_operator (OPERATORS (a68g_standenv), n, x, MODE (COMPLEX));
       if (z != NO_TAG) {
         return (z);
       }
@@ -11993,49 +11988,49 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
   u = make_series_from_moids (x, y);
   u = make_united_mode (u);
   v = get_balanced_mode (u, STRONG, NO_DEPREF, SAFE_DEFLEXING);
-  z = search_table_for_operator (a68g_standenv->operators, n, v, v);
+  z = search_table_for_operator (OPERATORS (a68g_standenv), n, v, v);
   if (z != NO_TAG) {
     return (z);
   }
   if (whether_coercible_series (u, MODE (REAL), STRONG, SAFE_DEFLEXING)) {
-    z = search_table_for_operator (a68g_standenv->operators, n, MODE (REAL), MODE (REAL));
+    z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (REAL), MODE (REAL));
     if (z != NO_TAG) {
       return (z);
     }
   }
   if (whether_coercible_series (u, MODE (LONG_REAL), STRONG, SAFE_DEFLEXING)) {
-    z = search_table_for_operator (a68g_standenv->operators, n, MODE (LONG_REAL), MODE (LONG_REAL));
+    z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONG_REAL), MODE (LONG_REAL));
     if (z != NO_TAG) {
       return (z);
     }
   }
   if (whether_coercible_series (u, MODE (LONGLONG_REAL), STRONG, SAFE_DEFLEXING)) {
-    z = search_table_for_operator (a68g_standenv->operators, n, MODE (LONGLONG_REAL), MODE (LONGLONG_REAL));
+    z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONGLONG_REAL), MODE (LONGLONG_REAL));
     if (z != NO_TAG) {
       return (z);
     }
   }
   if (whether_coercible_series (u, MODE (COMPLEX), STRONG, SAFE_DEFLEXING)) {
-    z = search_table_for_operator (a68g_standenv->operators, n, MODE (COMPLEX), MODE (COMPLEX));
+    z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (COMPLEX), MODE (COMPLEX));
     if (z != NO_TAG) {
       return (z);
     }
   }
   if (whether_coercible_series (u, MODE (LONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
-    z = search_table_for_operator (a68g_standenv->operators, n, MODE (LONG_COMPLEX), MODE (LONG_COMPLEX));
+    z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONG_COMPLEX), MODE (LONG_COMPLEX));
     if (z != NO_TAG) {
       return (z);
     }
   }
   if (whether_coercible_series (u, MODE (LONGLONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
-    z = search_table_for_operator (a68g_standenv->operators, n, MODE (LONGLONG_COMPLEX), MODE (LONGLONG_COMPLEX));
+    z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONGLONG_COMPLEX), MODE (LONGLONG_COMPLEX));
     if (z != NO_TAG) {
       return (z);
     }
   }
 /* (C.4) Now allow for depreffing for REF REAL +:= INT and alike */
   v = get_balanced_mode (u, STRONG, DEPREF, SAFE_DEFLEXING);
-  z = search_table_for_operator (a68g_standenv->operators, n, v, v);
+  z = search_table_for_operator (OPERATORS (a68g_standenv), n, v, v);
   if (z != NO_TAG) {
     return (z);
   }
@@ -12061,12 +12056,12 @@ static void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
       diagnostic_node (A68_ERROR, NEXT (p), ERROR_INVALID_OPERAND, u);
       make_soid (y, SORT (x), MODE (ERROR), 0);
     } else {
-      if (a68g_strchr (NOMADS, *(SYMBOL (p))) != NO_TEXT) {
+      if (a68g_strchr (NOMADS, *(NSYMBOL (p))) != NO_TEXT) {
         t = NO_TAG;
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_OPERATOR_INVALID, NOMADS);
         make_soid (y, SORT (x), MODE (ERROR), 0);
       } else {
-        t = find_operator (TABLE (p), SYMBOL (p), u, NULL);
+        t = find_operator (TABLE (p), NSYMBOL (p), u, NO_MOID);
         if (t == NO_TAG) {
           diagnostic_node (A68_ERROR, p, ERROR_NO_MONADIC, u);
           make_soid (y, SORT (x), MODE (ERROR), 0);
@@ -12150,7 +12145,7 @@ static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
       diagnostic_node (A68_ERROR, q, ERROR_INVALID_OPERAND, u);
       make_soid (y, SORT (x), MODE (ERROR), 0);
     } else {
-      op = find_operator (TABLE (NEXT (p)), SYMBOL (NEXT (p)), u, v);
+      op = find_operator (TABLE (NEXT (p)), NSYMBOL (NEXT (p)), u, v);
       if (op == NO_TAG) {
         diagnostic_node (A68_ERROR, NEXT (p), ERROR_NO_DYADIC, u, v);
         make_soid (y, SORT (x), MODE (ERROR), 0);
@@ -12287,7 +12282,7 @@ static void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
   SOID_T w;
   mode_check_declarer (p);
   make_soid (&w, STRONG, MOID (p), 0);
-  w.cast = A68_TRUE;
+  CAST (&w) = A68_TRUE;
   mode_check_enclosed (SUB_NEXT (p), &w, y);
   if (!whether_coercible_in_context (y, &w, SAFE_DEFLEXING)) {
     cannot_coerce (NEXT (p), MOID (y), MOID (&w), STRONG, SAFE_DEFLEXING, ENCLOSED_CLAUSE);
@@ -12356,7 +12351,7 @@ static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK
         make_soid (&z, STRONG, NO_MOID, 0);
       }
       add_to_soid_list (r, p, &z);
-    } else if (WHETHER (p, SUB_SYMBOL) && !program.options.brackets) {
+    } else if (WHETHER (p, SUB_SYMBOL) && !OPTION_BRACKETS (&program)) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, CALL);
     }
   }
@@ -12449,21 +12444,21 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
   SOID_T d;
   MOID (p) = n;
 /* "partial_locale" is the mode of the locale */
-  GENIE (p)->partial_locale = new_moid ();
-  ATTRIBUTE (GENIE (p)->partial_locale) = PROC_SYMBOL;
-  PACK (GENIE (p)->partial_locale) = NO_PACK;
-  SUB (GENIE (p)->partial_locale) = SUB (n);
+  PARTIAL_LOCALE (GINFO (p)) = new_moid ();
+  ATTRIBUTE (PARTIAL_LOCALE (GINFO (p))) = PROC_SYMBOL;
+  PACK (PARTIAL_LOCALE (GINFO (p))) = NO_PACK;
+  SUB (PARTIAL_LOCALE (GINFO (p))) = SUB (n);
 /* "partial_proc" is the mode of the resulting proc */
-  GENIE (p)->partial_proc = new_moid ();
-  ATTRIBUTE (GENIE (p)->partial_proc) = PROC_SYMBOL;
-  PACK (GENIE (p)->partial_proc) = NO_PACK;
-  SUB (GENIE (p)->partial_proc) = SUB (n);
+  PARTIAL_PROC (GINFO (p)) = new_moid ();
+  ATTRIBUTE (PARTIAL_PROC (GINFO (p))) = PROC_SYMBOL;
+  PACK (PARTIAL_PROC (GINFO (p))) = NO_PACK;
+  SUB (PARTIAL_PROC (GINFO (p))) = SUB (n);
 /* Check arguments and construct modes */
-  mode_check_argument_list_2 (NEXT (p), PACK (n), &d, &PACK (GENIE (p)->partial_locale), &PACK (GENIE (p)->partial_proc));
-  DIM (GENIE (p)->partial_proc) = count_pack_members (PACK (GENIE (p)->partial_proc));
-  DIM (GENIE (p)->partial_locale) = count_pack_members (PACK (GENIE (p)->partial_locale));
-  GENIE (p)->partial_proc = register_extra_mode (&program.top_moid, GENIE (p)->partial_proc);
-  GENIE (p)->partial_locale = register_extra_mode (&program.top_moid, GENIE (p)->partial_locale);
+  mode_check_argument_list_2 (NEXT (p), PACK (n), &d, &PACK (PARTIAL_LOCALE (GINFO (p))), &PACK (PARTIAL_PROC (GINFO (p))));
+  DIM (PARTIAL_PROC (GINFO (p))) = count_pack_members (PACK (PARTIAL_PROC (GINFO (p))));
+  DIM (PARTIAL_LOCALE (GINFO (p))) = count_pack_members (PACK (PARTIAL_LOCALE (GINFO (p))));
+  PARTIAL_PROC (GINFO (p)) = register_extra_mode (&TOP_MOID (&program), PARTIAL_PROC (GINFO (p)));
+  PARTIAL_LOCALE (GINFO (p)) = register_extra_mode (&TOP_MOID (&program), PARTIAL_LOCALE (GINFO (p)));
   if (DIM (MOID (&d)) != DIM (n)) {
     diagnostic_node (A68_ERROR, p, ERROR_ARGUMENT_NUMBER, n);
     make_soid (y, SORT (x), SUB (n), 0);
@@ -12472,13 +12467,13 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
     if (!whether_coercible (MOID (&d), n, STRONG, ALIAS_DEFLEXING)) {
       cannot_coerce (p, MOID (&d), n, STRONG, ALIAS_DEFLEXING, ARGUMENT);
     }
-    if (DIM (GENIE (p)->partial_proc) == 0) {
+    if (DIM (PARTIAL_PROC (GINFO (p))) == 0) {
       make_soid (y, SORT (x), SUB (n), 0);
     } else {
-      if (program.options.portcheck) {
-        diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, NEXT (p), WARNING_EXTENSION, NULL);
+      if (OPTION_PORTCHECK (&program)) {
+        diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, NEXT (p), WARNING_EXTENSION);
       }
-      make_soid (y, SORT (x), GENIE (p)->partial_proc, 0);
+      make_soid (y, SORT (x), PARTIAL_PROC (GINFO (p)), 0);
     }
   }
 }
@@ -12535,12 +12530,12 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
         }
         m = SLICE (m);
       }
-      ABEND (m == NO_MOID, "No mode in mode_check_slice", NULL);
+      ABEND (m == NO_MOID, "No mode in mode_check_slice", NO_TEXT);
       subs--;
     }
 /* A trim cannot be but deflexed */
     if (ANNOTATION (NEXT (p)) == TRIMMER && TRIM (m) != NO_MOID) {
-      ABEND (TRIM (m) == NO_MOID, ERROR_INTERNAL_CONSISTENCY, NULL);
+      ABEND (TRIM (m) == NO_MOID, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
       make_soid (y, SORT (x), TRIM (m), 0);
     } else {
       make_soid (y, SORT (x), m, 0);
@@ -12617,7 +12612,7 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
         (*m) = MODE (ERROR);
         return;
       }
-      fs = SYMBOL (p);
+      fs = NSYMBOL (p);
       str = n;
       while (WHETHER (str, REF_SYMBOL)) {
         str = SUB (str);
@@ -12643,7 +12638,7 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
       (*m) = MODE (ERROR);
     } else if (WHETHER (p, GENERIC_ARGUMENT) || WHETHER (p, GENERIC_ARGUMENT_LIST)) {
       mode_check_field_identifiers (SUB (p), m, seq);
-    } else if (whether_one_of (p, COMMA_SYMBOL, OPEN_SYMBOL, CLOSE_SYMBOL, SUB_SYMBOL, BUS_SYMBOL, NULL)) {
+    } else if (whether_one_of (p, COMMA_SYMBOL, OPEN_SYMBOL, CLOSE_SYMBOL, SUB_SYMBOL, BUS_SYMBOL, STOP)) {
 /* ok */;
     } else {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, FIELD_IDENTIFIER);
@@ -12690,7 +12685,7 @@ static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
     return (FIELD_SELECTION);
   } else {
     if (m != MODE (ERROR)) {
-      diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_MODE_SPECIFICATION, m, NULL);
+      diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_MODE_SPECIFICATION, m);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return (PRIMARY);
@@ -12711,6 +12706,7 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
   MOID_T *n, *str, *ori;
   PACK_T *t, *t_2;
   char *fs;
+  BOOL_T deflex = A68_FALSE;
   NODE_T *secondary = SUB_NEXT (p);
   make_soid (&w, WEAK, NO_MOID, 0);
   mode_check_unit (secondary, &w, &d);
@@ -12722,9 +12718,11 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
       t = PACK (n);
     } else if (WHETHER (n, REF_SYMBOL) && (WHETHER (SUB (n), ROW_SYMBOL) || WHETHER (SUB (n), FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
       coerce = A68_FALSE;
+      deflex = A68_TRUE;
       t = PACK (MULTIPLE (n));
     } else if ((WHETHER (n, ROW_SYMBOL) || WHETHER (n, FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
       coerce = A68_FALSE;
+      deflex = A68_TRUE;
       t = PACK (MULTIPLE (n));
     } else if (WHETHER (n, REF_SYMBOL) && whether_name_struct (n)) {
       coerce = A68_FALSE;
@@ -12746,7 +12744,7 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
     return;
   }
   MOID (NEXT (p)) = n;
-  fs = SYMBOL (SUB (p));
+  fs = NSYMBOL (SUB (p));
   str = n;
   while (WHETHER (str, REF_SYMBOL)) {
     str = SUB (str);
@@ -12760,8 +12758,12 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
   t_2 = PACK (str);
   while (t != NO_PACK && t_2 != NO_PACK) {
     if (TEXT (t) == fs) {
-      make_soid (y, SORT (x), MOID (t), 0);
-      MOID (p) = MOID (t);
+      MOID_T *ret = MOID (t);
+      if (deflex && TRIM (ret) != NO_MOID) {
+        ret = TRIM (ret);
+      }
+      make_soid (y, SORT (x), ret, 0);
+      MOID (p) = ret;
       NODE_PACK (SUB (p)) = t_2;
       return;
     }
@@ -12834,7 +12836,7 @@ static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
   } else {
     n = SLICE (n);
   }
-  ABEND (n == NO_MOID, "No mode in mode_check_diagonal", NULL);
+  ABEND (n == NO_MOID, "No mode in mode_check_diagonal", NO_TEXT);
   make_soid (y, SORT (x), n, 0);
 }
 
@@ -12883,7 +12885,7 @@ static void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
     return;
   }
   MOID (tert) = n;
-  ABEND (n == NO_MOID, "No mode in mode_check_transpose", NULL);
+  ABEND (n == NO_MOID, "No mode in mode_check_transpose", NO_TEXT);
   make_soid (y, SORT (x), n, 0);
 }
 
@@ -12942,7 +12944,7 @@ static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
     return;
   }
   MOID (tert) = n;
-  ABEND (n == NO_MOID, "No mode in mode_check_diagonal", NULL);
+  ABEND (n == NO_MOID, "No mode in mode_check_diagonal", NO_TEXT);
   make_soid (y, SORT (x), ROWED (n), 0);
 }
 
@@ -12996,10 +12998,10 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 /* Ex primary */
   } else if (WHETHER (p, SPECIFICATION)) {
     ATTRIBUTE (p) = mode_check_specification (SUB (p), x, y);
-    if (WHETHER (p, FIELD_SELECTION) && program.options.portcheck) {
-      diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION, NULL);
+    if (WHETHER (p, FIELD_SELECTION) && OPTION_PORTCHECK (&program)) {
+      diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION);
     } else if (WHETHER (p, FIELD_SELECTION)) {
-      diagnostic_node (A68_WARNING, p, WARNING_EXTENSION, NULL);
+      diagnostic_node (A68_WARNING, p, WARNING_EXTENSION);
     }
     warn_for_voiding (p, x, y, ATTRIBUTE (p));
   } else if (WHETHER (p, CAST)) {
@@ -13010,13 +13012,13 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
     warn_for_voiding (p, x, y, DENOTATION);
   } else if (WHETHER (p, IDENTIFIER)) {
     if ((TAX (p) == NO_TAG) && (MOID (p) == NO_MOID)) {
-      int att = first_tag_global (TABLE (p), SYMBOL (p));
+      int att = first_tag_global (TABLE (p), NSYMBOL (p));
       if (att == STOP) {
         (void) add_tag (TABLE (p), IDENTIFIER, p, MODE (ERROR), NORMAL_IDENTIFIER);
         diagnostic_node (A68_ERROR, p, ERROR_UNDECLARED_TAG);
         MOID (p) = MODE (ERROR);
       } else {
-        TAG_T *z = find_tag_global (TABLE (p), att, SYMBOL (p));
+        TAG_T *z = find_tag_global (TABLE (p), att, NSYMBOL (p));
         if (att == IDENTIFIER && z != NO_TAG) {
           MOID (p) = MOID (z);
         } else {
@@ -14042,7 +14044,7 @@ void widen_denotation (NODE_T * p)
   STATUS_SET (q, OPTIMAL_MASK);\
   }
 #define WARN_WIDENING\
-  if (program.options.portcheck && !(STATUS_TEST (SUB (q), OPTIMAL_MASK))) {\
+  if (OPTION_PORTCHECK (&program) && !(STATUS_TEST (SUB (q), OPTIMAL_MASK))) {\
     diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, q, WARNING_WIDENING_NOT_PORTABLE);\
   }
   NODE_T *q;
@@ -14108,8 +14110,8 @@ Also a little preparation for the monitor:
 static TUPLE_T scope_make_tuple (int e, int t)
 {
   static TUPLE_T z;
-  z.level = e;
-  z.transient = (BOOL_T) t;
+  LEVEL (&z) = e;
+  TRANSIENT (&z) = (BOOL_T) t;
   return (z);
 }
 
@@ -14122,10 +14124,10 @@ static TUPLE_T scope_make_tuple (int e, int t)
 
 static void scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
 {
-  if (sl != NULL) {
+  if (sl != NO_VAR) {
     SCOPE_T *ns = (SCOPE_T *) get_temp_heap_space ((unsigned) ALIGNED_SIZE_OF (SCOPE_T));
-    ns->where = p;
-    ns->tuple = tup;
+    WHERE (ns) = p;
+    TUPLE (ns) = tup;
     NEXT (ns) = *sl;
     *sl = ns;
   }
@@ -14146,25 +14148,25 @@ static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
 /* Transient names cannot be stored */
   if (mask & TRANSIENT) {
     for (s = top; s != NO_SCOPE; FORWARD (s)) {
-      if (s->tuple.transient & TRANSIENT) {
-        diagnostic_node (A68_ERROR, s->where, ERROR_TRANSIENT_NAME);
-        STATUS_SET (s->where, SCOPE_ERROR_MASK);
+      if (TRANSIENT (&TUPLE (s)) & TRANSIENT) {
+        diagnostic_node (A68_ERROR, WHERE (s), ERROR_TRANSIENT_NAME);
+        STATUS_SET (WHERE (s), SCOPE_ERROR_MASK);
         errors++;
       }
     }
   }
   for (s = top; s != NO_SCOPE; FORWARD (s)) {
-    if (dest < s->tuple.level && ! STATUS_TEST (s->where, SCOPE_ERROR_MASK)) {
+    if (dest < LEVEL (&TUPLE (s)) && ! STATUS_TEST (WHERE (s), SCOPE_ERROR_MASK)) {
 /* Potential scope violations */
-      MOID_T *sw = MOID (s->where);
+      MOID_T *sw = MOID (WHERE (s));
       if (sw != NO_MOID) {
         if (WHETHER (sw, REF_SYMBOL) || WHETHER (sw, PROC_SYMBOL)
             || WHETHER (sw, FORMAT_SYMBOL) || WHETHER (sw, UNION_SYMBOL)) {
-          diagnostic_node (A68_WARNING, s->where, WARNING_SCOPE_STATIC, 
-                           MOID (s->where), ATTRIBUTE (s->where));
+          diagnostic_node (A68_WARNING, WHERE (s), WARNING_SCOPE_STATIC, 
+                           MOID (WHERE (s)), ATTRIBUTE (WHERE (s)));
         }
       }
-      STATUS_SET (s->where, SCOPE_ERROR_MASK);
+      STATUS_SET (WHERE (s), SCOPE_ERROR_MASK);
       errors++;
     }
   }
@@ -14183,7 +14185,7 @@ static BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
 {
   BOOL_T no_err = A68_TRUE;
   for (; dest != NO_SCOPE; FORWARD (dest)) {
-    no_err &= scope_check (top, mask, dest->tuple.level);
+    no_err &= scope_check (top, mask, LEVEL (&TUPLE (dest)));
   }
   return (no_err);
 }
@@ -14215,8 +14217,8 @@ static TUPLE_T scope_find_youngest_outside (SCOPE_T * s, int treshold)
 {
   TUPLE_T z = scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT);
   for (; s != NO_SCOPE; FORWARD (s)) {
-    if (s->tuple.level > z.level && s->tuple.level <= treshold) {
-      z = s->tuple;
+    if (LEVEL (&TUPLE (s)) > LEVEL (&z) && LEVEL (&TUPLE (s)) <= treshold) {
+      z = TUPLE (s);
     }
   }
   return (z);
@@ -14248,7 +14250,7 @@ static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
     if (WHETHER (p, BOUNDS)) {
       gather_scopes_for_youngest (SUB (p), r);
     } else if (WHETHER (p, INDICANT)) {
-      if (MOID (p) != NO_MOID && TAX (p) != NO_TAG && MOID (p)->has_rows && no_ref) {
+      if (MOID (p) != NO_MOID && TAX (p) != NO_TAG && HAS_ROWS (MOID (p)) && no_ref) {
         scope_add (r, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
       }
     } else if (WHETHER (p, REF_SYMBOL)) {
@@ -14271,10 +14273,11 @@ static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if ((whether_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) && (TAX (p)->youngest_environ == PRIMAL_SCOPE)) {
+    if ((whether_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) && (YOUNGEST_ENVIRON (TAX (p)) == PRIMAL_SCOPE)) {
       SCOPE_T *t = NO_SCOPE;
       gather_scopes_for_youngest (SUB (p), &t);
-      TAX (p)->youngest_environ = scope_find_youngest_outside (t, LEX_LEVEL (p)).level;
+      TUPLE_T tup = scope_find_youngest_outside (t, LEX_LEVEL (p));
+      YOUNGEST_ENVIRON (TAX (p)) = LEVEL (&tup);
 /* Direct link into list iso "gather_scopes_for_youngest (SUB (p), s);" */
       if (t != NO_SCOPE) {
         SCOPE_T *u = t;
@@ -14285,7 +14288,7 @@ static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
         (*s) = t;
       }
     } else if (whether_one_of (p, IDENTIFIER, OPERATOR, STOP)) {
-      if (TAX (p) != NULL && TAG_LEX_LEVEL (TAX (p)) != PRIMAL_SCOPE) {
+      if (TAX (p) != NO_TAG && TAG_LEX_LEVEL (TAX (p)) != PRIMAL_SCOPE) {
         scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
       }
     } else if (WHETHER (p, DECLARER)) {
@@ -14306,8 +14309,10 @@ static void get_youngest_environs (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     if (whether_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) {
       SCOPE_T *s = NO_SCOPE;
+      TUPLE_T tup;
       gather_scopes_for_youngest (SUB (p), &s);
-      TAX (p)->youngest_environ = scope_find_youngest_outside (s, LEX_LEVEL (p)).level;
+      tup = scope_find_youngest_outside (s, LEX_LEVEL (p));
+      YOUNGEST_ENVIRON (TAX (p)) = LEVEL (&tup);
     } else {
       get_youngest_environs (SUB (p));
     }
@@ -14324,14 +14329,14 @@ static void bind_scope_to_tag (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     if (WHETHER (p, DEFINING_IDENTIFIER) && MOID (p) == MODE (FORMAT)) {
       if (WHETHER (NEXT_NEXT (p), FORMAT_TEXT)) {
-        TAX (p)->scope = TAX (NEXT_NEXT (p))->youngest_environ;
-        TAX (p)->scope_assigned = A68_TRUE;
+        SCOPE (TAX (p)) = YOUNGEST_ENVIRON (TAX (NEXT_NEXT (p)));
+        SCOPE_ASSIGNED (TAX (p)) = A68_TRUE;
       }
       return;
     } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
       if (WHETHER (NEXT_NEXT (p), ROUTINE_TEXT)) {
-        TAX (p)->scope = TAX (NEXT_NEXT (p))->youngest_environ;
-        TAX (p)->scope_assigned = A68_TRUE;
+        SCOPE (TAX (p)) = YOUNGEST_ENVIRON (TAX (NEXT_NEXT (p)));
+        SCOPE_ASSIGNED (TAX (p)) = A68_TRUE;
       }
       return;
     } else {
@@ -14365,7 +14370,7 @@ static void scope_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (WHETHER (p, UNIT)) {
-      scope_statement (p, NULL);
+      scope_statement (p, NO_VAR);
     } else {
       scope_bounds (SUB (p));
     }
@@ -14407,16 +14412,18 @@ static void scope_identity_declaration (NODE_T * p)
     if (WHETHER (p, DEFINING_IDENTIFIER)) {
       NODE_T *unit = NEXT_NEXT (p);
       SCOPE_T *s = NO_SCOPE;
+      TUPLE_T tup;
       int z = PRIMAL_SCOPE;
       if (ATTRIBUTE (MOID (TAX (p))) != PROC_SYMBOL) {
         check_identifier_usage (TAX (p), unit);
       }
       scope_statement (unit, &s);
       (void) scope_check (s, TRANSIENT, LEX_LEVEL (p));
-      z = scope_find_youngest (s).level;
+      tup = scope_find_youngest (s);
+      z = LEVEL (&tup);
       if (z < LEX_LEVEL (p)) {
-        TAX (p)->scope = z;
-        TAX (p)->scope_assigned = A68_TRUE;
+        SCOPE (TAX (p)) = z;
+        SCOPE_ASSIGNED (TAX (p)) = A68_TRUE;
       }
       STATUS_SET (unit, INTERRUPTIBLE_MASK);
       return;
@@ -14570,12 +14577,12 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
 {
   if (whether_coercion (p)) {
     if (WHETHER (p, VOIDING)) {
-      scope_coercion (SUB (p), NULL);
+      scope_coercion (SUB (p), NO_VAR);
     } else if (WHETHER (p, DEREFERENCING)) {
 /* Leave this to the dynamic scope checker */
-      scope_coercion (SUB (p), NULL);
+      scope_coercion (SUB (p), NO_VAR);
     } else if (WHETHER (p, DEPROCEDURING)) {
-      scope_coercion (SUB (p), NULL);
+      scope_coercion (SUB (p), NO_VAR);
     } else if (WHETHER (p, ROWING)) {
       SCOPE_T *z = NO_SCOPE;
       scope_coercion (SUB (p), &z);
@@ -14691,7 +14698,7 @@ static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
   TUPLE_T routine_tuple;
   scope_statement (NEXT_NEXT (routine), &x);
   (void) scope_check (x, TRANSIENT, LEX_LEVEL (p));
-  routine_tuple = scope_make_tuple (TAX (p)->youngest_environ, NOT_TRANSIENT);
+  routine_tuple = scope_make_tuple (YOUNGEST_ENVIRON (TAX (p)), NOT_TRANSIENT);
   scope_add (s, p, routine_tuple);
 }
 
@@ -14716,16 +14723,16 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
       } else {
         if (HEAP (TAX (p)) == HEAP_SYMBOL) {
           scope_add (s, p, scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT));
-        } else if (TAX (p)->scope_assigned) {
-          scope_add (s, p, scope_make_tuple (TAX (p)->scope, NOT_TRANSIENT));
+        } else if (SCOPE_ASSIGNED (TAX (p))) {
+          scope_add (s, p, scope_make_tuple (SCOPE (TAX (p)), NOT_TRANSIENT));
         } else {
           scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
         }
       }
-    } else if (ATTRIBUTE (MOID (p)) == PROC_SYMBOL && TAX (p)->scope_assigned == A68_TRUE) {
-      scope_add (s, p, scope_make_tuple (TAX (p)->scope, NOT_TRANSIENT));
-    } else if (MOID (p) == MODE (FORMAT) && TAX (p)->scope_assigned == A68_TRUE) {
-      scope_add (s, p, scope_make_tuple (TAX (p)->scope, NOT_TRANSIENT));
+    } else if (ATTRIBUTE (MOID (p)) == PROC_SYMBOL && SCOPE_ASSIGNED (TAX (p)) == A68_TRUE) {
+      scope_add (s, p, scope_make_tuple (SCOPE (TAX (p)), NOT_TRANSIENT));
+    } else if (MOID (p) == MODE (FORMAT) && SCOPE_ASSIGNED (TAX (p)) == A68_TRUE) {
+      scope_add (s, p, scope_make_tuple (SCOPE (TAX (p)), NOT_TRANSIENT));
     }
   } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
     scope_enclosed_clause (SUB (p), s);
@@ -14779,7 +14786,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     scope_add (s, p, scope_find_youngest (ns));
   } else if (WHETHER (p, GENERATOR)) {
     if (WHETHER (SUB (p), LOC_SYMBOL)) {
-      if (NON_LOCAL (p) != NULL) {
+      if (NON_LOCAL (p) != NO_TABLE) {
         scope_add (s, p, scope_make_tuple (LEVEL (NON_LOCAL (p)), NOT_TRANSIENT));
       } else {
         scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), NOT_TRANSIENT));
@@ -14835,10 +14842,12 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
   } else if (WHETHER (p, ASSIGNATION)) {
     NODE_T *unit = NEXT (NEXT_SUB (p));
     SCOPE_T *ns = NO_SCOPE, *nd = NO_SCOPE;
+    TUPLE_T tup;
     scope_statement (SUB_SUB (p), &nd);
     scope_statement (unit, &ns);
     (void) scope_check_multiple (ns, TRANSIENT, nd);
-    scope_add (s, p, scope_make_tuple (scope_find_youngest (nd).level, NOT_TRANSIENT));
+    tup = scope_find_youngest (nd);
+    scope_add (s, p, scope_make_tuple (LEVEL (&tup), NOT_TRANSIENT));
   } else if (WHETHER (p, ROUTINE_TEXT)) {
     scope_routine_text (p, s);
   } else if (whether_one_of (p, IDENTITY_RELATION, AND_FUNCTION, OR_FUNCTION, STOP)) {
@@ -14909,7 +14918,7 @@ static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
       if (terminator) {
         scope_statement (p, s);
       } else {
-        scope_statement (p, NULL);
+        scope_statement (p, NO_VAR);
       }
     }
   }
@@ -14955,7 +14964,7 @@ static void scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
 
 static void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
 {
-  scope_serial_clause (NEXT_SUB (p), NULL, A68_TRUE);
+  scope_serial_clause (NEXT_SUB (p), NO_VAR, A68_TRUE);
   FORWARD (p);
   scope_serial_clause (NEXT_SUB (p), s, A68_TRUE);
   if ((FORWARD (p)) != NO_NODE) {
@@ -15002,21 +15011,21 @@ static void scope_loop_clause (NODE_T * p)
     if (WHETHER (p, FOR_PART)) {
       scope_loop_clause (NEXT (p));
     } else if (whether_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
-      scope_statement (NEXT_SUB (p), NULL);
+      scope_statement (NEXT_SUB (p), NO_VAR);
       scope_loop_clause (NEXT (p));
     } else if (WHETHER (p, WHILE_PART)) {
-      scope_serial_clause (NEXT_SUB (p), NULL, A68_TRUE);
+      scope_serial_clause (NEXT_SUB (p), NO_VAR, A68_TRUE);
       scope_loop_clause (NEXT (p));
     } else if (whether_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
       NODE_T *do_p = NEXT_SUB (p), *un_p;
       if (WHETHER (do_p, SERIAL_CLAUSE)) {
-        scope_serial_clause (do_p, NULL, A68_TRUE);
+        scope_serial_clause (do_p, NO_VAR, A68_TRUE);
         un_p = NEXT (do_p);
       } else {
         un_p = do_p;
       }
       if (un_p != NO_NODE && WHETHER (un_p, UNTIL_PART)) {
-        scope_serial_clause (NEXT_SUB (un_p), NULL, A68_TRUE);
+        scope_serial_clause (NEXT_SUB (un_p), NO_VAR, A68_TRUE);
       }
     }
   }
@@ -15053,12 +15062,12 @@ static void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
 
 static BOOL_T empty_table (TABLE_T * t)
 {
-  if (t->identifiers == NO_TAG) {
-    return ((BOOL_T) (t->operators == NO_TAG && t->indicants == NO_TAG));
-  } else if (PRIO (t->identifiers) == LOOP_IDENTIFIER && NEXT (t->identifiers) == NO_TAG) {
-    return ((BOOL_T) (t->operators == NO_TAG && t->indicants == NO_TAG));
-  } else if (PRIO (t->identifiers) == SPECIFIER_IDENTIFIER && NEXT (t->identifiers) == NO_TAG) {
-    return ((BOOL_T) (t->operators == NO_TAG && t->indicants == NO_TAG));
+  if (IDENTIFIERS (t) == NO_TAG) {
+    return ((BOOL_T) (OPERATORS (t) == NO_TAG && INDICANTS (t) == NO_TAG));
+  } else if (PRIO (IDENTIFIERS (t)) == LOOP_IDENTIFIER && NEXT (IDENTIFIERS (t)) == NO_TAG) {
+    return ((BOOL_T) (OPERATORS (t) == NO_TAG && INDICANTS (t) == NO_TAG));
+  } else if (PRIO (IDENTIFIERS (t)) == SPECIFIER_IDENTIFIER && NEXT (IDENTIFIERS (t)) == NO_TAG) {
+    return ((BOOL_T) (OPERATORS (t) == NO_TAG && INDICANTS (t) == NO_TAG));
   } else {
     return (A68_FALSE);
   }
@@ -15079,7 +15088,7 @@ static void get_non_local_environs (NODE_T * p, int max)
       get_non_local_environs (SUB (p), LEX_LEVEL (SUB (p)));
     } else {
       get_non_local_environs (SUB (p), max);
-      NON_LOCAL (p) = NULL;
+      NON_LOCAL (p) = NO_TABLE;
       if (TABLE (p) != NO_TABLE) {
         TABLE_T *q = TABLE (p);
         while (q != NO_TABLE && empty_table (q) 
@@ -15107,7 +15116,7 @@ void scope_checker (NODE_T * p)
 /* PROC and FORMAT identities can now be assigned a scope */
   bind_scope_to_tags (p);
 /* Now check evertyhing else */
-  scope_enclosed_clause (SUB (p), NULL);
+  scope_enclosed_clause (SUB (p), NO_VAR);
 }
 
 /* syntax.c*/
