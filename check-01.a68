@@ -82,7 +82,7 @@ DO FOR j TO n x
    DO print (p [j, i])
    OD;
    print (new line)
-OD;
+OD
 
 
 

@@ -2860,7 +2860,7 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
   if (u == MODE (VOID)) {
     /* skip */ ;
   } else if (u == MODE (INT)) {
-    PUSH_PRIMITIVE (p, (int) (rng_53_bit () * A68_MAX_INT), A68_INT);
+    PUSH_PRIMITIVE (p, 1, A68_INT); /* Because users write [~] INT ! */
   } else if (u == MODE (REAL)) {
     PUSH_PRIMITIVE (p, (rng_53_bit ()), A68_REAL);
   } else if (u == MODE (BOOL)) {
@@ -3202,6 +3202,12 @@ static PROP_T genie_unit (NODE_T * p)
     case ASSERTION:
       {
         GLOBAL_PROP (&program) = genie_assertion (p);
+        break;
+      }
+    case CODE_CLAUSE:
+      {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CODE);
+        exit_genie (p, A68_RUNTIME_ERROR);
         break;
       }
     }
@@ -5550,7 +5556,6 @@ double garbage_seconds;
 #define DEF_NODE(p) (NEXT_NEXT (NODE (TAX (p))))
 #define MAX(u, v) ((u) = ((u) > (v) ? (u) : (v)))
 
-A68_REF genie_allocate_declarer (NODE_T *, ADDR_T *, A68_REF, BOOL_T);
 void genie_generator_stowed (NODE_T *, BYTE_T *, NODE_T **, ADDR_T *);
 
 /* Total freed is kept in a LONG INT */
@@ -5900,7 +5905,7 @@ void gc_heap (NODE_T * p, ADDR_T fp)
   A68_HANDLE *z;
   double t0, t1;
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  if (FRAME_THREAD_ID (frame_pointer) != main_thread_id) {
+  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) ==0) {
     return;
   }
 #endif
@@ -6916,7 +6921,7 @@ static void *start_genie_parallel (void *arg)
   BOOL_T units_active;
   (void) arg;
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  if (FRAME_THREAD_ID (frame_pointer) == main_thread_id) {
+  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {
     save_block_gc = block_gc;
     UP_BLOCK_GC;
   }
@@ -6938,7 +6943,7 @@ static void *start_genie_parallel (void *arg)
   } while (units_active);
   genie_abend_thread ();
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  if (FRAME_THREAD_ID (frame_pointer) == main_thread_id) {
+  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {
     block_gc = save_block_gc;
   }
 #endif

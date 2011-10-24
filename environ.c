@@ -8081,29 +8081,6 @@ void write_purge_buffer (NODE_T * p, A68_REF ref_file, int k)
 /* Routines that involve the A68 expression stack */
 
 /*!
-\brief print A68 string on the stack to file
-\param p position in tree
-\param ref_file fat pointer to file
-**/
-
-void genie_write_string_from_stack (NODE_T * p, A68_REF ref_file)
-{
-  A68_REF row;
-  int size;
-  POP_REF (p, &row);
-  CHECK_INIT (p, INITIALISED (&row), MODE (ROWS));
-  size = a68_string_size (p, row);
-  if (size > 0) {
-    FILE_T f = FD (FILE_DEREF (&ref_file));
-    set_transput_buffer_index (OUTPUT_BUFFER, 0);       /* discard anything in there */
-    if (get_transput_buffer_size (OUTPUT_BUFFER) < 1 + size) {
-      enlarge_transput_buffer (p, OUTPUT_BUFFER, 1 + size);
-    }
-    WRITE (f, a_to_c_string (p, get_transput_buffer (OUTPUT_BUFFER), row));
-  }
-}
-
-/*!
 \brief allocate a temporary string on the stack
 \param p position in tree
 \param size size in characters
@@ -11435,17 +11412,23 @@ static char digchar (int k)
 /*!
 \brief standard string for LONG INT
 \param p position in tree
-\param n mp number
+\param m mp number
 \param digits digits
 \param width width
 \return same
 **/
 
-char *long_sub_whole (NODE_T * p, MP_T * n, int digits, int width)
+char *long_sub_whole (NODE_T * p, MP_T * m, int digits, int width)
 {
-  char *s = stack_string (p, 8 + width);
+  ADDR_T pop_sp;
+  char *s;
+  MP_T *n;
   int len = 0;
+  s = stack_string (p, 8 + width);
   s[0] = NULL_CHAR;
+  pop_sp = stack_pointer;
+  STACK_MP (n, p, digits);
+  MOVE_MP (n, m, digits);
   do {
     if (len < width) {
 /* Sic transit gloria mundi */
@@ -11458,6 +11441,7 @@ char *long_sub_whole (NODE_T * p, MP_T * n, int digits, int width)
   if (len > width) {
     (void) error_chars (s, width);
   }
+  stack_pointer = pop_sp;
   return (s);
 }
 

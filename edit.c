@@ -172,10 +172,18 @@ Your screen looks like this:
 #define WRONG_TARGET -1
 
 #if defined HAVE_WIN32
+#define REDRAW(s) {wclear (s);}
+#else
+#define REDRAW(s) {wclear (s);}
+#endif /* defined HAVE_WIN32 */
+
+/*
+#if defined HAVE_WIN32
 #define REDRAW(s) {clearok ((s), 1);}
 #else
 #define REDRAW(s) {clearok ((s), true);}
-#endif /* defined HAVE_WIN32 */
+#endif
+*/
 
 static char pf_bind[MAX_PF][BUFFER_SIZE];
 static char history[HISTORY][BUFFER_SIZE];
@@ -4765,7 +4773,6 @@ Get some CSI/SS2/SS3 sequences from different terminals.
 /* Other keys */
     } else if (ch == KEY_IC) {
       INS_MODE (scr) = !INS_MODE (scr);
-/* Alas, unknown. File a complaint. */
     } else if (ch > 127) {
       if (IN_FORBIDDEN (curs)) {
         PROTECTED ("edit");
@@ -4773,11 +4780,12 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       }
       for (k = 0; CODE (&key_tab[k]) >= 0; k++) {
         if (ch == CODE (&key_tab[k])) {
+/* File a complaint. */
           ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined key %s", NAME (&key_tab[k])) >= 1);
           goto end;
         }
       }
-      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined key %d", ch) >= 0);
+      /* ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined key %d", ch) >= 0); */
     }
   end: continue;
   }

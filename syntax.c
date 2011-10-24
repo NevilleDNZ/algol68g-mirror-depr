@@ -2449,7 +2449,7 @@ static BOOL_T dont_mark_here (NODE_T * p)
 /*!
 \brief intelligible diagnostic from syntax tree branch
 \param p position in tree
-\param q
+\param q where to put error message
 \return same
 **/
 
@@ -2513,6 +2513,53 @@ diagnostic is not as important as accurately indicating *were* the problem is!
           bufcat (buffer, " starting", BUFFER_SIZE);
         }
         ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " in line %d", line) >= 0);
+        bufcat (buffer, edit_line, BUFFER_SIZE);
+      }
+      count++;
+    }
+  }
+  if (p != NO_NODE && count == MAX_TERMINALS) {
+    bufcat (buffer, " etcetera", BUFFER_SIZE);
+  }
+  return (buffer);
+}
+
+/*!
+\brief intelligible diagnostic from syntax tree branch
+\param p position in tree
+\param q where to put error message
+\return same
+**/
+
+char *phrase_to_text_2 (NODE_T * p, NODE_T ** w)
+{
+#define MAX_TERMINALS 8
+  int count = 0;
+  static char buffer[BUFFER_SIZE];
+  for (buffer[0] = NULL_CHAR; p != NO_NODE && count < MAX_TERMINALS; FORWARD (p)) {
+    if (LINE_NUMBER (p) > 0) {
+      char *z = non_terminal_string (input_line, ATTRIBUTE (p));
+/* 
+Where to put the error message? Bob Uzgalis noted that actual content of a 
+diagnostic is not as important as accurately indicating *were* the problem is! 
+*/
+      if (w != NO_VAR) {
+        if (count == 0 || (*w) == NO_NODE) {
+          *w = p;
+        } else if (dont_mark_here (*w)) {
+          *w = p;
+        }
+      }
+/* Add initiation */
+      if (count >= 1) {
+        bufcat (buffer, ",", BUFFER_SIZE);
+      }
+/* Attribute or symbol */
+      if (z != NO_TEXT) {
+          ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " %s", z) >= 0);
+          bufcat (buffer, edit_line, BUFFER_SIZE);
+      } else if (NSYMBOL (p) != NO_TEXT) {
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", NSYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
       }
       count++;
@@ -4270,7 +4317,6 @@ void bottom_up_parser (NODE_T * p)
         reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CASE_CLAUSE, STOP);
         reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CONFORMITY_CLAUSE, STOP);
         reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, LOOP_CLAUSE, STOP);
-        reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CODE_CLAUSE, STOP);
       }
 /* Try reducing the particular program */
       q = p;
@@ -4279,6 +4325,26 @@ void bottom_up_parser (NODE_T * p)
       if (SUB (p) == NO_NODE || NEXT (p) != NO_NODE) {
         recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((ERROR_COUNT (&program) - error_count_0) > MAX_ERRORS));
       }
+    }
+  }
+}
+
+/*!
+\brief reduce code clause
+\param p position in tree
+**/
+
+static void reduce_code_clause (NODE_T * p)
+{
+  BOOL_T siga = A68_TRUE;
+  while (siga) {
+    NODE_T *u;
+    siga = A68_FALSE;
+    for (u = p; u != NO_NODE; FORWARD (u)) {
+      reduce (u, NO_NOTE, &siga, CODE_LIST, CODE_SYMBOL, ROW_CHAR_DENOTATION, STOP);
+      reduce (u, NO_NOTE, &siga, CODE_LIST, CODE_LIST, ROW_CHAR_DENOTATION, STOP);
+      reduce (u, NO_NOTE, &siga, CODE_LIST, CODE_LIST, COMMA_SYMBOL, ROW_CHAR_DENOTATION, STOP);
+      reduce (u, NO_NOTE, &siga, CODE_CLAUSE, CODE_LIST, EDOC_SYMBOL, STOP);
     }
   }
 }
@@ -4307,6 +4373,9 @@ as the parser can repair some faults. This gives less spurious diagnostics.
       case SPECIFIER: {
         declarer_pack = A68_TRUE;
       }
+      default: {
+        declarer_pack = A68_FALSE;
+      }
     }
 /* Sample all info needed to decide whether a bold tag is operator or indicant.
    Find the meaning of bold tags and quit in case of extra errors. */
@@ -4323,7 +4392,9 @@ as the parser can repair some faults. This gives less spurious diagnostics.
 /* Now we can reduce declarers, knowing which bold tags are indicants */
     reduce_declarers (p, expect);
 /* Parse the phrase, as appropriate */
-    if (!declarer_pack) {
+    if (expect == CODE_CLAUSE) {
+      reduce_code_clause (p);
+    } else if (declarer_pack == A68_FALSE) {
       error_count_02 = ERROR_COUNT (&program);
       extract_declarations (p);
       if ((ERROR_COUNT (&program) - error_count_02) > 0) {
@@ -4346,7 +4417,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
             reduce_branch (u, ENQUIRY_CLAUSE);
           } else if (WHETHER (u, BEGIN_SYMBOL)) {
             reduce_branch (u, SOME_CLAUSE);
-          } else if (whether_one_of (u, THEN_SYMBOL, ELSE_SYMBOL, OUT_SYMBOL, DO_SYMBOL, ALT_DO_SYMBOL, CODE_SYMBOL, STOP)) {
+          } else if (whether_one_of (u, THEN_SYMBOL, ELSE_SYMBOL, OUT_SYMBOL, DO_SYMBOL, ALT_DO_SYMBOL, STOP)) {
             reduce_branch (u, SERIAL_CLAUSE);
           } else if (WHETHER (u, IN_SYMBOL)) {
             reduce_branch (u, COLLATERAL_CLAUSE);
@@ -4368,6 +4439,13 @@ as the parser can repair some faults. This gives less spurious diagnostics.
           reduce_secondaries (p);
           reduce_formulae (p);
           reduce_tertiaries (p);
+        }
+      }
+      for (u = p; u != NO_NODE; FORWARD (u)) {
+        if (SUB (u) != NO_NODE) {
+          if (WHETHER (u, CODE_SYMBOL)) {
+            reduce_branch (u, CODE_CLAUSE);
+          }
         }
       }
       reduce_right_to_left_constructs (p);
@@ -4694,6 +4772,7 @@ history. Meanwhile we use this routine.
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, JUMP, STOP);
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, SKIP, STOP);
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, ASSIGNATION, STOP);
+      reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, CODE_CLAUSE, STOP);
     }
 /* Routine texts with parameter pack */
     else if (WHETHER (p, PARAMETER_PACK)) {
@@ -4705,6 +4784,7 @@ history. Meanwhile we use this routine.
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, SKIP, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, TERTIARY, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, ROUTINE_TEXT, STOP);
+      reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, CODE_CLAUSE, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, ASSIGNATION, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, IDENTITY_RELATION, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, AND_FUNCTION, STOP);
@@ -4713,6 +4793,7 @@ history. Meanwhile we use this routine.
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, SKIP, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, TERTIARY, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, ROUTINE_TEXT, STOP);
+      reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, CODE_CLAUSE, STOP);
     }
 /* Routine texts without parameter pack */
     else if (WHETHER (p, DECLARER)) {
@@ -4725,6 +4806,7 @@ history. Meanwhile we use this routine.
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, SKIP, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, TERTIARY, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, ROUTINE_TEXT, STOP);
+        reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, CODE_CLAUSE, STOP);
       }
     } else if (WHETHER (p, VOID_SYMBOL)) {
       if (!(PREVIOUS (p) != NO_NODE && WHETHER (PREVIOUS (p), PARAMETER_PACK))) {
@@ -4736,6 +4818,7 @@ history. Meanwhile we use this routine.
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, SKIP, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, TERTIARY, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, ROUTINE_TEXT, STOP);
+        reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, CODE_CLAUSE, STOP);
       }
     }
   }
@@ -4795,7 +4878,6 @@ static void reduce_primary_parts (NODE_T * p, int expect)
     reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CASE_CLAUSE, STOP);
     reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CONFORMITY_CLAUSE, STOP);
     reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, LOOP_CLAUSE, STOP);
-    reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CODE_CLAUSE, STOP);
   }
 }
 
@@ -5358,6 +5440,7 @@ static void reduce_units (NODE_T * p)
     reduce (q, NO_NOTE, NO_TICK, UNIT, SKIP, STOP);
     reduce (q, NO_NOTE, NO_TICK, UNIT, TERTIARY, STOP);
     reduce (q, NO_NOTE, NO_TICK, UNIT, ASSERTION, STOP);
+    reduce (q, NO_NOTE, NO_TICK, UNIT, CODE_CLAUSE, STOP);
   }
 }
 
@@ -5768,8 +5851,6 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
       reduce (p, NO_NOTE, NO_TICK, FORMAT_TEXT, FORMAT_DELIMITER_SYMBOL, FORMAT_DELIMITER_SYMBOL, STOP);
     } else if (WHETHER (p, FORMAT_OPEN_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, COLLECTION, FORMAT_OPEN_SYMBOL, PICTURE_LIST, FORMAT_CLOSE_SYMBOL, STOP);
-    } else if (WHETHER (p, CODE_SYMBOL)) {
-      reduce (p, NO_NOTE, NO_TICK, CODE_CLAUSE, CODE_SYMBOL, SERIAL_CLAUSE, EDOC_SYMBOL, STOP);
     } else if (WHETHER (p, IF_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, IF_PART, IF_SYMBOL, ENQUIRY_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, IF_PART, IF_SYMBOL, INITIALISER_SERIES, STOP);
@@ -9468,7 +9549,6 @@ static ADDR_T assign_offset_tags (TAG_T * t, ADDR_T base)
 {
   ADDR_T sum = base;
   for (; t != NO_TAG; FORWARD (t)) {
-    if (MOID (t) == NO_MOID) {printf ("\n%d", NUMBER (NODE (t)));}
     ABEND (MOID (t) == NO_MOID, "tag has no mode", NSYMBOL (NODE (t)));
     SIZE (t) = moid_size (MOID (t));
     if (VALUE (t) == NO_TEXT) {
@@ -13085,6 +13165,8 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
   } else if (WHETHER (p, OR_FUNCTION)) {
     mode_check_bool_function (SUB (p), x, y);
     warn_for_voiding (p, x, y, OR_FUNCTION);
+  } else if (WHETHER (p, CODE_CLAUSE)) {
+    make_soid (y, STRONG, MODE (HIP), 0);
   }
   MOID (p) = MOID (y);
 }

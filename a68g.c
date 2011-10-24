@@ -811,23 +811,25 @@ Accept various silent extensions.
     }
     if (OPTION_RERUN (&program) == A68_FALSE) {
       announce_phase ("optimiser (code compiler)");
+
+/*-------------------------------------------------------------+
+| Build shared library using gcc.                              |
+| TODO: One day this should be all portable between platforms. |
++-------------------------------------------------------------*/
+
 /*
-Build shared library using gcc.
-FIXME: One day this should be all portable between platforms ... 
-*/
-/*
-Compilation on Linux, FreeBSD or NetBSD
+Compilation on Linux, FreeBSD or NetBSD using gcc
 */
 #if (defined HAVE_LINUX || defined HAVE_FREEBSD || defined HAVE_NETBSD)
-#if defined HAVE_TUNING
+  #if defined HAVE_TUNING
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g", extra_inc, optimisation, HAVE_TUNING) >= 0);
-#else
+  #else
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s -g", extra_inc, optimisation) >= 0);
-#endif
-#if defined HAVE_PIC
+  #endif
+  #if defined HAVE_PIC
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
-#endif
+  #endif
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&program), FILE_OBJECT_NAME (&program)) >= 0);
       if (OPTION_VERBOSE (&program)) {
         WRITELN (STDOUT_FILENO, cmd);
@@ -840,18 +842,18 @@ Compilation on Linux, FreeBSD or NetBSD
       ABEND (system (cmd) != 0, "cannot link", cmd);
       ABEND (remove (FILE_BINARY_NAME (&program)) != 0, "cannot remove", cmd);
 /*
-Compilation on Mac OS X
+Compilation on Mac OS X using gcc
 */
 #elif defined HAVE_MAC_OS_X
-#if defined HAVE_TUNING
+  #if defined HAVE_TUNING
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g -fno-common -dynamic", extra_inc, optimisation, HAVE_TUNING) >= 0);
-#else
+  #else
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s -g -fno-common -dynamic", extra_inc, optimisation) >= 0);
-#endif
-#if defined HAVE_PIC
+  #endif
+  #if defined HAVE_PIC
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
-#endif
+  #endif
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&program), FILE_OBJECT_NAME (&program)) >= 0);
       if (OPTION_VERBOSE (&program)) {
         WRITELN (STDOUT_FILENO, cmd);
@@ -2157,7 +2159,7 @@ static void a68g_print_short_mode (FILE_T f, MOID_T * z)
 }
 
 /*!
-\brief brief_mode_flat
+\brief a68g_print_flat_mode
 \param f file number
 \param z moid to print
 **/
@@ -2217,7 +2219,7 @@ static void a68g_print_short_pack (FILE_T f, PACK_T * pack)
 }
 
 /*!
-\brief brief_moid_flat
+\brief a68g_print_mode
 \param f file number
 \param z moid to print
 **/
@@ -2985,15 +2987,6 @@ BOOL_T heap_is_fluid;
 static int tag_number = 0;
 
 /*!
-\brief actions when closing the heap
-**/
-
-void free_heap (void)
-{
-  return;
-}
-
-/*!
 \brief pointer to block of "s" bytes
 \param s block lenght in bytes
 \return same
@@ -3743,28 +3736,6 @@ TOKEN_T *add_token (TOKEN_T ** p, char *t)
 }
 
 /*!
-\brief find token in the token tree
-\param p top token
-\param t text to find
-\return entry
-**/
-
-TOKEN_T *find_token (TOKEN_T ** p, char *t)
-{
-  while (*p != NO_TOKEN) {
-    int k = strcmp (t, TEXT (*p));
-    if (k < 0) {
-      p = &LESS (*p);
-    } else if (k > 0) {
-      p = &MORE (*p);
-    } else {
-      return (*p);
-    }
-  }
-  return (NO_TOKEN);
-}
-
-/*!
 \brief find keyword, from token name
 \param p top keyword
 \param t token text to find
@@ -3852,18 +3823,6 @@ double ten_up (int expo)
 char *a68g_strchr (char *str, int c)
 {
   return (strchr (str, c));
-}
-
-/*!
-\brief search last char in string
-\param str string to search
-\param c character to find
-\return pointer to last "c" in "str"
-**/
-
-char *a68g_strrchr (char *str, int c)
-{
-  return (strrchr (str, c));
 }
 
 /*!
@@ -4311,6 +4270,7 @@ static char *attribute_names[WILDCARD + 1] = {
   "CLOSED_CLAUSE",
   "CLOSE_SYMBOL",
   "CODE_CLAUSE",
+  "CODE_LIST",
   "CODE_SYMBOL",
   "COLLATERAL_CLAUSE",
   "COLLECTION",

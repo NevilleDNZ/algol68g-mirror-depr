@@ -1676,7 +1676,11 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *print
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Procedure frame=%s", (FRAME_PROC_FRAME (a68g_link) ? "yes" : "no")) >= 0);
     WRITELN (STDOUT_FILENO, output_line);
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Thread id=%u", (unsigned) FRAME_THREAD_ID (a68g_link)) >= 0);
+    if (pthread_equal (FRAME_THREAD_ID (a68g_link), main_thread_id) != 0) {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "In main thread") >= 0);
+    } else {
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Not in main thread") >= 0);
+    }
     WRITELN (STDOUT_FILENO, output_line);
 #endif
     show_frame_items (f, p, a68g_link, IDENTIFIERS (q), IDENTIFIER);

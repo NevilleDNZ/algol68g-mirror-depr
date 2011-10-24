@@ -102,7 +102,7 @@ Below definition switches everything on.
 #define GC_MODE(m) (m != NO_MOID && (WHETHER (m, REF_SYMBOL) || WHETHER (DEFLEX (m), ROW_SYMBOL)))
 #define NEEDS_DNS(m) (m != NO_MOID && (WHETHER (m, REF_SYMBOL) || WHETHER (m, PROC_SYMBOL) || WHETHER (m, UNION_SYMBOL) || WHETHER (m, FORMAT_SYMBOL)))
 
-#define EXECUTE(p) {\
+#define CODE_EXECUTE(p) {\
   indentf (out, snprintf (line, SNPRINTF_SIZE, "EXECUTE_UNIT_TRACE (_N_ (%d));", NUMBER (p)));\
   }
 
@@ -3481,6 +3481,23 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
 /*********************************/
 
 /*!
+\brief compile code clause
+\param out output file descriptor
+\param p starting node
+\return function name or NO_NODE
+**/
+
+static void embed_code_clause (NODE_T * p, FILE_T out)
+{
+  for (; p != NO_NODE; FORWARD (p)) {
+    if (WHETHER (p, ROW_CHAR_DENOTATION)) {
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "%s\n", NSYMBOL (p)));
+    }
+    embed_code_clause (SUB (p), out);
+  }
+}
+
+/*!
 \brief compile push
 \param p starting node
 \param out output file descriptor
@@ -4590,7 +4607,7 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
       case UNIT:
         {
           (* last) = p;
-          EXECUTE (p);
+          CODE_EXECUTE (p);
           inline_comment_source (p, out);
           undent (out, NEWLINE_STRING);
           (* units) ++;
@@ -4636,6 +4653,29 @@ static void embed_serial_clause (NODE_T * p, FILE_T out, char * pop)
   init_static_frame (out, p);
   compile_serial_clause (p, out, &last, &units, &decs, pop, A68_MAKE_FUNCTION);
   indent (out, "CLOSE_FRAME;\n");
+}
+
+/*!
+\brief compile code clause
+\param out output file descriptor
+\param p starting node
+\return function name
+**/
+
+static char * compile_code_clause (NODE_T * p, FILE_T out, int compose_fun)
+{
+  static char fn[NAME_SIZE];
+  comment_source (p, out);
+  (void) make_name (fn, "_code", "", NUMBER (p));
+  if (compose_fun == A68_MAKE_FUNCTION) {
+    write_fun_prelude (p, out, fn);
+  }
+  embed_code_clause (SUB (p), out);
+  if (compose_fun == A68_MAKE_FUNCTION) {
+    (void) make_name (fn, "_code", "", NUMBER (p));
+    write_fun_postlude (p, out, fn);
+  }
+  return (fn);
 }
 
 /*!
@@ -4912,7 +4952,7 @@ BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int 
           indentf (out, snprintf (line, SNPRINTF_SIZE, "case %d: {\n", k));
           indentation ++;
           indentf (out, snprintf (line, SNPRINTF_SIZE, "OPEN_STATIC_FRAME (_N_ (%d));\n", NUMBER (sym)));
-          EXECUTE (p);
+          CODE_EXECUTE (p);
           inline_comment_source (p, out);
           undent (out, NEWLINE_STRING);
           indent (out, "CLOSE_FRAME;\n");
@@ -5398,6 +5438,9 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
       COMPILE (p, out, compile_formula, compose_fun);
     }
   }
+  if (WHETHER (p, CODE_CLAUSE)) {
+    COMPILE (p, out, compile_code_clause, compose_fun);
+  }
   return (NO_TEXT);
 #undef COMPILE
 }
@@ -5412,7 +5455,7 @@ void compile_units (NODE_T * p, FILE_T out)
 {
   ADDR_T pop_temp_heap_pointer = temp_heap_pointer; /* At the end we discard temporary declarations */
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (WHETHER (p, UNIT) || WHETHER (p, CODE_CLAUSE)) {
       if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
         compile_units (SUB (p), out);
       } else if (SUB (p) != NO_NODE && GINFO (SUB (p)) != NO_GINFO && COMPILE_NODE (GINFO (SUB (p))) > 0) {

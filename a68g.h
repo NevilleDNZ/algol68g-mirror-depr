@@ -119,7 +119,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define A68_MAX_BITS (UINT_MAX)
 #define A68_MAX_INT (INT_MAX)
 #define A68_MAX_UNT (UINT_MAX)
-#define A68_MIN_INT (INT_MIN)
 #define A68_NO_FILENO ((FILE_T) -1)
 #define A68_PI 3.1415926535897932384626433832795029
 #define A68_PROTECTION (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) /* -rw-r--r-- */
@@ -163,7 +162,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define MAX_ERRORS 8
 #define MAX_LINE_WIDTH (BUFFER_SIZE / 2)
 #define MAX_MP_EXPONENT 142857 /* Arbitrary. Let M = MAX_REPR_INT then the largest range is M / Log M / LOG_MP_BASE */
-#define MAX_MP_PRECISION 5000 /* For larger precisions better algorithms exist  */
 #define MAX_OPEN_FILES 64 /* Some OS's won't open more than this number */
 #define MAX_PRIORITY 9
 #define MAX_REPR_INT 9007199254740992.0	/* 2^53, max int in a double */
@@ -180,6 +178,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define NEWLINE_STRING "\n"
 #define NOMADS "></=*"
 #define NOT_EMBEDDED_FORMAT A68_FALSE
+#define NOT_PRINTED 1
 #define NULL_CHAR '\0'
 #define OBJECT_EXTENSION ".c"
 #define POINT_CHAR '.'
@@ -192,7 +191,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define SMALL_BUFFER_SIZE 128
 #define SNPRINTF_SIZE ((size_t) BUFFER_SIZE)
 #define TAB_CHAR '\t'
-#define TIME_FORMAT "%A %d-%b-%Y %H:%M:%S"
 #define TRANSPUT_BUFFER_SIZE BUFFER_SIZE
 #define WANT_PATTERN A68_TRUE
 
@@ -246,31 +244,25 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define IN_HEAP_MASK ((STATUS_MASK) 0x00000001)
 #define IN_FRAME_MASK ((STATUS_MASK) 0x00000002)
 #define IN_STACK_MASK ((STATUS_MASK) 0x00000004)
-#define IN_HANDLE_MASK ((STATUS_MASK) 0x00000008)
 #define INITIALISED_MASK ((STATUS_MASK) 0x00000010)
 #define CONSTANT_MASK ((STATUS_MASK) 0x00000020)
 #define BLOCK_GC_MASK ((STATUS_MASK) 0x00000040)
-#define ROW_COLOUR_MASK ((STATUS_MASK) 0x00000080)
 #define COOKIE_MASK ((STATUS_MASK) 0x00000100)
 #define SCOPE_ERROR_MASK ((STATUS_MASK) 0x00000100)
-#define ASSIGNED_MASK ((STATUS_MASK) 0x00000200)
 #define ALLOCATED_MASK ((STATUS_MASK) 0x00000400)
 #define STANDENV_PROC_MASK ((STATUS_MASK) 0x00000800)
 #define COLOUR_MASK ((STATUS_MASK) 0x00001000)
-#define PROCEDURE_MASK ((STATUS_MASK) 0x00002000)
 #define OPTIMAL_MASK ((STATUS_MASK) 0x00004000)
 #define SERIAL_MASK ((STATUS_MASK) 0x00008000)
 #define CROSS_REFERENCE_MASK ((STATUS_MASK) 0x00010000)
 #define TREE_MASK ((STATUS_MASK) 0x00020000)
 #define CODE_MASK ((STATUS_MASK) 0x00040000)
-#define SYNTAX_TREE_MASK ((STATUS_MASK) 0x00080000)
 #define SOURCE_MASK ((STATUS_MASK) 0x00100000)
 #define ASSERT_MASK ((STATUS_MASK) 0x00200000)
 #define NIL_MASK ((STATUS_MASK) 0x00400000)
 #define SKIP_PROCEDURE_MASK ((STATUS_MASK) 0x00800000)
 #define SKIP_FORMAT_MASK ((STATUS_MASK) 0x00800000)
 #define SKIP_ROW_MASK	((STATUS_MASK) 0x00800000)
-#define SKIP_UNION_MASK	((STATUS_MASK) 0x00800000)
 #define INTERRUPTIBLE_MASK ((STATUS_MASK) 0x01000000)
 #define BREAKPOINT_MASK ((STATUS_MASK) 0x02000000)
 #define BREAKPOINT_TEMPORARY_MASK ((STATUS_MASK) 0x04000000)
@@ -289,10 +281,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 /************************/
 
 enum {UPPER_STROPPING = 1, QUOTE_STROPPING};
-enum {NOT_PRINTED, TO_PRINT, PRINTED };
 enum {MP_PI, MP_TWO_PI, MP_HALF_PI};
 
-enum ATTRIBUTES
+enum
 {
   STOP = 0,
   A68_PATTERN,
@@ -353,6 +344,7 @@ enum ATTRIBUTES
   CLOSED_CLAUSE,
   CLOSE_SYMBOL,
   CODE_CLAUSE,
+  CODE_LIST,
   CODE_SYMBOL,
   COLLATERAL_CLAUSE,
   COLLECTION,
@@ -661,7 +653,7 @@ enum
   INPUT_BUFFER = 0, OUTPUT_BUFFER, EDIT_BUFFER, UNFORMATTED_BUFFER, 
   FORMATTED_BUFFER, DOMAIN_BUFFER, PATH_BUFFER, REQUEST_BUFFER, 
   CONTENT_BUFFER, STRING_BUFFER, PATTERN_BUFFER, REPLACE_BUFFER, 
-  READLINE_BUFFER, FIXED_TRANSPUT_BUFFERS
+  FIXED_TRANSPUT_BUFFERS
 };
 
 enum 
@@ -721,7 +713,6 @@ typedef struct OPTIONS_T OPTIONS_T;
 typedef struct OPTION_LIST_T OPTION_LIST_T;
 typedef struct PACK_T PACK_T;
 typedef struct POSTULATE_T POSTULATE_T;
-typedef struct PRELUDE_T PRELUDE_T;
 typedef struct PROP_T PROP_T;
 typedef struct REFINEMENT_T REFINEMENT_T;
 typedef struct SOID_T SOID_T;
@@ -902,12 +893,6 @@ struct POSTULATE_T
   POSTULATE_T *next;
 };
 
-struct PRELUDE_T
-{
-  char *file_name;
-  PRELUDE_T *next;
-};
-
 struct REFINEMENT_T
 {
   REFINEMENT_T *next;
@@ -936,7 +921,7 @@ struct LINE_T
 
 struct TABLE_T
 {
-  int level, nest, attribute /* MAIN, PRELUDE_T*/ ;
+  int level, nest, attribute;
   BOOL_T initialise_frame, initialise_anon, proc_ops;
   ADDR_T ap_increment;
   TABLE_T *previous, *outer;
@@ -1219,9 +1204,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define ALIGNED_SIZE_OF(p) ((int) A68_ALIGN (sizeof (p)))
 #define BACKWARD(p) (p = PREVIOUS (p))
 #define BITS_WIDTH ((int) (1 + ceil (log ((double) A68_MAX_INT) / log((double) 2))))
-#define CHAR_WIDTH (1 + (int) log10 ((double) SCHAR_MAX))
 #define DEFLEX(p) (DEFLEXED (p) != NO_MOID ? DEFLEXED(p) : (p))
-#define EXIT_COMPILATION longjmp(program.exit_compilation, 1)
 #define EXP_WIDTH ((int) (1 + log10 ((double) DBL_MAX_10_EXP)))
 #define FORWARD(p) ((p) = NEXT (p))
 #define INT_WIDTH ((int) (1 + floor (log ((double) A68_MAX_INT) / log ((double) 10))))
@@ -1233,7 +1216,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define LONG_WIDTH (LONG_MP_DIGITS * LOG_MP_BASE)
 #define MP_BITS_WIDTH(k) ((int) ceil((k) * LOG_MP_BASE * LOG2_10) - 1)
 #define MP_BITS_WORDS(k) ((int) ceil ((double) MP_BITS_WIDTH (k) / (double) MP_BITS_BITS))
-#define NON_TERM(p) (find_non_terminal (top_non_terminal, ATTRIBUTE (p)))
 #define PM(m) (moid_to_string (m, 132, NO_NODE))
 #define SIGN(n) ((n) == 0 ? 0 : ((n) > 0 ? 1 : -1))
 #define STATUS_CLEAR(p, q) {STATUS (p) &= (~(q));}
@@ -1444,7 +1426,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define NEXT(p) ((p)->next)
 #define NEXT_NEXT(p) (NEXT (NEXT (p)))
 #define NEXT_NEXT_NEXT(p) (NEXT (NEXT_NEXT (p)))
-#define NEXT_NEXT_SUB(p) (NEXT (NEXT_SUB (p)))
 #define NEXT_SUB(p) (NEXT (SUB (p)))
 #define NF(p) ((p)->nf)
 #define NODE(p) ((p)->node)
@@ -1540,7 +1521,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define PUT(p) ((p)->put)
 #define P_PROTO(p) ((p)->p_proto)
 #define R(p) ((p)->r)
-#define RC(p) ((p)->rc)
 #define RE(z) (VALUE (&(z)[0]))
 #define READ_MOOD(p) ((p)->read_mood)
 #define RED(p) ((p)->red)
@@ -1572,7 +1552,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define SELECT(p) ((p)->select)
 #define SEQUENCE(p) ((p)->sequence)
 #define SET(p) ((p)->set)
-#define SH(p) ((p)->sh)
 #define SHIFT(p) ((p)->shift)
 #define SHORT_ID(p) ((p)->short_id)
 #define SIN_ADDR(p) ((p)->sin_addr)
@@ -1625,7 +1604,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define TERM(p) ((p)->term)
 #define TERMINATOR(p) ((p)->terminator)
 #define TEXT(p) ((p)->text)
-#define TGZ(p) ((p)->tgz)
 #define THREAD_ID(p) ((p)->thread_id)
 #define THREAD_STACK_OFFSET(p) ((p)->thread_stack_offset)
 #define TMP_FILE(p) ((p)->tmp_file)
@@ -1793,11 +1771,11 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
 #define UP_BLOCK_GC {\
-  if (FRAME_THREAD_ID (frame_pointer) == main_thread_id) {\
+  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
     block_gc++;\
   }}
 #define DOWN_BLOCK_GC {\
-  if (FRAME_THREAD_ID (frame_pointer) == main_thread_id) {\
+  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
     block_gc--;\
   }}
 #else
@@ -1901,13 +1879,11 @@ still is sufficient overhead to make it to the next check.
 #define FRAME_NUMBER(n) (FRAME_NO (FACT (n)))
 #define FRAME_OBJECT(n) (FRAME_OFFSET (FRAME_INFO_SIZE + (n)))
 #define FRAME_OFFSET(n) (FRAME_ADDRESS (frame_pointer + (n)))
-#define FRAME_OUTER(n) (OUTER (TABLE (FRAME_TREE(n))))
 #define FRAME_PARAMETER_LEVEL(n) (PARAMETER_LEVEL (FACT (n)))
 #define FRAME_PARAMETERS(n) (PARAMETERS (FACT (n)))
 #define FRAME_PROC_FRAME(n) (PROC_FRAME (FACT (n)))
 #define FRAME_SIZE(fp) (FRAME_INFO_SIZE + FRAME_INCREMENT (fp))
 #define FRAME_STATIC_LINK(n) (STATIC_LINK (FACT (n)))
-#define FRAME_TOP (FRAME_OFFSET (0))
 #define FRAME_TREE(n) (NODE (FACT (n)))
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
@@ -2083,7 +2059,7 @@ leaves it inoperative in case the routine quits through an event.
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
 #define CLOSE_FRAME {\
-  if (FRAME_THREAD_ID (frame_pointer) == main_thread_id) {\
+  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
     block_gc = FRAME_BLOCKS (frame_pointer);\
   }\
   frame_pointer = FRAME_DYNAMIC_LINK (frame_pointer);\
@@ -2148,12 +2124,6 @@ qualifier to a pointer. This is safe here.
   BYTE_T *_sp_ = STACK_TOP;\
   INCREMENT_STACK_POINTER ((p), (int) (size));\
   COPY (_sp_, (BYTE_T *) (addr), (int) (size));\
-  }
-
-#define PUSH_ALIGNED(p, addr, size) {\
-  BYTE_T *_sp_ = STACK_TOP;\
-  INCREMENT_STACK_POINTER ((p), (int) (size));\
-  COPY_ALIGNED (_sp_, (BYTE_T *) (addr), (int) (size));\
   }
 
 #define POP(p, addr, size) {\
@@ -2236,7 +2206,6 @@ qualifier to a pointer. This is safe here.
 
 #define POP_REF(p, z) POP_OBJECT (p, z, A68_REF)
 #define POP_PROCEDURE(p, z) POP_OBJECT (p, z, A68_PROCEDURE)
-#define POP_FORMAT(p, z) POP_OBJECT (p, z, A68_FORMAT)
 
 #define PUSH_UNION(p, z) PUSH_PRIMITIVE (p, z, A68_UNION)
 
@@ -2272,12 +2241,6 @@ qualifier to a pointer. This is safe here.
   MP_T *_m_d = (z), *_m_s = (x); int _m_k = digits;\
   while (_m_k--) {*_m_d++ = *_m_s++;}\
   }
-
-#define CHECK_MP_INIT(p, z, m) {\
-  if (! ((int) z[0] & INITIALISED_MASK)) {\
-    diagnostic_node (A68_RUNTIME_ERROR, (p), ERROR_EMPTY_VALUE, (m));\
-    exit_genie ((p), A68_RUNTIME_ERROR);\
-  }}
 
 #define CHECK_MP_EXPONENT(p, z) {\
   MP_T _expo_ = fabs (MP_EXPONENT (z));\
@@ -2389,8 +2352,6 @@ qualifier to a pointer. This is safe here.
 #define GSL_CONST_CGSM_GAUSS (1.0) /* cm / A s^2  */
 #define GSL_CONST_CGSM_SPEED_OF_LIGHT (2.99792458e10) /* cm / s */
 #define GSL_CONST_CGSM_GRAVITATIONAL_CONSTANT (6.673e-8) /* cm^3 / g s^2 */
-#define GSL_CONST_CGSM_PLANCKS_CONSTANT_H (6.62606896e-27) /* g cm^2 / s */
-#define GSL_CONST_CGSM_PLANCKS_CONSTANT_HBAR (1.05457162825e-27) /* g cm^2 / s */
 #define GSL_CONST_CGSM_ASTRONOMICAL_UNIT (1.49597870691e13) /* cm */
 #define GSL_CONST_CGSM_LIGHT_YEAR (9.46053620707e17) /* cm */
 #define GSL_CONST_CGSM_PARSEC (3.08567758135e18) /* cm */
@@ -2476,8 +2437,6 @@ qualifier to a pointer. This is safe here.
 #define GSL_CONST_CGSM_DYNE (1e0) /* cm g / s^2 */
 #define GSL_CONST_CGSM_JOULE (1e7) /* g cm^2 / s^2 */
 #define GSL_CONST_CGSM_ERG (1e0) /* g cm^2 / s^2 */
-#define GSL_CONST_CGSM_STEFAN_BOLTZMANN_CONSTANT (5.67040047374e-5) /* g / K^4 s^3 */
-#define GSL_CONST_CGSM_THOMSON_CROSS_SECTION (6.65245893699e-25) /* cm^2 */
 #define GSL_CONST_CGSM_BOHR_MAGNETON (9.27400899e-21) /* abamp cm^2 */
 #define GSL_CONST_CGSM_NUCLEAR_MAGNETON (5.05078317e-24) /* abamp cm^2 */
 #define GSL_CONST_CGSM_ELECTRON_MAGNETIC_MOMENT (9.28476362e-21) /* abamp cm^2 */
@@ -2486,8 +2445,6 @@ qualifier to a pointer. This is safe here.
 #define GSL_CONST_CGSM_ELECTRON_CHARGE (1.602176487e-20) /* abamp s */
 #define GSL_CONST_MKS_SPEED_OF_LIGHT (2.99792458e8) /* m / s */
 #define GSL_CONST_MKS_GRAVITATIONAL_CONSTANT (6.673e-11) /* m^3 / kg s^2 */
-#define GSL_CONST_MKS_PLANCKS_CONSTANT_H (6.62606896e-34) /* kg m^2 / s */
-#define GSL_CONST_MKS_PLANCKS_CONSTANT_HBAR (1.05457162825e-34) /* kg m^2 / s */
 #define GSL_CONST_MKS_ASTRONOMICAL_UNIT (1.49597870691e11) /* m */
 #define GSL_CONST_MKS_LIGHT_YEAR (9.46053620707e15) /* m */
 #define GSL_CONST_MKS_PARSEC (3.08567758135e16) /* m */
@@ -2573,8 +2530,6 @@ qualifier to a pointer. This is safe here.
 #define GSL_CONST_MKS_DYNE (1e-5) /* kg m / s^2 */
 #define GSL_CONST_MKS_JOULE (1e0) /* kg m^2 / s^2 */
 #define GSL_CONST_MKS_ERG (1e-7) /* kg m^2 / s^2 */
-#define GSL_CONST_MKS_STEFAN_BOLTZMANN_CONSTANT (5.67040047374e-8) /* kg / K^4 s^3 */
-#define GSL_CONST_MKS_THOMSON_CROSS_SECTION (6.65245893699e-29) /* m^2 */
 #define GSL_CONST_MKS_BOHR_MAGNETON (9.27400899e-24) /* A m^2 */
 #define GSL_CONST_MKS_NUCLEAR_MAGNETON (5.05078317e-27) /* A m^2 */
 #define GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT (9.28476362e-24) /* A m^2 */
@@ -2583,7 +2538,6 @@ qualifier to a pointer. This is safe here.
 #define GSL_CONST_MKS_ELECTRON_CHARGE (1.602176487e-19) /* A s */
 #define GSL_CONST_MKS_VACUUM_PERMITTIVITY (8.854187817e-12) /* A^2 s^4 / kg m^3 */
 #define GSL_CONST_MKS_VACUUM_PERMEABILITY (1.25663706144e-6) /* kg m / A^2 s^2 */
-#define GSL_CONST_MKS_DEBYE (3.33564095198e-30) /* A s^2 / m^2 */
 #define GSL_CONST_MKS_GAUSS (1e-4) /* kg / A s^2 */
 
 /***********************/
@@ -2595,12 +2549,11 @@ extern A68_FORMAT nil_format;
 extern A68_HANDLE nil_handle, *free_handles, *busy_handles;
 extern A68_REF nil_ref, stand_in, stand_out, skip_file;
 extern ADDR_T fixed_heap_pointer, temp_heap_pointer, frame_pointer, stack_pointer, heap_pointer, handle_pointer, global_pointer, frame_start, frame_end, stack_start, stack_end, finish_frame_pointer;
-extern BOOL_T halt_typing, time_limit_flag, listing_is_safe, heap_is_fluid, in_execution, in_monitor, do_confirm_exit, no_warnings;
+extern BOOL_T halt_typing, heap_is_fluid, in_execution, in_monitor, do_confirm_exit, no_warnings;
 extern BYTE_T *stack_segment, *heap_segment, *handle_segment, *system_stack_offset;
 extern KEYWORD_T *top_keyword;
 extern MODES_T a68_modes;
 extern MODULE_T program;
-extern MOID_T *top_expr_moid;
 extern NODE_T **node_register;
 extern POSTULATE_T *top_postulate, *top_postulate_list;
 extern TABLE_T *a68g_standenv;
@@ -2610,7 +2563,7 @@ extern char **global_argv, *watchpoint_expression, a68g_cmd_name[], output_line[
 extern clock_t clock_res;
 extern double cputime_0, garbage_seconds;
 extern int block_gc, frame_stack_size, expr_stack_size, heap_size, handle_pool_size, free_handle_count, max_handle_count, garbage_collects, global_argc, global_level, max_lex_lvl, new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos, stack_limit, frame_stack_limit, expr_stack_limit, stack_size, storage_overhead, symbol_table_count, mode_count, term_width, varying_mp_digits;
-extern jmp_buf genie_exit_label, monitor_exit_label;
+extern jmp_buf genie_exit_label;
 
 #if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
 extern BOOL_T a68g_curses_mode;
@@ -2629,15 +2582,11 @@ extern A68_REF c_string_to_row_char (NODE_T *, char *, int);
 extern A68_REF c_to_a_string (NODE_T *, char *, int);
 extern A68_REF empty_row (NODE_T *, MOID_T *);
 extern A68_REF empty_string (NODE_T *);
-extern A68_REF genie_allocate_declarer (NODE_T *, ADDR_T *, A68_REF, BOOL_T);
-extern A68_REF genie_assign_stowed (A68_REF, A68_REF *, NODE_T *, MOID_T *);
-extern A68_REF genie_copy_stowed (A68_REF, NODE_T *, MOID_T *);
 extern A68_REF heap_generator (NODE_T *, MOID_T *, int);
 extern ADDR_T calculate_internal_index (A68_TUPLE *, int);
 extern BOOL_T a68g_mkstemp(char *, int, mode_t);
 extern BOOL_T close_device (NODE_T *, A68_FILE *);
 extern BOOL_T genie_int_case_unit (NODE_T *, int, int *);
-extern BOOL_T genie_no_user_symbols (TABLE_T *);
 extern BOOL_T genie_string_to_value_internal (NODE_T *, MOID_T *, char *, BYTE_T *);
 extern BOOL_T increment_internal_index (A68_TUPLE *, int);
 extern BOOL_T lexical_analyser (void);
@@ -2678,15 +2627,11 @@ extern TAG_T *find_tag_global (TABLE_T *, int, char *);
 extern TAG_T *find_tag_local (TABLE_T *, int, char *);
 extern TAG_T *new_tag (void);
 extern TOKEN_T *add_token (TOKEN_T **, char *);
-extern TOKEN_T *find_token (TOKEN_T **, char *);
 extern char *a68g_strchr (char *, int);
-extern char *a68g_strrchr (char *, int);
 extern char *a_to_c_string (NODE_T *, char *, A68_REF);
 extern char *ctrl_char (int);
 extern char *error_chars (char *, int);
 extern char *fixed (NODE_T * p);
-extern char *fleet (NODE_T * p);
-extern char *genie_standard_format (NODE_T *, MOID_T *, void *);
 extern char *get_transput_buffer (int);
 extern char *moid_to_string (MOID_T *, int, NODE_T *);
 extern char *new_fixed_string (char *);
@@ -2696,14 +2641,11 @@ extern char *non_terminal_string (char *, int);
 extern char *phrase_to_text (NODE_T *, NODE_T **);
 extern char *propagator_name (PROP_PROC *p);
 extern char *read_string_from_tty (char *);
-extern char *stack_string (NODE_T *, int);
 extern char *standard_environ_proc_name (GPROC);
 extern char *sub_fixed (NODE_T *, double, int, int);
 extern char *sub_whole (NODE_T *, int, int);
 extern char *whole (NODE_T * p);
 extern char digit_to_char (int);
-extern char get_flip_char (void);
-extern char get_flop_char (void);
 extern char pop_char_transput_buffer (int);
 extern double a68g_acosh (double);
 extern double a68g_asinh (double);
@@ -2729,7 +2671,6 @@ extern int first_tag_global (TABLE_T *, char *);
 extern int get_replicator_value (NODE_T *, BOOL_T);
 extern int get_row_size (A68_TUPLE *, int);
 extern int get_transput_buffer_index (int);
-extern int get_transput_buffer_length (int);
 extern int get_transput_buffer_size (int);
 extern int get_unblocked_transput_buffer (NODE_T *);
 extern int grep_in_string (char *, char *, int *, int *);
@@ -2766,14 +2707,10 @@ extern void assign_offsets_packs (MOID_T *);
 extern void assign_offsets_table (TABLE_T *);
 extern void bind_format_tags_to_tree (NODE_T *);
 extern void bind_routine_tags_to_tree (NODE_T *);
-extern void bind_tag (TAG_T **, TAG_T *);
 extern void bottom_up_error_check (NODE_T *);
 extern void bottom_up_parser (NODE_T *);
-extern void brief_mode_flat (FILE_T, MOID_T *);
-extern void brief_moid_flat (FILE_T, MOID_T *);
 extern void bufcat (char *, char *, int);
 extern void bufcpy (char *, char *, int);
-extern void calc_rte (NODE_T *, BOOL_T, MOID_T *, const char *);
 extern void change_breakpoints (NODE_T *, unsigned, int, BOOL_T *, char *);
 extern void change_masks (NODE_T *, unsigned, BOOL_T);
 extern void check_parenthesis (NODE_T *);
@@ -2786,10 +2723,6 @@ extern void diagnostic_line (int, LINE_T *, char *, char *, ...);
 extern void diagnostic_node (int, NODE_T *, char *, ...);
 extern void diagnostics_to_terminal (LINE_T *, int);
 extern void discard_heap (void);
-extern void dump_frame (int);
-extern void dump_heap (void);
-extern void dump_stack (int);
-extern void dump_stowed (NODE_T *, FILE_T, void *, MOID_T *, int);
 extern void end_of_file_error (NODE_T * p, A68_REF ref_file);
 extern void enlarge_transput_buffer (NODE_T *, int, int);
 extern void exit_genie (NODE_T *, int);
@@ -2799,9 +2732,7 @@ extern void format_error (NODE_T *, A68_REF, char *);
 extern void free_file_entries (void);
 extern void free_file_entry (NODE_T *, int);
 extern void free_genie_heap (NODE_T *);
-extern void free_heap (void);
 extern void free_postulate_list (POSTULATE_T *, POSTULATE_T *);
-extern void free_postulates (void);
 extern void gc_heap (NODE_T *, ADDR_T);
 extern void genie (void *);
 extern void genie_argc (NODE_T *);
@@ -2809,11 +2740,8 @@ extern void genie_argv (NODE_T *);
 extern void genie_call_operator (NODE_T *, ADDR_T);
 extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
 extern void genie_check_initialisation (NODE_T *, BYTE_T *, MOID_T *);
-extern void genie_copy_sound (NODE_T *, BYTE_T *, BYTE_T *);
 extern void genie_create_pipe (NODE_T *);
 extern void genie_declaration (NODE_T *);
-extern void genie_dns_addr (NODE_T *, MOID_T *, BYTE_T *, ADDR_T, char *);
-extern void genie_dump_frames (void);
 extern void genie_enquiry_clause (NODE_T *);
 extern void genie_errno (NODE_T *);
 extern void genie_execve (NODE_T *);
@@ -2828,11 +2756,9 @@ extern void genie_generator_internal (NODE_T *, MOID_T *, TAG_T *, LEAP_T, ADDR_
 extern void genie_getenv (NODE_T *);
 extern void genie_identity_dec (NODE_T *);
 extern void genie_init_heap (NODE_T *);
-extern void genie_init_lib (NODE_T *);
 extern void genie_init_rng (void);
 extern void genie_localtime (NODE_T *);
 extern void genie_operator_dec (NODE_T *);
-extern void genie_prepare_declarer (NODE_T *);
 extern void genie_preprocess (NODE_T *, int *, void *);
 extern void genie_proc_variable_dec (NODE_T *);
 extern void genie_push_undefined (NODE_T *, MOID_T *);
@@ -2843,15 +2769,12 @@ extern void genie_serial_units (NODE_T *, NODE_T **, jmp_buf *, int);
 extern void genie_strerror (NODE_T *);
 extern void genie_string_to_value (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
 extern void genie_subscript (NODE_T *, A68_TUPLE **, int *, NODE_T **);
-extern void genie_subscript_linear (NODE_T *, ADDR_T *, int *);
 extern void genie_utctime (NODE_T *);
 extern void genie_value_to_string (NODE_T *, MOID_T *, BYTE_T *, int);
 extern void genie_variable_dec (NODE_T *, NODE_T **, ADDR_T);
 extern void genie_waitpid (NODE_T *);
 extern void genie_write_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
-extern void genie_write_string_from_stack (NODE_T * p, A68_REF);
 extern void get_global_level (NODE_T *);
-extern void get_global_pointer (NODE_T *);
 extern void get_max_simplout_size (NODE_T *);
 extern void get_refinements (void);
 extern void get_stack_size (void);
@@ -2859,7 +2782,6 @@ extern void init_curses (void);
 extern void init_file_entries (void);
 extern void init_file_entry (int);
 extern void init_heap (void);
-extern void init_moid_list (void);
 extern void init_options (void);
 extern void init_postulates (void);
 extern void init_rng (unsigned long);
@@ -2884,7 +2806,6 @@ extern void monitor_error (char *, char *);
 extern void on_event_handler (NODE_T *, A68_PROCEDURE, A68_REF);
 extern void online_help (FILE_T);
 extern void open_error (NODE_T *, A68_REF, char *);
-extern void optimise_tree (NODE_T *);
 extern void pattern_error (NODE_T *, MOID_T *, int);
 extern void portcheck (NODE_T *);
 extern void preliminary_symbol_table_setup (NODE_T *);
@@ -2901,12 +2822,8 @@ extern void read_rc_options (void);
 extern void read_sound (NODE_T *, A68_REF, A68_SOUND *);
 extern void rearrange_goto_less_jumps (NODE_T *);
 extern void register_nodes (NODE_T *);
-extern void remove_empty_symbol_tables (NODE_T *);
-extern void remove_file_type (char *);
 extern void renumber_moids (MOID_T *, int);
 extern void renumber_nodes (NODE_T *, int *);
-extern void reset_max_simplout_size (void);
-extern void reset_moid_list (void);
 extern void reset_symbol_table_nest_count (NODE_T *);
 extern void reset_transput_buffer (int);
 extern void scan_error (LINE_T *, char *, char *);
@@ -2918,15 +2835,10 @@ extern void set_nest (NODE_T *, NODE_T *);
 extern void set_par_level (NODE_T *, int);
 extern void set_proc_level (NODE_T *, int);
 extern void set_transput_buffer_index (int, int);
-extern void set_transput_buffer_length (int, int);
 extern void set_transput_buffer_size (int, int);
-extern void set_up_mode_table (NODE_T *);
 extern void set_up_tables (void);
-extern void show_data_item (FILE_T, NODE_T *, MOID_T *, BYTE_T *);
-extern void show_frame (NODE_T *, FILE_T);
 extern void single_step (NODE_T *, unsigned);
 extern void stack_dump (FILE_T, ADDR_T, int, int *);
-extern void stack_dump_light (ADDR_T);
 extern void standardise (double *, int, int, int *);
 extern void state_license (FILE_T);
 extern void state_version (FILE_T);
@@ -2936,7 +2848,6 @@ extern void tie_label_to_unit (NODE_T *);
 extern void top_down_parser (NODE_T *);
 extern void transput_error (NODE_T *, A68_REF, MOID_T *);
 extern void tree_listing (FILE_T, NODE_T *, int, LINE_T *, int *);
-extern void un_init_frame (NODE_T *);
 extern void unchar_scanner (NODE_T *, A68_FILE *, char);
 extern void value_error (NODE_T *, MOID_T *, A68_REF);
 extern void victal_checker (NODE_T *);
@@ -2960,7 +2871,6 @@ extern void edit (char *);
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
 extern BOOL_T whether_main_thread (void);
-extern void count_par_clauses (NODE_T *);
 extern void genie_abend_all_threads (NODE_T *, jmp_buf *, NODE_T *);
 extern void genie_set_exit_from_threads (int);
 #endif
@@ -3524,7 +3434,6 @@ extern GPROC genie_timesab_string;
 extern GPROC genie_to_lower;
 extern GPROC genie_to_upper;
 extern GPROC genie_unimplemented;
-extern GPROC genie_vector_times_scalar;
 extern GPROC genie_whole;
 extern GPROC genie_write;
 extern GPROC genie_write_bin;
@@ -3658,8 +3567,6 @@ extern GPROC genie_cgs_uk_gallon;
 extern GPROC genie_cgs_uk_ton;
 extern GPROC genie_cgs_unified_atomic_mass;
 extern GPROC genie_cgs_us_gallon;
-extern GPROC genie_cgs_vacuum_permeability;
-extern GPROC genie_cgs_vacuum_permittivity;
 extern GPROC genie_cgs_week;
 extern GPROC genie_cgs_yard;
 extern GPROC genie_mks_acre;
@@ -3982,15 +3889,9 @@ extern GPROC genie_pq_user;
 /********************/
 
 #define ERROR_SPECIFICATION (errno == 0 ? NO_TEXT : strerror (errno))
-
-#if defined HAVE_COMPILER
-#define ERROR_SPECIFICATION_COMPILER (dlerror ())
-#endif
-
 #define ERROR_ACCESSING_NIL "attempt to access N"
 #define ERROR_ALIGNMENT "alignment error"
 #define ERROR_ARGUMENT_NUMBER "incorrect number of arguments for M"
-#define ERROR_CANNOT_END_WITH_DECLARATION "clause cannot end with a declaration"
 #define ERROR_CANNOT_OPEN_NAME "cannot open Z"
 #define ERROR_CANNOT_WIDEN "cannot widen M to M"
 #define ERROR_CANNOT_WRITE_LISTING "cannot write listing file"
@@ -3998,6 +3899,7 @@ extern GPROC genie_pq_user;
 #define ERROR_CLAUSE_WITHOUT_VALUE "clause does not yield a value"
 #define ERROR_CLOSING_DEVICE "error while closing device"
 #define ERROR_CLOSING_FILE "error while closing file"
+#define ERROR_CODE "clause should be compiled"
 #define ERROR_COMMA_MUST_SEPARATE "A and A must be separated by a comma-symbol"
 #define ERROR_COMPONENT_NUMBER "M must have at least two components"
 #define ERROR_COMPONENT_RELATED "M has firmly related components"
@@ -4019,7 +3921,6 @@ extern GPROC genie_pq_user;
 #define ERROR_EXPONENT_DIGIT "invalid exponent digit"
 #define ERROR_EXPONENT_INVALID "invalid M exponent"
 #define ERROR_FALSE_ASSERTION "false assertion"
-#define ERROR_FEATURE_UNSUPPORTED "unsupported feature S"
 #define ERROR_FFT "fourier transform error; U; U"
 #define ERROR_FILE_ACCESS "file access error"
 #define ERROR_FILE_ALREADY_OPEN "file is already open"
@@ -4040,7 +3941,6 @@ extern GPROC genie_pq_user;
 #define ERROR_FILE_TRANSPUT "error transputting M value"
 #define ERROR_FILE_TRANSPUT_SIGN "error transputting sign in M value"
 #define ERROR_FILE_WRONG_MOOD "file is in Y mood"
-#define ERROR_FLEX_ROW "flexibility is a property of rows"
 #define ERROR_FORMAT_CANNOT_TRANSPUT "cannot transput M value with A"
 #define ERROR_FORMAT_EXHAUSTED "patterns exhausted in format"
 #define ERROR_FORMAT_INTS_REQUIRED "1 .. 3 M arguments required"
@@ -4067,7 +3967,6 @@ extern GPROC genie_pq_user;
 #define ERROR_LABEL_BEFORE_DECLARATION "declaration cannot follow a labeled unit"
 #define ERROR_LABEL_IN_PAR_CLAUSE "target label is in another parallel unit"
 #define ERROR_LAPLACE "laplace transform error; U; U"
-#define ERROR_LINE_ENDED "end of line reached"
 #define ERROR_LONG_STRING "string exceeds end of line"
 #define ERROR_MATH "M math error"
 #define ERROR_MATH_EXCEPTION "math exception E"
@@ -4075,7 +3974,6 @@ extern GPROC genie_pq_user;
 #define ERROR_MP_OUT_OF_BOUNDS "multiprecision value out of bounds"
 #define ERROR_MULTIPLE_FIELD "multiple declaration of field S"
 #define ERROR_MULTIPLE_TAG "multiple declaration of tag S"
-#define ERROR_NIL_DESCRIPTOR "descriptor is N"
 #define ERROR_NOT_WELL_FORMED "M does not specify a well formed mode"
 #define ERROR_NO_COMPONENT "M is neither component nor subset of M"
 #define ERROR_NO_DYADIC "dyadic operator O S O has not been declared"
@@ -4087,7 +3985,6 @@ extern GPROC genie_pq_user;
 #define ERROR_NO_NAME_REQUIRED "context does not require a name"
 #define ERROR_NO_PARALLEL_CLAUSE "interpreter was compiled without support for the parallel-clause"
 #define ERROR_NO_PRIORITY "S has no priority declaration"
-#define ERROR_NO_PROC "M A does not yield a procedure taking arguments"
 #define ERROR_NO_ROW_OR_PROC "M A does not yield a row or procedure"
 #define ERROR_NO_SOURCE_FILE "no source file specified"
 #define ERROR_NO_SQUARE_MATRIX "M matrix is not square"
@@ -4103,7 +4000,6 @@ extern GPROC genie_pq_user;
 #define ERROR_OUT_OF_CORE "insufficient memory"
 #define ERROR_PAGE_SIZE "error in page size"
 #define ERROR_PARALLEL_CANNOT_CREATE "cannot create thread"
-#define ERROR_PARALLEL_CANNOT_JOIN "cannot join thread"
 #define ERROR_PARALLEL_OUTSIDE "invalid outside a parallel clause"
 #define ERROR_PARALLEL_OVERFLOW "too many parallel units"
 #define ERROR_PARENTHESIS "incorrect parenthesis nesting; check for Y"
@@ -4116,9 +4012,6 @@ extern GPROC genie_pq_user;
 #define ERROR_REFINEMENT_EMPTY "empty refinement at end of source"
 #define ERROR_REFINEMENT_INVALID "invalid refinement"
 #define ERROR_REFINEMENT_NOT_APPLIED "refinement is not applied"
-#define ERROR_RELATED_MODES "M is related to M"
-#define ERROR_REQUIRE_THREADS "parallel clause requires posix threads"
-#define ERROR_RUNTIME_ERROR "runtime error"
 #define ERROR_SCOPE_DYNAMIC_0 "value is exported out of its scope"
 #define ERROR_SCOPE_DYNAMIC_1 "M value is exported out of its scope"
 #define ERROR_SCOPE_DYNAMIC_2 "M value from %s is exported out of its scope"
@@ -4133,7 +4026,6 @@ extern GPROC genie_pq_user;
 #define ERROR_SYNTAX_MIXED_DECLARATION "possibly mixed identity and variable declaration"
 #define ERROR_SYNTAX_STRANGE_SEPARATOR "possibly a missing or erroneous separator nearby"
 #define ERROR_SYNTAX_STRANGE_TOKENS "possibly a missing or erroneous symbol nearby"
-#define ERROR_THREAD_ACTIVE "parallel clause terminated but thread still active"
 #define ERROR_TIME_LIMIT_EXCEEDED "time limit exceeded"
 #define ERROR_TOO_MANY_ARGUMENTS "too many arguments"
 #define ERROR_TOO_MANY_OPEN_FILES "too many open files"
@@ -4143,9 +4035,7 @@ extern GPROC genie_pq_user;
 #define ERROR_UNDECLARED_TAG "tag S has not been declared properly"
 #define ERROR_UNDECLARED_TAG_2 "tag Z has not been declared properly"
 #define ERROR_UNDEFINED_TRANSPUT "transput of M value by this procedure is not defined"
-#define ERROR_UNDETERMINDED_FILE_MOOD "file has undetermined mood"
 #define ERROR_UNIMPLEMENTED "S is either not implemented or not compiled"
-#define ERROR_UNIMPLEMENTED_PRECISION "M precision is not implemented"
 #define ERROR_UNSPECIFIED "unspecified error"
 #define ERROR_UNTERMINATED_COMMENT "unterminated comment"
 #define ERROR_UNTERMINATED_PRAGMAT "unterminated pragmat"
