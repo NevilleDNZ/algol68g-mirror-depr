@@ -858,7 +858,7 @@ struct NODE_INFO_T
 struct GINFO_T
 {
   PROP_T propagator;
-  BOOL_T whether_coercion, whether_new_lexical_level, need_dns;
+  BOOL_T is_coercion, is_new_lexical_level, need_dns;
   BYTE_T *offset;
   MOID_T *partial_proc, *partial_locale;
   NODE_T *parent;
@@ -1524,7 +1524,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define RE(z) (VALUE (&(z)[0]))
 #define READ_MOOD(p) ((p)->read_mood)
 #define RED(p) ((p)->red)
-#define REFRESH(p) ((p)->refresh)
 #define REPL(p) ((p)->repl)
 #define RESERVED(p) ((p)->reserved)
 #define RESET(p) ((p)->reset)
@@ -1642,11 +1641,13 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define VALUE_ERROR_MENDED(p) ((p)->value_error_mended)
 #define WARNING_COUNT(p) ((p)->warning_count)
 #define WHERE(p) ((p)->where)
-#define WHETHER(p, s) (ATTRIBUTE (p) == (s))
-#define WHETHER_COERCION(p) ((p)->whether_coercion)
-#define WHETHER_LITERALLY(p, s) (strcmp (NSYMBOL (p), s) == 0)
-#define WHETHER_NEW_LEXICAL_LEVEL(p) ((p)->whether_new_lexical_level)
-#define WHETHER_NOT(p, s) (! WHETHER (p, s))
+#define IS(p, s) (ATTRIBUTE (p) == (s))
+#define IS_COERCION(p) ((p)->is_coercion)
+#define IS_LITERALLY(p, s) (strcmp (NSYMBOL (p), s) == 0)
+#define IS_NEW_LEXICAL_LEVEL(p) ((p)->is_new_lexical_level)
+#define ISNT(p, s) (! IS (p, s))
+#define IS_REF_FLEX(m)\
+  (IS (m, REF_SYMBOL) && IS (SUB (m), FLEX_SYMBOL))
 #define WINDOW_X_SIZE(p) ((p)->window_x_size)
 #define WINDOW_Y_SIZE(p) ((p)->window_y_size)
 #define WRITE_MOOD(p) ((p)->write_mood)
@@ -2090,11 +2091,11 @@ leaves it inoperative in case the routine quits through an event.
 #define CHECK_DNS(p, m, w, limit)\
   if (NEED_DNS (GINFO (p))) {\
     ADDR_T _lim = ((limit) < global_pointer ? global_pointer : (limit));\
-    if (WHETHER ((m), REF_SYMBOL)) {\
+    if (IS ((m), REF_SYMBOL)) {\
       CHECK_DNS2 (p, (REF_SCOPE ((A68_REF *) (w))), _lim, (m));\
-    } else if (WHETHER ((m), PROC_SYMBOL)) {\
+    } else if (IS ((m), PROC_SYMBOL)) {\
       CHECK_DNS2 (p, ENVIRON ((A68_PROCEDURE *) (w)), _lim, (m));\
-    } else if (WHETHER ((m), FORMAT_SYMBOL)) {\
+    } else if (IS ((m), FORMAT_SYMBOL)) {\
       CHECK_DNS2 (p, ENVIRON ((A68_FORMAT *) w), _lim, (m));\
   }}
 
@@ -2593,13 +2594,13 @@ extern BOOL_T lexical_analyser (void);
 extern BOOL_T match_string (char *, char *, char);
 extern BOOL_T set_options (OPTION_LIST_T *, BOOL_T);
 extern BOOL_T whether (NODE_T * p, ...);
-extern BOOL_T whether_coercion (NODE_T *);
-extern BOOL_T whether_firm (MOID_T *, MOID_T *);
-extern BOOL_T whether_modes_equivalent (MOID_T *, MOID_T *);
-extern BOOL_T whether_new_lexical_level (NODE_T *);
-extern BOOL_T whether_one_of (NODE_T * p, ...);
-extern BOOL_T whether_subset (MOID_T *, MOID_T *, int);
-extern BOOL_T whether_unitable (MOID_T *, MOID_T *, int);
+extern BOOL_T is_coercion (NODE_T *);
+extern BOOL_T is_firm (MOID_T *, MOID_T *);
+extern BOOL_T is_modes_equivalent (MOID_T *, MOID_T *);
+extern BOOL_T is_new_lexical_level (NODE_T *);
+extern BOOL_T is_one_of (NODE_T * p, ...);
+extern BOOL_T is_subset (MOID_T *, MOID_T *, int);
+extern BOOL_T is_unitable (MOID_T *, MOID_T *, int);
 extern BYTE_T *get_fixed_heap_space (size_t);
 extern BYTE_T *get_heap_space (size_t);
 extern BYTE_T *get_temp_heap_space (size_t);
@@ -2617,8 +2618,8 @@ extern NODE_T *last_unit;
 extern NODE_T *new_node (void);
 extern NODE_T *some_node (char *);
 extern PACK_T *new_pack (void);
-extern POSTULATE_T *whether_postulated (POSTULATE_T *, MOID_T *);
-extern POSTULATE_T *whether_postulated_pair (POSTULATE_T *, MOID_T *, MOID_T *);
+extern POSTULATE_T *is_postulated (POSTULATE_T *, MOID_T *);
+extern POSTULATE_T *is_postulated_pair (POSTULATE_T *, MOID_T *, MOID_T *);
 extern LINE_T *new_source_line (void);
 extern TABLE_T *find_level (NODE_T *, int);
 extern TABLE_T *new_symbol_table (TABLE_T *);
@@ -2679,7 +2680,7 @@ extern int iabs (int);
 extern int isign (int);
 extern int moid_size (MOID_T *);
 extern int store_file_entry (NODE_T *, FILE_T, char *, BOOL_T);
-extern int whether_identifier_or_label_global (TABLE_T *, char *);
+extern int is_identifier_or_label_global (TABLE_T *, char *);
 extern ssize_t io_read (FILE_T, void *, size_t);
 extern ssize_t io_read_conv (FILE_T, void *, size_t);
 extern ssize_t io_write (FILE_T, const void *, size_t);
@@ -2870,7 +2871,7 @@ extern void edit (char *);
 #endif
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-extern BOOL_T whether_main_thread (void);
+extern BOOL_T is_main_thread (void);
 extern void genie_abend_all_threads (NODE_T *, jmp_buf *, NODE_T *);
 extern void genie_set_exit_from_threads (int);
 #endif

@@ -183,8 +183,8 @@ TAG_T *error_tag;
 static SOID_T *top_soid_list = NO_SOID;
 
 static BOOL_T basic_coercions (MOID_T *, MOID_T *, int, int);
-static BOOL_T whether_coercible (MOID_T *, MOID_T *, int, int);
-static BOOL_T whether_nonproc (MOID_T *);
+static BOOL_T is_coercible (MOID_T *, MOID_T *, int, int);
+static BOOL_T is_nonproc (MOID_T *);
 static void mode_check_enclosed (NODE_T *, SOID_T *, SOID_T *);
 static void mode_check_unit (NODE_T *, SOID_T *, SOID_T *);
 static void mode_check_formula (NODE_T *, SOID_T *, SOID_T *);
@@ -196,7 +196,7 @@ static void coerce_unit (NODE_T *, SOID_T *);
 #define DEPREF A68_TRUE
 #define NO_DEPREF A68_FALSE
 
-#define WHETHER_MODE_IS_WELL(n) (! ((n) == MODE (ERROR) || (n) == MODE (UNDEFINED)))
+#define IF_MODE_IS_WELL(n) (! ((n) == MODE (ERROR) || (n) == MODE (UNDEFINED)))
 #define INSERT_COERCIONS(n, p, q) make_strong ((n), (p), MOID (q))
 
 #define STOP_CHAR 127
@@ -275,6 +275,23 @@ static char quote_postlude[] = "\
 'END'!";
 
 /*!
+\brief is_ref_refety_flex
+\param m mode under test
+\return same
+**/
+
+static BOOL_T is_ref_refety_flex (MOID_T * m)
+{
+  if (IS_REF_FLEX (m)) {
+    return (A68_TRUE);
+  } else if (IS (m, REF_SYMBOL)) {
+    return (is_ref_refety_flex (SUB (m)));
+  } else {
+    return (A68_FALSE);
+  }
+}
+
+/*!
 \brief count pictures
 \param p position in tree
 \param k counter
@@ -283,7 +300,7 @@ static char quote_postlude[] = "\
 static void count_pictures (NODE_T * p, int *k)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, PICTURE)) {
+    if (IS (p, PICTURE)) {
       (*k)++;
     }
     count_pictures (SUB (p), k);
@@ -299,9 +316,9 @@ static void count_pictures (NODE_T * p, int *k)
 static int count_operands (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, DECLARER)) {
+    if (IS (p, DECLARER)) {
       return (count_operands (NEXT (p)));
-    } else if (WHETHER (p, COMMA_SYMBOL)) {
+    } else if (IS (p, COMMA_SYMBOL)) {
       return (1 + count_operands (NEXT (p)));
     } else {
       return (count_operands (NEXT (p)) + count_operands (SUB (p)));
@@ -322,7 +339,7 @@ static int count_formal_bounds (NODE_T * p)
   if (p == NO_NODE) {
     return (0);
   } else {
-    if (WHETHER (p, COMMA_SYMBOL)) {
+    if (IS (p, COMMA_SYMBOL)) {
       return (1);
     } else {
       return (count_formal_bounds (NEXT (p)) + count_formal_bounds (SUB (p)));
@@ -341,7 +358,7 @@ static int count_bounds (NODE_T * p)
   if (p == NO_NODE) {
     return (0);
   } else {
-    if (WHETHER (p, BOUND)) {
+    if (IS (p, BOUND)) {
       return (1 + count_bounds (NEXT (p)));
     } else {
       return (count_bounds (NEXT (p)) + count_bounds (SUB (p)));
@@ -359,13 +376,13 @@ static int count_sizety (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (0);
-  } else if (WHETHER (p, LONGETY)) {
+  } else if (IS (p, LONGETY)) {
     return (count_sizety (SUB (p)) + count_sizety (NEXT (p)));
-  } else if (WHETHER (p, SHORTETY)) {
+  } else if (IS (p, SHORTETY)) {
     return (count_sizety (SUB (p)) + count_sizety (NEXT (p)));
-  } else if (WHETHER (p, LONG_SYMBOL)) {
+  } else if (IS (p, LONG_SYMBOL)) {
     return (1);
-  } else if (WHETHER (p, SHORT_SYMBOL)) {
+  } else if (IS (p, SHORT_SYMBOL)) {
     return (-1);
   } else {
     return (0);
@@ -483,7 +500,7 @@ static void concatenate_lines (LINE_T * top)
 \return whether u is v
 **/
 
-static BOOL_T whether_bold (char *u, char *v)
+static BOOL_T is_bold (char *u, char *v)
 {
   unsigned len = (unsigned) strlen (v);
   if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
@@ -546,11 +563,11 @@ static BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
   v++;
   while (u != NO_LINE) {
     while (v[0] != NULL_CHAR) {
-      if (whether_bold (v, "COMMENT") && delim == BOLD_COMMENT_SYMBOL) {
+      if (is_bold (v, "COMMENT") && delim == BOLD_COMMENT_SYMBOL) {
         *top = u;
         *ch = &v[1];
         return (A68_TRUE);
-      } else if (whether_bold (v, "CO") && delim == STYLE_I_COMMENT_SYMBOL) {
+      } else if (is_bold (v, "CO") && delim == STYLE_I_COMMENT_SYMBOL) {
         *top = u;
         *ch = &v[1];
         return (A68_TRUE);
@@ -587,11 +604,11 @@ static BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespa
   char *v = *ch;
   while (u != NO_LINE) {
     while (v[0] != NULL_CHAR) {
-      if (whether_bold (v, "PRAGMAT") && delim == BOLD_PRAGMAT_SYMBOL) {
+      if (is_bold (v, "PRAGMAT") && delim == BOLD_PRAGMAT_SYMBOL) {
         *top = u;
         *ch = &v[1];
         return (A68_TRUE);
-      } else if (whether_bold (v, "PR")
+      } else if (is_bold (v, "PR")
                  && delim == STYLE_I_PRAGMAT_SYMBOL) {
         *top = u;
         *ch = &v[1];
@@ -688,19 +705,19 @@ static char *next_preprocessor_item (LINE_T ** top, char **ch, int *delim)
         SCAN_ERROR (!skip_string (&u, &v), start_l, start_c, ERROR_UNTERMINATED_STRING);
       }
 /* COMMENTS must be skipped */
-      else if (whether_bold (v, "COMMENT")) {
+      else if (is_bold (v, "COMMENT")) {
         SCAN_ERROR (!skip_comment (&u, &v, BOLD_COMMENT_SYMBOL), start_l, start_c, ERROR_UNTERMINATED_COMMENT);
-      } else if (whether_bold (v, "CO")) {
+      } else if (is_bold (v, "CO")) {
         SCAN_ERROR (!skip_comment (&u, &v, STYLE_I_COMMENT_SYMBOL), start_l, start_c, ERROR_UNTERMINATED_COMMENT);
       } else if (v[0] == '#') {
         SCAN_ERROR (!skip_comment (&u, &v, STYLE_II_COMMENT_SYMBOL), start_l, start_c, ERROR_UNTERMINATED_COMMENT);
-      } else if (whether_bold (v, "PRAGMAT") || whether_bold (v, "PR")) {
+      } else if (is_bold (v, "PRAGMAT") || is_bold (v, "PR")) {
 /* We caught a PRAGMAT */
         char *item;
-        if (whether_bold (v, "PRAGMAT")) {
+        if (is_bold (v, "PRAGMAT")) {
           *delim = BOLD_PRAGMAT_SYMBOL;
           v = &v[strlen ("PRAGMAT")];
-        } else if (whether_bold (v, "PR")) {
+        } else if (is_bold (v, "PR")) {
           *delim = STYLE_I_PRAGMAT_SYMBOL;
           v = &v[strlen ("PR")];
         }
@@ -1312,7 +1329,7 @@ static int get_format_item (char ch)
 \return same
 **/
 
-static BOOL_T whether_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T is_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   char exp_syms[3];
@@ -1342,7 +1359,7 @@ static BOOL_T whether_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
 \return same
 **/
 
-static BOOL_T whether_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T is_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   save_state (*ref_l, *ref_s, *ch);
@@ -1369,7 +1386,7 @@ static BOOL_T whether_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
 \return same
 **/
 
-static BOOL_T whether_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T is_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   save_state (*ref_l, *ref_s, *ch);
@@ -1490,12 +1507,12 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
     *att = IDENTIFIER;
   } else if (c == POINT_CHAR) {
 /* Begins with a point symbol - point, dotdot, L REAL denotation */
-    if (whether_decimal_point (ref_l, ref_s, &c)) {
+    if (is_decimal_point (ref_l, ref_s, &c)) {
       (sym++)[0] = '0';
       (sym++)[0] = POINT_CHAR;
       c = next_char (ref_l, ref_s, A68_TRUE);
       SCAN_DIGITS (c);
-      if (whether_exp_char (ref_l, ref_s, &c)) {
+      if (is_exp_char (ref_l, ref_s, &c)) {
         SCAN_EXPONENT_PART (c);
       }
       sym[0] = NULL_CHAR;
@@ -1517,9 +1534,9 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
   } else if (IS_DIGIT (c)) {
 /* Something that begins with a digit - L INT denotation, L REAL denotation */
     SCAN_DIGITS (c);
-    if (whether_decimal_point (ref_l, ref_s, &c)) {
+    if (is_decimal_point (ref_l, ref_s, &c)) {
       c = next_char (ref_l, ref_s, A68_TRUE);
-      if (whether_exp_char (ref_l, ref_s, &c)) {
+      if (is_exp_char (ref_l, ref_s, &c)) {
         (sym++)[0] = POINT_CHAR;
         (sym++)[0] = '0';
         SCAN_EXPONENT_PART (c);
@@ -1527,15 +1544,15 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
       } else {
         (sym++)[0] = POINT_CHAR;
         SCAN_DIGITS (c);
-        if (whether_exp_char (ref_l, ref_s, &c)) {
+        if (is_exp_char (ref_l, ref_s, &c)) {
           SCAN_EXPONENT_PART (c);
         }
         *att = REAL_DENOTATION;
       }
-    } else if (whether_exp_char (ref_l, ref_s, &c)) {
+    } else if (is_exp_char (ref_l, ref_s, &c)) {
       SCAN_EXPONENT_PART (c);
       *att = REAL_DENOTATION;
-    } else if (whether_radix_char (ref_l, ref_s, &c)) {
+    } else if (is_radix_char (ref_l, ref_s, &c)) {
       (sym++)[0] = c;
       c = next_char (ref_l, ref_s, A68_TRUE);
       if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
@@ -1803,9 +1820,9 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
         }
         c = TEXT (add_token (&top_token, scan_buf));
       } else {
-        if (WHETHER (kw, TO_SYMBOL)) {
+        if (IS (kw, TO_SYMBOL)) {
 /* Merge GO and TO to GOTO */
-          if (*root != NO_NODE && WHETHER (*root, GO_SYMBOL)) {
+          if (*root != NO_NODE && IS (*root, GO_SYMBOL)) {
             ATTRIBUTE (*root) = GOTO_SYMBOL;
             NSYMBOL (*root) = TEXT (find_keyword (top_keyword, "GOTO"));
             make_node = A68_FALSE;
@@ -1891,7 +1908,7 @@ to know when it scans a format text and when not.
         tokenise_source (root, level + 1, A68_TRUE, l, s, start_l, start_c);
       } else if (in_format && open_nested_clause (att)) {
         NODE_T *z = PREVIOUS (*root);
-        if (z != NO_NODE && whether_one_of (z, FORMAT_ITEM_N, FORMAT_ITEM_G, FORMAT_ITEM_H, FORMAT_ITEM_F)) {
+        if (z != NO_NODE && is_one_of (z, FORMAT_ITEM_N, FORMAT_ITEM_G, FORMAT_ITEM_H, FORMAT_ITEM_F)) {
           tokenise_source (root, level, A68_FALSE, l, s, start_l, start_c);
         } else if (att == OPEN_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
@@ -1966,9 +1983,9 @@ BOOL_T lexical_analyser (void)
 \return same
 **/
 
-static BOOL_T whether_refinement_terminator (NODE_T * p)
+static BOOL_T is_refinement_terminator (NODE_T * p)
 {
-  if (WHETHER (p, POINT_SYMBOL)) {
+  if (IS (p, POINT_SYMBOL)) {
     if (IN_PRELUDE (NEXT (p))) {
       return (A68_TRUE);
     } else {
@@ -1993,7 +2010,7 @@ void get_refinements (void)
     FORWARD (p);
   }
 /* Determine whether the program contains refinements at all */
-  while (p != NO_NODE && !IN_PRELUDE (p) && !whether_refinement_terminator (p)) {
+  while (p != NO_NODE && !IN_PRELUDE (p) && !is_refinement_terminator (p)) {
     FORWARD (p);
   }
   if (p == NO_NODE || IN_PRELUDE (p)) {
@@ -2085,7 +2102,7 @@ void put_refinements (void)
 /* We need to substitute until the first point */
   p = TOP_NODE (&program);
   while (p != NO_NODE && ATTRIBUTE (p) != POINT_SYMBOL) {
-    if (WHETHER (p, IDENTIFIER)) {
+    if (IS (p, IDENTIFIER)) {
 /* See if we can find its definition */
       REFINEMENT_T *y = NO_REFINEMENT;
       x = TOP_REFINEMENT (&program);
@@ -2127,7 +2144,7 @@ void put_refinements (void)
     }
   }
 /* After the point we ignore it all until the prelude */
-  if (p != NO_NODE && WHETHER (p, POINT_SYMBOL)) {
+  if (p != NO_NODE && IS (p, POINT_SYMBOL)) {
     if (PREVIOUS (p) != NO_NODE) {
       NEXT (PREVIOUS (p)) = point;
     }
@@ -2214,7 +2231,7 @@ void substitute_brackets (NODE_T * p)
 \return TRUE or FALSE whether token terminates a unit
 **/
 
-static BOOL_T whether_unit_terminator (NODE_T * p)
+static BOOL_T is_unit_terminator (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case BUS_SYMBOL:
@@ -2248,7 +2265,7 @@ static BOOL_T whether_unit_terminator (NODE_T * p)
 \return whether token is a unit-terminator in a loop clause
 **/
 
-static BOOL_T whether_loop_keyword (NODE_T * p)
+static BOOL_T is_loop_keyword (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case FOR_SYMBOL:
@@ -2271,7 +2288,7 @@ static BOOL_T whether_loop_keyword (NODE_T * p)
 \return whether token cannot follow semicolon or EXIT
 **/
 
-static BOOL_T whether_semicolon_less (NODE_T * p)
+static BOOL_T is_semicolon_less (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case BUS_SYMBOL:
@@ -2796,7 +2813,7 @@ static NODE_T *bracket_check_parse (NODE_T * top, NODE_T * p)
     }
     if (ignore_token) {
       ;
-    } else if (q != NO_NODE && WHETHER (q, ket)) {
+    } else if (q != NO_NODE && IS (q, ket)) {
       p = q;
     } else if (q == NO_NODE) {
       char *diag = bracket_check_diagnose (top);
@@ -2870,22 +2887,22 @@ static void tokens_exhausted (NODE_T * p, NODE_T * q)
 \return number of symbols to skip
 **/
 
-static int whether_loop_cast_formula (NODE_T * p)
+static int is_loop_cast_formula (NODE_T * p)
 {
 /* Accept declarers that can appear in such casts but not much more */
-  if (WHETHER (p, VOID_SYMBOL)) {
+  if (IS (p, VOID_SYMBOL)) {
     return (1);
-  } else if (WHETHER (p, INT_SYMBOL)) {
+  } else if (IS (p, INT_SYMBOL)) {
     return (1);
-  } else if (WHETHER (p, REF_SYMBOL)) {
+  } else if (IS (p, REF_SYMBOL)) {
     return (1);
-  } else if (whether_one_of (p, OPERATOR, BOLD_TAG, STOP)) {
+  } else if (is_one_of (p, OPERATOR, BOLD_TAG, STOP)) {
     return (1);
   } else if (whether (p, UNION_SYMBOL, OPEN_SYMBOL, STOP)) {
     return (2);
-  } else if (whether_one_of (p, OPEN_SYMBOL, SUB_SYMBOL, STOP)) {
+  } else if (is_one_of (p, OPEN_SYMBOL, SUB_SYMBOL, STOP)) {
     int k;
-    for (k = 0; p != NO_NODE && (whether_one_of (p, OPEN_SYMBOL, SUB_SYMBOL, STOP)); FORWARD (p), k++) {
+    for (k = 0; p != NO_NODE && (is_one_of (p, OPEN_SYMBOL, SUB_SYMBOL, STOP)); FORWARD (p), k++) {
       ;
     }
     return (p != NO_NODE && (whether (p, UNION_SYMBOL, OPEN_SYMBOL, STOP) ? k : 0));
@@ -2902,12 +2919,12 @@ static int whether_loop_cast_formula (NODE_T * p)
 static NODE_T *top_down_skip_loop_unit (NODE_T * p)
 {
 /* Unit may start with, or consist of, a loop */
-  if (whether_loop_keyword (p)) {
+  if (is_loop_keyword (p)) {
     p = top_down_loop (p);
   }
 /* Skip rest of unit */
   while (p != NO_NODE) {
-    int k = whether_loop_cast_formula (p);
+    int k = is_loop_cast_formula (p);
     if (k != 0) {
 /* operator-cast series .. */
       while (p != NO_NODE && k != 0) {
@@ -2915,22 +2932,22 @@ static NODE_T *top_down_skip_loop_unit (NODE_T * p)
           FORWARD (p);
           k--;
         }
-        k = whether_loop_cast_formula (p);
+        k = is_loop_cast_formula (p);
       }
 /* ... may be followed by a loop clause */
-      if (whether_loop_keyword (p)) {
+      if (is_loop_keyword (p)) {
         p = top_down_loop (p);
       }
-    } else if (whether_loop_keyword (p) || WHETHER (p, OD_SYMBOL)) {
+    } else if (is_loop_keyword (p) || IS (p, OD_SYMBOL)) {
 /* new loop or end-of-loop */
       return (p);
-    } else if (WHETHER (p, COLON_SYMBOL)) {
+    } else if (IS (p, COLON_SYMBOL)) {
       FORWARD (p);
 /* skip routine header: loop clause */
-      if (p != NO_NODE && whether_loop_keyword (p)) {
+      if (p != NO_NODE && is_loop_keyword (p)) {
         p = top_down_loop (p);
       }
-    } else if (whether_one_of (p, SEMI_SYMBOL, COMMA_SYMBOL, STOP) || WHETHER (p, EXIT_SYMBOL)) {
+    } else if (is_one_of (p, SEMI_SYMBOL, COMMA_SYMBOL, STOP) || IS (p, EXIT_SYMBOL)) {
 /* Statement separators */
       return (p);
     } else {
@@ -2951,7 +2968,7 @@ static NODE_T *top_down_skip_loop_series (NODE_T * p)
   BOOL_T siga;
   do {
     p = top_down_skip_loop_unit (p);
-    siga = (BOOL_T) (p != NO_NODE && (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, COLON_SYMBOL, STOP)));
+    siga = (BOOL_T) (p != NO_NODE && (is_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, COLON_SYMBOL, STOP)));
     if (siga) {
       FORWARD (p);
     }
@@ -2968,31 +2985,31 @@ static NODE_T *top_down_skip_loop_series (NODE_T * p)
 NODE_T *top_down_loop (NODE_T * p)
 {
   NODE_T *start = p, *q = p, *save;
-  if (WHETHER (q, FOR_SYMBOL)) {
+  if (IS (q, FOR_SYMBOL)) {
     tokens_exhausted (FORWARD (q), start);
-    if (WHETHER (q, IDENTIFIER)) {
+    if (IS (q, IDENTIFIER)) {
       ATTRIBUTE (q) = DEFINING_IDENTIFIER;
     } else {
       top_down_diagnose (start, q, LOOP_CLAUSE, IDENTIFIER);
       longjmp (top_down_crash_exit, 1);
     }
     tokens_exhausted (FORWARD (q), start);
-    if (whether_one_of (q, FROM_SYMBOL, BY_SYMBOL, TO_SYMBOL, DOWNTO_SYMBOL, WHILE_SYMBOL, STOP)) {
+    if (is_one_of (q, FROM_SYMBOL, BY_SYMBOL, TO_SYMBOL, DOWNTO_SYMBOL, WHILE_SYMBOL, STOP)) {
       ;
-    } else if (WHETHER (q, DO_SYMBOL)) {
+    } else if (IS (q, DO_SYMBOL)) {
       ATTRIBUTE (q) = ALT_DO_SYMBOL;
     } else {
       top_down_diagnose (start, q, LOOP_CLAUSE, STOP);
       longjmp (top_down_crash_exit, 1);
     }
   }
-  if (WHETHER (q, FROM_SYMBOL)) {
+  if (IS (q, FROM_SYMBOL)) {
     start = q;
     q = top_down_skip_loop_unit (NEXT (q));
     tokens_exhausted (q, start);
-    if (whether_one_of (q, BY_SYMBOL, TO_SYMBOL, DOWNTO_SYMBOL, WHILE_SYMBOL, STOP)) {
+    if (is_one_of (q, BY_SYMBOL, TO_SYMBOL, DOWNTO_SYMBOL, WHILE_SYMBOL, STOP)) {
       ;
-    } else if (WHETHER (q, DO_SYMBOL)) {
+    } else if (IS (q, DO_SYMBOL)) {
       ATTRIBUTE (q) = ALT_DO_SYMBOL;
     } else {
       top_down_diagnose (start, q, LOOP_CLAUSE, STOP);
@@ -3000,13 +3017,13 @@ NODE_T *top_down_loop (NODE_T * p)
     }
     make_sub (start, PREVIOUS (q), FROM_SYMBOL);
   }
-  if (WHETHER (q, BY_SYMBOL)) {
+  if (IS (q, BY_SYMBOL)) {
     start = q;
     q = top_down_skip_loop_series (NEXT (q));
     tokens_exhausted (q, start);
-    if (whether_one_of (q, TO_SYMBOL, DOWNTO_SYMBOL, WHILE_SYMBOL, STOP)) {
+    if (is_one_of (q, TO_SYMBOL, DOWNTO_SYMBOL, WHILE_SYMBOL, STOP)) {
       ;
-    } else if (WHETHER (q, DO_SYMBOL)) {
+    } else if (IS (q, DO_SYMBOL)) {
       ATTRIBUTE (q) = ALT_DO_SYMBOL;
     } else {
       top_down_diagnose (start, q, LOOP_CLAUSE, STOP);
@@ -3014,13 +3031,13 @@ NODE_T *top_down_loop (NODE_T * p)
     }
     make_sub (start, PREVIOUS (q), BY_SYMBOL);
   }
-  if (whether_one_of (q, TO_SYMBOL, DOWNTO_SYMBOL, STOP)) {
+  if (is_one_of (q, TO_SYMBOL, DOWNTO_SYMBOL, STOP)) {
     start = q;
     q = top_down_skip_loop_series (NEXT (q));
     tokens_exhausted (q, start);
-    if (WHETHER (q, WHILE_SYMBOL)) {
+    if (IS (q, WHILE_SYMBOL)) {
       ;
-    } else if (WHETHER (q, DO_SYMBOL)) {
+    } else if (IS (q, DO_SYMBOL)) {
       ATTRIBUTE (q) = ALT_DO_SYMBOL;
     } else {
       top_down_diagnose (start, q, LOOP_CLAUSE, STOP);
@@ -3028,11 +3045,11 @@ NODE_T *top_down_loop (NODE_T * p)
     }
     make_sub (start, PREVIOUS (q), TO_SYMBOL);
   }
-  if (WHETHER (q, WHILE_SYMBOL)) {
+  if (IS (q, WHILE_SYMBOL)) {
     start = q;
     q = top_down_skip_loop_series (NEXT (q));
     tokens_exhausted (q, start);
-    if (WHETHER (q, DO_SYMBOL)) {
+    if (IS (q, DO_SYMBOL)) {
       ATTRIBUTE (q) = ALT_DO_SYMBOL;
     } else {
       top_down_diagnose (start, q, LOOP_CLAUSE, DO_SYMBOL);
@@ -3040,12 +3057,12 @@ NODE_T *top_down_loop (NODE_T * p)
     }
     make_sub (start, PREVIOUS (q), WHILE_SYMBOL);
   }
-  if (whether_one_of (q, DO_SYMBOL, ALT_DO_SYMBOL, STOP)) {
+  if (is_one_of (q, DO_SYMBOL, ALT_DO_SYMBOL, STOP)) {
     int k = ATTRIBUTE (q);
     start = q;
     q = top_down_skip_loop_series (NEXT (q));
     tokens_exhausted (q, start);
-    if (WHETHER_NOT (q, OD_SYMBOL)) {
+    if (ISNT (q, OD_SYMBOL)) {
       top_down_diagnose (start, q, LOOP_CLAUSE, OD_SYMBOL);
       longjmp (top_down_crash_exit, 1);
     }
@@ -3071,7 +3088,7 @@ static void top_down_loops (NODE_T * p)
   }
   q = p;
   while (q != NO_NODE) {
-    if (whether_loop_keyword (q) != STOP) {
+    if (is_loop_keyword (q) != STOP) {
       q = top_down_loop (q);
     } else {
       FORWARD (q);
@@ -3094,7 +3111,7 @@ static void top_down_untils (NODE_T * p)
   }
   q = p;
   while (q != NO_NODE) {
-    if (WHETHER (q, UNTIL_SYMBOL)) {
+    if (IS (q, UNTIL_SYMBOL)) {
       NODE_T *u = q;
       while (NEXT (u) != NO_NODE) {
         FORWARD (u);
@@ -3122,7 +3139,7 @@ static NODE_T *top_down_series (NODE_T * p)
     siga = A68_FALSE;
     p = top_down_skip_unit (p);
     if (p != NO_NODE) {
-      if (whether_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, STOP)) {
+      if (is_one_of (p, SEMI_SYMBOL, EXIT_SYMBOL, COMMA_SYMBOL, STOP)) {
         siga = A68_TRUE;
         FORWARD (p);
       }
@@ -3140,7 +3157,7 @@ static NODE_T *top_down_series (NODE_T * p)
 static NODE_T *top_down_begin (NODE_T * begin_p)
 {
   NODE_T *end_p = top_down_series (NEXT (begin_p));
-  if (end_p == NO_NODE || WHETHER_NOT (end_p, END_SYMBOL)) {
+  if (end_p == NO_NODE || ISNT (end_p, END_SYMBOL)) {
     top_down_diagnose (begin_p, end_p, ENCLOSED_CLAUSE, END_SYMBOL);
     longjmp (top_down_crash_exit, 1);
     return (NO_NODE);
@@ -3159,7 +3176,7 @@ static NODE_T *top_down_begin (NODE_T * begin_p)
 static NODE_T *top_down_code (NODE_T * code_p)
 {
   NODE_T *edoc_p = top_down_series (NEXT (code_p));
-  if (edoc_p == NO_NODE || WHETHER_NOT (edoc_p, EDOC_SYMBOL)) {
+  if (edoc_p == NO_NODE || ISNT (edoc_p, EDOC_SYMBOL)) {
     diagnostic_node (A68_SYNTAX_ERROR, code_p, ERROR_KEYWORD);
     longjmp (top_down_crash_exit, 1);
     return (NO_NODE);
@@ -3178,24 +3195,24 @@ static NODE_T *top_down_code (NODE_T * code_p)
 static NODE_T *top_down_open (NODE_T * open_p)
 {
   NODE_T *then_bar_p = top_down_series (NEXT (open_p)), *elif_bar_p;
-  if (then_bar_p != NO_NODE && WHETHER (then_bar_p, CLOSE_SYMBOL)) {
+  if (then_bar_p != NO_NODE && IS (then_bar_p, CLOSE_SYMBOL)) {
     make_sub (open_p, then_bar_p, OPEN_SYMBOL);
     return (NEXT (open_p));
   }
-  if (then_bar_p == NO_NODE || WHETHER_NOT (then_bar_p, THEN_BAR_SYMBOL)) {
+  if (then_bar_p == NO_NODE || ISNT (then_bar_p, THEN_BAR_SYMBOL)) {
     top_down_diagnose (open_p, then_bar_p, ENCLOSED_CLAUSE, STOP);
     longjmp (top_down_crash_exit, 1);
   }
   make_sub (open_p, PREVIOUS (then_bar_p), OPEN_SYMBOL);
   elif_bar_p = top_down_series (NEXT (then_bar_p));
-  if (elif_bar_p != NO_NODE && WHETHER (elif_bar_p, CLOSE_SYMBOL)) {
+  if (elif_bar_p != NO_NODE && IS (elif_bar_p, CLOSE_SYMBOL)) {
     make_sub (then_bar_p, PREVIOUS (elif_bar_p), THEN_BAR_SYMBOL);
     make_sub (open_p, elif_bar_p, OPEN_SYMBOL);
     return (NEXT (open_p));
   }
-  if (elif_bar_p != NO_NODE && WHETHER (elif_bar_p, THEN_BAR_SYMBOL)) {
+  if (elif_bar_p != NO_NODE && IS (elif_bar_p, THEN_BAR_SYMBOL)) {
     NODE_T *close_p = top_down_series (NEXT (elif_bar_p));
-    if (close_p == NO_NODE || WHETHER_NOT (close_p, CLOSE_SYMBOL)) {
+    if (close_p == NO_NODE || ISNT (close_p, CLOSE_SYMBOL)) {
       top_down_diagnose (open_p, elif_bar_p, ENCLOSED_CLAUSE, CLOSE_SYMBOL);
       longjmp (top_down_crash_exit, 1);
     }
@@ -3204,7 +3221,7 @@ static NODE_T *top_down_open (NODE_T * open_p)
     make_sub (open_p, close_p, OPEN_SYMBOL);
     return (NEXT (open_p));
   }
-  if (elif_bar_p != NO_NODE && WHETHER (elif_bar_p, ELSE_BAR_SYMBOL)) {
+  if (elif_bar_p != NO_NODE && IS (elif_bar_p, ELSE_BAR_SYMBOL)) {
     NODE_T *close_p = top_down_open (elif_bar_p);
     make_sub (then_bar_p, PREVIOUS (elif_bar_p), THEN_BAR_SYMBOL);
     make_sub (open_p, elif_bar_p, OPEN_SYMBOL);
@@ -3225,7 +3242,7 @@ static NODE_T *top_down_open (NODE_T * open_p)
 static NODE_T *top_down_sub (NODE_T * sub_p)
 {
   NODE_T *bus_p = top_down_series (NEXT (sub_p));
-  if (bus_p != NO_NODE && WHETHER (bus_p, BUS_SYMBOL)) {
+  if (bus_p != NO_NODE && IS (bus_p, BUS_SYMBOL)) {
     make_sub (sub_p, bus_p, SUB_SYMBOL);
     return (NEXT (sub_p));
   } else {
@@ -3244,7 +3261,7 @@ static NODE_T *top_down_sub (NODE_T * sub_p)
 static NODE_T *top_down_acco (NODE_T * acco_p)
 {
   NODE_T *occa_p = top_down_series (NEXT (acco_p));
-  if (occa_p != NO_NODE && WHETHER (occa_p, OCCA_SYMBOL)) {
+  if (occa_p != NO_NODE && IS (occa_p, OCCA_SYMBOL)) {
     make_sub (acco_p, occa_p, ACCO_SYMBOL);
     return (NEXT (acco_p));
   } else {
@@ -3263,20 +3280,20 @@ static NODE_T *top_down_acco (NODE_T * acco_p)
 static NODE_T *top_down_if (NODE_T * if_p)
 {
   NODE_T *then_p = top_down_series (NEXT (if_p)), *elif_p;
-  if (then_p == NO_NODE || WHETHER_NOT (then_p, THEN_SYMBOL)) {
+  if (then_p == NO_NODE || ISNT (then_p, THEN_SYMBOL)) {
     top_down_diagnose (if_p, then_p, CONDITIONAL_CLAUSE, THEN_SYMBOL);
     longjmp (top_down_crash_exit, 1);
   }
   make_sub (if_p, PREVIOUS (then_p), IF_SYMBOL);
   elif_p = top_down_series (NEXT (then_p));
-  if (elif_p != NO_NODE && WHETHER (elif_p, FI_SYMBOL)) {
+  if (elif_p != NO_NODE && IS (elif_p, FI_SYMBOL)) {
     make_sub (then_p, PREVIOUS (elif_p), THEN_SYMBOL);
     make_sub (if_p, elif_p, IF_SYMBOL);
     return (NEXT (if_p));
   }
-  if (elif_p != NO_NODE && WHETHER (elif_p, ELSE_SYMBOL)) {
+  if (elif_p != NO_NODE && IS (elif_p, ELSE_SYMBOL)) {
     NODE_T *fi_p = top_down_series (NEXT (elif_p));
-    if (fi_p == NO_NODE || WHETHER_NOT (fi_p, FI_SYMBOL)) {
+    if (fi_p == NO_NODE || ISNT (fi_p, FI_SYMBOL)) {
       top_down_diagnose (if_p, fi_p, CONDITIONAL_CLAUSE, FI_SYMBOL);
       longjmp (top_down_crash_exit, 1);
     } else {
@@ -3286,7 +3303,7 @@ static NODE_T *top_down_if (NODE_T * if_p)
       return (NEXT (if_p));
     }
   }
-  if (elif_p != NO_NODE && WHETHER (elif_p, ELIF_SYMBOL)) {
+  if (elif_p != NO_NODE && IS (elif_p, ELIF_SYMBOL)) {
     NODE_T *fi_p = top_down_if (elif_p);
     make_sub (then_p, PREVIOUS (elif_p), THEN_SYMBOL);
     make_sub (if_p, elif_p, IF_SYMBOL);
@@ -3307,20 +3324,20 @@ static NODE_T *top_down_if (NODE_T * if_p)
 static NODE_T *top_down_case (NODE_T * case_p)
 {
   NODE_T *in_p = top_down_series (NEXT (case_p)), *ouse_p;
-  if (in_p == NO_NODE || WHETHER_NOT (in_p, IN_SYMBOL)) {
+  if (in_p == NO_NODE || ISNT (in_p, IN_SYMBOL)) {
     top_down_diagnose (case_p, in_p, ENCLOSED_CLAUSE, IN_SYMBOL);
     longjmp (top_down_crash_exit, 1);
   }
   make_sub (case_p, PREVIOUS (in_p), CASE_SYMBOL);
   ouse_p = top_down_series (NEXT (in_p));
-  if (ouse_p != NO_NODE && WHETHER (ouse_p, ESAC_SYMBOL)) {
+  if (ouse_p != NO_NODE && IS (ouse_p, ESAC_SYMBOL)) {
     make_sub (in_p, PREVIOUS (ouse_p), IN_SYMBOL);
     make_sub (case_p, ouse_p, CASE_SYMBOL);
     return (NEXT (case_p));
   }
-  if (ouse_p != NO_NODE && WHETHER (ouse_p, OUT_SYMBOL)) {
+  if (ouse_p != NO_NODE && IS (ouse_p, OUT_SYMBOL)) {
     NODE_T *esac_p = top_down_series (NEXT (ouse_p));
-    if (esac_p == NO_NODE || WHETHER_NOT (esac_p, ESAC_SYMBOL)) {
+    if (esac_p == NO_NODE || ISNT (esac_p, ESAC_SYMBOL)) {
       top_down_diagnose (case_p, esac_p, ENCLOSED_CLAUSE, ESAC_SYMBOL);
       longjmp (top_down_crash_exit, 1);
     } else {
@@ -3330,7 +3347,7 @@ static NODE_T *top_down_case (NODE_T * case_p)
       return (NEXT (case_p));
     }
   }
-  if (ouse_p != NO_NODE && WHETHER (ouse_p, OUSE_SYMBOL)) {
+  if (ouse_p != NO_NODE && IS (ouse_p, OUSE_SYMBOL)) {
     NODE_T *esac_p = top_down_case (ouse_p);
     make_sub (in_p, PREVIOUS (ouse_p), IN_SYMBOL);
     make_sub (case_p, ouse_p, CASE_SYMBOL);
@@ -3350,20 +3367,20 @@ static NODE_T *top_down_case (NODE_T * case_p)
 
 NODE_T *top_down_skip_unit (NODE_T * p)
 {
-  while (p != NO_NODE && !whether_unit_terminator (p)) {
-    if (WHETHER (p, BEGIN_SYMBOL)) {
+  while (p != NO_NODE && !is_unit_terminator (p)) {
+    if (IS (p, BEGIN_SYMBOL)) {
       p = top_down_begin (p);
-    } else if (WHETHER (p, SUB_SYMBOL)) {
+    } else if (IS (p, SUB_SYMBOL)) {
       p = top_down_sub (p);
-    } else if (WHETHER (p, OPEN_SYMBOL)) {
+    } else if (IS (p, OPEN_SYMBOL)) {
       p = top_down_open (p);
-    } else if (WHETHER (p, IF_SYMBOL)) {
+    } else if (IS (p, IF_SYMBOL)) {
       p = top_down_if (p);
-    } else if (WHETHER (p, CASE_SYMBOL)) {
+    } else if (IS (p, CASE_SYMBOL)) {
       p = top_down_case (p);
-    } else if (WHETHER (p, CODE_SYMBOL)) {
+    } else if (IS (p, CODE_SYMBOL)) {
       p = top_down_code (p);
-    } else if (WHETHER (p, ACCO_SYMBOL)) {
+    } else if (IS (p, ACCO_SYMBOL)) {
       p = top_down_acco (p);
     } else {
       FORWARD (p);
@@ -3383,7 +3400,7 @@ static NODE_T *top_down_skip_format (NODE_T *);
 static NODE_T *top_down_format_open (NODE_T * open_p)
 {
   NODE_T *close_p = top_down_skip_format (NEXT (open_p));
-  if (close_p != NO_NODE && WHETHER (close_p, FORMAT_CLOSE_SYMBOL)) {
+  if (close_p != NO_NODE && IS (close_p, FORMAT_CLOSE_SYMBOL)) {
     make_sub (open_p, close_p, FORMAT_OPEN_SYMBOL);
     return (NEXT (open_p));
   } else {
@@ -3402,9 +3419,9 @@ static NODE_T *top_down_format_open (NODE_T * open_p)
 static NODE_T *top_down_skip_format (NODE_T * p)
 {
   while (p != NO_NODE) {
-    if (WHETHER (p, FORMAT_OPEN_SYMBOL)) {
+    if (IS (p, FORMAT_OPEN_SYMBOL)) {
       p = top_down_format_open (p);
-    } else if (whether_one_of (p, FORMAT_CLOSE_SYMBOL, FORMAT_DELIMITER_SYMBOL, STOP)) {
+    } else if (is_one_of (p, FORMAT_CLOSE_SYMBOL, FORMAT_DELIMITER_SYMBOL, STOP)) {
       return (p);
     } else {
       FORWARD (p);
@@ -3427,10 +3444,10 @@ static void top_down_formats (NODE_T * p)
     }
   }
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, FORMAT_DELIMITER_SYMBOL)) {
+    if (IS (q, FORMAT_DELIMITER_SYMBOL)) {
       NODE_T *f = NEXT (q);
-      while (f != NO_NODE && WHETHER_NOT (f, FORMAT_DELIMITER_SYMBOL)) {
-        if (WHETHER (f, FORMAT_OPEN_SYMBOL)) {
+      while (f != NO_NODE && ISNT (f, FORMAT_DELIMITER_SYMBOL)) {
+        if (IS (f, FORMAT_OPEN_SYMBOL)) {
           f = top_down_format_open (f);
         } else {
           f = NEXT (f);
@@ -3490,11 +3507,11 @@ static int serial_or_collateral (NODE_T * p)
   NODE_T *q;
   int semis = 0, commas = 0, exits = 0;
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, COMMA_SYMBOL)) {
+    if (IS (q, COMMA_SYMBOL)) {
       commas++;
-    } else if (WHETHER (q, SEMI_SYMBOL)) {
+    } else if (IS (q, SEMI_SYMBOL)) {
       semis++;
-    } else if (WHETHER (q, EXIT_SYMBOL)) {
+    } else if (IS (q, EXIT_SYMBOL)) {
       exits++;
     }
   }
@@ -3516,7 +3533,7 @@ static int serial_or_collateral (NODE_T * p)
 \return whether formal bounds
 **/
 
-static BOOL_T whether_formal_bounds (NODE_T * p)
+static BOOL_T is_formal_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -3533,7 +3550,7 @@ static BOOL_T whether_formal_bounds (NODE_T * p)
     case IDENTIFIER:
     case OPERATOR:
       {
-        return ((BOOL_T) (whether_formal_bounds (SUB (p)) && whether_formal_bounds (NEXT (p))));
+        return ((BOOL_T) (is_formal_bounds (SUB (p)) && is_formal_bounds (NEXT (p))));
       }
     default:
       {
@@ -3646,11 +3663,11 @@ kind of symbols to find a pattern that they recognise.
 static NODE_T *skip_unit (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, COMMA_SYMBOL)) {
+    if (IS (p, COMMA_SYMBOL)) {
       return (p);
-    } else if (WHETHER (p, SEMI_SYMBOL)) {
+    } else if (IS (p, SEMI_SYMBOL)) {
       return (p);
-    } else if (WHETHER (p, EXIT_SYMBOL)) {
+    } else if (IS (p, EXIT_SYMBOL)) {
       return (p);
     }
   }
@@ -3703,7 +3720,7 @@ static void elaborate_bold_tags (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, BOLD_TAG)) {
+    if (IS (q, BOLD_TAG)) {
       switch (find_tag_definition (TABLE (q), NSYMBOL (q))) {
       case 0:
         {
@@ -3734,13 +3751,13 @@ static void elaborate_bold_tags (NODE_T * p)
 static NODE_T *skip_pack_declarer (NODE_T * p)
 {
 /* Skip () REF [] REF FLEX [] [] .. */
-  while (p != NO_NODE && (whether_one_of (p, SUB_SYMBOL, OPEN_SYMBOL, REF_SYMBOL, FLEX_SYMBOL, SHORT_SYMBOL, LONG_SYMBOL, STOP))) {
+  while (p != NO_NODE && (is_one_of (p, SUB_SYMBOL, OPEN_SYMBOL, REF_SYMBOL, FLEX_SYMBOL, SHORT_SYMBOL, LONG_SYMBOL, STOP))) {
     FORWARD (p);
   }
 /* Skip STRUCT (), UNION () or PROC [()] */
-  if (p != NO_NODE && (whether_one_of (p, STRUCT_SYMBOL, UNION_SYMBOL, STOP))) {
+  if (p != NO_NODE && (is_one_of (p, STRUCT_SYMBOL, UNION_SYMBOL, STOP))) {
     return (NEXT (p));
-  } else if (p != NO_NODE && WHETHER (p, PROC_SYMBOL)) {
+  } else if (p != NO_NODE && IS (p, PROC_SYMBOL)) {
     return (skip_pack_declarer (NEXT (p)));
   } else {
     return (p);
@@ -3756,7 +3773,7 @@ static void extract_indicants (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
-    if (WHETHER (q, MODE_SYMBOL)) {
+    if (IS (q, MODE_SYMBOL)) {
       BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
@@ -3775,7 +3792,7 @@ static void extract_indicants (NODE_T * p)
         } else {
           siga = A68_FALSE;
         }
-      } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -3802,7 +3819,7 @@ static void extract_priorities (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
-    if (WHETHER (q, PRIO_SYMBOL)) {
+    if (IS (q, PRIO_SYMBOL)) {
       BOOL_T siga = A68_TRUE;
       do {
         FORWARD (q);
@@ -3876,7 +3893,7 @@ static void extract_priorities (NODE_T * p)
         } else {
           siga = A68_FALSE;
         }
-      } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -3892,12 +3909,12 @@ static void extract_operators (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
-    if (WHETHER_NOT (q, OP_SYMBOL)) {
+    if (ISNT (q, OP_SYMBOL)) {
       FORWARD (q);
     } else {
       BOOL_T siga = A68_TRUE;
 /* Skip operator plan */
-      if (NEXT (q) != NO_NODE && WHETHER (NEXT (q), OPEN_SYMBOL)) {
+      if (NEXT (q) != NO_NODE && IS (NEXT (q), OPEN_SYMBOL)) {
         q = skip_pack_declarer (NEXT (q));
       }
 /* Sample operators */
@@ -3930,7 +3947,7 @@ static void extract_operators (NODE_T * p)
             FORWARD (q);
             ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
             q = skip_unit (q);
-          } else if (q != NO_NODE && (whether_one_of (q, OPERATOR, BOLD_TAG, EQUALS_SYMBOL, STOP))) {
+          } else if (q != NO_NODE && (is_one_of (q, OPERATOR, BOLD_TAG, EQUALS_SYMBOL, STOP))) {
 /* The scanner cannot separate operator and "=" sign so we do this here */
             int len = (int) strlen (NSYMBOL (q));
             if (len > 1 && NSYMBOL (q)[len - 1] == '=') {
@@ -3952,7 +3969,7 @@ static void extract_operators (NODE_T * p)
           } else {
             siga = A68_FALSE;
           }
-        } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+        } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
       }
     }
   }
@@ -4007,7 +4024,7 @@ static void extract_identities (NODE_T * p)
         } else {
           siga = A68_FALSE;
         }
-      } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4039,7 +4056,7 @@ static void extract_variables (NODE_T * p)
         } else {
           siga = A68_FALSE;
         }
-      } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4075,7 +4092,7 @@ static void extract_proc_identities (NODE_T * p)
         } else {
           siga = A68_FALSE;
         }
-      } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4109,7 +4126,7 @@ static void extract_proc_variables (NODE_T * p)
         } else {
           siga = A68_FALSE;
         }
-      } while (siga && q != NO_NODE && WHETHER (q, COMMA_SYMBOL));
+      } while (siga && q != NO_NODE && IS (q, COMMA_SYMBOL));
     } else {
       FORWARD (q);
     }
@@ -4132,9 +4149,9 @@ static void extract_declarations (NODE_T * p)
   extract_proc_variables (p);
 /* By now we know whether "=" is an operator or not */
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, EQUALS_SYMBOL)) {
+    if (IS (q, EQUALS_SYMBOL)) {
       ATTRIBUTE (q) = OPERATOR;
-    } else if (WHETHER (q, ALT_EQUALS_SYMBOL)) {
+    } else if (IS (q, ALT_EQUALS_SYMBOL)) {
       ATTRIBUTE (q) = EQUALS_SYMBOL;
     }
   }
@@ -4161,7 +4178,7 @@ static void extract_declarations (NODE_T * p)
   }
 /* Give priorities to operators */
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, OPERATOR)) {
+    if (IS (q, OPERATOR)) {
       if (find_tag_global (TABLE (q), OP_SYMBOL, NSYMBOL (q))) {
         TAG_T *s = find_tag_global (TABLE (q), PRIO_SYMBOL, NSYMBOL (q));
         if (s != NO_TAG) {
@@ -4264,10 +4281,10 @@ for instance "FI; OD". These provoke only a warning.
 */
   for (; p != NO_NODE; FORWARD (p)) {
     ignore_superfluous_semicolons (SUB (p));
-    if (NEXT (p) != NO_NODE && WHETHER (NEXT (p), SEMI_SYMBOL) && NEXT_NEXT (p) == NO_NODE) {
+    if (NEXT (p) != NO_NODE && IS (NEXT (p), SEMI_SYMBOL) && NEXT_NEXT (p) == NO_NODE) {
       diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, NEXT (p), WARNING_SKIPPED_SUPERFLUOUS, ATTRIBUTE (NEXT (p)));
       NEXT (p) = NO_NODE;
-    } else if (WHETHER (p, SEMI_SYMBOL) && whether_semicolon_less (NEXT (p))) {
+    } else if (IS (p, SEMI_SYMBOL) && is_semicolon_less (NEXT (p))) {
       diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_SKIPPED_SUPERFLUOUS, ATTRIBUTE (p));
       if (PREVIOUS (p) != NO_NODE) {
         NEXT (PREVIOUS (p)) = NEXT (p);
@@ -4403,29 +4420,29 @@ as the parser can repair some faults. This gives less spurious diagnostics.
       extract_labels (p, expect);
       for (u = p; u != NO_NODE; FORWARD (u)) {
         if (SUB (u) != NO_NODE) {
-          if (WHETHER (u, FORMAT_DELIMITER_SYMBOL)) {
+          if (IS (u, FORMAT_DELIMITER_SYMBOL)) {
             reduce_branch (u, FORMAT_TEXT);
-          } else if (WHETHER (u, FORMAT_OPEN_SYMBOL)) {
+          } else if (IS (u, FORMAT_OPEN_SYMBOL)) {
             reduce_branch (u, FORMAT_TEXT);
-          } else if (WHETHER (u, OPEN_SYMBOL)) {
-            if (NEXT (u) != NO_NODE && WHETHER (NEXT (u), THEN_BAR_SYMBOL)) {
+          } else if (IS (u, OPEN_SYMBOL)) {
+            if (NEXT (u) != NO_NODE && IS (NEXT (u), THEN_BAR_SYMBOL)) {
               reduce_branch (u, ENQUIRY_CLAUSE);
-            } else if (PREVIOUS (u) != NO_NODE && WHETHER (PREVIOUS (u), PAR_SYMBOL)) {
+            } else if (PREVIOUS (u) != NO_NODE && IS (PREVIOUS (u), PAR_SYMBOL)) {
               reduce_branch (u, COLLATERAL_CLAUSE);
             }
-          } else if (whether_one_of (u, IF_SYMBOL, ELIF_SYMBOL, CASE_SYMBOL, OUSE_SYMBOL, WHILE_SYMBOL, UNTIL_SYMBOL, ELSE_BAR_SYMBOL, ACCO_SYMBOL, STOP)) {
+          } else if (is_one_of (u, IF_SYMBOL, ELIF_SYMBOL, CASE_SYMBOL, OUSE_SYMBOL, WHILE_SYMBOL, UNTIL_SYMBOL, ELSE_BAR_SYMBOL, ACCO_SYMBOL, STOP)) {
             reduce_branch (u, ENQUIRY_CLAUSE);
-          } else if (WHETHER (u, BEGIN_SYMBOL)) {
+          } else if (IS (u, BEGIN_SYMBOL)) {
             reduce_branch (u, SOME_CLAUSE);
-          } else if (whether_one_of (u, THEN_SYMBOL, ELSE_SYMBOL, OUT_SYMBOL, DO_SYMBOL, ALT_DO_SYMBOL, STOP)) {
+          } else if (is_one_of (u, THEN_SYMBOL, ELSE_SYMBOL, OUT_SYMBOL, DO_SYMBOL, ALT_DO_SYMBOL, STOP)) {
             reduce_branch (u, SERIAL_CLAUSE);
-          } else if (WHETHER (u, IN_SYMBOL)) {
+          } else if (IS (u, IN_SYMBOL)) {
             reduce_branch (u, COLLATERAL_CLAUSE);
-          } else if (WHETHER (u, THEN_BAR_SYMBOL)) {
+          } else if (IS (u, THEN_BAR_SYMBOL)) {
             reduce_branch (u, SOME_CLAUSE);
-          } else if (WHETHER (u, LOOP_CLAUSE)) {
+          } else if (IS (u, LOOP_CLAUSE)) {
             reduce_branch (u, ENCLOSED_CLAUSE);
-          } else if (whether_one_of (u, FOR_SYMBOL, FROM_SYMBOL, BY_SYMBOL, TO_SYMBOL, DOWNTO_SYMBOL, STOP)) {
+          } else if (is_one_of (u, FOR_SYMBOL, FROM_SYMBOL, BY_SYMBOL, TO_SYMBOL, DOWNTO_SYMBOL, STOP)) {
             reduce_branch (u, UNIT);
           }
         }
@@ -4443,7 +4460,7 @@ as the parser can repair some faults. This gives less spurious diagnostics.
       }
       for (u = p; u != NO_NODE; FORWARD (u)) {
         if (SUB (u) != NO_NODE) {
-          if (WHETHER (u, CODE_SYMBOL)) {
+          if (IS (u, CODE_SYMBOL)) {
             reduce_branch (u, CODE_CLAUSE);
           }
         }
@@ -4572,21 +4589,21 @@ static void reduce_declarers (NODE_T * p, int expect)
 /* Reduce declarer lists */
   for (q = p; q != NO_NODE; FORWARD (q)) {
     if (NEXT (q) != NO_NODE && SUB_NEXT (q) != NO_NODE) {
-      if (WHETHER (q, STRUCT_SYMBOL)) {
+      if (IS (q, STRUCT_SYMBOL)) {
         reduce_branch (NEXT (q), STRUCTURE_PACK);
         reduce (q, NO_NOTE, NO_TICK, DECLARER, STRUCT_SYMBOL, STRUCTURE_PACK, STOP);
-      } else if (WHETHER (q, UNION_SYMBOL)) {
+      } else if (IS (q, UNION_SYMBOL)) {
         reduce_branch (NEXT (q), UNION_PACK);
         reduce (q, NO_NOTE, NO_TICK, DECLARER, UNION_SYMBOL, UNION_PACK, STOP);
-      } else if (WHETHER (q, PROC_SYMBOL)) {
+      } else if (IS (q, PROC_SYMBOL)) {
         if (whether (q, PROC_SYMBOL, OPEN_SYMBOL, STOP)) {
-          if (!whether_formal_bounds (SUB_NEXT (q))) {
+          if (!is_formal_bounds (SUB_NEXT (q))) {
             reduce_branch (NEXT (q), FORMAL_DECLARERS);
           }
         }
-      } else if (WHETHER (q, OP_SYMBOL)) {
+      } else if (IS (q, OP_SYMBOL)) {
         if (whether (q, OP_SYMBOL, OPEN_SYMBOL, STOP)) {
-          if (!whether_formal_bounds (SUB_NEXT (q))) {
+          if (!is_formal_bounds (SUB_NEXT (q))) {
             reduce_branch (NEXT (q), FORMAL_DECLARERS);
           }
         }
@@ -4626,7 +4643,7 @@ static void reduce_declarers (NODE_T * p, int expect)
       if (whether (q, OPEN_SYMBOL, DECLARER, STOP) && SUB (q) != NO_NODE) {
         if (whether (q, OPEN_SYMBOL, DECLARER, COLON_SYMBOL, STOP)) {
 /* Catch e.g. (INT i) () INT: */
-          if (whether_formal_bounds (SUB (q))) {
+          if (is_formal_bounds (SUB (q))) {
             reduce_branch (q, BOUNDS);
             reduce (q, NO_NOTE, &siga, DECLARER, BOUNDS, DECLARER, STOP);
             reduce (q, NO_NOTE, &siga, DECLARER, FORMAL_BOUNDS, DECLARER, STOP);
@@ -4732,7 +4749,7 @@ static void reduce_declarers (NODE_T * p, int expect)
   } else {
     for (q = p; q != NO_NODE; FORWARD (q)) {
       if (whether (q, OPEN_SYMBOL, COLON_SYMBOL, STOP) && !(expect == GENERIC_ARGUMENT || expect == BOUNDS)) {
-        if (whether_one_of (p, IN_SYMBOL, THEN_BAR_SYMBOL, STOP)) {
+        if (is_one_of (p, IN_SYMBOL, THEN_BAR_SYMBOL, STOP)) {
           reduce_branch (q, SPECIFIER);
         }
       }
@@ -4763,7 +4780,7 @@ history. Meanwhile we use this routine.
   if (p != NO_NODE) {
     reduce_right_to_left_constructs (NEXT (p));
 /* Assignations */
-    if (WHETHER (p, TERTIARY)) {
+    if (IS (p, TERTIARY)) {
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, TERTIARY, STOP);
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, IDENTITY_RELATION, STOP);
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, AND_FUNCTION, STOP);
@@ -4775,7 +4792,7 @@ history. Meanwhile we use this routine.
       reduce (p, NO_NOTE, NO_TICK, ASSIGNATION, TERTIARY, ASSIGN_SYMBOL, CODE_CLAUSE, STOP);
     }
 /* Routine texts with parameter pack */
-    else if (WHETHER (p, PARAMETER_PACK)) {
+    else if (IS (p, PARAMETER_PACK)) {
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, ASSIGNATION, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, IDENTITY_RELATION, STOP);
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, DECLARER, COLON_SYMBOL, AND_FUNCTION, STOP);
@@ -4796,8 +4813,8 @@ history. Meanwhile we use this routine.
       reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, PARAMETER_PACK, VOID_SYMBOL, COLON_SYMBOL, CODE_CLAUSE, STOP);
     }
 /* Routine texts without parameter pack */
-    else if (WHETHER (p, DECLARER)) {
-      if (!(PREVIOUS (p) != NO_NODE && WHETHER (PREVIOUS (p), PARAMETER_PACK))) {
+    else if (IS (p, DECLARER)) {
+      if (!(PREVIOUS (p) != NO_NODE && IS (PREVIOUS (p), PARAMETER_PACK))) {
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, ASSIGNATION, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, IDENTITY_RELATION, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, AND_FUNCTION, STOP);
@@ -4808,8 +4825,8 @@ history. Meanwhile we use this routine.
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, ROUTINE_TEXT, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, DECLARER, COLON_SYMBOL, CODE_CLAUSE, STOP);
       }
-    } else if (WHETHER (p, VOID_SYMBOL)) {
-      if (!(PREVIOUS (p) != NO_NODE && WHETHER (PREVIOUS (p), PARAMETER_PACK))) {
+    } else if (IS (p, VOID_SYMBOL)) {
+      if (!(PREVIOUS (p) != NO_NODE && IS (PREVIOUS (p), PARAMETER_PACK))) {
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, ASSIGNATION, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, IDENTITY_RELATION, STOP);
         reduce (p, NO_NOTE, NO_TICK, ROUTINE_TEXT, VOID_SYMBOL, COLON_SYMBOL, AND_FUNCTION, STOP);
@@ -4906,12 +4923,12 @@ static void reduce_primaries (NODE_T * p, int expect)
     while (siga) {
       NODE_T *x = NEXT (q);
       siga = A68_FALSE;
-      if (WHETHER (q, PRIMARY) && x != NO_NODE) {
-        if (WHETHER (x, OPEN_SYMBOL)) {
+      if (IS (q, PRIMARY) && x != NO_NODE) {
+        if (IS (x, OPEN_SYMBOL)) {
           reduce_branch (NEXT (q), GENERIC_ARGUMENT);
           reduce (q, NO_NOTE, &siga, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, STOP);
           reduce (q, NO_NOTE, &siga, PRIMARY, SPECIFICATION, STOP);
-        } else if (WHETHER (x, SUB_SYMBOL)) {
+        } else if (IS (x, SUB_SYMBOL)) {
           reduce_branch (NEXT (q), GENERIC_ARGUMENT);
           reduce (q, NO_NOTE, &siga, SPECIFICATION, PRIMARY, GENERIC_ARGUMENT, STOP);
           reduce (q, NO_NOTE, &siga, PRIMARY, SPECIFICATION, STOP);
@@ -4919,7 +4936,7 @@ static void reduce_primaries (NODE_T * p, int expect)
       }
     }
 /* Now that call and slice are known, reduce remaining ( .. ) */
-    if (WHETHER (q, OPEN_SYMBOL) && SUB (q) != NO_NODE) {
+    if (IS (q, OPEN_SYMBOL) && SUB (q) != NO_NODE) {
       reduce_branch (q, SOME_CLAUSE);
       reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CLOSED_CLAUSE, STOP);
       reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, COLLATERAL_CLAUSE, STOP);
@@ -5220,7 +5237,7 @@ static void reduce_format_texts (NODE_T * p)
   }
 /* Picture lists */
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, PICTURE)) {
+    if (IS (q, PICTURE)) {
       BOOL_T siga = A68_TRUE;
       reduce (q, NO_NOTE, NO_TICK, PICTURE_LIST, PICTURE, STOP);
       while (siga) {
@@ -5284,7 +5301,7 @@ static void reduce_formulae (NODE_T * p)
   NODE_T *q = p;
   int priority;
   while (q != NO_NODE) {
-    if (whether_one_of (q, OPERATOR, SECONDARY, STOP)) {
+    if (is_one_of (q, OPERATOR, SECONDARY, STOP)) {
       q = reduce_dyadic (q, STOP);
     } else {
       FORWARD (q);
@@ -5296,11 +5313,11 @@ static void reduce_formulae (NODE_T * p)
       if (operator_with_priority (q, priority)) {
         BOOL_T siga = A68_FALSE;
         NODE_T *op = NEXT (q);
-        if (WHETHER (q, SECONDARY)) {
+        if (IS (q, SECONDARY)) {
           reduce (q, NO_NOTE, &siga, FORMULA, SECONDARY, OPERATOR, SECONDARY, STOP);
           reduce (q, NO_NOTE, &siga, FORMULA, SECONDARY, OPERATOR, MONADIC_FORMULA, STOP);
           reduce (q, NO_NOTE, &siga, FORMULA, SECONDARY, OPERATOR, FORMULA, STOP);
-        } else if (WHETHER (q, MONADIC_FORMULA)) {
+        } else if (IS (q, MONADIC_FORMULA)) {
           reduce (q, NO_NOTE, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, SECONDARY, STOP);
           reduce (q, NO_NOTE, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, MONADIC_FORMULA, STOP);
           reduce (q, NO_NOTE, &siga, FORMULA, MONADIC_FORMULA, OPERATOR, FORMULA, STOP);
@@ -5343,13 +5360,13 @@ static NODE_T *reduce_dyadic (NODE_T * p, int u)
   if (u > MAX_PRIORITY) {
     if (p == NO_NODE) {
       return (NO_NODE);
-    } else if (WHETHER (p, OPERATOR)) {
+    } else if (IS (p, OPERATOR)) {
 /* Reduce monadic formulas */
       NODE_T *q = p;
       BOOL_T siga;
       do {
         PRIO (INFO (q)) = 10;
-        siga = (BOOL_T) ((NEXT (q) != NO_NODE) && (WHETHER (NEXT (q), OPERATOR)));
+        siga = (BOOL_T) ((NEXT (q) != NO_NODE) && (IS (NEXT (q), OPERATOR)));
         if (siga) {
           FORWARD (q);
         }
@@ -5363,7 +5380,7 @@ static NODE_T *reduce_dyadic (NODE_T * p, int u)
     FORWARD (p);
   } else {
     p = reduce_dyadic (p, u + 1);
-    while (p != NO_NODE && WHETHER (p, OPERATOR) && PRIO (INFO (p)) == u) {
+    while (p != NO_NODE && IS (p, OPERATOR) && PRIO (INFO (p)) == u) {
       FORWARD (p);
       p = reduce_dyadic (p, u + 1);
     }
@@ -5425,7 +5442,7 @@ static void reduce_units (NODE_T * p)
   NODE_T *q;
 /* Stray ~ is a SKIP */
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, OPERATOR) && WHETHER_LITERALLY (q, "~")) {
+    if (IS (q, OPERATOR) && IS_LITERALLY (q, "~")) {
       ATTRIBUTE (q) = SKIP;
     }
   }
@@ -5454,7 +5471,7 @@ static void reduce_generic_arguments (NODE_T * p)
   NODE_T *q;
   BOOL_T siga;
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, UNIT)) {
+    if (IS (q, UNIT)) {
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, UNIT, COLON_SYMBOL, UNIT, AT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, UNIT, COLON_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, UNIT, COLON_SYMBOL, AT_SYMBOL, UNIT, STOP);
@@ -5463,12 +5480,12 @@ static void reduce_generic_arguments (NODE_T * p)
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, UNIT, DOTDOT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, UNIT, DOTDOT_SYMBOL, AT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, UNIT, DOTDOT_SYMBOL, STOP);
-    } else if (WHETHER (q, COLON_SYMBOL)) {
+    } else if (IS (q, COLON_SYMBOL)) {
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, COLON_SYMBOL, UNIT, AT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, COLON_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, COLON_SYMBOL, AT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, COLON_SYMBOL, STOP);
-    } else if (WHETHER (q, DOTDOT_SYMBOL)) {
+    } else if (IS (q, DOTDOT_SYMBOL)) {
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, DOTDOT_SYMBOL, UNIT, AT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, DOTDOT_SYMBOL, UNIT, STOP);
       reduce (q, NO_NOTE, NO_TICK, TRIMMER, DOTDOT_SYMBOL, AT_SYMBOL, UNIT, STOP);
@@ -5482,13 +5499,13 @@ static void reduce_generic_arguments (NODE_T * p)
     reduce (q, NO_NOTE, NO_TICK, TRIMMER, AT_SYMBOL, UNIT, STOP);
   }
   for (q = p; q && NEXT (q); FORWARD (q)) {
-    if (WHETHER (q, COMMA_SYMBOL)) {
+    if (IS (q, COMMA_SYMBOL)) {
       if (!(ATTRIBUTE (NEXT (q)) == UNIT || ATTRIBUTE (NEXT (q)) == TRIMMER)) {
         pad_node (q, TRIMMER);
       }
     } else {
-      if (WHETHER (NEXT (q), COMMA_SYMBOL)) {
-        if (WHETHER_NOT (q, UNIT) && WHETHER_NOT (q, TRIMMER)) {
+      if (IS (NEXT (q), COMMA_SYMBOL)) {
+        if (ISNT (q, UNIT) && ISNT (q, TRIMMER)) {
           pad_node (q, TRIMMER);
         }
       }
@@ -5668,17 +5685,17 @@ static void reduce_serial_clauses (NODE_T * p)
     BOOL_T siga, label_seen;
 /* Check wrong exits */
     for (u = q; u != NO_NODE; FORWARD (u)) {
-      if (WHETHER (u, EXIT_SYMBOL)) {
-        if (NEXT (u) == NO_NODE || WHETHER_NOT (NEXT (u), LABELED_UNIT)) {
+      if (IS (u, EXIT_SYMBOL)) {
+        if (NEXT (u) == NO_NODE || ISNT (NEXT (u), LABELED_UNIT)) {
           diagnostic_node (A68_SYNTAX_ERROR, u, ERROR_LABELED_UNIT_MUST_FOLLOW);
         }
       }
     }
 /* Check wrong jumps and declarations */
     for (u = q, label_seen = A68_FALSE; u != NO_NODE; FORWARD (u)) {
-      if (WHETHER (u, LABELED_UNIT)) {
+      if (IS (u, LABELED_UNIT)) {
         label_seen = A68_TRUE;
-      } else if (WHETHER (u, DECLARATION_LIST)) {
+      } else if (IS (u, DECLARATION_LIST)) {
         if (label_seen) {
           diagnostic_node (A68_SYNTAX_ERROR, u, ERROR_LABEL_BEFORE_DECLARATION);
         }
@@ -5690,7 +5707,7 @@ static void reduce_serial_clauses (NODE_T * p)
     reduce (q, NO_NOTE, NO_TICK, INITIALISER_SERIES, DECLARATION_LIST, STOP);
     do {
       siga = A68_FALSE;
-      if (WHETHER (q, SERIAL_CLAUSE)) {
+      if (IS (q, SERIAL_CLAUSE)) {
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, UNIT, STOP);
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, EXIT_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, LABELED_UNIT, STOP);
@@ -5705,7 +5722,7 @@ static void reduce_serial_clauses (NODE_T * p)
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, UNIT, STOP);
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, LABELED_UNIT, STOP);
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, DECLARATION_LIST, STOP);
-      } else if (WHETHER (q, INITIALISER_SERIES)) {
+      } else if (IS (q, INITIALISER_SERIES)) {
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, STOP);
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, NO_NOTE, &siga, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, STOP);
@@ -5739,7 +5756,7 @@ static void reduce_enquiry_clauses (NODE_T * p)
     reduce (q, NO_NOTE, NO_TICK, INITIALISER_SERIES, DECLARATION_LIST, STOP);
     do {
       siga = A68_FALSE;
-      if (WHETHER (q, ENQUIRY_CLAUSE)) {
+      if (IS (q, ENQUIRY_CLAUSE)) {
         reduce (q, NO_NOTE, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, SEMI_SYMBOL, UNIT, STOP);
         reduce (q, NO_NOTE, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, SEMI_SYMBOL, DECLARATION_LIST, STOP);
         reduce (q, strange_separator, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, COMMA_SYMBOL, UNIT, STOP);
@@ -5748,7 +5765,7 @@ static void reduce_enquiry_clauses (NODE_T * p)
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, COLON_SYMBOL, DECLARATION_LIST, STOP);
         reduce (q, strange_separator, &siga, ENQUIRY_CLAUSE, ENQUIRY_CLAUSE, UNIT, STOP);
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, ENQUIRY_CLAUSE, DECLARATION_LIST, STOP);
-      } else if (WHETHER (q, INITIALISER_SERIES)) {
+      } else if (IS (q, INITIALISER_SERIES)) {
         reduce (q, NO_NOTE, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, STOP);
         reduce (q, NO_NOTE, &siga, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, STOP);
         reduce (q, strange_separator, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, UNIT, STOP);
@@ -5772,7 +5789,7 @@ static void reduce_collateral_clauses (NODE_T * p)
 {
   if (NEXT (p) != NO_NODE) {
     NODE_T *q = NEXT (p);
-    if (WHETHER (q, UNIT)) {
+    if (IS (q, UNIT)) {
       BOOL_T siga;
       reduce (q, NO_NOTE, NO_TICK, UNIT_LIST, UNIT, STOP);
       do {
@@ -5780,7 +5797,7 @@ static void reduce_collateral_clauses (NODE_T * p)
         reduce (q, NO_NOTE, &siga, UNIT_LIST, UNIT_LIST, COMMA_SYMBOL, UNIT, STOP);
         reduce (q, strange_separator, &siga, UNIT_LIST, UNIT_LIST, UNIT, STOP);
       } while (siga);
-    } else if (WHETHER (q, SPECIFIED_UNIT)) {
+    } else if (IS (q, SPECIFIED_UNIT)) {
       BOOL_T siga;
       reduce (q, NO_NOTE, NO_TICK, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP);
       do {
@@ -5802,9 +5819,9 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
 {
   NODE_T *p = q;
   if (SUB (p) == NO_NODE) {
-    if (WHETHER (p, FOR_SYMBOL)) {
+    if (IS (p, FOR_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, FOR_PART, FOR_SYMBOL, DEFINING_IDENTIFIER, STOP);
-    } else if (WHETHER (p, OPEN_SYMBOL)) {
+    } else if (IS (p, OPEN_SYMBOL)) {
       if (expect == ENQUIRY_CLAUSE) {
         reduce (p, NO_NOTE, NO_TICK, OPEN_PART, OPEN_SYMBOL, ENQUIRY_CLAUSE, STOP);
       } else if (expect == ARGUMENT) {
@@ -5828,7 +5845,7 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
         reduce (p, NO_NOTE, NO_TICK, COLLATERAL_CLAUSE, OPEN_SYMBOL, CLOSE_SYMBOL, STOP);
         reduce (p, empty_clause, NO_TICK, CLOSED_CLAUSE, OPEN_SYMBOL, INITIALISER_SERIES, CLOSE_SYMBOL, STOP);
       }
-    } else if (WHETHER (p, SUB_SYMBOL)) {
+    } else if (IS (p, SUB_SYMBOL)) {
       if (expect == GENERIC_ARGUMENT) {
         if (whether (p, SUB_SYMBOL, BUS_SYMBOL, STOP)) {
           pad_node (p, TRIMMER);
@@ -5841,66 +5858,66 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
         reduce (p, NO_NOTE, NO_TICK, FORMAL_BOUNDS, SUB_SYMBOL, FORMAL_BOUNDS_LIST, BUS_SYMBOL, STOP);
         reduce (p, NO_NOTE, NO_TICK, FORMAL_BOUNDS, SUB_SYMBOL, ALT_FORMAL_BOUNDS_LIST, BUS_SYMBOL, STOP);
       }
-    } else if (WHETHER (p, BEGIN_SYMBOL)) {
+    } else if (IS (p, BEGIN_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, COLLATERAL_CLAUSE, BEGIN_SYMBOL, UNIT_LIST, END_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, COLLATERAL_CLAUSE, BEGIN_SYMBOL, END_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CLOSED_CLAUSE, BEGIN_SYMBOL, SERIAL_CLAUSE, END_SYMBOL, STOP);
       reduce (p, empty_clause, NO_TICK, CLOSED_CLAUSE, BEGIN_SYMBOL, INITIALISER_SERIES, END_SYMBOL, STOP);
-    } else if (WHETHER (p, FORMAT_DELIMITER_SYMBOL)) {
+    } else if (IS (p, FORMAT_DELIMITER_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, FORMAT_TEXT, FORMAT_DELIMITER_SYMBOL, PICTURE_LIST, FORMAT_DELIMITER_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, FORMAT_TEXT, FORMAT_DELIMITER_SYMBOL, FORMAT_DELIMITER_SYMBOL, STOP);
-    } else if (WHETHER (p, FORMAT_OPEN_SYMBOL)) {
+    } else if (IS (p, FORMAT_OPEN_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, COLLECTION, FORMAT_OPEN_SYMBOL, PICTURE_LIST, FORMAT_CLOSE_SYMBOL, STOP);
-    } else if (WHETHER (p, IF_SYMBOL)) {
+    } else if (IS (p, IF_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, IF_PART, IF_SYMBOL, ENQUIRY_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, IF_PART, IF_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, THEN_SYMBOL)) {
+    } else if (IS (p, THEN_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, THEN_PART, THEN_SYMBOL, SERIAL_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, THEN_PART, THEN_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, ELSE_SYMBOL)) {
+    } else if (IS (p, ELSE_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, ELSE_PART, ELSE_SYMBOL, SERIAL_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, ELSE_PART, ELSE_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, ELIF_SYMBOL)) {
+    } else if (IS (p, ELIF_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, ELIF_IF_PART, ELIF_SYMBOL, ENQUIRY_CLAUSE, STOP);
-    } else if (WHETHER (p, CASE_SYMBOL)) {
+    } else if (IS (p, CASE_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, CASE_PART, CASE_SYMBOL, ENQUIRY_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, CASE_PART, CASE_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, IN_SYMBOL)) {
+    } else if (IS (p, IN_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, CASE_IN_PART, IN_SYMBOL, UNIT_LIST, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_IN_PART, IN_SYMBOL, SPECIFIED_UNIT_LIST, STOP);
-    } else if (WHETHER (p, OUT_SYMBOL)) {
+    } else if (IS (p, OUT_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, OUT_PART, OUT_SYMBOL, SERIAL_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, OUT_PART, OUT_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, OUSE_SYMBOL)) {
+    } else if (IS (p, OUSE_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, OUSE_PART, OUSE_SYMBOL, ENQUIRY_CLAUSE, STOP);
-    } else if (WHETHER (p, THEN_BAR_SYMBOL)) {
+    } else if (IS (p, THEN_BAR_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, CHOICE, THEN_BAR_SYMBOL, SERIAL_CLAUSE, STOP);
       reduce (p, NO_NOTE, NO_TICK, CASE_CHOICE_CLAUSE, THEN_BAR_SYMBOL, UNIT_LIST, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CHOICE, THEN_BAR_SYMBOL, SPECIFIED_UNIT_LIST, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CHOICE, THEN_BAR_SYMBOL, SPECIFIED_UNIT, STOP);
       reduce (p, empty_clause, NO_TICK, CHOICE, THEN_BAR_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, ELSE_BAR_SYMBOL)) {
+    } else if (IS (p, ELSE_BAR_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, ELSE_OPEN_PART, ELSE_BAR_SYMBOL, ENQUIRY_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, ELSE_OPEN_PART, ELSE_BAR_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, FROM_SYMBOL)) {
+    } else if (IS (p, FROM_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, FROM_PART, FROM_SYMBOL, UNIT, STOP);
-    } else if (WHETHER (p, BY_SYMBOL)) {
+    } else if (IS (p, BY_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, BY_PART, BY_SYMBOL, UNIT, STOP);
-    } else if (WHETHER (p, TO_SYMBOL)) {
+    } else if (IS (p, TO_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, TO_PART, TO_SYMBOL, UNIT, STOP);
-    } else if (WHETHER (p, DOWNTO_SYMBOL)) {
+    } else if (IS (p, DOWNTO_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, TO_PART, DOWNTO_SYMBOL, UNIT, STOP);
-    } else if (WHETHER (p, WHILE_SYMBOL)) {
+    } else if (IS (p, WHILE_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, WHILE_PART, WHILE_SYMBOL, ENQUIRY_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, WHILE_PART, WHILE_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, UNTIL_SYMBOL)) {
+    } else if (IS (p, UNTIL_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, UNTIL_PART, UNTIL_SYMBOL, ENQUIRY_CLAUSE, STOP);
       reduce (p, empty_clause, NO_TICK, UNTIL_PART, UNTIL_SYMBOL, INITIALISER_SERIES, STOP);
-    } else if (WHETHER (p, DO_SYMBOL)) {
+    } else if (IS (p, DO_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, DO_PART, DO_SYMBOL, SERIAL_CLAUSE, UNTIL_PART, OD_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, DO_PART, DO_SYMBOL, SERIAL_CLAUSE, OD_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, DO_PART, DO_SYMBOL, UNTIL_PART, OD_SYMBOL, STOP);
-    } else if (WHETHER (p, ALT_DO_SYMBOL)) {
+    } else if (IS (p, ALT_DO_SYMBOL)) {
       reduce (p, NO_NOTE, NO_TICK, ALT_DO_PART, ALT_DO_SYMBOL, SERIAL_CLAUSE, UNTIL_PART, OD_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, ALT_DO_PART, ALT_DO_SYMBOL, SERIAL_CLAUSE, OD_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, ALT_DO_PART, ALT_DO_SYMBOL, UNTIL_PART, OD_SYMBOL, STOP);
@@ -5908,7 +5925,7 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
   }
   p = q;
   if (SUB (p) != NO_NODE) {
-    if (WHETHER (p, OPEN_PART)) {
+    if (IS (p, OPEN_PART)) {
       reduce (p, NO_NOTE, NO_TICK, CONDITIONAL_CLAUSE, OPEN_PART, CHOICE, CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONDITIONAL_CLAUSE, OPEN_PART, CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONDITIONAL_CLAUSE, OPEN_PART, CHOICE, BRIEF_ELIF_PART, STOP);
@@ -5918,7 +5935,7 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CLAUSE, OPEN_PART, CONFORMITY_CHOICE, CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CLAUSE, OPEN_PART, CONFORMITY_CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CLAUSE, OPEN_PART, CONFORMITY_CHOICE, BRIEF_CONFORMITY_OUSE_PART, STOP);
-    } else if (WHETHER (p, ELSE_OPEN_PART)) {
+    } else if (IS (p, ELSE_OPEN_PART)) {
       reduce (p, NO_NOTE, NO_TICK, BRIEF_ELIF_PART, ELSE_OPEN_PART, CHOICE, CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, BRIEF_ELIF_PART, ELSE_OPEN_PART, CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, BRIEF_ELIF_PART, ELSE_OPEN_PART, CHOICE, BRIEF_ELIF_PART, STOP);
@@ -5928,29 +5945,29 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
       reduce (p, NO_NOTE, NO_TICK, BRIEF_CONFORMITY_OUSE_PART, ELSE_OPEN_PART, CONFORMITY_CHOICE, CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, BRIEF_CONFORMITY_OUSE_PART, ELSE_OPEN_PART, CONFORMITY_CHOICE, CLOSE_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, BRIEF_CONFORMITY_OUSE_PART, ELSE_OPEN_PART, CONFORMITY_CHOICE, BRIEF_CONFORMITY_OUSE_PART, STOP);
-    } else if (WHETHER (p, IF_PART)) {
+    } else if (IS (p, IF_PART)) {
       reduce (p, NO_NOTE, NO_TICK, CONDITIONAL_CLAUSE, IF_PART, THEN_PART, ELSE_PART, FI_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONDITIONAL_CLAUSE, IF_PART, THEN_PART, ELIF_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONDITIONAL_CLAUSE, IF_PART, THEN_PART, FI_SYMBOL, STOP);
-    } else if (WHETHER (p, ELIF_IF_PART)) {
+    } else if (IS (p, ELIF_IF_PART)) {
       reduce (p, NO_NOTE, NO_TICK, ELIF_PART, ELIF_IF_PART, THEN_PART, ELSE_PART, FI_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, ELIF_PART, ELIF_IF_PART, THEN_PART, FI_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, ELIF_PART, ELIF_IF_PART, THEN_PART, ELIF_PART, STOP);
-    } else if (WHETHER (p, CASE_PART)) {
+    } else if (IS (p, CASE_PART)) {
       reduce (p, NO_NOTE, NO_TICK, CASE_CLAUSE, CASE_PART, CASE_IN_PART, OUT_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CASE_CLAUSE, CASE_PART, CASE_IN_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CASE_CLAUSE, CASE_PART, CASE_IN_PART, CASE_OUSE_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CLAUSE, CASE_PART, CONFORMITY_IN_PART, OUT_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CLAUSE, CASE_PART, CONFORMITY_IN_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_CLAUSE, CASE_PART, CONFORMITY_IN_PART, CONFORMITY_OUSE_PART, STOP);
-    } else if (WHETHER (p, OUSE_PART)) {
+    } else if (IS (p, OUSE_PART)) {
       reduce (p, NO_NOTE, NO_TICK, CASE_OUSE_PART, OUSE_PART, CASE_IN_PART, OUT_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CASE_OUSE_PART, OUSE_PART, CASE_IN_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CASE_OUSE_PART, OUSE_PART, CASE_IN_PART, CASE_OUSE_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_OUSE_PART, OUSE_PART, CONFORMITY_IN_PART, OUT_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_OUSE_PART, OUSE_PART, CONFORMITY_IN_PART, ESAC_SYMBOL, STOP);
       reduce (p, NO_NOTE, NO_TICK, CONFORMITY_OUSE_PART, OUSE_PART, CONFORMITY_IN_PART, CONFORMITY_OUSE_PART, STOP);
-    } else if (WHETHER (p, FOR_PART)) {
+    } else if (IS (p, FOR_PART)) {
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FOR_PART, FROM_PART, BY_PART, TO_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FOR_PART, FROM_PART, BY_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FOR_PART, FROM_PART, TO_PART, WHILE_PART, ALT_DO_PART, STOP);
@@ -5967,7 +5984,7 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FOR_PART, BY_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FOR_PART, TO_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FOR_PART, ALT_DO_PART, STOP);
-    } else if (WHETHER (p, FROM_PART)) {
+    } else if (IS (p, FROM_PART)) {
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FROM_PART, BY_PART, TO_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FROM_PART, BY_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FROM_PART, TO_PART, WHILE_PART, ALT_DO_PART, STOP);
@@ -5976,17 +5993,17 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FROM_PART, BY_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FROM_PART, TO_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, FROM_PART, ALT_DO_PART, STOP);
-    } else if (WHETHER (p, BY_PART)) {
+    } else if (IS (p, BY_PART)) {
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, BY_PART, TO_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, BY_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, BY_PART, TO_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, BY_PART, ALT_DO_PART, STOP);
-    } else if (WHETHER (p, TO_PART)) {
+    } else if (IS (p, TO_PART)) {
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, TO_PART, WHILE_PART, ALT_DO_PART, STOP);
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, TO_PART, ALT_DO_PART, STOP);
-    } else if (WHETHER (p, WHILE_PART)) {
+    } else if (IS (p, WHILE_PART)) {
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, WHILE_PART, ALT_DO_PART, STOP);
-    } else if (WHETHER (p, DO_PART)) {
+    } else if (IS (p, DO_PART)) {
       reduce (p, NO_NOTE, NO_TICK, LOOP_CLAUSE, DO_PART, STOP);
     }
   }
@@ -6028,7 +6045,7 @@ static void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
   while (NEXT (q) != NO_NODE) {
     FORWARD (q);
   }
-  if (whether_one_of (p, BEGIN_SYMBOL, OPEN_SYMBOL, STOP)) {
+  if (is_one_of (p, BEGIN_SYMBOL, OPEN_SYMBOL, STOP)) {
     if (expect == ARGUMENT || expect == COLLATERAL_CLAUSE || expect == PARAMETER_PACK || expect == STRUCTURE_PACK || expect == UNION_PACK) {
       make_sub (p, q, expect);
     } else if (expect == ENQUIRY_CLAUSE) {
@@ -6038,41 +6055,41 @@ static void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
     } else {
       make_sub (p, q, CLOSED_CLAUSE);
     }
-  } else if (WHETHER (p, FORMAT_DELIMITER_SYMBOL) && expect == FORMAT_TEXT) {
+  } else if (IS (p, FORMAT_DELIMITER_SYMBOL) && expect == FORMAT_TEXT) {
     make_sub (p, q, FORMAT_TEXT);
-  } else if (WHETHER (p, CODE_SYMBOL)) {
+  } else if (IS (p, CODE_SYMBOL)) {
     make_sub (p, q, CODE_CLAUSE);
-  } else if (whether_one_of (p, THEN_BAR_SYMBOL, CHOICE, STOP)) {
+  } else if (is_one_of (p, THEN_BAR_SYMBOL, CHOICE, STOP)) {
     make_sub (p, q, CHOICE);
-  } else if (whether_one_of (p, IF_SYMBOL, IF_PART, STOP)) {
+  } else if (is_one_of (p, IF_SYMBOL, IF_PART, STOP)) {
     make_sub (p, q, IF_PART);
-  } else if (whether_one_of (p, THEN_SYMBOL, THEN_PART, STOP)) {
+  } else if (is_one_of (p, THEN_SYMBOL, THEN_PART, STOP)) {
     make_sub (p, q, THEN_PART);
-  } else if (whether_one_of (p, ELSE_SYMBOL, ELSE_PART, STOP)) {
+  } else if (is_one_of (p, ELSE_SYMBOL, ELSE_PART, STOP)) {
     make_sub (p, q, ELSE_PART);
-  } else if (whether_one_of (p, ELIF_SYMBOL, ELIF_IF_PART, STOP)) {
+  } else if (is_one_of (p, ELIF_SYMBOL, ELIF_IF_PART, STOP)) {
     make_sub (p, q, ELIF_IF_PART);
-  } else if (whether_one_of (p, CASE_SYMBOL, CASE_PART, STOP)) {
+  } else if (is_one_of (p, CASE_SYMBOL, CASE_PART, STOP)) {
     make_sub (p, q, CASE_PART);
-  } else if (whether_one_of (p, OUT_SYMBOL, OUT_PART, STOP)) {
+  } else if (is_one_of (p, OUT_SYMBOL, OUT_PART, STOP)) {
     make_sub (p, q, OUT_PART);
-  } else if (whether_one_of (p, OUSE_SYMBOL, OUSE_PART, STOP)) {
+  } else if (is_one_of (p, OUSE_SYMBOL, OUSE_PART, STOP)) {
     make_sub (p, q, OUSE_PART);
-  } else if (whether_one_of (p, FOR_SYMBOL, FOR_PART, STOP)) {
+  } else if (is_one_of (p, FOR_SYMBOL, FOR_PART, STOP)) {
     make_sub (p, q, FOR_PART);
-  } else if (whether_one_of (p, FROM_SYMBOL, FROM_PART, STOP)) {
+  } else if (is_one_of (p, FROM_SYMBOL, FROM_PART, STOP)) {
     make_sub (p, q, FROM_PART);
-  } else if (whether_one_of (p, BY_SYMBOL, BY_PART, STOP)) {
+  } else if (is_one_of (p, BY_SYMBOL, BY_PART, STOP)) {
     make_sub (p, q, BY_PART);
-  } else if (whether_one_of (p, TO_SYMBOL, DOWNTO_SYMBOL, TO_PART, STOP)) {
+  } else if (is_one_of (p, TO_SYMBOL, DOWNTO_SYMBOL, TO_PART, STOP)) {
     make_sub (p, q, TO_PART);
-  } else if (whether_one_of (p, WHILE_SYMBOL, WHILE_PART, STOP)) {
+  } else if (is_one_of (p, WHILE_SYMBOL, WHILE_PART, STOP)) {
     make_sub (p, q, WHILE_PART);
-  } else if (whether_one_of (p, UNTIL_SYMBOL, UNTIL_PART, STOP)) {
+  } else if (is_one_of (p, UNTIL_SYMBOL, UNTIL_PART, STOP)) {
     make_sub (p, q, UNTIL_PART);
-  } else if (whether_one_of (p, DO_SYMBOL, DO_PART, STOP)) {
+  } else if (is_one_of (p, DO_SYMBOL, DO_PART, STOP)) {
     make_sub (p, q, DO_PART);
-  } else if (whether_one_of (p, ALT_DO_SYMBOL, ALT_DO_PART, STOP)) {
+  } else if (is_one_of (p, ALT_DO_SYMBOL, ALT_DO_PART, STOP)) {
     make_sub (p, q, ALT_DO_PART);
   } else if (non_terminal_string (edit_line, expect) != NO_TEXT) {
     make_sub (p, q, expect);
@@ -6117,7 +6134,7 @@ unsuspecting user */
 void bottom_up_error_check (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, BOOLEAN_PATTERN)) {
+    if (IS (p, BOOLEAN_PATTERN)) {
       int k = 0;
       count_pictures (SUB (p), &k);
       if (!(k == 0 || k == 2)) {
@@ -6139,17 +6156,17 @@ void bottom_up_error_check (NODE_T * p)
 void rearrange_goto_less_jumps (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       NODE_T *q = SUB (p);
-      if (WHETHER (q, TERTIARY)) {
+      if (IS (q, TERTIARY)) {
         NODE_T *tertiary = q;
         q = SUB (q);
-        if (q != NO_NODE && WHETHER (q, SECONDARY)) {
+        if (q != NO_NODE && IS (q, SECONDARY)) {
           q = SUB (q);
-          if (q != NO_NODE && WHETHER (q, PRIMARY)) {
+          if (q != NO_NODE && IS (q, PRIMARY)) {
             q = SUB (q);
-            if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-              if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
+            if (q != NO_NODE && IS (q, IDENTIFIER)) {
+              if (is_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
                 ATTRIBUTE (tertiary) = JUMP;
                 SUB (tertiary) = q;
               }
@@ -6157,37 +6174,37 @@ void rearrange_goto_less_jumps (NODE_T * p)
           }
         }
       }
-    } else if (WHETHER (p, TERTIARY)) {
+    } else if (IS (p, TERTIARY)) {
       NODE_T *q = SUB (p);
-      if (q != NO_NODE && WHETHER (q, SECONDARY)) {
+      if (q != NO_NODE && IS (q, SECONDARY)) {
         NODE_T *secondary = q;
         q = SUB (q);
-        if (q != NO_NODE && WHETHER (q, PRIMARY)) {
+        if (q != NO_NODE && IS (q, PRIMARY)) {
           q = SUB (q);
-          if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-            if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
+          if (q != NO_NODE && IS (q, IDENTIFIER)) {
+            if (is_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
               ATTRIBUTE (secondary) = JUMP;
               SUB (secondary) = q;
             }
           }
         }
       }
-    } else if (WHETHER (p, SECONDARY)) {
+    } else if (IS (p, SECONDARY)) {
       NODE_T *q = SUB (p);
-      if (q != NO_NODE && WHETHER (q, PRIMARY)) {
+      if (q != NO_NODE && IS (q, PRIMARY)) {
         NODE_T *primary = q;
         q = SUB (q);
-        if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-          if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
+        if (q != NO_NODE && IS (q, IDENTIFIER)) {
+          if (is_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
             ATTRIBUTE (primary) = JUMP;
             SUB (primary) = q;
           }
         }
       }
-    } else if (WHETHER (p, PRIMARY)) {
+    } else if (IS (p, PRIMARY)) {
       NODE_T *q = SUB (p);
-      if (q != NO_NODE && WHETHER (q, IDENTIFIER)) {
-        if (whether_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
+      if (q != NO_NODE && IS (q, IDENTIFIER)) {
+        if (is_identifier_or_label_global (TABLE (q), NSYMBOL (q)) == LABEL) {
           make_sub (q, q, JUMP);
         }
       }
@@ -6222,14 +6239,14 @@ static void victal_check_generator (NODE_T * p)
 static void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, FORMAL_DECLARERS)) {
+    if (IS (p, FORMAL_DECLARERS)) {
       victal_check_formal_pack (SUB (p), x, z);
-    } else if (whether_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
       victal_check_formal_pack (NEXT (p), x, z);
-    } else if (WHETHER (p, FORMAL_DECLARERS_LIST)) {
+    } else if (IS (p, FORMAL_DECLARERS_LIST)) {
       victal_check_formal_pack (NEXT (p), x, z);
       victal_check_formal_pack (SUB (p), x, z);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       victal_check_formal_pack (NEXT (p), x, z);
       (*z) &= victal_check_declarer (SUB (p), x);
     }
@@ -6243,7 +6260,7 @@ static void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
 
 static void victal_check_operator_dec (NODE_T * p)
 {
-  if (WHETHER (NEXT (p), FORMAL_DECLARERS)) {
+  if (IS (NEXT (p), FORMAL_DECLARERS)) {
     BOOL_T z = A68_TRUE;
     victal_check_formal_pack (NEXT (p), FORMAL_DECLARER_MARK, &z);
     if (!z) {
@@ -6264,13 +6281,13 @@ static void victal_check_operator_dec (NODE_T * p)
 static void victal_check_mode_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, MODE_DECLARATION)) {
+    if (IS (p, MODE_DECLARATION)) {
       victal_check_mode_dec (SUB (p));
       victal_check_mode_dec (NEXT (p));
-    } else if (whether_one_of (p, MODE_SYMBOL, DEFINING_INDICANT, STOP)
-               || whether_one_of (p, EQUALS_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, MODE_SYMBOL, DEFINING_INDICANT, STOP)
+               || is_one_of (p, EQUALS_SYMBOL, COMMA_SYMBOL, STOP)) {
       victal_check_mode_dec (NEXT (p));
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       if (!victal_check_declarer (p, ACTUAL_DECLARER_MARK)) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "actual declarer");
       }
@@ -6286,15 +6303,15 @@ static void victal_check_mode_dec (NODE_T * p)
 static void victal_check_variable_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, VARIABLE_DECLARATION)) {
+    if (IS (p, VARIABLE_DECLARATION)) {
       victal_check_variable_dec (SUB (p));
       victal_check_variable_dec (NEXT (p));
-    } else if (whether_one_of (p, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, STOP)
-               || WHETHER (p, COMMA_SYMBOL)) {
+    } else if (is_one_of (p, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, STOP)
+               || IS (p, COMMA_SYMBOL)) {
       victal_check_variable_dec (NEXT (p));
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       victal_checker (SUB (p));
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       if (!victal_check_declarer (p, ACTUAL_DECLARER_MARK)) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "actual declarer");
       }
@@ -6311,14 +6328,14 @@ static void victal_check_variable_dec (NODE_T * p)
 static void victal_check_identity_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, IDENTITY_DECLARATION)) {
+    if (IS (p, IDENTITY_DECLARATION)) {
       victal_check_identity_dec (SUB (p));
       victal_check_identity_dec (NEXT (p));
-    } else if (whether_one_of (p, DEFINING_IDENTIFIER, EQUALS_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, DEFINING_IDENTIFIER, EQUALS_SYMBOL, COMMA_SYMBOL, STOP)) {
       victal_check_identity_dec (NEXT (p));
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       victal_checker (SUB (p));
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       if (!victal_check_declarer (p, FORMAL_DECLARER_MARK)) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "formal declarer");
       }
@@ -6337,14 +6354,14 @@ static void victal_check_identity_dec (NODE_T * p)
 static void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, PARAMETER_PACK)) {
+    if (IS (p, PARAMETER_PACK)) {
       victal_check_routine_pack (SUB (p), x, z);
-    } else if (whether_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
       victal_check_routine_pack (NEXT (p), x, z);
-    } else if (whether_one_of (p, PARAMETER_LIST, PARAMETER, STOP)) {
+    } else if (is_one_of (p, PARAMETER_LIST, PARAMETER, STOP)) {
       victal_check_routine_pack (NEXT (p), x, z);
       victal_check_routine_pack (SUB (p), x, z);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       *z &= victal_check_declarer (SUB (p), x);
     }
   }
@@ -6357,7 +6374,7 @@ static void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
 
 static void victal_check_routine_text (NODE_T * p)
 {
-  if (WHETHER (p, PARAMETER_PACK)) {
+  if (IS (p, PARAMETER_PACK)) {
     BOOL_T z = A68_TRUE;
     victal_check_routine_pack (p, FORMAL_DECLARER_MARK, &z);
     if (!z) {
@@ -6381,14 +6398,14 @@ static void victal_check_routine_text (NODE_T * p)
 static void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, STRUCTURE_PACK)) {
+    if (IS (p, STRUCTURE_PACK)) {
       victal_check_structure_pack (SUB (p), x, z);
-    } else if (whether_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
       victal_check_structure_pack (NEXT (p), x, z);
-    } else if (whether_one_of (p, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD, STOP)) {
+    } else if (is_one_of (p, STRUCTURED_FIELD_LIST, STRUCTURED_FIELD, STOP)) {
       victal_check_structure_pack (NEXT (p), x, z);
       victal_check_structure_pack (SUB (p), x, z);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       (*z) &= victal_check_declarer (SUB (p), x);
     }
   }
@@ -6404,14 +6421,14 @@ static void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
 static void victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, UNION_PACK)) {
+    if (IS (p, UNION_PACK)) {
       victal_check_union_pack (SUB (p), x, z);
-    } else if (whether_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, VOID_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, VOID_SYMBOL, STOP)) {
       victal_check_union_pack (NEXT (p), x, z);
-    } else if (WHETHER (p, UNION_DECLARER_LIST)) {
+    } else if (IS (p, UNION_DECLARER_LIST)) {
       victal_check_union_pack (NEXT (p), x, z);
       victal_check_union_pack (SUB (p), x, z);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       victal_check_union_pack (NEXT (p), x, z);
       (*z) &= victal_check_declarer (SUB (p), FORMAL_DECLARER_MARK);
     }
@@ -6428,17 +6445,17 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
-  } else if (WHETHER (p, DECLARER)) {
+  } else if (IS (p, DECLARER)) {
     return (victal_check_declarer (SUB (p), x));
-  } else if (whether_one_of (p, LONGETY, SHORTETY, STOP)) {
+  } else if (is_one_of (p, LONGETY, SHORTETY, STOP)) {
     return (A68_TRUE);
-  } else if (whether_one_of (p, VOID_SYMBOL, INDICANT, STANDARD, STOP)) {
+  } else if (is_one_of (p, VOID_SYMBOL, INDICANT, STANDARD, STOP)) {
     return (A68_TRUE);
-  } else if (WHETHER (p, REF_SYMBOL)) {
+  } else if (IS (p, REF_SYMBOL)) {
     return (victal_check_declarer (NEXT (p), VIRTUAL_DECLARER_MARK));
-  } else if (WHETHER (p, FLEX_SYMBOL)) {
+  } else if (IS (p, FLEX_SYMBOL)) {
     return (victal_check_declarer (NEXT (p), x));
-  } else if (WHETHER (p, BOUNDS)) {
+  } else if (IS (p, BOUNDS)) {
     victal_checker (SUB (p));
     if (x == FORMAL_DECLARER_MARK) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "formal bounds");
@@ -6451,7 +6468,7 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
     } else {
       return (victal_check_declarer (NEXT (p), x));
     }
-  } else if (WHETHER (p, FORMAL_BOUNDS)) {
+  } else if (IS (p, FORMAL_BOUNDS)) {
     victal_checker (SUB (p));
     if (x == ACTUAL_DECLARER_MARK) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "actual bounds");
@@ -6460,19 +6477,19 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
     } else {
       return (victal_check_declarer (NEXT (p), x));
     }
-  } else if (WHETHER (p, STRUCT_SYMBOL)) {
+  } else if (IS (p, STRUCT_SYMBOL)) {
     BOOL_T z = A68_TRUE;
     victal_check_structure_pack (NEXT (p), x, &z);
     return (z);
-  } else if (WHETHER (p, UNION_SYMBOL)) {
+  } else if (IS (p, UNION_SYMBOL)) {
     BOOL_T z = A68_TRUE;
     victal_check_union_pack (NEXT (p), FORMAL_DECLARER_MARK, &z);
     if (!z) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "formal declarer pack");
     }
     return (A68_TRUE);
-  } else if (WHETHER (p, PROC_SYMBOL)) {
-    if (WHETHER (NEXT (p), FORMAL_DECLARERS)) {
+  } else if (IS (p, PROC_SYMBOL)) {
+    if (IS (NEXT (p), FORMAL_DECLARERS)) {
       BOOL_T z = A68_TRUE;
       victal_check_formal_pack (NEXT (p), FORMAL_DECLARER_MARK, &z);
       if (!z) {
@@ -6510,19 +6527,19 @@ static void victal_check_cast (NODE_T * p)
 void victal_checker (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, MODE_DECLARATION)) {
+    if (IS (p, MODE_DECLARATION)) {
       victal_check_mode_dec (SUB (p));
-    } else if (WHETHER (p, VARIABLE_DECLARATION)) {
+    } else if (IS (p, VARIABLE_DECLARATION)) {
       victal_check_variable_dec (SUB (p));
-    } else if (WHETHER (p, IDENTITY_DECLARATION)) {
+    } else if (IS (p, IDENTITY_DECLARATION)) {
       victal_check_identity_dec (SUB (p));
-    } else if (WHETHER (p, GENERATOR)) {
+    } else if (IS (p, GENERATOR)) {
       victal_check_generator (SUB (p));
-    } else if (WHETHER (p, ROUTINE_TEXT)) {
+    } else if (IS (p, ROUTINE_TEXT)) {
       victal_check_routine_text (SUB (p));
-    } else if (WHETHER (p, OPERATOR_PLAN)) {
+    } else if (IS (p, OPERATOR_PLAN)) {
       victal_check_operator_dec (SUB (p));
-    } else if (WHETHER (p, CAST)) {
+    } else if (IS (p, CAST)) {
       victal_check_cast (SUB (p));
     } else {
       victal_checker (SUB (p));
@@ -6585,10 +6602,10 @@ assuming their equivalence.
 \return same
 **/
 
-static BOOL_T whether_packs_equivalent (PACK_T * s, PACK_T * t)
+static BOOL_T is_packs_equivalent (PACK_T * s, PACK_T * t)
 {
   for (; s != NO_PACK && t != NO_PACK; FORWARD (s), FORWARD (t)) {
-    if (!whether_modes_equivalent (MOID (s), MOID (t))) {
+    if (!is_modes_equivalent (MOID (s), MOID (t))) {
       return (A68_FALSE);
     }
     if (TEXT (s) != TEXT (t)) {
@@ -6605,13 +6622,13 @@ static BOOL_T whether_packs_equivalent (PACK_T * s, PACK_T * t)
 \return same
 **/
 
-static BOOL_T whether_united_packs_equivalent (PACK_T * s, PACK_T * t)
+static BOOL_T is_united_packs_equivalent (PACK_T * s, PACK_T * t)
 {
   PACK_T *p, *q; BOOL_T f;
 /* whether s is a subset of t ... */
   for (p = s; p != NO_PACK; FORWARD (p)) {
     for (f = A68_FALSE, q = t; q != NO_PACK && !f; FORWARD (q)) {
-      f = whether_modes_equivalent (MOID (p), MOID (q));
+      f = is_modes_equivalent (MOID (p), MOID (q));
     }
     if (!f) {
       return (A68_FALSE);
@@ -6620,7 +6637,7 @@ static BOOL_T whether_united_packs_equivalent (PACK_T * s, PACK_T * t)
 /* ... and whether t is a subset of s */
   for (p = t; p != NO_PACK; FORWARD (p)) {
     for (f = A68_FALSE, q = s; q != NO_PACK && !f; FORWARD (q)) {
-      f = whether_modes_equivalent (MOID (p), MOID (q));
+      f = is_modes_equivalent (MOID (p), MOID (q));
     }
     if (!f) {
       return (A68_FALSE);
@@ -6636,7 +6653,7 @@ static BOOL_T whether_united_packs_equivalent (PACK_T * s, PACK_T * t)
 \return same
 **/
 
-BOOL_T whether_modes_equivalent (MOID_T * a, MOID_T * b)
+BOOL_T is_modes_equivalent (MOID_T * a, MOID_T * b)
 {
   if (a == NO_MOID || b == NO_MOID) {
 /* Modes can be NO_MOID in partial argument lists */
@@ -6649,13 +6666,13 @@ BOOL_T whether_modes_equivalent (MOID_T * a, MOID_T * b)
     return (A68_FALSE);
   } else if (DIM (a) != DIM (b)) {
     return (A68_FALSE);
-  } else if (WHETHER (a, STANDARD)) {
+  } else if (IS (a, STANDARD)) {
     return ((BOOL_T) (a == b));
   } else if (EQUIVALENT (a) == b || EQUIVALENT (b) == a) {
     return (A68_TRUE);
-  } else if (whether_postulated_pair (top_postulate, a, b) || whether_postulated_pair (top_postulate, b, a)) {
+  } else if (is_postulated_pair (top_postulate, a, b) || is_postulated_pair (top_postulate, b, a)) {
     return (A68_TRUE);
-  } else if (WHETHER (a, INDICANT)) {
+  } else if (IS (a, INDICANT)) {
     if (NODE (a) == NO_NODE || NODE (b) == NO_NODE) {
       return (A68_FALSE);
     } else {
@@ -6666,34 +6683,34 @@ BOOL_T whether_modes_equivalent (MOID_T * a, MOID_T * b)
     case REF_SYMBOL: 
     case ROW_SYMBOL: 
     case FLEX_SYMBOL: {
-      return (whether_modes_equivalent (SUB (a), SUB (b)));
+      return (is_modes_equivalent (SUB (a), SUB (b)));
     }
   }
-  if (WHETHER (a, PROC_SYMBOL) && PACK (a) == NO_PACK && PACK (b) == NO_PACK) {
-    return (whether_modes_equivalent (SUB (a), SUB (b)));
-  } else if (WHETHER (a, STRUCT_SYMBOL)) {
+  if (IS (a, PROC_SYMBOL) && PACK (a) == NO_PACK && PACK (b) == NO_PACK) {
+    return (is_modes_equivalent (SUB (a), SUB (b)));
+  } else if (IS (a, STRUCT_SYMBOL)) {
     POSTULATE_T *save; BOOL_T z;
     save = top_postulate;
     make_postulate (&top_postulate, a, b);
-    z = whether_packs_equivalent (PACK (a), PACK (b));
+    z = is_packs_equivalent (PACK (a), PACK (b));
     free_postulate_list (top_postulate, save);
     top_postulate = save;
     return (z);
-  } else if (WHETHER (a, UNION_SYMBOL)) {
-    return (whether_united_packs_equivalent (PACK (a), PACK (b)));
-  } else if (WHETHER (a, PROC_SYMBOL) && PACK (a) != NO_PACK && PACK (b) != NO_PACK) {
+  } else if (IS (a, UNION_SYMBOL)) {
+    return (is_united_packs_equivalent (PACK (a), PACK (b)));
+  } else if (IS (a, PROC_SYMBOL) && PACK (a) != NO_PACK && PACK (b) != NO_PACK) {
     POSTULATE_T *save; BOOL_T z;
     save = top_postulate;
     make_postulate (&top_postulate, a, b);
-    z = whether_modes_equivalent (SUB (a), SUB (b));
+    z = is_modes_equivalent (SUB (a), SUB (b));
     if (z) {
-      z = whether_packs_equivalent (PACK (a), PACK (b));
+      z = is_packs_equivalent (PACK (a), PACK (b));
     }
     free_postulate_list (top_postulate, save);
     top_postulate = save;
     return (z);
-  } else if (WHETHER (a, SERIES_MODE) || WHETHER (a, STOWED_MODE)) {
-    return (whether_packs_equivalent (PACK (a), PACK (b)));
+  } else if (IS (a, SERIES_MODE) || IS (a, STOWED_MODE)) {
+    return (is_packs_equivalent (PACK (a), PACK (b)));
   }
   return (A68_FALSE);
 }
@@ -6709,7 +6726,7 @@ static BOOL_T prove_moid_equivalence (MOID_T * p, MOID_T * q)
 {
 /* Prove two modes to be equivalent under assumption that they indeed are */
   POSTULATE_T *save = top_postulate;
-  BOOL_T z = whether_modes_equivalent (p, q);
+  BOOL_T z = is_modes_equivalent (p, q);
   free_postulate_list (top_postulate, save);
   top_postulate = save;
   return (z);
@@ -6809,7 +6826,7 @@ static PACK_T *absorb_union_pack (PACK_T * u)
     z = NO_PACK;
     go_on = A68_FALSE;
     for (t = u; t != NO_PACK; FORWARD (t)) {
-      if (WHETHER (MOID (t), UNION_SYMBOL)) {
+      if (IS (MOID (t), UNION_SYMBOL)) {
         PACK_T *s;
         go_on = A68_TRUE;
         for (s = PACK (MOID (t)); s != NO_PACK; FORWARD (s)) {
@@ -6836,7 +6853,7 @@ static void absorb_series_pack (MOID_T ** p)
     PACK_T *z = NO_PACK, *t;
     go_on = A68_FALSE;
     for (t = PACK (*p); t != NO_PACK; FORWARD (t)) {
-      if (MOID (t) != NO_MOID && WHETHER (MOID (t), SERIES_MODE)) {
+      if (MOID (t) != NO_MOID && IS (MOID (t), SERIES_MODE)) {
         PACK_T *s;
         go_on = A68_TRUE;
         for (s = PACK (MOID (t)); s != NO_PACK; FORWARD (s)) {
@@ -6862,7 +6879,7 @@ static void absorb_series_union_pack (MOID_T ** p)
     PACK_T *z = NO_PACK, *t;
     go_on = A68_FALSE;
     for (t = PACK (*p); t != NO_PACK; FORWARD (t)) {
-      if (MOID (t) != NO_MOID && (WHETHER (MOID (t), SERIES_MODE) || WHETHER (MOID (t), UNION_SYMBOL))) {
+      if (MOID (t) != NO_MOID && (IS (MOID (t), SERIES_MODE) || IS (MOID (t), UNION_SYMBOL))) {
         PACK_T *s;
         go_on = A68_TRUE;
         for (s = PACK (MOID (t)); s != NO_PACK; FORWARD (s)) {
@@ -6917,7 +6934,7 @@ which is used in balancing conformity clauses.
     mods = 0;
     for (v = PACK (m); v != NO_PACK; FORWARD (v)) {
       MOID_T *n = depref_completely (MOID (v));
-      if (WHETHER (n, UNION_SYMBOL) && whether_subset (n, m, SAFE_DEFLEXING)) {
+      if (IS (n, UNION_SYMBOL) && is_subset (n, m, SAFE_DEFLEXING)) {
 /* Unpack it */
         PACK_T *w;
         for (w = PACK (n); w != NO_PACK; FORWARD (w)) {
@@ -6950,7 +6967,7 @@ static MOID_T *make_united_mode (MOID_T * m)
     return (m);
   }
 /* Do not unite a single UNION */
-  if (DIM (m) == 1 && WHETHER (MOID (PACK (m)), UNION_SYMBOL)) {
+  if (DIM (m) == 1 && IS (MOID (PACK (m)), UNION_SYMBOL)) {
     return (MOID (PACK (m)));
   }
 /* Straighten the series */
@@ -7064,7 +7081,7 @@ UNION (A, UNION (B, C)) = UNION (A, B, C) or
 UNION (A, UNION (A, B)) = UNION (A, B).
 */
   for (; m != NO_MOID; FORWARD (m)) {
-    if (WHETHER (m, UNION_SYMBOL)) {
+    if (IS (m, UNION_SYMBOL)) {
       PACK (m) = absorb_union_pack (PACK (m));
     }
   }
@@ -7081,7 +7098,7 @@ static void contract_unions (MOID_T * m)
 {
 /* UNION (A, B, A) -> UNION (A, B) */
   for (; m != NO_MOID; FORWARD (m)) {
-    if (WHETHER (m, UNION_SYMBOL) && EQUIVALENT (m) == NO_MOID) {
+    if (IS (m, UNION_SYMBOL) && EQUIVALENT (m) == NO_MOID) {
       contract_union (m);
     }
   }
@@ -7103,7 +7120,7 @@ static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
   MOID_T *p = TOP_MOID (&program);
 /* Search standard mode */
   for (; p != NO_MOID; FORWARD (p)) {
-    if (WHETHER (p, STANDARD) && DIM (p) == sizety && NSYMBOL (NODE (p)) == NSYMBOL (indicant)) {
+    if (IS (p, STANDARD) && DIM (p) == sizety && NSYMBOL (NODE (p)) == NSYMBOL (indicant)) {
       return (p);
     }
   }
@@ -7131,10 +7148,10 @@ static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
 static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, IDENTIFIER)) {
+    if (IS (p, IDENTIFIER)) {
         ATTRIBUTE (p) = FIELD_IDENTIFIER;
         (void) add_mode_to_pack (u, NO_MOID, NSYMBOL (p), p);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
         MOID_T *new_one = get_mode_from_declarer (p);
         PACK_T *t;
         get_mode_from_struct_field (NEXT (p), u);
@@ -7158,7 +7175,7 @@ static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
 static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, DECLARER)) {
+    if (IS (p, DECLARER)) {
         MOID_T *z;
         get_mode_from_formal_pack (NEXT (p), u);
         z = get_mode_from_declarer (p);
@@ -7179,7 +7196,7 @@ static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
 static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, DECLARER) || WHETHER (p, VOID_SYMBOL)) {
+    if (IS (p, DECLARER) || IS (p, VOID_SYMBOL)) {
         MOID_T *z;
         get_mode_from_union_pack (NEXT (p), u);
         z = get_mode_from_declarer (p);
@@ -7200,9 +7217,9 @@ static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
 static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, IDENTIFIER)) {
+    if (IS (p, IDENTIFIER)) {
       (void) add_mode_to_pack (u, NO_MOID, NO_TEXT, p);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
         MOID_T *z = get_mode_from_declarer (p);
         PACK_T *t = *u;
         for (; t != NO_PACK && MOID (t) == NO_MOID; FORWARD (t)) {
@@ -7229,17 +7246,17 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
   if (p == NO_NODE) {
     return (NO_MOID);
   } else {
-    if (WHETHER (p, DECLARER)) {
+    if (IS (p, DECLARER)) {
       if (MOID (p) != NO_MOID) {
         return (MOID (p));
       } else {
         return (MOID (p) = get_mode_from_declarer (SUB (p)));
       }
     } else {
-      if (WHETHER (p, VOID_SYMBOL)) {
+      if (IS (p, VOID_SYMBOL)) {
         MOID (p) = MODE (VOID);
         return (MOID (p));
-      } else if (WHETHER (p, LONGETY)) {
+      } else if (IS (p, LONGETY)) {
         if (whether (p, LONGETY, INDICANT, STOP)) {
           int k = count_sizety (SUB (p));
           MOID (p) = search_standard_mode (k, NEXT (p));
@@ -7247,7 +7264,7 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
         } else {
           return (NO_MOID);
         }
-      } else if (WHETHER (p, SHORTETY)) {
+      } else if (IS (p, SHORTETY)) {
         if (whether (p, SHORTETY, INDICANT, STOP)) {
           int k = count_sizety (SUB (p));
           MOID (p) = search_standard_mode (k, NEXT (p));
@@ -7255,7 +7272,7 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
         } else {
           return (NO_MOID);
         }
-      } else if (WHETHER (p, INDICANT)) {
+      } else if (IS (p, INDICANT)) {
         MOID_T *q = search_standard_mode (0, p);
         if (q != NO_MOID) {
           MOID (p) = q;
@@ -7269,38 +7286,38 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
           }
         }
         return (MOID (p));
-      } else if (WHETHER (p, REF_SYMBOL)) {
+      } else if (IS (p, REF_SYMBOL)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, p, new_one, NO_PACK);
         return (MOID (p));
-      } else if (WHETHER (p, FLEX_SYMBOL)) {
+      } else if (IS (p, FLEX_SYMBOL)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_mode (&TOP_MOID (&program), FLEX_SYMBOL, 0, p, new_one, NO_PACK);
         SLICE (MOID (p)) = SLICE (new_one);
         return (MOID (p));
-      } else if (WHETHER (p, FORMAL_BOUNDS)) {
+      } else if (IS (p, FORMAL_BOUNDS)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_row (&TOP_MOID (&program), 1 + count_formal_bounds (SUB (p)), new_one, p, A68_FALSE);
         return (MOID (p));
-      } else if (WHETHER (p, BOUNDS)) {
+      } else if (IS (p, BOUNDS)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
         MOID (p) = add_row (&TOP_MOID (&program), count_bounds (SUB (p)), new_one, p, A68_FALSE);
         return (MOID (p));
-      } else if (WHETHER (p, STRUCT_SYMBOL)) {
+      } else if (IS (p, STRUCT_SYMBOL)) {
         PACK_T *u = NO_PACK;
         get_mode_from_struct_field (NEXT (p), &u);
         MOID (p) = add_mode (&TOP_MOID (&program), STRUCT_SYMBOL, count_pack_members (u), p, NO_MOID, u);
         return (MOID (p));
-      } else if (WHETHER (p, UNION_SYMBOL)) {
+      } else if (IS (p, UNION_SYMBOL)) {
         PACK_T *u = NO_PACK;
         get_mode_from_union_pack (NEXT (p), &u);
         MOID (p) = add_mode (&TOP_MOID (&program), UNION_SYMBOL, count_pack_members (u), p, NO_MOID, u);
         return (MOID (p));
-      } else if (WHETHER (p, PROC_SYMBOL)) {
+      } else if (IS (p, PROC_SYMBOL)) {
         NODE_T *save = p;
         PACK_T *u = NO_PACK;
         MOID_T *new_one;
-        if (WHETHER (NEXT (p), FORMAL_DECLARERS)) {
+        if (IS (NEXT (p), FORMAL_DECLARERS)) {
           get_mode_from_formal_pack (SUB_NEXT (p), &u);
           FORWARD (p);
         }
@@ -7326,7 +7343,7 @@ static MOID_T *get_mode_from_routine_text (NODE_T * p)
   PACK_T *u = NO_PACK;
   MOID_T *n;
   NODE_T *q = p;
-  if (WHETHER (p, PARAMETER_PACK)) {
+  if (IS (p, PARAMETER_PACK)) {
     get_mode_from_routine_pack (SUB (p), &u);
     FORWARD (p);
   }
@@ -7345,7 +7362,7 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
   PACK_T *u = NO_PACK;
   MOID_T *new_one;
   NODE_T *save = p;
-  if (WHETHER (NEXT (p), FORMAL_DECLARERS)) {
+  if (IS (NEXT (p), FORMAL_DECLARERS)) {
     get_mode_from_formal_pack (SUB_NEXT (p), &u);
     FORWARD (p);
   }
@@ -7363,15 +7380,15 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
 static void get_mode_from_denotation (NODE_T * p, int sizety)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, ROW_CHAR_DENOTATION)) {
+    if (IS (p, ROW_CHAR_DENOTATION)) {
       if (strlen (NSYMBOL (p)) == 1) {
         MOID (p) = MODE (CHAR);
       } else {
         MOID (p) = MODE (ROW_CHAR);
       }
-    } else if (WHETHER (p, TRUE_SYMBOL) || WHETHER (p, FALSE_SYMBOL)) {
+    } else if (IS (p, TRUE_SYMBOL) || IS (p, FALSE_SYMBOL)) {
       MOID (p) = MODE (BOOL);
-    } else if (WHETHER (p, INT_DENOTATION)) {
+    } else if (IS (p, INT_DENOTATION)) {
       if (sizety == 0) {
         MOID (p) = MODE (INT);
       } else if (sizety == 1) {
@@ -7381,7 +7398,7 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
       } else {
         MOID (p) = (sizety > 0 ? MODE (LONGLONG_INT) : MODE (INT));
       }
-    } else if (WHETHER (p, REAL_DENOTATION)) {
+    } else if (IS (p, REAL_DENOTATION)) {
       if (sizety == 0) {
         MOID (p) = MODE (REAL);
       } else if (sizety == 1) {
@@ -7391,7 +7408,7 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
       } else {
         MOID (p) = (sizety > 0 ? MODE (LONGLONG_REAL) : MODE (REAL));
       }
-    } else if (WHETHER (p, BITS_DENOTATION)) {
+    } else if (IS (p, BITS_DENOTATION)) {
       if (sizety == 0) {
         MOID (p) = MODE (BITS);
       } else if (sizety == 1) {
@@ -7401,10 +7418,10 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
       } else {
         MOID (p) = (sizety > 0 ? MODE (LONGLONG_BITS) : MODE (BITS));
       }
-    } else if (WHETHER (p, LONGETY) || WHETHER (p, SHORTETY)) {
+    } else if (IS (p, LONGETY) || IS (p, SHORTETY)) {
       get_mode_from_denotation (NEXT (p), count_sizety (SUB (p)));
       MOID (p) = MOID (NEXT (p));
-    } else if (WHETHER (p, EMPTY_SYMBOL)) {
+    } else if (IS (p, EMPTY_SYMBOL)) {
       MOID (p) = MODE (VOID);
     }
   }
@@ -7420,20 +7437,20 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, VOID_SYMBOL)) {
+    if (IS (q, VOID_SYMBOL)) {
       MOID (q) = MODE (VOID);
-    } else if (WHETHER (q, DECLARER)) {
+    } else if (IS (q, DECLARER)) {
       if (attribute == VARIABLE_DECLARATION) {
         MOID_T *new_one = get_mode_from_declarer (q);
         MOID (q) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
       } else {
         MOID (q) = get_mode_from_declarer (q);
       }
-    } else if (WHETHER (q, ROUTINE_TEXT)) {
+    } else if (IS (q, ROUTINE_TEXT)) {
       MOID (q) = get_mode_from_routine_text (SUB (q));
-    } else if (WHETHER (q, OPERATOR_PLAN)) {
+    } else if (IS (q, OPERATOR_PLAN)) {
       MOID (q) = get_mode_from_operator (SUB (q));
-    } else if (whether_one_of (q, LOC_SYMBOL, HEAP_SYMBOL, NEW_SYMBOL, STOP)) {
+    } else if (is_one_of (q, LOC_SYMBOL, HEAP_SYMBOL, NEW_SYMBOL, STOP)) {
       if (attribute == GENERATOR) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (q));
         MOID (NEXT (q)) = new_one;
@@ -7462,12 +7479,12 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
 static void get_mode_from_proc_variables (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, PROCEDURE_VARIABLE_DECLARATION)) {
+    if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       get_mode_from_proc_variables (SUB (p));
       get_mode_from_proc_variables (NEXT (p));
-    } else if (WHETHER (p, QUALIFIER) || WHETHER (p, PROC_SYMBOL) || WHETHER (p, COMMA_SYMBOL)) {
+    } else if (IS (p, QUALIFIER) || IS (p, PROC_SYMBOL) || IS (p, COMMA_SYMBOL)) {
       get_mode_from_proc_variables (NEXT (p));
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
       MOID_T *new_one = MOID (NEXT_NEXT (p));
       MOID (p) = add_mode (&TOP_MOID (&program), REF_SYMBOL, 0, p, new_one, NO_PACK);
     }
@@ -7483,7 +7500,7 @@ static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     get_mode_from_proc_var_declarations_tree (SUB (p));
-    if (WHETHER (p, PROCEDURE_VARIABLE_DECLARATION)) {
+    if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       get_mode_from_proc_variables (p);
     }
   }
@@ -7503,7 +7520,7 @@ static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
 \return same
 **/
 
-static BOOL_T whether_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T yang, BOOL_T video)
+static BOOL_T is_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T yang, BOOL_T video)
 {
   if (z == NO_MOID) {
     return (A68_FALSE);
@@ -7511,9 +7528,9 @@ static BOOL_T whether_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T y
     return (z == MODE (VOID) ? video : A68_TRUE);
   } else if (z == MODE (VOID)) {
     return (video);
-  } else if (WHETHER (z, STANDARD)) {
+  } else if (IS (z, STANDARD)) {
     return (A68_TRUE);
-  } else if (WHETHER (z, INDICANT)) {
+  } else if (IS (z, INDICANT)) {
     if (def == NO_MOID) {
 /* Check an applied indicant for relation to VOID */
       while (z != NO_MOID) {
@@ -7530,31 +7547,31 @@ static BOOL_T whether_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T y
       } else {
         BOOL_T wwf;
         USE (z) = A68_TRUE;
-        wwf = whether_well_formed (def, EQUIVALENT (z), yin, yang, video);
+        wwf = is_well_formed (def, EQUIVALENT (z), yin, yang, video);
         USE (z) = A68_FALSE;
         return (wwf);
       }
     }
-  } else if (WHETHER (z, REF_SYMBOL)) {
-    return (whether_well_formed (def, SUB (z), A68_TRUE, yang, A68_FALSE));
-  } else if (WHETHER (z, PROC_SYMBOL)) {
-    return (PACK (z) != NO_PACK ? A68_TRUE : whether_well_formed (def, SUB (z), A68_TRUE, yang, A68_TRUE));
-  } else if (WHETHER (z, ROW_SYMBOL)) {
-    return (whether_well_formed (def, SUB (z), yin, yang, A68_FALSE));
-  } else if (WHETHER (z, FLEX_SYMBOL)) {
-    return (whether_well_formed (def, SUB (z), yin, yang, A68_FALSE));
-  } else if (WHETHER (z, STRUCT_SYMBOL)) {
+  } else if (IS (z, REF_SYMBOL)) {
+    return (is_well_formed (def, SUB (z), A68_TRUE, yang, A68_FALSE));
+  } else if (IS (z, PROC_SYMBOL)) {
+    return (PACK (z) != NO_PACK ? A68_TRUE : is_well_formed (def, SUB (z), A68_TRUE, yang, A68_TRUE));
+  } else if (IS (z, ROW_SYMBOL)) {
+    return (is_well_formed (def, SUB (z), yin, yang, A68_FALSE));
+  } else if (IS (z, FLEX_SYMBOL)) {
+    return (is_well_formed (def, SUB (z), yin, yang, A68_FALSE));
+  } else if (IS (z, STRUCT_SYMBOL)) {
     PACK_T *s = PACK (z);
     for (; s != NO_PACK; FORWARD (s)) {
-      if (! whether_well_formed (def, MOID (s), yin, A68_TRUE, A68_FALSE)) {
+      if (! is_well_formed (def, MOID (s), yin, A68_TRUE, A68_FALSE)) {
         return (A68_FALSE);
       }
     }
     return (A68_TRUE);
-  } else if (WHETHER (z, UNION_SYMBOL)) {
+  } else if (IS (z, UNION_SYMBOL)) {
     PACK_T *s = PACK (z);
     for (; s != NO_PACK; FORWARD (s)) {
-      if (! whether_well_formed (def, MOID (s), yin, yang, A68_TRUE)) {
+      if (! is_well_formed (def, MOID (s), yin, yang, A68_TRUE)) {
         return (A68_FALSE);
       }
     }
@@ -7607,7 +7624,7 @@ static void bind_modes (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     resolve_equivalent (& MOID (p));
-    if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
+    if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
       TABLE_T *s = TABLE (SUB (p));
       TAG_T *z = INDICANTS (s);
       for (; z != NO_TAG; FORWARD (z)) {
@@ -7748,18 +7765,18 @@ static MOID_T *make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 \return same
 **/
 
-static BOOL_T whether_mode_has_row (MOID_T * m)
+static BOOL_T is_mode_has_row (MOID_T * m)
 {
-  if (WHETHER (m, STRUCT_SYMBOL) || WHETHER (m, UNION_SYMBOL)) {
+  if (IS (m, STRUCT_SYMBOL) || IS (m, UNION_SYMBOL)) {
     BOOL_T k = A68_FALSE;
     PACK_T *p = PACK (m);
     for (; p != NO_PACK && k == A68_FALSE; FORWARD (p)) {
-      HAS_ROWS (MOID (p)) = whether_mode_has_row (MOID (p));
+      HAS_ROWS (MOID (p)) = is_mode_has_row (MOID (p));
       k |= (HAS_ROWS (MOID (p)));
     }
     return (k);
   } else {
-    return ((BOOL_T) (HAS_ROWS (m) || WHETHER (m, ROW_SYMBOL) || WHETHER (m, FLEX_SYMBOL)));
+    return ((BOOL_T) (HAS_ROWS (m) || IS (m, ROW_SYMBOL) || IS (m, FLEX_SYMBOL)));
   }
 }
 
@@ -7780,15 +7797,15 @@ static void compute_derived_modes (MODULE_T *mod)
 /* Make deflexed modes */
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (SUB (z) != NO_MOID) {
-        if (WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), FLEX_SYMBOL) && DEFLEXED (SUB_SUB (z)) != NO_MOID) {
+        if (IS_REF_FLEX (z) && DEFLEXED (SUB_SUB (z)) != NO_MOID) {
           DEFLEXED (z) = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), DEFLEXED (SUB_SUB (z)), NO_PACK);
-        } else if (WHETHER (z, REF_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
+        } else if (IS (z, REF_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
           DEFLEXED (z) = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), DEFLEXED (SUB (z)), NO_PACK);
-        } else if (WHETHER (z, ROW_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
+        } else if (IS (z, ROW_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
           DEFLEXED (z) = add_mode (&TOP_MOID (mod), ROW_SYMBOL, DIM (z), NODE (z), DEFLEXED (SUB (z)), NO_PACK);
-        } else if (WHETHER (z, FLEX_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
+        } else if (IS (z, FLEX_SYMBOL) && DEFLEXED (SUB (z)) != NO_MOID) {
           DEFLEXED (z) = DEFLEXED (SUB (z));
-        } else if (WHETHER (z, FLEX_SYMBOL)) {
+        } else if (IS (z, FLEX_SYMBOL)) {
           DEFLEXED (z) = SUB (z);
         } else {
           DEFLEXED (z) = z;
@@ -7797,59 +7814,59 @@ static void compute_derived_modes (MODULE_T *mod)
     }
 /* Derived modes for stowed modes */
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (NAME (z) == NO_MOID && WHETHER (z, REF_SYMBOL)) {
-        if (WHETHER (SUB (z), STRUCT_SYMBOL)) {
+      if (NAME (z) == NO_MOID && IS (z, REF_SYMBOL)) {
+        if (IS (SUB (z), STRUCT_SYMBOL)) {
           NAME (z) = make_name_struct (SUB (z), &TOP_MOID (mod));
-        } else if (WHETHER (SUB (z), ROW_SYMBOL)) {
+        } else if (IS (SUB (z), ROW_SYMBOL)) {
           NAME (z) = make_name_row (SUB (z), &TOP_MOID (mod));
-        } else if (WHETHER (SUB (z), FLEX_SYMBOL) && SUB_SUB (z) != NO_MOID) {
+        } else if (IS (SUB (z), FLEX_SYMBOL) && SUB_SUB (z) != NO_MOID) {
           NAME (z) = make_name_row (SUB_SUB (z), &TOP_MOID (mod));
         }
       }
       if (MULTIPLE (z) != NO_MOID) {
         ;
-      } else if (WHETHER (z, REF_SYMBOL)) {
+      } else if (IS (z, REF_SYMBOL)) {
         if (MULTIPLE (SUB (z)) != NO_MOID) {
           MULTIPLE (z) = make_name_struct (MULTIPLE (SUB (z)), &TOP_MOID (mod));
         }
-      } else if (WHETHER (z, ROW_SYMBOL)) {
-        if (WHETHER (SUB (z), STRUCT_SYMBOL)) {
+      } else if (IS (z, ROW_SYMBOL)) {
+        if (IS (SUB (z), STRUCT_SYMBOL)) {
           MULTIPLE (z) = make_multiple_struct (SUB (z), &TOP_MOID (mod), DIM (z));
         }
       }
     }
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (TRIM (z) == NO_MOID && WHETHER (z, FLEX_SYMBOL)) {
+      if (TRIM (z) == NO_MOID && IS (z, FLEX_SYMBOL)) {
         TRIM (z) = SUB (z);
       }
-      if (TRIM (z) == NO_MOID && WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), FLEX_SYMBOL)) {
+      if (TRIM (z) == NO_MOID && IS_REF_FLEX (z)) {
         TRIM (z) = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), SUB_SUB (z), NO_PACK);
       }
     }
 /* Fill out stuff for rows, f.i. inverse relations */
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (WHETHER (z, ROW_SYMBOL) && DIM (z) > 0 && SUB (z) != NO_MOID && ! DERIVATE (z)) {
+      if (IS (z, ROW_SYMBOL) && DIM (z) > 0 && SUB (z) != NO_MOID && ! DERIVATE (z)) {
         (void) add_row (&TOP_MOID (mod), DIM (z) + 1, SUB (z), NODE (z), A68_TRUE);
-      } else if (WHETHER (z, REF_SYMBOL) && WHETHER (SUB (z), ROW_SYMBOL) && ! DERIVATE (SUB (z))) {
+      } else if (IS (z, REF_SYMBOL) && IS (SUB (z), ROW_SYMBOL) && ! DERIVATE (SUB (z))) {
         MOID_T *x = add_row (&TOP_MOID (mod), DIM (SUB (z)) + 1, SUB_SUB (z), NODE (SUB (z)), A68_TRUE);
         MOID_T *y = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), x, NO_PACK);
         NAME (y) = z;
       }
     }
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (WHETHER (z, ROW_SYMBOL) && SLICE (z) != NO_MOID) {
+      if (IS (z, ROW_SYMBOL) && SLICE (z) != NO_MOID) {
         ROWED (SLICE (z)) = z;
       }
-      if (WHETHER (z, REF_SYMBOL)) {
+      if (IS (z, REF_SYMBOL)) {
         MOID_T *y = SUB (z);
-        if (SLICE (y) != NO_MOID && WHETHER (SLICE (y), ROW_SYMBOL) && NAME (z) != NO_MOID) {
+        if (SLICE (y) != NO_MOID && IS (SLICE (y), ROW_SYMBOL) && NAME (z) != NO_MOID) {
           ROWED (NAME (z)) = z;
         }
       }
     }
     bind_modes (TOP_NODE (mod));
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (WHETHER (z, INDICANT) && NODE (z) != NO_NODE) {
+      if (IS (z, INDICANT) && NODE (z) != NO_NODE) {
         EQUIVALENT (z) = MOID (NODE (z));
       }
     }
@@ -7873,8 +7890,8 @@ static void compute_derived_modes (MODULE_T *mod)
     contract_unions (TOP_MOID (mod));
 /* FLEX INDICANT could be resolved */
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (WHETHER (z, FLEX_SYMBOL) && SUB (z) != NO_MOID) {
-        if (SUB_SUB (z) != NO_MOID && WHETHER (SUB_SUB (z), STRUCT_SYMBOL)) {
+      if (IS (z, FLEX_SYMBOL) && SUB (z) != NO_MOID) {
+        if (SUB_SUB (z) != NO_MOID && IS (SUB_SUB (z), STRUCT_SYMBOL)) {
           MULTIPLE (z) = make_flex_multiple_struct (SUB_SUB (z), &TOP_MOID (mod), DIM (SUB (z)));
         }
       }
@@ -7898,17 +7915,17 @@ static void compute_derived_modes (MODULE_T *mod)
   ABEND (MODE (STRING) != MODE (FLEX_ROW_CHAR), "equivalencing is broken", NO_TEXT);
 /* Find out what modes contain rows */
   for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-    HAS_ROWS (z) = whether_mode_has_row (z);
+    HAS_ROWS (z) = is_mode_has_row (z);
   }
 /* Check flexible modes */
   for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-    if (WHETHER (z, FLEX_SYMBOL) && WHETHER_NOT (SUB (z), ROW_SYMBOL)) {
+    if (IS (z, FLEX_SYMBOL) && ISNT (SUB (z), ROW_SYMBOL)) {
       diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
     }
   }
 /* Check on fields in structured modes f.i. STRUCT (REAL x, INT n, REAL x) is wrong */
   for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-    if (WHETHER (z, STRUCT_SYMBOL) && EQUIVALENT (z) == NO_MOID) {
+    if (IS (z, STRUCT_SYMBOL) && EQUIVALENT (z) == NO_MOID) {
       PACK_T *s = PACK (z);
       for (; s != NO_PACK; FORWARD (s)) {
         PACK_T *t = NEXT (s);
@@ -7927,7 +7944,7 @@ static void compute_derived_modes (MODULE_T *mod)
   }
 /* Various union test */
   for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-    if (WHETHER (z, UNION_SYMBOL) && EQUIVALENT (z) == NO_MOID) {
+    if (IS (z, UNION_SYMBOL) && EQUIVALENT (z) == NO_MOID) {
       PACK_T *s = PACK (z);
 /* Discard unions with one member */
       if (count_pack_members (s) == 1) {
@@ -7938,7 +7955,7 @@ static void compute_derived_modes (MODULE_T *mod)
         PACK_T *t;
         for (t = NEXT (s); t != NO_PACK; FORWARD (t)) {
           if (MOID (t) != MOID (s)) {
-            if (whether_firm (MOID (s), MOID (t))) {
+            if (is_firm (MOID (s), MOID (t))) {
               diagnostic_node (A68_ERROR, NODE (z), ERROR_COMPONENT_RELATED, z);
             }
           }
@@ -7947,7 +7964,7 @@ static void compute_derived_modes (MODULE_T *mod)
 /* Discard incestuous unions with firmly related subsets */
       for (s = PACK (z); s != NO_PACK; FORWARD (s)) {
         MOID_T *n = depref_completely (MOID (s));
-        if (WHETHER (n, UNION_SYMBOL) && whether_subset (n, z, NO_DEFLEXING)) {
+        if (IS (n, UNION_SYMBOL) && is_subset (n, z, NO_DEFLEXING)) {
           diagnostic_node (A68_ERROR, NODE (z), ERROR_SUBSET_RELATED, z, n);
         }
       }
@@ -7980,7 +7997,7 @@ void make_moid_list (MODULE_T *mod)
   get_mode_from_proc_var_declarations_tree (TOP_NODE (mod));
 /* Connect indicants to their declarers */
   for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-    if (WHETHER (z, INDICANT)) {
+    if (IS (z, INDICANT)) {
       NODE_T *u = NODE (z);
       ABEND (NEXT (u) == NO_NODE, "error in mode table", NO_TEXT);
       ABEND (NEXT_NEXT (u) == NO_NODE, "error in mode table", NO_TEXT);
@@ -7993,12 +8010,12 @@ void make_moid_list (MODULE_T *mod)
     USE (z) = A68_FALSE;
   }
   for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-    if (WHETHER (z, INDICANT) && EQUIVALENT (z) != NO_MOID) {
-      if (!whether_well_formed (z, EQUIVALENT (z), A68_FALSE, A68_FALSE, A68_TRUE)) {
+    if (IS (z, INDICANT) && EQUIVALENT (z) != NO_MOID) {
+      if (!is_well_formed (z, EQUIVALENT (z), A68_FALSE, A68_FALSE, A68_TRUE)) {
         diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
       }
     } else if (NODE (z) != NO_NODE) {
-      if (!whether_well_formed (NO_MOID, z, A68_FALSE, A68_FALSE, A68_TRUE)) {
+      if (!is_well_formed (NO_MOID, z, A68_FALSE, A68_FALSE, A68_TRUE)) {
         diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
       }
     }
@@ -8027,7 +8044,7 @@ void set_proc_level (NODE_T * p, int n)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     PROCEDURE_LEVEL (INFO (p)) = n;
-    if (WHETHER (p, ROUTINE_TEXT)) {
+    if (IS (p, ROUTINE_TEXT)) {
       set_proc_level (SUB (p), n + 1);
     } else {
       set_proc_level (SUB (p), n);
@@ -8045,19 +8062,19 @@ void set_nest (NODE_T * p, NODE_T * s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     NEST (p) = s;
-    if (WHETHER (p, PARTICULAR_PROGRAM)) {
+    if (IS (p, PARTICULAR_PROGRAM)) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CLOSED_CLAUSE) && LINE_NUMBER (p) != 0) {
+    } else if (IS (p, CLOSED_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, COLLATERAL_CLAUSE) && LINE_NUMBER (p) != 0) {
+    } else if (IS (p, COLLATERAL_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CONDITIONAL_CLAUSE) && LINE_NUMBER (p) != 0) {
+    } else if (IS (p, CONDITIONAL_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CASE_CLAUSE) && LINE_NUMBER (p) != 0) {
+    } else if (IS (p, CASE_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, CONFORMITY_CLAUSE) && LINE_NUMBER (p) != 0) {
+    } else if (IS (p, CONFORMITY_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
-    } else if (WHETHER (p, LOOP_CLAUSE) && LINE_NUMBER (p) != 0) {
+    } else if (IS (p, LOOP_CLAUSE) && LINE_NUMBER (p) != 0) {
       set_nest (SUB (p), p);
     } else {
       set_nest (SUB (p), s);
@@ -8130,13 +8147,13 @@ void portcheck (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     portcheck (SUB (p));
     if (OPTION_PORTCHECK (&program)) {
-      if (WHETHER (p, INDICANT) && MOID (p) != NO_MOID) {
+      if (IS (p, INDICANT) && MOID (p) != NO_MOID) {
         PORTCHECK_TAX (p, PORTABLE (MOID (p)));
         PORTABLE (MOID (p)) = A68_TRUE;
-      } else if (WHETHER (p, IDENTIFIER)) {
+      } else if (IS (p, IDENTIFIER)) {
         PORTCHECK_TAX (p, PORTABLE (TAX (p)));
         PORTABLE (TAX (p)) = A68_TRUE;
-      } else if (WHETHER (p, OPERATOR)) {
+      } else if (IS (p, OPERATOR)) {
         PORTCHECK_TAX (p, PORTABLE (TAX (p)));
         PORTABLE (TAX (p)) = A68_TRUE;
       }
@@ -8150,7 +8167,7 @@ void portcheck (NODE_T * p)
 \return same
 **/
 
-static BOOL_T whether_mappable_routine (char *z)
+static BOOL_T is_mappable_routine (char *z)
 {
 #define ACCEPT(u, v) {\
   if (strlen (u) >= strlen (v)) {\
@@ -8200,7 +8217,7 @@ static TAG_T *bind_lengthety_identifier (char *u)
 {
 #define CAR(u, v) (strncmp (u, v, strlen(v)) == 0)
 /*
-We can only map routines blessed by "whether_mappable_routine", so there is no
+We can only map routines blessed by "is_mappable_routine", so there is no
 "short print" or "long char in string".
 */
   if (CAR (u, "short")) {
@@ -8210,7 +8227,7 @@ We can only map routines blessed by "whether_mappable_routine", so there is no
       u = &u[strlen ("short")];
       v = TEXT (add_token (&top_token, u));
       w = find_tag_local (a68g_standenv, IDENTIFIER, v);
-      if (w != NO_TAG && whether_mappable_routine (v)) {
+      if (w != NO_TAG && is_mappable_routine (v)) {
         return (w);
       }
     } while (CAR (u, "short"));
@@ -8221,7 +8238,7 @@ We can only map routines blessed by "whether_mappable_routine", so there is no
       u = &u[strlen ("long")];
       v = TEXT (add_token (&top_token, u));
       w = find_tag_local (a68g_standenv, IDENTIFIER, v);
-      if (w != NO_TAG && whether_mappable_routine (v)) {
+      if (w != NO_TAG && is_mappable_routine (v)) {
         return (w);
       }
     } while (CAR (u, "long"));
@@ -8239,7 +8256,7 @@ static void bind_identifier_tag_to_symbol_table (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     bind_identifier_tag_to_symbol_table (SUB (p));
-    if (whether_one_of (p, IDENTIFIER, DEFINING_IDENTIFIER, STOP)) {
+    if (is_one_of (p, IDENTIFIER, DEFINING_IDENTIFIER, STOP)) {
       int att = first_tag_global (TABLE (p), NSYMBOL (p));
       TAG_T *z;
       if (att == STOP) {
@@ -8267,7 +8284,7 @@ static void bind_identifier_tag_to_symbol_table (NODE_T * p)
           MOID (p) = MODE (ERROR);
         }
         TAX (p) = z;
-        if (WHETHER (p, DEFINING_IDENTIFIER)) {
+        if (IS (p, DEFINING_IDENTIFIER)) {
           NODE (z) = p;
         }
       }
@@ -8284,12 +8301,12 @@ static void bind_indicant_tag_to_symbol_table (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     bind_indicant_tag_to_symbol_table (SUB (p));
-    if (whether_one_of (p, INDICANT, DEFINING_INDICANT, STOP)) {
+    if (is_one_of (p, INDICANT, DEFINING_INDICANT, STOP)) {
       TAG_T *z = find_tag_global (TABLE (p), INDICANT, NSYMBOL (p));
       if (z != NO_TAG) {
         MOID (p) = MOID (z);
         TAX (p) = z;
-        if (WHETHER (p, DEFINING_INDICANT)) {
+        if (IS (p, DEFINING_INDICANT)) {
           NODE (z) = p;
         }
       }
@@ -8306,7 +8323,7 @@ static void tax_specifiers (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_specifiers (SUB (p));
-    if (SUB (p) != NO_NODE && WHETHER (p, SPECIFIER)) {
+    if (SUB (p) != NO_NODE && IS (p, SPECIFIER)) {
       tax_specifier_list (SUB (p));
     }
   }
@@ -8320,14 +8337,14 @@ static void tax_specifiers (NODE_T * p)
 static void tax_specifier_list (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, OPEN_SYMBOL)) {
+    if (IS (p, OPEN_SYMBOL)) {
       tax_specifier_list (NEXT (p));
-    } else if (whether_one_of (p, CLOSE_SYMBOL, VOID_SYMBOL, STOP)) {
+    } else if (is_one_of (p, CLOSE_SYMBOL, VOID_SYMBOL, STOP)) {
       ;
-    } else if (WHETHER (p, IDENTIFIER)) {
+    } else if (IS (p, IDENTIFIER)) {
       TAG_T *z = add_tag (TABLE (p), IDENTIFIER, p, NO_MOID, SPECIFIER_IDENTIFIER);
       HEAP (z) = LOC_SYMBOL;
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       tax_specifiers (SUB (p));
       tax_specifier_list (NEXT (p));
 /* last identifier entry is identifier with this declarer */
@@ -8347,7 +8364,7 @@ static void tax_parameters (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
       tax_parameters (SUB (p));
-      if (WHETHER (p, PARAMETER_PACK)) {
+      if (IS (p, PARAMETER_PACK)) {
         tax_parameter_list (SUB (p));
       }
     }
@@ -8362,17 +8379,17 @@ static void tax_parameters (NODE_T * p)
 static void tax_parameter_list (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (whether_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
+    if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_parameter_list (NEXT (p));
-    } else if (WHETHER (p, CLOSE_SYMBOL)) {
+    } else if (IS (p, CLOSE_SYMBOL)) {
       ;
-    } else if (whether_one_of (p, PARAMETER_LIST, PARAMETER, STOP)) {
+    } else if (is_one_of (p, PARAMETER_LIST, PARAMETER, STOP)) {
       tax_parameter_list (NEXT (p));
       tax_parameter_list (SUB (p));
-    } else if (WHETHER (p, IDENTIFIER)) {
+    } else if (IS (p, IDENTIFIER)) {
 /* parameters are always local */
       HEAP (add_tag (TABLE (p), IDENTIFIER, p, NO_MOID, PARAMETER_IDENTIFIER)) = LOC_SYMBOL;
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       TAG_T *s;
       tax_parameter_list (NEXT (p));
 /* last identifier entries are identifiers with this declarer */
@@ -8393,7 +8410,7 @@ static void tax_for_identifiers (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_for_identifiers (SUB (p));
-    if (WHETHER (p, FOR_SYMBOL)) {
+    if (IS (p, FOR_SYMBOL)) {
       if ((FORWARD (p)) != NO_NODE) {
         (void) add_tag (TABLE (p), IDENTIFIER, p, MODE (INT), LOOP_IDENTIFIER);
       }
@@ -8410,7 +8427,7 @@ static void tax_routine_texts (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_routine_texts (SUB (p));
-    if (WHETHER (p, ROUTINE_TEXT)) {
+    if (IS (p, ROUTINE_TEXT)) {
       TAG_T *z = add_tag (TABLE (p), ANONYMOUS, p, MOID (p), ROUTINE_TEXT);
       TAX (p) = z;
       HEAP (z) = LOC_SYMBOL;
@@ -8428,11 +8445,11 @@ static void tax_format_texts (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_format_texts (SUB (p));
-    if (WHETHER (p, FORMAT_TEXT)) {
+    if (IS (p, FORMAT_TEXT)) {
       TAG_T *z = add_tag (TABLE (p), ANONYMOUS, p, MODE (FORMAT), FORMAT_TEXT);
       TAX (p) = z;
       USE (z) = A68_TRUE;
-    } else if (WHETHER (p, FORMAT_DELIMITER_SYMBOL) && NEXT (p) != NO_NODE) {
+    } else if (IS (p, FORMAT_DELIMITER_SYMBOL) && NEXT (p) != NO_NODE) {
       TAG_T *z = add_tag (TABLE (p), ANONYMOUS, p, MODE (FORMAT), FORMAT_IDENTIFIER);
       TAX (p) = z;
       USE (z) = A68_TRUE;
@@ -8449,7 +8466,7 @@ static void tax_pictures (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_pictures (SUB (p));
-    if (WHETHER (p, PICTURE)) {
+    if (IS (p, PICTURE)) {
       TAX (p) = add_tag (TABLE (p), ANONYMOUS, p, MODE (COLLITEM), FORMAT_IDENTIFIER);
     }
   }
@@ -8464,8 +8481,8 @@ static void tax_generators (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_generators (SUB (p));
-    if (WHETHER (p, GENERATOR)) {
-      if (WHETHER (SUB (p), LOC_SYMBOL)) {
+    if (IS (p, GENERATOR)) {
+      if (IS (SUB (p), LOC_SYMBOL)) {
         TAG_T *z = add_tag (TABLE (p), ANONYMOUS, p, SUB_MOID (SUB (p)), GENERATOR);
         HEAP (z) = LOC_SYMBOL;
         USE (z) = A68_TRUE;
@@ -8492,7 +8509,7 @@ static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T *
     for (; s != NO_TAG; FORWARD (s)) {
       if (s != self && NSYMBOL (NODE (s)) == n) {
         PACK_T *t = PACK (MOID (s));
-        if (t != NO_PACK && whether_firm (MOID (t), l)) {
+        if (t != NO_PACK && is_firm (MOID (t), l)) {
 /* catch monadic operator */
           if ((FORWARD (t)) == NO_PACK) {
             if (r == NO_MOID) {
@@ -8500,7 +8517,7 @@ static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T *
             }
           } else {
 /* catch dyadic operator */
-            if (r != NO_MOID && whether_firm (MOID (t), r)) {
+            if (r != NO_MOID && is_firm (MOID (t), r)) {
               return (s);
             }
           }
@@ -8546,7 +8563,7 @@ static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
 static void test_firmly_related_ops (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
+    if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
       TAG_T *oops = OPERATORS (TABLE (SUB (p)));
       if (oops != NO_TAG) {
         test_firmly_related_ops_local (NODE (oops), oops);
@@ -8732,7 +8749,7 @@ TAG_T *find_tag_global (TABLE_T * table, int a, char *name)
 \return attribute of tag
 **/
 
-int whether_identifier_or_label_global (TABLE_T * table, char *name)
+int is_identifier_or_label_global (TABLE_T * table, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s;
@@ -8746,7 +8763,7 @@ int whether_identifier_or_label_global (TABLE_T * table, char *name)
         return (LABEL);
       }
     }
-    return (whether_identifier_or_label_global (PREVIOUS (table), name));
+    return (is_identifier_or_label_global (PREVIOUS (table), name));
   } else {
     return (0);
   }
@@ -8795,9 +8812,9 @@ TAG_T *find_tag_local (TABLE_T * table, int a, char *name)
 static int tab_qualifier (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (whether_one_of (p, UNIT, ASSIGNATION, TERTIARY, SECONDARY, GENERATOR, STOP)) {
+    if (is_one_of (p, UNIT, ASSIGNATION, TERTIARY, SECONDARY, GENERATOR, STOP)) {
       return (tab_qualifier (SUB (p)));
-    } else if (whether_one_of (p, LOC_SYMBOL, HEAP_SYMBOL, NEW_SYMBOL, STOP)) {
+    } else if (is_one_of (p, LOC_SYMBOL, HEAP_SYMBOL, NEW_SYMBOL, STOP)) {
       return (ATTRIBUTE (p) == LOC_SYMBOL ? LOC_SYMBOL : HEAP_SYMBOL);
     } else {
       return (LOC_SYMBOL);
@@ -8816,16 +8833,16 @@ static int tab_qualifier (NODE_T * p)
 static void tax_identity_dec (NODE_T * p, MOID_T ** m)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, IDENTITY_DECLARATION)) {
+    if (IS (p, IDENTITY_DECLARATION)) {
       tax_identity_dec (SUB (p), m);
       tax_identity_dec (NEXT (p), m);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       tax_tags (SUB (p));
       *m = MOID (p);
       tax_identity_dec (NEXT (p), m);
-    } else if (WHETHER (p, COMMA_SYMBOL)) {
+    } else if (IS (p, COMMA_SYMBOL)) {
       tax_identity_dec (NEXT (p), m);
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
       TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       MOID (p) = *m;
       HEAP (entry) = LOC_SYMBOL;
@@ -8851,19 +8868,19 @@ static void tax_identity_dec (NODE_T * p, MOID_T ** m)
 static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, VARIABLE_DECLARATION)) {
+    if (IS (p, VARIABLE_DECLARATION)) {
       tax_variable_dec (SUB (p), q, m);
       tax_variable_dec (NEXT (p), q, m);
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       tax_tags (SUB (p));
       *m = MOID (p);
       tax_variable_dec (NEXT (p), q, m);
-    } else if (WHETHER (p, QUALIFIER)) {
+    } else if (IS (p, QUALIFIER)) {
       *q = ATTRIBUTE (SUB (p));
       tax_variable_dec (NEXT (p), q, m);
-    } else if (WHETHER (p, COMMA_SYMBOL)) {
+    } else if (IS (p, COMMA_SYMBOL)) {
       tax_variable_dec (NEXT (p), q, m);
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
       TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       MOID (p) = *m;
       TAX (p) = entry;
@@ -8893,15 +8910,15 @@ static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
 static void tax_proc_variable_dec (NODE_T * p, int *q)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, PROCEDURE_VARIABLE_DECLARATION)) {
+    if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       tax_proc_variable_dec (SUB (p), q);
       tax_proc_variable_dec (NEXT (p), q);
-    } else if (WHETHER (p, QUALIFIER)) {
+    } else if (IS (p, QUALIFIER)) {
       *q = ATTRIBUTE (SUB (p));
       tax_proc_variable_dec (NEXT (p), q);
-    } else if (whether_one_of (p, PROC_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, PROC_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_proc_variable_dec (NEXT (p), q);
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
       TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       TAX (p) = entry;
       HEAP (entry) = *q;
@@ -8929,12 +8946,12 @@ static void tax_proc_variable_dec (NODE_T * p, int *q)
 static void tax_proc_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, PROCEDURE_DECLARATION)) {
+    if (IS (p, PROCEDURE_DECLARATION)) {
       tax_proc_dec (SUB (p));
       tax_proc_dec (NEXT (p));
-    } else if (whether_one_of (p, PROC_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, PROC_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_proc_dec (NEXT (p));
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
       TAG_T *entry = find_tag_local (TABLE (p), IDENTIFIER, NSYMBOL (p));
       MOID_T *m = MOID (NEXT_NEXT (p));
       MOID (p) = m;
@@ -8982,18 +8999,18 @@ static void check_operator_dec (NODE_T * p)
 static void tax_op_dec (NODE_T * p, MOID_T ** m)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, OPERATOR_DECLARATION)) {
+    if (IS (p, OPERATOR_DECLARATION)) {
       tax_op_dec (SUB (p), m);
       tax_op_dec (NEXT (p), m);
-    } else if (WHETHER (p, OPERATOR_PLAN)) {
+    } else if (IS (p, OPERATOR_PLAN)) {
       tax_tags (SUB (p));
       *m = MOID (p);
       tax_op_dec (NEXT (p), m);
-    } else if (WHETHER (p, OP_SYMBOL)) {
+    } else if (IS (p, OP_SYMBOL)) {
       tax_op_dec (NEXT (p), m);
-    } else if (WHETHER (p, COMMA_SYMBOL)) {
+    } else if (IS (p, COMMA_SYMBOL)) {
       tax_op_dec (NEXT (p), m);
-    } else if (WHETHER (p, DEFINING_OPERATOR)) {
+    } else if (IS (p, DEFINING_OPERATOR)) {
       TAG_T *entry = OPERATORS (TABLE (p));
       check_operator_dec (p);
       while (entry != NO_TAG && NODE (entry) != p) {
@@ -9018,12 +9035,12 @@ static void tax_op_dec (NODE_T * p, MOID_T ** m)
 static void tax_brief_op_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, BRIEF_OPERATOR_DECLARATION)) {
+    if (IS (p, BRIEF_OPERATOR_DECLARATION)) {
       tax_brief_op_dec (SUB (p));
       tax_brief_op_dec (NEXT (p));
-    } else if (whether_one_of (p, OP_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OP_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_brief_op_dec (NEXT (p));
-    } else if (WHETHER (p, DEFINING_OPERATOR)) {
+    } else if (IS (p, DEFINING_OPERATOR)) {
       TAG_T *entry = OPERATORS (TABLE (p));
       MOID_T *m = MOID (NEXT_NEXT (p));
       check_operator_dec (p);
@@ -9049,12 +9066,12 @@ static void tax_brief_op_dec (NODE_T * p)
 static void tax_prio_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, PRIORITY_DECLARATION)) {
+    if (IS (p, PRIORITY_DECLARATION)) {
       tax_prio_dec (SUB (p));
       tax_prio_dec (NEXT (p));
-    } else if (whether_one_of (p, PRIO_SYMBOL, COMMA_SYMBOL, STOP)) {
+    } else if (is_one_of (p, PRIO_SYMBOL, COMMA_SYMBOL, STOP)) {
       tax_prio_dec (NEXT (p));
-    } else if (WHETHER (p, DEFINING_OPERATOR)) {
+    } else if (IS (p, DEFINING_OPERATOR)) {
       TAG_T *entry = PRIO (TABLE (p));
       while (entry != NO_TAG && NODE (entry) != p) {
         FORWARD (entry);
@@ -9079,19 +9096,19 @@ static void tax_tags (NODE_T * p)
   for (; p != NO_NODE; FORWARD (p)) {
     int heap = LOC_SYMBOL;
     MOID_T *m = NO_MOID;
-    if (WHETHER (p, IDENTITY_DECLARATION)) {
+    if (IS (p, IDENTITY_DECLARATION)) {
       tax_identity_dec (p, &m);
-    } else if (WHETHER (p, VARIABLE_DECLARATION)) {
+    } else if (IS (p, VARIABLE_DECLARATION)) {
       tax_variable_dec (p, &heap, &m);
-    } else if (WHETHER (p, PROCEDURE_DECLARATION)) {
+    } else if (IS (p, PROCEDURE_DECLARATION)) {
       tax_proc_dec (p);
-    } else if (WHETHER (p, PROCEDURE_VARIABLE_DECLARATION)) {
+    } else if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       tax_proc_variable_dec (p, &heap);
-    } else if (WHETHER (p, OPERATOR_DECLARATION)) {
+    } else if (IS (p, OPERATOR_DECLARATION)) {
       tax_op_dec (p, &m);
-    } else if (WHETHER (p, BRIEF_OPERATOR_DECLARATION)) {
+    } else if (IS (p, BRIEF_OPERATOR_DECLARATION)) {
       tax_brief_op_dec (p);
-    } else if (WHETHER (p, PRIORITY_DECLARATION)) {
+    } else if (IS (p, PRIORITY_DECLARATION)) {
       tax_prio_dec (p);
     } else {
       tax_tags (SUB (p));
@@ -9107,7 +9124,7 @@ static void tax_tags (NODE_T * p)
 void reset_symbol_table_nest_count (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
+    if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
       NEST (TABLE (SUB (p))) = symbol_table_count++;
     }
     reset_symbol_table_nest_count (SUB (p));
@@ -9123,7 +9140,7 @@ void bind_routine_tags_to_tree (NODE_T * p)
 {
 /* By inserting coercions etc. some may have shifted */
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, ROUTINE_TEXT) && TAX (p) != NO_TAG) {
+    if (IS (p, ROUTINE_TEXT) && TAX (p) != NO_TAG) {
       NODE (TAX (p)) = p;
     }
     bind_routine_tags_to_tree (SUB (p));
@@ -9139,9 +9156,9 @@ void bind_format_tags_to_tree (NODE_T * p)
 {
 /* By inserting coercions etc. some may have shifted */
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, FORMAT_TEXT) && TAX (p) != NO_TAG) {
+    if (IS (p, FORMAT_TEXT) && TAX (p) != NO_TAG) {
       NODE (TAX (p)) = p;
-    } else if (WHETHER (p, FORMAT_DELIMITER_SYMBOL) && NEXT (p) != NO_NODE && TAX (p) != NO_TAG) {
+    } else if (IS (p, FORMAT_DELIMITER_SYMBOL) && NEXT (p) != NO_NODE && TAX (p) != NO_TAG) {
       NODE (TAX (p)) = p;
     }
     bind_format_tags_to_tree (SUB (p));
@@ -9160,9 +9177,9 @@ void fill_symbol_table_outer (NODE_T * p, TABLE_T * s)
     if (TABLE (p) != NO_TABLE) {
       OUTER (TABLE (p)) = s;
     }
-    if (SUB (p) != NO_NODE && WHETHER (p, ROUTINE_TEXT)) {
+    if (SUB (p) != NO_NODE && IS (p, ROUTINE_TEXT)) {
       fill_symbol_table_outer (SUB (p), TABLE (SUB (p)));
-    } else if (SUB (p) != NO_NODE && WHETHER (p, FORMAT_TEXT)) {
+    } else if (SUB (p) != NO_NODE && IS (p, FORMAT_TEXT)) {
       fill_symbol_table_outer (SUB (p), TABLE (SUB (p)));
     } else {
       fill_symbol_table_outer (SUB (p), s);
@@ -9181,7 +9198,7 @@ static void flood_with_symbol_table_restricted (NODE_T * p, TABLE_T * s)
   for (; p != NO_NODE; FORWARD (p)) {
     TABLE (p) = s;
     if (ATTRIBUTE (p) != ROUTINE_TEXT && ATTRIBUTE (p) != SPECIFIED_UNIT) {
-      if (whether_new_lexical_level (p)) {
+      if (is_new_lexical_level (p)) {
         PREVIOUS (TABLE (SUB (p))) = s;
       } else {
         flood_with_symbol_table_restricted (SUB (p), s);
@@ -9202,26 +9219,26 @@ void finalise_symbol_table_setup (NODE_T * p, int l)
   NODE_T *q = p;
   while (q != NO_NODE) {
 /* routine texts are ranges */
-    if (WHETHER (q, ROUTINE_TEXT)) {
+    if (IS (q, ROUTINE_TEXT)) {
       flood_with_symbol_table_restricted (SUB (q), new_symbol_table (s));
     }
 /* specifiers are ranges */
-    else if (WHETHER (q, SPECIFIED_UNIT)) {
+    else if (IS (q, SPECIFIED_UNIT)) {
       flood_with_symbol_table_restricted (SUB (q), new_symbol_table (s));
     }
 /* level count and recursion */
     if (SUB (q) != NO_NODE) {
-      if (whether_new_lexical_level (q)) {
+      if (is_new_lexical_level (q)) {
         LEX_LEVEL (SUB (q)) = l + 1;
         PREVIOUS (TABLE (SUB (q))) = s;
         finalise_symbol_table_setup (SUB (q), l + 1);
-        if (WHETHER (q, WHILE_PART)) {
+        if (IS (q, WHILE_PART)) {
 /* This was a bug that went unnoticed for 15 years! */
           TABLE_T *s2 = TABLE (SUB (q));
           if ((FORWARD (q)) == NO_NODE) {
             return;
           }
-          if (WHETHER (q, ALT_DO_PART)) {
+          if (IS (q, ALT_DO_PART)) {
             PREVIOUS (TABLE (SUB (q))) = s2;
             LEX_LEVEL (SUB (q)) = l + 2;
             finalise_symbol_table_setup (SUB (q), l + 2);
@@ -9233,14 +9250,14 @@ void finalise_symbol_table_setup (NODE_T * p, int l)
       }
     }
     TABLE (q) = s;
-    if (WHETHER (q, FOR_SYMBOL)) {
+    if (IS (q, FOR_SYMBOL)) {
       FORWARD (q);
     }
     FORWARD (q);
   }
 /* FOR identifiers are in the DO ... OD range */
   for (q = p; q != NO_NODE; FORWARD (q)) {
-    if (WHETHER (q, FOR_SYMBOL)) {
+    if (IS (q, FOR_SYMBOL)) {
       TABLE (NEXT (q)) = TABLE (SEQUENCE (NEXT (q)));
     }
   }
@@ -9264,12 +9281,12 @@ void preliminary_symbol_table_setup (NODE_T * p)
   for (q = p; q != NO_NODE && !not_a_for_range; FORWARD (q)) {
     if (SUB (q) != NO_NODE) {
 /* BEGIN ... END, CODE ... EDOC, DEF ... FED, DO ... OD, $ ... $, { ... } are ranges */
-      if (whether_one_of (q, BEGIN_SYMBOL, DO_SYMBOL, ALT_DO_SYMBOL, FORMAT_DELIMITER_SYMBOL, ACCO_SYMBOL, STOP)) {
+      if (is_one_of (q, BEGIN_SYMBOL, DO_SYMBOL, ALT_DO_SYMBOL, FORMAT_DELIMITER_SYMBOL, ACCO_SYMBOL, STOP)) {
         TABLE (SUB (q)) = new_symbol_table (s);
         preliminary_symbol_table_setup (SUB (q));
       }
 /* ( ... ) is a range */
-      else if (WHETHER (q, OPEN_SYMBOL)) {
+      else if (IS (q, OPEN_SYMBOL)) {
         if (whether (q, OPEN_SYMBOL, THEN_BAR_SYMBOL, STOP)) {
           TABLE (SUB (q)) = s;
           preliminary_symbol_table_setup (SUB (q));
@@ -9279,11 +9296,11 @@ void preliminary_symbol_table_setup (NODE_T * p)
           if ((FORWARD (q)) == NO_NODE) {
             not_a_for_range = A68_TRUE;
           } else {
-            if (WHETHER (q, THEN_BAR_SYMBOL)) {
+            if (IS (q, THEN_BAR_SYMBOL)) {
               TABLE (SUB (q)) = new_symbol_table (s);
               preliminary_symbol_table_setup (SUB (q));
             }
-            if (WHETHER (q, OPEN_SYMBOL)) {
+            if (IS (q, OPEN_SYMBOL)) {
               TABLE (SUB (q)) = new_symbol_table (s);
               preliminary_symbol_table_setup (SUB (q));
             }
@@ -9295,7 +9312,7 @@ void preliminary_symbol_table_setup (NODE_T * p)
         }
       }
 /* IF ... THEN ... ELSE ... FI are ranges */
-      else if (WHETHER (q, IF_SYMBOL)) {
+      else if (IS (q, IF_SYMBOL)) {
         if (whether (q, IF_SYMBOL, THEN_SYMBOL, STOP)) {
           TABLE (SUB (q)) = s;
           preliminary_symbol_table_setup (SUB (q));
@@ -9305,11 +9322,11 @@ void preliminary_symbol_table_setup (NODE_T * p)
           if ((FORWARD (q)) == NO_NODE) {
             not_a_for_range = A68_TRUE;
           } else {
-            if (WHETHER (q, ELSE_SYMBOL)) {
+            if (IS (q, ELSE_SYMBOL)) {
               TABLE (SUB (q)) = new_symbol_table (s);
               preliminary_symbol_table_setup (SUB (q));
             }
-            if (WHETHER (q, IF_SYMBOL)) {
+            if (IS (q, IF_SYMBOL)) {
               TABLE (SUB (q)) = new_symbol_table (s);
               preliminary_symbol_table_setup (SUB (q));
             }
@@ -9320,7 +9337,7 @@ void preliminary_symbol_table_setup (NODE_T * p)
         }
       }
 /* CASE ... IN ... OUT ... ESAC are ranges */
-      else if (WHETHER (q, CASE_SYMBOL)) {
+      else if (IS (q, CASE_SYMBOL)) {
         if (whether (q, CASE_SYMBOL, IN_SYMBOL, STOP)) {
           TABLE (SUB (q)) = s;
           preliminary_symbol_table_setup (SUB (q));
@@ -9330,11 +9347,11 @@ void preliminary_symbol_table_setup (NODE_T * p)
           if ((FORWARD (q)) == NO_NODE) {
             not_a_for_range = A68_TRUE;
           } else {
-            if (WHETHER (q, OUT_SYMBOL)) {
+            if (IS (q, OUT_SYMBOL)) {
               TABLE (SUB (q)) = new_symbol_table (s);
               preliminary_symbol_table_setup (SUB (q));
             }
-            if (WHETHER (q, CASE_SYMBOL)) {
+            if (IS (q, CASE_SYMBOL)) {
               TABLE (SUB (q)) = new_symbol_table (s);
               preliminary_symbol_table_setup (SUB (q));
             }
@@ -9345,17 +9362,17 @@ void preliminary_symbol_table_setup (NODE_T * p)
         }
       }
 /* UNTIL ... OD is a range */
-      else if (WHETHER (q, UNTIL_SYMBOL) && SUB (q) != NO_NODE) {
+      else if (IS (q, UNTIL_SYMBOL) && SUB (q) != NO_NODE) {
         TABLE (SUB (q)) = new_symbol_table (s);
         preliminary_symbol_table_setup (SUB (q));
 /* WHILE ... DO ... OD are ranges */
-      } else if (WHETHER (q, WHILE_SYMBOL)) {
+      } else if (IS (q, WHILE_SYMBOL)) {
         TABLE_T *u = new_symbol_table (s);
         TABLE (SUB (q)) = u;
         preliminary_symbol_table_setup (SUB (q));
         if ((FORWARD (q)) == NO_NODE) {
           not_a_for_range = A68_TRUE;
-        } else if (WHETHER (q, ALT_DO_SYMBOL)) {
+        } else if (IS (q, ALT_DO_SYMBOL)) {
           TABLE (SUB (q)) = new_symbol_table (u);
           preliminary_symbol_table_setup (SUB (q));
         }
@@ -9368,11 +9385,11 @@ void preliminary_symbol_table_setup (NODE_T * p)
 /* FOR identifiers will go to the DO ... OD range */
   if (!not_a_for_range) {
     for (q = p; q != NO_NODE; FORWARD (q)) {
-      if (WHETHER (q, FOR_SYMBOL)) {
+      if (IS (q, FOR_SYMBOL)) {
         NODE_T *r = q;
         TABLE (NEXT (q)) = NO_TABLE;
         for (; r != NO_NODE && TABLE (NEXT (q)) == NO_TABLE; FORWARD (r)) {
-          if ((whether_one_of (r, WHILE_SYMBOL, ALT_DO_SYMBOL, STOP)) && (NEXT (q) != NO_NODE && SUB (r) != NO_NODE)) {
+          if ((is_one_of (r, WHILE_SYMBOL, ALT_DO_SYMBOL, STOP)) && (NEXT (q) != NO_NODE && SUB (r) != NO_NODE)) {
             TABLE (NEXT (q)) = TABLE (SUB (r));
             SEQUENCE (NEXT (q)) = SUB (r);
           }
@@ -9430,7 +9447,7 @@ parameters that you may not use at all - think of PROC (REF FILE) BOOL event
 routines in transput.
 */
       mark_auxilliary (SUB (p));
-    } else if (WHETHER (p, OPERATOR)) {
+    } else if (IS (p, OPERATOR)) {
       TAG_T *z;
       if (TAX (p) != NO_TAG) {
         USE (TAX (p)) = A68_TRUE;
@@ -9438,13 +9455,13 @@ routines in transput.
       if ((z = find_tag_global (TABLE (p), PRIO_SYMBOL, NSYMBOL (p))) != NO_TAG) {
         USE (z) = A68_TRUE;
       }
-    } else if (WHETHER (p, INDICANT)) {
+    } else if (IS (p, INDICANT)) {
       TAG_T *z = find_tag_global (TABLE (p), INDICANT, NSYMBOL (p));
       if (z != NO_TAG) {
         TAX (p) = z;
         USE (z) = A68_TRUE;
       }
-    } else if (WHETHER (p, IDENTIFIER)) {
+    } else if (IS (p, IDENTIFIER)) {
       if (TAX (p) != NO_TAG) {
         USE (TAX (p)) = A68_TRUE;
       }
@@ -9475,7 +9492,7 @@ void warn_for_unused_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
-      if (whether_new_lexical_level (p) && ATTRIBUTE (TABLE (SUB (p))) != ENVIRON_SYMBOL) {
+      if (is_new_lexical_level (p) && ATTRIBUTE (TABLE (SUB (p))) != ENVIRON_SYMBOL) {
         unused (OPERATORS (TABLE (SUB (p))));
         unused (PRIO (TABLE (SUB (p))));
         unused (IDENTIFIERS (TABLE (SUB (p))));
@@ -9496,7 +9513,7 @@ void warn_tags_threads (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     warn_tags_threads (SUB (p));
-    if (whether_one_of (p, IDENTIFIER, OPERATOR, STOP)) {
+    if (is_one_of (p, IDENTIFIER, OPERATOR, STOP)) {
       if (TAX (p) != NO_TAG) {
         int plev_def = PAR_LEVEL (NODE (TAX (p))), plev_app = PAR_LEVEL (p);
         if (plev_def != 0 && plev_def != plev_app) {
@@ -9515,15 +9532,15 @@ void warn_tags_threads (NODE_T * p)
 void jumps_from_procs (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, PROCEDURING)) {
+    if (IS (p, PROCEDURING)) {
       NODE_T *u = SUB_SUB (p);
-      if (WHETHER (u, GOTO_SYMBOL)) {
+      if (IS (u, GOTO_SYMBOL)) {
         FORWARD (u);
       }
       USE (TAX (u)) = A68_TRUE;
-    } else if (WHETHER (p, JUMP)) {
+    } else if (IS (p, JUMP)) {
       NODE_T *u = SUB (p);
-      if (WHETHER (u, GOTO_SYMBOL)) {
+      if (IS (u, GOTO_SYMBOL)) {
         FORWARD (u);
       }
       if ((TAX (u) == NO_TAG) && (MOID (u) == NO_MOID) && (find_tag_global (TABLE (u), LABEL, NSYMBOL (u)) == NO_TAG)) {
@@ -9580,7 +9597,7 @@ void assign_offsets_table (TABLE_T * c)
 void assign_offsets (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (SUB (p) != NO_NODE && whether_new_lexical_level (p)) {
+    if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
       assign_offsets_table (TABLE (SUB (p)));
     }
     assign_offsets (SUB (p));
@@ -9595,7 +9612,7 @@ void assign_offsets (NODE_T * p)
 void assign_offsets_packs (MOID_T * q)
 {
   for (; q != NO_MOID; FORWARD (q)) {
-    if (EQUIVALENT (q) == NO_MOID && WHETHER (q, STRUCT_SYMBOL)) {
+    if (EQUIVALENT (q) == NO_MOID && IS (q, STRUCT_SYMBOL)) {
       PACK_T *p = PACK (q);
       ADDR_T offset = 0;
       for (; p != NO_PACK; FORWARD (p)) {
@@ -9629,16 +9646,16 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
   if (depth == 1) {
     txt[0] = NULL_CHAR;
   }
-  if (WHETHER (p, SERIES_MODE)) {
+  if (IS (p, SERIES_MODE)) {
     PACK_T *u = PACK (p);
     if (u == NO_PACK) {
       ASSERT (snprintf (txt, SNPRINTF_SIZE, "empty mode-list") >= 0);
     } else {
       for (; u != NO_PACK; FORWARD (u)) {
         if (MOID (u) != NO_MOID) {
-          if (WHETHER (MOID (u), SERIES_MODE)) {
+          if (IS (MOID (u), SERIES_MODE)) {
             (void) mode_error_text (n, MOID (u), q, context, deflex, depth + 1);
-          } else if (!whether_coercible (MOID (u), q, context, deflex)) {
+          } else if (!is_coercible (MOID (u), q, context, deflex)) {
             int len = (int) strlen (txt);
             if (len > BUFFER_SIZE / 2) {
               ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " etcetera") >= 0);
@@ -9655,13 +9672,13 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
     if (depth == 1) {
       ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " cannot be coerced to %s", moid_to_string (q, MOID_ERROR_WIDTH, n)) >= 0);
     }
-  } else if (WHETHER (p, STOWED_MODE) && WHETHER (q, FLEX_SYMBOL)) {
+  } else if (IS (p, STOWED_MODE) && IS (q, FLEX_SYMBOL)) {
     PACK_T *u = PACK (p);
     if (u == NO_PACK) {
       ASSERT (snprintf (txt, SNPRINTF_SIZE, "empty mode-list") >= 0);
     } else {
       for (; u != NO_PACK; FORWARD (u)) {
-        if (!whether_coercible (MOID (u), SLICE (SUB (q)), context, deflex)) {
+        if (!is_coercible (MOID (u), SLICE (SUB (q)), context, deflex)) {
           int len = (int) strlen (txt);
           if (len > BUFFER_SIZE / 2) {
             ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " etcetera") >= 0);
@@ -9675,13 +9692,13 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
       }
       ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " cannot be coerced to %s", moid_to_string (SLICE (SUB (q)), MOID_ERROR_WIDTH, n)) >= 0);
     }
-  } else if (WHETHER (p, STOWED_MODE) && WHETHER (q, ROW_SYMBOL)) {
+  } else if (IS (p, STOWED_MODE) && IS (q, ROW_SYMBOL)) {
     PACK_T *u = PACK (p);
     if (u == NO_PACK) {
       ASSERT (snprintf (txt, SNPRINTF_SIZE, "empty mode-list") >= 0);
     } else {
       for (; u != NO_PACK; FORWARD (u)) {
-        if (!whether_coercible (MOID (u), SLICE (q), context, deflex)) {
+        if (!is_coercible (MOID (u), SLICE (q), context, deflex)) {
           int len = (int) strlen (txt);
           if (len > BUFFER_SIZE / 2) {
             ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " etcetera") >= 0);
@@ -9695,13 +9712,13 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
       }
       ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " cannot be coerced to %s", moid_to_string (SLICE (q), MOID_ERROR_WIDTH, n)) >= 0);
     }
-  } else if (WHETHER (p, STOWED_MODE) && (WHETHER (q, PROC_SYMBOL) || WHETHER (q, STRUCT_SYMBOL))) {
+  } else if (IS (p, STOWED_MODE) && (IS (q, PROC_SYMBOL) || IS (q, STRUCT_SYMBOL))) {
     PACK_T *u = PACK (p), *v = PACK (q);
     if (u == NO_PACK) {
       ASSERT (snprintf (txt, SNPRINTF_SIZE, "empty mode-list") >= 0);
     } else {
       for (; u != NO_PACK && v != NO_PACK; FORWARD (u), FORWARD (v)) {
-        if (!whether_coercible (MOID (u), MOID (v), context, deflex)) {
+        if (!is_coercible (MOID (u), MOID (v), context, deflex)) {
           int len = (int) strlen (txt);
           if (len > BUFFER_SIZE / 2) {
             ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " etcetera") >= 0);
@@ -9770,7 +9787,7 @@ static void make_soid (SOID_T * s, int sort, MOID_T * type, int attribute)
 
 void mode_checker (NODE_T * p)
 {
-  if (WHETHER (p, PARTICULAR_PROGRAM)) {
+  if (IS (p, PARTICULAR_PROGRAM)) {
     SOID_T x, y;
     top_soid_list = NO_SOID;
     make_soid (&x, STRONG, MODE (VOID), 0);
@@ -9786,7 +9803,7 @@ void mode_checker (NODE_T * p)
 
 void coercion_inserter (NODE_T * p)
 {
-  if (WHETHER (p, PARTICULAR_PROGRAM)) {
+  if (IS (p, PARTICULAR_PROGRAM)) {
     SOID_T q;
     make_soid (&q, STRONG, MODE (VOID), 0);
     coerce_enclosed (SUB (p), &q);
@@ -9799,16 +9816,16 @@ void coercion_inserter (NODE_T * p)
 \return same
 **/
 
-static BOOL_T whether_mode_isnt_well (MOID_T * p)
+static BOOL_T is_mode_isnt_well (MOID_T * p)
 {
   if (p == NO_MOID) {
     return (A68_TRUE);
-  } else if (!WHETHER_MODE_IS_WELL (p)) {
+  } else if (!IF_MODE_IS_WELL (p)) {
     return (A68_TRUE);
   } else if (PACK (p) != NO_PACK) {
     PACK_T *q = PACK (p);
     for (; q != NO_PACK; FORWARD (q)) {
-      if (!WHETHER_MODE_IS_WELL (MOID (q))) {
+      if (!IF_MODE_IS_WELL (MOID (q))) {
         return (A68_TRUE);
       }
     }
@@ -9901,18 +9918,18 @@ static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
 \return same
 **/
 
-static BOOL_T whether_equal_modes (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T is_equal_modes (MOID_T * p, MOID_T * q, int deflex)
 {
   if (deflex == FORCE_DEFLEXING) {
     return (DEFLEX (p) == DEFLEX (q));
   } else if (deflex == ALIAS_DEFLEXING) {
-    if (WHETHER (p, REF_SYMBOL) && WHETHER (q, REF_SYMBOL)) {
+    if (IS (p, REF_SYMBOL) && IS (q, REF_SYMBOL)) {
       return (p == q || DEFLEX (p) == q);
-    } else if (WHETHER_NOT (p, REF_SYMBOL) && WHETHER_NOT (q, REF_SYMBOL)) {
+    } else if (ISNT (p, REF_SYMBOL) && ISNT (q, REF_SYMBOL)) {
       return (DEFLEX (p) == DEFLEX (q));
     }
   } else if (deflex == SAFE_DEFLEXING) {
-    if (WHETHER_NOT (p, REF_SYMBOL) && WHETHER_NOT (q, REF_SYMBOL)) {
+    if (ISNT (p, REF_SYMBOL) && ISNT (q, REF_SYMBOL)) {
       return (DEFLEX (p) == DEFLEX (q));
     }
   }
@@ -9925,12 +9942,12 @@ static BOOL_T whether_equal_modes (MOID_T * p, MOID_T * q, int deflex)
 \return same
 **/
 
-BOOL_T whether_deprefable (MOID_T * p)
+BOOL_T is_deprefable (MOID_T * p)
 {
-  if (WHETHER (p, REF_SYMBOL)) {
+  if (IS (p, REF_SYMBOL)) {
     return (A68_TRUE);
   } else {
-    return ((BOOL_T) (WHETHER (p, PROC_SYMBOL) && PACK (p) == NO_PACK));
+    return ((BOOL_T) (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK));
   }
 }
 
@@ -9942,11 +9959,11 @@ BOOL_T whether_deprefable (MOID_T * p)
 
 static MOID_T *depref_once (MOID_T * p)
 {
-  if (WHETHER (p, REF_SYMBOL) && WHETHER (SUB (p), FLEX_SYMBOL)) {
+  if (IS_REF_FLEX (p)) {
     return (SUB_SUB (p));
-  } else if (WHETHER (p, REF_SYMBOL)) {
+  } else if (IS (p, REF_SYMBOL)) {
     return (SUB (p));
-  } else if (WHETHER (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
+  } else if (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     return (SUB (p));
   } else {
     return (NO_MOID);
@@ -9961,7 +9978,7 @@ static MOID_T *depref_once (MOID_T * p)
 
 MOID_T *depref_completely (MOID_T * p)
 {
-  while (whether_deprefable (p)) {
+  while (is_deprefable (p)) {
     p = depref_once (p);
   }
   return (p);
@@ -9975,7 +9992,7 @@ MOID_T *depref_completely (MOID_T * p)
 
 static MOID_T *deproc_completely (MOID_T * p)
 {
-  while (WHETHER (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
+  while (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     p = depref_once (p);
   }
   return (p);
@@ -9991,7 +10008,7 @@ static MOID_T *deproc_completely (MOID_T * p)
 static MOID_T *depref_rows (MOID_T * p, MOID_T * q)
 {
   if (q == MODE (ROWS)) {
-    while (whether_deprefable (p)) {
+    while (is_deprefable (p)) {
       p = depref_once (p);
     }
     return (p);
@@ -10008,7 +10025,7 @@ static MOID_T *depref_rows (MOID_T * p, MOID_T * q)
 
 static MOID_T *derow (MOID_T * p)
 {
-  if (WHETHER (p, ROW_SYMBOL) || WHETHER (p, FLEX_SYMBOL)) {
+  if (IS (p, ROW_SYMBOL) || IS (p, FLEX_SYMBOL)) {
     return (derow (SUB (p)));
   } else {
     return (p);
@@ -10021,7 +10038,7 @@ static MOID_T *derow (MOID_T * p)
 \return same
 **/
 
-static BOOL_T whether_rows_type (MOID_T * p)
+static BOOL_T is_rows_type (MOID_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case ROW_SYMBOL:
@@ -10034,7 +10051,7 @@ static BOOL_T whether_rows_type (MOID_T * p)
       PACK_T *t = PACK (p);
       BOOL_T go_on = A68_TRUE;
       while (t != NO_PACK && go_on) {
-        go_on &= whether_rows_type (MOID (t));
+        go_on &= is_rows_type (MOID (t));
         FORWARD (t);
       }
       return (go_on);
@@ -10052,7 +10069,7 @@ static BOOL_T whether_rows_type (MOID_T * p)
 \return same
 **/
 
-static BOOL_T whether_proc_ref_file_void_or_format (MOID_T * p)
+static BOOL_T is_proc_ref_file_void_or_format (MOID_T * p)
 {
   if (p == MODE (PROC_REF_FILE_VOID)) {
     return (A68_TRUE);
@@ -10069,7 +10086,7 @@ static BOOL_T whether_proc_ref_file_void_or_format (MOID_T * p)
 \return same
 **/
 
-static BOOL_T whether_transput_mode (MOID_T * p, char rw)
+static BOOL_T is_transput_mode (MOID_T * p, char rw)
 {
   if (p == MODE (INT)) {
     return (A68_TRUE);
@@ -10105,21 +10122,21 @@ static BOOL_T whether_transput_mode (MOID_T * p, char rw)
     return (A68_TRUE);
   } else if (p == MODE (SOUND)) {
     return (A68_TRUE);
-  } else if (WHETHER (p, UNION_SYMBOL) || WHETHER (p, STRUCT_SYMBOL)) {
+  } else if (IS (p, UNION_SYMBOL) || IS (p, STRUCT_SYMBOL)) {
     PACK_T *q = PACK (p);
     BOOL_T k = A68_TRUE;
     for (; q != NO_PACK && k; FORWARD (q)) {
-      k = (BOOL_T) (k & (whether_transput_mode (MOID (q), rw) || whether_proc_ref_file_void_or_format (MOID (q))));
+      k = (BOOL_T) (k & (is_transput_mode (MOID (q), rw) || is_proc_ref_file_void_or_format (MOID (q))));
     }
     return (k);
-  } else if (WHETHER (p, FLEX_SYMBOL)) {
+  } else if (IS (p, FLEX_SYMBOL)) {
     if (SUB (p) == MODE (ROW_CHAR)) {
       return (A68_TRUE);
     } else {
-      return ((BOOL_T) (rw == 'w' ? whether_transput_mode (SUB (p), rw) : A68_FALSE));
+      return ((BOOL_T) (rw == 'w' ? is_transput_mode (SUB (p), rw) : A68_FALSE));
     }
-  } else if (WHETHER (p, ROW_SYMBOL)) {
-    return ((BOOL_T) (whether_transput_mode (SUB (p), rw) || whether_proc_ref_file_void_or_format (SUB (p))));
+  } else if (IS (p, ROW_SYMBOL)) {
+    return ((BOOL_T) (is_transput_mode (SUB (p), rw) || is_proc_ref_file_void_or_format (SUB (p))));
   } else {
     return (A68_FALSE);
   }
@@ -10131,12 +10148,12 @@ static BOOL_T whether_transput_mode (MOID_T * p, char rw)
 \return same
 **/
 
-static BOOL_T whether_printable_mode (MOID_T * p)
+static BOOL_T is_printable_mode (MOID_T * p)
 {
-  if (whether_proc_ref_file_void_or_format (p)) {
+  if (is_proc_ref_file_void_or_format (p)) {
     return (A68_TRUE);
   } else {
-    return (whether_transput_mode (p, 'w'));
+    return (is_transput_mode (p, 'w'));
   }
 }
 
@@ -10146,12 +10163,12 @@ static BOOL_T whether_printable_mode (MOID_T * p)
 \return same
 **/
 
-static BOOL_T whether_readable_mode (MOID_T * p)
+static BOOL_T is_readable_mode (MOID_T * p)
 {
-  if (whether_proc_ref_file_void_or_format (p)) {
+  if (is_proc_ref_file_void_or_format (p)) {
     return (A68_TRUE);
   } else {
-    return ((BOOL_T) (WHETHER (p, REF_SYMBOL) ? whether_transput_mode (SUB (p), 'r') : A68_FALSE));
+    return ((BOOL_T) (IS (p, REF_SYMBOL) ? is_transput_mode (SUB (p), 'r') : A68_FALSE));
   }
 }
 
@@ -10161,9 +10178,9 @@ static BOOL_T whether_readable_mode (MOID_T * p)
 \return same
 **/
 
-static BOOL_T whether_name_struct (MOID_T * p)
+static BOOL_T is_name_struct (MOID_T * p)
 {
-  return ((BOOL_T) (NAME (p) != NO_MOID ? WHETHER (DEFLEX (SUB (p)), STRUCT_SYMBOL) : A68_FALSE));
+  return ((BOOL_T) (NAME (p) != NO_MOID ? IS (DEFLEX (SUB (p)), STRUCT_SYMBOL) : A68_FALSE));
 }
 
 /*!
@@ -10200,10 +10217,10 @@ MOID_T *unites_to (MOID_T * m, MOID_T * u)
 \return same
 **/
 
-static BOOL_T whether_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
+static BOOL_T is_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
 {
   for (; v != NO_PACK; FORWARD (v)) {
-    if (whether_equal_modes (u, MOID (v), deflex)) {
+    if (is_equal_modes (u, MOID (v), deflex)) {
       return (A68_TRUE);
     }
   }
@@ -10218,12 +10235,12 @@ static BOOL_T whether_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
 \return same
 **/
 
-BOOL_T whether_subset (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_subset (MOID_T * p, MOID_T * q, int deflex)
 {
   PACK_T *u = PACK (p);
   BOOL_T j = A68_TRUE;
   for (; u != NO_PACK && j; FORWARD (u)) {
-    j = (BOOL_T) (j && whether_moid_in_pack (MOID (u), PACK (q), deflex));
+    j = (BOOL_T) (j && is_moid_in_pack (MOID (u), PACK (q), deflex));
   }
   return (j);
 }
@@ -10236,13 +10253,13 @@ BOOL_T whether_subset (MOID_T * p, MOID_T * q, int deflex)
 \return same
 **/
 
-BOOL_T whether_unitable (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_unitable (MOID_T * p, MOID_T * q, int deflex)
 {
-  if (WHETHER (q, UNION_SYMBOL)) {
-    if (WHETHER (p, UNION_SYMBOL)) {
-      return (whether_subset (p, q, deflex));
+  if (IS (q, UNION_SYMBOL)) {
+    if (IS (p, UNION_SYMBOL)) {
+      return (is_subset (p, q, deflex));
     } else {
-      return (whether_moid_in_pack (p, PACK (q), deflex));
+      return (is_moid_in_pack (p, PACK (q), deflex));
     }
   }
   return (A68_FALSE);
@@ -10264,7 +10281,7 @@ static void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BO
     PACK_T *w;
     BOOL_T k = A68_FALSE;
     for (w = u; w != NO_PACK; FORWARD (w)) {
-      k |= whether_coercible (MOID (w), MOID (v), FIRM, FORCE_DEFLEXING);
+      k |= is_coercible (MOID (w), MOID (v), FIRM, FORCE_DEFLEXING);
     }
     *some |= k;
     *all &= k;
@@ -10279,12 +10296,12 @@ static void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BO
 \return same
 **/
 
-static BOOL_T whether_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
-  if (whether_equal_modes (p, q, deflex)) {
+  if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
-  } else if (WHETHER (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
-    return (whether_softly_coercible (SUB (p), q, deflex));
+  } else if (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
+    return (is_softly_coercible (SUB (p), q, deflex));
   } else {
     return (A68_FALSE);
   }
@@ -10298,12 +10315,12 @@ static BOOL_T whether_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
 \return same
 **/
 
-static BOOL_T whether_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
-  if (whether_equal_modes (p, q, deflex)) {
+  if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
-  } else if (whether_deprefable (p)) {
-    return (whether_weakly_coercible (depref_once (p), q, deflex));
+  } else if (is_deprefable (p)) {
+    return (is_weakly_coercible (depref_once (p), q, deflex));
   } else {
     return (A68_FALSE);
   }
@@ -10317,12 +10334,12 @@ static BOOL_T whether_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
 \return same
 **/
 
-static BOOL_T whether_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
-  if (whether_equal_modes (p, q, deflex)) {
+  if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
-  } else if (whether_deprefable (p)) {
-    return (whether_meekly_coercible (depref_once (p), q, deflex));
+  } else if (is_deprefable (p)) {
+    return (is_meekly_coercible (depref_once (p), q, deflex));
   } else {
     return (A68_FALSE);
   }
@@ -10336,16 +10353,16 @@ static BOOL_T whether_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
 \return same
 **/
 
-static BOOL_T whether_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T is_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
-  if (whether_equal_modes (p, q, deflex)) {
+  if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
-  } else if (q == MODE (ROWS) && whether_rows_type (p)) {
+  } else if (q == MODE (ROWS) && is_rows_type (p)) {
     return (A68_TRUE);
-  } else if (whether_unitable (p, q, deflex)) {
+  } else if (is_unitable (p, q, deflex)) {
     return (A68_TRUE);
-  } else if (whether_deprefable (p)) {
-    return (whether_firmly_coercible (depref_once (p), q, deflex));
+  } else if (is_deprefable (p)) {
+    return (is_firmly_coercible (depref_once (p), q, deflex));
   } else {
     return (A68_FALSE);
   }
@@ -10454,11 +10471,11 @@ static MOID_T *widens_to (MOID_T * p, MOID_T * q)
 \return same
 **/
 
-static BOOL_T whether_widenable (MOID_T * p, MOID_T * q)
+static BOOL_T is_widenable (MOID_T * p, MOID_T * q)
 {
   MOID_T *z = widens_to (p, q);
   if (z != NO_MOID) {
-    return ((BOOL_T) (z == q ? A68_TRUE : whether_widenable (z, q)));
+    return ((BOOL_T) (z == q ? A68_TRUE : is_widenable (z, q)));
   } else {
     return (A68_FALSE);
   }
@@ -10470,9 +10487,9 @@ static BOOL_T whether_widenable (MOID_T * p, MOID_T * q)
 \return same
 **/
 
-static BOOL_T whether_ref_row (MOID_T * p)
+static BOOL_T is_ref_row (MOID_T * p)
 {
-  return ((BOOL_T) (NAME (p) != NO_MOID ? WHETHER (DEFLEX (SUB (p)), ROW_SYMBOL) : A68_FALSE));
+  return ((BOOL_T) (NAME (p) != NO_MOID ? IS (DEFLEX (SUB (p)), ROW_SYMBOL) : A68_FALSE));
 }
 
 /*!
@@ -10482,12 +10499,12 @@ static BOOL_T whether_ref_row (MOID_T * p)
 \return same
 **/
 
-static BOOL_T whether_strong_name (MOID_T * p, MOID_T * q)
+static BOOL_T is_strong_name (MOID_T * p, MOID_T * q)
 {
   if (p == q) {
     return (A68_TRUE);
-  } else if (whether_ref_row (q)) {
-    return (whether_strong_name (p, NAME (q)));
+  } else if (is_ref_row (q)) {
+    return (is_strong_name (p, NAME (q)));
   } else {
     return (A68_FALSE);
   }
@@ -10500,16 +10517,16 @@ static BOOL_T whether_strong_name (MOID_T * p, MOID_T * q)
 \return same
 **/
 
-static BOOL_T whether_strong_slice (MOID_T * p, MOID_T * q)
+static BOOL_T is_strong_slice (MOID_T * p, MOID_T * q)
 {
-  if (p == q || whether_widenable (p, q)) {
+  if (p == q || is_widenable (p, q)) {
     return (A68_TRUE);
   } else if (SLICE (q) != NO_MOID) {
-    return (whether_strong_slice (p, SLICE (q)));
-  } else if (WHETHER (q, FLEX_SYMBOL)) {
-    return (whether_strong_slice (p, SUB (q)));
-  } else if (whether_ref_row (q)) {
-    return (whether_strong_name (p, q));
+    return (is_strong_slice (p, SLICE (q)));
+  } else if (IS (q, FLEX_SYMBOL)) {
+    return (is_strong_slice (p, SUB (q)));
+  } else if (is_ref_row (q)) {
+    return (is_strong_name (p, q));
   } else {
     return (A68_FALSE);
   }
@@ -10523,32 +10540,32 @@ static BOOL_T whether_strong_slice (MOID_T * p, MOID_T * q)
 \return same
 **/
 
-static BOOL_T whether_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
 /* Keep this sequence of statements */
-  if (whether_equal_modes (p, q, deflex)) {
+  if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
   } else if (q == MODE (VOID)) {
     return (A68_TRUE);
-  } else if ((q == MODE (SIMPLIN) || q == MODE (ROW_SIMPLIN)) && whether_readable_mode (p)) {
+  } else if ((q == MODE (SIMPLIN) || q == MODE (ROW_SIMPLIN)) && is_readable_mode (p)) {
     return (A68_TRUE);
-  } else if (q == MODE (ROWS) && whether_rows_type (p)) {
+  } else if (q == MODE (ROWS) && is_rows_type (p)) {
     return (A68_TRUE);
-  } else if (whether_unitable (p, derow (q), deflex)) {
+  } else if (is_unitable (p, derow (q), deflex)) {
     return (A68_TRUE);
   }
-  if (whether_ref_row (q) && whether_strong_name (p, q)) {
+  if (is_ref_row (q) && is_strong_name (p, q)) {
     return (A68_TRUE);
-  } else if (SLICE (q) != NO_MOID && whether_strong_slice (p, q)) {
+  } else if (SLICE (q) != NO_MOID && is_strong_slice (p, q)) {
     return (A68_TRUE);
-  } else if (WHETHER (q, FLEX_SYMBOL) && whether_strong_slice (p, q)) {
+  } else if (IS (q, FLEX_SYMBOL) && is_strong_slice (p, q)) {
     return (A68_TRUE);
-  } else if (whether_widenable (p, q)) {
+  } else if (is_widenable (p, q)) {
     return (A68_TRUE);
-  } else if (whether_deprefable (p)) {
-    return (whether_strongly_coercible (depref_once (p), q, deflex));
+  } else if (is_deprefable (p)) {
+    return (is_strongly_coercible (depref_once (p), q, deflex));
   } else if (q == MODE (SIMPLOUT) || q == MODE (ROW_SIMPLOUT)) {
-    return (whether_printable_mode (p));
+    return (is_printable_mode (p));
   } else {
     return (A68_FALSE);
   }
@@ -10561,9 +10578,9 @@ static BOOL_T whether_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
 \return same
 **/
 
-BOOL_T whether_firm (MOID_T * p, MOID_T * q)
+BOOL_T is_firm (MOID_T * p, MOID_T * q)
 {
-  return ((BOOL_T) (whether_firmly_coercible (p, q, SAFE_DEFLEXING) || whether_firmly_coercible (q, p, SAFE_DEFLEXING)));
+  return ((BOOL_T) (is_firmly_coercible (p, q, SAFE_DEFLEXING) || is_firmly_coercible (q, p, SAFE_DEFLEXING)));
 }
 
 /*!
@@ -10575,33 +10592,33 @@ BOOL_T whether_firm (MOID_T * p, MOID_T * q)
 \return same
 **/
 
-static BOOL_T whether_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
+static BOOL_T is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (c == STRONG) {
     if (q == MODE (VOID)) {
       return (A68_TRUE);
-    } else if (WHETHER (q, FLEX_SYMBOL)) {
+    } else if (IS (q, FLEX_SYMBOL)) {
       PACK_T *u = PACK (p);
       BOOL_T j = A68_TRUE;
       for (; u != NO_PACK && j; FORWARD (u)) {
-        j &= whether_coercible (MOID (u), SLICE (SUB (q)), c, deflex);
+        j &= is_coercible (MOID (u), SLICE (SUB (q)), c, deflex);
       }
       return (j);
-    } else if (WHETHER (q, ROW_SYMBOL)) {
+    } else if (IS (q, ROW_SYMBOL)) {
       PACK_T *u = PACK (p);
       BOOL_T j = A68_TRUE;
       for (; u != NO_PACK && j; FORWARD (u)) {
-        j &= whether_coercible (MOID (u), SLICE (q), c, deflex);
+        j &= is_coercible (MOID (u), SLICE (q), c, deflex);
       }
       return (j);
-    } else if (WHETHER (q, PROC_SYMBOL) || WHETHER (q, STRUCT_SYMBOL)) {
+    } else if (IS (q, PROC_SYMBOL) || IS (q, STRUCT_SYMBOL)) {
       PACK_T *u = PACK (p), *v = PACK (q);
       if (DIM (p) != DIM (q)) {
         return (A68_FALSE);
       } else {
         BOOL_T j = A68_TRUE;
         while (u != NO_PACK && v != NO_PACK && j) {
-          j &= whether_coercible (MOID (u), MOID (v), c, deflex);
+          j &= is_coercible (MOID (u), MOID (v), c, deflex);
           FORWARD (u);
           FORWARD (v);
         }
@@ -10624,24 +10641,24 @@ static BOOL_T whether_coercible_stowed (MOID_T * p, MOID_T * q, int c, int defle
 \return same
 **/
 
-static BOOL_T whether_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
+static BOOL_T is_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (c != STRONG) {
     return (A68_FALSE);
   } else if (p == NO_MOID || q == NO_MOID) {
     return (A68_FALSE);
-  } else if (WHETHER (p, SERIES_MODE) && PACK (p) == NO_PACK) {
+  } else if (IS (p, SERIES_MODE) && PACK (p) == NO_PACK) {
     return (A68_FALSE);
-  } else if (WHETHER (q, SERIES_MODE) && PACK (q) == NO_PACK) {
+  } else if (IS (q, SERIES_MODE) && PACK (q) == NO_PACK) {
     return (A68_FALSE);
   } else if (PACK (p) == NO_PACK) {
-    return (whether_coercible (p, q, c, deflex));
+    return (is_coercible (p, q, c, deflex));
   } else {
     PACK_T *u = PACK (p);
     BOOL_T j = A68_TRUE;
     for (; u != NO_PACK && j; FORWARD (u)) {
       if (MOID (u) != NO_MOID) {
-        j &= whether_coercible (MOID (u), q, c, deflex);
+        j &= is_coercible (MOID (u), q, c, deflex);
       }
     }
     return (j);
@@ -10659,20 +10676,20 @@ static BOOL_T whether_coercible_series (MOID_T * p, MOID_T * q, int c, int defle
 
 static BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
 {
-  if (whether_equal_modes (p, q, deflex)) {
+  if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
   } else if (c == NO_SORT) {
     return ((BOOL_T) (p == q));
   } else if (c == SOFT) {
-    return (whether_softly_coercible (p, q, deflex));
+    return (is_softly_coercible (p, q, deflex));
   } else if (c == WEAK) {
-    return (whether_weakly_coercible (p, q, deflex));
+    return (is_weakly_coercible (p, q, deflex));
   } else if (c == MEEK) {
-    return (whether_meekly_coercible (p, q, deflex));
+    return (is_meekly_coercible (p, q, deflex));
   } else if (c == FIRM) {
-    return (whether_firmly_coercible (p, q, deflex));
+    return (is_firmly_coercible (p, q, deflex));
   } else if (c == STRONG) {
-    return (whether_strongly_coercible (p, q, deflex));
+    return (is_strongly_coercible (p, q, deflex));
   } else {
     return (A68_FALSE);
   }
@@ -10687,19 +10704,19 @@ static BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
 \return same
 **/
 
-BOOL_T whether_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
+BOOL_T is_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
 {
-  if (whether_mode_isnt_well (p) || whether_mode_isnt_well (q)) {
+  if (is_mode_isnt_well (p) || is_mode_isnt_well (q)) {
     return (A68_TRUE);
-  } else if (whether_equal_modes (p, q, deflex)) {
+  } else if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
   } else if (p == MODE (HIP)) {
     return (A68_TRUE);
-  } else if (WHETHER (p, STOWED_MODE)) {
-    return (whether_coercible_stowed (p, q, c, deflex));
-  } else if (WHETHER (p, SERIES_MODE)) {
-    return (whether_coercible_series (p, q, c, deflex));
-  } else if (p == MODE (VACUUM) && WHETHER (DEFLEX (q), ROW_SYMBOL)) {
+  } else if (IS (p, STOWED_MODE)) {
+    return (is_coercible_stowed (p, q, c, deflex));
+  } else if (IS (p, SERIES_MODE)) {
+    return (is_coercible_series (p, q, c, deflex));
+  } else if (p == MODE (VACUUM) && IS (DEFLEX (q), ROW_SYMBOL)) {
     return (A68_TRUE);
   } else {
     return (basic_coercions (p, q, c, deflex));
@@ -10714,14 +10731,14 @@ BOOL_T whether_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
 \return same
 **/
 
-static BOOL_T whether_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
+static BOOL_T is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
 {
   if (SORT (p) != SORT (q)) {
     return (A68_FALSE);
   } else if (MOID (p) == MOID (q)) {
     return (A68_TRUE);
   } else {
-    return (whether_coercible (MOID (p), MOID (q), SORT (q), deflex));
+    return (is_coercible (MOID (p), MOID (q), SORT (q), deflex));
   }
 }
 
@@ -10733,14 +10750,14 @@ static BOOL_T whether_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
 \return same
 **/
 
-static BOOL_T whether_balanced (NODE_T * n, SOID_T * y, int sort)
+static BOOL_T is_balanced (NODE_T * n, SOID_T * y, int sort)
 {
   if (sort == STRONG) {
     return (A68_TRUE);
   } else {
     BOOL_T k = A68_FALSE;
     for (; y != NO_SOID && !k; FORWARD (y)) {
-      k = (BOOL_T) (WHETHER_NOT (MOID (y), STOWED_MODE));
+      k = (BOOL_T) (ISNT (MOID (y), STOWED_MODE));
     }
     if (k == A68_FALSE) {
       diagnostic_node (A68_ERROR, n, ERROR_NO_UNIQUE_MODE);
@@ -10761,7 +10778,7 @@ static BOOL_T whether_balanced (NODE_T * n, SOID_T * y, int sort)
 MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int deflex)
 {
   MOID_T *common = NO_MOID;
-  if (m != NO_MOID && !whether_mode_isnt_well (m) && WHETHER (m, UNION_SYMBOL)) {
+  if (m != NO_MOID && !is_mode_isnt_well (m) && IS (m, UNION_SYMBOL)) {
     int depref_level;
     BOOL_T go_on = A68_TRUE;
 /* Test for increasing depreffing */
@@ -10775,7 +10792,7 @@ MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int de
           MOID_T *candidate = MOID (p);
           int k;
 /* Depref as far as allowed */
-          for (k = depref_level; k > 0 && whether_deprefable (candidate); k--) {
+          for (k = depref_level; k > 0 && is_deprefable (candidate); k--) {
             candidate = depref_once (candidate);
           }
 /* Only need testing if all allowed deprefs succeeded */
@@ -10787,7 +10804,7 @@ MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int de
             for (q = PACK (m); q != NO_PACK && all_coercible; FORWARD (q)) {
               MOID_T *from = MOID (q);
               if (p != q && from != to) {
-                all_coercible &= whether_coercible (from, to, sort, deflex);
+                all_coercible &= is_coercible (from, to, sort, deflex);
               }
             }
 /* If the pack is coercible to the candidate, we mark the candidate.
@@ -10796,7 +10813,7 @@ MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int de
               MOID_T *mark = (return_depreffed ? MOID (p) : candidate);
               if (common == NO_MOID) {
                 common = mark;
-              } else if (WHETHER (candidate, FLEX_SYMBOL) && DEFLEX (candidate) == common) {
+              } else if (IS (candidate, FLEX_SYMBOL) && DEFLEX (candidate) == common) {
 /* We prefer FLEX */
                 common = mark;
               }
@@ -10843,7 +10860,7 @@ static MOID_T *determine_unique_mode (SOID_T * z, int deflex)
     return (NO_MOID);
   } else {
     MOID_T *x = MOID (z);
-    if (whether_mode_isnt_well (x)) {
+    if (is_mode_isnt_well (x)) {
       return (MODE (ERROR));
     }
     x = make_united_mode (x);
@@ -10867,8 +10884,8 @@ static void warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
 {
   (void) c;
   if (CAST (x) == A68_FALSE) {
-    if (MOID (x) == MODE (VOID) && MOID (y) != MODE (ERROR) && !(MOID (y) == MODE (VOID) || !whether_nonproc (MOID (y)))) {
-      if (WHETHER (p, FORMULA)) {
+    if (MOID (x) == MODE (VOID) && MOID (y) != MODE (ERROR) && !(MOID (y) == MODE (VOID) || !is_nonproc (MOID (y)))) {
+      if (IS (p, FORMULA)) {
         diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_VOIDED, MOID (y));
       } else {
         diagnostic_node (A68_WARNING, p, WARNING_VOIDED, MOID (y));
@@ -10892,9 +10909,9 @@ semantic_pitfall: warn for things that are likely unintended, for instance
                   REF INT i := LOC INT := 0, which should probably be
                   REF INT i = LOC INT := 0.
 */
-  if (WHETHER (p, u)) {
+  if (IS (p, u)) {
     diagnostic_node (A68_WARNING, p, WARNING_UNINTENDED, MOID (p), u, m, c);
-  } else if (whether_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, STOP)) {
+  } else if (is_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, STOP)) {
     semantic_pitfall (SUB (p), m, c, u);
   }
 }
@@ -10938,9 +10955,9 @@ static void make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 static void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) != DEFLEX (q)) {
-    if (whether_widenable (p, q)) {
+    if (is_widenable (p, q)) {
       make_widening_coercion (n, p, q);
-    } else if (whether_ref_row (q)) {
+    } else if (is_ref_row (q)) {
       make_ref_rowing_coercion (n, p, NAME (q));
       make_coercion (n, ROWING, q);
     }
@@ -10957,14 +10974,14 @@ static void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 static void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) != DEFLEX (q)) {
-    if (whether_widenable (p, q)) {
+    if (is_widenable (p, q)) {
       make_widening_coercion (n, p, q);
     } else if (SLICE (q) != NO_MOID) {
       make_rowing_coercion (n, p, SLICE (q));
       make_coercion (n, ROWING, q);
-    } else if (WHETHER (q, FLEX_SYMBOL)) {
+    } else if (IS (q, FLEX_SYMBOL)) {
       make_rowing_coercion (n, p, SUB (q));
-    } else if (whether_ref_row (q)) {
+    } else if (is_ref_row (q)) {
       make_ref_rowing_coercion (n, p, q);
     }
   }
@@ -10979,7 +10996,7 @@ static void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 static void make_uniting_coercion (NODE_T * n, MOID_T * q)
 {
   make_coercion (n, UNITING, derow (q));
-  if (WHETHER (q, ROW_SYMBOL) || WHETHER (q, FLEX_SYMBOL)) {
+  if (IS (q, ROW_SYMBOL) || IS (q, FLEX_SYMBOL)) {
     make_rowing_coercion (n, derow (q), q);
   }
 }
@@ -10995,34 +11012,34 @@ static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) == DEFLEX (q)) {
     return;
-  } else if (q == MODE (SIMPLOUT) && whether_printable_mode (p)) {
+  } else if (q == MODE (SIMPLOUT) && is_printable_mode (p)) {
     make_coercion (n, UNITING, q);
-  } else if (q == MODE (ROW_SIMPLOUT) && whether_printable_mode (p)) {
+  } else if (q == MODE (ROW_SIMPLOUT) && is_printable_mode (p)) {
     make_coercion (n, UNITING, MODE (SIMPLOUT));
     make_coercion (n, ROWING, MODE (ROW_SIMPLOUT));
-  } else if (q == MODE (SIMPLIN) && whether_readable_mode (p)) {
+  } else if (q == MODE (SIMPLIN) && is_readable_mode (p)) {
     make_coercion (n, UNITING, q);
-  } else if (q == MODE (ROW_SIMPLIN) && whether_readable_mode (p)) {
+  } else if (q == MODE (ROW_SIMPLIN) && is_readable_mode (p)) {
     make_coercion (n, UNITING, MODE (SIMPLIN));
     make_coercion (n, ROWING, MODE (ROW_SIMPLIN));
-  } else if (q == MODE (ROWS) && whether_rows_type (p)) {
+  } else if (q == MODE (ROWS) && is_rows_type (p)) {
     make_coercion (n, UNITING, MODE (ROWS));
     MOID (n) = MODE (ROWS);
-  } else if (whether_widenable (p, q)) {
+  } else if (is_widenable (p, q)) {
     make_widening_coercion (n, p, q);
-  } else if (whether_unitable (p, derow (q), SAFE_DEFLEXING)) {
+  } else if (is_unitable (p, derow (q), SAFE_DEFLEXING)) {
     make_uniting_coercion (n, q);
-  } else if (whether_ref_row (q) && whether_strong_name (p, q)) {
+  } else if (is_ref_row (q) && is_strong_name (p, q)) {
     make_ref_rowing_coercion (n, p, q);
-  } else if (SLICE (q) != NO_MOID && whether_strong_slice (p, q)) {
+  } else if (SLICE (q) != NO_MOID && is_strong_slice (p, q)) {
     make_rowing_coercion (n, p, q);
-  } else if (WHETHER (q, FLEX_SYMBOL) && whether_strong_slice (p, q)) {
+  } else if (IS (q, FLEX_SYMBOL) && is_strong_slice (p, q)) {
     make_rowing_coercion (n, p, q);
-  } else if (WHETHER (p, REF_SYMBOL)) {
+  } else if (IS (p, REF_SYMBOL)) {
     MOID_T *r = depref_once (p);
     make_coercion (n, DEREFERENCING, r);
     make_depreffing_coercion (n, r, q);
-  } else if (WHETHER (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
+  } else if (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     MOID_T *r = SUB (p);
     make_coercion (n, DEPROCEDURING, r);
     make_depreffing_coercion (n, r, q);
@@ -11037,12 +11054,12 @@ static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 \return same
 **/
 
-static BOOL_T whether_nonproc (MOID_T * p)
+static BOOL_T is_nonproc (MOID_T * p)
 {
-  if (WHETHER (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
+  if (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     return (A68_FALSE);
-  } else if (WHETHER (p, REF_SYMBOL)) {
-    return (whether_nonproc (SUB (p)));
+  } else if (IS (p, REF_SYMBOL)) {
+    return (is_nonproc (SUB (p)));
   } else {
     return (A68_TRUE);
   }
@@ -11077,17 +11094,17 @@ static void make_void (NODE_T * p, MOID_T * q)
   case IDENTIFIER:
     {
 /* A nonproc moid value is eliminated directly */
-      if (whether_nonproc (q)) {
+      if (is_nonproc (q)) {
         make_coercion (p, VOIDING, MODE (VOID));
         return;
       } else {
 /* Descend the chain of e.g. REF PROC .. until a nonproc moid remains */
         MOID_T *z = q;
-        while (!whether_nonproc (z)) {
-          if (WHETHER (z, REF_SYMBOL)) {
+        while (!is_nonproc (z)) {
+          if (IS (z, REF_SYMBOL)) {
             make_coercion (p, DEREFERENCING, SUB (z));
           }
-          if (WHETHER (z, PROC_SYMBOL) && NODE_PACK (p) == NO_PACK) {
+          if (IS (z, PROC_SYMBOL) && NODE_PACK (p) == NO_PACK) {
             make_coercion (p, DEPROCEDURING, SUB (z));
           }
           z = SUB (z);
@@ -11128,11 +11145,11 @@ static void mode_check_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     SOID_T x, y;
     make_soid (&x, STRONG, MODE (INT), 0);
     mode_check_unit (p, &x, &y);
-    if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+    if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
       cannot_coerce (p, MOID (&y), MODE (INT), MEEK, SAFE_DEFLEXING, UNIT);
     }
     mode_check_bounds (NEXT (p));
@@ -11151,7 +11168,7 @@ static void mode_check_declarer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, BOUNDS)) {
+  } else if (IS (p, BOUNDS)) {
     mode_check_bounds (SUB (p));
     mode_check_declarer (NEXT (p));
   } else {
@@ -11180,7 +11197,7 @@ static void mode_check_identity_declaration (NODE_T * p)
         SOID_T x, y;
         make_soid (&x, STRONG, MOID (p), 0);
         mode_check_unit (NEXT_NEXT (p), &x, &y);
-        if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+        if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
           cannot_coerce (NEXT_NEXT (p), MOID (&y), MOID (&x), STRONG, SAFE_DEFLEXING, UNIT);
         } else if (MOID (&x) != MOID (&y)) {
 /* Check for instance, REF INT i = LOC REF INT */
@@ -11219,7 +11236,7 @@ static void mode_check_variable_declaration (NODE_T * p)
           SOID_T x, y;
           make_soid (&x, STRONG, SUB_MOID (p), 0);
           mode_check_unit (NEXT_NEXT (p), &x, &y);
-          if (!whether_coercible_in_context (&y, &x, FORCE_DEFLEXING)) {
+          if (!is_coercible_in_context (&y, &x, FORCE_DEFLEXING)) {
             cannot_coerce (p, MOID (&y), MOID (&x), STRONG, FORCE_DEFLEXING, UNIT);
           } else if (SUB_MOID (&x) != MOID (&y)) {
 /* Check for instance, REF INT i = LOC REF INT */
@@ -11247,14 +11264,14 @@ static void mode_check_variable_declaration (NODE_T * p)
 static void mode_check_routine_text (NODE_T * p, SOID_T * y)
 {
   SOID_T w;
-  if (WHETHER (p, PARAMETER_PACK)) {
+  if (IS (p, PARAMETER_PACK)) {
     mode_check_declarer (SUB (p));
     FORWARD (p);
   }
   mode_check_declarer (SUB (p));
   make_soid (&w, STRONG, MOID (p), 0);
   mode_check_unit (NEXT_NEXT (p), &w, y);
-  if (!whether_coercible_in_context (y, &w, FORCE_DEFLEXING)) {
+  if (!is_coercible_in_context (y, &w, FORCE_DEFLEXING)) {
     cannot_coerce (NEXT_NEXT (p), MOID (y), MOID (&w), STRONG, FORCE_DEFLEXING, UNIT);
   }
 }
@@ -11268,7 +11285,7 @@ static void mode_check_proc_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, ROUTINE_TEXT)) {
+  } else if (IS (p, ROUTINE_TEXT)) {
     SOID_T x, y;
     make_soid (&x, STRONG, NO_MOID, 0);
     mode_check_routine_text (SUB (p), &y);
@@ -11287,7 +11304,7 @@ static void mode_check_brief_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, DEFINING_OPERATOR)) {
+  } else if (IS (p, DEFINING_OPERATOR)) {
     SOID_T y;
     if (MOID (p) != MOID (NEXT_NEXT (p))) {
       SOID_T y2, x;
@@ -11311,11 +11328,11 @@ static void mode_check_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, DEFINING_OPERATOR)) {
+  } else if (IS (p, DEFINING_OPERATOR)) {
     SOID_T y, x;
     make_soid (&x, STRONG, MOID (p), 0);
     mode_check_unit (NEXT_NEXT (p), &x, &y);
-    if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+    if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
       cannot_coerce (NEXT_NEXT (p), MOID (&y), MOID (&x), STRONG, SAFE_DEFLEXING, UNIT);
     }
   } else {
@@ -11386,16 +11403,16 @@ static void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, INITIALISER_SERIES)) {
+  } else if (IS (p, INITIALISER_SERIES)) {
     mode_check_serial (r, SUB (p), x, A68_FALSE);
     mode_check_serial (r, NEXT (p), x, k);
-  } else if (WHETHER (p, DECLARATION_LIST)) {
+  } else if (IS (p, DECLARATION_LIST)) {
     mode_check_declaration_list (SUB (p));
-  } else if (whether_one_of (p, LABEL, SEMI_SYMBOL, EXIT_SYMBOL, STOP)) {
+  } else if (is_one_of (p, LABEL, SEMI_SYMBOL, EXIT_SYMBOL, STOP)) {
     mode_check_serial (r, NEXT (p), x, k);
-  } else if (whether_one_of (p, SERIAL_CLAUSE, ENQUIRY_CLAUSE, STOP)) {
+  } else if (is_one_of (p, SERIAL_CLAUSE, ENQUIRY_CLAUSE, STOP)) {
     if (NEXT (p) != NO_NODE) {
-      if (WHETHER (NEXT (p), EXIT_SYMBOL) || WHETHER (NEXT (p), END_SYMBOL) || WHETHER (NEXT (p), CLOSE_SYMBOL)) {
+      if (IS (NEXT (p), EXIT_SYMBOL) || IS (NEXT (p), END_SYMBOL) || IS (NEXT (p), CLOSE_SYMBOL)) {
         mode_check_serial (r, SUB (p), x, A68_TRUE);
       } else {
         mode_check_serial (r, SUB (p), x, A68_FALSE);
@@ -11404,9 +11421,9 @@ static void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
     } else {
       mode_check_serial (r, SUB (p), x, A68_TRUE);
     }
-  } else if (WHETHER (p, LABELED_UNIT)) {
+  } else if (IS (p, LABELED_UNIT)) {
     mode_check_serial (r, SUB (p), x, k);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     SOID_T y;
     if (k) {
       mode_check_unit (p, x, &y);
@@ -11438,7 +11455,7 @@ static void mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att
   SOID_T *top_sl = NO_SOID;
   (void) att;
   mode_check_serial (&top_sl, SUB (p), x, A68_TRUE);
-  if (whether_balanced (p, top_sl, SORT (x))) {
+  if (is_balanced (p, top_sl, SORT (x))) {
     MOID_T *result = pack_soids_in_moid (top_sl, SERIES_MODE);
     make_soid (y, SORT (x), result, SERIAL_CLAUSE);
   } else {
@@ -11458,12 +11475,12 @@ static void mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT_LIST)) {
+  } else if (IS (p, UNIT_LIST)) {
     mode_check_unit_list (r, SUB (p), x);
     mode_check_unit_list (r, NEXT (p), x);
-  } else if (WHETHER (p, COMMA_SYMBOL)) {
+  } else if (IS (p, COMMA_SYMBOL)) {
     mode_check_unit_list (r, NEXT (p), x);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     SOID_T y;
     mode_check_unit (p, x, &y);
     add_to_soid_list (r, p, &y);
@@ -11482,12 +11499,12 @@ static void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT_LIST)) {
+  } else if (IS (p, UNIT_LIST)) {
     mode_check_struct_display (r, SUB (p), fields);
     mode_check_struct_display (r, NEXT (p), fields);
-  } else if (WHETHER (p, COMMA_SYMBOL)) {
+  } else if (IS (p, COMMA_SYMBOL)) {
     mode_check_struct_display (r, NEXT (p), fields);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     SOID_T x, y;
     if (*fields != NO_PACK) {
       make_soid (&x, STRONG, MOID (*fields), 0);
@@ -11510,9 +11527,9 @@ static void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields
 static void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (whether_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
+    if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
       mode_check_get_specified_moids (SUB (p), u);
-    } else if (WHETHER (p, SPECIFIER)) {
+    } else if (IS (p, SPECIFIER)) {
       MOID_T *m = MOID (NEXT_SUB (p));
       add_mode_to_pack (&(PACK (u)), m, NO_TEXT, NODE (m));
     }
@@ -11530,14 +11547,14 @@ static void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
 static void mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x, MOID_T * u)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (whether_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
+    if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
       mode_check_specified_unit_list (r, SUB (p), x, u);
-    } else if (WHETHER (p, SPECIFIER)) {
+    } else if (IS (p, SPECIFIER)) {
       MOID_T *m = MOID (NEXT_SUB (p));
-      if (u != NO_MOID && !whether_unitable (m, u, SAFE_DEFLEXING)) {
+      if (u != NO_MOID && !is_unitable (m, u, SAFE_DEFLEXING)) {
         diagnostic_node (A68_ERROR, p, ERROR_NO_COMPONENT, m, u);
       }
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       SOID_T y;
       mode_check_unit (p, x, &y);
       add_to_soid_list (r, p, &y);
@@ -11572,7 +11589,7 @@ static void mode_check_united_case_parts (SOID_T ** ry, NODE_T * p, SOID_T * x)
   if (u == MODE (HIP)) {
     w = v;
   } else {
-    if (WHETHER (u, UNION_SYMBOL)) {
+    if (IS (u, UNION_SYMBOL)) {
       BOOL_T uv, vu, some;
       investigate_firm_relations (PACK (u), PACK (v), &uv, &some);
       investigate_firm_relations (PACK (v), PACK (u), &vu, &some);
@@ -11599,9 +11616,9 @@ get a coercion-error later */
   mode_check_specified_unit_list (ry, NEXT_SUB (p), x, w);
 /* OUSE, OUT, ESAC */
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, OUT_PART, CHOICE, STOP)) {
+    if (is_one_of (p, OUT_PART, CHOICE, STOP)) {
       mode_check_serial (ry, NEXT_SUB (p), x, A68_TRUE);
-    } else if (whether_one_of (p, CONFORMITY_OUSE_PART, BRIEF_CONFORMITY_OUSE_PART, STOP)) {
+    } else if (is_one_of (p, CONFORMITY_OUSE_PART, BRIEF_CONFORMITY_OUSE_PART, STOP)) {
       mode_check_united_case_parts (ry, SUB (p), x);
     }
   }
@@ -11619,7 +11636,7 @@ static void mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
   mode_check_united_case_parts (&top_sl, p, x);
-  if (!whether_balanced (p, top_sl, SORT (x))) {
+  if (!is_balanced (p, top_sl, SORT (x))) {
     if (MOID (x) != NO_MOID) {
       make_soid (y, SORT (x), MOID (x), CONFORMITY_CLAUSE);
 
@@ -11644,15 +11661,15 @@ static void mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   if (MOID (x) != NO_MOID) {
-    if (WHETHER (MOID (x), FLEX_SYMBOL)) {
+    if (IS (MOID (x), FLEX_SYMBOL)) {
       SOID_T y2;
       make_soid (&y2, SORT (x), SLICE (SUB_MOID (x)), 0);
       mode_check_unit_list (&top_sl, SUB (p), &y2);
-    } else if (WHETHER (MOID (x), ROW_SYMBOL)) {
+    } else if (IS (MOID (x), ROW_SYMBOL)) {
       SOID_T y2;
       make_soid (&y2, SORT (x), SLICE (MOID (x)), 0);
       mode_check_unit_list (&top_sl, SUB (p), &y2);
-    } else if (WHETHER (MOID (x), STRUCT_SYMBOL)) {
+    } else if (IS (MOID (x), STRUCT_SYMBOL)) {
       PACK_T *y2 = PACK (MOID (x));
       mode_check_struct_display (&top_sl, SUB (p), &y2);
     } else {
@@ -11676,9 +11693,9 @@ static void mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, SERIAL_CLAUSE)) {
+  } else if (IS (p, SERIAL_CLAUSE)) {
     mode_check_serial_units (p, x, y, SERIAL_CLAUSE);
-  } else if (whether_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
+  } else if (is_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
     mode_check_closed (NEXT (p), x, y);
   }
   MOID (p) = MOID (y);
@@ -11698,7 +11715,7 @@ static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
   } else if (whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP)
              || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP)) {
     if (SORT (x) == STRONG) {
-      MOID_T *z = (WHETHER (MOID (x), FLEX_SYMBOL) ? SUB_MOID (x) : MOID (x));
+      MOID_T *z = (IS (MOID (x), FLEX_SYMBOL) ? SUB_MOID (x) : MOID (x));
       make_soid (y, STRONG, MODE (VACUUM), 0);
       if (SUB (z) != NO_MOID && HAS_ROWS (SUB (z))) {
         diagnostic_node (A68_ERROR, p, ERROR_VACUUM, "REF", MOID (x));
@@ -11707,9 +11724,9 @@ static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
       make_soid (y, STRONG, MODE (UNDEFINED), 0);
     }
   } else {
-    if (WHETHER (p, UNIT_LIST)) {
+    if (IS (p, UNIT_LIST)) {
       mode_check_unit_list_2 (p, x, y);
-    } else if (whether_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
       mode_check_collateral (NEXT (p), x, y);
     }
     MOID (p) = MOID (y);
@@ -11728,15 +11745,15 @@ static void mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
   SOID_T enq_expct, enq_yield;
   make_soid (&enq_expct, STRONG, MODE (BOOL), 0);
   mode_check_serial_units (NEXT_SUB (p), &enq_expct, &enq_yield, ENQUIRY_CLAUSE);
-  if (!whether_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
+  if (!is_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
     cannot_coerce (p, MOID (&enq_yield), MOID (&enq_expct), MEEK, SAFE_DEFLEXING, ENQUIRY_CLAUSE);
   }
   FORWARD (p);
   mode_check_serial (ry, NEXT_SUB (p), x, A68_TRUE);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, ELSE_PART, CHOICE, STOP)) {
+    if (is_one_of (p, ELSE_PART, CHOICE, STOP)) {
       mode_check_serial (ry, NEXT_SUB (p), x, A68_TRUE);
-    } else if (whether_one_of (p, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    } else if (is_one_of (p, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       mode_check_conditional_2 (ry, SUB (p), x);
     }
   }
@@ -11754,7 +11771,7 @@ static void mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
   mode_check_conditional_2 (&top_sl, p, x);
-  if (!whether_balanced (p, top_sl, SORT (x))) {
+  if (!is_balanced (p, top_sl, SORT (x))) {
     if (MOID (x) != NO_MOID) {
       make_soid (y, SORT (x), MOID (x), CONDITIONAL_CLAUSE);
     } else {
@@ -11779,15 +11796,15 @@ static void mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
   SOID_T enq_expct, enq_yield;
   make_soid (&enq_expct, STRONG, MODE (INT), 0);
   mode_check_serial_units (NEXT_SUB (p), &enq_expct, &enq_yield, ENQUIRY_CLAUSE);
-  if (!whether_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
+  if (!is_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
     cannot_coerce (p, MOID (&enq_yield), MOID (&enq_expct), MEEK, SAFE_DEFLEXING, ENQUIRY_CLAUSE);
   }
   FORWARD (p);
   mode_check_unit_list (ry, NEXT_SUB (p), x);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, OUT_PART, CHOICE, STOP)) {
+    if (is_one_of (p, OUT_PART, CHOICE, STOP)) {
       mode_check_serial (ry, NEXT_SUB (p), x, A68_TRUE);
-    } else if (whether_one_of (p, CASE_OUSE_PART, BRIEF_OUSE_PART, STOP)) {
+    } else if (is_one_of (p, CASE_OUSE_PART, BRIEF_OUSE_PART, STOP)) {
       mode_check_int_case_2 (ry, SUB (p), x);
     }
   }
@@ -11805,7 +11822,7 @@ static void mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
   mode_check_int_case_2 (&top_sl, p, x);
-  if (!whether_balanced (p, top_sl, SORT (x))) {
+  if (!is_balanced (p, top_sl, SORT (x))) {
     if (MOID (x) != NO_MOID) {
       make_soid (y, SORT (x), MOID (x), CASE_CLAUSE);
     } else {
@@ -11828,40 +11845,40 @@ static void mode_check_loop_2 (NODE_T * p, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, FOR_PART)) {
+  } else if (IS (p, FOR_PART)) {
     mode_check_loop_2 (NEXT (p), y);
-  } else if (whether_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
+  } else if (is_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
     SOID_T ix, iy;
     make_soid (&ix, STRONG, MODE (INT), 0);
     mode_check_unit (NEXT_SUB (p), &ix, &iy);
-    if (!whether_coercible_in_context (&iy, &ix, SAFE_DEFLEXING)) {
+    if (!is_coercible_in_context (&iy, &ix, SAFE_DEFLEXING)) {
       cannot_coerce (NEXT_SUB (p), MOID (&iy), MODE (INT), MEEK, SAFE_DEFLEXING, ENQUIRY_CLAUSE);
     }
     mode_check_loop_2 (NEXT (p), y);
-  } else if (WHETHER (p, WHILE_PART)) {
+  } else if (IS (p, WHILE_PART)) {
     SOID_T enq_expct, enq_yield;
     make_soid (&enq_expct, STRONG, MODE (BOOL), 0);
     mode_check_serial_units (NEXT_SUB (p), &enq_expct, &enq_yield, ENQUIRY_CLAUSE);
-    if (!whether_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
+    if (!is_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
       cannot_coerce (p, MOID (&enq_yield), MOID (&enq_expct), MEEK, SAFE_DEFLEXING, ENQUIRY_CLAUSE);
     }
     mode_check_loop_2 (NEXT (p), y);
-  } else if (whether_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
+  } else if (is_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
     SOID_T *z = NO_SOID;
     SOID_T ix;
     NODE_T *do_p = NEXT_SUB (p), *un_p;
     make_soid (&ix, STRONG, MODE (VOID), 0);
-    if (WHETHER (do_p, SERIAL_CLAUSE)) {
+    if (IS (do_p, SERIAL_CLAUSE)) {
       mode_check_serial (&z, do_p, &ix, A68_TRUE);
       un_p = NEXT (do_p);
     } else {
       un_p = do_p;
     }
-    if (un_p != NO_NODE && WHETHER (un_p, UNTIL_PART)) {
+    if (un_p != NO_NODE && IS (un_p, UNTIL_PART)) {
       SOID_T enq_expct, enq_yield;
       make_soid (&enq_expct, STRONG, MODE (BOOL), 0);
       mode_check_serial_units (NEXT_SUB (un_p), &enq_expct, &enq_yield, ENQUIRY_CLAUSE);
-      if (!whether_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
+      if (!is_coercible_in_context (&enq_yield, &enq_expct, SAFE_DEFLEXING)) {
         cannot_coerce (un_p, MOID (&enq_yield), MOID (&enq_expct), MEEK, SAFE_DEFLEXING, ENQUIRY_CLAUSE);
       }
     }
@@ -11893,23 +11910,23 @@ void mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     mode_check_enclosed (SUB (p), x, y);
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     mode_check_closed (SUB (p), x, y);
-  } else if (WHETHER (p, PARALLEL_CLAUSE)) {
+  } else if (IS (p, PARALLEL_CLAUSE)) {
     mode_check_collateral (SUB (NEXT_SUB (p)), x, y);
     make_soid (y, STRONG, MODE (VOID), 0);
     MOID (NEXT_SUB (p)) = MODE (VOID);
-  } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+  } else if (IS (p, COLLATERAL_CLAUSE)) {
     mode_check_collateral (SUB (p), x, y);
-  } else if (WHETHER (p, CONDITIONAL_CLAUSE)) {
+  } else if (IS (p, CONDITIONAL_CLAUSE)) {
     mode_check_conditional (SUB (p), x, y);
-  } else if (WHETHER (p, CASE_CLAUSE)) {
+  } else if (IS (p, CASE_CLAUSE)) {
     mode_check_int_case (SUB (p), x, y);
-  } else if (WHETHER (p, CONFORMITY_CLAUSE)) {
+  } else if (IS (p, CONFORMITY_CLAUSE)) {
     mode_check_united_case (SUB (p), x, y);
-  } else if (WHETHER (p, LOOP_CLAUSE)) {
+  } else if (IS (p, LOOP_CLAUSE)) {
     mode_check_loop (SUB (p), y);
   }
   MOID (p) = MOID (y);
@@ -11926,20 +11943,20 @@ void mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
 
 static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T * y)
 {
-  if (whether_mode_isnt_well (x)) {
+  if (is_mode_isnt_well (x)) {
     return (error_tag);
-  } else if (y != NO_MOID && whether_mode_isnt_well (y)) {
+  } else if (y != NO_MOID && is_mode_isnt_well (y)) {
     return (error_tag);
   }
   for (; t != NO_TAG; FORWARD (t)) {
     if (NSYMBOL (NODE (t)) == n) {
       PACK_T *p = PACK (MOID (t));
-      if (whether_coercible (x, MOID (p), FIRM, ALIAS_DEFLEXING)) {
+      if (is_coercible (x, MOID (p), FIRM, ALIAS_DEFLEXING)) {
         FORWARD (p);
         if (p == NO_PACK && y == NO_MOID) {
 /* Matched in case of a monadic */
           return (t);
-        } else if (p != NO_PACK && y != NO_MOID && whether_coercible (y, MOID (p), FIRM, ALIAS_DEFLEXING)) {
+        } else if (p != NO_PACK && y != NO_MOID && is_coercible (y, MOID (p), FIRM, ALIAS_DEFLEXING)) {
 /* Matched in case of a dyadic */
           return (t);
         }
@@ -11960,9 +11977,9 @@ static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T 
 
 static TAG_T *search_table_chain_for_operator (TABLE_T * s, char * n, MOID_T * x, MOID_T * y)
 {
-  if (whether_mode_isnt_well (x)) {
+  if (is_mode_isnt_well (x)) {
     return (error_tag);
-  } else if (y != NO_MOID && whether_mode_isnt_well (y)) {
+  } else if (y != NO_MOID && is_mode_isnt_well (y)) {
     return (error_tag);
   }
   while (s != NO_TABLE) {
@@ -11992,9 +12009,9 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 /* (A) Catch exceptions first */
   if (x == NO_MOID && y == NO_MOID) {
     return (NO_TAG);
-  } else if (whether_mode_isnt_well (x)) {
+  } else if (is_mode_isnt_well (x)) {
     return (error_tag);
-  } else if (y != NO_MOID && whether_mode_isnt_well (y)) {
+  } else if (y != NO_MOID && is_mode_isnt_well (y)) {
     return (error_tag);
   }
 /* (B) MONADs */
@@ -12004,19 +12021,19 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
       return (z);
     } else {
 /* (B.2) A little trick to allow - (0, 1) or ABS (1, long pi) */
-      if (whether_coercible (x, MODE (COMPLEX), STRONG, SAFE_DEFLEXING)) {
+      if (is_coercible (x, MODE (COMPLEX), STRONG, SAFE_DEFLEXING)) {
         z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (COMPLEX), NO_MOID);
         if (z != NO_TAG) {
           return (z);
         }
       }
-      if (whether_coercible (x, MODE (LONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
+      if (is_coercible (x, MODE (LONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
         z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONG_COMPLEX), NO_MOID);
         if (z != NO_TAG) {
           return (z);
         }
       }
-      if (whether_coercible (x, MODE (LONGLONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
+      if (is_coercible (x, MODE (LONGLONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
         z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONGLONG_COMPLEX), NO_MOID);
       }
     }
@@ -12072,37 +12089,37 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
   if (z != NO_TAG) {
     return (z);
   }
-  if (whether_coercible_series (u, MODE (REAL), STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible_series (u, MODE (REAL), STRONG, SAFE_DEFLEXING)) {
     z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (REAL), MODE (REAL));
     if (z != NO_TAG) {
       return (z);
     }
   }
-  if (whether_coercible_series (u, MODE (LONG_REAL), STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible_series (u, MODE (LONG_REAL), STRONG, SAFE_DEFLEXING)) {
     z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONG_REAL), MODE (LONG_REAL));
     if (z != NO_TAG) {
       return (z);
     }
   }
-  if (whether_coercible_series (u, MODE (LONGLONG_REAL), STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible_series (u, MODE (LONGLONG_REAL), STRONG, SAFE_DEFLEXING)) {
     z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONGLONG_REAL), MODE (LONGLONG_REAL));
     if (z != NO_TAG) {
       return (z);
     }
   }
-  if (whether_coercible_series (u, MODE (COMPLEX), STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible_series (u, MODE (COMPLEX), STRONG, SAFE_DEFLEXING)) {
     z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (COMPLEX), MODE (COMPLEX));
     if (z != NO_TAG) {
       return (z);
     }
   }
-  if (whether_coercible_series (u, MODE (LONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible_series (u, MODE (LONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
     z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONG_COMPLEX), MODE (LONG_COMPLEX));
     if (z != NO_TAG) {
       return (z);
     }
   }
-  if (whether_coercible_series (u, MODE (LONGLONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible_series (u, MODE (LONGLONG_COMPLEX), STRONG, SAFE_DEFLEXING)) {
     z = search_table_for_operator (OPERATORS (a68g_standenv), n, MODE (LONGLONG_COMPLEX), MODE (LONGLONG_COMPLEX));
     if (z != NO_TAG) {
       return (z);
@@ -12130,7 +12147,7 @@ static void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
     TAG_T *t;
     MOID_T *u;
     u = determine_unique_mode (y, SAFE_DEFLEXING);
-    if (whether_mode_isnt_well (u)) {
+    if (is_mode_isnt_well (u)) {
       make_soid (y, SORT (x), MODE (ERROR), 0);
     } else if (u == MODE (HIP)) {
       diagnostic_node (A68_ERROR, NEXT (p), ERROR_INVALID_OPERAND, u);
@@ -12190,11 +12207,11 @@ static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
   SOID_T ls, rs;
   TAG_T *op;
   MOID_T *u, *v;
-  if (WHETHER (p, MONADIC_FORMULA)) {
+  if (IS (p, MONADIC_FORMULA)) {
     mode_check_monadic_formula (SUB (p), x, &ls);
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     mode_check_formula (SUB (p), x, &ls);
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     SOID_T e;
     make_soid (&e, FIRM, NO_MOID, 0);
     mode_check_unit (SUB (p), &e, &ls);
@@ -12205,18 +12222,18 @@ static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
     make_soid (y, SORT (x), u, 0);
   } else {
     NODE_T *q = NEXT_NEXT (p);
-    if (WHETHER (q, MONADIC_FORMULA)) {
+    if (IS (q, MONADIC_FORMULA)) {
       mode_check_monadic_formula (SUB (NEXT_NEXT (p)), x, &rs);
-    } else if (WHETHER (q, FORMULA)) {
+    } else if (IS (q, FORMULA)) {
       mode_check_formula (SUB (NEXT_NEXT (p)), x, &rs);
-    } else if (WHETHER (q, SECONDARY)) {
+    } else if (IS (q, SECONDARY)) {
       SOID_T e;
       make_soid (&e, FIRM, NO_MOID, 0);
       mode_check_unit (SUB (q), &e, &rs);
     }
     v = determine_unique_mode (&rs, SAFE_DEFLEXING);
     MOID (q) = v;
-    if (whether_mode_isnt_well (u) || whether_mode_isnt_well (v)) {
+    if (is_mode_isnt_well (u) || is_mode_isnt_well (v)) {
       make_soid (y, SORT (x), MODE (ERROR), 0);
     } else if (u == MODE (HIP)) {
       diagnostic_node (A68_ERROR, p, ERROR_INVALID_OPERAND, u);
@@ -12262,7 +12279,7 @@ static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
   ori = determine_unique_mode (&tmp, SAFE_DEFLEXING);
   name_moid = deproc_completely (ori);
   if (ATTRIBUTE (name_moid) != REF_SYMBOL) {
-    if (WHETHER_MODE_IS_WELL (name_moid)) {
+    if (IF_MODE_IS_WELL (name_moid)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_NAME, ori, ATTRIBUTE (SUB (p)));
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
@@ -12272,7 +12289,7 @@ static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
 /* Get source mode */
   make_soid (&name, STRONG, SUB (name_moid), 0);
   mode_check_unit (NEXT_NEXT (p), &name, &value);
-  if (!whether_coercible_in_context (&value, &name, FORCE_DEFLEXING)) {
+  if (!is_coercible_in_context (&value, &name, FORCE_DEFLEXING)) {
     source_moid = MOID (&value);
     cannot_coerce (p, MOID (&value), MOID (&name), STRONG, FORCE_DEFLEXING, UNIT);
     make_soid (y, SORT (x), MODE (ERROR), 0);
@@ -12301,20 +12318,20 @@ static void mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
   orir = determine_unique_mode (&r, SAFE_DEFLEXING);
   lhs = deproc_completely (oril);
   rhs = deproc_completely (orir);
-  if (WHETHER_MODE_IS_WELL (lhs) && lhs != MODE (HIP) && ATTRIBUTE (lhs) != REF_SYMBOL) {
+  if (IF_MODE_IS_WELL (lhs) && lhs != MODE (HIP) && ATTRIBUTE (lhs) != REF_SYMBOL) {
     diagnostic_node (A68_ERROR, ln, ERROR_NO_NAME, oril, ATTRIBUTE (SUB (ln)));
     lhs = MODE (ERROR);
   }
-  if (WHETHER_MODE_IS_WELL (rhs) && rhs != MODE (HIP) && ATTRIBUTE (rhs) != REF_SYMBOL) {
+  if (IF_MODE_IS_WELL (rhs) && rhs != MODE (HIP) && ATTRIBUTE (rhs) != REF_SYMBOL) {
     diagnostic_node (A68_ERROR, rn, ERROR_NO_NAME, orir, ATTRIBUTE (SUB (rn)));
     rhs = MODE (ERROR);
   }
   if (lhs == MODE (HIP) && rhs == MODE (HIP)) {
     diagnostic_node (A68_ERROR, p, ERROR_NO_UNIQUE_MODE);
   }
-  if (whether_coercible (lhs, rhs, STRONG, SAFE_DEFLEXING)) {
+  if (is_coercible (lhs, rhs, STRONG, SAFE_DEFLEXING)) {
     lhs = rhs;
-  } else if (whether_coercible (rhs, lhs, STRONG, SAFE_DEFLEXING)) {
+  } else if (is_coercible (rhs, lhs, STRONG, SAFE_DEFLEXING)) {
     rhs = lhs;
   } else {
     cannot_coerce (NEXT (p), rhs, lhs, SOFT, SKIP_DEFLEXING, TERTIARY);
@@ -12338,11 +12355,11 @@ static void mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
   NODE_T *ln = p, *rn = NEXT_NEXT (p);
   make_soid (&e, STRONG, MODE (BOOL), 0);
   mode_check_unit (SUB (ln), &e, &l);
-  if (!whether_coercible_in_context (&l, &e, SAFE_DEFLEXING)) {
+  if (!is_coercible_in_context (&l, &e, SAFE_DEFLEXING)) {
     cannot_coerce (ln, MOID (&l), MOID (&e), MEEK, SAFE_DEFLEXING, TERTIARY);
   }
   mode_check_unit (SUB (rn), &e, &r);
-  if (!whether_coercible_in_context (&r, &e, SAFE_DEFLEXING)) {
+  if (!is_coercible_in_context (&r, &e, SAFE_DEFLEXING)) {
     cannot_coerce (rn, MOID (&r), MOID (&e), MEEK, SAFE_DEFLEXING, TERTIARY);
   }
   MOID (ln) = MODE (BOOL);
@@ -12364,7 +12381,7 @@ static void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
   make_soid (&w, STRONG, MOID (p), 0);
   CAST (&w) = A68_TRUE;
   mode_check_enclosed (SUB_NEXT (p), &w, y);
-  if (!whether_coercible_in_context (y, &w, SAFE_DEFLEXING)) {
+  if (!is_coercible_in_context (y, &w, SAFE_DEFLEXING)) {
     cannot_coerce (NEXT (p), MOID (y), MOID (&w), STRONG, SAFE_DEFLEXING, ENCLOSED_CLAUSE);
   }
   make_soid (y, SORT (x), MOID (p), 0);
@@ -12381,7 +12398,7 @@ static void mode_check_assertion (NODE_T * p)
   make_soid (&w, STRONG, MODE (BOOL), 0);
   mode_check_enclosed (SUB_NEXT (p), &w, &y);
   SORT (&y) = SORT (&w); /* Patch */
-  if (!whether_coercible_in_context (&y, &w, NO_DEFLEXING)) {
+  if (!is_coercible_in_context (&y, &w, NO_DEFLEXING)) {
     cannot_coerce (NEXT (p), MOID (&y), MOID (&w), MEEK, NO_DEFLEXING, ENCLOSED_CLAUSE);
   }
 }
@@ -12398,12 +12415,12 @@ static void mode_check_assertion (NODE_T * p)
 static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK_T ** v, PACK_T ** w)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, GENERIC_ARGUMENT_LIST)) {
+    if (IS (p, GENERIC_ARGUMENT_LIST)) {
       ATTRIBUTE (p) = ARGUMENT_LIST;
     }
-    if (WHETHER (p, ARGUMENT_LIST)) {
+    if (IS (p, ARGUMENT_LIST)) {
       mode_check_argument_list (r, SUB (p), x, v, w);
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       SOID_T y, z;
       if (*x != NO_PACK) {
         make_soid (&z, STRONG, MOID (*x), 0);
@@ -12414,7 +12431,7 @@ static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK
       }
       mode_check_unit (p, &z, &y);
       add_to_soid_list (r, p, &y);
-    } else if (WHETHER (p, TRIMMER)) {
+    } else if (IS (p, TRIMMER)) {
       SOID_T z;
       if (SUB (p) != NO_NODE) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, ARGUMENT);
@@ -12431,7 +12448,7 @@ static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK
         make_soid (&z, STRONG, NO_MOID, 0);
       }
       add_to_soid_list (r, p, &z);
-    } else if (WHETHER (p, SUB_SYMBOL) && !OPTION_BRACKETS (&program)) {
+    } else if (IS (p, SUB_SYMBOL) && !OPTION_BRACKETS (&program)) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, CALL);
     }
   }
@@ -12464,7 +12481,7 @@ static void mode_check_meek_int (NODE_T * p)
   SOID_T x, y;
   make_soid (&x, STRONG, MODE (INT), 0);
   mode_check_unit (p, &x, &y);
-  if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+  if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
     cannot_coerce (p, MOID (&y), MOID (&x), MEEK, SAFE_DEFLEXING, 0);
   }
 }
@@ -12478,9 +12495,9 @@ static void mode_check_trimmer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, TRIMMER)) {
+  } else if (IS (p, TRIMMER)) {
     mode_check_trimmer (SUB (p));
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     mode_check_meek_int (p);
     mode_check_trimmer (NEXT (p));
   } else {
@@ -12499,10 +12516,10 @@ static void mode_check_indexer (NODE_T * p, int *subs, int *trims)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, TRIMMER)) {
+  } else if (IS (p, TRIMMER)) {
     (*trims)++;
     mode_check_trimmer (SUB (p));
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     (*subs)++;
     mode_check_meek_int (p);
   } else {
@@ -12544,7 +12561,7 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
     make_soid (y, SORT (x), SUB (n), 0);
 /*  make_soid (y, SORT (x), MODE (ERROR), 0); */
   } else {
-    if (!whether_coercible (MOID (&d), n, STRONG, ALIAS_DEFLEXING)) {
+    if (!is_coercible (MOID (&d), n, STRONG, ALIAS_DEFLEXING)) {
       cannot_coerce (p, MOID (&d), n, STRONG, ALIAS_DEFLEXING, ARGUMENT);
     }
     if (DIM (PARTIAL_PROC (GINFO (p))) == 0) {
@@ -12568,15 +12585,15 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
 
 static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 {
-  BOOL_T whether_ref;
+  BOOL_T is_ref;
   int rowdim, subs, trims;
   MOID_T *m = depref_completely (ori), *n = ori;
 /* WEAK coercion */
-  while ((WHETHER (n, REF_SYMBOL) && !whether_ref_row (n)) || (WHETHER (n, PROC_SYMBOL) && PACK (n) == NO_PACK)) {
+  while ((IS (n, REF_SYMBOL) && !is_ref_row (n)) || (IS (n, PROC_SYMBOL) && PACK (n) == NO_PACK)) {
     n = depref_once (n);
   }
-  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || whether_ref_row (n))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || is_ref_row (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_ROW_OR_PROC, n, ATTRIBUTE (SUB (p)));
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
@@ -12585,7 +12602,7 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
   MOID (p) = n;
   subs = trims = 0;
   mode_check_indexer (SUB_NEXT (p), &subs, &trims);
-  if ((whether_ref = whether_ref_row (n)) != 0) {
+  if ((is_ref = is_ref_row (n)) != 0) {
     rowdim = DIM (DEFLEX (SUB (n)));
   } else {
     rowdim = DIM (DEFLEX (n));
@@ -12602,10 +12619,10 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
       m = n;
     }
     while (subs > 0) {
-      if (whether_ref) {
+      if (is_ref) {
         m = NAME (m);
       } else {
-        if (WHETHER (m, FLEX_SYMBOL)) {
+        if (IS (m, FLEX_SYMBOL)) {
           m = SUB (m);
         }
         m = SLICE (m);
@@ -12634,7 +12651,7 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       MOID (p) = (*m);
       mode_check_field_identifiers (SUB (p), m, seq);
       if (MOID (p) != MODE (ERROR)) {
@@ -12644,19 +12661,19 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
       SEQUENCE (*seq) = p;
       (*seq) = p;
       SUB (p) = NO_NODE;
-    } else if (WHETHER (p, TERTIARY)) {
+    } else if (IS (p, TERTIARY)) {
       MOID (p) = (*m);
       mode_check_field_identifiers (SUB (p), m, seq);
       NODE_PACK (p) = NODE_PACK (SUB (p));
-    } else if (WHETHER (p, SECONDARY)) {
+    } else if (IS (p, SECONDARY)) {
       MOID (p) = (*m);
       mode_check_field_identifiers (SUB (p), m, seq);
       NODE_PACK (p) = NODE_PACK (SUB (p));
-    } else if (WHETHER (p, PRIMARY)) {
+    } else if (IS (p, PRIMARY)) {
       MOID (p) = (*m);
       mode_check_field_identifiers (SUB (p), m, seq);
       NODE_PACK (p) = NODE_PACK (SUB (p));
-    } else if (WHETHER (p, IDENTIFIER)) {
+    } else if (IS (p, IDENTIFIER)) {
       BOOL_T coerce;
       MOID_T *n, *str;
       PACK_T *t, *t_2;
@@ -12664,19 +12681,19 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
       n = (*m);
       coerce = A68_TRUE;
       while (coerce) {
-        if (WHETHER (n, STRUCT_SYMBOL)) {
+        if (IS (n, STRUCT_SYMBOL)) {
           coerce = A68_FALSE;
           t = PACK (n);
-        } else if (WHETHER (n, REF_SYMBOL) && (WHETHER (SUB (n), ROW_SYMBOL) || WHETHER (SUB (n), FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
+        } else if (IS (n, REF_SYMBOL) && (IS (SUB (n), ROW_SYMBOL) || IS (SUB (n), FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
           coerce = A68_FALSE;
           t = PACK (MULTIPLE (n));
-        } else if ((WHETHER (n, ROW_SYMBOL) || WHETHER (n, FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
+        } else if ((IS (n, ROW_SYMBOL) || IS (n, FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
           coerce = A68_FALSE;
           t = PACK (MULTIPLE (n));
-        } else if (WHETHER (n, REF_SYMBOL) && whether_name_struct (n)) {
+        } else if (IS (n, REF_SYMBOL) && is_name_struct (n)) {
           coerce = A68_FALSE;
           t = PACK (NAME (n));
-        } else if (whether_deprefable (n)) {
+        } else if (is_deprefable (n)) {
           coerce = A68_TRUE;
           n = SUB (n);
           t = NO_PACK;
@@ -12686,7 +12703,7 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
         }
       }
       if (t == NO_PACK) {
-        if (WHETHER_MODE_IS_WELL (*m)) {
+        if (IF_MODE_IS_WELL (*m)) {
           diagnostic_node (A68_ERROR, p, ERROR_NO_STRUCT, (*m), CONSTRUCT);
         }
         (*m) = MODE (ERROR);
@@ -12694,13 +12711,13 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
       }
       fs = NSYMBOL (p);
       str = n;
-      while (WHETHER (str, REF_SYMBOL)) {
+      while (IS (str, REF_SYMBOL)) {
         str = SUB (str);
       }
-      if (WHETHER (str, FLEX_SYMBOL)) {
+      if (IS (str, FLEX_SYMBOL)) {
         str = SUB (str);
       }
-      if (WHETHER (str, ROW_SYMBOL)) {
+      if (IS (str, ROW_SYMBOL)) {
         str = SUB (str);
       }
       t_2 = PACK (str);
@@ -12716,9 +12733,9 @@ static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq
       }
       diagnostic_node (A68_ERROR, p, ERROR_NO_FIELD, str, fs);
       (*m) = MODE (ERROR);
-    } else if (WHETHER (p, GENERIC_ARGUMENT) || WHETHER (p, GENERIC_ARGUMENT_LIST)) {
+    } else if (IS (p, GENERIC_ARGUMENT) || IS (p, GENERIC_ARGUMENT_LIST)) {
       mode_check_field_identifiers (SUB (p), m, seq);
-    } else if (whether_one_of (p, COMMA_SYMBOL, OPEN_SYMBOL, CLOSE_SYMBOL, SUB_SYMBOL, BUS_SYMBOL, STOP)) {
+    } else if (is_one_of (p, COMMA_SYMBOL, OPEN_SYMBOL, CLOSE_SYMBOL, SUB_SYMBOL, BUS_SYMBOL, STOP)) {
 /* ok */;
     } else {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, FIELD_IDENTIFIER);
@@ -12752,15 +12769,15 @@ static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
   mode_check_unit (SUB (p), &w, &d);
   ori = determine_unique_mode (&d, SAFE_DEFLEXING);
   m = depref_completely (ori);
-  if (WHETHER (m, PROC_SYMBOL)) {
+  if (IS (m, PROC_SYMBOL)) {
 /* Assume CALL */
     mode_check_call (p, m, x, y);
     return (CALL);
-  } else if (WHETHER (m, ROW_SYMBOL) || WHETHER (m, FLEX_SYMBOL)) {
+  } else if (IS (m, ROW_SYMBOL) || IS (m, FLEX_SYMBOL)) {
 /* Assume SLICE */
     mode_check_slice (p, ori, x, y);
     return (SLICE);
-  } else if (WHETHER (m, STRUCT_SYMBOL)) {
+  } else if (IS (m, STRUCT_SYMBOL)) {
     mode_check_field_selection (p, ori, x, y);
     return (FIELD_SELECTION);
   } else {
@@ -12793,21 +12810,21 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
   n = ori = determine_unique_mode (&d, SAFE_DEFLEXING);
   coerce = A68_TRUE;
   while (coerce) {
-    if (WHETHER (n, STRUCT_SYMBOL)) {
+    if (IS (n, STRUCT_SYMBOL)) {
       coerce = A68_FALSE;
       t = PACK (n);
-    } else if (WHETHER (n, REF_SYMBOL) && (WHETHER (SUB (n), ROW_SYMBOL) || WHETHER (SUB (n), FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
+    } else if (IS (n, REF_SYMBOL) && (IS (SUB (n), ROW_SYMBOL) || IS (SUB (n), FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
       coerce = A68_FALSE;
       deflex = A68_TRUE;
       t = PACK (MULTIPLE (n));
-    } else if ((WHETHER (n, ROW_SYMBOL) || WHETHER (n, FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
+    } else if ((IS (n, ROW_SYMBOL) || IS (n, FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
       coerce = A68_FALSE;
       deflex = A68_TRUE;
       t = PACK (MULTIPLE (n));
-    } else if (WHETHER (n, REF_SYMBOL) && whether_name_struct (n)) {
+    } else if (IS (n, REF_SYMBOL) && is_name_struct (n)) {
       coerce = A68_FALSE;
       t = PACK (NAME (n));
-    } else if (whether_deprefable (n)) {
+    } else if (is_deprefable (n)) {
       coerce = A68_TRUE;
       n = SUB (n);
       t = NO_PACK;
@@ -12817,7 +12834,7 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
     }
   }
   if (t == NO_PACK) {
-    if (WHETHER_MODE_IS_WELL (MOID (&d))) {
+    if (IF_MODE_IS_WELL (MOID (&d))) {
       diagnostic_node (A68_ERROR, secondary, ERROR_NO_STRUCT, ori, ATTRIBUTE (secondary));
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
@@ -12826,13 +12843,13 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
   MOID (NEXT (p)) = n;
   fs = NSYMBOL (SUB (p));
   str = n;
-  while (WHETHER (str, REF_SYMBOL)) {
+  while (IS (str, REF_SYMBOL)) {
     str = SUB (str);
   }
-  if (WHETHER (str, FLEX_SYMBOL)) {
+  if (IS (str, FLEX_SYMBOL)) {
     str = SUB (str);
   }
-  if (WHETHER (str, ROW_SYMBOL)) {
+  if (IS (str, ROW_SYMBOL)) {
     str = SUB (str);
   }
   t_2 = PACK (str);
@@ -12868,11 +12885,11 @@ static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
   NODE_T *tert;
   MOID_T *n, *ori;
   int rowdim;
-  BOOL_T whether_ref;
-  if (WHETHER (p, TERTIARY)) {
+  BOOL_T is_ref;
+  if (IS (p, TERTIARY)) {
     make_soid (&w, STRONG, MODE (INT), 0);
     mode_check_unit (p, &w, &d);
-    if (!whether_coercible_in_context (&d, &w, SAFE_DEFLEXING)) {
+    if (!is_coercible_in_context (&d, &w, SAFE_DEFLEXING)) {
       cannot_coerce (p, MOID (&d), MOID (&w), MEEK, SAFE_DEFLEXING, 0);
     }
     tert = NEXT_NEXT (p);
@@ -12882,24 +12899,24 @@ static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
   make_soid (&w, WEAK, NO_MOID, 0);
   mode_check_unit (tert, &w, &d);
   n = ori = determine_unique_mode (&d, SAFE_DEFLEXING);
-  while (WHETHER (n, REF_SYMBOL) && !whether_ref_row (n)) {
+  while (IS (n, REF_SYMBOL) && !is_ref_row (n)) {
     n = depref_once (n);
   }
-  if (n != NO_MOID && (WHETHER (n, FLEX_SYMBOL) || (WHETHER (n, REF_SYMBOL) && WHETHER (SUB (n), FLEX_SYMBOL)))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n != NO_MOID && (IS (n, FLEX_SYMBOL) || IS_REF_FLEX (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_FLEX_ARGUMENT, ori, TERTIARY);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return;
   }
-  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || whether_ref_row (n))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || is_ref_row (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_MATRIX, ori, TERTIARY);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return;
   }
-  if ((whether_ref = whether_ref_row (n)) != A68_FALSE) {
+  if ((is_ref = is_ref_row (n)) != A68_FALSE) {
     rowdim = DIM (DEFLEX (SUB (n)));
   } else {
     rowdim = DIM (DEFLEX (n));
@@ -12910,9 +12927,9 @@ static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
     return;
   }
   MOID (tert) = n;
-  if (whether_ref) {
+  if (is_ref) {
     n = NAME (n);
-    ABEND (WHETHER_NOT (n, REF_SYMBOL), "mode table error", PM (n));
+    ABEND (ISNT (n, REF_SYMBOL), "mode table error", PM (n));
   } else {
     n = SLICE (n);
   }
@@ -12933,28 +12950,28 @@ static void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
   NODE_T *tert = NEXT (p);
   MOID_T *n, *ori;
   int rowdim;
-  BOOL_T whether_ref;
+  BOOL_T is_ref;
   make_soid (&w, WEAK, NO_MOID, 0);
   mode_check_unit (tert, &w, &d);
   n = ori = determine_unique_mode (&d, SAFE_DEFLEXING);
-  while (WHETHER (n, REF_SYMBOL) && !whether_ref_row (n)) {
+  while (IS (n, REF_SYMBOL) && !is_ref_row (n)) {
     n = depref_once (n);
   }
-  if (n != NO_MOID && (WHETHER (n, FLEX_SYMBOL) || (WHETHER (n, REF_SYMBOL) && WHETHER (SUB (n), FLEX_SYMBOL)))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n != NO_MOID && (IS (n, FLEX_SYMBOL) || IS_REF_FLEX (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_FLEX_ARGUMENT, ori, TERTIARY);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return;
   }
-  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || whether_ref_row (n))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || is_ref_row (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_MATRIX, ori, TERTIARY);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return;
   }
-  if ((whether_ref = whether_ref_row (n)) != A68_FALSE) {
+  if ((is_ref = is_ref_row (n)) != A68_FALSE) {
     rowdim = DIM (DEFLEX (SUB (n)));
   } else {
     rowdim = DIM (DEFLEX (n));
@@ -12982,11 +12999,11 @@ static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
   NODE_T *tert;
   MOID_T *n, *ori;
   int rowdim;
-  BOOL_T whether_ref;
-  if (WHETHER (p, TERTIARY)) {
+  BOOL_T is_ref;
+  if (IS (p, TERTIARY)) {
     make_soid (&w, STRONG, MODE (INT), 0);
     mode_check_unit (p, &w, &d);
-    if (!whether_coercible_in_context (&d, &w, SAFE_DEFLEXING)) {
+    if (!is_coercible_in_context (&d, &w, SAFE_DEFLEXING)) {
       cannot_coerce (p, MOID (&d), MOID (&w), MEEK, SAFE_DEFLEXING, 0);
     }
     tert = NEXT_NEXT (p);
@@ -12996,24 +13013,24 @@ static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
   make_soid (&w, WEAK, NO_MOID, 0);
   mode_check_unit (tert, &w, &d);
   n = ori = determine_unique_mode (&d, SAFE_DEFLEXING);
-  while (WHETHER (n, REF_SYMBOL) && !whether_ref_row (n)) {
+  while (IS (n, REF_SYMBOL) && !is_ref_row (n)) {
     n = depref_once (n);
   }
-  if (n != NO_MOID && (WHETHER (n, FLEX_SYMBOL) || (WHETHER (n, REF_SYMBOL) && WHETHER (SUB (n), FLEX_SYMBOL)))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n != NO_MOID && (IS (n, FLEX_SYMBOL) || IS_REF_FLEX (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_FLEX_ARGUMENT, ori, TERTIARY);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return;
   }
-  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || whether_ref_row (n))) {
-    if (WHETHER_MODE_IS_WELL (n)) {
+  if (n == NO_MOID || !(SLICE (DEFLEX (n)) != NO_MOID || is_ref_row (n))) {
+    if (IF_MODE_IS_WELL (n)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_VECTOR, ori, TERTIARY);
     }
     make_soid (y, SORT (x), MODE (ERROR), 0);
     return;
   }
-  if ((whether_ref = whether_ref_row (n)) != A68_FALSE) {
+  if ((is_ref = is_ref_row (n)) != A68_FALSE) {
     rowdim = DIM (DEFLEX (SUB (n)));
   } else {
     rowdim = DIM (DEFLEX (n));
@@ -13037,25 +13054,25 @@ static void mode_check_format_text (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     mode_check_format_text (SUB (p));
-    if (WHETHER (p, FORMAT_PATTERN)) {
+    if (IS (p, FORMAT_PATTERN)) {
       SOID_T x, y;
       make_soid (&x, STRONG, MODE (FORMAT), 0);
       mode_check_enclosed (SUB (NEXT_SUB (p)), &x, &y);
-      if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+      if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
         cannot_coerce (p, MOID (&y), MOID (&x), STRONG, SAFE_DEFLEXING, ENCLOSED_CLAUSE);
       }
-    } else if (WHETHER (p, GENERAL_PATTERN) && NEXT_SUB (p) != NO_NODE) {
+    } else if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) != NO_NODE) {
       SOID_T x, y;
       make_soid (&x, STRONG, MODE (ROW_INT), 0);
       mode_check_enclosed (SUB (NEXT_SUB (p)), &x, &y);
-      if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+      if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
         cannot_coerce (p, MOID (&y), MOID (&x), STRONG, SAFE_DEFLEXING, ENCLOSED_CLAUSE);
       }
-    } else if (WHETHER (p, DYNAMIC_REPLICATOR)) {
+    } else if (IS (p, DYNAMIC_REPLICATOR)) {
       SOID_T x, y;
       make_soid (&x, STRONG, MODE (INT), 0);
       mode_check_enclosed (SUB (NEXT_SUB (p)), &x, &y);
-      if (!whether_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
+      if (!is_coercible_in_context (&y, &x, SAFE_DEFLEXING)) {
         cannot_coerce (p, MOID (&y), MOID (&x), STRONG, SAFE_DEFLEXING, ENCLOSED_CLAUSE);
       }
     }
@@ -13073,24 +13090,24 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
-  } else if (whether_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, STOP)) {
+  } else if (is_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, STOP)) {
     mode_check_unit (SUB (p), x, y);
 /* Ex primary */
-  } else if (WHETHER (p, SPECIFICATION)) {
+  } else if (IS (p, SPECIFICATION)) {
     ATTRIBUTE (p) = mode_check_specification (SUB (p), x, y);
-    if (WHETHER (p, FIELD_SELECTION) && OPTION_PORTCHECK (&program)) {
+    if (IS (p, FIELD_SELECTION) && OPTION_PORTCHECK (&program)) {
       diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION);
-    } else if (WHETHER (p, FIELD_SELECTION)) {
+    } else if (IS (p, FIELD_SELECTION)) {
       diagnostic_node (A68_WARNING, p, WARNING_EXTENSION);
     }
     warn_for_voiding (p, x, y, ATTRIBUTE (p));
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     mode_check_cast (SUB (p), x, y);
     warn_for_voiding (p, x, y, CAST);
-  } else if (WHETHER (p, DENOTATION)) {
+  } else if (IS (p, DENOTATION)) {
     make_soid (y, SORT (x), MOID (SUB (p)), 0);
     warn_for_voiding (p, x, y, DENOTATION);
-  } else if (WHETHER (p, IDENTIFIER)) {
+  } else if (IS (p, IDENTIFIER)) {
     if ((TAX (p) == NO_TAG) && (MOID (p) == NO_MOID)) {
       int att = first_tag_global (TABLE (p), NSYMBOL (p));
       if (att == STOP) {
@@ -13110,62 +13127,62 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
     }
     make_soid (y, SORT (x), MOID (p), 0);
     warn_for_voiding (p, x, y, IDENTIFIER);
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     mode_check_enclosed (SUB (p), x, y);
-  } else if (WHETHER (p, FORMAT_TEXT)) {
+  } else if (IS (p, FORMAT_TEXT)) {
     mode_check_format_text (p);
     make_soid (y, SORT (x), MODE (FORMAT), 0);
     warn_for_voiding (p, x, y, FORMAT_TEXT);
 /* Ex secondary */
-  } else if (WHETHER (p, GENERATOR)) {
+  } else if (IS (p, GENERATOR)) {
     mode_check_declarer (SUB (p));
     make_soid (y, SORT (x), MOID (SUB (p)), 0);
     warn_for_voiding (p, x, y, GENERATOR);
-  } else if (WHETHER (p, SELECTION)) {
+  } else if (IS (p, SELECTION)) {
     mode_check_selection (SUB (p), x, y);
     warn_for_voiding (p, x, y, SELECTION);
 /* Ex tertiary */
-  } else if (WHETHER (p, NIHIL)) {
+  } else if (IS (p, NIHIL)) {
     make_soid (y, STRONG, MODE (HIP), 0);
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     mode_check_formula (p, x, y);
-    if (WHETHER_NOT (MOID (y), REF_SYMBOL)) {
+    if (ISNT (MOID (y), REF_SYMBOL)) {
       warn_for_voiding (p, x, y, FORMULA);
     }
-  } else if (WHETHER (p, DIAGONAL_FUNCTION)) {
+  } else if (IS (p, DIAGONAL_FUNCTION)) {
     mode_check_diagonal (SUB (p), x, y);
     warn_for_voiding (p, x, y, DIAGONAL_FUNCTION);
-  } else if (WHETHER (p, TRANSPOSE_FUNCTION)) {
+  } else if (IS (p, TRANSPOSE_FUNCTION)) {
     mode_check_transpose (SUB (p), x, y);
     warn_for_voiding (p, x, y, TRANSPOSE_FUNCTION);
-  } else if (WHETHER (p, ROW_FUNCTION)) {
+  } else if (IS (p, ROW_FUNCTION)) {
     mode_check_row_column_function (SUB (p), x, y);
     warn_for_voiding (p, x, y, ROW_FUNCTION);
-  } else if (WHETHER (p, COLUMN_FUNCTION)) {
+  } else if (IS (p, COLUMN_FUNCTION)) {
     mode_check_row_column_function (SUB (p), x, y);
     warn_for_voiding (p, x, y, COLUMN_FUNCTION);
 /* Ex unit */
-  } else if (whether_one_of (p, JUMP, SKIP, STOP)) {
+  } else if (is_one_of (p, JUMP, SKIP, STOP)) {
     make_soid (y, STRONG, MODE (HIP), 0);
-  } else if (WHETHER (p, ASSIGNATION)) {
+  } else if (IS (p, ASSIGNATION)) {
     mode_check_assignation (SUB (p), x, y);
-  } else if (WHETHER (p, IDENTITY_RELATION)) {
+  } else if (IS (p, IDENTITY_RELATION)) {
     mode_check_identity_relation (SUB (p), x, y);
     warn_for_voiding (p, x, y, IDENTITY_RELATION);
-  } else if (WHETHER (p, ROUTINE_TEXT)) {
+  } else if (IS (p, ROUTINE_TEXT)) {
     mode_check_routine_text (SUB (p), y);
     make_soid (y, SORT (x), MOID (p), 0);
     warn_for_voiding (p, x, y, ROUTINE_TEXT);
-  } else if (WHETHER (p, ASSERTION)) {
+  } else if (IS (p, ASSERTION)) {
     mode_check_assertion (SUB (p));
     make_soid (y, STRONG, MODE (VOID), 0);
-  } else if (WHETHER (p, AND_FUNCTION)) {
+  } else if (IS (p, AND_FUNCTION)) {
     mode_check_bool_function (SUB (p), x, y);
     warn_for_voiding (p, x, y, AND_FUNCTION);
-  } else if (WHETHER (p, OR_FUNCTION)) {
+  } else if (IS (p, OR_FUNCTION)) {
     mode_check_bool_function (SUB (p), x, y);
     warn_for_voiding (p, x, y, OR_FUNCTION);
-  } else if (WHETHER (p, CODE_CLAUSE)) {
+  } else if (IS (p, CODE_CLAUSE)) {
     make_soid (y, STRONG, MODE (HIP), 0);
   }
   MOID (p) = MOID (y);
@@ -13179,7 +13196,7 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 static void coerce_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       SOID_T q;
       make_soid (&q, MEEK, MODE (INT), 0);
       coerce_unit (p, &q);
@@ -13197,7 +13214,7 @@ static void coerce_bounds (NODE_T * p)
 static void coerce_declarer (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, BOUNDS)) {
+    if (IS (p, BOUNDS)) {
       coerce_bounds (SUB (p));
     } else {
       coerce_declarer (SUB (p));
@@ -13279,7 +13296,7 @@ static void coerce_variable_declaration (NODE_T * p)
 static void coerce_routine_text (NODE_T * p)
 {
   SOID_T w;
-  if (WHETHER (p, PARAMETER_PACK)) {
+  if (IS (p, PARAMETER_PACK)) {
     FORWARD (p);
   }
   make_soid (&w, STRONG, MOID (p), 0);
@@ -13295,7 +13312,7 @@ static void coerce_proc_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, ROUTINE_TEXT)) {
+  } else if (IS (p, ROUTINE_TEXT)) {
     coerce_routine_text (SUB (p));
   } else {
     coerce_proc_declaration (SUB (p));
@@ -13312,7 +13329,7 @@ static void coerce_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, DEFINING_OPERATOR)) {
+  } else if (IS (p, DEFINING_OPERATOR)) {
     SOID_T q;
     make_soid (&q, STRONG, MOID (p), 0);
     coerce_unit (NEXT_NEXT (p), &q);
@@ -13331,7 +13348,7 @@ static void coerce_brief_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, DEFINING_OPERATOR)) {
+  } else if (IS (p, DEFINING_OPERATOR)) {
     coerce_routine_text (SUB (NEXT_NEXT (p)));
   } else {
     coerce_brief_op_declaration (SUB (p));
@@ -13400,17 +13417,17 @@ static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, INITIALISER_SERIES)) {
+  } else if (IS (p, INITIALISER_SERIES)) {
     coerce_serial (SUB (p), q, A68_FALSE);
     coerce_serial (NEXT (p), q, k);
-  } else if (WHETHER (p, DECLARATION_LIST)) {
+  } else if (IS (p, DECLARATION_LIST)) {
     coerce_declaration_list (SUB (p));
-  } else if (whether_one_of (p, LABEL, SEMI_SYMBOL, EXIT_SYMBOL, STOP)) {
+  } else if (is_one_of (p, LABEL, SEMI_SYMBOL, EXIT_SYMBOL, STOP)) {
     coerce_serial (NEXT (p), q, k);
-  } else if (whether_one_of (p, SERIAL_CLAUSE, ENQUIRY_CLAUSE, STOP)) {
+  } else if (is_one_of (p, SERIAL_CLAUSE, ENQUIRY_CLAUSE, STOP)) {
     NODE_T *z = NEXT (p);
     if (z != NO_NODE) {
-      if (WHETHER (z, EXIT_SYMBOL) || WHETHER (z, END_SYMBOL) || WHETHER (z, CLOSE_SYMBOL) || WHETHER (z, OCCA_SYMBOL)) {
+      if (IS (z, EXIT_SYMBOL) || IS (z, END_SYMBOL) || IS (z, CLOSE_SYMBOL) || IS (z, OCCA_SYMBOL)) {
         coerce_serial (SUB (p), q, A68_TRUE);
       } else {
         coerce_serial (SUB (p), q, A68_FALSE);
@@ -13419,9 +13436,9 @@ static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
       coerce_serial (SUB (p), q, A68_TRUE);
     }
     coerce_serial (NEXT (p), q, k);
-  } else if (WHETHER (p, LABELED_UNIT)) {
+  } else if (IS (p, LABELED_UNIT)) {
     coerce_serial (SUB (p), q, k);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     if (k) {
       coerce_unit (p, q);
     } else {
@@ -13440,9 +13457,9 @@ static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
 
 static void coerce_closed (NODE_T * p, SOID_T * q)
 {
-  if (WHETHER (p, SERIAL_CLAUSE)) {
+  if (IS (p, SERIAL_CLAUSE)) {
     coerce_serial (p, q, A68_TRUE);
-  } else if (whether_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
+  } else if (is_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
     coerce_closed (NEXT (p), q);
   }
 }
@@ -13461,9 +13478,9 @@ static void coerce_conditional (NODE_T * p, SOID_T * q)
   FORWARD (p);
   coerce_serial (NEXT_SUB (p), q, A68_TRUE);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, ELSE_PART, CHOICE, STOP)) {
+    if (is_one_of (p, ELSE_PART, CHOICE, STOP)) {
       coerce_serial (NEXT_SUB (p), q, A68_TRUE);
-    } else if (whether_one_of (p, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    } else if (is_one_of (p, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       coerce_conditional (SUB (p), q);
     }
   }
@@ -13479,12 +13496,12 @@ static void coerce_unit_list (NODE_T * p, SOID_T * q)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT_LIST)) {
+  } else if (IS (p, UNIT_LIST)) {
     coerce_unit_list (SUB (p), q);
     coerce_unit_list (NEXT (p), q);
-  } else if (whether_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, COMMA_SYMBOL, STOP)) {
+  } else if (is_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, COMMA_SYMBOL, STOP)) {
     coerce_unit_list (NEXT (p), q);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     coerce_unit (p, q);
     coerce_unit_list (NEXT (p), q);
   }
@@ -13504,9 +13521,9 @@ static void coerce_int_case (NODE_T * p, SOID_T * q)
   FORWARD (p);
   coerce_unit_list (NEXT_SUB (p), q);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, OUT_PART, CHOICE, STOP)) {
+    if (is_one_of (p, OUT_PART, CHOICE, STOP)) {
       coerce_serial (NEXT_SUB (p), q, A68_TRUE);
-    } else if (whether_one_of (p, CASE_OUSE_PART, BRIEF_OUSE_PART, STOP)) {
+    } else if (is_one_of (p, CASE_OUSE_PART, BRIEF_OUSE_PART, STOP)) {
       coerce_int_case (SUB (p), q);
     }
   }
@@ -13521,9 +13538,9 @@ static void coerce_int_case (NODE_T * p, SOID_T * q)
 static void coerce_spec_unit_list (NODE_T * p, SOID_T * q)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (whether_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
+    if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
       coerce_spec_unit_list (SUB (p), q);
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       coerce_unit (p, q);
     }
   }
@@ -13543,9 +13560,9 @@ static void coerce_united_case (NODE_T * p, SOID_T * q)
   FORWARD (p);
   coerce_spec_unit_list (NEXT_SUB (p), q);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, OUT_PART, CHOICE, STOP)) {
+    if (is_one_of (p, OUT_PART, CHOICE, STOP)) {
       coerce_serial (NEXT_SUB (p), q, A68_TRUE);
-    } else if (whether_one_of (p, CONFORMITY_OUSE_PART, BRIEF_CONFORMITY_OUSE_PART, STOP)) {
+    } else if (is_one_of (p, CONFORMITY_OUSE_PART, BRIEF_CONFORMITY_OUSE_PART, STOP)) {
       coerce_united_case (SUB (p), q);
     }
   }
@@ -13558,29 +13575,29 @@ static void coerce_united_case (NODE_T * p, SOID_T * q)
 
 static void coerce_loop (NODE_T * p)
 {
-  if (WHETHER (p, FOR_PART)) {
+  if (IS (p, FOR_PART)) {
     coerce_loop (NEXT (p));
-  } else if (whether_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
+  } else if (is_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
     SOID_T w;
     make_soid (&w, MEEK, MODE (INT), 0);
     coerce_unit (NEXT_SUB (p), &w);
     coerce_loop (NEXT (p));
-  } else if (WHETHER (p, WHILE_PART)) {
+  } else if (IS (p, WHILE_PART)) {
     SOID_T w;
     make_soid (&w, MEEK, MODE (BOOL), 0);
     coerce_serial (NEXT_SUB (p), &w, A68_TRUE);
     coerce_loop (NEXT (p));
-  } else if (whether_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
+  } else if (is_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
     SOID_T w;
     NODE_T *do_p = NEXT_SUB (p), *un_p;
     make_soid (&w, STRONG, MODE (VOID), 0);
     coerce_serial (do_p, &w, A68_TRUE);
-    if (WHETHER (do_p, SERIAL_CLAUSE)) {
+    if (IS (do_p, SERIAL_CLAUSE)) {
       un_p = NEXT (do_p);
     } else {
       un_p = do_p;
     }
-    if (un_p != NO_NODE && WHETHER (un_p, UNTIL_PART)) {
+    if (un_p != NO_NODE && IS (un_p, UNTIL_PART)) {
       SOID_T sw;
       make_soid (&sw, MEEK, MODE (BOOL), 0);
       coerce_serial (NEXT_SUB (un_p), &sw, A68_TRUE);
@@ -13598,12 +13615,12 @@ static void coerce_struct_display (PACK_T ** r, NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT_LIST)) {
+  } else if (IS (p, UNIT_LIST)) {
     coerce_struct_display (r, SUB (p));
     coerce_struct_display (r, NEXT (p));
-  } else if (whether_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, COMMA_SYMBOL, STOP)) {
+  } else if (is_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, COMMA_SYMBOL, STOP)) {
     coerce_struct_display (r, NEXT (p));
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     SOID_T s;
     make_soid (&s, STRONG, MOID (*r), 0);
     coerce_unit (p, &s);
@@ -13621,14 +13638,14 @@ static void coerce_struct_display (PACK_T ** r, NODE_T * p)
 static void coerce_collateral (NODE_T * p, SOID_T * q)
 {
   if (!(whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP) || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP))) {
-    if (WHETHER (MOID (q), STRUCT_SYMBOL)) {
+    if (IS (MOID (q), STRUCT_SYMBOL)) {
       PACK_T *t = PACK (MOID (q));
       coerce_struct_display (&t, p);
-    } else if (WHETHER (MOID (q), FLEX_SYMBOL)) {
+    } else if (IS (MOID (q), FLEX_SYMBOL)) {
       SOID_T w;
       make_soid (&w, STRONG, SLICE (SUB_MOID (q)), 0);
       coerce_unit_list (p, &w);
-    } else if (WHETHER (MOID (q), ROW_SYMBOL)) {
+    } else if (IS (MOID (q), ROW_SYMBOL)) {
       SOID_T w;
       make_soid (&w, STRONG, SLICE (MOID (q)), 0);
       coerce_unit_list (p, &w);
@@ -13647,21 +13664,21 @@ static void coerce_collateral (NODE_T * p, SOID_T * q)
 
 void coerce_enclosed (NODE_T * p, SOID_T * q)
 {
-  if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  if (IS (p, ENCLOSED_CLAUSE)) {
     coerce_enclosed (SUB (p), q);
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     coerce_closed (SUB (p), q);
-  } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+  } else if (IS (p, COLLATERAL_CLAUSE)) {
     coerce_collateral (SUB (p), q);
-  } else if (WHETHER (p, PARALLEL_CLAUSE)) {
+  } else if (IS (p, PARALLEL_CLAUSE)) {
     coerce_collateral (SUB (NEXT_SUB (p)), q);
-  } else if (WHETHER (p, CONDITIONAL_CLAUSE)) {
+  } else if (IS (p, CONDITIONAL_CLAUSE)) {
     coerce_conditional (SUB (p), q);
-  } else if (WHETHER (p, CASE_CLAUSE)) {
+  } else if (IS (p, CASE_CLAUSE)) {
     coerce_int_case (SUB (p), q);
-  } else if (WHETHER (p, CONFORMITY_CLAUSE)) {
+  } else if (IS (p, CONFORMITY_CLAUSE)) {
     coerce_united_case (SUB (p), q);
-  } else if (WHETHER (p, LOOP_CLAUSE)) {
+  } else if (IS (p, LOOP_CLAUSE)) {
     coerce_loop (SUB (p));
   }
   MOID (p) = depref_rows (MOID (p), MOID (q));
@@ -13718,7 +13735,7 @@ static void coerce_monad_formula (NODE_T * p)
 
 static void coerce_operand (NODE_T * p, SOID_T * q)
 {
-  if (WHETHER (p, MONADIC_FORMULA)) {
+  if (IS (p, MONADIC_FORMULA)) {
     coerce_monad_formula (SUB (p));
     if (MOID (p) != MOID (q)) {
       make_sub (p, p, FORMULA);
@@ -13726,11 +13743,11 @@ static void coerce_operand (NODE_T * p, SOID_T * q)
       make_sub (p, p, TERTIARY);
     }
     MOID (p) = depref_rows (MOID (p), MOID (q));
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     coerce_formula (SUB (p), q);
     INSERT_COERCIONS (p, MOID (p), q);
     MOID (p) = depref_rows (MOID (p), MOID (q));
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     coerce_unit (SUB (p), q);
     MOID (p) = MOID (SUB (p));
   }
@@ -13745,7 +13762,7 @@ static void coerce_operand (NODE_T * p, SOID_T * q)
 static void coerce_formula (NODE_T * p, SOID_T * q)
 {
   (void) q;
-  if (WHETHER (p, MONADIC_FORMULA) && NEXT (p) == NO_NODE) {
+  if (IS (p, MONADIC_FORMULA) && NEXT (p) == NO_NODE) {
     coerce_monad_formula (SUB (p));
   } else {
     if (TAX (NEXT (p)) != NO_TAG && TAX (NEXT (p)) != error_tag) {
@@ -13860,14 +13877,14 @@ static void coerce_cast (NODE_T * p)
 static void coerce_argument_list (PACK_T ** r, NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, ARGUMENT_LIST)) {
+    if (IS (p, ARGUMENT_LIST)) {
       coerce_argument_list (r, SUB (p));
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       SOID_T s;
       make_soid (&s, STRONG, MOID (*r), 0);
       coerce_unit (p, &s);
       FORWARD (*r);
-    } else if (WHETHER (p, TRIMMER)) {
+    } else if (IS (p, TRIMMER)) {
       FORWARD (*r);
     }
   }
@@ -13910,7 +13927,7 @@ static void coerce_meek_int (NODE_T * p)
 static void coerce_trimmer (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       coerce_meek_int (p);
       coerce_trimmer (NEXT (p));
     } else {
@@ -13927,9 +13944,9 @@ static void coerce_trimmer (NODE_T * p)
 static void coerce_indexer (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, TRIMMER)) {
+    if (IS (p, TRIMMER)) {
       coerce_trimmer (SUB (p));
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       coerce_meek_int (p);
     } else {
       coerce_indexer (SUB (p));
@@ -13961,7 +13978,7 @@ static void coerce_slice (NODE_T * p)
 static void coerce_diagonal (NODE_T * p)
 {
   SOID_T w;
-  if (WHETHER (p, TERTIARY)) {
+  if (IS (p, TERTIARY)) {
     make_soid (&w, MEEK, MODE (INT), 0);
     coerce_unit (SUB (p), &w);
     FORWARD (p);
@@ -13990,7 +14007,7 @@ static void coerce_transpose (NODE_T * p)
 static void coerce_row_column_function (NODE_T * p)
 {
   SOID_T w;
-  if (WHETHER (p, TERTIARY)) {
+  if (IS (p, TERTIARY)) {
     make_soid (&w, MEEK, MODE (INT), 0);
     coerce_unit (SUB (p), &w);
     FORWARD (p);
@@ -14008,15 +14025,15 @@ static void coerce_format_text (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     coerce_format_text (SUB (p));
-    if (WHETHER (p, FORMAT_PATTERN)) {
+    if (IS (p, FORMAT_PATTERN)) {
       SOID_T x;
       make_soid (&x, STRONG, MODE (FORMAT), 0);
       coerce_enclosed (SUB (NEXT_SUB (p)), &x);
-    } else if (WHETHER (p, GENERAL_PATTERN) && NEXT_SUB (p) != NO_NODE) {
+    } else if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) != NO_NODE) {
       SOID_T x;
       make_soid (&x, STRONG, MODE (ROW_INT), 0);
       coerce_enclosed (SUB (NEXT_SUB (p)), &x);
-    } else if (WHETHER (p, DYNAMIC_REPLICATOR)) {
+    } else if (IS (p, DYNAMIC_REPLICATOR)) {
       SOID_T x;
       make_soid (&x, STRONG, MODE (INT), 0);
       coerce_enclosed (SUB (NEXT_SUB (p)), &x);
@@ -14034,79 +14051,79 @@ static void coerce_unit (NODE_T * p, SOID_T * q)
 {
   if (p == NO_NODE) {
     return;
-  } else if (whether_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, STOP)) {
+  } else if (is_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, STOP)) {
     coerce_unit (SUB (p), q);
     MOID (p) = MOID (SUB (p));
 /* Ex primary */
-  } else if (WHETHER (p, CALL)) {
+  } else if (IS (p, CALL)) {
     coerce_call (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, SLICE)) {
+  } else if (IS (p, SLICE)) {
     coerce_slice (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, FIELD_SELECTION)) {
+  } else if (IS (p, FIELD_SELECTION)) {
     coerce_field_selection (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     coerce_cast (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (whether_one_of (p, DENOTATION, IDENTIFIER, STOP)) {
+  } else if (is_one_of (p, DENOTATION, IDENTIFIER, STOP)) {
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, FORMAT_TEXT)) {
+  } else if (IS (p, FORMAT_TEXT)) {
     coerce_format_text (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     coerce_enclosed (p, q);
 /* Ex secondary */
-  } else if (WHETHER (p, SELECTION)) {
+  } else if (IS (p, SELECTION)) {
     coerce_selection (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, GENERATOR)) {
+  } else if (IS (p, GENERATOR)) {
     coerce_declarer (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
 /* Ex tertiary */
-  } else if (WHETHER (p, NIHIL)) {
+  } else if (IS (p, NIHIL)) {
     if (ATTRIBUTE (MOID (q)) != REF_SYMBOL && MOID (q) != MODE (VOID)) {
       diagnostic_node (A68_ERROR, p, ERROR_NO_NAME_REQUIRED);
     }
     MOID (p) = depref_rows (MOID (p), MOID (q));
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     coerce_formula (SUB (p), q);
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, DIAGONAL_FUNCTION)) {
+  } else if (IS (p, DIAGONAL_FUNCTION)) {
     coerce_diagonal (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, TRANSPOSE_FUNCTION)) {
+  } else if (IS (p, TRANSPOSE_FUNCTION)) {
     coerce_transpose (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, ROW_FUNCTION)) {
+  } else if (IS (p, ROW_FUNCTION)) {
     coerce_row_column_function (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, COLUMN_FUNCTION)) {
+  } else if (IS (p, COLUMN_FUNCTION)) {
     coerce_row_column_function (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
 /* Ex unit */
-  } else if (WHETHER (p, JUMP)) {
+  } else if (IS (p, JUMP)) {
     if (MOID (q) == MODE (PROC_VOID)) {
       make_sub (p, p, PROCEDURING);
     }
     MOID (p) = depref_rows (MOID (p), MOID (q));
-  } else if (WHETHER (p, SKIP)) {
+  } else if (IS (p, SKIP)) {
     MOID (p) = depref_rows (MOID (p), MOID (q));
-  } else if (WHETHER (p, ASSIGNATION)) {
+  } else if (IS (p, ASSIGNATION)) {
     coerce_assignation (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
     MOID (p) = depref_rows (MOID (p), MOID (q));
-  } else if (WHETHER (p, IDENTITY_RELATION)) {
+  } else if (IS (p, IDENTITY_RELATION)) {
     coerce_relation (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, ROUTINE_TEXT)) {
+  } else if (IS (p, ROUTINE_TEXT)) {
     coerce_routine_text (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (whether_one_of (p, AND_FUNCTION, OR_FUNCTION, STOP)) {
+  } else if (is_one_of (p, AND_FUNCTION, OR_FUNCTION, STOP)) {
     coerce_bool_function (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
-  } else if (WHETHER (p, ASSERTION)) {
+  } else if (IS (p, ASSERTION)) {
     coerce_assertion (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
   }
@@ -14132,7 +14149,7 @@ void widen_denotation (NODE_T * p)
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
     widen_denotation (SUB (q));
-    if (WHETHER (q, WIDENING) && WHETHER (SUB (q), DENOTATION)) {
+    if (IS (q, WIDENING) && IS (SUB (q), DENOTATION)) {
       MOID_T *lm = MOID (q), *m = MOID (SUB (q));
       if (lm == MODE (LONGLONG_INT) && m == MODE (LONG_INT)) {
         WARN_WIDENING;
@@ -14242,8 +14259,8 @@ static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
 /* Potential scope violations */
       MOID_T *sw = MOID (WHERE (s));
       if (sw != NO_MOID) {
-        if (WHETHER (sw, REF_SYMBOL) || WHETHER (sw, PROC_SYMBOL)
-            || WHETHER (sw, FORMAT_SYMBOL) || WHETHER (sw, UNION_SYMBOL)) {
+        if (IS (sw, REF_SYMBOL) || IS (sw, PROC_SYMBOL)
+            || IS (sw, FORMAT_SYMBOL) || IS (sw, UNION_SYMBOL)) {
           diagnostic_node (A68_WARNING, WHERE (s), WARNING_SCOPE_STATIC, 
                            MOID (WHERE (s)), ATTRIBUTE (WHERE (s)));
         }
@@ -14281,7 +14298,7 @@ static BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
 static void check_identifier_usage (TAG_T * t, NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, IDENTIFIER) && TAX (p) == t && ATTRIBUTE (MOID (t)) != PROC_SYMBOL) {
+    if (IS (p, IDENTIFIER) && TAX (p) == t && ATTRIBUTE (MOID (t)) != PROC_SYMBOL) {
       diagnostic_node (A68_WARNING, p, WARNING_UNINITIALISED);
     }
     check_identifier_usage (t, SUB (p));
@@ -14329,15 +14346,15 @@ static TUPLE_T scope_find_youngest (SCOPE_T * s)
 static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, BOUNDS)) {
+    if (IS (p, BOUNDS)) {
       gather_scopes_for_youngest (SUB (p), r);
-    } else if (WHETHER (p, INDICANT)) {
+    } else if (IS (p, INDICANT)) {
       if (MOID (p) != NO_MOID && TAX (p) != NO_TAG && HAS_ROWS (MOID (p)) && no_ref) {
         scope_add (r, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
       }
-    } else if (WHETHER (p, REF_SYMBOL)) {
+    } else if (IS (p, REF_SYMBOL)) {
       get_declarer_elements (NEXT (p), r, A68_FALSE);
-    } else if (whether_one_of (p, PROC_SYMBOL, UNION_SYMBOL, STOP)) {
+    } else if (is_one_of (p, PROC_SYMBOL, UNION_SYMBOL, STOP)) {
       ;
     } else {
       get_declarer_elements (SUB (p), r, no_ref);
@@ -14355,10 +14372,11 @@ static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if ((whether_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) && (YOUNGEST_ENVIRON (TAX (p)) == PRIMAL_SCOPE)) {
+    if ((is_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) && (YOUNGEST_ENVIRON (TAX (p)) == PRIMAL_SCOPE)) {
       SCOPE_T *t = NO_SCOPE;
+      TUPLE_T tup;
       gather_scopes_for_youngest (SUB (p), &t);
-      TUPLE_T tup = scope_find_youngest_outside (t, LEX_LEVEL (p));
+      tup = scope_find_youngest_outside (t, LEX_LEVEL (p));
       YOUNGEST_ENVIRON (TAX (p)) = LEVEL (&tup);
 /* Direct link into list iso "gather_scopes_for_youngest (SUB (p), s);" */
       if (t != NO_SCOPE) {
@@ -14369,11 +14387,11 @@ static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
         NEXT (u) = *s;
         (*s) = t;
       }
-    } else if (whether_one_of (p, IDENTIFIER, OPERATOR, STOP)) {
+    } else if (is_one_of (p, IDENTIFIER, OPERATOR, STOP)) {
       if (TAX (p) != NO_TAG && TAG_LEX_LEVEL (TAX (p)) != PRIMAL_SCOPE) {
         scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)), NOT_TRANSIENT));
       }
-    } else if (WHETHER (p, DECLARER)) {
+    } else if (IS (p, DECLARER)) {
       get_declarer_elements (p, s, A68_TRUE);
     } else {
       gather_scopes_for_youngest (SUB (p), s);
@@ -14389,7 +14407,7 @@ static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 static void get_youngest_environs (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (whether_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) {
+    if (is_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) {
       SCOPE_T *s = NO_SCOPE;
       TUPLE_T tup;
       gather_scopes_for_youngest (SUB (p), &s);
@@ -14409,14 +14427,14 @@ static void get_youngest_environs (NODE_T * p)
 static void bind_scope_to_tag (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, DEFINING_IDENTIFIER) && MOID (p) == MODE (FORMAT)) {
-      if (WHETHER (NEXT_NEXT (p), FORMAT_TEXT)) {
+    if (IS (p, DEFINING_IDENTIFIER) && MOID (p) == MODE (FORMAT)) {
+      if (IS (NEXT_NEXT (p), FORMAT_TEXT)) {
         SCOPE (TAX (p)) = YOUNGEST_ENVIRON (TAX (NEXT_NEXT (p)));
         SCOPE_ASSIGNED (TAX (p)) = A68_TRUE;
       }
       return;
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
-      if (WHETHER (NEXT_NEXT (p), ROUTINE_TEXT)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
+      if (IS (NEXT_NEXT (p), ROUTINE_TEXT)) {
         SCOPE (TAX (p)) = YOUNGEST_ENVIRON (TAX (NEXT_NEXT (p)));
         SCOPE_ASSIGNED (TAX (p)) = A68_TRUE;
       }
@@ -14435,7 +14453,7 @@ static void bind_scope_to_tag (NODE_T * p)
 static void bind_scope_to_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (whether_one_of (p, PROCEDURE_DECLARATION, IDENTITY_DECLARATION, STOP)) {
+    if (is_one_of (p, PROCEDURE_DECLARATION, IDENTITY_DECLARATION, STOP)) {
       bind_scope_to_tag (SUB (p));
     } else {
       bind_scope_to_tags (SUB (p));
@@ -14451,7 +14469,7 @@ static void bind_scope_to_tags (NODE_T * p)
 static void scope_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       scope_statement (p, NO_VAR);
     } else {
       scope_bounds (SUB (p));
@@ -14467,13 +14485,13 @@ static void scope_bounds (NODE_T * p)
 static void scope_declarer (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, BOUNDS)) {
+    if (IS (p, BOUNDS)) {
       scope_bounds (SUB (p));
-    } else if (WHETHER (p, INDICANT)) {
+    } else if (IS (p, INDICANT)) {
       ;
-    } else if (WHETHER (p, REF_SYMBOL)) {
+    } else if (IS (p, REF_SYMBOL)) {
       scope_declarer (NEXT (p));
-    } else if (whether_one_of (p, PROC_SYMBOL, UNION_SYMBOL, STOP)) {
+    } else if (is_one_of (p, PROC_SYMBOL, UNION_SYMBOL, STOP)) {
       ;
     } else {
       scope_declarer (SUB (p));
@@ -14491,7 +14509,7 @@ static void scope_identity_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_identity_declaration (SUB (p));
-    if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    if (IS (p, DEFINING_IDENTIFIER)) {
       NODE_T *unit = NEXT_NEXT (p);
       SCOPE_T *s = NO_SCOPE;
       TUPLE_T tup;
@@ -14522,9 +14540,9 @@ static void scope_variable_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_variable_declaration (SUB (p));
-    if (WHETHER (p, DECLARER)) {
+    if (IS (p, DECLARER)) {
       scope_declarer (SUB (p));
-    } else if (WHETHER (p, DEFINING_IDENTIFIER)) {
+    } else if (IS (p, DEFINING_IDENTIFIER)) {
       if (whether (p, DEFINING_IDENTIFIER, ASSIGN_SYMBOL, UNIT, STOP)) {
         NODE_T *unit = NEXT_NEXT (p);
         SCOPE_T *s = NO_SCOPE;
@@ -14547,7 +14565,7 @@ static void scope_procedure_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_procedure_declaration (SUB (p));
-    if (whether_one_of (p, DEFINING_IDENTIFIER, DEFINING_OPERATOR, STOP)) {
+    if (is_one_of (p, DEFINING_IDENTIFIER, DEFINING_OPERATOR, STOP)) {
       NODE_T *unit = NEXT_NEXT (p);
       SCOPE_T *s = NO_SCOPE;
       scope_statement (unit, &s);
@@ -14566,19 +14584,19 @@ static void scope_procedure_declaration (NODE_T * p)
 static void scope_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, IDENTITY_DECLARATION)) {
+    if (IS (p, IDENTITY_DECLARATION)) {
       scope_identity_declaration (SUB (p));
-    } else if (WHETHER (p, VARIABLE_DECLARATION)) {
+    } else if (IS (p, VARIABLE_DECLARATION)) {
       scope_variable_declaration (SUB (p));
-    } else if (WHETHER (p, MODE_DECLARATION)) {
+    } else if (IS (p, MODE_DECLARATION)) {
       scope_declarer (SUB (p));
-    } else if (WHETHER (p, PRIORITY_DECLARATION)) {
+    } else if (IS (p, PRIORITY_DECLARATION)) {
       ;
-    } else if (WHETHER (p, PROCEDURE_DECLARATION)) {
+    } else if (IS (p, PROCEDURE_DECLARATION)) {
       scope_procedure_declaration (SUB (p));
-    } else if (WHETHER (p, PROCEDURE_VARIABLE_DECLARATION)) {
+    } else if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       scope_procedure_declaration (SUB (p));
-    } else if (whether_one_of (p, BRIEF_OPERATOR_DECLARATION, OPERATOR_DECLARATION, STOP)) {
+    } else if (is_one_of (p, BRIEF_OPERATOR_DECLARATION, OPERATOR_DECLARATION, STOP)) {
       scope_procedure_declaration (SUB (p));
     } else {
       scope_declaration_list (SUB (p));
@@ -14595,7 +14613,7 @@ static void scope_declaration_list (NODE_T * p)
 static void scope_arguments (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       SCOPE_T *s = NO_SCOPE;
       scope_statement (p, &s);
       (void) scope_check (s, TRANSIENT, LEX_LEVEL (p));
@@ -14606,26 +14624,11 @@ static void scope_arguments (NODE_T * p)
 }
 
 /*!
-\brief whether_transient_row
-\param m mode of row
-\return same
-**/
-
-static BOOL_T whether_transient_row (MOID_T * m)
-{
-  if (WHETHER (m, REF_SYMBOL)) {
-    return ((BOOL_T) (WHETHER (SUB (m), FLEX_SYMBOL)));
-  } else {
-    return (A68_FALSE);
-  }
-}
-
-/*!
-\brief whether_coercion
+\brief is_coercion
 \param p position in tree
 **/
 
-BOOL_T whether_coercion (NODE_T * p)
+BOOL_T is_coercion (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -14657,31 +14660,31 @@ BOOL_T whether_coercion (NODE_T * p)
 
 static void scope_coercion (NODE_T * p, SCOPE_T ** s)
 {
-  if (whether_coercion (p)) {
-    if (WHETHER (p, VOIDING)) {
+  if (is_coercion (p)) {
+    if (IS (p, VOIDING)) {
       scope_coercion (SUB (p), NO_VAR);
-    } else if (WHETHER (p, DEREFERENCING)) {
+    } else if (IS (p, DEREFERENCING)) {
 /* Leave this to the dynamic scope checker */
       scope_coercion (SUB (p), NO_VAR);
-    } else if (WHETHER (p, DEPROCEDURING)) {
+    } else if (IS (p, DEPROCEDURING)) {
       scope_coercion (SUB (p), NO_VAR);
-    } else if (WHETHER (p, ROWING)) {
+    } else if (IS (p, ROWING)) {
       SCOPE_T *z = NO_SCOPE;
       scope_coercion (SUB (p), &z);
       (void) scope_check (z, TRANSIENT, LEX_LEVEL (p));
-      if (whether_transient_row (MOID (SUB (p)))) {
+      if (IS_REF_FLEX (MOID (SUB (p)))) {
         scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
       } else {
         scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), NOT_TRANSIENT)); 
       }
-    } else if (WHETHER (p, PROCEDURING)) {
+    } else if (IS (p, PROCEDURING)) {
 /* Can only be a JUMP */
       NODE_T *q = SUB_SUB (p);
-      if (WHETHER (q, GOTO_SYMBOL)) {
+      if (IS (q, GOTO_SYMBOL)) {
         FORWARD (q);
       }
       scope_add (s, q, scope_make_tuple (TAG_LEX_LEVEL (TAX (q)), NOT_TRANSIENT));
-    } else if (WHETHER (p, UNITING)) {
+    } else if (IS (p, UNITING)) {
       SCOPE_T *z = NO_SCOPE;
       scope_coercion (SUB (p), &z);
       (void) scope_check (z, TRANSIENT, LEX_LEVEL (p));
@@ -14703,30 +14706,15 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
 static void scope_format_text (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, FORMAT_PATTERN)) {
+    if (IS (p, FORMAT_PATTERN)) {
       scope_enclosed_clause (SUB (NEXT_SUB (p)), s);
-    } else if (WHETHER (p, FORMAT_ITEM_G) && NEXT (p) != NO_NODE) {
+    } else if (IS (p, FORMAT_ITEM_G) && NEXT (p) != NO_NODE) {
       scope_enclosed_clause (SUB_NEXT (p), s);
-    } else if (WHETHER (p, DYNAMIC_REPLICATOR)) {
+    } else if (IS (p, DYNAMIC_REPLICATOR)) {
       scope_enclosed_clause (SUB (NEXT_SUB (p)), s);
     } else {
       scope_format_text (SUB (p), s);
     }
-  }
-}
-
-/*!
-\brief whether_transient_selection
-\param m mode under test
-\return same
-**/
-
-static BOOL_T whether_transient_selection (MOID_T * m)
-{
-  if (WHETHER (m, REF_SYMBOL)) {
-    return (whether_transient_selection (SUB (m)));
-  } else {
-    return ((BOOL_T) (WHETHER (m, FLEX_SYMBOL)));
   }
 }
 
@@ -14738,11 +14726,11 @@ static BOOL_T whether_transient_selection (MOID_T * m)
 
 static void scope_operand (NODE_T * p, SCOPE_T ** s)
 {
-  if (WHETHER (p, MONADIC_FORMULA)) {
+  if (IS (p, MONADIC_FORMULA)) {
     scope_operand (NEXT_SUB (p), s);
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     scope_formula (p, s);
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     scope_statement (SUB (p), s);
   }
 }
@@ -14775,7 +14763,7 @@ static void scope_formula (NODE_T * p, SCOPE_T ** s)
 
 static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
 {
-  NODE_T *q = SUB (p), *routine = (WHETHER (q, PARAMETER_PACK) ? NEXT (q) : q);
+  NODE_T *q = SUB (p), *routine = (IS (q, PARAMETER_PACK) ? NEXT (q) : q);
   SCOPE_T *x = NO_SCOPE;
   TUPLE_T routine_tuple;
   scope_statement (NEXT_NEXT (routine), &x);
@@ -14792,14 +14780,14 @@ static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
 
 static void scope_statement (NODE_T * p, SCOPE_T ** s)
 {
-  if (whether_coercion (p)) {
+  if (is_coercion (p)) {
     scope_coercion (p, s);
-  } else if (whether_one_of (p, PRIMARY, SECONDARY, TERTIARY, UNIT, STOP)) {
+  } else if (is_one_of (p, PRIMARY, SECONDARY, TERTIARY, UNIT, STOP)) {
     scope_statement (SUB (p), s);
-  } else if (whether_one_of (p, DENOTATION, NIHIL, STOP)) {
+  } else if (is_one_of (p, DENOTATION, NIHIL, STOP)) {
     scope_add (s, p, scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT));
-  } else if (WHETHER (p, IDENTIFIER)) {
-    if (WHETHER (MOID (p), REF_SYMBOL)) {
+  } else if (IS (p, IDENTIFIER)) {
+    if (IS (MOID (p), REF_SYMBOL)) {
       if (PRIO (TAX (p)) == PARAMETER_IDENTIFIER) {
         scope_add (s, p, scope_make_tuple (TAG_LEX_LEVEL (TAX (p)) - 1, NOT_TRANSIENT));
       } else {
@@ -14816,58 +14804,58 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     } else if (MOID (p) == MODE (FORMAT) && SCOPE_ASSIGNED (TAX (p)) == A68_TRUE) {
       scope_add (s, p, scope_make_tuple (SCOPE (TAX (p)), NOT_TRANSIENT));
     }
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     scope_enclosed_clause (SUB (p), s);
-  } else if (WHETHER (p, CALL)) {
+  } else if (IS (p, CALL)) {
     SCOPE_T *x = NO_SCOPE;
     scope_statement (SUB (p), &x);
     (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
     scope_arguments (NEXT_SUB (p));
-  } else if (WHETHER (p, SLICE)) {
+  } else if (IS (p, SLICE)) {
     SCOPE_T *x = NO_SCOPE;
     MOID_T *m = MOID (SUB (p));
-    if (WHETHER (m, REF_SYMBOL)) {
+    if (IS (m, REF_SYMBOL)) {
       if (ATTRIBUTE (SUB (p)) == PRIMARY && ATTRIBUTE (SUB_SUB (p)) == SLICE) {
         scope_statement (SUB (p), s);
       } else {
         scope_statement (SUB (p), &x);
         (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
       }
-      if (WHETHER (SUB (m), FLEX_SYMBOL)) {
+      if (IS (SUB (m), FLEX_SYMBOL)) {
         scope_add (s, SUB (p), scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
       }
       scope_bounds (SUB (NEXT_SUB (p)));
     }
-    if (WHETHER (MOID (p), REF_SYMBOL)) {
+    if (IS (MOID (p), REF_SYMBOL)) {
       scope_add (s, p, scope_find_youngest (x));
     }
-  } else if (WHETHER (p, FORMAT_TEXT)) {
+  } else if (IS (p, FORMAT_TEXT)) {
     SCOPE_T *x = NO_SCOPE;
     scope_format_text (SUB (p), &x);
     scope_add (s, p, scope_find_youngest (x));
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     SCOPE_T *x = NO_SCOPE;
     scope_enclosed_clause (SUB (NEXT_SUB (p)), &x);
     (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
     scope_add (s, p, scope_find_youngest (x));
-  } else if (WHETHER (p, FIELD_SELECTION)) {
+  } else if (IS (p, FIELD_SELECTION)) {
     SCOPE_T *ns = NO_SCOPE;
     scope_statement (SUB (p), &ns);
     (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (p));
-    if (whether_transient_selection (MOID (SUB (p)))) {
+    if (is_ref_refety_flex (MOID (SUB (p)))) {
       scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
     }
     scope_add (s, p, scope_find_youngest (ns));
-  } else if (WHETHER (p, SELECTION)) {
+  } else if (IS (p, SELECTION)) {
     SCOPE_T *ns = NO_SCOPE;
     scope_statement (NEXT_SUB (p), &ns);
     (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (p));
-    if (whether_transient_selection (MOID (NEXT_SUB (p)))) {
+    if (is_ref_refety_flex (MOID (NEXT_SUB (p)))) {
       scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
     }
     scope_add (s, p, scope_find_youngest (ns));
-  } else if (WHETHER (p, GENERATOR)) {
-    if (WHETHER (SUB (p), LOC_SYMBOL)) {
+  } else if (IS (p, GENERATOR)) {
+    if (IS (SUB (p), LOC_SYMBOL)) {
       if (NON_LOCAL (p) != NO_TABLE) {
         scope_add (s, p, scope_make_tuple (LEVEL (NON_LOCAL (p)), NOT_TRANSIENT));
       } else {
@@ -14877,10 +14865,10 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
       scope_add (s, p, scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT));
     }
     scope_declarer (SUB (NEXT_SUB (p)));
-  } else if (WHETHER (p, DIAGONAL_FUNCTION)) {
+  } else if (IS (p, DIAGONAL_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NO_SCOPE;
-    if (WHETHER (q, TERTIARY)) {
+    if (IS (q, TERTIARY)) {
       scope_statement (SUB (q), &ns);
       (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
       ns = NO_SCOPE;
@@ -14889,16 +14877,16 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     scope_statement (SUB_NEXT (q), &ns);
     (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
-  } else if (WHETHER (p, TRANSPOSE_FUNCTION)) {
+  } else if (IS (p, TRANSPOSE_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NO_SCOPE;
     scope_statement (SUB_NEXT (q), &ns);
     (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
-  } else if (WHETHER (p, ROW_FUNCTION)) {
+  } else if (IS (p, ROW_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NO_SCOPE;
-    if (WHETHER (q, TERTIARY)) {
+    if (IS (q, TERTIARY)) {
       scope_statement (SUB (q), &ns);
       (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
       ns = NO_SCOPE;
@@ -14907,10 +14895,10 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     scope_statement (SUB_NEXT (q), &ns);
     (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
-  } else if (WHETHER (p, COLUMN_FUNCTION)) {
+  } else if (IS (p, COLUMN_FUNCTION)) {
     NODE_T *q = SUB (p);
     SCOPE_T *ns = NO_SCOPE;
-    if (WHETHER (q, TERTIARY)) {
+    if (IS (q, TERTIARY)) {
       scope_statement (SUB (q), &ns);
       (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
       ns = NO_SCOPE;
@@ -14919,9 +14907,9 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     scope_statement (SUB_NEXT (q), &ns);
     (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (q));
     scope_add (s, p, scope_find_youngest (ns));
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     scope_formula (p, s);
-  } else if (WHETHER (p, ASSIGNATION)) {
+  } else if (IS (p, ASSIGNATION)) {
     NODE_T *unit = NEXT (NEXT_SUB (p));
     SCOPE_T *ns = NO_SCOPE, *nd = NO_SCOPE;
     TUPLE_T tup;
@@ -14930,18 +14918,18 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     (void) scope_check_multiple (ns, TRANSIENT, nd);
     tup = scope_find_youngest (nd);
     scope_add (s, p, scope_make_tuple (LEVEL (&tup), NOT_TRANSIENT));
-  } else if (WHETHER (p, ROUTINE_TEXT)) {
+  } else if (IS (p, ROUTINE_TEXT)) {
     scope_routine_text (p, s);
-  } else if (whether_one_of (p, IDENTITY_RELATION, AND_FUNCTION, OR_FUNCTION, STOP)) {
+  } else if (is_one_of (p, IDENTITY_RELATION, AND_FUNCTION, OR_FUNCTION, STOP)) {
     SCOPE_T *n = NO_SCOPE;
     scope_statement (SUB (p), &n);
     scope_statement (NEXT (NEXT_SUB (p)), &n);
     (void) scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
-  } else if (WHETHER (p, ASSERTION)) {
+  } else if (IS (p, ASSERTION)) {
     SCOPE_T *n = NO_SCOPE;
     scope_enclosed_clause (SUB (NEXT_SUB (p)), &n);
     (void) scope_check (n, NOT_TRANSIENT, LEX_LEVEL (p));
-  } else if (whether_one_of (p, JUMP, SKIP, STOP)) {
+  } else if (is_one_of (p, JUMP, SKIP, STOP)) {
     ;
   }
 }
@@ -14955,7 +14943,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
 static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       STATUS_SET (p, INTERRUPTIBLE_MASK);
       scope_statement (p, s);
     } else {
@@ -14974,14 +14962,14 @@ static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
 static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, INITIALISER_SERIES)) {
+    if (IS (p, INITIALISER_SERIES)) {
       scope_serial_clause (SUB (p), s, A68_FALSE);
       scope_serial_clause (NEXT (p), s, terminator);
-    } else if (WHETHER (p, DECLARATION_LIST)) {
+    } else if (IS (p, DECLARATION_LIST)) {
       scope_declaration_list (SUB (p));
-    } else if (whether_one_of (p, LABEL, SEMI_SYMBOL, EXIT_SYMBOL, STOP)) {
+    } else if (is_one_of (p, LABEL, SEMI_SYMBOL, EXIT_SYMBOL, STOP)) {
       scope_serial_clause (NEXT (p), s, terminator);
-    } else if (whether_one_of (p, SERIAL_CLAUSE, ENQUIRY_CLAUSE, STOP)) {
+    } else if (is_one_of (p, SERIAL_CLAUSE, ENQUIRY_CLAUSE, STOP)) {
       if (NEXT (p) != NO_NODE) {
         int j = ATTRIBUTE (NEXT (p));
         if (j == EXIT_SYMBOL || j == END_SYMBOL || j == CLOSE_SYMBOL) {
@@ -14993,9 +14981,9 @@ static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
         scope_serial_clause (SUB (p), s, A68_TRUE);
       }
       scope_serial_clause (NEXT (p), s, terminator);
-    } else if (WHETHER (p, LABELED_UNIT)) {
+    } else if (IS (p, LABELED_UNIT)) {
       scope_serial_clause (SUB (p), s, terminator);
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       STATUS_SET (p, INTERRUPTIBLE_MASK);
       if (terminator) {
         scope_statement (p, s);
@@ -15015,9 +15003,9 @@ static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
 static void scope_closed_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, SERIAL_CLAUSE)) {
+    if (IS (p, SERIAL_CLAUSE)) {
       scope_serial_clause (p, s, A68_TRUE);
-    } else if (whether_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
+    } else if (is_one_of (p, OPEN_SYMBOL, BEGIN_SYMBOL, STOP)) {
       scope_closed_clause (NEXT (p), s);
     }
   }
@@ -15050,9 +15038,9 @@ static void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
   FORWARD (p);
   scope_serial_clause (NEXT_SUB (p), s, A68_TRUE);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, ELSE_PART, CHOICE, STOP)) {
+    if (is_one_of (p, ELSE_PART, CHOICE, STOP)) {
       scope_serial_clause (NEXT_SUB (p), s, A68_TRUE);
-    } else if (whether_one_of (p, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    } else if (is_one_of (p, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       scope_conditional_clause (SUB (p), s);
     }
   }
@@ -15072,11 +15060,11 @@ static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
   FORWARD (p);
   scope_statement_list (NEXT_SUB (p), s);
   if ((FORWARD (p)) != NO_NODE) {
-    if (whether_one_of (p, OUT_PART, CHOICE, STOP)) {
+    if (is_one_of (p, OUT_PART, CHOICE, STOP)) {
       scope_serial_clause (NEXT_SUB (p), s, A68_TRUE);
-    } else if (whether_one_of (p, CASE_OUSE_PART, BRIEF_OUSE_PART, STOP)) {
+    } else if (is_one_of (p, CASE_OUSE_PART, BRIEF_OUSE_PART, STOP)) {
       scope_case_clause (SUB (p), s);
-    } else if (whether_one_of (p, CONFORMITY_OUSE_PART, BRIEF_CONFORMITY_OUSE_PART, STOP)) {
+    } else if (is_one_of (p, CONFORMITY_OUSE_PART, BRIEF_CONFORMITY_OUSE_PART, STOP)) {
       scope_case_clause (SUB (p), s);
     }
   }
@@ -15090,23 +15078,23 @@ static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
 static void scope_loop_clause (NODE_T * p)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, FOR_PART)) {
+    if (IS (p, FOR_PART)) {
       scope_loop_clause (NEXT (p));
-    } else if (whether_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
+    } else if (is_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
       scope_statement (NEXT_SUB (p), NO_VAR);
       scope_loop_clause (NEXT (p));
-    } else if (WHETHER (p, WHILE_PART)) {
+    } else if (IS (p, WHILE_PART)) {
       scope_serial_clause (NEXT_SUB (p), NO_VAR, A68_TRUE);
       scope_loop_clause (NEXT (p));
-    } else if (whether_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
+    } else if (is_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
       NODE_T *do_p = NEXT_SUB (p), *un_p;
-      if (WHETHER (do_p, SERIAL_CLAUSE)) {
+      if (IS (do_p, SERIAL_CLAUSE)) {
         scope_serial_clause (do_p, NO_VAR, A68_TRUE);
         un_p = NEXT (do_p);
       } else {
         un_p = do_p;
       }
-      if (un_p != NO_NODE && WHETHER (un_p, UNTIL_PART)) {
+      if (un_p != NO_NODE && IS (un_p, UNTIL_PART)) {
         scope_serial_clause (NEXT_SUB (un_p), NO_VAR, A68_TRUE);
       }
     }
@@ -15121,17 +15109,17 @@ static void scope_loop_clause (NODE_T * p)
 
 static void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
 {
-  if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  if (IS (p, ENCLOSED_CLAUSE)) {
     scope_enclosed_clause (SUB (p), s);
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     scope_closed_clause (SUB (p), s);
-  } else if (whether_one_of (p, COLLATERAL_CLAUSE, PARALLEL_CLAUSE, STOP)) {
+  } else if (is_one_of (p, COLLATERAL_CLAUSE, PARALLEL_CLAUSE, STOP)) {
     scope_collateral_clause (SUB (p), s);
-  } else if (WHETHER (p, CONDITIONAL_CLAUSE)) {
+  } else if (IS (p, CONDITIONAL_CLAUSE)) {
     scope_conditional_clause (SUB (p), s);
-  } else if (whether_one_of (p, CASE_CLAUSE, CONFORMITY_CLAUSE, STOP)) {
+  } else if (is_one_of (p, CASE_CLAUSE, CONFORMITY_CLAUSE, STOP)) {
     scope_case_clause (SUB (p), s);
-  } else if (WHETHER (p, LOOP_CLAUSE)) {
+  } else if (IS (p, LOOP_CLAUSE)) {
     scope_loop_clause (SUB (p));
   }
 }
@@ -15164,9 +15152,9 @@ static BOOL_T empty_table (TABLE_T * t)
 static void get_non_local_environs (NODE_T * p, int max)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, ROUTINE_TEXT)) {
+    if (IS (p, ROUTINE_TEXT)) {
       get_non_local_environs (SUB (p), LEX_LEVEL (SUB (p)));
-    } else if (WHETHER (p, FORMAT_TEXT)) {
+    } else if (IS (p, FORMAT_TEXT)) {
       get_non_local_environs (SUB (p), LEX_LEVEL (SUB (p)));
     } else {
       get_non_local_environs (SUB (p), max);

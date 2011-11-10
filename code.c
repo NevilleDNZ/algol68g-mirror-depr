@@ -99,8 +99,8 @@ Below definition switches everything on.
 #define LONG_MODE(m) ((m) == MODE (LONG_INT) || (m) == MODE (LONG_REAL))
 #define WIDEN_TO(p, a, b) (MOID (p) == MODE (b) && MOID (SUB (p)) == MODE (a))
 
-#define GC_MODE(m) (m != NO_MOID && (WHETHER (m, REF_SYMBOL) || WHETHER (DEFLEX (m), ROW_SYMBOL)))
-#define NEEDS_DNS(m) (m != NO_MOID && (WHETHER (m, REF_SYMBOL) || WHETHER (m, PROC_SYMBOL) || WHETHER (m, UNION_SYMBOL) || WHETHER (m, FORMAT_SYMBOL)))
+#define GC_MODE(m) (m != NO_MOID && (IS (m, REF_SYMBOL) || IS (DEFLEX (m), ROW_SYMBOL)))
+#define NEEDS_DNS(m) (m != NO_MOID && (IS (m, REF_SYMBOL) || IS (m, PROC_SYMBOL) || IS (m, UNION_SYMBOL) || IS (m, FORMAT_SYMBOL)))
 
 #define CODE_EXECUTE(p) {\
   indentf (out, snprintf (line, SNPRINTF_SIZE, "EXECUTE_UNIT_TRACE (_N_ (%d));", NUMBER (p)));\
@@ -906,21 +906,21 @@ static BOOL_T basic_mode (MOID_T * m)
 {
   if (denotation_mode (m)) {
     return (A68_TRUE);
-  } else if (WHETHER (m, REF_SYMBOL)) {
-    if (WHETHER (SUB (m), REF_SYMBOL) || WHETHER (SUB (m), PROC_SYMBOL)) {
+  } else if (IS (m, REF_SYMBOL)) {
+    if (IS (SUB (m), REF_SYMBOL) || IS (SUB (m), PROC_SYMBOL)) {
       return (A68_FALSE);
     } else {
       return (basic_mode (SUB (m)));
     }
-  } else if (WHETHER (m, ROW_SYMBOL)) {
+  } else if (IS (m, ROW_SYMBOL)) {
     if (primitive_mode (SUB (m))) {
       return (A68_TRUE);
-    } else if (WHETHER (SUB (m), STRUCT_SYMBOL)) {
+    } else if (IS (SUB (m), STRUCT_SYMBOL)) {
       return (basic_mode (SUB (m)));
     } else {
       return (A68_FALSE);
     }
-  } else if (WHETHER (m, STRUCT_SYMBOL)) {
+  } else if (IS (m, STRUCT_SYMBOL)) {
     PACK_T *p = PACK (m);
     for (; p != NO_PACK; FORWARD (p)) {
       if (!primitive_mode (MOID (p))) {
@@ -943,13 +943,13 @@ static BOOL_T basic_mode_non_row (MOID_T * m)
 {
   if (denotation_mode (m)) {
     return (A68_TRUE);
-  } else if (WHETHER (m, REF_SYMBOL)) {
-    if (WHETHER (SUB (m), REF_SYMBOL) || WHETHER (SUB (m), PROC_SYMBOL)) {
+  } else if (IS (m, REF_SYMBOL)) {
+    if (IS (SUB (m), REF_SYMBOL) || IS (SUB (m), PROC_SYMBOL)) {
       return (A68_FALSE);
     } else {
       return (basic_mode_non_row (SUB (m)));
     }
-  } else if (WHETHER (m, STRUCT_SYMBOL)) {
+  } else if (IS (m, STRUCT_SYMBOL)) {
     PACK_T *p = PACK (m);
     for (; p != NO_PACK; FORWARD (p)) {
       if (!primitive_mode (MOID (p))) {
@@ -971,17 +971,17 @@ static BOOL_T basic_mode_non_row (MOID_T * m)
 
 static NODE_T * locate (NODE_T * p, int att)
 {
-  if (WHETHER (p, VOIDING)) {
+  if (IS (p, VOIDING)) {
     return (locate (SUB (p), att));
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return (locate (SUB (p), att));
-  } else if (WHETHER (p, TERTIARY)) {
+  } else if (IS (p, TERTIARY)) {
     return (locate (SUB (p), att));
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     return (locate (SUB (p), att));
-  } else if (WHETHER (p, PRIMARY)) {
+  } else if (IS (p, PRIMARY)) {
     return (locate (SUB (p), att));
-  } else if (WHETHER (p, att)) {
+  } else if (IS (p, att)) {
     return (p);
   } else {
     return (NO_NODE);
@@ -1003,7 +1003,7 @@ static BOOL_T basic_collateral (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_unit (SUB (p)) && basic_collateral (NEXT (p))));
   } else {
     return ((BOOL_T) (basic_collateral (SUB (p)) && basic_collateral (NEXT (p))));
@@ -1019,12 +1019,12 @@ static BOOL_T basic_collateral (NODE_T * p)
 static void count_basic_units (NODE_T * p, int * total, int * good)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       (* total) ++;
       if (basic_unit (p)) {
         (* good) ++;
       }
-    } else if (WHETHER (p, DECLARATION_LIST)) {
+    } else if (IS (p, DECLARATION_LIST)) {
       (* total) ++;
     } else {
       count_basic_units (SUB (p), total, good);
@@ -1060,9 +1060,9 @@ static BOOL_T basic_indexer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
-  } else if (WHETHER (p, TRIMMER)) {
+  } else if (IS (p, TRIMMER)) {
     return (A68_FALSE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return (basic_unit (p));
   } else {
     return ((BOOL_T) (basic_indexer (SUB (p)) && basic_indexer (NEXT (p))));
@@ -1077,7 +1077,7 @@ static BOOL_T basic_indexer (NODE_T * p)
 
 static BOOL_T basic_slice (NODE_T * p)
 {
-  if (WHETHER (p, SLICE)) {
+  if (IS (p, SLICE)) {
     NODE_T * prim = SUB (p);
     NODE_T * idf = locate (prim, IDENTIFIER);
     if (idf != NO_NODE) {
@@ -1098,7 +1098,7 @@ static BOOL_T basic_argument (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_unit (p) && basic_argument (NEXT (p))));
   } else {
     return ((BOOL_T) (basic_argument (SUB (p)) && basic_argument (NEXT (p))));
@@ -1113,7 +1113,7 @@ static BOOL_T basic_argument (NODE_T * p)
 
 static BOOL_T basic_call (NODE_T * p)
 {
-  if (WHETHER (p, CALL)) {
+  if (IS (p, CALL)) {
     NODE_T * prim = SUB (p);
     NODE_T * idf = locate (prim, IDENTIFIER);
     if (idf == NO_NODE) {
@@ -1139,7 +1139,7 @@ static BOOL_T basic_call (NODE_T * p)
 
 static BOOL_T basic_monadic_formula (NODE_T * p)
 {
-  if (WHETHER (p, MONADIC_FORMULA)) {
+  if (IS (p, MONADIC_FORMULA)) {
     NODE_T * op = SUB (p);
     int k;
     for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
@@ -1160,7 +1160,7 @@ static BOOL_T basic_monadic_formula (NODE_T * p)
 
 static BOOL_T basic_formula (NODE_T * p)
 {
-  if (WHETHER (p, FORMULA)) {
+  if (IS (p, FORMULA)) {
     NODE_T * lhs = SUB (p);
     NODE_T * op = NEXT (lhs);
     if (op == NO_NODE) {
@@ -1186,23 +1186,23 @@ static BOOL_T basic_formula (NODE_T * p)
 
 static BOOL_T basic_conditional (NODE_T * p)
 {
-  if (! (WHETHER (p, IF_PART) || WHETHER (p, OPEN_PART))) {
+  if (! (IS (p, IF_PART) || IS (p, OPEN_PART))) {
     return (A68_FALSE);
   }
   if (! basic_serial (NEXT_SUB (p), 1)) {
     return (A68_FALSE);
   }
   FORWARD (p);
-  if (! (WHETHER (p, THEN_PART) || WHETHER (p, CHOICE))) {
+  if (! (IS (p, THEN_PART) || IS (p, CHOICE))) {
     return (A68_FALSE);
   }
   if (! basic_serial (NEXT_SUB (p), 1)) {
     return (A68_FALSE);
   }
   FORWARD (p);
-  if (WHETHER (p, ELSE_PART) || WHETHER (p, CHOICE)) {
+  if (IS (p, ELSE_PART) || IS (p, CHOICE)) {
     return (basic_serial (NEXT_SUB (p), 1));
-  } else if (WHETHER (p, FI_SYMBOL)) {
+  } else if (IS (p, FI_SYMBOL)) {
     return (A68_TRUE);
   } else {
     return (A68_FALSE);
@@ -1219,45 +1219,45 @@ static BOOL_T basic_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return (basic_unit (SUB (p)));
-  } else if (WHETHER (p, TERTIARY)) {
+  } else if (IS (p, TERTIARY)) {
     return (basic_unit (SUB (p)));
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     return (basic_unit (SUB (p)));
-  } else if (WHETHER (p, PRIMARY)) {
+  } else if (IS (p, PRIMARY)) {
     return (basic_unit (SUB (p)));
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     return (basic_unit (SUB (p)));
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     return (basic_serial (NEXT_SUB (p), 1));
-  } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+  } else if (IS (p, COLLATERAL_CLAUSE)) {
     return (basic_mode (MOID (p)) && basic_collateral (NEXT_SUB (p)));
-  } else if (WHETHER (p, CONDITIONAL_CLAUSE)) {
+  } else if (IS (p, CONDITIONAL_CLAUSE)) {
     return (basic_mode (MOID (p)) && basic_conditional (SUB (p)));
-  } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), IDENTIFIER) != NO_NODE) {
+  } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), IDENTIFIER) != NO_NODE) {
     NODE_T * dst = SUB_SUB (p);
     NODE_T * src = NEXT_NEXT (dst);
     return ((BOOL_T) basic_unit (src) && basic_mode_non_row (MOID (src)));
-  } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SLICE) != NO_NODE) {
+  } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SLICE) != NO_NODE) {
     NODE_T * dst = SUB_SUB (p);
     NODE_T * src = NEXT_NEXT (dst);
     NODE_T * slice = locate (dst, SLICE);
-    return ((BOOL_T) (WHETHER (MOID (slice), REF_SYMBOL) && basic_slice (slice) && basic_unit (src) && basic_mode_non_row (MOID (src))));
-  } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SELECTION) != NO_NODE) {
+    return ((BOOL_T) (IS (MOID (slice), REF_SYMBOL) && basic_slice (slice) && basic_unit (src) && basic_mode_non_row (MOID (src))));
+  } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SELECTION) != NO_NODE) {
     NODE_T * dst = SUB_SUB (p);
     NODE_T * src = NEXT_NEXT (dst);
     return ((BOOL_T) (locate (NEXT_SUB (locate (dst, SELECTION)), IDENTIFIER) != NO_NODE && basic_unit (src) && basic_mode_non_row (MOID (dst))));
-  } else if (WHETHER (p, VOIDING)) {
+  } else if (IS (p, VOIDING)) {
     return (basic_unit (SUB (p)));
-  } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER)) {
+  } else if (IS (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && BASIC (SUB (p), IDENTIFIER)));
-  } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), SLICE)) {
+  } else if (IS (p, DEREFERENCING) && locate (SUB (p), SLICE)) {
     NODE_T * slice = locate (SUB (p), SLICE);
-    return ((BOOL_T) (basic_mode (MOID (p)) && WHETHER (MOID (SUB (slice)), REF_SYMBOL) && basic_slice (slice)));
-  } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), SELECTION)) {
+    return ((BOOL_T) (basic_mode (MOID (p)) && IS (MOID (SUB (slice)), REF_SYMBOL) && basic_slice (slice)));
+  } else if (IS (p, DEREFERENCING) && locate (SUB (p), SELECTION)) {
     return ((BOOL_T) (primitive_mode (MOID (p)) && BASIC (SUB (p), SELECTION)));
-  } else if (WHETHER (p, WIDENING)) {
+  } else if (IS (p, WIDENING)) {
     if (WIDEN_TO (p, INT, REAL)) {
       return (basic_unit (SUB (p)));
     } else if (WIDEN_TO (p, INT, LONG_INT)) {
@@ -1271,7 +1271,7 @@ static BOOL_T basic_unit (NODE_T * p)
     } else {
       return (A68_FALSE);
     }
-  } else if (WHETHER (p, IDENTIFIER)) {
+  } else if (IS (p, IDENTIFIER)) {
     if (A68G_STANDENV_PROC (TAX (p))) {
       int k;
       for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k ++) {
@@ -1283,27 +1283,27 @@ static BOOL_T basic_unit (NODE_T * p)
     } else {
       return (basic_mode (MOID (p)));
     }
-  } else if (WHETHER (p, DENOTATION)) {
+  } else if (IS (p, DENOTATION)) {
     return (denotation_mode (MOID (p)));
-  } else if (WHETHER (p, MONADIC_FORMULA)) {
+  } else if (IS (p, MONADIC_FORMULA)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_monadic_formula (p)));
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_formula (p)));
-  } else if (WHETHER (p, CALL)) {
+  } else if (IS (p, CALL)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_call (p)));
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     return ((BOOL_T) (folder_mode (MOID (SUB (p))) && basic_unit (NEXT_SUB (p))));
-  } else if (WHETHER (p, SLICE)) {
+  } else if (IS (p, SLICE)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_slice (p)));
-  } else if (WHETHER (p, SELECTION)) {
+  } else if (IS (p, SELECTION)) {
     NODE_T * sec = locate (NEXT_SUB (p), IDENTIFIER);
     if (sec == NO_NODE) {
       return (A68_FALSE);
     } else {
       return (basic_mode_non_row (MOID (sec)));
     }
-  } else if (WHETHER (p, IDENTITY_RELATION)) {
-#define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && WHETHER (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
+  } else if (IS (p, IDENTITY_RELATION)) {
+#define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && IS (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
     NODE_T * lhs = SUB (p);
     NODE_T * rhs = NEXT_NEXT (lhs);
     if (GOOD (lhs) && GOOD (rhs)) {
@@ -1338,7 +1338,7 @@ static BOOL_T constant_collateral (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return ((BOOL_T) (folder_mode (MOID (p)) && constant_unit (SUB (p)) && constant_collateral (NEXT (p))));
   } else {
     return ((BOOL_T) (constant_collateral (SUB (p)) && constant_collateral (NEXT (p))));
@@ -1354,7 +1354,7 @@ static BOOL_T constant_collateral (NODE_T * p)
 static void count_constant_units (NODE_T * p, int * total, int * good)
 {
   if (p != NO_NODE) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       (* total) ++;
       if (constant_unit (p)) {
         (* good) ++;
@@ -1395,7 +1395,7 @@ static BOOL_T constant_argument (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return ((BOOL_T) (folder_mode (MOID (p)) && constant_unit (p) && constant_argument (NEXT (p))));
   } else {
     return ((BOOL_T) (constant_argument (SUB (p)) && constant_argument (NEXT (p))));
@@ -1410,7 +1410,7 @@ static BOOL_T constant_argument (NODE_T * p)
 
 static BOOL_T constant_call (NODE_T * p)
 {
-  if (WHETHER (p, CALL)) {
+  if (IS (p, CALL)) {
     NODE_T * prim = SUB (p);
     NODE_T * idf = locate (prim, IDENTIFIER);
     if (idf != NO_NODE) {
@@ -1434,7 +1434,7 @@ static BOOL_T constant_call (NODE_T * p)
 
 static BOOL_T constant_monadic_formula (NODE_T * p)
 {
-  if (WHETHER (p, MONADIC_FORMULA)) {
+  if (IS (p, MONADIC_FORMULA)) {
     NODE_T * op = SUB (p);
     int k;
     for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
@@ -1455,7 +1455,7 @@ static BOOL_T constant_monadic_formula (NODE_T * p)
 
 static BOOL_T constant_formula (NODE_T * p)
 {
-  if (WHETHER (p, FORMULA)) {
+  if (IS (p, FORMULA)) {
     NODE_T * lhs = SUB (p);
     NODE_T * op = NEXT (lhs);
     if (op == NO_NODE) {
@@ -1483,21 +1483,21 @@ static BOOL_T constant_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     return (constant_unit (SUB (p)));
-  } else if (WHETHER (p, TERTIARY)) {
+  } else if (IS (p, TERTIARY)) {
     return (constant_unit (SUB (p)));
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     return (constant_unit (SUB (p)));
-  } else if (WHETHER (p, PRIMARY)) {
+  } else if (IS (p, PRIMARY)) {
     return (constant_unit (SUB (p)));
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     return (constant_unit (SUB (p)));
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     return (constant_serial (NEXT_SUB (p), 1));
-  } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+  } else if (IS (p, COLLATERAL_CLAUSE)) {
     return (folder_mode (MOID (p)) && constant_collateral (NEXT_SUB (p)));
-  } else if (WHETHER (p, WIDENING)) {
+  } else if (IS (p, WIDENING)) {
     if (WIDEN_TO (p, INT, REAL)) {
       return (constant_unit (SUB (p)));
     } else if (WIDEN_TO (p, INT, LONG_INT)) {
@@ -1511,7 +1511,7 @@ static BOOL_T constant_unit (NODE_T * p)
     } else {
       return (A68_FALSE);
     }
-  } else if (WHETHER (p, IDENTIFIER)) {
+  } else if (IS (p, IDENTIFIER)) {
     if (A68G_STANDENV_PROC (TAX (p))) {
       int k;
       for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k ++) {
@@ -1528,22 +1528,22 @@ static BOOL_T constant_unit (NODE_T * p)
         diagnostic_node (A68_WARNING, p, WARNING_UNINITIALISED);
       } else {
         STATUS (p) |= COOKIE_MASK;
-        if (folder_mode (MOID (p)) && def != NO_NODE && NEXT (def) != NO_NODE && WHETHER (NEXT (def), EQUALS_SYMBOL)) {
+        if (folder_mode (MOID (p)) && def != NO_NODE && NEXT (def) != NO_NODE && IS (NEXT (def), EQUALS_SYMBOL)) {
           ret = constant_unit (NEXT_NEXT (def));
         }
       }
       STATUS (p) &= !(COOKIE_MASK);
       return (ret);
     }
-  } else if (WHETHER (p, DENOTATION)) {
+  } else if (IS (p, DENOTATION)) {
     return (denotation_mode (MOID (p)));
-  } else if (WHETHER (p, MONADIC_FORMULA)) {
+  } else if (IS (p, MONADIC_FORMULA)) {
     return ((BOOL_T) (folder_mode (MOID (p)) && constant_monadic_formula (p)));
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     return ((BOOL_T) (folder_mode (MOID (p)) && constant_formula (p)));
-  } else if (WHETHER (p, CALL)) {
+  } else if (IS (p, CALL)) {
     return ((BOOL_T) (folder_mode (MOID (p)) && constant_call (p)));
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     return ((BOOL_T) (folder_mode (MOID (SUB (p))) && constant_unit (NEXT_SUB (p))));
   } else {
     return (A68_FALSE);
@@ -1564,7 +1564,7 @@ static void push_denotation (NODE_T * p)
 {
 #define PUSH_DENOTATION(mode, decl) {\
   decl z;\
-  NODE_T *s = (WHETHER (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p));\
+  NODE_T *s = (IS (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p));\
   if (genie_string_to_value_internal (p, MODE (mode), NSYMBOL (s), (BYTE_T *) & z) == A68_FALSE) {\
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (mode));\
   }\
@@ -1572,7 +1572,7 @@ static void push_denotation (NODE_T * p)
 /**/
 #define PUSH_LONG_DENOTATION(mode, decl) {\
   decl z;\
-  NODE_T *s = (WHETHER (SUB (p), LONGETY) ? NEXT_SUB (p) : SUB (p));\
+  NODE_T *s = (IS (SUB (p), LONGETY) ? NEXT_SUB (p) : SUB (p));\
   if (genie_string_to_value_internal (p, MODE (mode), NSYMBOL (s), (BYTE_T *) z) == A68_FALSE) {\
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (mode));\
   }\
@@ -1635,7 +1635,7 @@ static void push_collateral_units (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     push_unit (p);
   } else {
     push_collateral_units (SUB (p));
@@ -1652,7 +1652,7 @@ static void push_collateral_units (NODE_T * p)
 static void push_argument (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       push_unit (p);
     } else {
       push_argument (SUB (p));
@@ -1671,23 +1671,23 @@ static void push_unit (NODE_T * p)
   if (p == NO_NODE) {
     return;
   }
-  if (WHETHER (p, UNIT)) {
+  if (IS (p, UNIT)) {
     push_unit (SUB (p));
-  } else if (WHETHER (p, TERTIARY)) {
+  } else if (IS (p, TERTIARY)) {
     push_unit (SUB (p));
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     push_unit (SUB (p));
-  } else if (WHETHER (p, PRIMARY)) {
+  } else if (IS (p, PRIMARY)) {
     push_unit (SUB (p));
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     push_unit (SUB (p));
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     push_unit (SUB (NEXT_SUB (p)));
-  } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+  } else if (IS (p, COLLATERAL_CLAUSE)) {
     push_collateral_units (NEXT_SUB (p));
-  } else if (WHETHER (p, WIDENING)) {
+  } else if (IS (p, WIDENING)) {
     push_widening (p);
-  } else if (WHETHER (p, IDENTIFIER)) {
+  } else if (IS (p, IDENTIFIER)) {
     if (A68G_STANDENV_PROC (TAX (p))) {
       (void) (*(PROCEDURE (TAX (p)))) (p);
     } else {
@@ -1695,14 +1695,14 @@ static void push_unit (NODE_T * p)
       NODE_T * def = NODE (TAX (p));
       push_unit (NEXT_NEXT (def));
     }
-  } else if (WHETHER (p, DENOTATION)) {
+  } else if (IS (p, DENOTATION)) {
     push_denotation (p);
-  } else if (WHETHER (p, MONADIC_FORMULA)) {
+  } else if (IS (p, MONADIC_FORMULA)) {
     NODE_T * op = SUB (p);
     NODE_T * rhs = NEXT (op);
     push_unit (rhs);
     (*(PROCEDURE (TAX (op)))) (op);
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     NODE_T * lhs = SUB (p);
     NODE_T * op = NEXT (lhs);
     if (op == NO_NODE) {
@@ -1713,13 +1713,13 @@ static void push_unit (NODE_T * p)
       push_unit (rhs);
       (*(PROCEDURE (TAX (op)))) (op);
     }
-  } else if (WHETHER (p, CALL)) {
+  } else if (IS (p, CALL)) {
     NODE_T * prim = SUB (p);
     NODE_T * args = NEXT (prim);
     NODE_T * idf = locate (prim, IDENTIFIER);
     push_argument (args);
     (void) (*(PROCEDURE (TAX (idf)))) (p);
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     push_unit (NEXT_SUB (p));
   }
 }
@@ -1908,7 +1908,7 @@ static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_prin
   }}
 /**/
   for (; p != NO_NODE && (*max_print) >= 0; FORWARD (p)) {
-    if (WHETHER (p, ROW_CHAR_DENOTATION)) {
+    if (IS (p, ROW_CHAR_DENOTATION)) {
       if (*want_space != 0) {
         UNDENT (out, " ");
       }
@@ -2130,13 +2130,13 @@ static char * inline_mode (MOID_T * m)
     return ("A68_BITS");
   } else if (m == MODE (COMPLEX)) {
     return ("A68_COMPLEX");
-  } else if (WHETHER (m, REF_SYMBOL)) {
+  } else if (IS (m, REF_SYMBOL)) {
     return ("A68_REF");
-  } else if (WHETHER (m, ROW_SYMBOL)) {
+  } else if (IS (m, ROW_SYMBOL)) {
     return ("A68_ROW");
-  } else if (WHETHER (m, PROC_SYMBOL)) {
+  } else if (IS (m, PROC_SYMBOL)) {
     return ("A68_PROCEDURE");
-  } else if (WHETHER (m, STRUCT_SYMBOL)) {
+  } else if (IS (m, STRUCT_SYMBOL)) {
     return ("A68_STRUCT");
   } else {
     return ("A68_ERROR");
@@ -2155,7 +2155,7 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
   if (phase == L_DECLARE && LONG_MODE (MOID (p))) {
     char acc[NAME_SIZE];
     A68_LONG z;
-    NODE_T *s = WHETHER (SUB (p), LONGETY) ? NEXT_SUB (p) : SUB (p);
+    NODE_T *s = IS (SUB (p), LONGETY) ? NEXT_SUB (p) : SUB (p);
     int k;
     (void) make_name (acc, CON, "", NUMBER (p));
     if (genie_string_to_value_internal (p, MOID (p), NSYMBOL (s), (BYTE_T *) & z) == A68_FALSE) {
@@ -2170,7 +2170,7 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
   if (phase == L_YIELD) {
     if (MOID (p) == MODE (INT)) {
       A68_INT z;
-      NODE_T *s = WHETHER (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
+      NODE_T *s = IS (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
       char *den = NSYMBOL (s);
       if (genie_string_to_value_internal (p, MODE (INT), den, (BYTE_T *) & z) == A68_FALSE) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (INT));
@@ -2178,7 +2178,7 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
       undentf (out, snprintf (line, SNPRINTF_SIZE, "%d", VALUE (&z)));
     } else if (MOID (p) == MODE (REAL)) {
       A68_REAL z;
-      NODE_T *s = WHETHER (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
+      NODE_T *s = IS (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
       char *den = NSYMBOL (s);
       if (genie_string_to_value_internal (p, MODE (REAL), den, (BYTE_T *) & z) == A68_FALSE) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (REAL));
@@ -2207,7 +2207,7 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
       }
     } else if (MOID (p) == MODE (BITS)) {
       A68_BITS z;
-      NODE_T *s = WHETHER (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
+      NODE_T *s = IS (SUB (p), SHORTETY) ? NEXT_SUB (p) : SUB (p);
       if (genie_string_to_value_internal (p, MODE (BITS), NSYMBOL (s), (BYTE_T *) & z) == A68_FALSE) {
         diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (BITS));
       }
@@ -2356,7 +2356,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
 {
 /* Possible constant folding */
   NODE_T * def = NODE (TAX (p));
-  if (primitive_mode (MOID (p)) && def != NO_NODE && NEXT (def) != NO_NODE && WHETHER (NEXT (def), EQUALS_SYMBOL)) {
+  if (primitive_mode (MOID (p)) && def != NO_NODE && NEXT (def) != NO_NODE && IS (NEXT (def), EQUALS_SYMBOL)) {
     NODE_T * src = locate (NEXT_NEXT (def), DENOTATION);
     if (src != NO_NODE) {
       inline_denotation (src, out, phase);
@@ -2427,7 +2427,7 @@ static void inline_indexer (NODE_T * p, FILE_T out, int phase, int * k, char * t
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     if (phase != L_YIELD) {
       inline_unit (p, out, phase);
     } else {
@@ -2494,7 +2494,7 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
       (void) make_name (elm, ELM, "", NUMBER (prim));
       (void) make_name (drf, DRF, "", NUMBER (prim));
       get_stack (pidf, out, idf, "A68_REF");
-      if (WHETHER (row_mode, REF_SYMBOL) && WHETHER (SUB (row_mode), ROW_SYMBOL)) {
+      if (IS (row_mode, REF_SYMBOL) && IS (SUB (row_mode), ROW_SYMBOL)) {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
       } else {
         ABEND (A68_TRUE, "strange mode in dereference slice (execute)", NO_TEXT);
@@ -2587,7 +2587,7 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
       (void) make_name (elm, ELM, "", NUMBER (prim));
       (void) make_name (drf, DRF, "", NUMBER (prim));
       get_stack (pidf, out, idf, "A68_REF");
-      if (WHETHER (row_mode, REF_SYMBOL) && WHETHER (SUB (row_mode), ROW_SYMBOL)) {
+      if (IS (row_mode, REF_SYMBOL) && IS (SUB (row_mode), ROW_SYMBOL)) {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
       } else {
         ABEND (A68_TRUE, "strange mode in slice (execute)", NO_TEXT);
@@ -2663,7 +2663,7 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
       (void) make_name (elm, ELM, "", NUMBER (prim));
       (void) make_name (drf, DRF, "", NUMBER (prim));
       get_stack (pidf, out, idf, "A68_REF");
-      if (WHETHER (row_mode, REF_SYMBOL)) {
+      if (IS (row_mode, REF_SYMBOL)) {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
       } else {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) %s);\n", arr, tup, idf));
@@ -2717,7 +2717,7 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
 {
   NODE_T *op = SUB (p);
   NODE_T * rhs = NEXT (op);
-  if (WHETHER (p, MONADIC_FORMULA) && MOID (p) == MODE (COMPLEX)) {
+  if (IS (p, MONADIC_FORMULA) && MOID (p) == MODE (COMPLEX)) {
     char acc[NAME_SIZE];
     (void) make_name (acc, TMP, "", NUMBER (p));
     if (phase == L_DECLARE) {
@@ -2736,7 +2736,7 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_YIELD) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "%s", acc));
     }
-  } else if (WHETHER (p, MONADIC_FORMULA) && LONG_MODE (MOID (rhs))) {
+  } else if (IS (p, MONADIC_FORMULA) && LONG_MODE (MOID (rhs))) {
     char acc[NAME_SIZE];
     (void) make_name (acc, TMP, "", NUMBER (p));
     if (phase == L_DECLARE) {
@@ -2759,7 +2759,7 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_YIELD) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, "%s", acc));
     }
-  } else if (WHETHER (p, MONADIC_FORMULA) && basic_mode (MOID (p))) {
+  } else if (IS (p, MONADIC_FORMULA) && basic_mode (MOID (p))) {
     if (phase != L_YIELD) {
       inline_unit (rhs, out, phase);
     } else {
@@ -2794,12 +2794,12 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
 {
   NODE_T * lhs = SUB (p), *rhs;
   NODE_T * op = NEXT (lhs);
-  if (WHETHER (p, FORMULA) && op == NO_NODE) {
+  if (IS (p, FORMULA) && op == NO_NODE) {
     inline_monadic_formula (lhs, out, phase);
     return;
   }
   rhs = NEXT (op);
-  if (WHETHER (p, FORMULA) && MOID (p) == MODE (COMPLEX)) {
+  if (IS (p, FORMULA) && MOID (p) == MODE (COMPLEX)) {
     if (op == NO_NODE) {
       inline_monadic_formula (lhs, out, phase);
     } else if (phase == L_DECLARE) {
@@ -2836,7 +2836,7 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
         undentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (& %s)", acc));
       }
     }
-  } else if (WHETHER (p, FORMULA) && LONG_MODE (MOID (lhs)) && LONG_MODE (MOID (rhs))) {
+  } else if (IS (p, FORMULA) && LONG_MODE (MOID (lhs)) && LONG_MODE (MOID (rhs))) {
     char acc[NAME_SIZE];
     (void) make_name (acc, TMP, "", NUMBER (p));
     if (phase == L_DECLARE) {
@@ -2867,7 +2867,7 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
         undentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (& %s)", acc));
       }
     }
-  } else if (WHETHER (p, FORMULA) && basic_mode (MOID (p))) {
+  } else if (IS (p, FORMULA) && basic_mode (MOID (p))) {
     if (phase != L_YIELD) {
       inline_unit (lhs, out, phase);
       inline_unit (rhs, out, phase);
@@ -2906,11 +2906,11 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
 static void inline_single_argument (NODE_T * p, FILE_T out, int phase)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, ARGUMENT_LIST) || WHETHER (p, ARGUMENT)) {
+    if (IS (p, ARGUMENT_LIST) || IS (p, ARGUMENT)) {
       inline_single_argument (SUB (p), out, phase);
-    } else if (WHETHER (p, GENERIC_ARGUMENT_LIST) || WHETHER (p, GENERIC_ARGUMENT)) {
+    } else if (IS (p, GENERIC_ARGUMENT_LIST) || IS (p, GENERIC_ARGUMENT)) {
       inline_single_argument (SUB (p), out, phase);
-    } else if (WHETHER (p, UNIT)) {
+    } else if (IS (p, UNIT)) {
       inline_unit (p, out, phase);
     }
   }
@@ -2992,7 +2992,7 @@ static void inline_collateral_units (NODE_T * p, FILE_T out, int phase)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     if (phase == L_DECLARE) {
       inline_unit (SUB (p), out, L_DECLARE);
     } else if (phase == L_EXECUTE) {
@@ -3071,19 +3071,19 @@ static void inline_conditional (NODE_T * p, FILE_T out, int phase)
 {
   NODE_T * if_part = NO_NODE, * then_part = NO_NODE, * else_part = NO_NODE;
   p = SUB (p);
-  if (WHETHER (p, IF_PART) || WHETHER (p, OPEN_PART)) {
+  if (IS (p, IF_PART) || IS (p, OPEN_PART)) {
     if_part = p;
   } else {
     ABEND (A68_TRUE, "if-part expected", NO_TEXT);
   }
   FORWARD (p);
-  if (WHETHER (p, THEN_PART) || WHETHER (p, CHOICE)) {
+  if (IS (p, THEN_PART) || IS (p, CHOICE)) {
     then_part = p;
   } else {
     ABEND (A68_TRUE, "then-part expected", NO_TEXT);
   }
   FORWARD (p);
-  if (WHETHER (p, ELSE_PART) || WHETHER (p, CHOICE)) {
+  if (IS (p, ELSE_PART) || IS (p, CHOICE)) {
     else_part = p;
   } else {
     else_part = NO_NODE;
@@ -3345,7 +3345,7 @@ static void inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
 
 static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
 {
-#define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && WHETHER (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
+#define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && IS (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
   NODE_T * lhs = SUB (p);
   NODE_T * op = NEXT (lhs);
   NODE_T * rhs = NEXT (op);
@@ -3363,7 +3363,7 @@ static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_YIELD) {
       NODE_T * lidf = locate (lhs, IDENTIFIER);
       NODE_T * ridf = locate (rhs, IDENTIFIER);
-      if (WHETHER (op, IS_SYMBOL)) {
+      if (IS (op, IS_SYMBOL)) {
         undentf (out, snprintf (line, SNPRINTF_SIZE, "ADDRESS ("));
         inline_ref_identifier (lidf, out, L_YIELD);
         undentf (out, snprintf (line, SNPRINTF_SIZE, ") == ADDRESS ("));
@@ -3386,7 +3386,7 @@ static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
       inline_ref_identifier (lidf, out, L_EXECUTE);
     } else if (phase == L_YIELD) {
       NODE_T * lidf = locate (lhs, IDENTIFIER);
-      if (WHETHER (op, IS_SYMBOL)) {
+      if (IS (op, IS_SYMBOL)) {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "IS_NIL (*"));
         inline_ref_identifier (lidf, out, L_YIELD);
         undentf (out, snprintf (line, SNPRINTF_SIZE, ")"));
@@ -3413,65 +3413,65 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
     return;
   } else if (constant_unit (p) && locate (p, DENOTATION) == NO_NODE) {
     constant_folder (p, out, phase);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     inline_unit (SUB (p), out, phase);
-  } else if (WHETHER (p, TERTIARY)) {
+  } else if (IS (p, TERTIARY)) {
     inline_unit (SUB (p), out, phase);
-  } else if (WHETHER (p, SECONDARY)) {
+  } else if (IS (p, SECONDARY)) {
     inline_unit (SUB (p), out, phase);
-  } else if (WHETHER (p, PRIMARY)) {
+  } else if (IS (p, PRIMARY)) {
     inline_unit (SUB (p), out, phase);
-  } else if (WHETHER (p, ENCLOSED_CLAUSE)) {
+  } else if (IS (p, ENCLOSED_CLAUSE)) {
     inline_unit (SUB (p), out, phase);
-  } else if (WHETHER (p, CLOSED_CLAUSE)) {
+  } else if (IS (p, CLOSED_CLAUSE)) {
     inline_closed (p, out, phase);
-  } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+  } else if (IS (p, COLLATERAL_CLAUSE)) {
     inline_collateral (p, out, phase);
-  } else if (WHETHER (p, CONDITIONAL_CLAUSE)) {
+  } else if (IS (p, CONDITIONAL_CLAUSE)) {
     inline_conditional (p, out, phase);
-  } else if (WHETHER (p, WIDENING)) {
+  } else if (IS (p, WIDENING)) {
     inline_widening (p, out, phase);
-  } else if (WHETHER (p, IDENTIFIER)) {
+  } else if (IS (p, IDENTIFIER)) {
     inline_identifier (p, out, phase);
-  } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER) != NO_NODE) {
+  } else if (IS (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER) != NO_NODE) {
     inline_dereference_identifier (p, out, phase);
-  } else if (WHETHER (p, SLICE)) {
+  } else if (IS (p, SLICE)) {
     NODE_T * prim = SUB (p);
     MOID_T * mode = MOID (p);
     MOID_T * row_mode = DEFLEX (MOID (prim));
     if (mode == SUB (row_mode)) {
       inline_slice (p, out, phase);
-    } else if (WHETHER (mode, REF_SYMBOL) && WHETHER (row_mode, REF_SYMBOL) && SUB (mode) == SUB_SUB (row_mode)) {
+    } else if (IS (mode, REF_SYMBOL) && IS (row_mode, REF_SYMBOL) && SUB (mode) == SUB_SUB (row_mode)) {
       inline_slice_ref_to_ref (p, out, phase);
     } else {
       ABEND (A68_TRUE, "strange mode for slice", NO_TEXT);
     }
-  } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), SLICE) != NO_NODE) {
+  } else if (IS (p, DEREFERENCING) && locate (SUB (p), SLICE) != NO_NODE) {
     inline_dereference_slice (SUB (p), out, phase);
-  } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), SELECTION) != NO_NODE) {
+  } else if (IS (p, DEREFERENCING) && locate (SUB (p), SELECTION) != NO_NODE) {
     inline_dereference_selection (SUB (p), out, phase);
-  } else if (WHETHER (p, SELECTION)) {
+  } else if (IS (p, SELECTION)) {
     NODE_T * sec = NEXT_SUB (p);
     MOID_T * mode = MOID (p);
     MOID_T * struct_mode = MOID (sec);
-    if (WHETHER (struct_mode, REF_SYMBOL) && WHETHER (mode, REF_SYMBOL)) {
+    if (IS (struct_mode, REF_SYMBOL) && IS (mode, REF_SYMBOL)) {
       inline_selection_ref_to_ref (p, out, phase);
-    } else if (WHETHER (struct_mode, STRUCT_SYMBOL) && primitive_mode (mode)) {
+    } else if (IS (struct_mode, STRUCT_SYMBOL) && primitive_mode (mode)) {
       inline_selection (p, out, phase);
     } else {
       ABEND (A68_TRUE, "strange mode for selection", NO_TEXT);
     }
-  } else if (WHETHER (p, DENOTATION)) {
+  } else if (IS (p, DENOTATION)) {
     inline_denotation (p, out, phase);
-  } else if (WHETHER (p, MONADIC_FORMULA)) {
+  } else if (IS (p, MONADIC_FORMULA)) {
     inline_monadic_formula (p, out, phase);
-  } else if (WHETHER (p, FORMULA)) {
+  } else if (IS (p, FORMULA)) {
     inline_formula (p, out, phase);
-  } else if (WHETHER (p, CALL)) {
+  } else if (IS (p, CALL)) {
     inline_call (p, out, phase);
-  } else if (WHETHER (p, CAST)) {
+  } else if (IS (p, CAST)) {
     inline_unit (NEXT_SUB (p), out, phase);
-  } else if (WHETHER (p, IDENTITY_RELATION)) {
+  } else if (IS (p, IDENTITY_RELATION)) {
     inline_identity_relation (p, out, phase);
   }
 }
@@ -3490,7 +3490,7 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
 static void embed_code_clause (NODE_T * p, FILE_T out)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, ROW_CHAR_DENOTATION)) {
+    if (IS (p, ROW_CHAR_DENOTATION)) {
       indentf (out, snprintf (line, SNPRINTF_SIZE, "%s\n", NSYMBOL (p)));
     }
     embed_code_clause (SUB (p), out);
@@ -3916,10 +3916,10 @@ static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
 {
   if (p == NO_NODE) {
     return;
-  } else if (WHETHER (p, UNIT) && phase == L_PUSH) {
+  } else if (IS (p, UNIT) && phase == L_PUSH) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "EXECUTE_UNIT_TRACE (_N_ (%d));\n", NUMBER (p)));
     inline_arguments (NEXT (p), out, L_PUSH, size);
-  } else if (WHETHER (p, UNIT)) {
+  } else if (IS (p, UNIT)) {
     char arg[NAME_SIZE];
     (void) make_name (arg, ARG, "", NUMBER (p));
     if (phase == L_DECLARE) {
@@ -4320,7 +4320,7 @@ static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int com
   NODE_T * prim = SUB (slice);
   MOID_T * mode = SUB_MOID (dst);
   MOID_T * row_mode = DEFLEX (MOID (prim));
-  if (WHETHER (row_mode, REF_SYMBOL) && basic_slice (slice) && basic_unit (src) && basic_mode_non_row (MOID (src))) {
+  if (IS (row_mode, REF_SYMBOL) && basic_slice (slice) && basic_unit (src) && basic_mode_non_row (MOID (src))) {
     NODE_T * indx = NEXT (prim);
     char * symbol = NSYMBOL (SUB (prim));
     char drf[NAME_SIZE], idf[NAME_SIZE], arr[NAME_SIZE], tup[NAME_SIZE], elm[NAME_SIZE], pop[NAME_SIZE];
@@ -4461,7 +4461,7 @@ static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, in
 
 static char * compile_identity_relation (NODE_T * p, FILE_T out, int compose_fun)
 {
-#define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && WHETHER (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
+#define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && IS (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
   NODE_T * lhs = SUB (p);
   NODE_T * op = NEXT (lhs);
   NODE_T * rhs = NEXT (op);
@@ -4582,15 +4582,15 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (compose_fun == A68_MAKE_OTHERS) {
-      if (WHETHER (p, UNIT)) {
+      if (IS (p, UNIT)) {
         (* units) ++;
       }
-      if (WHETHER (p, DECLARATION_LIST)) {
+      if (IS (p, DECLARATION_LIST)) {
         (* decs) ++;
       }
-      if (WHETHER (p, UNIT) || WHETHER (p, DECLARATION_LIST)) {
+      if (IS (p, UNIT) || IS (p, DECLARATION_LIST)) {
         if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
-          if (WHETHER (p, UNIT) && WHETHER (SUB (p), TERTIARY)) {
+          if (IS (p, UNIT) && IS (SUB (p), TERTIARY)) {
             compile_units (SUB_SUB (p), out);
           } else {
             compile_units (SUB (p), out);
@@ -4615,9 +4615,9 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
         }
       case SEMI_SYMBOL:
         {
-          if (WHETHER (* last, UNIT) && MOID (* last) == MODE (VOID)) {
+          if (IS (* last, UNIT) && MOID (* last) == MODE (VOID)) {
             break;
-          } else if (WHETHER (* last, DECLARATION_LIST)) {
+          } else if (IS (* last, DECLARATION_LIST)) {
             break;
           } else {
             indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
@@ -4724,7 +4724,7 @@ static char * compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
 
 static char * compile_collateral_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
-  if (basic_unit (p) && WHETHER (MOID (p), STRUCT_SYMBOL)) {
+  if (basic_unit (p) && IS (MOID (p), STRUCT_SYMBOL)) {
     static char fn[NAME_SIZE];
     comment_source (p, out);
     (void) make_name (fn, "_collateral", "", NUMBER (p));
@@ -4770,7 +4770,7 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
     write_fun_prelude (q, out, fn);
   }
 /* Collect declarations */
-  if (WHETHER (p, IF_PART) || WHETHER (p, OPEN_PART)) {
+  if (IS (p, IF_PART) || IS (p, OPEN_PART)) {
     root_idf = NO_DEC;
     inline_unit (SUB (NEXT_SUB (p)), out, L_DECLARE);
     print_declarations (out, root_idf);
@@ -4783,7 +4783,7 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
     ABEND (A68_TRUE, "if-part expected", NO_TEXT);
   }
   FORWARD (p);
-  if (WHETHER (p, THEN_PART) || WHETHER (p, CHOICE)) {
+  if (IS (p, THEN_PART) || IS (p, CHOICE)) {
     int pop = temp_book_pointer;
     (void) compile_unit (SUB (NEXT_SUB (p)), out, A68_MAKE_NOTHING);
     indentation --;
@@ -4792,7 +4792,7 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
     ABEND (A68_TRUE, "then-part expected", NO_TEXT);
   }
   FORWARD (p);
-  if (WHETHER (p, ELSE_PART) || WHETHER (p, CHOICE)) {
+  if (IS (p, ELSE_PART) || IS (p, CHOICE)) {
     int pop = temp_book_pointer;
     indent (out, "} else {\n");
     indentation ++;
@@ -4828,35 +4828,35 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
     return (NO_TEXT);
   }
   q = SUB (p);
-  while (q != NO_NODE && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
+  while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     if (! basic_serial (NEXT_SUB (q), 1)) {
       return (NO_TEXT);
     }
     FORWARD (q);
-    while (q != NO_NODE && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
+    while (q != NO_NODE && (IS (q, THEN_PART) || IS (q, ELSE_PART) || IS (q, CHOICE))) {
       if (LABELS (TABLE (NEXT_SUB (q))) != NO_TAG) {
         return (NO_TEXT);
       }
       FORWARD (q);
     }
-    if (q != NO_NODE && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    if (q != NO_NODE && is_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
-    } else if (q != NO_NODE && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
+    } else if (q != NO_NODE && is_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
     }
   }
 /* Generate embedded units */
   q = SUB (p);
-  while (q != NO_NODE && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
+  while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     FORWARD (q);
-    while (q != NO_NODE && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
+    while (q != NO_NODE && (IS (q, THEN_PART) || IS (q, ELSE_PART) || IS (q, CHOICE))) {
       last = NO_NODE; units = decs = 0;
       compile_serial_clause (NEXT_SUB (q), out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
       FORWARD (q);
     }
-    if (q != NO_NODE && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    if (q != NO_NODE && is_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
-    } else if (q != NO_NODE && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
+    } else if (q != NO_NODE && is_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
     }
   }
@@ -4869,15 +4869,15 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   }
   root_idf = NO_DEC;
   q = SUB (p);
-  while (q != NO_NODE && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
+  while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     inline_unit (SUB (NEXT_SUB (q)), out, L_DECLARE);
     FORWARD (q);
-    while (q != NO_NODE && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
+    while (q != NO_NODE && (IS (q, THEN_PART) || IS (q, ELSE_PART) || IS (q, CHOICE))) {
       FORWARD (q);
     }
-    if (q != NO_NODE && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    if (q != NO_NODE && is_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
-    } else if (q != NO_NODE && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
+    } else if (q != NO_NODE && is_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
     }
   }
@@ -4886,22 +4886,22 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
 /* Generate the function body */
   indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
   q = SUB (p);
-  while (q != NO_NODE && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
+  while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     inline_unit (SUB (NEXT_SUB (q)), out, L_EXECUTE);
     FORWARD (q);
-    while (q != NO_NODE && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
+    while (q != NO_NODE && (IS (q, THEN_PART) || IS (q, ELSE_PART) || IS (q, CHOICE))) {
       FORWARD (q);
     }
-    if (q != NO_NODE && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    if (q != NO_NODE && is_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
-    } else if (q != NO_NODE && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
+    } else if (q != NO_NODE && is_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
     }
   }
   q = SUB (p);
-  while (q != NO_NODE && whether_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
+  while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     BOOL_T else_part = A68_FALSE;
-    if (whether_one_of (q, IF_PART, OPEN_PART, STOP) ) {
+    if (is_one_of (q, IF_PART, OPEN_PART, STOP) ) {
       indent (out, "if (");
     } else {
       indent (out, "} else if (");
@@ -4909,7 +4909,7 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
     inline_unit (SUB (NEXT_SUB (q)), out, L_YIELD);
     undent (out, ") {\n");
     FORWARD (q);
-    while (q != NO_NODE && (WHETHER (q, THEN_PART) || WHETHER (q, ELSE_PART) || WHETHER (q, CHOICE))) {
+    while (q != NO_NODE && (IS (q, THEN_PART) || IS (q, ELSE_PART) || IS (q, CHOICE))) {
       if (else_part) {
         indent (out, "} else {\n");
       }
@@ -4919,9 +4919,9 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
       else_part = A68_TRUE;
       FORWARD (q);
     }
-    if (q != NO_NODE && whether_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
+    if (q != NO_NODE && is_one_of (q, ELIF_PART, BRIEF_ELIF_PART, STOP)) {
       q = SUB (q);
-    } else if (q != NO_NODE && whether_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
+    } else if (q != NO_NODE && is_one_of (q, FI_SYMBOL, CLOSE_SYMBOL)) {
       FORWARD (q);
     }
   }
@@ -4946,7 +4946,7 @@ BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int 
   if (p == NO_NODE) {
     return (A68_FALSE);
   } else {
-    if (WHETHER (p, UNIT)) {
+    if (IS (p, UNIT)) {
       if (k == * count) {
         if (compose_fun == A68_MAKE_FUNCTION) {
           indentf (out, snprintf (line, SNPRINTF_SIZE, "case %d: {\n", k));
@@ -4961,7 +4961,7 @@ BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int 
           indent (out, "}\n");
         } else if (compose_fun == A68_MAKE_OTHERS) {
           if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
-            if (WHETHER (p, UNIT) && WHETHER (SUB (p), TERTIARY)) {
+            if (IS (p, UNIT) && IS (SUB (p), TERTIARY)) {
               compile_units (SUB_SUB (p), out);
             } else {
               compile_units (SUB (p), out);
@@ -5003,7 +5003,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
     return (NO_TEXT);
   }
   q = SUB (p);
-  if (q != NO_NODE && whether_one_of (q, CASE_PART, OPEN_PART, STOP)) {
+  if (q != NO_NODE && is_one_of (q, CASE_PART, OPEN_PART, STOP)) {
     if (! basic_serial (NEXT_SUB (q), 1)) {
       return (NO_TEXT);
     }
@@ -5011,22 +5011,22 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   } else {
     return (NO_TEXT);
   }
-  while (q != NO_NODE && whether_one_of (q, CASE_IN_PART, OUT_PART, CHOICE, STOP)) {
+  while (q != NO_NODE && is_one_of (q, CASE_IN_PART, OUT_PART, CHOICE, STOP)) {
     if (LABELS (TABLE (NEXT_SUB (q))) != NO_TAG) {
       return (NO_TEXT);
     }
     FORWARD (q);
   }
-  if (q != NO_NODE && whether_one_of (q, ESAC_SYMBOL, CLOSE_SYMBOL)) {
+  if (q != NO_NODE && is_one_of (q, ESAC_SYMBOL, CLOSE_SYMBOL)) {
     FORWARD (q);
   } else {
     return (NO_TEXT);
   }
 /* Generate embedded units */
   q = SUB (p);
-  if (q != NO_NODE && whether_one_of (q, CASE_PART, OPEN_PART, STOP)) {
+  if (q != NO_NODE && is_one_of (q, CASE_PART, OPEN_PART, STOP)) {
     FORWARD (q);
-    if (q != NO_NODE && whether_one_of (q, CASE_IN_PART, CHOICE, STOP)) {
+    if (q != NO_NODE && is_one_of (q, CASE_IN_PART, CHOICE, STOP)) {
       last = NO_NODE; units = decs = 0;
       k = 0;
       do {
@@ -5035,7 +5035,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
       } while (compile_int_case_units (NEXT_SUB (q), out, NO_NODE, k, & count, A68_MAKE_OTHERS)); 
       FORWARD (q);
     }
-    if (q != NO_NODE && whether_one_of (q, OUT_PART, CHOICE, STOP)) {
+    if (q != NO_NODE && is_one_of (q, OUT_PART, CHOICE, STOP)) {
       last = NO_NODE; units = decs = 0;
       compile_serial_clause (NEXT_SUB (q), out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
       FORWARD (q);
@@ -5068,7 +5068,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
     k ++;
   } while (compile_int_case_units (NEXT_SUB (q), out, SUB (q), k, & count, A68_MAKE_FUNCTION)); 
   FORWARD (q);
-  if (q != NO_NODE && whether_one_of (q, OUT_PART, CHOICE, STOP)) {
+  if (q != NO_NODE && is_one_of (q, OUT_PART, CHOICE, STOP)) {
     indent (out, "default: {\n");
     indentation ++;
     embed_serial_clause (NEXT_SUB (q), out, pop);
@@ -5101,13 +5101,13 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   int units, decs;
   BOOL_T need_for = A68_FALSE, need_while = A68_FALSE, gc, need_reinit;
 /* FOR identifier */
-  if (WHETHER (q, FOR_PART)) {
+  if (IS (q, FOR_PART)) {
     need_for = A68_TRUE;
     for_part = NEXT_SUB (q);
     FORWARD (q);
   }
 /* FROM unit */
-  if (WHETHER (p, FROM_PART)) {
+  if (IS (p, FROM_PART)) {
     need_for = A68_TRUE;
     from_part = NEXT_SUB (q);
     if (! basic_unit (from_part)) {
@@ -5116,7 +5116,7 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     FORWARD (q);
   }
 /* BY unit */
-  if (WHETHER (q, BY_PART)) {
+  if (IS (q, BY_PART)) {
     need_for = A68_TRUE;
     by_part = NEXT_SUB (q);
     if (! basic_unit (by_part)) {
@@ -5125,14 +5125,14 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     FORWARD (q);
   }
 /* TO unit, DOWNTO unit */
-  if (WHETHER (q, TO_PART)) {
+  if (IS (q, TO_PART)) {
     need_for = A68_TRUE;
-    if (WHETHER (SUB (q), TO_SYMBOL)) {
+    if (IS (SUB (q), TO_SYMBOL)) {
       to_part = NEXT_SUB (q);
       if (! basic_unit (to_part)) {
         return (NO_TEXT);
       }
-    } else if (WHETHER (SUB (q), DOWNTO_SYMBOL)) {
+    } else if (IS (SUB (q), DOWNTO_SYMBOL)) {
       downto_part = NEXT_SUB (q);
       if (! basic_unit (downto_part)) {
         return (NO_TEXT);
@@ -5140,7 +5140,7 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     }
     FORWARD (q);
   }
-  if (WHETHER (q, WHILE_PART)) {
+  if (IS (q, WHILE_PART)) {
     BOOL_T pop_lma, good_unit;
     if (need_for) {
       return (NO_TEXT);
@@ -5158,12 +5158,12 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     FORWARD (q);
   }
 /* We cannot yet compile DO UNTIL OD, only basic and classic A68 loops */
-  if (WHETHER (q, DO_PART) || WHETHER (q, ALT_DO_PART)) {
+  if (IS (q, DO_PART) || IS (q, ALT_DO_PART)) {
     sc = q = NEXT_SUB (q);
-    if (WHETHER (q, SERIAL_CLAUSE)) {
+    if (IS (q, SERIAL_CLAUSE)) {
       FORWARD (q);
     }
-    if (q != NO_NODE && WHETHER (q, UNTIL_PART)) {
+    if (q != NO_NODE && IS (q, UNTIL_PART)) {
       return (NO_TEXT);
     }
   } else {
@@ -5359,16 +5359,16 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
   LOW_SYSTEM_STACK_ALERT (p);
   if (p == NO_NODE) {
     return (NO_TEXT);
-  } else if (whether_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, ENCLOSED_CLAUSE, STOP)) {
+  } else if (is_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, ENCLOSED_CLAUSE, STOP)) {
     COMPILE (SUB (p), out, compile_unit, compose_fun);
   } 
   if (DEBUG_LEVEL >= 3) {
 /* Control structure */
-    if (WHETHER (p, CLOSED_CLAUSE)) {
+    if (IS (p, CLOSED_CLAUSE)) {
       COMPILE (p, out, compile_closed_clause, compose_fun);
-    } else if (WHETHER (p, COLLATERAL_CLAUSE)) {
+    } else if (IS (p, COLLATERAL_CLAUSE)) {
       COMPILE (p, out, compile_collateral_clause, compose_fun);
-    } else if (WHETHER (p, CONDITIONAL_CLAUSE)) {
+    } else if (IS (p, CONDITIONAL_CLAUSE)) {
       char * fn2 = compile_basic_conditional (p, out, compose_fun);
       if (compose_fun == A68_MAKE_FUNCTION && fn2 != NO_TEXT) {
         ABEND (strlen (fn2) > 32, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
@@ -5382,63 +5382,63 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
       } else {
         COMPILE (p, out, compile_conditional_clause, compose_fun);
       }
-    } else if (WHETHER (p, CASE_CLAUSE)) {
+    } else if (IS (p, CASE_CLAUSE)) {
       COMPILE (p, out, compile_int_case_clause, compose_fun);
-    } else if (WHETHER (p, LOOP_CLAUSE)) {
+    } else if (IS (p, LOOP_CLAUSE)) {
       COMPILE (p, out, compile_loop_clause, compose_fun);
     }
   }
   if (DEBUG_LEVEL >= 2) {
 /* Simple constructions */
-    if (WHETHER (p, VOIDING) && WHETHER (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), IDENTIFIER) != NO_NODE) {
+    if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), IDENTIFIER) != NO_NODE) {
       COMPILE (p, out, compile_voiding_assignation_identifier, compose_fun);
-    } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SLICE) != NO_NODE) {
+    } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SLICE) != NO_NODE) {
       COMPILE (p, out, compile_voiding_assignation_slice, compose_fun);
-    } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SELECTION) != NO_NODE) {
+    } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SELECTION) != NO_NODE) {
       COMPILE (p, out, compile_voiding_assignation_selection, compose_fun);
-    } else if (WHETHER (p, SLICE)) {
+    } else if (IS (p, SLICE)) {
       COMPILE (p, out, compile_slice, compose_fun);
-    } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), SLICE) != NO_NODE) {
+    } else if (IS (p, DEREFERENCING) && locate (SUB (p), SLICE) != NO_NODE) {
       COMPILE (p, out, compile_dereference_slice, compose_fun);
-    } else if (WHETHER (p, SELECTION)) {
+    } else if (IS (p, SELECTION)) {
       COMPILE (p, out, compile_selection, compose_fun);
-    } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), SELECTION) != NO_NODE) {
+    } else if (IS (p, DEREFERENCING) && locate (SUB (p), SELECTION) != NO_NODE) {
       COMPILE (p, out, compile_dereference_selection, compose_fun);
-    } else if (WHETHER (p, CAST)) {
+    } else if (IS (p, CAST)) {
       COMPILE (p, out, compile_cast, compose_fun);
-    } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), FORMULA)) {
+    } else if (IS (p, VOIDING) && IS (SUB (p), FORMULA)) {
       COMPILE (SUB (p), out, compile_voiding_formula, compose_fun);
-    } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), MONADIC_FORMULA)) {
+    } else if (IS (p, VOIDING) && IS (SUB (p), MONADIC_FORMULA)) {
       COMPILE (SUB (p), out, compile_voiding_formula, compose_fun);
-    } else if (WHETHER (p, DEPROCEDURING)) {
+    } else if (IS (p, DEPROCEDURING)) {
       COMPILE (p, out, compile_deproceduring, compose_fun);
-    } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), DEPROCEDURING)) {
+    } else if (IS (p, VOIDING) && IS (SUB (p), DEPROCEDURING)) {
       COMPILE (p, out, compile_voiding_deproceduring, compose_fun);
-    } else if (WHETHER (p, CALL)) {
+    } else if (IS (p, CALL)) {
       COMPILE (p, out, compile_call, compose_fun);
-    } else if (WHETHER (p, VOIDING) && WHETHER (SUB (p), CALL)) {
+    } else if (IS (p, VOIDING) && IS (SUB (p), CALL)) {
       COMPILE (p, out, compile_voiding_call, compose_fun);
-    } else if (WHETHER (p, IDENTITY_RELATION)) {
+    } else if (IS (p, IDENTITY_RELATION)) {
       COMPILE (p, out, compile_identity_relation, compose_fun);
-    } else if (WHETHER (p, UNITING)) {
+    } else if (IS (p, UNITING)) {
       COMPILE (p, out, compile_uniting, compose_fun);
     }
   }
   if (DEBUG_LEVEL >= 1) {
     /* Debugging stuff, only basic */
-    if (WHETHER (p, DENOTATION)) {
+    if (IS (p, DENOTATION)) {
       COMPILE (p, out, compile_denotation, compose_fun);
-    } else if (WHETHER (p, IDENTIFIER)) {
+    } else if (IS (p, IDENTIFIER)) {
       COMPILE (p, out, compile_identifier, compose_fun);
-    } else if (WHETHER (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER) != NO_NODE) {
+    } else if (IS (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER) != NO_NODE) {
       COMPILE (p, out, compile_dereference_identifier, compose_fun);
-    } else if (WHETHER (p, MONADIC_FORMULA)) {
+    } else if (IS (p, MONADIC_FORMULA)) {
       COMPILE (p, out, compile_formula, compose_fun);
-    } else if (WHETHER (p, FORMULA)) {
+    } else if (IS (p, FORMULA)) {
       COMPILE (p, out, compile_formula, compose_fun);
     }
   }
-  if (WHETHER (p, CODE_CLAUSE)) {
+  if (IS (p, CODE_CLAUSE)) {
     COMPILE (p, out, compile_code_clause, compose_fun);
   }
   return (NO_TEXT);
@@ -5455,7 +5455,7 @@ void compile_units (NODE_T * p, FILE_T out)
 {
   ADDR_T pop_temp_heap_pointer = temp_heap_pointer; /* At the end we discard temporary declarations */
   for (; p != NO_NODE; FORWARD (p)) {
-    if (WHETHER (p, UNIT) || WHETHER (p, CODE_CLAUSE)) {
+    if (IS (p, UNIT) || IS (p, CODE_CLAUSE)) {
       if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
         compile_units (SUB (p), out);
       } else if (SUB (p) != NO_NODE && GINFO (SUB (p)) != NO_GINFO && COMPILE_NODE (GINFO (SUB (p))) > 0) {

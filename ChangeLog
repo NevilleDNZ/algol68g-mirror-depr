@@ -1,3 +1,9 @@
+09.11.2011 - 2.3.4
+Fixed AC_PROG_CC expansion (known autoconf problem).
+
+29.10.2011 - 2.3.4
+Fixed bug in mode checker.
+
 22.10.2011 - 2.3.3
 Added code-clause.
 

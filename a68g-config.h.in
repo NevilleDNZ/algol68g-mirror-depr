@@ -159,6 +159,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define this if untested OS was detected */
+#undef HAVE_UNTESTED
+
 /* Define this if /usr/local/pgsql/include was detected */
 #undef HAVE_USR_LOCAL_PGSQL_INCLUDE
 

@@ -44,7 +44,8 @@ XEDIT/ISPF editors. Especially the folding is a nice feature.
 Your screen looks like this:
 
 +-----------------------------------------------------+
-| filename file=1 size=n col=n alt=n                  |<--Id/Message Line
+|filename date #1     n/n    col=n alt=n    ins       |<--Id/Message Line
+|====>                                                |<--Command Line
 |===== * * * Top of Data * * *                        |
 |    1                                                |
 |    2                                                |
@@ -54,7 +55,6 @@ Your screen looks like this:
 |    5                                                |
 |    6                                                |
 |===== * * * End of Data * * *                        |
-|====>                                                |<--Command Line
 +-----------------------------------------------------+
  |   | |                                             |
  +---+ +---------------------------------------------+
@@ -72,16 +72,18 @@ Your screen looks like this:
 | DELETE  Delete up to [target]
 | INDENT  Indent text to a column
 | FILE    Save file [to target filename] and quit
-| FOLD    [[TO] target] Folds lines either up TO target, or matching target.
+| FOLD    [[TO] target] Folds lines either up TO target, or matching target
 | MESSAGE visualise a message from RUN or SYNTAX
 | MOVE    target target [n] Up to 1st target to after 2nd target, n copies
 | PAGE    [[+-]n|*] Forward or backward paging
 | PFn cmd Binds function key n to cmd
-| QQUIT   Categorically quit, does not ask if you are sure or not! 
+| QQUIT   Categorically quit 
 | READ    Insert filename after current line
 | RESET   Reset prefixes
-| RUN     run with a68g
-| SCALE   Put the scale [OFF] or at line [n]
+| RUN     Run with a68g
+| SET     CMD TOP|BOTTOM|*|n Place the command line
+| SET     IDF OFF|TOP|BOTTOM|*|n Place the file identification line
+| SET     SCALE OFF|TOP|BOTTOM|*|n Place the scale
 | SHELL   target cmd Filter lines using cmd
 | S       Substitute command /find/replace/ [C][target [n|* [m|*]]]
 | SYNTAX  Alias for a68g --pedantic --norun
@@ -149,7 +151,7 @@ Your screen looks like this:
 #define BLANK  "       "
 #define BLOCK_SIZE 4
 #define BOTSTR "* * * End of Data * * *"
-#define DATE_STRING "%d-%m-%y %H:%M"
+#define DATE_STRING "%d-%m-%y %H:%M:%S"
 #define EMPTY_STRING(s) ((s) == NO_TEXT || (s)[0] == NULL_CHAR)
 #define FD_READ 0
 #define FD_WRITE 1
@@ -169,25 +171,23 @@ Your screen looks like this:
 #define TEXT_WIDTH (COLS - MARGIN)
 #define TOPSTR "* * * Top of Data * * *"
 #define TRAILING(s) ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: trailing text", (s)) >= 0)
-#define WRONG_TARGET -1
+#define WRONG_TARGET (-1)
+
+#define EDIT_TEST(c) {\
+  if (! (c)) {\
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: error detected at line %d", __FILE__, __LINE__) >= 0);\
+  }}
 
 #if defined HAVE_WIN32
-#define REDRAW(s) {wclear (s);}
-#else
-#define REDRAW(s) {wclear (s);}
-#endif /* defined HAVE_WIN32 */
-
-/*
-#if defined HAVE_WIN32
-#define REDRAW(s) {clearok ((s), 1);}
-#else
-#define REDRAW(s) {clearok ((s), true);}
+#define true 1
 #endif
-*/
+
+#define REDRAW(s) {EDIT_TEST (clearok (s, true) != ERR);}
 
 static char pf_bind[MAX_PF][BUFFER_SIZE];
 static char history[HISTORY][BUFFER_SIZE];
 static int histcurr = -1, histnext = -1, histprev = -1;
+static int loop_cnt = 0;
 
 #define KEY_CTRL(n) TO_UCHAR ((int) n - 0x40)
 
@@ -243,7 +243,7 @@ static int histcurr = -1, histnext = -1, histprev = -1;
 
 #define XABEND(p, reason, info) {\
   if (p) {\
-    endwin ();\
+    (void) endwin ();\
     abend ((char *) reason, (char *) info, __FILE__, __LINE__);\
   }}
 
@@ -557,7 +557,6 @@ struct DATASET_T {
   EDLIN_T *tof; /* top-of-file */
   BOOL_T new_file;
   BOOL_T subset;
-  BOOL_T refresh;
   BOOL_T collect;
   DISPLAY_T display;
   EDLIN_T *curr; /* Current line, above the scale */
@@ -862,12 +861,12 @@ static BOOL_T match_regex (DATASET_T *dd, EDLIN_T *z, int eflags, char *cmd)
   M_SO (dd) = M_EO (dd) = -1;
   if (m1 && !NEGATE (&TARG1 (dd))) {
     M_MATCH (dd) = z;
-    M_SO (dd) = RM_SO (&(MATCH (&TARG1 (dd))[0]));      
-    M_EO (dd) = RM_EO (&(MATCH (&TARG1 (dd))[0]));      
+    M_SO (dd) = (int) RM_SO (&(MATCH (&TARG1 (dd))[0]));      
+    M_EO (dd) = (int) RM_EO (&(MATCH (&TARG1 (dd))[0]));      
   } else if (m2 && !NEGATE (&TARG2 (dd))) {
     M_MATCH (dd) = z;
-    M_SO (dd) = RM_SO (&(MATCH (&TARG2 (dd))[0]));      
-    M_EO (dd) = RM_EO (&(MATCH (&TARG2 (dd))[0]));      
+    M_SO (dd) = (int) RM_SO (&(MATCH (&TARG2 (dd))[0]));      
+    M_EO (dd) = (int) RM_EO (&(MATCH (&TARG2 (dd))[0]));      
   }
   if (OPER (dd) == NULL_CHAR) {
     return (m1);
@@ -1214,7 +1213,8 @@ static int tab_reps (int pos, int tabs)
 static BOOL_T reserved_row (DATASET_T *dd, int row)
 {
   DISPLAY_T *scr = &(DISPLAY (dd));
-  return (row == CMD_ROW (scr) || row == SCALE_ROW (scr) ||
+  return (row == CMD_ROW (scr) || 
+          row == SCALE_ROW (scr) ||
           row == IDF_ROW (scr));
 }
 
@@ -1278,24 +1278,23 @@ static void edit_init_curses (DATASET_T *dd)
 {
   DISPLAY_T *scr = &(DISPLAY (dd));
   CURSOR_T *curs = &(CURS (scr));
-  int res = count_reserved (dd);
-  initscr ();
-  raw ();
-  keypad (stdscr, TRUE);
-  noecho ();
-  nonl ();
-  meta (stdscr, TRUE);
+  (void) initscr ();
+  (void) raw ();
+  EDIT_TEST (keypad (stdscr, TRUE) != ERR);
+  EDIT_TEST (noecho () != ERR);
+  EDIT_TEST (nonl () != ERR);
+  EDIT_TEST (meta (stdscr, TRUE) != ERR);
 #if ! defined HAVE_WIN32
-  mousemask (ALL_MOUSE_EVENTS, NULL);
+  (void) mousemask ((mmask_t) ALL_MOUSE_EVENTS, NULL);
 #endif /* ! defined HAVE_WIN32 */
-  curs_set (1);
-  SCALE_ROW (scr) = res / 2 + (LINES - res) / 2;
-  CMD_ROW (scr) = LINES - 1;
+  EDIT_TEST (curs_set (1) != ERR);
+  SCALE_ROW (scr) = LINES / 2;
+  CMD_ROW (scr) = 1;
   IDF_ROW (scr) = 0;
   ROW (curs) = COL (curs) = -1;
   SYNC (curs) = A68_FALSE;
-  wclear (stdscr);
-  refresh ();
+  REDRAW (stdscr);
+  EDIT_TEST (wrefresh (stdscr) != ERR);
 }
 
 /*
@@ -1419,7 +1418,7 @@ static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
     RESERVED (l) = 1;
     TEXT (l) = (char *) edit_get_heap (dd, (size_t) RESERVED (l));
     TEXT (l)[0] = NULL_CHAR;
-    bufcpy (PRECMD (l), BLANK, (strlen (BLANK) + 1));
+    bufcpy (PRECMD (l), BLANK, (int) (strlen (BLANK) + 1));
   } else {
     int res = 1 + (int) strlen (txt);
     if (res % BLOCK_SIZE > 0) {
@@ -1436,7 +1435,7 @@ static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
       return;
     }
     bufcpy (TEXT (l), txt, res);
-    bufcpy (PRECMD (l), BLANK, (strlen (BLANK) + 1));
+    bufcpy (PRECMD (l), BLANK, (int) (strlen (BLANK) + 1));
   }
 }
 
@@ -1447,7 +1446,7 @@ static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
 
 static void set_prefix (EDLIN_T *l)
 {
-  bufcpy (PRECMD (l), BLANK, (strlen (BLANK) + 1));
+  bufcpy (PRECMD (l), BLANK, (int) (strlen (BLANK) + 1));
 }
 
 /*
@@ -1500,7 +1499,6 @@ static void split_line (DATASET_T *dd, char *cmd)
     ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot split line", cmd) >= 0);
     return;
   }
-/*  wclear (stdscr); */
   BL_START (dd) = BL_END (dd) = NO_EDLIN;
   ALTS (dd)++;
   SIZE (dd)++;
@@ -1552,7 +1550,6 @@ static void join_line (DATASET_T *dd, char *cmd)
     ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot join line", cmd) >= 0);
     return;
   }
-/*  wclear (stdscr); */
   BL_START (dd) = BL_END (dd) = NO_EDLIN;
   prv = PREVIOUS (lin);
   ALTS (dd)++;
@@ -1776,7 +1773,7 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
     SIZE (dd) = 0;
     PERMS (dd) = A68_PROTECTION;
     NEW_FILE (dd) = A68_TRUE;
-    time (&rt);
+    ASSERT (time (&rt) != (time_t) (-1));
     ASSERT ((tm = localtime (&rt)) != NULL);
     ASSERT ((strftime (datestr, BUFFER_SIZE, DATE_STRING, tm)) > 0);
     ASSERT (snprintf (DATE (dd), SNPRINTF_SIZE, "%s", datestr) >= 0);
@@ -1973,11 +1970,12 @@ static void edit_putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_li
   BOOL_T forbidden = reserved_row (dd, row);
   BOOL_T text_area = (!forbidden) && col >= MARGIN;
   BOOL_T prefix_area = (!forbidden) && col < MARGIN;
+  int rc;
   if (row < 0 || row >= LINES) {
     return;
   }
   if (IS_CNTRL (ch)) {
-    ch = '~';
+    ch = '*';
   }
   if (col < 0 || col >= COLS) {
     return;
@@ -2026,7 +2024,10 @@ static void edit_putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_li
       LINE (curs) = dd_line;
     }
   }
-  mvaddch (row, col, (chtype) ch);
+  EDIT_TEST (wmove (stdscr, row, col) != ERR);
+  rc = waddch (stdscr, (chtype) ch);
+  EDIT_TEST (rc != ERR || (row == (LINES - 1) && col == (COLS - 1)));
+  EDIT_TEST (wmove (stdscr, row, col) != ERR);
 }
 
 /*
@@ -2104,7 +2105,6 @@ static void edit_draw (DATASET_T *dd)
       row++;
     }
   }
-  wrefresh (stdscr);
 /* Draw text lines */
   for (row = 0; row < LINES; ) {
     if (reserved_row (dd, row)) {
@@ -2152,7 +2152,7 @@ static void edit_draw (DATASET_T *dd)
             pn /= 10;
           }
           for (pk = 0; pk < MARGIN - 2 && prefix[pk] == '0'; pk ++) {
-            prefix[pk] = BLANK_CHAR;
+            /* prefix[pk] = BLANK_CHAR; */
           }
         }
         for (ind = 0; ind < MARGIN; ind++) {
@@ -2219,11 +2219,13 @@ static void edit_draw (DATASET_T *dd)
 /* Put the character */
             if (!IS_PRINT (ch)) {
               char nch = (char) TO_UCHAR ((int) 0x40 + (int) ch);
+              (void) wattron (stdscr, A_REVERSE);
               if (IS_PRINT (nch)) {
                 edit_putch (row, col, nch, dd, run, ind); col++;
               } else {
                 edit_putch (row, col, '*', dd, run, ind); col++;
               }
+              (void) wattroff (stdscr, A_REVERSE);
             } else if (IS_TOF (run) || IS_EOF (run)) {
               edit_putch (row, col, ch, dd, run, ind); col++;
             } else if (run == CURR (dd)) {
@@ -2233,9 +2235,9 @@ static void edit_draw (DATASET_T *dd)
                   COL (curs) = col;
                 }
                 if (ind > M_SO (dd) && ind < M_EO (dd)) {
-                  attron (A_REVERSE);
+                  (void) wattron (stdscr, A_REVERSE);
                   edit_putch (row, col, ch, dd, run, ind); col++;
-                  attroff (A_REVERSE);
+                  (void) wattroff (stdscr, A_REVERSE);
                 } else {
                   edit_putch (row, col, ch, dd, run, ind); col++;
                 }
@@ -2258,7 +2260,6 @@ static void edit_draw (DATASET_T *dd)
       }
     }
   }
-  wrefresh (stdscr);
 /* Write the scale row now all data is complete */
   for (row = 0; row < LINES; ) {
     if (row == SCALE_ROW (scr)) {
@@ -2312,17 +2313,17 @@ static void edit_draw (DATASET_T *dd)
         int col = 0, ind = 0;
         if (strlen (DL0 (scr)) == 0) {
 /* Write file identification line */ 
-          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "\"%s\" file=%d size=%-6d", 
-            NAME (dd), NUM (dd), SIZE (dd)) >= 0);
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "\"%s\" %s #%d", 
+            NAME (dd), DATE (dd), NUM (dd)) >= 0);
           for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
             col++;
           }
           if ((IN_TEXT (curs) || IN_PREFIX (curs)) && lin != NO_EDLIN && NUMBER (lin) > 0) {
-            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " line=%-4d", 
-              NUMBER (lin) % 10000) >= 0);
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " %6d/%-6d", 
+              NUMBER (lin) % 1000000, SIZE (dd)) >= 0);
           } else {
-            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "          ") >= 0);
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "              ") >= 0);
           }
           for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
@@ -2355,12 +2356,12 @@ static void edit_draw (DATASET_T *dd)
           }
         } else {
 /* Write message in stead of identification */ 
-          attron (A_REVERSE);
+          (void) wattron (stdscr, A_REVERSE);
           for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
             col++;
           }
-          attroff (A_REVERSE);
+          (void) wattroff (stdscr, A_REVERSE);
         }
         for (ind = col; ind < COLS; col++, ind++) {
           edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
@@ -2373,7 +2374,7 @@ static void edit_draw (DATASET_T *dd)
   }
   M_MATCH (dd) = NO_EDLIN;
   M_SO (dd) = M_EO (dd) = -1;
-  wrefresh (stdscr);
+  EDIT_TEST (wrefresh (stdscr) != ERR);
 }
 
 /* Routines to edit various parts of the screen */
@@ -2769,8 +2770,8 @@ static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, BOOL_T *co
       M_EO (dd) = newt + RM_EO (&(MATCH (&FIND (dd))[0]));      
       CURSOR_TO_COMMAND (dd, curs);
       edit_draw (dd);
-      wmove (stdscr, ROW (curs), COL (curs));
-      wrefresh (stdscr);
+      EDIT_TEST (wmove (stdscr, ROW (curs), COL (curs)) != ERR);
+      EDIT_TEST (wrefresh (stdscr) != ERR);
       M_MATCH (dd) = NO_EDLIN;
       M_SO (dd) = -1;
       M_EO (dd) = -1;
@@ -2953,7 +2954,7 @@ static void edit_filter (DATASET_T *dd, char *cmd, char *argv, EDLIN_T *u)
 /* ... process the lines ... */
   RESET_ERRNO;
   ASSERT (snprintf (shell, SNPRINTF_SIZE, "%s < .a68g.edit.out > .a68g.edit.in", argv) >= 0);
-  system (shell);
+ EDIT_TEST (system (shell) != -1);
   CHECK_ERRNO (cmd);
 /* ... and read lines */
   edit_read (dd, cmd, ".a68g.edit.in", NO_EDLIN);
@@ -3329,8 +3330,8 @@ static char *full_cmd (char *cmd)
     return ("reset");
   } else if (match_cmd (cmd, "SAve", NO_VAR)) {
     return ("save");
-  } else if (match_cmd (cmd, "SCale", NO_VAR)) {
-    return ("scale");
+  } else if (match_cmd (cmd, "SET", NO_VAR)) {
+    return ("set");
   } else if (match_cmd (cmd, "SHell", NO_VAR)) {
     return ("shell");
   } else if (match_cmd (cmd, "Help", NO_VAR)) {
@@ -3353,6 +3354,117 @@ static char *full_cmd (char *cmd)
     return ("xedit");
   } else {
     return (cmd);
+  }
+}
+
+/*
+\brief place reserved line
+\param dd current dataset
+\param line pointer to line
+\param fcmd full name of SET command
+\param args arguments
+**/
+
+static void edit_place (DATASET_T *dd, int *line, char *fcmd, char *args)
+{
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  char *rest = NO_TEXT;
+  if (match_cmd (args, "TOP", &rest)) {
+    if (!EMPTY_STRING (rest)) {
+      TRAILING (fcmd);
+      return;
+    }
+    if (reserved_row (dd, 0)) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot place at row %d", fcmd, 1) >= 0);
+      return;
+    }
+    (*line) = 0;
+    return;
+  } else if (match_cmd (args, "BOTtom", &rest)) {
+    if (!EMPTY_STRING (rest)) {
+      TRAILING (fcmd);
+      return;
+    }
+    if (reserved_row (dd, LINES - 1)) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot place at row %d", fcmd, LINES) >= 0);
+      return;
+    }
+    (*line) = LINES - 1;
+    return;
+  } else {
+    int n = int_arg (dd, fcmd, args, &rest, 1 + LINES / 2);
+    if (!EMPTY_STRING (rest)) {
+      TRAILING (fcmd);
+      return;
+    }
+    if ((n < 0 || n > LINES) || reserved_row (dd, n - 1)) {
+      ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot place at row %d", fcmd, n) >= 0);
+      return;
+    }
+    (*line) = n - 1;
+    return;
+  }
+}
+
+/*
+\brief execute set command
+\param dd current dataset
+\param fcmd full name of SET command
+\param cmd command after SET
+**/
+
+static void edit_set_cmd (DATASET_T *dd, char *fcmd, char *cmd)
+{
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  CURSOR_T *curs = &(CURS (scr));
+  char *args = NO_TEXT, *rest = NO_TEXT;
+  char gcmd[SNPRINTF_SIZE];
+  ASSERT (snprintf (gcmd, SNPRINTF_SIZE, "%s %s", fcmd, cmd) >= 0);
+  edit_add_history (CMD (scr));
+  if (match_cmd (cmd, "SCALE", &args)) {
+/* SCALE OFF|TOP|BOTTOM|*|n: set scale row */
+    if (match_cmd (args, "OFF", &rest)) {
+      if (!EMPTY_STRING (rest)) {
+        TRAILING (gcmd);
+        CURSOR_TO_COMMAND (dd, curs);
+        return;
+      }
+      SCALE_ROW (scr) = A68_MAX_INT;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+      CURSOR_TO_COMMAND (dd, curs);
+      return;
+    } else {
+      edit_place (dd, &SCALE_ROW (scr), gcmd, args);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+      CURSOR_TO_COMMAND (dd, curs);
+      return;
+    }
+  } else if (match_cmd (cmd, "IDF", &args)) {
+/* IDF OFF|TOP|BOTTOM|*|n: set scale row */
+    if (match_cmd (args, "OFF", &rest)) {
+      if (!EMPTY_STRING (rest)) {
+        TRAILING (gcmd);
+        CURSOR_TO_COMMAND (dd, curs);
+        return;
+      }
+      IDF_ROW (scr) = A68_MAX_INT;
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+      CURSOR_TO_COMMAND (dd, curs);
+      return;
+    } else {
+      edit_place (dd, &IDF_ROW (scr), gcmd, args);
+      bufcpy (CMD (scr), "", BUFFER_SIZE);
+      CURSOR_TO_COMMAND (dd, curs);
+      return;
+    }
+  } else if (match_cmd (cmd, "CMD", &args)) {
+/* CMD TOP|BOTTOM|*|n: set command row */
+    edit_place (dd, &CMD_ROW (scr), gcmd, args);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
+    CURSOR_TO_COMMAND (dd, curs);
+    return;
+  } else {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined command \"%s\"", gcmd) >= 0);
   }
 }
 
@@ -3526,13 +3638,15 @@ static void edit_do_cmd (DATASET_T *dd)
       return;
     } else {
       if ((UNDO (dd)[0]) != NULL_CHAR) {
-        (void) remove (UNDO (dd));
+        EDIT_TEST (remove (UNDO (dd)) != -1);
       }
       longjmp (EDIT_EXIT_LABEL (dd), 1);
     }
   } else if (match_cmd (cmd, "Page", &args)) {
 /* PAGE n: trace forward or backward by "drawing" the screen */
     int k, n = int_arg (dd, fcmd, args, &rest, 1);
+    EDLIN_T *old = CURR (dd);
+    BOOL_T at_bound = A68_FALSE;
     if (!EMPTY_STRING (rest)) {
       TRAILING (fcmd);
       CURSOR_TO_COMMAND (dd, curs);
@@ -3542,20 +3656,30 @@ static void edit_do_cmd (DATASET_T *dd)
     for (k = 0; k < abs (n); k++) {
       int lin = count_reserved (dd);
       EDLIN_T *z = CURR (dd), *u = z;
-      for (; IS_IN_TEXT (z);) {
+      BOOL_T cont = A68_TRUE;
+      for (; IS_IN_TEXT (z) && cont;) {
         lin += lines_on_scr (dd, z);
         if (lin > LINES) {
-          break;
+          cont = A68_FALSE;
+        } else {
+          u = z;
+          (n > 0 ? forward_line (&z) : backward_line (&z));
         }
-        u = z;
-        (n > 0 ? forward_line (&z) : backward_line (&z));
       }
       if (lin > LINES) {
         CURR (dd) = u;
       } else {
+        at_bound = A68_TRUE;
         CURR (dd) = z;
       }
       align_current (dd);
+    }
+    if (CURR (dd) == old) {
+      if (at_bound) {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: at file boundary", fcmd) >= 0);
+      } else {
+        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: line does not fit screen", fcmd) >= 0);
+      }
     }
     CURSOR_TO_COMMAND (dd, curs);
     bufcpy (CMD (scr), "", BUFFER_SIZE);
@@ -3681,7 +3805,7 @@ static void edit_do_cmd (DATASET_T *dd)
     }
     if (errno == 0) {
       if ((UNDO (dd)[0]) != NULL_CHAR) {
-        (void) remove (UNDO (dd));
+        EDIT_TEST (remove (UNDO (dd)) != -1);
       }
       longjmp (EDIT_EXIT_LABEL (dd), 1);
     } else {
@@ -3718,7 +3842,16 @@ static void edit_do_cmd (DATASET_T *dd)
 /* Write: save the dataset */
     edit_add_history (cmd); 
     if (EMPTY_STRING (args)) {
+      struct stat statbuf;
       edit_write (dd, fcmd, NAME (dd), TOF (dd), NO_EDLIN);
+      if (stat (NAME (dd), &statbuf) != -1) {
+        struct tm *tm;
+        char datestr[BUFFER_SIZE];
+        PERMS (dd) = ST_MODE (&statbuf);
+        ASSERT ((tm = localtime (&ST_MTIME (&statbuf))) != NULL);
+        ASSERT ((strftime (datestr, BUFFER_SIZE, DATE_STRING, tm)) > 0);
+        ASSERT (snprintf (DATE (dd), SNPRINTF_SIZE, "%s", datestr) >= 0);
+      }
       ALTS (dd) = 0;
       bufcpy (CMD (scr), "", BUFFER_SIZE);
       CURSOR_TO_COMMAND (dd, curs);
@@ -3746,7 +3879,7 @@ static void edit_do_cmd (DATASET_T *dd)
       ASSERT (close (MSGS (dd)) == 0);
       MSGS (dd) = -1;
     }
-    (void) remove (A68_DIAGNOSTICS_FILE);
+    EDIT_TEST (remove (A68_DIAGNOSTICS_FILE) != -1);
     if (EMPTY_STRING (args)) {
       ASSERT (snprintf (ccmd, SNPRINTF_SIZE, "a68g --tui %s", A68_CHECK_FILE) >= 0);
     } else {
@@ -3755,7 +3888,7 @@ static void edit_do_cmd (DATASET_T *dd)
     CURR (dd) = NEXT (TOF (dd));
     ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "write * %s", A68_CHECK_FILE) >= 0);
     edit_do_cmd (dd);
-    endwin ();
+    EDIT_TEST (endwin () != ERR);
     ret = system (ccmd);
     edit_init_curses (dd);
     CURR (dd) = cursav;
@@ -3828,36 +3961,11 @@ static void edit_do_cmd (DATASET_T *dd)
       bufcpy (CMD (scr), "", BUFFER_SIZE);
       return;
     }
-  } else if (match_cmd (cmd, "SCale", &args)) {
-/* SCALE OFF|n: set scale row */
-    if (match_cmd (args, "OFF", &rest)) {
-      if (!EMPTY_STRING (rest)) {
-        TRAILING (fcmd);
-        CURSOR_TO_COMMAND (dd, curs);
-        return;
-      }
-      SCALE_ROW (scr) = A68_MAX_INT;
-      bufcpy (CMD (scr), "", BUFFER_SIZE);
-      CURSOR_TO_COMMAND (dd, curs);
-      return;
-    } else {
-      int res = count_reserved (dd);
-      int n = int_arg (dd, fcmd, args, &rest, 1 + res / 2 + (LINES - res) / 2);
-      if (!EMPTY_STRING (rest)) {
-        TRAILING (fcmd);
-        CURSOR_TO_COMMAND (dd, curs);
-        return;
-      }
-      if ((reserved_row (dd, n - 1) && (n - 1) != SCALE_ROW (scr)) || n < 2 || n > LINES) {
-        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot place scale at row %d", fcmd, n) >= 0);
-        CURSOR_TO_COMMAND (dd, curs);
-        return;
-      }
-      SCALE_ROW (scr) = n - 1;
-      bufcpy (CMD (scr), "", BUFFER_SIZE);
-      CURSOR_TO_COMMAND (dd, curs);
-      return;
-    }
+  } else if (match_cmd (cmd, "SET", &args)) {
+    edit_set_cmd (dd, fcmd, args);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
+    CURSOR_TO_COMMAND (dd, curs);
+    return;
   } else if (match_cmd (cmd, "MSG", &args)) {
 /* MSG: display its argument in the message area */
     ARGS (fcmd, args);
@@ -3885,7 +3993,7 @@ static void edit_do_cmd (DATASET_T *dd)
     }
     for (j = 0; j < LINES; j++) {
       for (k = 0; k < COLS; k++) {
-        move (j, k);
+        EDIT_TEST (wmove (stdscr, j, k) != ERR);
         ASSERT (snprintf (buff, SNPRINTF_SIZE, "%c", (char) inch ()) >= 0);
         WRITE (fd, buff);
       }
@@ -4030,8 +4138,8 @@ static void edit_do_cmd (DATASET_T *dd)
   } else if (match_cmd (cmd, "S", &args)) {
 /* SUBSTITUTE /find/replace/ [C] [/target/] [repetition]: replace substrings */
     int reps, start, subs = 0;
-    edit_add_history (cmd); 
     BOOL_T confirm = A68_FALSE;
+    edit_add_history (cmd); 
     if (!get_subst (dd, fcmd, args, &rest)) {
       ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: unrecognised syntax", fcmd) >= 0);
       CURSOR_TO_COMMAND (dd, curs);
@@ -4547,16 +4655,11 @@ static void key_command (DATASET_T *dd, char *cmd)
 {
   DISPLAY_T *scr = &(DISPLAY (dd));
   CURSOR_T *curs = &(CURS (scr));
-  EDLIN_T *old = CURR (dd);
   SAVE_CURSOR (dd, curs);
   bufcpy (CMD (scr), cmd, BUFFER_SIZE);
   edit_do_cmd (dd);
   CURSOR_TO_SAVE (dd, curs);
-  if (old == CURR (dd)) {
-    REFRESH (dd) = A68_FALSE;
-  } else {
-    REDRAW (stdscr);
-  }
+  REDRAW (stdscr);
 }
 
 /*
@@ -4570,14 +4673,12 @@ static void edit_loop (DATASET_T *dd)
   CURSOR_T *curs = &(CURS (scr));
   for (;;) {
     int ch, k;
-    if (REFRESH (dd)) {
+    loop_cnt ++;
 /* Redraw the screen ... */
-      edit_draw (dd);
+    edit_draw (dd);
 /* ... and set the cursor like this or else ncurses can misplace it :-( */
-      wmove (stdscr, ROW (curs), COL (curs));
-      wrefresh (stdscr);
-    }
-    REFRESH (dd) = A68_TRUE;
+    EDIT_TEST (wmove (stdscr, ROW (curs), COL (curs)) != ERR);
+    EDIT_TEST (wrefresh (stdscr) != ERR);
     bufcpy (DL0 (scr), "", BUFFER_SIZE);
     ch = wgetch (stdscr);
     if (ch == ESCAPE_CHAR) {
@@ -4678,13 +4779,13 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       }
     } else if (ch == KEY_RESIZE) {
 /* Resize event triggers reinitialisation */
-      endwin ();
+      EDIT_TEST (endwin () != ERR);
       edit_init_curses (dd);
     } else if (ch == KEY_MOUSE) {
 /* Mouse control is basic: you can point with the cursor but little else */
 #if ! defined HAVE_WIN32
       MEVENT event;
-      if (getmouse (&event) == OK) {
+      if (getmouse (&event) != ERR) {
         BSTATE (curs) = BSTATE (&event);
         if (BSTATE (&event) & (BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED | 
                             BUTTON1_PRESSED | BUTTON1_RELEASED)) {
@@ -4801,6 +4902,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
 
 static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
 {
+  DISPLAY_T *scr = &(DISPLAY (dd));
 /* Init ncurses */
   edit_init_curses (dd);
   bufcpy (NAME (dd), filename, BUFFER_SIZE);
@@ -4816,7 +4918,6 @@ static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
   XABEND (heap_full (BUFFER_SIZE), "out of memory", NO_TEXT);
   COLLECT (dd) = A68_TRUE;
   INS_MODE (&DISPLAY (dd)) = A68_TRUE;
-  REFRESH (dd) = A68_TRUE;
   MSGS (dd) = -1; /* File not open */
   NUM (dd) = num;
   UNDO_LINE (dd) = 0;
@@ -4837,7 +4938,8 @@ static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
     (UNDO (dd))[0] = NULL_CHAR;
     ASSERT (snprintf (DL0 (&DISPLAY (dd)), SNPRINTF_SIZE, "edit: cannot open temporary file for undo") >= 0);
   }
-  remove (UNDO (dd));
+  EDIT_TEST (remove (UNDO (dd)) != -1);
+  loop_cnt = 0;
   if (setjmp (EDIT_EXIT_LABEL (dd)) == 0) {
     edit_loop (dd);
   }
@@ -4851,6 +4953,7 @@ static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
 void edit (char *start_text)
 {
   DATASET_T dataset;
+  DISPLAY_T *scr = &(DISPLAY (&dataset));
   int k;
   (void) start_text;
   genie_init_rng ();
@@ -4879,10 +4982,10 @@ void edit (char *start_text)
   edit_dataset (&dataset, 1, FILE_INITIAL_NAME (&program), OPTION_TARGET (&program));
 /* Exit edit */
   write_history ();
-  wclear (stdscr);
-  refresh ();
-  endwin ();
-  (void) remove (A68_DIAGNOSTICS_FILE);
+  EDIT_TEST (wclear (stdscr) != ERR);
+  EDIT_TEST (wrefresh (stdscr) != ERR);
+  EDIT_TEST (endwin () != ERR);
+  EDIT_TEST (remove (A68_DIAGNOSTICS_FILE) != -1);
   exit (EXIT_SUCCESS);
 }
 

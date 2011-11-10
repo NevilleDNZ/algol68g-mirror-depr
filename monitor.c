@@ -414,10 +414,10 @@ static BOOL_T deref_condition (int k, int context)
   MOID_T *u = _m_stack[k];
   if (context == WEAK && SUB (u) != NO_MOID) {
     MOID_T *v = SUB (u);
-    BOOL_T stowed = (BOOL_T) (WHETHER (v, FLEX_SYMBOL) || WHETHER (v, ROW_SYMBOL) || WHETHER (v, STRUCT_SYMBOL));
-    return ((BOOL_T) (WHETHER (u, REF_SYMBOL) && !stowed));
+    BOOL_T stowed = (BOOL_T) (IS (v, FLEX_SYMBOL) || IS (v, ROW_SYMBOL) || IS (v, STRUCT_SYMBOL));
+    return ((BOOL_T) (IS (u, REF_SYMBOL) && !stowed));
   } else {
-    return ((BOOL_T) (WHETHER (u, REF_SYMBOL)));
+    return ((BOOL_T) (IS (u, REF_SYMBOL)));
   }
 }
 
@@ -466,7 +466,7 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
   }
   for (m = TOP_MOID (&program); m != NO_MOID; FORWARD (m)) {
     int k = 0;
-    while (WHETHER (m, REF_SYMBOL)) {
+    while (IS (m, REF_SYMBOL)) {
       k++;
       m = SUB (m);
     }
@@ -507,10 +507,10 @@ static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
     }
   }
 /* Not found yet, try dereferencing */
-  if (WHETHER (x, REF_SYMBOL)) {
+  if (IS (x, REF_SYMBOL)) {
     return (search_operator (sym, SUB (x), y));
   }
-  if (y != NO_MOID && WHETHER (y, REF_SYMBOL)) {
+  if (y != NO_MOID && IS (y, REF_SYMBOL)) {
     return (search_operator (sym, x, SUB (y)));
   }
 /* Not found. Grrrr. Give a message */
@@ -557,7 +557,7 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
     TAG_T *i = IDENTIFIERS (q);
     for (; i != NO_TAG; FORWARD (i)) {
       if (strcmp (NSYMBOL (NODE (i)), sym) == 0) {
-        if (WHETHER (MOID (i), PROC_SYMBOL)) {
+        if (IS (MOID (i), PROC_SYMBOL)) {
           static A68_PROCEDURE z;
           STATUS (&z) = (STATUS_MASK) (INITIALISED_MASK | STANDENV_PROC_MASK);
           PROCEDURE (&(BODY (&z))) = PROCEDURE (i);
@@ -598,7 +598,7 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
     if (_m_stack[k] == MOID (u)) {
       PUSH (p, STACK_ADDRESS (sp_2), MOID_SIZE (MOID (u)));
       sp_2 += MOID_SIZE (MOID (u));
-    } else if (WHETHER (_m_stack[k], REF_SYMBOL)) {
+    } else if (IS (_m_stack[k], REF_SYMBOL)) {
       A68_REF *v = (A68_REF *) STACK_ADDRESS (sp_2);
       PUSH_REF (p, *v);
       sp_2 += ALIGNED_SIZE_OF (A68_REF);
@@ -636,7 +636,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
   QUIT_ON_ERROR;
   PARSE_CHECK (f, p, MAX_PRIORITY + 1);
   deref (p, _m_sp - 1, WEAK);
-  if (WHETHER (TOP_MODE, REF_SYMBOL)) {
+  if (IS (TOP_MODE, REF_SYMBOL)) {
     name = A68_TRUE;
     u = PACK (NAME (TOP_MODE));
     moid = SUB (_m_stack[--_m_sp]);
@@ -647,7 +647,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
     u = PACK (moid);
     v = PACK (moid);
   }
-  if (WHETHER_NOT (moid, STRUCT_SYMBOL)) {
+  if (ISNT (moid, STRUCT_SYMBOL)) {
     monitor_error ("invalid selection mode", moid_to_string (moid, MOID_WIDTH, NO_NODE));
   }
   QUIT_ON_ERROR;
@@ -688,7 +688,7 @@ static void call (FILE_T f, NODE_T * p, int depth)
   deref (p, _m_sp - 1, STRONG);
   proc = _m_stack[--_m_sp];
   old_m_sp = _m_sp;
-  if (WHETHER_NOT (proc, PROC_SYMBOL)) {
+  if (ISNT (proc, PROC_SYMBOL)) {
     monitor_error ("invalid procedure mode", moid_to_string (proc, MOID_WIDTH, NO_NODE));
   }
   QUIT_ON_ERROR;
@@ -737,7 +737,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
   (void) depth;
   QUIT_ON_ERROR;
   deref (p, _m_sp - 1, WEAK);
-  if (WHETHER (TOP_MODE, REF_SYMBOL)) {
+  if (IS (TOP_MODE, REF_SYMBOL)) {
     name = A68_TRUE;
     res = NAME (TOP_MODE);
     deref (p, _m_sp - 1, STRONG);
@@ -747,7 +747,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
     moid = _m_stack[--_m_sp];
     res = SUB (moid);
   }
-  if (WHETHER_NOT (moid, ROW_SYMBOL) && WHETHER_NOT (moid, FLEX_SYMBOL)) {
+  if (ISNT (moid, ROW_SYMBOL) && ISNT (moid, FLEX_SYMBOL)) {
     monitor_error ("invalid row mode", moid_to_string (moid, MOID_WIDTH, NO_NODE));
   }
   QUIT_ON_ERROR;
@@ -755,7 +755,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
   POP_REF (p, &z);
   CHECK_MON_REF (p, z, moid);
   GET_DESCRIPTOR (arr, tup, &z);
-  if (WHETHER (moid, FLEX_SYMBOL)) {
+  if (IS (moid, FLEX_SYMBOL)) {
     dim = DIM (SUB (moid));
   } else {
     dim = DIM (moid);
@@ -843,13 +843,13 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         BOOL_T res;
         int op = attr;
         if (TOP_MODE != MODE (HIP)
-            && WHETHER_NOT (TOP_MODE, REF_SYMBOL)) {
+            && ISNT (TOP_MODE, REF_SYMBOL)) {
           monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
         }
         SCAN_CHECK (f, p);
         PARSE_CHECK (f, p, 1);
         if (TOP_MODE != MODE (HIP)
-            && WHETHER_NOT (TOP_MODE, REF_SYMBOL)) {
+            && ISNT (TOP_MODE, REF_SYMBOL)) {
           monitor_error ("identity relation operand must yield a name", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
         }
         QUIT_ON_ERROR;
@@ -941,7 +941,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       monitor_error ("cast expects close-symbol", NO_TEXT);
     }
     SCAN_CHECK (f, p);
-    while (WHETHER (TOP_MODE, REF_SYMBOL) && TOP_MODE != m) {
+    while (IS (TOP_MODE, REF_SYMBOL) && TOP_MODE != m) {
       MOID_T *sub = SUB (TOP_MODE);
       A68_REF z;
       POP_REF (p, &z);
@@ -1129,7 +1129,7 @@ static void assign (FILE_T f, NODE_T * p)
   if (attr == ASSIGN_SYMBOL) {
     MOID_T *m = _m_stack[--_m_sp];
     A68_REF z;
-    if (WHETHER_NOT (m, REF_SYMBOL)) {
+    if (ISNT (m, REF_SYMBOL)) {
       monitor_error ("invalid destination mode", moid_to_string (m, MOID_WIDTH, NO_NODE));
     }
     QUIT_ON_ERROR;
@@ -1138,7 +1138,7 @@ static void assign (FILE_T f, NODE_T * p)
     SCAN_CHECK (f, p);
     assign (f, p);
     QUIT_ON_ERROR;
-    while (WHETHER (TOP_MODE, REF_SYMBOL) && TOP_MODE != SUB (m)) {
+    while (IS (TOP_MODE, REF_SYMBOL) && TOP_MODE != SUB (m)) {
       MOID_T *sub = SUB (TOP_MODE);
       A68_REF y;
       POP_REF (p, &y);
@@ -1434,7 +1434,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
   if (item == NO_BYTE || mode == NO_MOID) {
     return;
   }
-  if (WHETHER (mode, REF_SYMBOL)) {
+  if (IS (mode, REF_SYMBOL)) {
     A68_REF *z = (A68_REF *) item;
     if (IS_NIL (*z)) {
       if (INITIALISED (z)) {
@@ -1468,7 +1468,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
     } else {
       print_item (p, f, item, mode);
     }
-  } else if ((WHETHER (mode, ROW_SYMBOL) || WHETHER (mode, FLEX_SYMBOL)) && mode != MODE (STRING)) {
+  } else if ((IS (mode, ROW_SYMBOL) || IS (mode, FLEX_SYMBOL)) && mode != MODE (STRING)) {
     MOID_T *deflexed = DEFLEX (mode);
     int old_tabs = tabs;
     tabs += 2;
@@ -1506,7 +1506,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
       }
     }
     tabs = old_tabs;
-  } else if (WHETHER (mode, STRUCT_SYMBOL)) {
+  } else if (IS (mode, STRUCT_SYMBOL)) {
     PACK_T *q = PACK (mode);
     tabs++;
     for (; q != NO_PACK; FORWARD (q)) {
@@ -1517,7 +1517,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
       show_item (f, p, elem, MOID (q));
     }
     tabs--;
-  } else if (WHETHER (mode, UNION_SYMBOL)) {
+  } else if (IS (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NO_NODE)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
@@ -1534,7 +1534,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
     BOOL_T init;
     if (check_initialisation (p, item, mode, &init)) {
       if (init) {
-        if (WHETHER (mode, PROC_SYMBOL)) {
+        if (IS (mode, PROC_SYMBOL)) {
           A68_PROCEDURE *z = (A68_PROCEDURE *) item;
           if (z != NO_PROCEDURE && STATUS (z) & STANDENV_PROC_MASK) {
             char *fname = standard_environ_proc_name (*(PROCEDURE (&BODY (z))));
@@ -1873,14 +1873,14 @@ void examine_stack (FILE_T f, ADDR_T a68g_link, char *sym, int *printed)
 \brief set or reset breakpoints
 \param p position in tree
 \param set mask indicating what to set
-\param whether_set to check whether breakpoint is already set
+\param is_set to check whether breakpoint is already set
 \param expr expression associated with breakpoint
 **/
 
-void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * whether_set, char *loc_expr)
+void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * is_set, char *loc_expr)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    change_breakpoints (SUB (p), set, num, whether_set, loc_expr);
+    change_breakpoints (SUB (p), set, num, is_set, loc_expr);
     if (set == BREAKPOINT_MASK) {
       if (LINE_NUMBER (p) == num && (STATUS_TEST (p, INTERRUPTIBLE_MASK)) && num != 0) {
         STATUS_SET (p, BREAKPOINT_MASK);
@@ -1888,7 +1888,7 @@ void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * whether_set
           free (EXPR (INFO (p)));
         }
         EXPR (INFO (p)) = loc_expr;
-        *whether_set = A68_TRUE;
+        *is_set = A68_TRUE;
       }
     } else if (set == BREAKPOINT_TEMPORARY_MASK) {
       if (LINE_NUMBER (p) == num && (STATUS_TEST (p, INTERRUPTIBLE_MASK)) && num != 0) {
@@ -1897,7 +1897,7 @@ void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * whether_set
           free (EXPR (INFO (p)));
         }
         EXPR (INFO (p)) = loc_expr;
-        *whether_set = A68_TRUE;
+        *is_set = A68_TRUE;
       }
     } else if (set == NULL_MASK) {
       if (LINE_NUMBER (p) != num) {
@@ -1997,7 +1997,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
           WRITE (STDOUT_FILENO, moid_to_string (res, MOID_WIDTH, NO_NODE));
           WRITE (STDOUT_FILENO, ")");
           show_item (STDOUT_FILENO, p, STACK_ADDRESS (old_sp), res);
-          cont = (BOOL_T) (WHETHER (res, REF_SYMBOL) && !IS_NIL (*(A68_REF *) STACK_ADDRESS (old_sp)));
+          cont = (BOOL_T) (IS (res, REF_SYMBOL) && !IS_NIL (*(A68_REF *) STACK_ADDRESS (old_sp)));
           if (cont) {
             A68_REF z;
             POP_REF (p, &z);
@@ -2455,7 +2455,7 @@ void single_step (NODE_T * p, unsigned mask)
     return;
   }
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  if (whether_main_thread ()) {
+  if (is_main_thread ()) {
     WRITELN (STDOUT_FILENO, "This is the main thread");
   } else {
     WRITELN (STDOUT_FILENO, "This is not the main thread");
@@ -2549,7 +2549,7 @@ void genie_evaluate (NODE_T * p)
     BOOL_T cont = A68_TRUE;
     while (cont) {
       res = TOP_MODE;
-      cont = (BOOL_T) (WHETHER (res, REF_SYMBOL) && !IS_NIL (*(A68_REF *) STACK_ADDRESS (top_sp)));
+      cont = (BOOL_T) (IS (res, REF_SYMBOL) && !IS_NIL (*(A68_REF *) STACK_ADDRESS (top_sp)));
       if (cont) {
         A68_REF w;
         POP_REF (p, &w);

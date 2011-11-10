@@ -907,7 +907,7 @@ void trunc_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
     SET_MP_ZERO (z, digits);
   } else if (MP_EXPONENT (x) >= (MP_T) digits) {
     errno = EDOM;
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (WHETHER (MOID (p), PROC_SYMBOL) ? SUB_MOID (p) : MOID (p)));
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (IS (MOID (p), PROC_SYMBOL) ? SUB_MOID (p) : MOID (p)));
     exit_genie (p, A68_RUNTIME_ERROR);
   } else {
     int k;
