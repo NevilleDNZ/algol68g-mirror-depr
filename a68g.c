@@ -563,12 +563,6 @@ Accept various silent extensions.
   FILE_SCRIPT_NAME (&program) = (char *) get_heap_space ((size_t) len);
   bufcpy (FILE_SCRIPT_NAME (&program), FILE_GENERIC_NAME (&program), len);
   bufcat (FILE_SCRIPT_NAME (&program), SCRIPT_EXTENSION, len);
-/* Diagnostics file */
-  if (OPTION_TUI (&program)) {
-    FILE_DIAGS_NAME (&program) = A68_DIAGNOSTICS_FILE;
-    FILE_DIAGS_FD (&program) = open (FILE_DIAGS_NAME (&program), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
-    ABEND (FILE_DIAGS_FD (&program) == -1, "cannot open diagnostics file", FILE_DIAGS_NAME (&program));
-  }
 /* Tokeniser */
   FILE_SOURCE_OPENED (&program) = A68_TRUE;
   announce_phase ("initialiser");
@@ -731,7 +725,6 @@ Accept various silent extensions.
     mark_auxilliary (TOP_NODE (&program));
     jumps_from_procs (TOP_NODE (&program));
     warn_for_unused_tags (TOP_NODE (&program));
-    warn_tags_threads (TOP_NODE (&program));
     verbosity ();
   }
 /* Scope checker */
@@ -1008,9 +1001,6 @@ terminal
 */
   genie_curses_end (NO_NODE);
 #endif
-  if (OPTION_TUI (&program) && FILE_DIAGS_FD (&program) != -1) {
-    ASSERT (close (FILE_DIAGS_FD (&program)) == 0);
-  }
   exit (code);
 }
 
@@ -1229,7 +1219,6 @@ void default_options (MODULE_T *p)
   OPTION_TIME_LIMIT (p) = 0;
   OPTION_TRACE (p) = A68_FALSE;
   OPTION_TREE_LISTING (p) = A68_FALSE;
-  OPTION_TUI (p) = A68_FALSE;
   OPTION_UNUSED (p) = A68_FALSE;
   OPTION_VERBOSE (p) = A68_FALSE;
   OPTION_VERSION (p) = A68_FALSE;
@@ -1592,17 +1581,13 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             }
           }
         }
-/* EDIT starts a basic TUI */
+/* EDIT starts a basic editor */
         else if (eq (p, "Edit")) {
           if (cmd_line == A68_FALSE) {
             option_error (start_l, start_c, "command-line-only");
           } else {
             OPTION_EDIT (&program) = A68_TRUE;
           }
-        }
-/* TUI generates diagnostics apt for EDIT */
-        else if (eq (p, "TUI")) {
-          OPTION_TUI (&program) = A68_TRUE;
         }
 /* EXECUTE and PRINT execute their argument as Algol 68 text */
         else if (eq (p, "EXECute") || eq (p, "X") || eq (p, "Print")) {
@@ -5311,63 +5296,6 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
   NEXT (msg) = NO_DIAGNOSTIC;
 }
 
-/*!
-\brief add diagnostic to diagnostics file
-\param line source line
-\param pos where to mark
-\param p node to mark
-\param sev severity
-\param b diagnostic text
-*/
-
-static void tui_diagnostic (LINE_T * line, char *pos, NODE_T *p, int sev, char *b)
-{
-  FILE_T fd = FILE_DIAGS_FD (&program); 
-  int lin, col;
-  char buff[BUFFER_SIZE];
-  char *txt, *severity = get_severity (sev);
-  if (in_monitor) {
-    return;
-  }
-  if (fd == -1) {
-    return;
-  }
-  if (p != NO_NODE) {
-    lin = LINE_NUMBER (p);
-    txt = STRING (LINE (INFO (p)));
-    pos = CHAR_IN_LINE (INFO (p));
-  } else if (line != NO_LINE) {
-    lin = NUMBER (line);
-    txt = STRING (line);
-  } else {
-    lin = 0;
-    txt = NO_TEXT;
-  }
-  if (txt != NO_TEXT && pos != NO_TEXT) {
-    int k = 0;
-    col = 0;
-    while (txt[k] != NULL_CHAR) {
-      if (&(txt[k]) == pos) {
-        col = k;
-        break;
-      }
-      k++;
-    }
-  } else {
-    col = 0;
-  }
-  ASSERT (snprintf(buff, SNPRINTF_SIZE, "%d\n", lin) >= 0);
-  WRITE (fd, buff);
-  ASSERT (snprintf(buff, SNPRINTF_SIZE, "%d\n", col) >= 0);
-  WRITE (fd, buff);
-  if (severity == NO_TEXT) {
-    ASSERT (snprintf(buff, SNPRINTF_SIZE, "%s\n", b) >= 0);
-  } else {
-    ASSERT (snprintf(buff, SNPRINTF_SIZE, "%s: %s\n", severity, b) >= 0);
-  }
-  WRITE (fd, buff);
-}
-
 /*
 Legend for special symbols:
 # skip extra syntactical information
@@ -5596,9 +5524,6 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
   } else {
     ERROR_COUNT (&program)++;
   }
-  if (OPTION_TUI (&program)) {
-    tui_diagnostic (NO_LINE, NO_TEXT, p, sev, b);
-  }
   if (p == NO_NODE) {
     write_diagnostic (sev, b);
   } else {
@@ -5686,9 +5611,6 @@ void diagnostic_line (int sev, LINE_T * line, char *pos, char *loc_str, ...)
     WARNING_COUNT (&program)++;
   } else {
     ERROR_COUNT (&program)++;
-  }
-  if (OPTION_TUI (&program)) {
-    tui_diagnostic (line, pos, NO_NODE, sev, b);
   }
   if (line == NO_LINE) {
     write_diagnostic (sev, b);

@@ -10,6 +10,6 @@ else
 a68g_LDFLAGS =
 endif
 
-pkginclude_HEADERS = a68g.h
+pkginclude_HEADERS = a68g.h a68g-config.h
 man_MANS = a68g.1
 EXTRA_DIST = $(man_MANS) check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68

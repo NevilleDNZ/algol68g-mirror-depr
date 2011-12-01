@@ -9505,26 +9505,6 @@ void warn_for_unused_tags (NODE_T * p)
 }
 
 /*!
-\brief warn if tags are used between threads
-\param p position in tree
-**/
-
-void warn_tags_threads (NODE_T * p)
-{
-  for (; p != NO_NODE; FORWARD (p)) {
-    warn_tags_threads (SUB (p));
-    if (is_one_of (p, IDENTIFIER, OPERATOR, STOP)) {
-      if (TAX (p) != NO_TAG) {
-        int plev_def = PAR_LEVEL (NODE (TAX (p))), plev_app = PAR_LEVEL (p);
-        if (plev_def != 0 && plev_def != plev_app) {
-          diagnostic_node (A68_WARNING, p, WARNING_DEFINED_IN_OTHER_THREAD);
-        }
-      }
-    }
-  }
-}
-
-/*!
 \brief mark jumps and procedured jumps
 \param p position in tree
 **/

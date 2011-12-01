@@ -4050,17 +4050,21 @@ void genie_add_string (NODE_T * p)
   SHIFT (t_3) = LWB (t_3);
   SPAN (t_3) = 1;
 /* add strings */
-  b_1 = ADDRESS (&ARRAY (a_1));
-  b_2 = ADDRESS (&ARRAY (a_2));
   b_3 = ADDRESS (&ARRAY (a_3));
   m = 0;
-  for (k = LWB (t_1); k <= UPB (t_1); k++) {
-    MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, k)], ALIGNED_SIZE_OF (A68_CHAR));
-    m += ALIGNED_SIZE_OF (A68_CHAR);
+  if (ROW_SIZE (t_1) > 0) {
+    b_1 = ADDRESS (&ARRAY (a_1));
+    for (k = LWB (t_1); k <= UPB (t_1); k++) {
+      MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, k)], ALIGNED_SIZE_OF (A68_CHAR));
+      m += ALIGNED_SIZE_OF (A68_CHAR);
+    }
   }
-  for (k = LWB (t_2); k <= UPB (t_2); k++) {
-    MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_2[INDEX_1_DIM (a_2, t_2, k)], ALIGNED_SIZE_OF (A68_CHAR));
-    m += ALIGNED_SIZE_OF (A68_CHAR);
+  if (ROW_SIZE (t_2) > 0) {
+    b_2 = ADDRESS (&ARRAY (a_2));
+    for (k = LWB (t_2); k <= UPB (t_2); k++) {
+      MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_2[INDEX_1_DIM (a_2, t_2, k)], ALIGNED_SIZE_OF (A68_CHAR));
+      m += ALIGNED_SIZE_OF (A68_CHAR);
+    }
   }
   PUSH_REF (p, c);
   UNBLOCK_GC_HANDLE (&c);
@@ -4252,8 +4256,8 @@ static int string_difference (NODE_T * p)
 /* Get difference */
   size = (s_1 > s_2 ? s_1 : s_2);
   diff = 0;
-  b_1 = ADDRESS (&ARRAY (a_1));
-  b_2 = ADDRESS (&ARRAY (a_2));
+  b_1 = (s_1 > 0 ? ADDRESS (&ARRAY (a_1)) : NO_BYTE);
+  b_2 = (s_2 > 0 ? ADDRESS (&ARRAY (a_2)) : NO_BYTE);
   for (k = 0; k < size && diff == 0; k++) {
     int a, b;
     if (s_1 > 0 && k < s_1) {
@@ -8039,7 +8043,7 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   SHIFT (t_3) = LWB (t_3);
   SPAN (t_3) = 1;
 /* add strings */
-  b_1 = ADDRESS (&ARRAY (a_1));
+  b_1 = (ROW_SIZE (t_1) > 0 ? ADDRESS (&ARRAY (a_1)) : NO_BYTE);
   b_3 = ADDRESS (&ARRAY (a_3));
   u = 0;
   for (v = LWB (t_1); v <= UPB (t_1); v++) {
@@ -14089,7 +14093,7 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
       value_error (p, mode, ref_file);
     }
 /* Output the edited string */
-    mood = (unsigned) (DIGIT_NORMAL & INSERTION_NORMAL);
+    mood = (unsigned) (DIGIT_BLANK | INSERTION_NORMAL);
     str = get_transput_buffer (EDIT_BUFFER);
     write_mould (NEXT_SUB (p), ref_file, INTEGRAL_MOULD, &str, &mood);
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
@@ -14116,7 +14120,7 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
       value_error (p, mode, ref_file);
     }
 /* Output the edited string */
-    mood = (unsigned) (DIGIT_NORMAL & INSERTION_NORMAL);
+    mood = (unsigned) (DIGIT_BLANK | INSERTION_NORMAL);
     str = get_transput_buffer (EDIT_BUFFER);
     write_mould (NEXT_SUB (p), ref_file, INTEGRAL_MOULD, &str, &mood);
     stack_pointer = pop_sp;
@@ -16631,7 +16635,8 @@ void genie_new_sound (NODE_T * p)
   SAMPLE_RATE (&w) = (unsigned) (VALUE (&sample_rate));
   BITS_PER_SAMPLE (&w) = (unsigned) (VALUE (&bits_per_sample));
   test_bits_per_sample (p, BITS_PER_SAMPLE (&w));
-  DATA (&w) = heap_generator (p, MODE (SOUND_DATA), A68_SOUND_DATA_SIZE (&w));
+  DATA_SIZE (&w) = A68_SOUND_DATA_SIZE (&w);
+  DATA (&w) = heap_generator (p, MODE (SOUND_DATA), DATA_SIZE (&w));
   STATUS (&w) = INITIALISED_MASK;
   PUSH_OBJECT (p, w, A68_SOUND);
 }
@@ -16645,7 +16650,7 @@ void genie_get_sound (NODE_T * p)
 {
   A68_INT channel, sample;
   A68_SOUND w;
-  int k, n, z, m;
+  int addr, k, n, z, m;
   BYTE_T *d;
   POP_OBJECT (p, &sample, A68_INT);
   POP_OBJECT (p, &channel, A68_INT);
@@ -16663,7 +16668,9 @@ void genie_get_sound (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   n = A68_SOUND_BYTES (&w);
-  d = &(ADDRESS (&(DATA (&w)))[((VALUE (&sample) - 1) * (int) (NUM_CHANNELS (&w)) + (VALUE (&channel) - 1)) * n]);
+  addr = ((VALUE (&sample) - 1) * (int) (NUM_CHANNELS (&w)) + (VALUE (&channel) - 1)) * n;
+  ABEND (addr < 0 || addr >= (int) DATA_SIZE (&w), ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
+  d = &(ADDRESS (&(DATA (&w)))[addr]);
 /* Convert from little-endian, irrespective from the platform we work on */
   for (k = 0, z = 0, m = 0; k < n; k++) {
     z += ((int) (d[k]) * (int) (pow256[k]));
@@ -16680,7 +16687,7 @@ void genie_get_sound (NODE_T * p)
 void genie_set_sound (NODE_T * p)
 {
   A68_INT channel, sample, value;
-  int k, n, z;
+  int addr, k, n, z;
   BYTE_T *d;
   A68_SOUND w;
   POP_OBJECT (p, &value, A68_INT);
@@ -16700,7 +16707,9 @@ void genie_set_sound (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   n = A68_SOUND_BYTES (&w);
-  d = &(ADDRESS (&(DATA (&w)))[((VALUE (&sample) - 1) * (int) (NUM_CHANNELS (&w)) + (VALUE (&channel) - 1)) * n]);
+  addr = ((VALUE (&sample) - 1) * (int) (NUM_CHANNELS (&w)) + (VALUE (&channel) - 1)) * n;
+  ABEND (addr < 0 || addr >= (int) DATA_SIZE (&w), ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
+  d = &(ADDRESS (&(DATA (&w)))[addr]);
 /* Convert to little-endian */
   for (k = 0, z = VALUE (&value); k < n; k++) {
     d[k] = (BYTE_T) (z & 0xff);

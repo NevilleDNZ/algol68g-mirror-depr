@@ -26,8 +26,21 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "a68g.h"
 
-A68_HANDLE nil_handle = { INITIALISED_MASK, NO_BYTE, 0, NO_MOID, NO_HANDLE, NO_HANDLE };
-A68_REF nil_ref = { (STATUS_MASK) (INITIALISED_MASK | NIL_MASK), 0, 0, NO_HANDLE };
+A68_HANDLE nil_handle = { 
+  INITIALISED_MASK, 
+  NO_BYTE, 
+  0, 
+  NO_MOID, 
+  NO_HANDLE, 
+  NO_HANDLE 
+};
+
+A68_REF nil_ref = { 
+(STATUS_MASK) (INITIALISED_MASK | NIL_MASK), 
+  0, 
+  0, 
+  NO_HANDLE 
+};
 
 #define IF_ROW(m)\
   (IS (m, FLEX_SYMBOL) || IS (m, ROW_SYMBOL) || m == MODE (STRING))
@@ -346,12 +359,13 @@ protected and identifiers protect themselves.
     case WIDENING:
       {
         MOID_T *m = MOID (p);
-        if (m != NO_MOID && (IS (m, REF_SYMBOL) 
-            || IS (DEFLEX (m), ROW_SYMBOL))) {
-          TAG_T *z = add_tag (TABLE (p), ANONYMOUS, p, m, BLOCK_GC_REF);
-          BLOCK_REF (GINFO (p)) = z;
-          HEAP (z) = HEAP_SYMBOL;
-          USE (z) = A68_TRUE;
+        if (m != NO_MOID && (IS (m, REF_SYMBOL) || IS (DEFLEX (m), ROW_SYMBOL))) {
+          if (m != MODE (ROW_SIMPLOUT) && m != MODE (ROW_SIMPLIN)) {
+            TAG_T *z = add_tag (TABLE (p), ANONYMOUS, p, m, BLOCK_GC_REF);
+            BLOCK_REF (GINFO (p)) = z;
+            HEAP (z) = HEAP_SYMBOL;
+            USE (z) = A68_TRUE;
+          }
         }
         break;
       }
@@ -448,7 +462,7 @@ void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
         } else { /* look up */
 /* 
 Next line provokes a warning that cannot be suppressed, 
-not even by this POSIX workarond. Tant pis.
+not even by this POSIX workaround. Tant pis.
 */
           * (void **) &(UNIT (&GPROP (p))) = dlsym (compile_lib, COMPILE_NAME (GINFO (p)));
           ABEND (UNIT (&GPROP (p)) == NULL, "compiler cannot resolve", dlerror ());
@@ -3019,7 +3033,7 @@ static void genie_jump (NODE_T * p)
 /* Beam us up, Scotty! */
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
   {
-    int curlev = PAR_LEVEL (p), tarlev = PAR_LEVEL (NODE (TAX (label)));
+    int curlev = running_par_level, tarlev = PAR_LEVEL (NODE (TAX (label)));
     if (curlev == tarlev) {
 /* A jump within the same thread */
       jump_stat = FRAME_JUMP_STAT (target_frame_pointer);
@@ -4521,10 +4535,12 @@ A68_REF empty_row (NODE_T * p, MOID_T * u)
   A68_REF dsc;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
+  MOID_T *v;
   int dim, k;
   if (IS (u, FLEX_SYMBOL)) {
     u = SUB (u);
   }
+  v = SUB (u);
   dim = DIM (u);
   dsc = heap_generator (p, u, ALIGNED_SIZE_OF (A68_ARRAY) + dim * ALIGNED_SIZE_OF (A68_TUPLE));
   GET_DESCRIPTOR (arr, tup, &dsc);
@@ -4533,9 +4549,14 @@ A68_REF empty_row (NODE_T * p, MOID_T * u)
   ELEM_SIZE (arr) = moid_size (SLICE (u));
   SLICE_OFFSET (arr) = 0;
   FIELD_OFFSET (arr) = 0;
+  if (IS (v, ROW_SYMBOL) || IS (v, FLEX_SYMBOL)) {
+    /* [] AMODE or FLEX [] AMODE */
+    ARRAY (arr) = heap_generator (p, v, ALIGNED_SIZE_OF (A68_REF));
+    * DEREF (A68_REF,&ARRAY (arr)) = empty_row (p, v);
+  } else {
+    ARRAY (arr) = nil_ref;
+  }
   STATUS (&ARRAY (arr)) = (STATUS_MASK) (INITIALISED_MASK | IN_HEAP_MASK);
-  OFFSET (&ARRAY (arr)) = 0;
-  REF_HANDLE (&(ARRAY (arr))) = &nil_handle;
   for (k = 0; k < dim; k++) {
     LWB (&tup[k]) = 1;
     UPB (&tup[k]) = 0;
@@ -6579,6 +6600,7 @@ Don't copy POSIX_THREAD_THREADS_MAX since it may be ULONG_MAX.
 #endif
 
 pthread_t main_thread_id = 0;
+int running_par_level = 0;
 static A68_THREAD_CONTEXT context[THREAD_MAX];
 static ADDR_T fp0, sp0;
 static BOOL_T abend_all_threads = A68_FALSE, exit_from_threads = A68_FALSE;
@@ -6961,8 +6983,10 @@ static PROP_T genie_parallel (NODE_T * p)
   int j;
   ADDR_T stack_s = 0, frame_s = 0;
   BYTE_T *system_stack_offset_s = NO_BYTE;
+  int save_par_level = running_par_level;
+  running_par_level = PAR_LEVEL (p);
   if (is_main_thread ()) {
-/* Here we are not in the main thread, spawn first thread and await its completion */
+/* Spawn first thread and await its completion */
     pthread_attr_t new_at;
     size_t ss;
     BYTE_T stack_offset;
@@ -6995,23 +7019,28 @@ static PROP_T genie_parallel (NODE_T * p)
     RESET_ERRNO;
     if (pthread_attr_init (&new_at) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     if (pthread_attr_setstacksize (&new_at, (size_t) stack_size) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     if (pthread_attr_getstacksize (&new_at, &ss) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     ABEND ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NO_TEXT);
     if (pthread_create (&parent_thread_id, &new_at, start_genie_parallel, NULL) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
+      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     if (errno != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     PARENT (u) = main_thread_id;
@@ -7021,14 +7050,16 @@ static PROP_T genie_parallel (NODE_T * p)
     UNLOCK_THREAD;
     if (pthread_join (parent_thread_id, NULL) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
 /* The first spawned thread has completed, now clean up */
     for (j = 0; j < context_index; j++) {
       if (ACTIVE (&context[j]) && ID (&context[j]) != main_thread_id && ID (&context[j]) != parent_thread_id) {
-/* If threads are being zapped it is possible that some are still active at this point! */
+/* If threads are zapped it is possible that some are active at this point! */
         if (pthread_join (ID (&context[j]), NULL) != 0) {
           diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
+          running_par_level = save_par_level;
           exit_genie (p, A68_RUNTIME_ERROR);
         }
       }
@@ -7042,6 +7073,7 @@ static PROP_T genie_parallel (NODE_T * p)
       }
     }
 /* Now every thread should have ended */
+    running_par_level = save_par_level;
     context_index = 0;
     stack_pointer = stack_s;
     frame_pointer = frame_s;
@@ -7060,7 +7092,7 @@ static PROP_T genie_parallel (NODE_T * p)
       longjmp (*(jump_buffer), 1);
     }
   } else {
-/* Here we are not in the main thread, we spawn parallel units and await their completion */
+/* Not in the main thread, spawn parallel units and await completion */
     BOOL_T units_active;
     pthread_t t = pthread_self ();
 /* Spawn parallel units */
@@ -7072,6 +7104,7 @@ static PROP_T genie_parallel (NODE_T * p)
         try_change_thread (p);
       }
     } while (units_active);
+    running_par_level = save_par_level;
   }
   return (GPROP (p));
 }

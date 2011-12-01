@@ -112,8 +112,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 /* Constants */
 /*************/
 
-#define A68_CHECK_FILE ".a68g.edit.check"
-#define A68_DIAGNOSTICS_FILE ".a68g.edit.diag"
 #define A68_FALSE ((BOOL_T) 0)
 #define A68_HISTORY_FILE ".a68g.edit.hist"
 #define A68_MAX_BITS (UINT_MAX)
@@ -801,7 +799,7 @@ struct OPTIONS_T
   BOOL_T backtrace, brackets, check_only, clock, cross_reference, debug, compile, keep, local, moid_listing, 
    object_listing, optimise, portcheck, pragmat_sema, reductions, regression_test, run, rerun,
   run_script, source_listing, standard_prelude_listing, statistics_listing, 
-  strict, stropping, trace, tree_listing, unused, verbose, version, edit, tui,
+  strict, stropping, trace, tree_listing, unused, verbose, version, edit,
   no_warnings, quiet; 
   int time_limit, opt_level;
   char *target; 
@@ -1059,7 +1057,7 @@ struct A68_UNION
 struct A68_SOUND
 {
   STATUS_MASK status;
-  unsigned num_channels, sample_rate, bits_per_sample, num_samples;
+  unsigned num_channels, sample_rate, bits_per_sample, num_samples, data_size;
   A68_REF data;
 };
 
@@ -1276,6 +1274,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define CURS(p) ((p)->curs)
 #define CUR_PTR(p) ((p)->cur_ptr)
 #define DATA(p) ((p)->data)
+#define DATA_SIZE(p) ((p)->data_size)
 #define DATE(p) ((p)->date)
 #define DEF(p) ((p)->def)
 #define DEFLEXED(p) ((p)->deflexed_mode)
@@ -1479,7 +1478,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define OPTION_TIME_LIMIT(p) (OPTIONS (p).time_limit)
 #define OPTION_TRACE(p) (OPTIONS (p).trace)
 #define OPTION_TREE_LISTING(p) (OPTIONS (p).tree_listing)
-#define OPTION_TUI(p) (OPTIONS (p).tui)
 #define OPTION_UNUSED(p) (OPTIONS (p).unused)
 #define OPTION_VERBOSE(p) (OPTIONS (p).verbose)
 #define OPTION_VERSION(p) (OPTIONS (p).version)
@@ -2572,6 +2570,7 @@ extern BOOL_T a68g_curses_mode;
 
 #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
 extern pthread_t main_thread_id;
+extern int running_par_level;
 #endif
 
 #if defined HAVE_WIN32
@@ -2853,7 +2852,6 @@ extern void unchar_scanner (NODE_T *, A68_FILE *, char);
 extern void value_error (NODE_T *, MOID_T *, A68_REF);
 extern void victal_checker (NODE_T *);
 extern void warn_for_unused_tags (NODE_T *);
-extern void warn_tags_threads (NODE_T *);
 extern void where_in_source (FILE_T, NODE_T *);
 extern void widen_denotation (NODE_T *);
 extern void write_insertion (NODE_T *, A68_REF, unsigned);
@@ -4046,7 +4044,6 @@ extern GPROC genie_pq_user;
 #define ERROR_VACUUM "vacuum cannot have row elements (use a U M generator)"
 #define INFO_APPROPRIATE_DECLARER "appropriate declarer"
 #define INFO_MISSING_KEYWORDS "missing or unmatched keyword"
-#define WARNING_DEFINED_IN_OTHER_THREAD "definition of S is in the private stack of another thread"
 #define WARNING_EXTENSION "@ is an extension"
 #define WARNING_HIDES "declaration hides a declaration of S with larger reach"
 #define WARNING_HIDES_PRELUDE "declaration hides prelude declaration of M S"

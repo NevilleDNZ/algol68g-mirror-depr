@@ -1,3 +1,12 @@
+11.2011 - 2.3.5
+Fixed string handling issue.
+Fixed configuration-issue (explicit export-dynamic).
+Fixed parallel-clause nesting counting issue.
+Fixed zero suppression bug in printing using BITS pattern.
+Fixed minor problem in garbage collector.
+Fixed omission in genie_push_undefined.
+Added colour to the editor.
+
 09.11.2011 - 2.3.4
 Fixed AC_PROG_CC expansion (known autoconf problem).
 

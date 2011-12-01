@@ -41,100 +41,6 @@ take you to diagnostic positions in the code.
 The editor supports prefix commands and text folding, like the
 XEDIT/ISPF editors. Especially the folding is a nice feature.
 
-Your screen looks like this:
-
-+-----------------------------------------------------+
-|filename date #1     n/n    col=n alt=n    ins       |<--Id/Message Line
-|====>                                                |<--Command Line
-|===== * * * Top of Data * * *                        |
-|    1                                                |
-|    2                                                |
-|    3                                                |<--Current Line
-|      |...+....1....+....2... ... ...6....+....7....||<--Scale
-|    4                                                |
-|    5                                                |
-|    6                                                |
-|===== * * * End of Data * * *                        |
-+-----------------------------------------------------+
- |   | |                                             |
- +---+ +---------------------------------------------+
-   |                         |
- Prefix Area              File Area
-
-
-+-- Command overview ---
-| target  A target as command, sets the current line
-| ADD [n] Add n lines
-| AGAIN   Repeat last search
-| CASE    Switch case of character under cursor
-| CDELETE Delete to end of line
-| COPY    Copy up to 1st target to after 2nd target, [n] copies
-| DELETE  Delete up to [target]
-| INDENT  Indent text to a column
-| FILE    Save file [to target filename] and quit
-| FOLD    [[TO] target] Folds lines either up TO target, or matching target
-| MESSAGE visualise a message from RUN or SYNTAX
-| MOVE    target target [n] Up to 1st target to after 2nd target, n copies
-| PAGE    [[+-]n|*] Forward or backward paging
-| PFn cmd Binds function key n to cmd
-| QQUIT   Categorically quit 
-| READ    Insert filename after current line
-| RESET   Reset prefixes
-| RUN     Run with a68g
-| SET     CMD TOP|BOTTOM|*|n Place the command line
-| SET     IDF OFF|TOP|BOTTOM|*|n Place the file identification line
-| SET     SCALE OFF|TOP|BOTTOM|*|n Place the scale
-| SHELL   target cmd Filter lines using cmd
-| S       Substitute command /find/replace/ [C][target [n|* [m|*]]]
-| SYNTAX  Alias for a68g --pedantic --norun
-| TOGGLE  Toggle between current line and command line (F1, F12 do the same)
-| UNDO    Undo until last command that made a back-up copy
-| WRITE   [target filename]
-| 
-| =         AGAIN, repeat last saved command
-| ?         restore last saved command in the command buffer
-| &cmd      execute cmd and leave it in the command buffer
-|
-| Targets (XEDIT syntax):
-| :n          Absolute line number n
-| [+]n        n lines down
-| -n          n lines up
-| .name       line name as entered in prefix area
-| [+]*        top of file
-| -*          end of file
-| [+]/REGEXP/ line matching REGEXP, search forward
-| -/REGEXP/   line matching REGEXP, search backward
-|
-| All targets can have [+k|-k] relative offset, f.i. /IF/+1
-|
-| The editor uses POSIX ERE regular expression syntax.
-| A prefix ~ to a regexp matches lines not matching regexp.
-|
-| [~]/regexp/             regexp must [not] match
-| [~]/regexp/&[~]/regexp/ both lines must [not] match
-| [~]/regexp/|[~]/regexp/ one or both must [not] match
-| [~]/regexp/^[~]/regexp/ at most one regexp must [not] match
-|
-| In substitution you can specify matched subexpression with \1 .. \9
-| syntax; furthermore you can specify \a .. \j or \A .. \J which will cast
-| the subexpression to either lower - or upper case respectively.
-|
-| Prefix commands
-| /    Make line the current line
-| A[n] Add n new lines below this line
-| C[n] Copy lines; use P (after) or Q (before) for destination
-| CC   Copy block of lines marker; use P (after) or Q (before) for destination
-| D[n] Delete lines
-| DD   Delete block of lines marker
-| I    Indent line relative to column or to absolute column [<|>][n]
-| II   Indent block of lines
-| J    Join with next line
-| P[n] Add n copies after this line
-| Q[n] Add n copies before this line
-| U    Unselect line from editing
-| X[n] Move lines; use P (after) or Q (before) for destination
-| XX   Move block of lines marker; use P (after) or Q (before) for destination
-+---
 */
 
 #if defined HAVE_CONFIG_H
@@ -153,6 +59,7 @@ Your screen looks like this:
 #define BOTSTR "* * * End of Data * * *"
 #define DATE_STRING "%d-%m-%y %H:%M:%S"
 #define EMPTY_STRING(s) ((s) == NO_TEXT || (s)[0] == NULL_CHAR)
+#define EDIT_HELP_FILE ".a68g.edit.help"
 #define FD_READ 0
 #define FD_WRITE 1
 #define HISTORY 64
@@ -182,12 +89,23 @@ Your screen looks like this:
 #define true 1
 #endif
 
+#if defined HAVE_LINUX
+#define USE_MOUSE
+#endif
+
 #define REDRAW(s) {EDIT_TEST (clearok (s, true) != ERR);}
 
 static char pf_bind[MAX_PF][BUFFER_SIZE];
 static char history[HISTORY][BUFFER_SIZE];
 static int histcurr = -1, histnext = -1, histprev = -1;
 static int loop_cnt = 0;
+
+enum {PAIR_ARROW = 1, PAIR_CMDLINE, PAIR_CONTROL, PAIR_CURLINE, PAIR_FILEAREA, PAIR_IDLINE,
+      PAIR_MATCH, PAIR_MSGLINE, PAIR_PREFIX, PAIR_SCALE, PAIR_TOFEOF};
+
+static int pair_arrow = 0, pair_cmdline = 0, pair_control = 0, pair_curline = 0, 
+           pair_filearea = 0, pair_idline = 0, pair_match = 0, pair_msgline = 0, 
+           pair_prefix = 0, pair_scale = 0, pair_tofeof = 0;
 
 #define KEY_CTRL(n) TO_UCHAR ((int) n - 0x40)
 
@@ -463,6 +381,7 @@ KEY key_tab[] = {
 /* VT100 numeric keypad */
 
 struct KEY dec_key[] = {
+#if ! defined HAVE_WIN32
   {KEY_UP, KEY_UP, "\033OA"},
   {KEY_DOWN, KEY_DOWN, "\033OB"},
   {KEY_RIGHT, KEY_RIGHT, "\033OC"},
@@ -495,6 +414,7 @@ struct KEY dec_key[] = {
   {KEY_B2, KEY_B2, "\033[E"},
   {KEY_END, KEY_END, "\033[4~"},
   {KEY_HOME, KEY_HOME, "\033[1~"},
+#endif
   {-1, -1, NO_TEXT}
 };
 
@@ -573,6 +493,7 @@ struct DATASET_T {
 
 /* Forward routines */
 
+static void edit_draw (DATASET_T *);
 static void edit_do_cmd (DATASET_T *);
 static void edit_do_prefix (DATASET_T *);
 static void edit_loop (DATASET_T *);
@@ -582,10 +503,203 @@ static void set_current (DATASET_T *, char *, char *);
 static void backward_line (EDLIN_T **);
 static void forward_line (EDLIN_T **);
 static int int_arg (DATASET_T *, char *, char *, char **, int);
+static int parse_colour (DATASET_T *, char *, char *, int);
 
-/*
+/*!
+\brief initialise curses
+\param dd current dataset
+**/
+
+static void edit_init_colours (DATASET_T *dd)
+{
+  if (has_colors ()) {
+    (void) start_color ();
+    pair_arrow = parse_colour (dd, "edit", "cyan high", PAIR_ARROW);
+    pair_cmdline = parse_colour (dd, "edit", "cyan nohigh", PAIR_CMDLINE);
+    pair_control = parse_colour (dd, "edit", "magenta high", PAIR_CONTROL);
+    pair_curline = parse_colour (dd, "edit", "cyan high", PAIR_CURLINE);
+    pair_filearea = parse_colour (dd, "edit", "cyan nohigh", PAIR_FILEAREA);
+    pair_idline = parse_colour (dd, "edit", "white nohigh", PAIR_IDLINE);
+    pair_match = parse_colour (dd, "edit", "red high", PAIR_MATCH);
+    pair_msgline = parse_colour (dd, "edit", "red high", PAIR_MSGLINE);
+    pair_prefix = parse_colour (dd, "edit", "cyan nohigh", PAIR_PREFIX);
+    pair_scale = parse_colour (dd, "edit", "blue high", PAIR_SCALE);
+    pair_tofeof = parse_colour (dd, "edit", "white", PAIR_TOFEOF);
+  }
+}
+
+/*!
+\brief store help
+\param fn filename to write
+**/
+
+void write_help_file (char *fn)
+{
+  FILE *f = fopen (fn, "w");
+  int pfk;
+  if (f == NO_FILE) {
+    return;
+  }
+  ASSERT (fprintf (f, "PF KEY BINDINGS\n") >= 0);
+  ASSERT (fprintf (f, "-- --- --------\n\n") >= 0);
+    for (pfk = 0; pfk < MAX_PF; pfk++) {
+      if ((int) strlen (pf_bind[pfk]) > 0) {
+        ASSERT (fprintf (f, "PF%02d=%s\n", pfk + 1, pf_bind[pfk]) >= 0);
+      }
+    }
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "SCREEN LAYOUT\n") >= 0);
+  ASSERT (fprintf (f, "------ ------\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "+--------------------------------------------------+\n") >= 0);
+  ASSERT (fprintf (f, "|filename date #1     n/n    col=n alt=n    ins    |<--Id/Message Line\n") >= 0);
+  ASSERT (fprintf (f, "|====>                                             |<--Command Line\n") >= 0);
+  ASSERT (fprintf (f, "|===== * * * Top of Data * * *                     |\n") >= 0);
+  ASSERT (fprintf (f, "|    1                                             |\n") >= 0);
+  ASSERT (fprintf (f, "|    2                                             |\n") >= 0);
+  ASSERT (fprintf (f, "|    3                                             |<--Current Line\n") >= 0);
+  ASSERT (fprintf (f, "|      |...+....1....+....2... ... ...6....+....7..|<--Scale\n") >= 0);
+  ASSERT (fprintf (f, "|    4                                             |\n") >= 0);
+  ASSERT (fprintf (f, "|    5                                             |\n") >= 0);
+  ASSERT (fprintf (f, "|    6                                             |\n") >= 0);
+  ASSERT (fprintf (f, "|===== * * * End of Data * * *                     |\n") >= 0);
+  ASSERT (fprintf (f, "+--------------------------------------------------+\n") >= 0);
+  ASSERT (fprintf (f, " |   | |                                          |\n") >= 0);
+  ASSERT (fprintf (f, " +---+ +------------------------------------------+\n") >= 0);
+  ASSERT (fprintf (f, "   |                         |\n") >= 0);
+  ASSERT (fprintf (f, " Prefix Area              File Area\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "COMMAND OVERVIEW\n") >= 0);
+  ASSERT (fprintf (f, "------- --------\n\n") >= 0);
+  ASSERT (fprintf (f, "target  A target as command, sets the current line\n") >= 0);
+  ASSERT (fprintf (f, "ADD [n] Add n lines\n") >= 0);
+  ASSERT (fprintf (f, "AGAIN   Repeat last search\n") >= 0);
+  ASSERT (fprintf (f, "CASE    Switch case of character under cursor\n") >= 0);
+  ASSERT (fprintf (f, "CDELETE Delete to end of line\n") >= 0);
+  ASSERT (fprintf (f, "COPY    Copy up to 1st target to after 2nd target, [n] copies\n") >= 0);
+  ASSERT (fprintf (f, "DELETE  Delete up to [target]\n") >= 0);
+  ASSERT (fprintf (f, "INDENT  Indent text to a column\n") >= 0);
+  ASSERT (fprintf (f, "FILE    Save file [to target filename] and quit\n") >= 0);
+  ASSERT (fprintf (f, "FOLD    [[TO] target] Folds lines either up TO target,\n") >= 0);
+  ASSERT (fprintf (f, "        or those matching target\n") >= 0);
+  ASSERT (fprintf (f, "MOVE    target target [n] Up to 1st target to after 2nd target, n copies\n") >= 0);
+  ASSERT (fprintf (f, "PAGE    [[+-]n|*] Forward or backward paging\n") >= 0);
+  ASSERT (fprintf (f, "PFn cmd Binds function key n to cmd\n") >= 0);
+  ASSERT (fprintf (f, "QQUIT   Categorically quit\n") >= 0);
+  ASSERT (fprintf (f, "READ    Insert filename after current line\n") >= 0);
+  ASSERT (fprintf (f, "RESET   Reset prefixes\n") >= 0);
+  ASSERT (fprintf (f, "SET     CMD TOP|BOTTOM|*|n Place the command line\n") >= 0);
+  ASSERT (fprintf (f, "SET     IDF OFF|TOP|BOTTOM|*|n Place the file identification line\n") >= 0);
+  ASSERT (fprintf (f, "SET     SCALE OFF|TOP|BOTTOM|*|n Place the scale\n") >= 0);
+  ASSERT (fprintf (f, "SET     COLOUR|COLOR ARROW|CMDLINE|CONTROL|CURLINE|FILEAREA|IDLINE|\n") >= 0);
+  ASSERT (fprintf (f, "                     MATCH|MSGLINE|PREFIX|SCALE|TOFEOF colour\n") >= 0);
+  ASSERT (fprintf (f, "SHELL   target cmd Filter lines using cmd\n") >= 0);
+  ASSERT (fprintf (f, "S       Substitute command /find/replace/ [C][target [n|* [m|*]]]\n") >= 0);
+  ASSERT (fprintf (f, "TOGGLE  Toggle between current line and command line (as do F1, F12)\n") >= 0);
+  ASSERT (fprintf (f, "UNDO    Undo until last command that made a back-up copy\n") >= 0);
+  ASSERT (fprintf (f, "WRITE   [target filename]\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "=         AGAIN, repeat last saved command\n") >= 0);
+  ASSERT (fprintf (f, "?         restore last saved command in the command buffer\n") >= 0);
+  ASSERT (fprintf (f, "&cmd      execute cmd and leave it in the command buffer\n") >= 0);
+  ASSERT (fprintf (f, "\nTARGETS\n") >= 0);
+  ASSERT (fprintf (f, "-------\n\n") >= 0);
+  ASSERT (fprintf (f, ":n          Absolute line number n\n") >= 0);
+  ASSERT (fprintf (f, "[+]n        n lines down\n") >= 0);
+  ASSERT (fprintf (f, "-n          n lines up\n") >= 0);
+  ASSERT (fprintf (f, ".name       line name as entered in prefix area\n") >= 0);
+  ASSERT (fprintf (f, "[+]*        top of file\n") >= 0);
+  ASSERT (fprintf (f, "-*          end of file\n") >= 0);
+  ASSERT (fprintf (f, "[+]/REGEXP/ line matching REGEXP, search forward\n") >= 0);
+  ASSERT (fprintf (f, "-/REGEXP/   line matching REGEXP, search backward\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "All targets can have [+k|-k] relative offset, f.i. /IF/+1\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "The editor uses POSIX ERE regular expression syntax.\n") >= 0);
+  ASSERT (fprintf (f, "A prefix ~ to a regexp matches lines not matching regexp.\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "[~]/regexp/             regexp must [not] match\n") >= 0);
+  ASSERT (fprintf (f, "[~]/regexp/&[~]/regexp/ both lines must [not] match\n") >= 0);
+  ASSERT (fprintf (f, "[~]/regexp/|[~]/regexp/ one or both must [not] match\n") >= 0);
+  ASSERT (fprintf (f, "[~]/regexp/^[~]/regexp/ at most one regexp must [not] match\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "In substitution you can specify matched subexpression with \\1 .. \\9\n") >= 0);
+  ASSERT (fprintf (f, "syntax; furthermore you can specify \\a .. \\j or \\A .. \\J which will\n") >= 0);
+  ASSERT (fprintf (f, "cast the subexpression to either lower - or upper case respectively.\n") >= 0);
+  ASSERT (fprintf (f, "\n") >= 0);
+  ASSERT (fprintf (f, "PREFIX COMMANDS\n") >= 0);
+  ASSERT (fprintf (f, "------ --------\n\n") >= 0);
+  ASSERT (fprintf (f, "/    Make line the current line\n") >= 0);
+  ASSERT (fprintf (f, "A[n] Add n new lines below this line\n") >= 0);
+  ASSERT (fprintf (f, "C[n] Copy lines; use P (after) or Q (before) for destination\n") >= 0);
+  ASSERT (fprintf (f, "CC   Copy block of lines marker;\n") >= 0);
+  ASSERT (fprintf (f, "     use P (after) or Q (before) for destination\n") >= 0);
+  ASSERT (fprintf (f, "D[n] Delete lines\n") >= 0);
+  ASSERT (fprintf (f, "DD   Delete block of lines marker\n") >= 0);
+  ASSERT (fprintf (f, "I    Indent line relative to column or to absolute column [<|>][n]\n") >= 0);
+  ASSERT (fprintf (f, "II   Indent block of lines\n") >= 0);
+  ASSERT (fprintf (f, "J    Join with next line\n") >= 0);
+  ASSERT (fprintf (f, "P[n] Add n copies after this line\n") >= 0);
+  ASSERT (fprintf (f, "Q[n] Add n copies before this line\n") >= 0);
+  ASSERT (fprintf (f, "U    Unselect line from editing\n") >= 0);
+  ASSERT (fprintf (f, "X[n] Move lines; use P (after) or Q (before) for destination\n") >= 0);
+  ASSERT (fprintf (f, "XX   Move block of lines marker;\n") >= 0);
+  ASSERT (fprintf (f, "     use P (after) or Q (before) for destination\n") >= 0);
+  ASSERT (fprintf (f, "\nCOLOURS IN SET COMMAND") >= 0);
+  ASSERT (fprintf (f, "\n------- -- --- -------\n\n") >= 0);
+  ASSERT (fprintf (f, "RED|GREEN|YELLOW|BLUE|MAGENTA|CYAN|WHITE [HIGH|NOHIGH|DIM]\n") >= 0);
+  ASSERT (fclose (f) == 0);
+}
+
+/*!
+\brief set colour on screen
+\param pair same
+**/
+
+static void set_colour (int pair)
+{
+  if (has_colors ()) {
+    wattrset (stdscr, pair);
+  }
+}
+
+/*! brief colour to string
+\param f file to write to
+\param name field name
+\param clr coded attribute
+\param pair pair number
+**/
+
+static void write_colour (FILE *f, char *name, int clr, int pair)
+{
+  short fg, bg;
+  fprintf (f, "%s", name);
+  (void) pair_content ((short) pair, &fg, &bg);
+  switch (fg) {
+    case COLOR_BLACK: fprintf (f, " black"); break;
+    case COLOR_RED: fprintf (f, " red"); break;
+    case COLOR_GREEN: fprintf (f, " green"); break;
+    case COLOR_YELLOW: fprintf (f, " yellow"); break;
+    case COLOR_BLUE: fprintf (f, " blue"); break;
+    case COLOR_MAGENTA: fprintf (f, " magenta"); break;
+    case COLOR_CYAN: fprintf (f, " cyan"); break;
+    case COLOR_WHITE: fprintf (f, " white"); break;
+    default: fprintf (f, "%d %d %d", pair, (int) fg, (int) bg); break;
+  }
+  if (clr & (int) A_NORMAL) {
+    fprintf (f, " nohigh");
+  } else if (clr & (int) A_BOLD) {
+    fprintf (f, " high");
+  } else if (clr & (int) A_DIM) {
+    fprintf (f, " low");
+  }
+  fprintf (f, "\n");
+}
+
+/*!
 \brief set pointers to track history
-*/
+\param ref
+**/
 
 static void edit_set_history (int ref)
 {
@@ -602,10 +716,10 @@ static void edit_set_history (int ref)
   }
 }
 
-/*
+/*!
 \brief store command in a cyclic buffer
 \param cmd command to store
-*/
+**/
 
 static void edit_add_history (char *cmd)
 {
@@ -617,35 +731,82 @@ static void edit_add_history (char *cmd)
   histprev = histnext = histcurr;
 }
 
-/*
+/*!
 \brief restore history
-*/
+**/
 
-void read_history (void)
+void read_history (DATASET_T *dd)
 {
   FILE *f = fopen (A68_HISTORY_FILE, "r");
   if (f != NO_FILE) {
     int k;
+    char *cp;
+    RESET_ERRNO;
+#define RESTORE_CLR(n, p)\
+  (void) fgets (input_line, BUFFER_SIZE, f);\
+  if (errno != 0) {\
+    ASSERT (fclose (f) == 0);\
+    return;\
+  }\
+  if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {\
+    input_line[strlen (input_line) - 1] = NULL_CHAR;\
+  }\
+  cp = strchr (input_line, BLANK_CHAR);\
+  if (cp == NO_TEXT) {\
+    return;\
+  }\
+  (n) = parse_colour (dd, "edit", &cp[1], (p));
+#
+    RESTORE_CLR (pair_arrow, PAIR_ARROW);
+    RESTORE_CLR (pair_cmdline, PAIR_CMDLINE);
+    RESTORE_CLR (pair_control, PAIR_CONTROL);
+    RESTORE_CLR (pair_curline, PAIR_CURLINE);
+    RESTORE_CLR (pair_filearea, PAIR_FILEAREA);
+    RESTORE_CLR (pair_idline, PAIR_IDLINE);
+    RESTORE_CLR (pair_match, PAIR_MATCH);
+    RESTORE_CLR (pair_msgline, PAIR_MSGLINE);
+    RESTORE_CLR (pair_prefix, PAIR_PREFIX);
+    RESTORE_CLR (pair_scale, PAIR_SCALE);
+    RESTORE_CLR (pair_tofeof, PAIR_TOFEOF);
+#undef RESTORE_CLR
+    if (errno != 0) {
+      ASSERT (fclose (f) == 0);
+      return;
+    }
     for (k = 0; k < MAX_PF; k++) {
-      if (fgets (input_line, BUFFER_SIZE, f) != NO_TEXT) {
-        if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
-          input_line[strlen (input_line) - 1] = NULL_CHAR;
-        }
-        if ((int) strlen (input_line) > 0) {
-          bufcpy (pf_bind[k], input_line, BUFFER_SIZE);
-        }
+      (void) fgets (input_line, BUFFER_SIZE, f);
+      if (errno != 0) {
+        ASSERT (fclose (f) == 0);
+        return;
       }
+      if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
+        input_line[strlen (input_line) - 1] = NULL_CHAR;
+      }
+      cp = strchr (input_line, '=');
+      if (cp != NO_TEXT && (int) strlen (&cp[1]) > 0) {
+        bufcpy (pf_bind[k], &cp[1], BUFFER_SIZE);
+      } else {
+        bufcpy (pf_bind[k], "", BUFFER_SIZE);
+      }
+    }
+    if (errno != 0) {
+      ASSERT (fclose (f) == 0);
+      return;
     }
     histcurr = histnext = histprev = -1;
     while (!feof (f)) {
-      if (fgets (input_line, BUFFER_SIZE, f) != NO_TEXT) {
-        if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
-          input_line[strlen (input_line) - 1] = NULL_CHAR;
-        }
-        edit_add_history (input_line);
+      (void) fgets (input_line, BUFFER_SIZE, f);
+      if (errno != 0) {
+        ASSERT (fclose (f) == 0);
+        return;
       }
+      if (input_line[strlen (input_line) - 1] == NEWLINE_CHAR) {
+        input_line[strlen (input_line) - 1] = NULL_CHAR;
+      }
+      edit_add_history (input_line);
     }
     ASSERT (fclose (f) == 0);
+    (void) remove (A68_HISTORY_FILE);
   } else {
 /* Laissez-passer */
     histcurr = histnext = histprev = -1;
@@ -653,19 +814,30 @@ void read_history (void)
   }
 }
 
-/*
+/*!
 \brief store history
-*/
+**/
 
 void write_history (void)
 {
   FILE *f = fopen (A68_HISTORY_FILE, "w");
   if (f != NO_FILE) {
     int k;
+    write_colour (f, "arrow", pair_arrow, PAIR_ARROW);
+    write_colour (f, "cmdline", pair_cmdline, PAIR_CMDLINE);
+    write_colour (f, "control", pair_control, PAIR_CONTROL);
+    write_colour (f, "curline", pair_curline, PAIR_CURLINE);
+    write_colour (f, "filearea", pair_filearea, PAIR_FILEAREA);
+    write_colour (f, "idline", pair_idline, PAIR_IDLINE);
+    write_colour (f, "match", pair_match, PAIR_MATCH);
+    write_colour (f, "msgline", pair_msgline, PAIR_MSGLINE);
+    write_colour (f, "prefix", pair_prefix, PAIR_PREFIX);
+    write_colour (f, "scale", pair_scale, PAIR_SCALE);
+    write_colour (f, "tofeof", pair_tofeof, PAIR_TOFEOF);
     for (k = 0; k < MAX_PF; k++) {
-      fprintf (f, "%s\n", pf_bind[k]);
+      fprintf (f, "pf%02d=%s\n", k + 1, pf_bind[k]);
     }
-    for (k = 0; k <= histcurr; k ++) {
+    for (k = 0; k < histcurr; k ++) {
       fprintf (f, "%s\n", history[k]);
     }
     ASSERT (fclose (f) == 0);
@@ -675,7 +847,7 @@ void write_history (void)
   }
 }
 
-/*
+/*!
 \brief whether there is space on the heap
 \param s bytes to allocate
 \return same
@@ -688,7 +860,7 @@ static BOOL_T heap_full (int as)
   return (heap_up || heap_down);
 }
 
-/*
+/*!
 \brief allocate heap space for editor
 \param dd dataset that allocates
 \param s bytes to allocate
@@ -715,7 +887,7 @@ static BYTE_T *edit_get_heap (DATASET_T *dd, size_t s)
   return (z);
 }
 
-/*
+/*!
 \brief add char to line buffer
 \param lbuf line buffer
 \param lsiz size of line buffer
@@ -742,7 +914,7 @@ static void add_linbuf (DATASET_T *dd, char ch, int pos)
 
 /* REGULAR EXPRESSION SUPPORT */
 
-/*
+/*!
 \brief initialise regular expression
 \param re regexp to initialise
 **/
@@ -755,7 +927,7 @@ static void init_regexp (REGEXP_T *re)
   NUM_MATCH (re) = 0;
 }
 
-/*
+/*!
 \brief reset regular expression
 \param re regexp to initialise
 **/
@@ -771,7 +943,7 @@ static void reset_regexp (REGEXP_T *re)
   NUM_MATCH (re) = 0;
 }
 
-/*
+/*!
 \brief compile regular expression
 \param dd current dataset
 \param re regexp to compile
@@ -804,7 +976,7 @@ static int compile_regexp (DATASET_T *dd, REGEXP_T *re, char *cmd)
   return (0);
 }
 
-/*
+/*!
 \brief match line to regular expression
 \param dd current dataset
 \param fragment whether matching the tail of a string after an earlier match
@@ -1218,7 +1390,7 @@ static BOOL_T reserved_row (DATASET_T *dd, int row)
           row == IDF_ROW (scr));
 }
 
-/*
+/*!
 \brief count reserved lines on screen
 \param dd current dataset
 \return same
@@ -1235,7 +1407,7 @@ static int count_reserved (DATASET_T *dd)
   return (n);
 }
 
-/*
+/*!
 \brief lines on screen for a line - account for tabs
 \param dd current dataset
 \param lin line to count
@@ -1269,7 +1441,7 @@ static int lines_on_scr (DATASET_T *dd, EDLIN_T * lin)
   return (row);
 }
 
-/*
+/*!
 \brief initialise curses
 \param dd current dataset
 **/
@@ -1280,24 +1452,32 @@ static void edit_init_curses (DATASET_T *dd)
   CURSOR_T *curs = &(CURS (scr));
   (void) initscr ();
   (void) raw ();
+#if defined HAVE_WIN32
+  (void) keypad (stdscr, TRUE);
+  (void) noecho ();
+  (void) nonl ();
+  (void) meta (stdscr, TRUE);
+#else
   EDIT_TEST (keypad (stdscr, TRUE) != ERR);
   EDIT_TEST (noecho () != ERR);
   EDIT_TEST (nonl () != ERR);
   EDIT_TEST (meta (stdscr, TRUE) != ERR);
-#if ! defined HAVE_WIN32
+#endif /* defined HAVE_WIN32 */
+#if defined USE_MOUSE
   (void) mousemask ((mmask_t) ALL_MOUSE_EVENTS, NULL);
-#endif /* ! defined HAVE_WIN32 */
+#endif /* defined USE_MOUSE */
   EDIT_TEST (curs_set (1) != ERR);
   SCALE_ROW (scr) = LINES / 2;
   CMD_ROW (scr) = 1;
   IDF_ROW (scr) = 0;
-  ROW (curs) = COL (curs) = -1;
-  SYNC (curs) = A68_FALSE;
+  CURSOR_TO_COMMAND (dd, curs);
   REDRAW (stdscr);
-  EDIT_TEST (wrefresh (stdscr) != ERR);
+  M_MATCH (dd) = NO_EDLIN;
+  M_SO (dd) = -1;
+  M_EO (dd) = -1;
 }
 
-/*
+/*!
 \brief read a buffer from file
 \param fd file to read from
 \param buffer buffer to store line
@@ -1312,7 +1492,7 @@ int get_buffer (FILE_T fd, char *buffer)
   return (bytes);
 }
 
-/*
+/*!
 \brief generate a new line
 \param dd current dataset
 \return new line
@@ -1334,7 +1514,7 @@ EDLIN_T *new_line (DATASET_T *dd)
   return (newl);
 }
 
-/*
+/*!
 \brief mark line as altered
 \param dd current dataset
 \return new line
@@ -1350,7 +1530,7 @@ static void alt_line (DATASET_T *dd, EDLIN_T *z)
   M_SO (dd) = M_EO (dd) = -1;
 }
 
-/*
+/*!
 \brief forward line, folded or not
 \param z line to forward
 **/
@@ -1365,7 +1545,7 @@ static void forward_line (EDLIN_T **z)
   } while (*z != NO_EDLIN && ! (SELECT (*z) || NUMBER (*z) == 0));
 }
 
-/*
+/*!
 \brief backward line, folded or not
 \param z line to "backward"
 **/
@@ -1380,7 +1560,7 @@ static void backward_line (EDLIN_T **z)
   } while (*z != NO_EDLIN && ! (SELECT (*z) || NUMBER (*z) == 0));
 }
 
-/*
+/*!
 \brief align current line, cannot be TOF or EOF
 \param dd current dataset
 **/
@@ -1404,7 +1584,7 @@ static void align_current (DATASET_T *dd)
   }
 }
 
-/*
+/*!
 \brief generate a new string for a line
 \param dd current dataset
 \param l line to add string to
@@ -1439,7 +1619,7 @@ static void new_edit_string (DATASET_T *dd, EDLIN_T *l, char *txt, EDLIN_T *eat)
   }
 }
 
-/*
+/*!
 \brief set prefix to line
 \param l line to set
 **/
@@ -1449,7 +1629,7 @@ static void set_prefix (EDLIN_T *l)
   bufcpy (PRECMD (l), BLANK, (int) (strlen (BLANK) + 1));
 }
 
-/*
+/*!
 \brief reset prefixes to original state
 \param dd current dataset
 **/
@@ -1468,7 +1648,7 @@ static void edit_reset (DATASET_T *dd)
   SIZE (dd) = k;
 }
 
-/*
+/*!
 \brief delete to end of line
 \param dd current dataset
 **/
@@ -1483,7 +1663,7 @@ static void cdelete (DATASET_T *dd)
   }
 }
 
-/*
+/*!
 \brief split line at cursor position
 \param dd current dataset
 \param cmd command that calls this routine
@@ -1503,6 +1683,7 @@ static void split_line (DATASET_T *dd, char *cmd)
   ALTS (dd)++;
   SIZE (dd)++;
 /* Insert a new line */
+  REDRAW (stdscr);
   newl = new_line (dd);
   if (newl == NO_EDLIN) {
     return;
@@ -1533,7 +1714,7 @@ static void split_line (DATASET_T *dd, char *cmd)
   }
 }
 
-/*
+/*!
 \brief join line with next one
 \param dd current dataset
 \param cmd command that calls this
@@ -1550,6 +1731,7 @@ static void join_line (DATASET_T *dd, char *cmd)
     ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot join line", cmd) >= 0);
     return;
   }
+  REDRAW (stdscr);
   BL_START (dd) = BL_END (dd) = NO_EDLIN;
   prv = PREVIOUS (lin);
   ALTS (dd)++;
@@ -1607,40 +1789,7 @@ static void join_line (DATASET_T *dd, char *cmd)
   SYNC (curs) = A68_TRUE;
 }
 
-/*
-\brief read a string from file
-\param dd current dataset
-\param cmd command that calls this routine
-**/
-
-static void edit_read_string (DATASET_T *dd, FILE_T fd)
-{
-  int bytes, posl;
-  char ch;
-/* Set up for reading */
-  (LINBUF (dd))[0] = NULL_CHAR;
-  if (fd == -1) {
-    return;
-  }
-  posl = 0;
-  bytes = io_read (fd, &ch, 1);
-  while (A68_TRUE) {
-    if (bytes != 1) {
-      return;
-    } else if (ch == NEWLINE_CHAR) {
-      return;
-    } else {
-      add_linbuf (dd, ch, posl);
-      if (LINBUF (dd) == NO_TEXT) {
-        return;
-      }
-      posl++;
-    }
-    bytes = io_read (fd, &ch, 1);
-  }
-}
-
-/*
+/*!
 \brief read a file into a dataset
 \param dd current dataset
 \param cmd command that calls this routine
@@ -1653,7 +1802,7 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
   DISPLAY_T *scr = &(DISPLAY (dd));
   CURSOR_T *curs = &(CURS (scr));
   FILE_T fd;
-  int bytes, posl;
+  int total = 0, bytes, posl;
   char ch;
   EDLIN_T *curr = CURR (dd);
 /* Open the file */
@@ -1666,14 +1815,16 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
     return;
   }
   CHECK_ERRNO (cmd);
-/* Set up for reading */
+/* Reading ... */
   posl = 0;
-  bytes = io_read (fd, &ch, 1);
+  total = 0;
   while (A68_TRUE) {
-    if (bytes != 1) {
+    bytes = io_read (fd, &ch, 1);
+    if (bytes != 1 && total == 0) {
       goto end;
     }
-    if (ch == NEWLINE_CHAR) {
+    total ++;
+    if (bytes != 1 || ch == NEWLINE_CHAR) {
 /* Link line */
       LINE (curs) = curr;
       INDEX (curs) = (int) strlen (TEXT (curr));
@@ -1684,6 +1835,9 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
         FORWARD (eat);
       } else {
         new_edit_string (dd, curr, LINBUF (dd), curr);
+      }
+      if (bytes != 1) {
+        goto end;
       }
       if (TEXT (curr) == NO_TEXT) {
         ASSERT (close (fd) == 0);
@@ -1702,7 +1856,6 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
       }
       posl++;
     }
-    bytes = io_read (fd, &ch, 1);
   }
   end:
   ASSERT (close (fd) == 0);
@@ -1711,7 +1864,7 @@ static void edit_read (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *eat)
   align_current (dd);
 }
 
-/*
+/*!
 \brief first read of a file
 \param dd current dataset
 \param cmd command that calls this routine
@@ -1722,7 +1875,7 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
   DISPLAY_T *scr = &(DISPLAY (dd));
   CURSOR_T *curs = &(CURS (scr));
   FILE_T fd;
-  EDLIN_T *curr;
+  EDLIN_T *curr = NO_EDLIN, *eof_dd = NO_EDLIN;
   struct stat statbuf;
 /* Initialisations */
   CMD (scr)[0] = NULL_CHAR;
@@ -1758,6 +1911,7 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
   PREVIOUS (curr) = TOF (dd);
   NEXT (TOF (dd)) = curr;
   CURR (dd) = TOF (dd);
+  eof_dd = curr;
 /* Open the file */
   RESET_ERRNO;
   if ((int) strlen (NAME (dd)) > 0) {
@@ -1773,6 +1927,16 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
     SIZE (dd) = 0;
     PERMS (dd) = A68_PROTECTION;
     NEW_FILE (dd) = A68_TRUE;
+/* Link one empty line just as a read of an empty file would do
+    nl = new_line (dd);
+    if (nl != NO_EDLIN) {
+      NEXT (nl) = eof_dd;
+      PREVIOUS (eof_dd) = nl;
+      NEXT (TOF (dd)) = nl;
+      PREVIOUS (nl) = TOF (dd);
+      CURR (dd) = nl;
+    }
+*/
     ASSERT (time (&rt) != (time_t) (-1));
     ASSERT ((tm = localtime (&rt)) != NULL);
     ASSERT ((strftime (datestr, BUFFER_SIZE, DATE_STRING, tm)) > 0);
@@ -1797,7 +1961,7 @@ static void edit_read_initial (DATASET_T * dd, char *cmd)
   CURR (dd) = NEXT (TOF (dd));
 }
 
-/*
+/*!
 \brief write dataset to file
 \param dd current dataset
 \param cmd command that calls this routine
@@ -1831,7 +1995,7 @@ static void edit_write (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *u, EDLI
       if ((int) strlen (TEXT (curr)) > 0) {
         WRITE (fd, TEXT (curr));
       }
-      if (NEXT (curr) != NO_EDLIN) {
+      if (NEXT (curr) != NO_EDLIN && NOT_EOF (NEXT (curr))) {
         WRITE (fd, "\n");
       }
     }
@@ -1841,7 +2005,7 @@ static void edit_write (DATASET_T * dd, char *cmd, char *fname, EDLIN_T *u, EDLI
   CHECK_ERRNO (cmd);
 }
 
-/*
+/*!
 \brief write a file for recovery
 \param dd current dataset
 \param cmd command that calls this routine
@@ -1856,7 +2020,7 @@ static void edit_write_undo_file (DATASET_T * dd, char *cmd)
   UNDO_LINE (dd) = NUMBER (CURR (dd));
 }
 
-/*
+/*!
 \brief read a file for recovery
 \param dd current dataset
 \param cmd command that calls this routine
@@ -1932,7 +2096,7 @@ static void edit_read_undo_file (DATASET_T *dd, char *cmd)
   }
 }
 
-/*
+/*!
 \brief garbage collector for the editor
 \param dd current dataset
 \param cmd current command under execution
@@ -1953,7 +2117,7 @@ static void edit_garbage_collect (DATASET_T *dd, char *cmd)
   return;
 }
 
-/*
+/*!
 \brief put character on screen
 \param row current row on screen
 \param col current col on screen
@@ -2030,7 +2194,7 @@ static void edit_putch (int row, int col, char ch, DATASET_T *dd, EDLIN_T *dd_li
   EDIT_TEST (wmove (stdscr, row, col) != ERR);
 }
 
-/*
+/*!
 \brief draw the screen
 \param dd current dataset
 **/
@@ -2043,6 +2207,9 @@ static void edit_draw (DATASET_T *dd)
   int row, k, virt_scal, lin_abo, lin_dif;
   char *prompt = PROMPT;
 /* Initialisations */
+  if (SIZE (dd) == 0) {
+    CURR (dd) = TOF (dd);
+  }
   if (LINE (curs) != NO_EDLIN) {
     LAST (curs) = LINE (curs);
   }
@@ -2083,6 +2250,7 @@ static void edit_draw (DATASET_T *dd)
 /* COMMAND ROW - ====> Forward */
     if (row == CMD_ROW (scr)) {
       int col = 0, ind = 0;
+      set_colour (pair_arrow);
       for (ind = 0; ind < MARGIN; ind++) {
         edit_putch (row, col, prompt[ind], dd, NO_EDLIN, 0);
         col++;
@@ -2093,6 +2261,7 @@ static void edit_draw (DATASET_T *dd)
         COL (curs) = col;
       }
 /* Show command */
+      set_colour (pair_cmdline);
       for (ind = 0; ind < TEXT_WIDTH && IS_PRINT (CMD (scr)[ind]); ind++) {
         edit_putch (row, col, CMD (scr)[ind], dd, NO_EDLIN, ind);
         col++;
@@ -2116,6 +2285,7 @@ static void edit_draw (DATASET_T *dd)
       if (run == NO_EDLIN) {
 /* Draw blank line to balance the screen */
         int col;
+        set_colour (pair_filearea);
         for (col = 0; col < COLS; col++) {
           edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, col);
         }
@@ -2123,6 +2293,7 @@ static void edit_draw (DATASET_T *dd)
       } else if (lin_dif > 0) {
 /* Draw blank line to balance the screen */
         int col;
+        set_colour (pair_filearea);
         for (col = 0; col < COLS; col++) {
           edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, col);
         }
@@ -2142,7 +2313,7 @@ static void edit_draw (DATASET_T *dd)
         if (ROW (curs) == row) {
           lin = run;
         }
-        if (pn == 0) {
+        if (NUMBER (run) == 0) {
           bufcpy (prefix, PREFIX, (strlen (PREFIX) + 1));
         } else {
 /* Next is a cheap print int */
@@ -2155,6 +2326,7 @@ static void edit_draw (DATASET_T *dd)
             /* prefix[pk] = BLANK_CHAR; */
           }
         }
+        set_colour (pair_prefix);
         for (ind = 0; ind < MARGIN; ind++) {
           char chc = PRECMD (run)[ind], chp = prefix[ind];
           if (chc == BLANK_CHAR) {
@@ -2164,6 +2336,8 @@ static void edit_draw (DATASET_T *dd)
           }
           col++;
         }
+        set_colour (NUMBER (run) == 0 ? pair_tofeof :
+                    (run == CURR (dd) ? pair_curline : pair_filearea));
 /* Draw text */
         ind = 0;
         cont = A68_TRUE;
@@ -2211,21 +2385,25 @@ static void edit_draw (DATASET_T *dd)
               }
               connum[0] = '+';
               col = 0;
+              set_colour (pair_prefix);
               for (k = 0; k < MARGIN; k++) {
                 edit_putch (row, col, connum[k], dd, run, k);
                 col++;
               }
+              set_colour (NUMBER (run) == 0 ? pair_tofeof :
+                          (run == CURR (dd) ? pair_curline : pair_filearea));
             }
 /* Put the character */
             if (!IS_PRINT (ch)) {
               char nch = (char) TO_UCHAR ((int) 0x40 + (int) ch);
-              (void) wattron (stdscr, A_REVERSE);
+              set_colour (pair_control);              
               if (IS_PRINT (nch)) {
                 edit_putch (row, col, nch, dd, run, ind); col++;
               } else {
                 edit_putch (row, col, '*', dd, run, ind); col++;
               }
-              (void) wattroff (stdscr, A_REVERSE);
+              set_colour (NUMBER (run) == 0 ? pair_tofeof :
+                          (run == CURR (dd) ? pair_curline : pair_filearea));
             } else if (IS_TOF (run) || IS_EOF (run)) {
               edit_putch (row, col, ch, dd, run, ind); col++;
             } else if (run == CURR (dd)) {
@@ -2235,10 +2413,11 @@ static void edit_draw (DATASET_T *dd)
                   COL (curs) = col;
                 }
                 if (ind > M_SO (dd) && ind < M_EO (dd)) {
-                  (void) wattron (stdscr, A_REVERSE);
+                  set_colour (pair_match);              
                   edit_putch (row, col, ch, dd, run, ind); col++;
-                  (void) wattroff (stdscr, A_REVERSE);
                 } else {
+                    set_colour (NUMBER (run) == 0 ? pair_tofeof :
+                                (run == CURR (dd) ? pair_curline : pair_filearea));
                   edit_putch (row, col, ch, dd, run, ind); col++;
                 }
               } else {
@@ -2265,6 +2444,7 @@ static void edit_draw (DATASET_T *dd)
     if (row == SCALE_ROW (scr)) {
 /* SCALE ROW - ----+----1----+----2 */
       int col = 0, ind = 0;
+      set_colour (pair_scale);
       for (ind = 0; ind < MARGIN - 1; ind++) {
         edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, 0);
         col++;
@@ -2287,43 +2467,26 @@ static void edit_draw (DATASET_T *dd)
       row++;
     } else if (row == IDF_ROW (scr)) {
 /* IDF ROW - Identification, unless there is important stuff to show */
-      if (strcmp (DL0 (scr), "help") == 0) {
-        int col = 0, ind = 0, pfk, space = (COLS - MARGIN - 4 * 8) / 8;
-        char pft[BUFFER_SIZE];
-        if (space < 4) {
-          space = 4; /* Tant pis */
-        }
-        for (ind = 0; ind < MARGIN - 1; ind++) {
-          edit_putch (row, col, '-', dd, NO_EDLIN, 0);
-          col++;
-        }
-        edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
-        col++;
-        for (pfk = 0; pfk < 8; pfk++) {
-          ASSERT (snprintf (pft, SNPRINTF_SIZE, "f%1d=%-*s ", pfk + 1, space, pf_bind[pfk]) >= 0);
-          for (k = 0; k < (int) strlen (pft); col++, k++) {
-            edit_putch (row, col, pft[k], dd, NO_EDLIN, k - MARGIN);
-          }
-        }
-        for (ind = col; ind < COLS; col++, ind++) {
-          edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
-        }
-        row++;
-      } else {
         int col = 0, ind = 0;
         if (strlen (DL0 (scr)) == 0) {
 /* Write file identification line */ 
-          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "\"%s\" %s #%d", 
-            NAME (dd), DATE (dd), NUM (dd)) >= 0);
+          set_colour (pair_idline);
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "\"%s\" #%d", 
+            NAME (dd), NUM (dd)) >= 0);
+          for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
+            edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
+            col++;
+          }
+          ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " size=%-6d", SIZE (dd)) >= 0);
           for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
             col++;
           }
           if ((IN_TEXT (curs) || IN_PREFIX (curs)) && lin != NO_EDLIN && NUMBER (lin) > 0) {
-            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " %6d/%-6d", 
-              NUMBER (lin) % 1000000, SIZE (dd)) >= 0);
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, " line=%-6d",
+              NUMBER (lin) % 1000000) >= 0);
           } else {
-            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "              ") >= 0);
+            ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "            ") >= 0);
           }
           for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
@@ -2354,20 +2517,22 @@ static void edit_draw (DATASET_T *dd)
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
             col++;
           }
+          for (ind = col; ind < COLS; col++, ind++) {
+            edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
+          }
+          row++;
         } else {
 /* Write message in stead of identification */ 
-          (void) wattron (stdscr, A_REVERSE);
+          set_colour (pair_msgline);
           for (ind = 0; ind < COLS && IS_PRINT (DL0 (scr)[ind]); ind++) {
             edit_putch (row, col, DL0 (scr)[ind], dd, NO_EDLIN, 0);
             col++;
           }
-          (void) wattroff (stdscr, A_REVERSE);
+          for (ind = col; ind < COLS; col++, ind++) {
+            edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
+          }
+          row++;
         }
-        for (ind = col; ind < COLS; col++, ind++) {
-          edit_putch (row, col, BLANK_CHAR, dd, NO_EDLIN, ind);
-        }
-        row++;
-      }
     } else {
       row++;
     }
@@ -2379,7 +2544,7 @@ static void edit_draw (DATASET_T *dd)
 
 /* Routines to edit various parts of the screen */
 
-/*
+/*!
 \brief edit prefix
 \param dd current dataset
 \param ch typed character
@@ -2415,7 +2580,7 @@ BACKSPACE erases the character left of the cursor.
   }
 }
 
-/*
+/*!
 \brief edit command
 \param dd current dataset
 \param ch typed character
@@ -2466,7 +2631,7 @@ BACKSPACE erases the character to the left of the cursor.
   }
 }
 
-/*
+/*!
 \brief edit text
 \param dd current dataset
 \param ch typed character
@@ -2565,7 +2730,7 @@ BACKSPACE erases the character to the left of the cursor.
 \brief whether x matches c; case insensitive
 \param string string to test
 \param string to match, caps in c are mandatory
-\param rest pointer to string after the match
+\param args pointer to string after the match
 \return whether match
 **/
 
@@ -2611,6 +2776,57 @@ BOOL_T match_cmd (char *x, char *c, char **args)
   }
   return ((BOOL_T) match);
 #undef TRM
+}
+
+
+/*!
+\brief parse a colour, for instance "GREEN HIGH"
+\param cmd command for errors
+\param x string to parse
+\param pair identifier
+\return colour as curses attribute or -1 on error
+**/
+
+static int parse_colour (DATASET_T *dd, char *cmd, char * x, int pair)
+{
+  DISPLAY_T *scr = &(DISPLAY (dd));
+  int att = A_NORMAL;
+  char *rest = NO_TEXT, *end = NO_TEXT;
+  if (match_cmd (x, "Red", &rest)) {
+    (void) init_pair ((short) pair, COLOR_RED, COLOR_BLACK);
+  } else if (match_cmd (x, "Green", &rest)) {
+    (void) init_pair ((short) pair, COLOR_GREEN, COLOR_BLACK);
+  } else if (match_cmd (x, "Yellow", &rest)) {
+    (void) init_pair ((short) pair, COLOR_YELLOW, COLOR_BLACK);
+  } else if (match_cmd (x, "Blue", &rest)) {
+    (void) init_pair ((short) pair, COLOR_BLUE, COLOR_BLACK);
+  } else if (match_cmd (x, "Magenta", &rest)) {
+    (void) init_pair ((short) pair, COLOR_MAGENTA, COLOR_BLACK);
+  } else if (match_cmd (x, "Cyan", &rest)) {
+    (void) init_pair ((short) pair, COLOR_CYAN, COLOR_BLACK);
+  } else if (match_cmd (x, "White", &rest)) {
+    (void) init_pair ((short) pair, COLOR_WHITE, COLOR_BLACK);
+  } else {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: invalid colour name %s", cmd, x) >= 0);
+    return (-1);
+  }
+  if (rest == NO_TEXT || (int) strlen (rest) == 0) {
+    att = A_NORMAL;
+  } else if (match_cmd (rest, "High", &end)) {
+    att = A_BOLD;
+  } else if (match_cmd (rest, "Nohigh", &end)) {
+    att = A_NORMAL;
+  } else if (match_cmd (rest, "Dim", &end)) {
+    att = A_DIM;
+  } else {
+    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: invalid colour attribute %s", cmd, rest) >= 0);
+    return (-1);
+  }
+  if (!EMPTY_STRING (end)) {
+    TRAILING (end);
+    return (-1);
+  }
+  return (COLOR_PAIR (pair) | att);
 }
 
 /*!
@@ -2921,7 +3137,7 @@ static int substitute (DATASET_T *dd, EDLIN_T *z, int rep, int start, BOOL_T *co
   return (subs);
 }
 
-/*
+/*!
 \brief dispatch lines to shell command and insert command output
 \param dd current dataset
 \param cmd edit cmd that calls this routine
@@ -2964,7 +3180,7 @@ static void edit_filter (DATASET_T *dd, char *cmd, char *argv, EDLIN_T *u)
   return;
 }
 
-/*
+/*!
 \brief move or copy lines (move is copy + delete)
 \param dd current dataset
 \param cmd command that calls this
@@ -3099,7 +3315,7 @@ static void move_copy (DATASET_T *dd, char *cmd, char *args, BOOL_T cmd_move)
   return;
 }
 
-/*
+/*!
 \brief indent lines to a column
 \param dd current dataset
 \param cmd command that calls this
@@ -3233,7 +3449,7 @@ static void indent (DATASET_T *dd, char *cmd, char *args)
   return;
 }
 
-/*
+/*!
 \brief set current line
 \param dd current dataset
 \param cmd command that calls this
@@ -3258,7 +3474,7 @@ static void set_current (DATASET_T *dd, char *cmd, char *target)
   CURSOR_TO_COMMAND (dd, curs);
 }
 
-/*
+/*!
 \brief set current line and store target as command
 \param dd current dataset
 \param cmd command that calls this
@@ -3284,7 +3500,7 @@ static void set_current_store (DATASET_T *dd, char *cmd, char *target)
   CURSOR_TO_COMMAND (dd, curs);
 }
 
-/*
+/*!
 \brief give full command name
 \param cmd command that calls this
 \return same
@@ -3302,8 +3518,6 @@ static char *full_cmd (char *cmd)
     return ("case");
   } else if (match_cmd (cmd, "CDelete", NO_VAR)) {
     return ("cdelete");
-  } else if (match_cmd (cmd, "RUN", NO_VAR)) {
-    return ("run");
   } else if (match_cmd (cmd, "COpy", NO_VAR)) {
     return ("copy");
   } else if (match_cmd (cmd, "DELete", NO_VAR)) {
@@ -3314,8 +3528,8 @@ static char *full_cmd (char *cmd)
     return ("file");
   } else if (match_cmd (cmd, "FOld", NO_VAR)) {
     return ("fold");
-  } else if (match_cmd (cmd, "MEssage", NO_VAR)) {
-    return ("message");
+  } else if (match_cmd (cmd, "Input", NO_VAR)) {
+    return ("input");
   } else if (match_cmd (cmd, "MOve", NO_VAR)) {
     return ("move");
   } else if (match_cmd (cmd, "Page", NO_VAR)) {
@@ -3336,8 +3550,6 @@ static char *full_cmd (char *cmd)
     return ("shell");
   } else if (match_cmd (cmd, "Help", NO_VAR)) {
     return ("help");
-  } else if (match_cmd (cmd, "SYntax", NO_VAR)) {
-    return ("syntax");
   } else if (match_cmd (cmd, "S", NO_VAR)) {
     return ("substitute");
   } else if (match_cmd (cmd, "S", NO_VAR)) {
@@ -3357,7 +3569,7 @@ static char *full_cmd (char *cmd)
   }
 }
 
-/*
+/*!
 \brief place reserved line
 \param dd current dataset
 \param line pointer to line
@@ -3406,7 +3618,7 @@ static void edit_place (DATASET_T *dd, int *line, char *fcmd, char *args)
   }
 }
 
-/*
+/*!
 \brief execute set command
 \param dd current dataset
 \param fcmd full name of SET command
@@ -3419,7 +3631,11 @@ static void edit_set_cmd (DATASET_T *dd, char *fcmd, char *cmd)
   CURSOR_T *curs = &(CURS (scr));
   char *args = NO_TEXT, *rest = NO_TEXT;
   char gcmd[SNPRINTF_SIZE];
-  ASSERT (snprintf (gcmd, SNPRINTF_SIZE, "%s %s", fcmd, cmd) >= 0);
+  if (cmd == NO_TEXT) {
+    ASSERT (snprintf (gcmd, SNPRINTF_SIZE, "%s", fcmd) >= 0);
+  } else {
+    ASSERT (snprintf (gcmd, SNPRINTF_SIZE, "%s %s", fcmd, cmd) >= 0);
+  }
   edit_add_history (CMD (scr));
   if (match_cmd (cmd, "SCALE", &args)) {
 /* SCALE OFF|TOP|BOTTOM|*|n: set scale row */
@@ -3463,12 +3679,33 @@ static void edit_set_cmd (DATASET_T *dd, char *fcmd, char *cmd)
     bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
-  } else {
-    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined command \"%s\"", gcmd) >= 0);
+  } else if (match_cmd (cmd, "COLOUR", &args) || match_cmd (cmd, "COLOR", &args)) {
+    int clr;
+#define SET_COLOUR(name, colour, pair) {\
+    if (match_cmd (args, (name), &rest)) {\
+      clr = parse_colour (dd, cmd, rest, pair);\
+      if (clr == -1) {\
+        return;\
+      } else {\
+        colour = clr;\
+        return;\
+    }}}
+    SET_COLOUR ("Arrow", pair_arrow, PAIR_ARROW);
+    SET_COLOUR ("CMdline", pair_cmdline, PAIR_CMDLINE);
+    SET_COLOUR ("COntrol", pair_control, PAIR_CONTROL);
+    SET_COLOUR ("CUrline", pair_curline, PAIR_CURLINE);
+    SET_COLOUR ("Filearea", pair_filearea, PAIR_FILEAREA);
+    SET_COLOUR ("Idline", pair_idline, PAIR_IDLINE);
+    SET_COLOUR ("MAtch", pair_match, PAIR_MATCH);
+    SET_COLOUR ("MSgline", pair_msgline, PAIR_MSGLINE);
+    SET_COLOUR ("Prefix", pair_prefix, PAIR_PREFIX);
+    SET_COLOUR ("Scale", pair_scale, PAIR_SCALE);
+    SET_COLOUR ("Tofeof", pair_tofeof, PAIR_TOFEOF);
   }
+  ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: undefined command \"%s\"", gcmd) >= 0);
 }
 
-/*
+/*!
 \brief execute editor command
 \param dd current dataset
 **/
@@ -3590,6 +3827,12 @@ static void edit_do_cmd (DATASET_T *dd)
     bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
     return;
+  } else if (match_cmd (cmd, "Input", &args)) {
+    NO_ARGS (fcmd, args);
+    CURSOR_TO_CURRENT (dd, curs);
+    bufcpy (CMD (scr), "ADD 1", BUFFER_SIZE);
+    edit_do_cmd (dd);
+    return;
   } else if (match_cmd (cmd, "TOGgle", &args)) {
 /* TOGGLE: switch between prefix/text and command line */
     NO_ARGS (fcmd, args);
@@ -3600,12 +3843,6 @@ static void edit_do_cmd (DATASET_T *dd)
     } else {
       CURSOR_TO_COMMAND (dd, curs);
     }
-    bufcpy (CMD (scr), "", BUFFER_SIZE);
-    return;
-  } else if (match_cmd (cmd, "Help", &args)) {
-/* HELP: Give some rudimentary help */
-    NO_ARGS (fcmd, args);
-    ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "help") > 0);
     bufcpy (CMD (scr), "", BUFFER_SIZE);
     return;
   } else if (match_cmd (cmd, "CDelete", &args)) {
@@ -3707,6 +3944,12 @@ static void edit_do_cmd (DATASET_T *dd)
         bufcpy (CMD (scr), "", BUFFER_SIZE);
       }
     }
+    return;
+/* SET command */
+  } else if (match_cmd (cmd, "SET", &args)) {
+    edit_set_cmd (dd, fcmd, args);
+    bufcpy (CMD (scr), "", BUFFER_SIZE);
+    CURSOR_TO_COMMAND (dd, curs);
     return;
   } else if (match_cmd (cmd, "Add", &args)) {
 /* ADD [repetition]: add lines */
@@ -3869,103 +4112,6 @@ static void edit_do_cmd (DATASET_T *dd)
       CURSOR_TO_COMMAND (dd, curs);
       return;
     }
-/* RUN: run a program with a68g */
-  } else if (match_cmd (cmd, "RUN", &args)) {
-    char ccmd[BUFFER_SIZE];
-    int ret;
-    EDLIN_T *cursav = CURR (dd);
-    edit_add_history (cmd); 
-    if (MSGS (dd) != -1) {
-      ASSERT (close (MSGS (dd)) == 0);
-      MSGS (dd) = -1;
-    }
-    EDIT_TEST (remove (A68_DIAGNOSTICS_FILE) != -1);
-    if (EMPTY_STRING (args)) {
-      ASSERT (snprintf (ccmd, SNPRINTF_SIZE, "a68g --tui %s", A68_CHECK_FILE) >= 0);
-    } else {
-      ASSERT (snprintf (ccmd, SNPRINTF_SIZE, "a68g %s --tui %s", args, A68_CHECK_FILE) >= 0);
-    }
-    CURR (dd) = NEXT (TOF (dd));
-    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "write * %s", A68_CHECK_FILE) >= 0);
-    edit_do_cmd (dd);
-    EDIT_TEST (endwin () != ERR);
-    ret = system (ccmd);
-    edit_init_curses (dd);
-    CURR (dd) = cursav;
-    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "message") >= 0);
-    edit_do_cmd (dd);
-    bufcpy (CMD (scr), "", BUFFER_SIZE);
-    CURSOR_TO_COMMAND (dd, curs);
-    return;
-/* SYNTAX: check syntax of an a68 program using a68g */  
-  } else if (match_cmd (cmd, "SYntax", &args)) {
-    edit_add_history (cmd); 
-    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "run --pedantic --norun") >= 0);
-    edit_do_cmd (dd);
-    return;
-/* MESSAGE: hop through diagnostics of a68g */
-  } else if (match_cmd (cmd, "MEssage", &args)) {
-    edit_add_history (cmd); 
-    NO_ARGS (fcmd, args);
-    if (MSGS (dd) == -1) {
-    /* Open the file */
-      RESET_ERRNO;
-      MSGS (dd) = open (A68_DIAGNOSTICS_FILE, A68_READ_ACCESS);
-      if (MSGS (dd) == -1 || errno != 0) {
-        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: cannot open diagnostics file for reading", fcmd) >= 0);
-        CURSOR_TO_COMMAND (dd, curs);
-        return;
-      }
-    }
-    if (MSGS (dd) != -1) {
-      int n, m;
-      EDLIN_T *z;
-      edit_read_string (dd, MSGS (dd));
-      if (strlen (LINBUF (dd)) == 0) {
-        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: no diagnostic to display", fcmd) >= 0);
-        ASSERT (close (MSGS (dd)) == 0);
-        MSGS (dd) = -1;
-        bufcpy (CMD (scr), "", BUFFER_SIZE);
-        CURSOR_TO_COMMAND (dd, curs);
-        return;
-      }  
-      n = int_arg (dd, cmd, &((LINBUF (dd))[0]), &rest, 1);
-      if (n == WRONG_TARGET) {
-        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s: wrong target in file", fcmd) >= 0);
-        CURSOR_TO_COMMAND (dd, curs);
-        return;
-      } else {
-        for (z = TOF (dd); z != NO_EDLIN && NUMBER (z) != n; forward_line (&z)) {;}
-        if (z != NO_EDLIN) {
-          CURR (dd) = z;
-          align_current (dd);
-        }
-      }
-      edit_read_string (dd, MSGS (dd));
-      SYNC_INDEX (curs) = 0;
-      if (n != 0 && n != WRONG_TARGET) {
-        m = int_arg (dd, cmd, &((LINBUF (dd))[0]), &rest, 1);
-        if (m >= 0 && m < (int) strlen (TEXT (CURR (dd)))) {
-          SYNC_INDEX (curs) = m;
-        }
-      }
-      SYNC_LINE (curs) = CURR (dd);
-      SYNC (curs) = A68_TRUE;
-      edit_read_string (dd, MSGS (dd));
-      if ((int) strlen (LINBUF (dd)) >= COLS) {
-        (LINBUF (dd))[COLS - 4] = NULL_CHAR;
-        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s ...", LINBUF (dd)) >= 0);
-      } else {
-        ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "%s", LINBUF (dd)) >= 0);
-      }
-      bufcpy (CMD (scr), "", BUFFER_SIZE);
-      return;
-    }
-  } else if (match_cmd (cmd, "SET", &args)) {
-    edit_set_cmd (dd, fcmd, args);
-    bufcpy (CMD (scr), "", BUFFER_SIZE);
-    CURSOR_TO_COMMAND (dd, curs);
-    return;
   } else if (match_cmd (cmd, "MSG", &args)) {
 /* MSG: display its argument in the message area */
     ARGS (fcmd, args);
@@ -4007,17 +4153,36 @@ static void edit_do_cmd (DATASET_T *dd)
     return;
   } else if (match_cmd (cmd, "Edit", &args) || match_cmd (cmd, "Xedit", &args)) {
 /* EDIT filename: recursively edit another file */
-    DATASET_T dataset;
+    DATASET_T ndd;
+    DISPLAY_T *nscr = &(DISPLAY (&ndd));
+    CURSOR_T *ncurs = &(CURS (nscr));
+    int salts = ALTS (dd);
     edit_add_history (cmd); 
     edit_write_undo_file (dd, fcmd);
-    edit_dataset (&dataset, NUM (dd) + 1, args, NO_TEXT);
+    SCALE_ROW (nscr) = LINES / 2;
+    CMD_ROW (nscr) = 1;
+    IDF_ROW (nscr) = 0;
+    CURSOR_TO_COMMAND (&ndd, ncurs);
+    REDRAW (stdscr);
+    M_MATCH (&ndd) = NO_EDLIN;
+    M_SO (&ndd) = -1;
+    M_EO (&ndd) = -1;
+    edit_dataset (&ndd, NUM (dd) + 1, args, NO_TEXT);
     fixed_heap_pointer = HEAP_POINTER (dd);
     LINBUF (dd) = NO_TEXT;
     LINSIZ (dd) = 0;
     TOF (dd) = NO_EDLIN;
     edit_read_undo_file (dd, fcmd);
+    ALTS (dd) = salts;
     bufcpy (CMD (scr), "", BUFFER_SIZE);
     CURSOR_TO_COMMAND (dd, curs);
+    return;
+  } else if (match_cmd (cmd, "Help", &args)) {
+/* HELP: recursively edit another file */
+    write_help_file (EDIT_HELP_FILE);
+    edit_add_history (cmd);
+    ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "edit %s", EDIT_HELP_FILE) >= 0);
+    edit_do_cmd (dd);
     return;
   }
 /* Commands with targets */
@@ -4218,7 +4383,7 @@ static void edit_do_cmd (DATASET_T *dd)
   }
 }
 
-/*
+/*!
 \brief do a prefix command
 \param dd current dataset
 **/
@@ -4362,7 +4527,6 @@ static void edit_do_prefix (DATASET_T *dd)
     EDLIN_T *w;
     for (z = TOF (dd); z != NO_EDLIN; FORWARD (z)) {
       char *p = PRECMD (z);
-      EDLIN_T *cursavi = CURR (dd);
       SKIP_WHITE (p);
       if (match_cmd (p, "D", &arg)) {
         w = CURR (dd);
@@ -4373,13 +4537,8 @@ static void edit_do_prefix (DATASET_T *dd)
           ASSERT (snprintf (CMD (scr), SNPRINTF_SIZE, "delete %s", arg) >= 0);
         }
         edit_do_cmd (dd);
-        if (w == z) {
-          forward_line (&w);
-        }
-        CURR (dd) = w;
         edit_reset (dd);
         BL_START (dd) = BL_END (dd) = NO_EDLIN;
-        CURR (dd) = cursavi;
         align_current (dd);
         bufcpy (CMD (scr), "", BUFFER_SIZE);
         return;
@@ -4645,7 +4804,7 @@ static void edit_do_prefix (DATASET_T *dd)
   ASSERT (snprintf (DL0 (scr), SNPRINTF_SIZE, "edit: unrecognised prefix command") >= 0);
 }
 
-/*
+/*!
 \brief execute command from function key
 \param dd current dataset
 \param cmd command bound to key
@@ -4662,7 +4821,7 @@ static void key_command (DATASET_T *dd, char *cmd)
   REDRAW (stdscr);
 }
 
-/*
+/*!
 \brief editor loop: get a key and do something with it
 \param dd current dataset
 **/
@@ -4779,11 +4938,13 @@ Get some CSI/SS2/SS3 sequences from different terminals.
       }
     } else if (ch == KEY_RESIZE) {
 /* Resize event triggers reinitialisation */
+      write_history ();
       EDIT_TEST (endwin () != ERR);
       edit_init_curses (dd);
+      read_history (dd);
     } else if (ch == KEY_MOUSE) {
 /* Mouse control is basic: you can point with the cursor but little else */
-#if ! defined HAVE_WIN32
+#if defined USE_MOUSE
       MEVENT event;
       if (getmouse (&event) != ERR) {
         BSTATE (curs) = BSTATE (&event);
@@ -4805,7 +4966,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
           }
         }
       }
-#endif /* ! defined HAVE_WIN32 */
+#endif /* defined USE_MOUSE */
 /* Keyboard control keys */
     } else if (ch == KEY_UP) {
       int u = ROW (curs);
@@ -4819,15 +4980,19 @@ Get some CSI/SS2/SS3 sequences from different terminals.
         u = (u == LINES - 1 ? 0 : u + 1);
       } while (reserved_row (dd, u) && u != CMD_ROW (scr));
       ROW (curs) = u;
-    } else if (ch == KEY_CTRL('W') && histcurr >= 0) {
-      if (histprev >= 0) {
-        bufcpy (CMD (scr), history[histprev], BUFFER_SIZE);
-        edit_set_history (histprev);
+    } else if (ch == KEY_CTRL ('W') && ROW (curs) == CMD_ROW (scr)) {
+      if (histcurr >= 0) {
+        if (histprev >= 0) {
+          bufcpy (CMD (scr), history[histprev], BUFFER_SIZE);
+          edit_set_history (histprev);
+        }
       }
-    } else if (ch == KEY_CTRL('X') && histcurr >= 0) {
-      if (histnext >= 0) {
-        bufcpy (CMD (scr), history[histnext], BUFFER_SIZE);
-        edit_set_history (histnext);
+    } else if (ch == KEY_CTRL ('X') && ROW (curs) == CMD_ROW (scr)) {
+      if (histcurr >= 0) {
+        if (histnext >= 0) {
+          bufcpy (CMD (scr), history[histnext], BUFFER_SIZE);
+          edit_set_history (histnext);
+        }
       }
     } else if (ch == KEY_RIGHT) {
       COL (curs) = (COL (curs) == COLS - 1 ? 0 : COL (curs) + 1);
@@ -4892,7 +5057,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
   }
 }
 
-/*
+/*!
 \brief edit a dataset
 \param dd current dataset
 \param num number of dataset
@@ -4903,8 +5068,7 @@ Get some CSI/SS2/SS3 sequences from different terminals.
 static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
 {
   DISPLAY_T *scr = &(DISPLAY (dd));
-/* Init ncurses */
-  edit_init_curses (dd);
+  CURSOR_T *curs = &(CURS (scr));
   bufcpy (NAME (dd), filename, BUFFER_SIZE);
   TABS (dd) = TAB_STOP;
   HEAP_POINTER (dd) = fixed_heap_pointer;
@@ -4939,13 +5103,14 @@ static void edit_dataset (DATASET_T *dd, int num, char *filename, char *target)
     ASSERT (snprintf (DL0 (&DISPLAY (dd)), SNPRINTF_SIZE, "edit: cannot open temporary file for undo") >= 0);
   }
   EDIT_TEST (remove (UNDO (dd)) != -1);
+  CURSOR_TO_COMMAND (dd, curs);
   loop_cnt = 0;
   if (setjmp (EDIT_EXIT_LABEL (dd)) == 0) {
     edit_loop (dd);
   }
 }
 
-/*
+/*!
 \brief edit main routine
 \param start_text not used
 **/
@@ -4978,14 +5143,16 @@ void edit (char *start_text)
 #endif /* ! defined HAVE_WIN32 */
     SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, "edit: no filename");
   }
-  read_history ();
+/* Init ncurses */
+  edit_init_curses (&dataset);
+  edit_init_colours (&dataset);
+  read_history (&dataset);
   edit_dataset (&dataset, 1, FILE_INITIAL_NAME (&program), OPTION_TARGET (&program));
 /* Exit edit */
   write_history ();
   EDIT_TEST (wclear (stdscr) != ERR);
   EDIT_TEST (wrefresh (stdscr) != ERR);
   EDIT_TEST (endwin () != ERR);
-  EDIT_TEST (remove (A68_DIAGNOSTICS_FILE) != -1);
   exit (EXIT_SUCCESS);
 }
 
