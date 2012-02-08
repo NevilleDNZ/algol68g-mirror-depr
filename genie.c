@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -172,7 +172,7 @@ void genie_system (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&cmd), MODE (STRING));
   size = 1 + a68_string_size (p, cmd);
   ref_z = heap_generator (p, MODE (C_STRING), 1 + size);
-  sys_ret_code = system (a_to_c_string (p, (char *) ADDRESS (&ref_z), cmd));
+  sys_ret_code = system (a_to_c_string (p, DEREF (char, &ref_z), cmd));
   PUSH_PRIMITIVE (p, sys_ret_code, A68_INT);
 }
 
@@ -1286,7 +1286,7 @@ static PROP_T genie_dereference_slice_name_quick (NODE_T * p)
   EXECUTE_UNIT (prim);
   stack_pointer = pop_sp;
   CHECK_REF (p, *z, ref_mode);
-  GET_DESCRIPTOR (a, t, (A68_ROW *) ADDRESS (z));
+  GET_DESCRIPTOR (a, t, DEREF (A68_ROW, z));
   for (row_index = 0, q = SEQUENCE (p); q != NO_NODE; t++, q = SEQUENCE (q)) {
     A68_INT *j = (A68_INT *) STACK_TOP;
     int k;
@@ -1895,7 +1895,7 @@ static PROP_T genie_slice_name_quick (NODE_T * p)
   UP_BLOCK_GC;
   EXECUTE_UNIT (pr);
   CHECK_REF (p, *z, MOID (SUB (p)));
-  GET_DESCRIPTOR (a, t, (A68_ROW *) ADDRESS (z));
+  GET_DESCRIPTOR (a, t, DEREF (A68_ROW, z));
   pop_sp = stack_pointer;
   for (sindex = 0, q = SEQUENCE (p); q != NO_NODE; t++, q = SEQUENCE (q)) {
     A68_INT *j = (A68_INT *) STACK_TOP;
@@ -1944,7 +1944,7 @@ static PROP_T genie_slice (NODE_T * p)
     POP_REF (p, &z);
     CHECK_REF (p, z, MOID (SUB (p)));
     scope = REF_SCOPE (&z);
-    PUSH_REF (p, *(A68_REF *) ADDRESS (&z));
+    PUSH_REF (p, * DEREF (A68_REF, &z));
   }
   if (ANNOTATION (indexer) == SLICE) {
 /* SLICING subscripts one element from an array */
@@ -2008,8 +2008,8 @@ static PROP_T genie_slice (NODE_T * p)
     POP_REF (p, &z);
 /* Get indexer */
     CHECK_REF (p, z, MOID (SUB (p)));
-    old_des = (A68_ARRAY *) ADDRESS (&z);
-    new_des = (A68_ARRAY *) ADDRESS (&ref_desc_copy);
+    old_des = DEREF (A68_ARRAY, &z);
+    new_des = DEREF (A68_ARRAY, &ref_desc_copy);
     ref_old = ADDRESS (&z) + ALIGNED_SIZE_OF (A68_ARRAY);
     ref_new = ADDRESS (&ref_desc_copy) + ALIGNED_SIZE_OF (A68_ARRAY);
     DIM (new_des) = DIM (DEFLEX (result_mode));
@@ -2023,7 +2023,7 @@ static PROP_T genie_slice (NODE_T * p)
 /* Trim of a name is a name */
     if (slice_of_name) {
       A68_REF ref_new2 = heap_generator (p, MOID (p), ALIGNED_SIZE_OF (A68_REF));
-      *(A68_REF *) ADDRESS (&ref_new2) = ref_desc_copy;
+      * DEREF (A68_REF, &ref_new2) = ref_desc_copy;
       REF_SCOPE (&ref_new2) = scope;
       PUSH_REF (p, ref_new2);
     } else {
@@ -2384,15 +2384,15 @@ static PROP_T genie_selection (NODE_T * p)
     UP_BLOCK_GC;
     POP_ADDRESS (selector, row1, A68_REF);
     CHECK_REF (p, *row1, struct_mode);
-    row1 = (A68_REF *) ADDRESS (row1);
+    row1 = DEREF (A68_REF, row1);
     dims = DIM (DEFLEX (SUB (struct_mode)));
     desc_size = ALIGNED_SIZE_OF (A68_ARRAY) + dims * ALIGNED_SIZE_OF (A68_TUPLE);
     row2 = heap_generator (selector, result_mode, desc_size);
-    MOVE (ADDRESS (&row2), (BYTE_T *) ADDRESS (row1), (unsigned) desc_size);
-    MOID (((A68_ARRAY *) ADDRESS (&row2))) = SUB_SUB (result_mode);
-    FIELD_OFFSET ((A68_ARRAY *) ADDRESS (&row2)) += OFFSET (NODE_PACK (SUB (selector)));
+    MOVE (ADDRESS (&row2), DEREF (BYTE_T, row1), (unsigned) desc_size);
+    MOID ((DEREF (A68_ARRAY, &row2))) = SUB_SUB (result_mode);
+    FIELD_OFFSET (DEREF (A68_ARRAY, &row2)) += OFFSET (NODE_PACK (SUB (selector)));
     row3 = heap_generator (selector, result_mode, ALIGNED_SIZE_OF (A68_REF));
-    *(A68_REF *) ADDRESS (&row3) = row2;
+    * DEREF (A68_REF, &row3) = row2;
     PUSH_REF (selector, row3);
     UNIT (&self) = genie_selection;
     DOWN_BLOCK_GC;
@@ -2405,9 +2405,9 @@ static PROP_T genie_selection (NODE_T * p)
     dims = DIM (DEFLEX (struct_mode));
     desc_size = ALIGNED_SIZE_OF (A68_ARRAY) + dims * ALIGNED_SIZE_OF (A68_TUPLE);
     row2 = heap_generator (selector, result_mode, desc_size);
-    MOVE (ADDRESS (&row2), (BYTE_T *) ADDRESS (row1), (unsigned) desc_size);
-    MOID (((A68_ARRAY *) ADDRESS (&row2))) = SUB (result_mode);
-    FIELD_OFFSET ((A68_ARRAY *) ADDRESS (&row2)) += OFFSET (NODE_PACK (SUB (selector)));
+    MOVE (ADDRESS (&row2), DEREF (BYTE_T, row1), (unsigned) desc_size);
+    MOID ((DEREF (A68_ARRAY, &row2))) = SUB (result_mode);
+    FIELD_OFFSET (DEREF (A68_ARRAY, &row2)) += OFFSET (NODE_PACK (SUB (selector)));
     PUSH_REF (selector, row2);
     UNIT (&self) = genie_selection;
     DOWN_BLOCK_GC;
@@ -4091,11 +4091,11 @@ This warning can be safely ignored.
   if (IS (p, WHILE_PART)) {
     conditional = A68_TRUE;
   } else if (IS (p, DO_PART) || IS (p, ALT_DO_PART)) {
-    NODE_T *un_p = NEXT_SUB (p);
-    if (IS (un_p, SERIAL_CLAUSE)) {
-      un_p = NEXT (un_p);
+    NODE_T *until_part = NEXT_SUB (p);
+    if (IS (until_part, SERIAL_CLAUSE)) {
+      until_part = NEXT (until_part);
     }
-    conditional = (BOOL_T) (un_p != NO_NODE && IS (un_p, UNTIL_PART));
+    conditional = (BOOL_T) (until_part != NO_NODE && IS (until_part, UNTIL_PART));
   } else {
     conditional = A68_FALSE;
   }
@@ -4120,24 +4120,24 @@ Next line provokes inevitably:
   warning: variable 'do_p' might be clobbered by 'longjmp' or 'vfork'
 This warning can be safely ignored.
 */
-        volatile NODE_T *do_p = p, *un_p;
+        volatile NODE_T *do_part = p, *until_part;
         if (IS (p, WHILE_PART)) {
-          do_p = NEXT_SUB (NEXT (p));
-          OPEN_STATIC_FRAME ((NODE_T *) do_p);
-          INIT_STATIC_FRAME ((NODE_T *) do_p);
+          do_part = NEXT_SUB (NEXT (p));
+          OPEN_STATIC_FRAME ((NODE_T *) do_part);
+          INIT_STATIC_FRAME ((NODE_T *) do_part);
         } else {
-          do_p = NEXT_SUB (p);
+          do_part = NEXT_SUB (p);
         }
-        if (IS (do_p, SERIAL_CLAUSE)) {
+        if (IS (do_part, SERIAL_CLAUSE)) {
           PREEMPTIVE_GC;
-          SERIAL_CLAUSE_TRACE (do_p);
-          un_p = NEXT (do_p);
+          SERIAL_CLAUSE_TRACE (do_part);
+          until_part = NEXT (do_part);
         } else {
-          un_p = do_p;
+          until_part = do_part;
         }
 /* UNTIL part */
-        if (un_p != NO_NODE && IS (un_p, UNTIL_PART)) {
-          NODE_T *v = NEXT_SUB (un_p);
+        if (until_part != NO_NODE && IS (until_part, UNTIL_PART)) {
+          NODE_T *v = NEXT_SUB (until_part);
           OPEN_STATIC_FRAME ((NODE_T *) v);
           INIT_STATIC_FRAME ((NODE_T *) v);
           stack_pointer = pop_sp;
@@ -4760,7 +4760,7 @@ A68_REF genie_make_ref_row_of_row (NODE_T * p, MOID_T * dst_mode, MOID_T * src_m
   UPB (tup) = 1;
   SPAN (tup) = 1;
   SHIFT (tup) = LWB (tup);
-  *(A68_REF *) ADDRESS (&name) = new_row;
+  * DEREF (A68_REF, &name) = new_row;
   UNBLOCK_GC_HANDLE (&new_row);
   return (name);
 }
@@ -4787,7 +4787,7 @@ A68_REF genie_make_ref_row_row (NODE_T * p, MOID_T * dst_mode, MOID_T * src_mode
   if (IS_NIL (name)) {
     return (nil_ref);
   }
-  old_row = *(A68_REF *) ADDRESS (&name);
+  old_row = * DEREF (A68_REF, &name);
   GET_DESCRIPTOR (old_arr, old_tup, &old_row);
 /* Make new descriptor */
   new_row = heap_generator (p, dst_mode, ALIGNED_SIZE_OF (A68_ARRAY) + DIM (SUB (dst_mode)) * ALIGNED_SIZE_OF (A68_TUPLE));
@@ -4809,7 +4809,7 @@ A68_REF genie_make_ref_row_row (NODE_T * p, MOID_T * dst_mode, MOID_T * src_mode
     new_tup[k + 1] = old_tup[k];
   }
 /* Yield the new name */
-  *(A68_REF *) ADDRESS (&name) = new_row;
+  * DEREF (A68_REF, &name) = new_row;
   UNBLOCK_GC_HANDLE (&new_row);
   return (name);
 }
@@ -4950,7 +4950,7 @@ The routine takes a REF to the value and returns a REF to the clone.
     int size;
     BYTE_T *owd;
     nsound = heap_generator (p, m, MOID_SIZE (m));
-    w = (A68_SOUND *) ADDRESS (&nsound);
+    w = DEREF (A68_SOUND, &nsound);
     size = A68_SOUND_DATA_SIZE (w);
     COPY ((BYTE_T *) w, ADDRESS (old), MOID_SIZE (MODE (SOUND)));
     owd = ADDRESS (&(DATA (w)));
@@ -4988,11 +4988,11 @@ The routine takes a REF to the value and returns a REF to the clone.
     UP_BLOCK_GC;
     nunion = heap_generator (p, m, MOID_SIZE (m));
     src = *old;
-    u = (A68_UNION *) ADDRESS (&src);
+    u = DEREF (A68_UNION, &src);
     um = (MOID_T *) VALUE (u);
     OFFSET (&src) += UNION_OFFSET;
     dst = nunion;
-    *(A68_UNION *) ADDRESS (&dst) = *u;
+    * DEREF (A68_UNION, &dst) = *u;
     OFFSET (&dst) += UNION_OFFSET;
 /* A union has formal members, so tmp is irrelevant */
     tmpu = nil_ref;
@@ -5014,7 +5014,7 @@ The routine takes a REF to the value and returns a REF to the clone.
     BOOL_T check_bounds;
 /* Make new array */
     UP_BLOCK_GC;
-    GET_DESCRIPTOR (oarr, otup, (A68_REF *) ADDRESS (old));
+    GET_DESCRIPTOR (oarr, otup, DEREF (A68_REF, old));
     nrow = heap_generator (p, m, ALIGNED_SIZE_OF (A68_ARRAY) + DIM (oarr) * ALIGNED_SIZE_OF (A68_TUPLE));
 /* Now fill the new descriptor */
     GET_DESCRIPTOR (narr, ntup, &nrow);
@@ -5031,7 +5031,7 @@ This is just song and dance to comply with the RR.
     if (IS_NIL (*tmp)) {
       ntmp = nil_ref;
     } else {
-      A68_REF *z = (A68_REF *) ADDRESS (tmp);
+      A68_REF *z = DEREF (A68_REF, tmp);
       if (!IS_NIL (*z)) {
         GET_DESCRIPTOR (tarr, ttup, z);
         ntmp = ARRAY (tarr);
@@ -5094,7 +5094,7 @@ This is just song and dance to comply with the RR.
       }
     }
     heap = heap_generator (p, m, ALIGNED_SIZE_OF (A68_REF));
-    *(A68_REF *) ADDRESS (&heap) = nrow;
+    * DEREF (A68_REF, &heap) = nrow;
     DOWN_BLOCK_GC;
     return (heap);
   }
@@ -5124,8 +5124,8 @@ The routine takes a REF to the value and returns a REF to the clone.
     int k, span;
     BOOL_T done = A68_FALSE;
     UP_BLOCK_GC;
-    GET_DESCRIPTOR (old_arr, old_tup, (A68_REF *) ADDRESS (old));
-    GET_DESCRIPTOR (new_arr, new_tup, (A68_REF *) ADDRESS (dst));
+    GET_DESCRIPTOR (old_arr, old_tup, DEREF (A68_REF, old));
+    GET_DESCRIPTOR (new_arr, new_tup, DEREF (A68_REF, dst));
 /* 
 Get size and check bounds.
 This is just song and dance to comply with the RR.
@@ -5175,7 +5175,7 @@ static void genie_clone_stack (NODE_T *p, MOID_T *srcm, A68_REF *dst, A68_REF *t
   STATUS (&stack) = (STATUS_MASK) (INITIALISED_MASK | IN_STACK_MASK);
   OFFSET (&stack) = stack_pointer;
   REF_HANDLE (&stack) = &nil_handle;
-  src = (A68_REF *) ADDRESS (&stack);
+  src = DEREF (A68_REF, &stack);
   if (IS (srcm, ROW_SYMBOL) && !IS_NIL (*tmp)) {
     if (STATUS (src) & SKIP_ROW_MASK) {
       return;
@@ -5220,7 +5220,7 @@ static PROP_T genie_diagonal_function (NODE_T * p)
     POP_REF (p, &z);
     CHECK_REF (p, z, MOID (SUB (p)));
     scope = REF_SCOPE (&z);
-    PUSH_REF (p, *(A68_REF *) ADDRESS (&z));
+    PUSH_REF (p, * DEREF (A68_REF, &z));
   }
   POP_OBJECT (p, &row, A68_ROW);
   GET_DESCRIPTOR2 (arr, tup1, tup2, &row);
@@ -5251,7 +5251,7 @@ static PROP_T genie_diagonal_function (NODE_T * p)
   PUT_DESCRIPTOR (new_arr, new_tup, &new_row);
   if (name) {
     A68_REF ref_new = heap_generator (p, MOID (p), ALIGNED_SIZE_OF (A68_REF));
-    *(A68_REF *) ADDRESS (&ref_new) = new_row;
+    * DEREF (A68_REF, &ref_new) = new_row;
     REF_SCOPE (&ref_new) = scope;
     PUSH_REF (p, ref_new);
   } else {
@@ -5287,7 +5287,7 @@ static PROP_T genie_transpose_function (NODE_T * p)
     POP_REF (p, &z);
     CHECK_REF (p, z, MOID (SUB (p)));
     scope = REF_SCOPE (&z);
-    PUSH_REF (p, *(A68_REF *) ADDRESS (&z));
+    PUSH_REF (p, * DEREF (A68_REF, &z));
   }
   POP_OBJECT (p, &row, A68_ROW);
   GET_DESCRIPTOR2 (arr, tup1, tup2, &row);
@@ -5298,7 +5298,7 @@ static PROP_T genie_transpose_function (NODE_T * p)
   PUT_DESCRIPTOR2 (new_arr, new_tup1, new_tup2, &new_row);
   if (name) {
     A68_REF ref_new = heap_generator (p, MOID (p), ALIGNED_SIZE_OF (A68_REF));
-    *(A68_REF *) ADDRESS (&ref_new) = new_row;
+    * DEREF (A68_REF, &ref_new) = new_row;
     REF_SCOPE (&ref_new) = scope;
     PUSH_REF (p, ref_new);
   } else {
@@ -5342,7 +5342,7 @@ static PROP_T genie_row_function (NODE_T * p)
     POP_REF (p, &z);
     CHECK_REF (p, z, MOID (SUB (p)));
     scope = REF_SCOPE (&z);
-    PUSH_REF (p, *(A68_REF *) ADDRESS (&z));
+    PUSH_REF (p, * DEREF (A68_REF, &z));
   }
   POP_OBJECT (p, &row, A68_ROW);
   GET_DESCRIPTOR (arr, tup, &row);
@@ -5371,7 +5371,7 @@ static PROP_T genie_row_function (NODE_T * p)
   PUT_DESCRIPTOR2 (new_arr, tup1, tup2, &new_row);
   if (name) {
     A68_REF ref_new = heap_generator (p, MOID (p), ALIGNED_SIZE_OF (A68_REF));
-    *(A68_REF *) ADDRESS (&ref_new) = new_row;
+    * DEREF (A68_REF, &ref_new) = new_row;
     REF_SCOPE (&ref_new) = scope;
     PUSH_REF (p, ref_new);
   } else {
@@ -5415,7 +5415,7 @@ static PROP_T genie_column_function (NODE_T * p)
     POP_REF (p, &z);
     CHECK_REF (p, z, MOID (SUB (p)));
     scope = REF_SCOPE (&z);
-    PUSH_REF (p, *(A68_REF *) ADDRESS (&z));
+    PUSH_REF (p, * DEREF (A68_REF, &z));
   }
   POP_OBJECT (p, &row, A68_ROW);
   GET_DESCRIPTOR (arr, tup, &row);
@@ -5440,7 +5440,7 @@ static PROP_T genie_column_function (NODE_T * p)
   PUT_DESCRIPTOR2 (new_arr, tup1, tup2, &new_row);
   if (name) {
     A68_REF ref_new = heap_generator (p, MOID (p), ALIGNED_SIZE_OF (A68_REF));
-    *(A68_REF *) ADDRESS (&ref_new) = new_row;
+    * DEREF (A68_REF, &ref_new) = new_row;
     REF_SCOPE (&ref_new) = scope;
     PUSH_REF (p, ref_new);
   } else {
@@ -5524,7 +5524,7 @@ void genie_sort_row_string (NODE_T * p)
     SPAN (&tupn) = 1;
     K (&tupn) = 0;
     PUT_DESCRIPTOR (arrn, tupn, &z);
-    base_ref = (A68_REF *) ADDRESS (&row);
+    base_ref = DEREF (A68_REF, &row);
     for (k = 0; k < size; k++) {
       base_ref[k] = c_to_a_string (p, ptrs[k], DEFAULT_WIDTH);
     }
@@ -7120,7 +7120,7 @@ void genie_level_sema_int (NODE_T * p)
   A68_REF s;
   POP_OBJECT (p, &k, A68_INT);
   s = heap_generator (p, MODE (INT), ALIGNED_SIZE_OF (A68_INT));
-  *(A68_INT *) ADDRESS (&s) = k;
+  * DEREF (A68_INT, &s) = k;
   PUSH_REF (p, s);
 }
 
@@ -7134,7 +7134,7 @@ void genie_level_int_sema (NODE_T * p)
   A68_REF s;
   POP_REF (p, &s);
   CHECK_INIT (p, INITIALISED (&s), MODE (SEMA));
-  PUSH_PRIMITIVE (p, VALUE ((A68_INT *) ADDRESS (&s)), A68_INT);
+  PUSH_PRIMITIVE (p, VALUE (DEREF (A68_INT, &s)), A68_INT);
 }
 
 /*!
@@ -7151,7 +7151,7 @@ void genie_up_sema (NODE_T * p)
   }
   POP_REF (p, &s);
   CHECK_INIT (p, INITIALISED (&s), MODE (SEMA));
-  VALUE ((A68_INT *) ADDRESS (&s))++;
+  VALUE (DEREF (A68_INT, &s))++;
 }
 
 /*!
@@ -7171,7 +7171,7 @@ void genie_down_sema (NODE_T * p)
   POP_REF (p, &s);
   CHECK_INIT (p, INITIALISED (&s), MODE (SEMA));
   while (cont) {
-    k = (A68_INT *) ADDRESS (&s);
+    k = DEREF (A68_INT, &s);
     if (VALUE (k) <= 0) {
       save_stacks (pthread_self ());
       while (VALUE (k) <= 0) {
@@ -7183,7 +7183,7 @@ void genie_down_sema (NODE_T * p)
         ASSERT (usleep (10) == 0);
         LOCK_THREAD;
 /* Garbage may be collected, so recalculate 'k' */
-        k = (A68_INT *) ADDRESS (&s);
+        k = DEREF (A68_INT, &s);
       }
       restore_stacks (pthread_self ());
       cont = A68_TRUE;

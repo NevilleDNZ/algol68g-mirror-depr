@@ -182,19 +182,19 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 2.3.5"
+#define PACKAGE_STRING "algol68g 2.3.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.3.5"
+#define PACKAGE_VERSION "2.3.6"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.3.5"
+#define VERSION "2.3.6"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

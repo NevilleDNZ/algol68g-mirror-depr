@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -3198,13 +3198,22 @@ void genie_pow_real_int (NODE_T * p)
 void genie_pow_real (NODE_T * p)
 {
   A68_REAL x, y;
-  double z;
+  double z = 0;
   POP_OBJECT (p, &y, A68_REAL);
   POP_OBJECT (p, &x, A68_REAL);
   RESET_ERRNO;
-  PRELUDE_ERROR (VALUE (&x) <= 0.0, p, ERROR_INVALID_ARGUMENT, MODE (REAL));
-  z = exp (VALUE (&y) * log (VALUE (&x)));
-  MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
+  PRELUDE_ERROR (VALUE (&x) < 0.0, p, ERROR_INVALID_ARGUMENT, MODE (REAL));
+  if (VALUE (&x) == 0.0) {
+    if (VALUE (&y) < 0) {
+      errno = ERANGE;
+      MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
+    } else {
+      z = (VALUE (&y) == 0.0 ? 1.0 : 0.0);
+    }
+  } else {
+    z = exp (VALUE (&y) * log (VALUE (&x)));
+    MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
+  }
   PUSH_PRIMITIVE (p, z, A68_REAL);
 }
 
@@ -3859,9 +3868,17 @@ void genie_pow_long_mp (NODE_T * p)
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   MP_T *z;
   STACK_MP (z, p, digits);
-  PRELUDE_ERROR (ln_mp (p, z, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
-  (void) mul_mp (p, z, y, z, digits);
-  (void) exp_mp (p, x, z, digits);
+  if (IS_ZERO_MP (x)) {
+    if (MP_DIGIT (y, 1) < (MP_T) 0) {
+      PRELUDE_ERROR (A68_TRUE, p, ERROR_INVALID_ARGUMENT, MOID (p));
+    } else if (IS_ZERO_MP (y)) {
+      (void) set_mp_short (x, (MP_T) 1, 0, digits);
+    }
+  } else {
+    PRELUDE_ERROR (ln_mp (p, z, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
+    (void) mul_mp (p, z, y, z, digits);
+    (void) exp_mp (p, x, z, digits);
+  }
   stack_pointer = pop_sp - size;
   MP_STATUS (x) = (MP_T) INITIALISED_MASK;
 }
@@ -3976,7 +3993,7 @@ void genie_add_char (NODE_T * p)
   SHIFT (t_3) = LWB (t_3);
   SPAN (t_3) = 1;
 /* add chars */
-  b_3 = ADDRESS (&ARRAY (a_3));
+  b_3 = DEREF (BYTE_T, &ARRAY (a_3));
   MOVE ((BYTE_T *) & b_3[0], (BYTE_T *) & a, ALIGNED_SIZE_OF (A68_CHAR));
   MOVE ((BYTE_T *) & b_3[ALIGNED_SIZE_OF (A68_CHAR)], (BYTE_T *) & b, ALIGNED_SIZE_OF (A68_CHAR));
   PUSH_REF (p, c);
@@ -4003,7 +4020,7 @@ void genie_elem_string (NODE_T * p)
   GET_DESCRIPTOR (a, t, &z);
   PRELUDE_ERROR (VALUE (&k) < LWB (t), p, ERROR_INDEX_OUT_OF_BOUNDS, NO_TEXT);
   PRELUDE_ERROR (VALUE (&k) > UPB (t), p, ERROR_INDEX_OUT_OF_BOUNDS, NO_TEXT);
-  base = ADDRESS (&(ARRAY (a)));
+  base = DEREF (BYTE_T, &(ARRAY (a)));
   ch = (A68_CHAR *) & (base[INDEX_1_DIM (a, t, VALUE (&k))]);
   PUSH_PRIMITIVE (p, VALUE (ch), A68_CHAR);
 }
@@ -4050,17 +4067,17 @@ void genie_add_string (NODE_T * p)
   SHIFT (t_3) = LWB (t_3);
   SPAN (t_3) = 1;
 /* add strings */
-  b_3 = ADDRESS (&ARRAY (a_3));
+  b_3 = DEREF (BYTE_T, &ARRAY (a_3));
   m = 0;
   if (ROW_SIZE (t_1) > 0) {
-    b_1 = ADDRESS (&ARRAY (a_1));
+    b_1 = DEREF (BYTE_T, &ARRAY (a_1));
     for (k = LWB (t_1); k <= UPB (t_1); k++) {
       MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, k)], ALIGNED_SIZE_OF (A68_CHAR));
       m += ALIGNED_SIZE_OF (A68_CHAR);
     }
   }
   if (ROW_SIZE (t_2) > 0) {
-    b_2 = ADDRESS (&ARRAY (a_2));
+    b_2 = DEREF (BYTE_T, &ARRAY (a_2));
     for (k = LWB (t_2); k <= UPB (t_2); k++) {
       MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_2[INDEX_1_DIM (a_2, t_2, k)], ALIGNED_SIZE_OF (A68_CHAR));
       m += ALIGNED_SIZE_OF (A68_CHAR);
@@ -4192,13 +4209,13 @@ void genie_plusto_string (NODE_T * p)
   A68_REF refa, a, b;
   POP_REF (p, &refa);
   CHECK_REF (p, refa, MODE (REF_STRING));
-  a = *(A68_REF *) ADDRESS (&refa);
+  a = * DEREF (A68_REF, &refa);
   CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
   POP_REF (p, &b);
   PUSH_REF (p, b);
   PUSH_REF (p, a);
   genie_add_string (p);
-  POP_REF (p, (A68_REF *) ADDRESS (&refa));
+  POP_REF (p, DEREF (A68_REF, &refa));
   PUSH_REF (p, refa);
 }
 
@@ -4218,7 +4235,7 @@ void genie_timesab_string (NODE_T * p)
 /* REF STRING */
   POP_REF (p, &refa);
   CHECK_REF (p, refa, MODE (REF_STRING));
-  a = *(A68_REF *) ADDRESS (&refa);
+  a = * DEREF (A68_REF, &refa);
   CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
 /* Multiplication as repeated addition */
   PUSH_REF (p, empty_string (p));
@@ -4227,7 +4244,7 @@ void genie_timesab_string (NODE_T * p)
     genie_add_string (p);
   }
 /* The stack contains a STRING, promote to REF STRING */
-  POP_REF (p, (A68_REF *) ADDRESS (&refa));
+  POP_REF (p, DEREF (A68_REF, &refa));
   PUSH_REF (p, refa);
 }
 
@@ -4256,8 +4273,8 @@ static int string_difference (NODE_T * p)
 /* Get difference */
   size = (s_1 > s_2 ? s_1 : s_2);
   diff = 0;
-  b_1 = (s_1 > 0 ? ADDRESS (&ARRAY (a_1)) : NO_BYTE);
-  b_2 = (s_2 > 0 ? ADDRESS (&ARRAY (a_2)) : NO_BYTE);
+  b_1 = (s_1 > 0 ? DEREF (BYTE_T, &ARRAY (a_1)) : NO_BYTE);
+  b_2 = (s_2 > 0 ? DEREF (BYTE_T, &ARRAY (a_2)) : NO_BYTE);
   for (k = 0; k < size && diff == 0; k++) {
     int a, b;
     if (s_1 > 0 && k < s_1) {
@@ -4415,7 +4432,7 @@ void genie_plusto_bytes (NODE_T * p)
   A68_REF z;
   POP_REF (p, &z);
   CHECK_REF (p, z, MODE (REF_BYTES));
-  address = (A68_BYTES *) ADDRESS (&z);
+  address = DEREF (A68_BYTES, &z);
   CHECK_INIT (p, INITIALISED (address), MODE (BYTES));
   POP_OBJECT (p, &i, A68_BYTES);
   PRELUDE_ERROR (((int) strlen (VALUE (address)) + (int) strlen (VALUE (&i))) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (BYTES));
@@ -4549,7 +4566,7 @@ void genie_plusto_long_bytes (NODE_T * p)
   A68_REF z;
   POP_REF (p, &z);
   CHECK_REF (p, z, MODE (REF_LONG_BYTES));
-  address = (A68_LONG_BYTES *) ADDRESS (&z);
+  address = DEREF (A68_LONG_BYTES, &z);
   CHECK_INIT (p, INITIALISED (address), MODE (LONG_BYTES));
   POP_OBJECT (p, &i, A68_LONG_BYTES);
   PRELUDE_ERROR (((int) strlen (VALUE (address)) + (int) strlen (VALUE (&i))) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (LONG_BYTES));
@@ -5023,17 +5040,19 @@ void genie_bits_pack (NODE_T * p)
   GET_DESCRIPTOR (arr, tup, &z);
   size = ROW_SIZE (tup);
   PRELUDE_ERROR (size < 0 || size > BITS_WIDTH, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
-  base = ADDRESS (&ARRAY (arr));
   VALUE (&b) = 0x0;
-  bit = 0x1;
-  for (k = UPB (tup); k >= LWB (tup); k--) {
-    int addr = INDEX_1_DIM (arr, tup, k);
-    A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
-    CHECK_INIT (p, INITIALISED (boo), MODE (BOOL));
-    if (VALUE (boo)) {
-      VALUE (&b) |= bit;
+  if (ROW_SIZE (tup) > 0) {
+    base = DEREF (BYTE_T, &ARRAY (arr));
+    bit = 0x1;
+    for (k = UPB (tup); k >= LWB (tup); k--) {
+      int addr = INDEX_1_DIM (arr, tup, k);
+      A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
+      CHECK_INIT (p, INITIALISED (boo), MODE (BOOL));
+      if (VALUE (boo)) {
+        VALUE (&b) |= bit;
+      }
+      bit <<= 1;
     }
-    bit <<= 1;
   }
   STATUS (&b) = INITIALISED_MASK;
   PUSH_OBJECT (p, b, A68_BITS);
@@ -5062,21 +5081,22 @@ void genie_long_bits_pack (NODE_T * p)
   digits = get_mp_digits (mode);
   PRELUDE_ERROR (size < 0 || size > bits, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
 /* Convert so that LWB goes to MSB, so ELEM gives same order as [] BOOL */
-  base = ADDRESS (&ARRAY (arr));
   STACK_MP (sum, p, digits);
   SET_MP_ZERO (sum, digits);
   pop_sp = stack_pointer;
-/* Set bit mask */
   STACK_MP (fact, p, digits);
   (void) set_mp_short (fact, (MP_T) 1, 0, digits);
-  for (k = UPB (tup); k >= LWB (tup); k--) {
-    int addr = INDEX_1_DIM (arr, tup, k);
-    A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
-    CHECK_INIT (p, INITIALISED (boo), MODE (BOOL));
-    if (VALUE (boo)) {
-     (void) add_mp (p, sum, sum, fact, digits);
+  if (ROW_SIZE (tup) > 0) {
+    base = DEREF (BYTE_T, &ARRAY (arr));
+    for (k = UPB (tup); k >= LWB (tup); k--) {
+      int addr = INDEX_1_DIM (arr, tup, k);
+      A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
+      CHECK_INIT (p, INITIALISED (boo), MODE (BOOL));
+      if (VALUE (boo)) {
+       (void) add_mp (p, sum, sum, fact, digits);
+      }
+     (void) mul_mp_digit (p, fact, fact, (MP_T) 2, digits);
     }
-   (void) mul_mp_digit (p, fact, fact, (MP_T) 2, digits);
   }
   stack_pointer = pop_sp;
   MP_STATUS (sum) = (MP_T) INITIALISED_MASK;
@@ -7672,7 +7692,7 @@ void genie_char_in_string (NODE_T * p)
     if (q[k] == ch) {
       STATUS (&pos) = INITIALISED_MASK;
       VALUE (&pos) = k + LOWER_BOUND (tup);
-      *(A68_INT *) ADDRESS (&ref_pos) = pos;
+      * DEREF (A68_INT, &ref_pos) = pos;
       PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
       return;
     }
@@ -7709,7 +7729,7 @@ void genie_last_char_in_string (NODE_T * p)
     if (q[k] == ch) {
       STATUS (&pos) = INITIALISED_MASK;
       VALUE (&pos) = k + LOWER_BOUND (tup);
-      *(A68_INT *) ADDRESS (&ref_pos) = pos;
+      * DEREF (A68_INT, &ref_pos) = pos;
       PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
       return;
     }
@@ -7745,7 +7765,7 @@ void genie_string_in_string (NODE_T * p)
       STATUS (&pos) = INITIALISED_MASK;
 /* ANSI standard leaves pointer difference undefined */
       VALUE (&pos) = LOWER_BOUND (tup) + (int) get_transput_buffer_index (STRING_BUFFER) - (int) strlen (q);
-      *(A68_INT *) ADDRESS (&ref_pos) = pos;
+      * DEREF (A68_INT, &ref_pos) = pos;
     }
     PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
   } else {
@@ -7954,13 +7974,11 @@ void add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
   A68_REF row = *(A68_REF *) ref;
   A68_ARRAY *arr;
   A68_TUPLE *tup;
-  int size;
   CHECK_INIT (p, INITIALISED (&row), MODE (ROWS));
   GET_DESCRIPTOR (arr, tup, &row);
-  size = ROW_SIZE (tup);
-  if (size > 0) {
+  if (ROW_SIZE (tup) > 0) {
     int i;
-    BYTE_T *base_address = ADDRESS (&ARRAY (arr));
+    BYTE_T *base_address = DEREF (BYTE_T, &ARRAY (arr));
     for (i = LWB (tup); i <= UPB (tup); i++) {
       int addr = INDEX_1_DIM (arr, tup, i);
       A68_CHAR *ch = (A68_CHAR *) & (base_address[addr]);
@@ -8019,7 +8037,7 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   l_2 = (int) strlen (str);
 /* left part */
   CHECK_REF (p, ref_str, MODE (REF_STRING));
-  a = *(A68_REF *) ADDRESS (&ref_str);
+  a = * DEREF (A68_REF, &ref_str);
   CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
   GET_DESCRIPTOR (a_1, t_1, &a);
   l_1 = ROW_SIZE (t_1);
@@ -8043,8 +8061,8 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   SHIFT (t_3) = LWB (t_3);
   SPAN (t_3) = 1;
 /* add strings */
-  b_1 = (ROW_SIZE (t_1) > 0 ? ADDRESS (&ARRAY (a_1)) : NO_BYTE);
-  b_3 = ADDRESS (&ARRAY (a_3));
+  b_1 = (ROW_SIZE (t_1) > 0 ? DEREF (BYTE_T, &ARRAY (a_1)) : NO_BYTE);
+  b_3 = DEREF (BYTE_T, &ARRAY (a_3));
   u = 0;
   for (v = LWB (t_1); v <= UPB (t_1); v++) {
     MOVE ((BYTE_T *) & b_3[u], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, v)], ALIGNED_SIZE_OF (A68_CHAR));
@@ -8059,7 +8077,7 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   }
   UNBLOCK_GC_HANDLE (&c);
   UNBLOCK_GC_HANDLE (&d);
-  *(A68_REF *) ADDRESS (&ref_str) = c;
+  * DEREF (A68_REF, &ref_str) = c;
 }
 
 /*!
@@ -8366,7 +8384,7 @@ static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, 
   char *filename = (env == NO_TEXT ? NO_TEXT : getenv (env));
   *ref_file = heap_generator (p, MODE (REF_FILE), ALIGNED_SIZE_OF (A68_FILE));
   BLOCK_GC_HANDLE (ref_file);
-  f = (A68_FILE *) ADDRESS (ref_file);
+  f = FILE_DEREF (ref_file);
   STATUS (f) = INITIALISED_MASK;
   TERMINATOR (f) = nil_ref;
   CHANNEL (f) = c;
@@ -8374,7 +8392,7 @@ static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, 
     int len = 1 + (int) strlen (filename);
     IDENTIFICATION (f) = heap_generator (p, MODE (C_STRING), len);
     BLOCK_GC_HANDLE (&(IDENTIFICATION (f)));
-    bufcpy ((char *) ADDRESS (&(IDENTIFICATION (f))), filename, len);
+    bufcpy (DEREF (char, &IDENTIFICATION (f)), filename, len);
     FD (f) = A68_NO_FILENO;
     READ_MOOD (f) = A68_FALSE;
     WRITE_MOOD (f) = A68_FALSE;
@@ -8443,7 +8461,7 @@ void genie_idf (NODE_T * p)
   ref_file = *(A68_REF *) STACK_TOP;
   ref_filename = IDENTIFICATION (FILE_DEREF (&ref_file));
   CHECK_REF (p, ref_filename, MODE (ROWS));
-  filename = (char *) ADDRESS (&ref_filename);
+  filename = DEREF (char, &ref_filename);
   PUSH_REF (p, c_to_a_string (p, filename, DEFAULT_WIDTH));
 }
 
@@ -8461,7 +8479,7 @@ void genie_term (NODE_T * p)
   ref_file = *(A68_REF *) STACK_TOP;
   ref_term = TERMINATOR (FILE_DEREF (&ref_file));
   CHECK_REF (p, ref_term, MODE (ROWS));
-  term = (char *) ADDRESS (&ref_term);
+  term = DEREF (char, &ref_term);
   PUSH_REF (p, c_to_a_string (p, term, DEFAULT_WIDTH));
 }
 
@@ -8488,7 +8506,7 @@ void genie_make_term (NODE_T * p)
   }
   TERMINATOR (file) = heap_generator (p, MODE (C_STRING), 1 + size);
   BLOCK_GC_HANDLE (&(TERMINATOR (file)));
-  ASSERT (a_to_c_string (p, (char *) ADDRESS (&(TERMINATOR (file))), str) != NO_TEXT);
+  ASSERT (a_to_c_string (p, DEREF (char, &TERMINATOR (file)), str) != NO_TEXT);
 }
 
 /*!
@@ -8651,12 +8669,12 @@ void genie_open (NODE_T * p)
   }
   IDENTIFICATION (file) = heap_generator (p, MODE (C_STRING), 1 + size);
   BLOCK_GC_HANDLE (&(IDENTIFICATION (file)));
-  ASSERT (a_to_c_string (p, (char *) ADDRESS (&(IDENTIFICATION (file))), ref_iden) != NO_TEXT);
+  ASSERT (a_to_c_string (p, DEREF (char, &IDENTIFICATION (file)), ref_iden) != NO_TEXT);
   TERMINATOR (file) = nil_ref;
   FORMAT (file) = nil_format;
   FD (file) = A68_NO_FILENO;
   if (INITIALISED (&(STRING (file))) && !IS_NIL (STRING (file))) {
-    UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(STRING (file))));
+    UNBLOCK_GC_HANDLE (DEREF (A68_REF, &STRING (file)));
   }
   STRING (file) = nil_ref;
   STRPOS (file) = 0;
@@ -8664,7 +8682,7 @@ void genie_open (NODE_T * p)
   set_default_mended_procedures (file);
   {
     struct stat status;
-    if (stat ((char *) ADDRESS (& (IDENTIFICATION (file))), &status) == 0) {
+    if (stat (DEREF (char, &IDENTIFICATION (file)), &status) == 0) {
       PUSH_PRIMITIVE (p, (S_ISREG (ST_MODE (&status)) != 0 ? 0 : 1), A68_INT);
     } else {
       PUSH_PRIMITIVE (p, 1, A68_INT);
@@ -8709,12 +8727,12 @@ void genie_establish (NODE_T * p)
   }
   IDENTIFICATION (file) = heap_generator (p, MODE (C_STRING), 1 + size);
   BLOCK_GC_HANDLE (&(IDENTIFICATION (file)));
-  ASSERT (a_to_c_string (p, (char *) ADDRESS (&(IDENTIFICATION (file))), ref_iden) != NO_TEXT);
+  ASSERT (a_to_c_string (p, DEREF (char, &IDENTIFICATION (file)), ref_iden) != NO_TEXT);
   TERMINATOR (file) = nil_ref;
   FORMAT (file) = nil_format;
   FD (file) = A68_NO_FILENO;
   if (INITIALISED (&(STRING (file))) && !IS_NIL (STRING (file))) {
-    UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(STRING (file))));
+    UNBLOCK_GC_HANDLE (DEREF (A68_REF, &STRING (file)));
   }
   STRING (file) = nil_ref;
   STRPOS (file) = 0;
@@ -8754,7 +8772,7 @@ void genie_create (NODE_T * p)
   FORMAT (file) = nil_format;
   FD (file) = A68_NO_FILENO;
   if (INITIALISED (&(STRING (file))) && !IS_NIL (STRING (file))) {
-    UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(STRING (file))));
+    UNBLOCK_GC_HANDLE (DEREF (A68_REF, &STRING (file)));
   }
   STRING (file) = nil_ref;
   STRPOS (file) = 0;
@@ -8803,7 +8821,7 @@ void genie_associate (NODE_T * p)
   FORMAT (file) = nil_format;
   FD (file) = A68_NO_FILENO;
   if (INITIALISED (&(STRING (file))) && !IS_NIL (STRING (file))) {
-    UNBLOCK_GC_HANDLE ((A68_REF *) ADDRESS (&(STRING (file))));
+    UNBLOCK_GC_HANDLE (DEREF (A68_REF, &STRING (file)));
   }
   STRING (file) = ref_string;
   BLOCK_GC_HANDLE ((A68_REF *) (&(STRING (file))));
@@ -8918,7 +8936,7 @@ void genie_erase (NODE_T * p)
   if (!IS_NIL (IDENTIFICATION (file))) {
     char *filename;
     CHECK_INIT (p, INITIALISED (&(IDENTIFICATION (file))), MODE (ROWS));
-    filename = (char *) ADDRESS (&(IDENTIFICATION (file)));
+    filename = DEREF (char, &IDENTIFICATION (file));
     if (remove (filename) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_SCRATCH);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -8966,7 +8984,7 @@ void genie_set (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!IS_NIL (STRING (file))) {
-    A68_REF z = *(A68_REF *) (ADDRESS (&STRING (file)));
+    A68_REF z = * DEREF (A68_REF, &STRING (file));
     A68_ARRAY *a;
     A68_TUPLE *t;
 /* Circumvent buffering problems */
@@ -9261,9 +9279,9 @@ void open_error (NODE_T * p, A68_REF ref_file, char *mode)
     file = FILE_DEREF (&ref_file);
     CHECK_INIT (p, INITIALISED (file), MODE (FILE));
     if (!IS_NIL (IDENTIFICATION (file))) {
-      filename = (char *) ADDRESS (&(IDENTIFICATION (FILE_DEREF (&ref_file))));
+      filename = DEREF (char, &IDENTIFICATION (FILE_DEREF (&ref_file)));
     } else {
-      filename = "(NIL filename)";
+      filename = "(missing filename)";
     }
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_CANNOT_OPEN_FOR, filename, mode);
     exit_genie (p, A68_RUNTIME_ERROR);
@@ -9361,23 +9379,25 @@ int char_scanner (A68_FILE * f)
       return (EOF_CHAR);
     }
   } else {
-/* File is associated with a STRING. Give next CHAR. 
-   When we're outside the STRING give EOF_CHAR. 
+/* 
+File is associated with a STRING. Give next CHAR. 
+When we're outside the STRING give EOF_CHAR. 
 */
-    A68_REF z = *(A68_REF *) (ADDRESS (&STRING (f)));    /* Dereference REF STRING */
+    A68_REF z = * DEREF (A68_REF, &STRING (f));
     A68_ARRAY *a;
     A68_TUPLE *t;
     BYTE_T *base;
     A68_CHAR *ch;
     GET_DESCRIPTOR (a, t, &z);
-    if (STRPOS (f) < LWB (t) || STRPOS (f) > UPB (t)) {
+    if (ROW_SIZE (t) <= 0 || STRPOS (f) < LWB (t) || STRPOS (f) > UPB (t)) {
       END_OF_FILE (f) = A68_TRUE;
       return (EOF_CHAR);
+    } else {
+      base = DEREF (BYTE_T, &ARRAY (a));
+      ch = (A68_CHAR *) & (base[INDEX_1_DIM (a, t, STRPOS (f))]);
+      STRPOS (f)++;
+      return (VALUE (ch));
     }
-    base = ADDRESS (&(ARRAY (a)));
-    ch = (A68_CHAR *) & (base[INDEX_1_DIM (a, t, STRPOS (f))]);
-    STRPOS (f)++;
-    return (VALUE (ch));
   }
 }
 
@@ -9876,7 +9896,9 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
   A68_FILE *file;
   A68_REF ref_filename;
   char *filename;
-  (void) permissions;
+  BOOL_T reading = (flags & ~O_BINARY) == A68_READ_ACCESS;
+  BOOL_T writing = (flags & ~O_BINARY) == A68_WRITE_ACCESS;
+  ABEND (reading == writing, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
   CHECK_REF (p, ref_file, MODE (REF_FILE));
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
@@ -9888,28 +9910,32 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
     return (FD (file));
   } else if (IS_NIL (IDENTIFICATION (file))) {
 /* No identification, so generate a unique identification. */
-    char tfilename[BUFFER_SIZE];
-    int len;
-    if (!a68g_mkstemp (tfilename, flags, permissions)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_NO_TEMP);
-      exit_genie (p, A68_RUNTIME_ERROR);
+    if (reading) {
+      return (A68_NO_FILENO);
+    } else {
+      char tfilename[BUFFER_SIZE];
+      int len;
+      if (!a68g_mkstemp (tfilename, flags, permissions)) {
+        diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_NO_TEMP);
+        exit_genie (p, A68_RUNTIME_ERROR);
+      }
+      FD (file) = open (tfilename, flags, permissions);
+      len = 1 + (int) strlen (tfilename);
+      IDENTIFICATION (file) = heap_generator (p, MODE (C_STRING), len);
+      BLOCK_GC_HANDLE (&(IDENTIFICATION (file)));
+      bufcpy (DEREF (char, &IDENTIFICATION (file)), tfilename, len);
+      TRANSPUT_BUFFER (file) = get_unblocked_transput_buffer (p);
+      reset_transput_buffer (TRANSPUT_BUFFER (file));
+      END_OF_FILE (file) = A68_FALSE;
+      TMP_FILE (file) = A68_TRUE;
+      FILE_ENTRY (file) = store_file_entry (p, FD (file), tfilename, TMP_FILE (file));
+      return (FD (file));
     }
-    FD (file) = open (tfilename, flags, permissions);
-    len = 1 + (int) strlen (tfilename);
-    IDENTIFICATION (file) = heap_generator (p, MODE (C_STRING), len);
-    BLOCK_GC_HANDLE (&(IDENTIFICATION (file)));
-    bufcpy ((char *) ADDRESS (&(IDENTIFICATION (file))), tfilename, len);
-    TRANSPUT_BUFFER (file) = get_unblocked_transput_buffer (p);
-    reset_transput_buffer (TRANSPUT_BUFFER (file));
-    END_OF_FILE (file) = A68_FALSE;
-    TMP_FILE (file) = A68_TRUE;
-    FILE_ENTRY (file) = store_file_entry (p, FD (file), tfilename, TMP_FILE (file));
-    return (FD (file));
   } else {
 /* Opening an identified file */
     ref_filename = IDENTIFICATION (file);
     CHECK_REF (p, ref_filename, MODE (ROWS));
-    filename = (char *) ADDRESS (&ref_filename);
+    filename = DEREF (char, &ref_filename);
     if (OPEN_EXCLUSIVE (file)) {
 /* Establishing requires that the file does not exist */
       if (flags == (A68_WRITE_ACCESS)) {
@@ -10397,7 +10423,7 @@ void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_
     scan_bits (p, ref_file);
     genie_string_to_value (p, mode, item, ref_file);
   } else if (mode == MODE (STRING)) {
-    char *term = (char *) ADDRESS (&TERMINATOR (f));
+    char *term = DEREF (char, &TERMINATOR (f));
     scan_string (p, term, ref_file);
     genie_string_to_value (p, mode, item, ref_file);
   } else if (IS (mode, STRUCT_SYMBOL)) {
@@ -10418,8 +10444,8 @@ void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_
     A68_TUPLE *tup;
     CHECK_INIT (p, INITIALISED ((A68_REF *) item), mode);
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
-    if (get_row_size (tup, DIM (arr)) != 0) {
-      BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+    if (get_row_size (tup, DIM (arr)) > 0) {
+      BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
       BOOL_T done = A68_FALSE;
       initialise_internal_index (tup, DIM (arr));
       while (!done) {
@@ -10516,7 +10542,10 @@ void genie_read_file (NODE_T * p)
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
   open_for_reading (p, ref_file);
 /* Read */
-  base_address = ADDRESS (&ARRAY (arr));
+  if (elems <= 0) {
+    return;
+  }
+  base_address = DEREF (BYTE_T, &ARRAY (arr));
   elem_index = 0;
   for (k = 0; k < elems; k++) {
     A68_UNION *z = (A68_UNION *) & base_address[elem_index];
@@ -10528,7 +10557,7 @@ void genie_read_file (NODE_T * p)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
       exit_genie (p, A68_RUNTIME_ERROR);
     } else if (mode == MODE (REF_SOUND)) {
-      read_sound (p, ref_file, (A68_SOUND *) ADDRESS ((A68_REF *) item));
+      read_sound (p, ref_file, DEREF (A68_SOUND, (A68_REF *) item));
     } else {
       if (END_OF_FILE (file)) {
         end_of_file_error (p, ref_file);
@@ -10717,8 +10746,8 @@ void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref
     A68_TUPLE *tup;
     CHECK_INIT (p, INITIALISED ((A68_REF *) item), MODE (ROWS));
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
-    if (get_row_size (tup, DIM (arr)) != 0) {
-      BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+    if (get_row_size (tup, DIM (arr)) > 0) {
+      BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
       BOOL_T done = A68_FALSE;
       initialise_internal_index (tup, DIM (arr));
       while (!done) {
@@ -10817,7 +10846,11 @@ void genie_write_file (NODE_T * p)
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
   open_for_writing (p, ref_file);
-  base_address = ADDRESS (&(ARRAY (arr)));
+/* Write. */
+  if (elems <= 0) {
+    return;
+  }
+  base_address = DEREF (BYTE_T, &ARRAY (arr));
   elem_index = 0;
   for (k = 0; k < elems; k++) {
     A68_UNION *z = (A68_UNION *) & (base_address[elem_index]);
@@ -10911,8 +10944,8 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
     A68_TUPLE *tup;
     CHECK_INIT (p, INITIALISED ((A68_REF *) item), MODE (ROWS));
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
-    if (get_row_size (tup, DIM (arr)) != 0) {
-      BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+    if (get_row_size (tup, DIM (arr)) > 0) {
+      BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
       BOOL_T done = A68_FALSE;
       initialise_internal_index (tup, DIM (arr));
       while (!done) {
@@ -10935,76 +10968,11 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
 
 void genie_read_bin (NODE_T * p)
 {
-  A68_REF ref_file;
-  A68_FILE *file;
   A68_REF row;
-  A68_ARRAY *arr;
-  A68_TUPLE *tup;
-  BYTE_T *base_address;
-  int elems, k, elem_index;
   POP_REF (p, &row);
-  CHECK_REF (p, row, MODE (ROW_SIMPLIN));
-  GET_DESCRIPTOR (arr, tup, &row);
-  elems = ROW_SIZE (tup);
-  ref_file = stand_back;
-  file = FILE_DEREF (&ref_file);
-  CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (!OPENED (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_NOT_OPEN);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (DRAW_MOOD (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "draw");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (WRITE_MOOD (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "write");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (!GET (&CHANNEL (file))) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CHANNEL_DOES_NOT_ALLOW, "getting");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (!BIN (&CHANNEL (file))) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CHANNEL_DOES_NOT_ALLOW, "binary getting");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (!READ_MOOD (file) && !WRITE_MOOD (file)) {
-    if ((FD (file) = open_physical_file (p, ref_file, A68_READ_ACCESS | O_BINARY, 0)) == A68_NO_FILENO) {
-      open_error (p, ref_file, "binary getting");
-    }
-    DRAW_MOOD (file) = A68_FALSE;
-    READ_MOOD (file) = A68_TRUE;
-    WRITE_MOOD (file) = A68_FALSE;
-    CHAR_MOOD (file) = A68_FALSE;
-  }
-  if (CHAR_MOOD (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "text");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-/* Read */
-  elem_index = 0;
-  base_address = ADDRESS (&(ARRAY (arr)));
-  for (k = 0; k < elems; k++) {
-    A68_UNION *z = (A68_UNION *) & base_address[elem_index];
-    MOID_T *mode = (MOID_T *) (VALUE (z));
-    BYTE_T *item = (BYTE_T *) & base_address[elem_index + ALIGNED_SIZE_OF (A68_UNION)];
-    if (mode == MODE (PROC_REF_FILE_VOID)) {
-      genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
-    } else if (mode == MODE (FORMAT)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (REF_SOUND)) {
-      read_sound (p, ref_file, (A68_SOUND *) ADDRESS ((A68_REF *) item));
-    } else {
-      if (END_OF_FILE (file)) {
-        end_of_file_error (p, ref_file);
-      }
-      CHECK_REF (p, *(A68_REF *) item, mode);
-      genie_read_bin_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
-    }
-    elem_index += MOID_SIZE (MODE (SIMPLIN));
-  }
+  genie_stand_back (p);
+  PUSH_REF (p, row);
+  genie_read_bin_file (p);
 }
 
 /*!
@@ -11064,8 +11032,11 @@ void genie_read_bin_file (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
 /* Read */
+  if (elems <= 0) {
+    return;
+  }
   elem_index = 0;
-  base_address = ADDRESS (&(ARRAY (arr)));
+  base_address = DEREF (BYTE_T, &ARRAY (arr));
   for (k = 0; k < elems; k++) {
     A68_UNION *z = (A68_UNION *) & base_address[elem_index];
     MOID_T *mode = (MOID_T *) (VALUE (z));
@@ -11139,8 +11110,8 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
     A68_TUPLE *tup;
     CHECK_INIT (p, INITIALISED ((A68_REF *) item), MODE (ROWS));
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
-    if (get_row_size (tup, DIM (arr)) != 0) {
-      BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+    if (get_row_size (tup, DIM (arr)) > 0) {
+      BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
       BOOL_T done = A68_FALSE;
       initialise_internal_index (tup, DIM (arr));
       while (!done) {
@@ -11165,70 +11136,11 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
 
 void genie_write_bin (NODE_T * p)
 {
-  A68_REF ref_file, row;
-  A68_FILE *file;
-  A68_ARRAY *arr;
-  A68_TUPLE *tup;
-  BYTE_T *base_address;
-  int elems, k, elem_index;
+  A68_REF row;
   POP_REF (p, &row);
-  CHECK_REF (p, row, MODE (ROW_SIMPLOUT));
-  GET_DESCRIPTOR (arr, tup, &row);
-  elems = ROW_SIZE (tup);
-  ref_file = stand_back;
-  file = FILE_DEREF (&ref_file);
-  CHECK_INIT (p, INITIALISED (file), MODE (FILE));
-  if (!OPENED (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_NOT_OPEN);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (DRAW_MOOD (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "draw");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (READ_MOOD (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "read");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (!PUT (&CHANNEL (file))) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CHANNEL_DOES_NOT_ALLOW, "putting");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (!BIN (&CHANNEL (file))) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CHANNEL_DOES_NOT_ALLOW, "binary putting");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  if (!READ_MOOD (file) && !WRITE_MOOD (file)) {
-    if ((FD (file) = open_physical_file (p, ref_file, A68_WRITE_ACCESS | O_BINARY, A68_PROTECTION)) == A68_NO_FILENO) {
-      open_error (p, ref_file, "binary putting");
-    }
-    DRAW_MOOD (file) = A68_FALSE;
-    READ_MOOD (file) = A68_FALSE;
-    WRITE_MOOD (file) = A68_TRUE;
-    CHAR_MOOD (file) = A68_FALSE;
-  }
-  if (CHAR_MOOD (file)) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "text");
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
-  base_address = ADDRESS (&ARRAY (arr));
-  elem_index = 0;
-  for (k = 0; k < elems; k++) {
-    A68_UNION *z = (A68_UNION *) & base_address[elem_index];
-    MOID_T *mode = (MOID_T *) (VALUE (z));
-    BYTE_T *item = (BYTE_T *) & base_address[elem_index + ALIGNED_SIZE_OF (A68_UNION)];
-    if (mode == MODE (PROC_REF_FILE_VOID)) {
-      genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
-    } else if (mode == MODE (FORMAT)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (SOUND)) {
-      write_sound (p, ref_file, (A68_SOUND *) item);
-    } else {
-      genie_write_bin_standard (p, mode, item, ref_file);
-    }
-    elem_index += MOID_SIZE (MODE (SIMPLOUT));
-  }
+  genie_stand_back (p);
+  PUSH_REF (p, row);
+  genie_write_bin_file (p);
 }
 
 /*!
@@ -11286,7 +11198,10 @@ void genie_write_bin_file (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_WRONG_MOOD, "text");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  base_address = ADDRESS (&ARRAY (arr));
+  if (elems <= 0) {
+    return;
+  }
+  base_address = DEREF (BYTE_T, &ARRAY (arr));
   elem_index = 0;
   for (k = 0; k < elems; k++) {
     A68_UNION *z = (A68_UNION *) & base_address[elem_index];
@@ -13171,7 +13086,7 @@ static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int 
   size = ROW_SIZE (tup);
   if (size > 0) {
     int i;
-    BYTE_T *base_address = ADDRESS (&ARRAY (arr));
+    BYTE_T *base_address = DEREF (BYTE_T, &ARRAY (arr));
     for (i = LWB (tup); i <= UPB (tup); i++) {
       int addr = INDEX_1_DIM (arr, tup, i);
       int arg = VALUE ((A68_INT *) & (base_address[addr]));
@@ -14447,8 +14362,8 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     A68_TUPLE *tup;
     CHECK_INIT (p, INITIALISED ((A68_REF *) item), MODE (ROWS));
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
-    if (get_row_size (tup, DIM (arr)) != 0) {
-      BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+    if (get_row_size (tup, DIM (arr)) > 0) {
+      BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
       BOOL_T done = A68_FALSE;
       initialise_internal_index (tup, DIM (arr));
       while (!done) {
@@ -14573,8 +14488,11 @@ void genie_write_file_format (NODE_T * p)
   if (BODY (&FORMAT (file)) != NO_NODE) {
     open_format_frame (p, ref_file, &FORMAT (file), NOT_EMBEDDED_FORMAT, A68_FALSE);
   }
+  if (elems <= 0) {
+    return;
+  }
   formats = 0;
-  base_address = ADDRESS (&(ARRAY (arr)));
+  base_address = DEREF (BYTE_T, &ARRAY (arr));
   elem_index = 0;
   for (k = 0; k < elems; k++) {
     A68_UNION *z = (A68_UNION *) & (base_address[elem_index]);
@@ -14671,9 +14589,7 @@ put, which is non-standard Algol68, but convenient.
       PUSH_PRIMITIVE (p, -1, A68_INT);
       genie_set (p);
     } else if (IS (p, LITERAL)) {
-      /*
-       * Skip characters, don't check whether the literal wordly is there. 
-       */
+      /* Skip characters, but don't check the literal. */
       int len = (int) strlen (NSYMBOL (p));
       while (len-- && !END_OF_FILE (file)) {
         (void) read_single_char (p, ref_file);
@@ -14692,7 +14608,7 @@ put, which is non-standard Algol68, but convenient.
           }
         }
       }
-      return;                   /* Don't delete this! */
+      return; /* Don't delete this! */
     }
   }
 }
@@ -15265,8 +15181,8 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
     A68_TUPLE *tup;
     CHECK_INIT (p, INITIALISED ((A68_REF *) item), MODE (ROWS));
     GET_DESCRIPTOR (arr, tup, (A68_REF *) item);
-    if (get_row_size (tup, DIM (arr)) != 0) {
-      BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+    if (get_row_size (tup, DIM (arr)) > 0) {
+      BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
       BOOL_T done = A68_FALSE;
       initialise_internal_index (tup, DIM (arr));
       while (!done) {
@@ -15394,8 +15310,11 @@ void genie_read_file_format (NODE_T * p)
   if (BODY (&FORMAT (file)) != NO_NODE) {
     open_format_frame (p, ref_file, &FORMAT (file), NOT_EMBEDDED_FORMAT, A68_FALSE);
   }
+  if (elems <= 0) {
+    return;
+  }
   formats = 0;
-  base_address = ADDRESS (&(ARRAY (arr)));
+  base_address = DEREF (BYTE_T, &ARRAY (arr));
   elem_index = 0;
   for (k = 0; k < elems; k++) {
     A68_UNION *z = (A68_UNION *) & (base_address[elem_index]);
@@ -15902,7 +15821,7 @@ int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
       FD (fe) = fd;
       IDF (fe) = heap_generator (p, MODE (C_STRING), len);
       BLOCK_GC_HANDLE (&(IDF (fe)));
-      bufcpy ((char *) ADDRESS (&(IDF (fe))), idf, len);
+      bufcpy (DEREF (char, &IDF (fe)), idf, len);
       return (k);
     }
   }
@@ -15931,7 +15850,7 @@ void free_file_entry (NODE_T *p, int k)
         if (!IS_NIL (IDF (fe))) {
           char *filename;
           CHECK_INIT (p, INITIALISED (&(IDF (fe))), MODE (ROWS));
-          filename = (char *) ADDRESS (&(IDF (fe)));
+          filename = DEREF (char, &IDF (fe));
           if (filename != NO_TEXT) {
             (void) remove (filename);
           }
@@ -16635,8 +16554,8 @@ void genie_new_sound (NODE_T * p)
   SAMPLE_RATE (&w) = (unsigned) (VALUE (&sample_rate));
   BITS_PER_SAMPLE (&w) = (unsigned) (VALUE (&bits_per_sample));
   test_bits_per_sample (p, BITS_PER_SAMPLE (&w));
-  DATA_SIZE (&w) = A68_SOUND_DATA_SIZE (&w);
-  DATA (&w) = heap_generator (p, MODE (SOUND_DATA), DATA_SIZE (&w));
+  DATA_SIZE (&w) = (unsigned) A68_SOUND_DATA_SIZE (&w);
+  DATA (&w) = heap_generator (p, MODE (SOUND_DATA), (int) DATA_SIZE (&w));
   STATUS (&w) = INITIALISED_MASK;
   PUSH_OBJECT (p, w, A68_SOUND);
 }
@@ -17118,7 +17037,7 @@ void genie_directory (NODE_T * p)
     SPAN (&tup) = 1;
     K (&tup) = 0;
     PUT_DESCRIPTOR (arr, tup, &z);
-    base = (A68_REF *) ADDRESS (&row);
+    base = DEREF (A68_REF, &row);
     for (k = 0; k < n; k++) {
       entry = readdir (dir);
       if (errno != 0) {
@@ -17500,8 +17419,8 @@ static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
   A68_ARRAY *arr = (A68_ARRAY *) & z[0];
   A68_TUPLE *tup = (A68_TUPLE *) & z[ALIGNED_SIZE_OF (A68_ARRAY)];
   int k = 0;
-  if (get_row_size (tup, DIM (arr)) != 0) {
-    BYTE_T *base_addr = ADDRESS (&ARRAY (arr));
+  if (get_row_size (tup, DIM (arr)) > 0) {
+    BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
     BOOL_T done = A68_FALSE;
     initialise_internal_index (tup, DIM (arr));
     while (!done) {
@@ -17587,7 +17506,7 @@ static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL
 {
   A68_FILE *f;
   *z = heap_generator (p, MODE (REF_FILE), ALIGNED_SIZE_OF (A68_FILE));
-  f = (A68_FILE *) ADDRESS (z);
+  f = FILE_DEREF (z);
   STATUS (f) = (STATUS_MASK) ((pid < 0) ? 0 : INITIALISED_MASK);
   IDENTIFICATION (f) = nil_ref;
   TERMINATOR (f) = nil_ref;
@@ -17911,7 +17830,7 @@ Child redirects STDIN and STDOUT.
       status = -1;
     }
     if (!IS_NIL (dest)) {
-      *(A68_REF *) ADDRESS (&dest) =
+      * DEREF (A68_REF, &dest) =
         c_to_a_string (p, get_transput_buffer (INPUT_BUFFER),
                           get_transput_buffer_index (INPUT_BUFFER));
     }
@@ -18249,12 +18168,12 @@ void genie_grep_in_string (NODE_T * p)
     }
   }
   if (!IS_NIL (ref_beg)) {
-    A68_INT *i = (A68_INT *) ADDRESS (&ref_beg);
+    A68_INT *i = DEREF (A68_INT, &ref_beg);
     STATUS (i) = INITIALISED_MASK;
     VALUE (i) = (int) (RM_SO (&(matches[max_k]))) + (int) (LOWER_BOUND (tup));
   }
   if (!IS_NIL (ref_end)) {
-    A68_INT *i = (A68_INT *) ADDRESS (&ref_end);
+    A68_INT *i = DEREF (A68_INT, &ref_end);
     STATUS (i) = INITIALISED_MASK;
     VALUE (i) = (int) (RM_EO (&(matches[max_k]))) + (int) (LOWER_BOUND (tup)) - 1;
   }
@@ -18321,12 +18240,12 @@ void genie_grep_in_substring (NODE_T * p)
     }
   }
   if (!IS_NIL (ref_beg)) {
-    A68_INT *i = (A68_INT *) ADDRESS (&ref_beg);
+    A68_INT *i = DEREF (A68_INT, &ref_beg);
     STATUS (i) = INITIALISED_MASK;
     VALUE (i) = (int) (RM_SO (&(matches[max_k]))) + (int) (LOWER_BOUND (tup));
   }
   if (!IS_NIL (ref_end)) {
-    A68_INT *i = (A68_INT *) ADDRESS (&ref_end);
+    A68_INT *i = DEREF (A68_INT, &ref_end);
     STATUS (i) = INITIALISED_MASK;
     VALUE (i) = (int) (RM_EO (&(matches[max_k]))) + (int) (LOWER_BOUND (tup)) - 1;
   }
@@ -18358,7 +18277,7 @@ void genie_sub_in_string (NODE_T * p)
   reset_transput_buffer (REPLACE_BUFFER);
   reset_transput_buffer (PATTERN_BUFFER);
   add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_pat);
-  add_a_string_transput_buffer (p, STRING_BUFFER, (BYTE_T *) (A68_REF *) ADDRESS (&ref_str));
+  add_a_string_transput_buffer (p, STRING_BUFFER, (BYTE_T *) DEREF (A68_REF, &ref_str));
   rc = regcomp (&compiled, get_transput_buffer (PATTERN_BUFFER), REG_NEWLINE | REG_EXTENDED);
   if (rc != 0) {
     push_grep_rc (p, rc);
@@ -18402,7 +18321,7 @@ void genie_sub_in_string (NODE_T * p)
   for (k = end; k < get_transput_buffer_size (STRING_BUFFER); k++) {
     add_char_transput_buffer (p, REPLACE_BUFFER, txt[k]);
   }
-  *(A68_REF *) ADDRESS (&ref_str) = c_to_a_string (p, get_transput_buffer (REPLACE_BUFFER), DEFAULT_WIDTH);
+  * DEREF (A68_REF, &ref_str) = c_to_a_string (p, get_transput_buffer (REPLACE_BUFFER), DEFAULT_WIDTH);
   free (matches);
   push_grep_rc (p, 0);
 }

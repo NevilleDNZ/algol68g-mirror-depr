@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -2320,7 +2320,7 @@ static void inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
         inline_unit (SUB (p), out, L_YIELD);
         undent (out, ");\n");
       } else {
-        indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) ADDRESS (", idf, inline_mode (MOID (p))));
+        indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, ", idf, inline_mode (MOID (p))));
         sign_in (BOOK_DEREF, L_EXECUTE, NSYMBOL (p), NULL, NUMBER (p));
         inline_unit (SUB (p), out, L_YIELD);
         undent (out, ");\n");
@@ -2495,7 +2495,7 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
       (void) make_name (drf, DRF, "", NUMBER (prim));
       get_stack (pidf, out, idf, "A68_REF");
       if (IS (row_mode, REF_SYMBOL) && IS (SUB (row_mode), ROW_SYMBOL)) {
-        indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
+        indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, DEREF (A68_ROW, %s));\n", arr, tup, idf));
       } else {
         ABEND (A68_TRUE, "strange mode in dereference slice (execute)", NO_TEXT);
       }
@@ -2515,7 +2515,7 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
     k = 0;
     inline_indexer (indx, out, L_YIELD, &k, tup);
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) ADDRESS(& %s);\n", drf, inline_mode (mode), elm));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
   } else if (phase == L_YIELD) {
     BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry != NO_BOOK && same_tree (indx, (NODE_T *) (INFO (entry))) == A68_TRUE) {
@@ -2588,7 +2588,7 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
       (void) make_name (drf, DRF, "", NUMBER (prim));
       get_stack (pidf, out, idf, "A68_REF");
       if (IS (row_mode, REF_SYMBOL) && IS (SUB (row_mode), ROW_SYMBOL)) {
-        indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
+        indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, DEREF (A68_ROW, %s));\n", arr, tup, idf));
       } else {
         ABEND (A68_TRUE, "strange mode in slice (execute)", NO_TEXT);
       }
@@ -2608,7 +2608,7 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
     k = 0;
     inline_indexer (indx, out, L_YIELD, &k, tup);
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) ADDRESS(& %s);\n", drf, inline_mode (mode), elm));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
   } else if (phase == L_YIELD) {
     BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry != NO_BOOK && same_tree (indx, (NODE_T *) (INFO (entry))) == A68_TRUE) {
@@ -2664,7 +2664,7 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
       (void) make_name (drf, DRF, "", NUMBER (prim));
       get_stack (pidf, out, idf, "A68_REF");
       if (IS (row_mode, REF_SYMBOL)) {
-        indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
+        indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, DEREF (A68_ROW, %s));\n", arr, tup, idf));
       } else {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) %s);\n", arr, tup, idf));
       }
@@ -2684,7 +2684,7 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
     k = 0;
     inline_indexer (indx, out, L_YIELD, &k, tup);
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) ADDRESS(& %s);\n", drf, inline_mode (mode), elm));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
   } else if (phase == L_YIELD) {
     BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry != NO_BOOK && same_tree (indx, (NODE_T *) (INFO (entry))) == A68_TRUE) {
@@ -4364,7 +4364,7 @@ static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int com
     if (signed_in (BOOK_DECL, L_EXECUTE, symbol) == NO_BOOK) {
       NODE_T * pidf = locate (prim, IDENTIFIER);
       get_stack (pidf, out, idf, "A68_REF");
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, (A68_ROW *) ADDRESS (%s));\n", arr, tup, idf));
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, DEREF (A68_ROW, %s));\n", arr, tup, idf));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = ARRAY (%s);\n", elm, arr));
       sign_in (BOOK_DECL, L_EXECUTE, NSYMBOL (p), (void *) indx, NUMBER (prim));
     }
@@ -4374,7 +4374,7 @@ static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int com
     k = 0;
     inline_indexer (indx, out, L_YIELD, &k, tup);
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) ADDRESS(& %s);\n", drf, inline_mode (mode), elm));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
     inline_unit (src, out, L_EXECUTE);
 /* Generate */
     compile_assign (src, out, drf);
@@ -4433,7 +4433,7 @@ static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, in
         undent (out, ");\n");
         sign_in (BOOK_DEREF, L_EXECUTE, NSYMBOL (q), NULL, NUMBER (p));
       } else {
-        indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) ADDRESS (", idf, inline_mode (SUB_MOID (dst))));
+        indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, ", idf, inline_mode (SUB_MOID (dst))));
         inline_unit (dst, out, L_YIELD);
         undent (out, ");\n");
         sign_in (BOOK_DEREF, L_EXECUTE, NSYMBOL (q), NULL, NUMBER (p));

@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -126,7 +126,7 @@ void state_license (FILE_T f)
   }
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright (c) 2011 %s.\n", PACKAGE_BUGREPORT) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright (c) 2012 %s.\n", PACKAGE_BUGREPORT) >= 0);
   WRITE (f, output_line);
   PR ("");
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "This is free software covered by the GNU General Public License.\n") >= 0);
@@ -150,6 +150,9 @@ void state_license (FILE_T f)
 
 void state_version (FILE_T f)
 {
+#if ! defined HAVE_WIN32
+  char txt[BUFFER_SIZE];
+#endif
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
   }
@@ -213,6 +216,18 @@ void state_version (FILE_T f)
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PostgreSQL is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
+#if ! defined HAVE_WIN32
+  if (confstr (_CS_GNU_LIBC_VERSION, txt, BUFFER_SIZE) > (size_t) 0) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libc version %s.\n", txt) >= 0);
+    WRITE (f, output_line);
+  }
+#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+  if (confstr (_CS_GNU_LIBPTHREAD_VERSION, txt, BUFFER_SIZE) > (size_t) 0) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libpthread version %s.\n", txt) >= 0);
+    WRITE (f, output_line);
+  }
+#endif
+#endif
 }
 
 /*!

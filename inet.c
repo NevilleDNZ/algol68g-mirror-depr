@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -68,7 +68,7 @@ void genie_http_content (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  *(A68_REF *) ADDRESS (&content_string) = empty_string (p);
+  * DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -156,7 +156,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  *(A68_REF *) ADDRESS (&content_string) =
+  * DEREF (A68_REF, &content_string) =
     c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
       get_transput_buffer_index (CONTENT_BUFFER));
   if (k != 0) {
@@ -194,7 +194,7 @@ void genie_tcp_request (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  *(A68_REF *) ADDRESS (&content_string) = empty_string (p);
+  * DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -280,7 +280,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  *(A68_REF *) ADDRESS (&content_string) =
+  * DEREF (A68_REF, &content_string) =
     c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
       get_transput_buffer_index (CONTENT_BUFFER));
   if (k != 0) {
@@ -320,7 +320,7 @@ void genie_http_content (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  *(A68_REF *) ADDRESS (&content_string) = empty_string (p);
+  * DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -423,7 +423,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  *(A68_REF *) ADDRESS (&content_string) =
+  * DEREF (A68_REF, &content_string) =
     c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
       get_transput_buffer_index (CONTENT_BUFFER));
   ASSERT (close (socket_id) == 0);
@@ -457,7 +457,7 @@ void genie_tcp_request (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  *(A68_REF *) ADDRESS (&content_string) = empty_string (p);
+  * DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -558,7 +558,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  *(A68_REF *) ADDRESS (&content_string) =
+  * DEREF (A68_REF, &content_string) =
     c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
       get_transput_buffer_index (CONTENT_BUFFER));
   ASSERT (close (socket_id) == 0);

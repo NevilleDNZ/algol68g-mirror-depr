@@ -1,3 +1,7 @@
+12.2011 - 2.3.6
+Source code maintenance.
+Documentation updates.
+
 11.2011 - 2.3.5
 Fixed string handling issue.
 Fixed configuration-issue (explicit export-dynamic).
@@ -7,137 +11,88 @@ Fixed minor problem in garbage collector.
 Fixed omission in genie_push_undefined.
 Added colour to the editor.
 
-09.11.2011 - 2.3.4
+11.2011 - 2.3.4
 Fixed AC_PROG_CC expansion (known autoconf problem).
 
-29.10.2011 - 2.3.4
+10.2011 - 2.3.4
 Fixed bug in mode checker.
 
-22.10.2011 - 2.3.3
+10.2011 - 2.3.3
 Added code-clause.
-
-16.10.2011 - 2.3.3
 Portable code for comparing pthread_t objects.
 
-15.10.2011 - 2.3.2
+10.2011 - 2.3.2
 Fixed minor issues.
-
-01.10.2011 - 2.3.2
 Fixed heap allocation bug.
 
-27.09.2011 - 2.3.2
+09.2011 - 2.3.2
 Fixed COMPLEX division by zero neglect.
 
-17.09.2011 - 2.3.1
+09.2011 - 2.3.1
 Fixed minor issue in mode table builder.
-
-16.09.2011 - 2.3.1
 Fixed minor issue in interpreter.
 
-11.09.2011 - 2.3.0
+09.2011 - 2.3.0
 Fixed minor issue in code generator.
-
-09.09.2011 - 2.3.0
 Fixed medium issue in mode checker.
-
-06.09.2011 - 2.3.0
 Fixed minor issue in the scanner.
 
-02.09.2011 - 2.3.0
-24.08.2011 - 2.3.0
+08.2011 - 2.3.0
 Fixed minor issues in mode checker.
 
-18.07.2011 - 2.3.0
+07.2011 - 2.3.0
 Alpha: non-local environs.
-
-14.07.2011 - 2.3.0
 Alpha: ghost elements for empty rows.
-
-09.07.2011 - 2.3.0
 New self-consistency criterion for the mode table builder.
 
-------
-
-03.07.2011 - 2.2.0
+07.2011 - 2.2.0
 Improved the parser.
 
-30.06.2011 - 2.2.0
+06.2011 - 2.2.0
 Revamped the mode table builder.
-
-17.06.2011 - 2.2.0
 Improved mode checker.
-
-13.06.2011 - 2.2.0
 Fixed minor bug in mode checker.
-
-05.06.2011 - 2.2.0
 Added handling of unclosed files at end of execution.
 
-15.05.2011 - 2.2.0
+05.2011 - 2.2.0
 Fixed "a68g_divab_real not found" in a68g.h.
 
-30.04.2011 - 2.2.0
-Finished alpha version of the editor, which is undocumented for now.
-
-19.04.2011 - 2.2.0
+04.2011 - 2.2.0
+Alpha version of the editor, which is undocumented for now.
 Added function a68g_mkstemp.
 
-13.02.2011 - 2.2.0
+02.2011 - 2.2.0
 Added routine grep in substring.
 
-23.01.2011 - 2.2.0
+01.2011 - 2.2.0
 Added compile_uniting to code.c.
 Removed unneeded stackpointer saves in code.c.
 Improved underflow/overflow detection in REAL denotations in code.c.
 
-------
-
-22.01.2011 - 2.1.2
+01.2011 - 2.1.2
 Fixed "include" problem in code.c.
-
-21.01.2011 - 2.1.2
 Revised the documentation.
-
-15.01.2011 - 2.1.2
 Adapted Makefile.am for Wextra and Wshadow.
 
-------
-
-08.01.2011 - 2.1.1
+01.2011 - 2.1.1
 Improved error reporting in options to a68g.
 Updated the documentation.
-
-07.01.2011 - 2.1.1
 Added option --enable-arch and --enable-pic to configure.ac.
-
-05.01.2011 - 2.1.1
 Adapted configure.ac to accomodate /usr/pkg platforms.
 Adapted configure.ac so optional functionality can be enabled/disabled.
 Updated the documentation.
-
-04.01.2011 - 2.1.1
 Adapted configure.ac to better accomodate /usr and /opt platforms.
 Shell-script building is not portable - inhibited on non-Linux systems.
 Pass (includedir) to a68g so compiler knows about non-standard target directories.
 
-------
-
-03.01.2011 - 2.1.0
+01.2011 - 2.1.0
 Macro-ised various RTS functions for INT, REAL and COMPLEX.
+Fixed bug reported by Andy Walker (errno checking at EXECUTE_UNIT_TRACE).
 
-01.01.2011 - 2.1.0
-Fixed bug reported by Andy Walker (caused by errno checking at EXECUTE_UNIT_TRACE).
-
-28.12.2010 - 2.1.0
+12.2010 - 2.1.0
 Made the upgraded package run on MacOS X.
-
-23.12.2010 - 2.1.0
 Made the upgraded package run on FreeBSD.
-
-22.12.2010 - 2.1.0
 Made the upgraded package run on Linux.
-
-21.12.2010 - 2.1.0
 Finished upgrading to the GNU build system.
 
 ------

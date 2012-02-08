@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -1176,7 +1176,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define ADDRESS(z) (&((IS_IN_HEAP (z) ? REF_POINTER (z) : stack_segment)[REF_OFFSET (z)]))
 #define ARRAY_ADDRESS(z) (&(REF_POINTER (z)[REF_OFFSET (z)]))
 #define DEREF(mode, expr) ((mode *) ADDRESS (expr))
-#define FILE_DEREF(p) ((A68_FILE *) ADDRESS (p))
+#define FILE_DEREF(p) DEREF (A68_FILE, (p))
 #define HEAP_ADDRESS(n) ((BYTE_T *) & (heap_segment[n]))
 #define IS_IN_FRAME(z) (STATUS (z) & IN_FRAME_MASK)
 #define IS_IN_HEAP(z) (STATUS (z) & IN_HEAP_MASK)

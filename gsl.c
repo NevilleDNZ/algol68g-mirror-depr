@@ -5,7 +5,7 @@
 
 /*
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2011 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -109,8 +109,8 @@ static gsl_permutation *pop_permutation (NODE_T * p, BOOL_T get)
   GET_DESCRIPTOR (arr, tup, &desc);
   len = ROW_SIZE (tup);
   v = gsl_permutation_alloc ((size_t) len);
-  if (get) {
-    base = DEREF (BYTE_T, &(ARRAY (arr)));
+  if (get && len > 0) {
+    base = DEREF (BYTE_T, &ARRAY (arr));
     iindex = VECTOR_OFFSET (arr, tup);
     inc = SPAN (tup) * ELEM_SIZE (arr);
     for (k = 0; k < len; k++, iindex += inc) {
@@ -150,7 +150,7 @@ static void push_permutation (NODE_T * p, gsl_permutation * v)
   SHIFT (&tup) = LWB (&tup);
   K (&tup) = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
   inc = SPAN (&tup) * ELEM_SIZE (&arr);
   for (k = 0; k < len; k++, iindex += inc) {
@@ -184,8 +184,8 @@ static gsl_vector *pop_vector (NODE_T * p, BOOL_T get)
   GET_DESCRIPTOR (arr, tup, &desc);
   len = ROW_SIZE (tup);
   v = gsl_vector_alloc ((size_t) len);
-  if (get) {
-    base = DEREF (BYTE_T, &(ARRAY (arr)));
+  if (get && len > 0) {
+    base = DEREF (BYTE_T, &ARRAY (arr));
     iindex = VECTOR_OFFSET (arr, tup);
     inc = SPAN (tup) * ELEM_SIZE (arr);
     for (k = 0; k < len; k++, iindex += inc) {
@@ -225,7 +225,7 @@ static void push_vector (NODE_T * p, gsl_vector * v)
   SHIFT (&tup) = LWB (&tup);
   K (&tup) = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
   inc = SPAN (&tup) * ELEM_SIZE (&arr);
   for (k = 0; k < len; k++, iindex += inc) {
@@ -262,8 +262,8 @@ static gsl_matrix *pop_matrix (NODE_T * p, BOOL_T get)
   len1 = ROW_SIZE (tup1);
   len2 = ROW_SIZE (tup2);
   a = gsl_matrix_alloc ((size_t) len1, (size_t) len2);
-  if (get) {
-    base = DEREF (BYTE_T, &(ARRAY (arr)));
+  if (get && (len1 * len2 > 0)) {
+    base = DEREF (BYTE_T, &ARRAY (arr));
     iindex1 = MATRIX_OFFSET (arr, tup1, tup2);
     inc1 = SPAN (tup1) * ELEM_SIZE (arr);
     inc2 = SPAN (tup2) * ELEM_SIZE (arr);
@@ -312,7 +312,7 @@ static void push_matrix (NODE_T * p, gsl_matrix * a)
   SHIFT (&tup2) = LWB (&tup2) * SPAN (&tup2);
   K (&tup2) = 0;
   PUT_DESCRIPTOR2 (arr, tup1, tup2, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex1 = MATRIX_OFFSET (&arr, &tup1, &tup2);
   inc1 = SPAN (&tup1) * ELEM_SIZE (&arr);
   inc2 = SPAN (&tup2) * ELEM_SIZE (&arr);
@@ -350,8 +350,8 @@ static gsl_vector_complex *pop_vector_complex (NODE_T * p, BOOL_T get)
   GET_DESCRIPTOR (arr, tup, &desc);
   len = ROW_SIZE (tup);
   v = gsl_vector_complex_alloc ((size_t) len);
-  if (get) {
-    base = DEREF (BYTE_T, &(ARRAY (arr)));
+  if (get && len > 0) {
+    base = DEREF (BYTE_T, &ARRAY (arr));
     iindex = VECTOR_OFFSET (arr, tup);
     inc = SPAN (tup) * ELEM_SIZE (arr);
     for (k = 0; k < len; k++, iindex += inc) {
@@ -395,7 +395,7 @@ static void push_vector_complex (NODE_T * p, gsl_vector_complex * v)
   SHIFT (&tup) = LWB (&tup);
   K (&tup) = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
   inc = SPAN (&tup) * ELEM_SIZE (&arr);
   for (k = 0; k < len; k++, iindex += inc) {
@@ -435,8 +435,8 @@ static gsl_matrix_complex *pop_matrix_complex (NODE_T * p, BOOL_T get)
   len1 = ROW_SIZE (tup1);
   len2 = ROW_SIZE (tup2);
   a = gsl_matrix_complex_alloc ((size_t) len1, (size_t) len2);
-  if (get) {
-    BYTE_T *base = DEREF (BYTE_T, &(ARRAY (arr)));
+  if (get && (len1 * len2 > 0)) {
+    BYTE_T *base = DEREF (BYTE_T, &ARRAY (arr));
     int iindex1 = MATRIX_OFFSET (arr, tup1, tup2);
     int inc1 = SPAN (tup1) * ELEM_SIZE (arr), inc2 = SPAN (tup2) * ELEM_SIZE (arr), k1;
     for (k1 = 0; k1 < len1; k1++, iindex1 += inc1) {
@@ -489,7 +489,7 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
   SHIFT (&tup2) = LWB (&tup2) * SPAN (&tup2);
   K (&tup2) = 0;
   PUT_DESCRIPTOR2 (arr, tup1, tup2, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex1 = MATRIX_OFFSET (&arr, &tup1, &tup2);
   inc1 = SPAN (&tup1) * ELEM_SIZE (&arr);
   inc2 = SPAN (&tup2) * ELEM_SIZE (&arr);
@@ -2392,12 +2392,12 @@ static double *pop_array_real (NODE_T * p, int *len)
   CHECK_REF (p, desc, MODE (ROW_REAL));
   GET_DESCRIPTOR (arr, tup, &desc);
   *len = ROW_SIZE (tup);
-  if ((*len) == 0) {
+  if ((*len) <= 0) {
     return (NO_REAL);
   }
   v = malloc (2 * (size_t) (*len) * sizeof (double));
   fft_test_error (v == NO_REAL ? GSL_ENOMEM : GSL_SUCCESS);
-  base = DEREF (BYTE_T, &(ARRAY (arr)));
+  base = DEREF (BYTE_T, &ARRAY (arr));
   iindex = VECTOR_OFFSET (arr, tup);
   inc = SPAN (tup) * ELEM_SIZE (arr);
   for (k = 0; k < (*len); k++, iindex += inc) {
@@ -2437,7 +2437,7 @@ static void push_array_real (NODE_T * p, double *v, int len)
   SPAN (&tup) = 1;
   K (&tup) = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
   inc = SPAN (&tup) * ELEM_SIZE (&arr);
   for (k = 0; k < len; k++, iindex += inc) {
@@ -2472,12 +2472,12 @@ static double *pop_array_complex (NODE_T * p, int *len)
   CHECK_REF (p, desc, MODE (ROW_COMPLEX));
   GET_DESCRIPTOR (arr, tup, &desc);
   *len = ROW_SIZE (tup);
-  if ((*len) == 0) {
+  if ((*len) <= 0) {
     return (NO_REAL);
   }
   v = malloc (2 * (size_t) (*len) * sizeof (double));
   fft_test_error (v == NO_REAL ? GSL_ENOMEM : GSL_SUCCESS);
-  base = DEREF (BYTE_T, &(ARRAY (arr)));
+  base = DEREF (BYTE_T, &ARRAY (arr));
   iindex = VECTOR_OFFSET (arr, tup);
   inc = SPAN (tup) * ELEM_SIZE (arr);
   for (k = 0; k < (*len); k++, iindex += inc) {
@@ -2519,7 +2519,7 @@ static void push_array_complex (NODE_T * p, double *v, int len)
   SPAN (&tup) = 1;
   K (&tup) = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
   inc = SPAN (&tup) * ELEM_SIZE (&arr);
   for (k = 0; k < len; k++, iindex += inc) {
@@ -2571,7 +2571,7 @@ void genie_prime_factors (NODE_T * p)
   SPAN (&tup) = 1;
   K (&tup) = 0;
   PUT_DESCRIPTOR (arr, tup, &desc);
-  base = DEREF (BYTE_T, &(ARRAY (&arr)));
+  base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
   inc = SPAN (&tup) * ELEM_SIZE (&arr);
   for (k = 0; k < len; k++, iindex += inc) {
