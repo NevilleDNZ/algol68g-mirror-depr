@@ -35,11 +35,6 @@ clauses) and has basic means for inspecting call-frame stack and heap.
 
 #include "a68g.h"
 
-#if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
-#include <term.h>
-extern char term_buffer[];
-#endif
-
 #define CANNOT_SHOW " unprintable value or uninitialised value"
 #define MAX_ROW_ELEMS 24
 #define NOT_A_NUM (-1)
@@ -1204,7 +1199,7 @@ static int get_num_arg (char *num, char **rest)
       }
       return (k);
     } else {
-      monitor_error ("invalid numerical argument", strerror (errno));
+      monitor_error ("invalid numerical argument", error_specification ());
       return (NOT_A_NUM);
     }
   } else {
@@ -1675,7 +1670,7 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *print
     WRITELN (STDOUT_FILENO, output_line);
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Procedure frame=%s", (FRAME_PROC_FRAME (a68g_link) ? "yes" : "no")) >= 0);
     WRITELN (STDOUT_FILENO, output_line);
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
     if (pthread_equal (FRAME_THREAD_ID (a68g_link), main_thread_id) != 0) {
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "In main thread") >= 0);
     } else {
@@ -2048,22 +2043,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     if (top <= 0) {
       top = heap_size;
     }
-#if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
-    {
-      char *mon_tty_type = getenv ("TERM");
-      int term_lines;
-      if (mon_tty_type == NO_TEXT) {
-        term_lines = 24;
-      } else if (tgetent (term_buffer, mon_tty_type) < 0) {
-        term_lines = 24;
-      } else {
-        term_lines = tgetnum ("li");
-      }
-      show_heap (STDOUT_FILENO, p, busy_handles, top, term_lines - 4);
-    }
-#else
-    show_heap (STDOUT_FILENO, p, busy_handles, top, 20);
-#endif
+    show_heap (STDOUT_FILENO, p, busy_handles, top, term_heigth - 4);
     return (A68_FALSE);
   } else if (match_string (cmd, "APropos", NULL_CHAR) || match_string (cmd, "Help", NULL_CHAR) || match_string (cmd, "INfo", NULL_CHAR)) {
     apropos (STDOUT_FILENO, NO_TEXT, "monitor");
@@ -2401,7 +2381,7 @@ void single_step (NODE_T * p, unsigned mask)
   if (LINE_NUMBER (p) == 0) {
     return;
   }
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
   genie_curses_end (NO_NODE);
 #endif
   if (mask == (unsigned) BREAKPOINT_ERROR_MASK) {
@@ -2454,7 +2434,7 @@ void single_step (NODE_T * p, unsigned mask)
     WIS ((p));
     return;
   }
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   if (is_main_thread ()) {
     WRITELN (STDOUT_FILENO, "This is the main thread");
   } else {

@@ -587,7 +587,7 @@ static void indentf (FILE_T out, int ret)
   if (ret >= 0) {
     indent (out, line);
   } else {
-    ABEND(A68_TRUE, "Return value failure", ERROR_SPECIFICATION);
+    ABEND(A68_TRUE, "Return value failure", error_specification ());
   }
 }
 
@@ -605,7 +605,7 @@ static void undentf (FILE_T out, int ret)
   if (ret >= 0) {
     WRITE (out, line);
   } else {
-    ABEND(A68_TRUE, "Return value failure", ERROR_SPECIFICATION);
+    ABEND(A68_TRUE, "Return value failure", error_specification ());
   }
 }
 
@@ -795,21 +795,21 @@ static BOOK_T * signed_in (int action, int phase, char * idf)
 
 /*!
 \brief make name
-\param reg output buffer
+\param buf output buffer
 \param name appropriate name
 \param n distinghuising number
 \return output buffer
 **/
 
-static char * make_name (char * reg, char * name, char * tag, int n)
+static char * make_name (char * buf, char * name, char * tag, int n)
 {
   if (strlen (tag) > 0) {
-    ASSERT (snprintf (reg, NAME_SIZE, "%s_%s_%d", name, tag, n) >= 0);
+    ASSERT (snprintf (buf, NAME_SIZE, "%s_%s_%d", name, tag, n) >= 0);
   } else {
-    ASSERT (snprintf (reg, NAME_SIZE, "%s_%d", name, n) >= 0);
+    ASSERT (snprintf (buf, NAME_SIZE, "%s_%d", name, n) >= 0);
   }
-  ABEND (strlen (reg) >= NAME_SIZE, "make name error", NO_TEXT);
-  return (reg);
+  ABEND (strlen (buf) >= NAME_SIZE, "make name error", NO_TEXT);
+  return (buf);
 }
 
 /*!

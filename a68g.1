@@ -1,4 +1,4 @@
-.Dd February  8, 2012
+.Dd April 15, 2012
 .Dt A68G 1 PRM
 .Os LINUX
 .
@@ -7,7 +7,7 @@ a68g \- Algol 68 Genie, an Algol 68 compiler-interpreter
 .
 .Sh SYNOPSIS
 a68g
-.Op Fl -apropos | -help | -info [string]
+.Op Fl -apropos | -help | -info Ar [string]
 .Op Fl -assertions | Fl -no-assertions
 .Op Fl -backtrace | Fl -no-backtrace
 .Op Fl -brackets
@@ -17,15 +17,20 @@ a68g
 .Op Fl -debug | Fl -monitor
 .Op Fl -echo Ar string
 .Op Fl -execute Ar unit | -x Ar unit
+.Op Fl -exit | Fl -
 .Op Fl -extensive
+.Op Fl f | Fl -file Ar string
 .Op Fl -frame Ar number
 .Op Fl -handles Ar number
 .Op Fl -heap Ar number
 .Op Fl -listing
 .Op Fl -moids
+.Op Fl O | Fl O0 | Fl O1 | Fl O2 | Fl O3 
 .Op Fl -object | Fl -no-object
 .Op Fl -overhead Ar number
 .Op Fl -optimise | Fl -no-optimise
+.Op Fl -pedantic
+.Op Fl -portcheck | -no-portcheck 
 .Op Fl -pragmats | Fl -no-pragmats
 .Op Fl -precision Ar number
 .Op Fl -prelude-listing
@@ -34,6 +39,7 @@ a68g
 .Op Fl -reductions
 .Op Fl -rerun
 .Op Fl -run
+.Op Fl -script Ar string
 .Op Fl -source | Fl -no-source
 .Op Fl -stack Ar number
 .Op Fl -statistics
@@ -97,8 +103,14 @@ Echo string to standout.
 .It Fl -execute Ar unit | Fl -x Ar unit
 Execute the Algol 68 unit. In this way one-liners can be executed from the command line.
 .
+.It Fl -exit | -
+Ignore further options.
+.
 .It Fl -extensive
 Generate an extensive listing.
+.
+.It Fl f | -file Ar string
+Accept string as filename in case it conflicts with shell syntax.
 .
 .It Fl -frame Ar number
 Set the frame stack size to
@@ -126,9 +138,16 @@ Control the listing of C code in the listing file.
 .
 .It Fl -optimise | -no-optimise
 Switch compilation of units on or off. Compilation omits many of the runtime checks offered by the interpreter proper.
+This option is equivalent to -O2.
+.
+.It Fl O | O0 | O1 | O2 | O3
+Switch compilation of units on and pass the option to the back-end C compiler to set the optimiser level. 
 .
 .It Fl -overhead Ar number
 Set overhead for stack checking.
+.
+.It Fl -pedantic
+Equivalent to --warnings --portcheck
 .
 .It Fl -portcheck | Fl -no-portcheck
 Enable or disable portability warning messages.
@@ -158,6 +177,9 @@ Use compiled code of a previous run.
 .
 .It Fl -run
 Override the --no-run option.
+.
+.It Fl -script Ar string
+Takes string as source file name and skips further option processing so these can be handled by the script.
 .
 .It Fl -source | Fl -no-source
 Control the listing of source lines in the listing file.

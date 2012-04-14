@@ -1,22 +1,62 @@
 /* a68g-config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
+#undef GWINSZ_IN_SYS_IOCTL
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the <ctype.h> header file. */
+#undef HAVE_CTYPE_H
+
+/* Define this if a good curses installation was detected */
+#undef HAVE_CURSES
+
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
-/* Define to 1 if you have the <dirent.h> header file. */
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
 #undef HAVE_DIRENT_H
+
+/* Define this if a good DL installation was detected */
+#undef HAVE_DL
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the `exit' function. */
+#undef HAVE_EXIT
+
 /* Define this if EXPORT_DYNAMIC is recognised */
 #undef HAVE_EXPORT_DYNAMIC
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <float.h> header file. */
+#undef HAVE_FLOAT_H
+
+/* Define to 1 if you have the `fprintf' function. */
+#undef HAVE_FPRINTF
+
+/* Define to 1 if you have the `free' function. */
+#undef HAVE_FREE
 
 /* Define this if FreeBSD was detected */
 #undef HAVE_FREEBSD
 
 /* Define this if GCC was detected */
 #undef HAVE_GCC
+
+/* Define this if a good GNU GSL installation was detected */
+#undef HAVE_GNU_GSL
+
+/* Define this if a good GNU plotutils installation was detected */
+#undef HAVE_GNU_PLOTUTILS
 
 /* Define to 1 if you have the <gsl/gsl_blas.h> header file. */
 #undef HAVE_GSL_GSL_BLAS_H
@@ -60,6 +100,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `curses' library (-lcurses). */
+#undef HAVE_LIBCURSES
+
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
@@ -71,9 +114,6 @@
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
-
-/* Define to 1 if you have the `ncurses' library (-lncurses). */
-#undef HAVE_LIBNCURSES
 
 /* Define to 1 if you have the `plot' library (-lplot). */
 #undef HAVE_LIBPLOT
@@ -87,20 +127,41 @@
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
-/* Define to 1 if you have the `termcap' library (-ltermcap). */
-#undef HAVE_LIBTERMCAP
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
 
 /* Define this if LINUX was detected */
 #undef HAVE_LINUX
 
+/* Define to 1 if you have the `longjmp' function. */
+#undef HAVE_LONGJMP
+
 /* Define this if DARWIN was detected */
 #undef HAVE_MAC_OS_X
+
+/* Define to 1 if you have the `malloc' function. */
+#undef HAVE_MALLOC
 
 /* Define to 1 if you have the <math.h> header file. */
 #undef HAVE_MATH_H
 
+/* Define to 1 if you have the `memcpy' function. */
+#undef HAVE_MEMCPY
+
+/* Define to 1 if you have the `memmove' function. */
+#undef HAVE_MEMMOVE
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the <ncurses/curses.h> header file. */
+#undef HAVE_NCURSES_CURSES_H
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_NDIR_H
 
 /* Define this if NetBSD was detected */
 #undef HAVE_NETBSD
@@ -117,11 +178,20 @@
 /* Define this if /opt/local/pgsql/include was detected */
 #undef HAVE_OPT_LOCAL_PGSQL_INCLUDE
 
+/* Define this if a good pthread installation was detected */
+#undef HAVE_PARALLEL_CLAUSE
+
 /* Define this as PIC option */
 #undef HAVE_PIC
 
 /* Define to 1 if you have the <plot.h> header file. */
 #undef HAVE_PLOT_H
+
+/* Define this if a good PostgreSQL installation was detected */
+#undef HAVE_POSTGRESQL
+
+/* Define to 1 if you have the `printf' function. */
+#undef HAVE_PRINTF
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -129,11 +199,38 @@
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
 
+/* Define to 1 if you have the `setjmp' function. */
+#undef HAVE_SETJMP
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#undef HAVE_SETJMP_H
+
+/* Define to 1 if you have the `signal' function. */
+#undef HAVE_SIGNAL
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcmp' function. */
+#undef HAVE_STRCMP
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -141,17 +238,46 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strncmp' function. */
+#undef HAVE_STRNCMP
+
+/* Define to 1 if you have the `strncpy' function. */
+#undef HAVE_STRNCPY
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <term.h> header file. */
-#undef HAVE_TERM_H
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define to 1 if you have the <time.h> header file. */
+#undef HAVE_TIME_H
 
 /* Define this if user wants to tune for a specific CPU */
 #undef HAVE_TUNING
@@ -167,6 +293,9 @@
 
 /* Define this if /usr/pkg/pgsql/include was detected */
 #undef HAVE_USR_PKG_PGSQL_INCLUDE
+
+/* Define to 1 if assertions should be disabled. */
+#undef NDEBUG
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
@@ -195,14 +324,19 @@
 /* Version number of package */
 #undef VERSION
 
-/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
-   `char[]'. */
-#undef YYTEXT_POINTER
-
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__
 # undef __CHAR_UNSIGNED__
 #endif
+
+/* Define this if we have no __mode_t */
+#undef __mode_t
+
+/* Define this if we have no __off_t */
+#undef __off_t
+
+/* Define this if we have no __pid_t */
+#undef __pid_t
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t
@@ -216,74 +350,3 @@
 /* Define to the type of an unsigned integer type of width exactly 16 bits if
    such a type exists and the standard includes do not define it. */
 #undef uint16_t
-
-/* In case of incomplete GSL installation - tant pis */
-#if ! defined HAVE_LIBGSLCBLAS
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_BLAS_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_COMPLEX_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_COMPLEX_MATH_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_ERRNO_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_FFT_COMPLEX_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_INTEGRATION_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_LINALG_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_MATH_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_MATRIX_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_PERMUTATION_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_SF_H
-#undef HAVE_LIBGSL
-#endif
-
-#if ! defined HAVE_GSL_GSL_VECTOR_H
-#undef HAVE_LIBGSL
-#endif
-
-/* Do we have a compiler? */
-#if (! defined HAVE_GCC || defined NO_MINUS_C_MINUS_O || ! defined HAVE_DLFCN_H)
-#undef HAVE_COMPILER
-#elif (! HAVE_MAC_OS_X && ! defined HAVE_EXPORT_DYNAMIC)
-#undef HAVE_COMPILER
-#elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_LIBDL)
-#define HAVE_COMPILER 1
-#elif (defined HAVE_FREEBSD || defined HAVE_NETBSD)
-#define HAVE_COMPILER 1
-#else
-#undef HAVE_COMPILER
-#endif
-
-/* Can we access the internet? */
-#if (defined HAVE_NETDB_H && defined HAVE_NETINET_IN_H && defined HAVE_SYS_SOCKET_H)
-#define HAVE_HTTP
-#endif

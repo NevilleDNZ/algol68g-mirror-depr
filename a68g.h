@@ -29,89 +29,291 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "a68g-config.h"
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES && defined HAVE_REGEX_H)
+/*************************/
+/* Derived configuration */
+/*************************/
+
+/* Do we have a compiler? */
+#if (! defined HAVE_GCC || defined NO_MINUS_C_MINUS_O || ! defined HAVE_DL)
+#undef HAVE_COMPILER
+#elif (! HAVE_MAC_OS_X && ! defined HAVE_EXPORT_DYNAMIC)
+#undef HAVE_COMPILER
+#elif ((defined HAVE_LINUX || defined HAVE_MAC_OS_X) && defined HAVE_DL)
+#define HAVE_COMPILER 1
+#elif (defined HAVE_FREEBSD || defined HAVE_NETBSD)
+#define HAVE_COMPILER 1
+#else
+#undef HAVE_COMPILER
+#endif
+
+/* Can we access the internet? */
+
+#if (defined HAVE_NETDB_H && defined HAVE_NETINET_IN_H && defined HAVE_SYS_SOCKET_H)
+#if (defined HAVE_LINUX || defined HAVE_MAC_OS_X || defined HAVE_FREEBSD || defined HAVE_NETBSD)
+#define HAVE_HTTP
+#endif
+#endif
+
+/* Do we have an editor? */
+
+#if (defined HAVE_CURSES && defined HAVE_REGEX_H)
 #define HAVE_EDITOR
 #endif
 
-/*******************/
-/* Common includes */
-/*******************/
+/************/
+/* Includes */
+/************/
 
-#include <sys/types.h>
-
-#include <assert.h>
-#include <ctype.h>
-#include <errno.h>
-#include <float.h>
-#include <limits.h>
-#include <math.h>
-
-#include <setjmp.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <fcntl.h>
-
-#if defined HAVE_STRING_H
-#include <string.h>
-#elif defined HAVE_STRINGS_H
-#include <strings.h>
-#else
-#include <string.h>
+#if defined HAVE_SYS_TYPES_H 
+#include <sys/types.h> 
 #endif
 
-#if ! defined HAVE_WIN32
-#include <sys/resource.h>
-#include <sys/wait.h>
-#endif /* ! defined HAVE_WIN32 */
-
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <unistd.h>
-
-/***********************/
-/* System dependencies */
-/***********************/
-
-#if defined HAVE_REGEX_H
-#include <regex.h>
+#if defined HAVE_STDIO_H 
+#include <stdio.h> 
 #endif
 
-#if defined HAVE_DLFCN_H
-#include <dlfcn.h>
+#if defined HAVE_LIMITS_H 
+#include <limits.h> 
 #endif
 
-#if defined HAVE_REGEX_H
-#include <regex.h>
+#if defined HAVE_ASSERT_H 
+#include <assert.h> 
 #endif
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-#include <pthread.h>
+#if defined HAVE_CONIO_H 
+#include <conio.h> 
 #endif
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
-#if defined HAVE_WIN32
-#include <conio.h>
-#else
-#endif /* defined HAVE_WIN32 */
-#include <curses.h>
+#if defined HAVE_CTYPE_H 
+#include <ctype.h> 
 #endif
 
-#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
-#include <libpq-fe.h>
+#if defined HAVE_CURSES_H 
+#include <curses.h> 
+#elif defined HAVE_NCURSES_CURSES_H
+#include <ncurses/curses.h>
 #endif
 
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
-#include <plot.h>
+#if defined HAVE_DIRENT_H 
+#include <dirent.h> 
+#endif
+
+#if defined HAVE_DL 
+#include <dlfcn.h> 
+#endif
+
+#if defined HAVE_ERRNO_H 
+#include <errno.h> 
+#endif
+
+#if defined HAVE_FCNTL_H 
+#include <fcntl.h> 
+#endif
+
+#if defined HAVE_FLOAT_H 
+#include <float.h> 
+#endif
+
+#if defined HAVE_LIBPQ-FE_H 
+#include <libpq-fe.h> 
+#endif
+
+#if defined HAVE_MATH_H 
+#include <math.h> 
+#endif
+
+#if defined HAVE_NETDB_H 
+#include <netdb.h> 
+#endif
+
+#if defined HAVE_NETINET_IN_H 
+#include <netinet/in.h> 
+#endif
+
+#if defined HAVE_GNU_PLOTUTILS
+#include <plot.h> 
+#endif
+
+#if defined HAVE_PTHREAD_H 
+#include <pthread.h> 
+#endif
+
+#if defined HAVE_REGEX_H 
+#include <regex.h> 
+#endif
+
+#if defined HAVE_SETJMP_H 
+#include <setjmp.h> 
+#endif
+
+#if defined HAVE_SIGNAL_H 
+#include <signal.h> 
+#endif
+
+#if defined HAVE_STDARG_H 
+#include <stdarg.h> 
+#endif
+
+#if defined HAVE_STDDEF_H 
+#include <stddef.h> 
+#endif
+
+#if defined HAVE_STDLIB_H 
+#include <stdlib.h> 
+#endif
+
+#if defined HAVE_STRING_H 
+#include <string.h> 
+#endif
+
+#if defined HAVE_STRINGS_H 
+#include <strings.h> 
+#endif
+
+#if (defined HAVE_TERMIOS_H && ! defined TIOCGWINSZ)
+#include <termios.h> 
+#elif (defined HAVE_TERMIOS_H && ! defined GWINSZ_IN_SYS_IOCTL) 
+#include <termios.h> 
+#endif
+
+#if defined HAVE_TIME_H 
+#include <time.h> 
+#endif
+
+#if defined HAVE_UNISTD_H 
+#include <unistd.h> 
+#endif
+
+#if defined HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+
+#if defined HAVE_SYS_RESOURCE_H 
+#include <sys/resource.h> 
+#endif
+
+#if defined HAVE_SYS_SOCKET_H 
+#include <sys/socket.h> 
+#endif
+
+#if defined HAVE_SYS_STAT_H 
+#include <sys/stat.h> 
+#endif
+
+#if defined HAVE_SYS_TIME_H 
+#include <sys/time.h> 
+#endif
+
+#if defined HAVE_SYS_WAIT_H 
+#include <sys/wait.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_BLAS_H 
+#include <gsl/gsl_blas.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_COMPLEX_H 
+#include <gsl/gsl_complex.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_COMPLEX_H 
+#include <gsl/gsl_complex.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_COMPLEX_H 
+#include <gsl/gsl_complex.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_COMPLEX_MATH_H 
+#include <gsl/gsl_complex_math.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_COMPLEX_MATH_H 
+#include <gsl/gsl_complex_math.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_COMPLEX_MATH_H 
+#include <gsl/gsl_complex_math.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_ERRNO_H 
+#include <gsl/gsl_errno.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_ERRNO_H 
+#include <gsl/gsl_errno.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_ERRNO_H 
+#include <gsl/gsl_errno.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_FFT_COMPLEX_H
+#include <gsl/gsl_fft_complex.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_INTEGRATION_H 
+#include <gsl/gsl_integration.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_LINALG_H 
+#include <gsl/gsl_linalg.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_MATH_H 
+#include <gsl/gsl_math.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_MATH_H 
+#include <gsl/gsl_math.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_MATH_H 
+#include <gsl/gsl_math.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_MATRIX_H 
+#include <gsl/gsl_matrix.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_PERMUTATION_H 
+#include <gsl/gsl_permutation.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_SF_H 
+#include <gsl/gsl_sf.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_SF_H 
+#include <gsl/gsl_sf.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_SF_H 
+#include <gsl/gsl_sf.h> 
+#endif
+
+#if defined HAVE_GSL_GSL_VECTOR_H 
+#include <gsl/gsl_vector.h> 
+#endif
+
+/*****************/
+/* Compatibility */
+/*****************/
+
+#if ! defined HAVE_SNPRINTF
+#define snprintf a68g_snprintf
+extern int a68g_snprintf (char *, size_t, char *, ...);
+#endif
+
+#if ! defined O_BINARY
+#define O_BINARY 0x0000
 #endif
 
 /*************/
 /* Constants */
 /*************/
 
+#define A68_DIR ".a68g"
 #define A68_FALSE ((BOOL_T) 0)
 #define A68_HISTORY_FILE ".a68g.edit.hist"
 #define A68_MAX_BITS (UINT_MAX)
@@ -158,11 +360,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #define LONG_EXP_WIDTH (EXP_WIDTH)
 #define LONG_MP_DIGITS DEFAULT_DOUBLE_DIGITS
 #define MAX_ERRORS 8
-#define MAX_LINE_WIDTH (BUFFER_SIZE / 2)
 #define MAX_MP_EXPONENT 142857 /* Arbitrary. Let M = MAX_REPR_INT then the largest range is M / Log M / LOG_MP_BASE */
 #define MAX_OPEN_FILES 64 /* Some OS's won't open more than this number */
 #define MAX_PRIORITY 9
 #define MAX_REPR_INT 9007199254740992.0	/* 2^53, max int in a double */
+#define MAX_TERM_HEIGTH 24
+#define MAX_TERM_WIDTH (BUFFER_SIZE / 2)
 #define MAX_TRANSPUT_BUFFER (MAX_OPEN_FILES)
 #define MEGABYTE (KILOBYTE * KILOBYTE)
 #define MIN_MEM_SIZE (128 * KILOBYTE)
@@ -728,7 +931,7 @@ struct ACTIVATION_RECORD
   jmp_buf *jump_stat;
   BOOL_T proc_frame;
   int frame_no, frame_level, parameter_level, blocks;
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   pthread_t thread_id;
 #endif
 };
@@ -1075,7 +1278,7 @@ struct A68_FILE
   struct
   {
     FILE *stream;
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
     plPlotter *plotter;
     plPlotterParams *plotter_params;
 #endif
@@ -1085,7 +1288,7 @@ struct A68_FILE
     double x_coord, y_coord, red, green, blue;
   }
   device;
-#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
+#if defined HAVE_POSTGRESQL
   PGconn *connection;
   PGresult *result;
 #endif
@@ -1125,7 +1328,7 @@ struct A68_FILE
     abend ((char *) reason, (char *) info, __FILE__, __LINE__);\
   }}
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
 #define ASSERT(f) {\
   if (!(f)) {\
     if (a68g_curses_mode == A68_TRUE) {\
@@ -1133,22 +1336,12 @@ struct A68_FILE
       (void) endwin ();\
       a68g_curses_mode = A68_FALSE;\
     }\
-    ABEND(A68_TRUE, "Return value failure", ERROR_SPECIFICATION)\
+    ABEND(A68_TRUE, "Return value failure", error_specification ())\
   }}
 #else
 #define ASSERT(f) {\
-  ABEND((!(f)), "Return value failure", ERROR_SPECIFICATION)\
+  ABEND((!(f)), "Return value failure", error_specification ())\
   }
-#endif
-
-#if (defined HAVE_MAC_OS_X || defined HAVE_FREEBSD)
-#define __off_t off_t
-#define __pid_t pid_t
-#define __mode_t mode_t
-#endif
-
-#if ! defined O_BINARY
-#define O_BINARY 0x0000
 #endif
 
 /*
@@ -1167,9 +1360,9 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define IS_SPACE(c) isspace ((unsigned char) (c))
 #define IS_UPPER(c) isupper ((unsigned char) (c))
 #define IS_XDIGIT(c) isxdigit ((unsigned char) (c))
-#define TO_LOWER(c) tolower ((unsigned char) (c))
+#define TO_LOWER(c) (char) tolower ((unsigned char) (c))
 #define TO_UCHAR(c) ((c) >= 0 ? (int) (c) : (int) (UCHAR_MAX + (int) (c) + 1))
-#define TO_UPPER(c) toupper ((unsigned char) (c))
+#define TO_UPPER(c) (char) toupper ((unsigned char) (c))
 
 /* Macro's for fat A68 pointers */
 
@@ -1486,7 +1679,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define P(q) ((q)->p)
 #define PACK(p) ((p)->pack)
 #define PAGE_END_MENDED(p) ((p)->page_end_mended)
-#define PAGE_SIZE(p) ((p)->page_size)
+#define A68_PAGE_SIZE(p) ((p)->page_size)
 #define PARAMETERS(p) ((p)->parameters)
 #define PARAMETER_LEVEL(p) ((p)->parameter_level)
 #define PARAMS(p) ((p)->params)
@@ -1768,7 +1961,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 /* Only the main thread can invoke or (un)block the GC */
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 #define UP_BLOCK_GC {\
   if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
     block_gc++;\
@@ -1885,7 +2078,7 @@ still is sufficient overhead to make it to the next check.
 #define FRAME_STATIC_LINK(n) (STATIC_LINK (FACT (n)))
 #define FRAME_TREE(n) (NODE (FACT (n)))
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 #define FRAME_THREAD_ID(n) (THREAD_ID (FACT (n)))
 #endif
 
@@ -1954,7 +2147,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
     global_pointer = frame_pointer;\
   }}
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 #define OPEN_STATIC_FRAME(p) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act, *pre;\
@@ -1997,7 +2190,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
   }
 #endif
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act;\
@@ -2056,7 +2249,7 @@ This to avoid that a RTS routine that blocks the garbage collector,
 leaves it inoperative in case the routine quits through an event.
 */
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 #define CLOSE_FRAME {\
   if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
     block_gc = FRAME_BLOCKS (frame_pointer);\
@@ -2561,14 +2754,14 @@ extern TOKEN_T *top_token;
 extern char **global_argv, *watchpoint_expression, a68g_cmd_name[], output_line[], edit_line[], input_line[];
 extern clock_t clock_res;
 extern double cputime_0, garbage_seconds;
-extern int block_gc, frame_stack_size, expr_stack_size, heap_size, handle_pool_size, free_handle_count, max_handle_count, garbage_collects, global_argc, global_level, max_lex_lvl, new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos, stack_limit, frame_stack_limit, expr_stack_limit, stack_size, storage_overhead, symbol_table_count, mode_count, term_width, varying_mp_digits;
+extern int block_gc, frame_stack_size, expr_stack_size, heap_size, handle_pool_size, free_handle_count, max_handle_count, garbage_collects, global_argc, global_level, max_lex_lvl, new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos, stack_limit, frame_stack_limit, expr_stack_limit, stack_size, storage_overhead, symbol_table_count, mode_count, term_heigth, term_width, varying_mp_digits;
 extern jmp_buf genie_exit_label;
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
 extern BOOL_T a68g_curses_mode;
 #endif
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 extern pthread_t main_thread_id;
 extern int running_par_level;
 #endif
@@ -2603,6 +2796,7 @@ extern BOOL_T is_unitable (MOID_T *, MOID_T *, int);
 extern BYTE_T *get_fixed_heap_space (size_t);
 extern BYTE_T *get_heap_space (size_t);
 extern BYTE_T *get_temp_heap_space (size_t);
+extern FILE *a68g_fopen (char *, char *, char *);
 extern FILE_T open_physical_file (NODE_T *, A68_REF, int, mode_t);
 extern GINFO_T *new_genie_info (void);
 extern KEYWORD_T *find_keyword (KEYWORD_T *, char *);
@@ -2631,6 +2825,7 @@ extern char *a68g_strchr (char *, int);
 extern char *a_to_c_string (NODE_T *, char *, A68_REF);
 extern char *ctrl_char (int);
 extern char *error_chars (char *, int);
+extern char *error_specification (void);
 extern char *fixed (NODE_T * p);
 extern char *get_transput_buffer (int);
 extern char *moid_to_string (MOID_T *, int, NODE_T *);
@@ -2689,6 +2884,7 @@ extern void a68g_cos_complex (A68_REAL *, A68_REAL *);
 extern void a68g_div_complex (A68_REAL *, A68_REAL *, A68_REAL *);
 extern void a68g_exit (int);
 extern void a68g_exp_complex (A68_REAL *, A68_REAL *);
+extern void a68g_getty (int *, int *);
 extern void a68g_ln_complex (A68_REAL *, A68_REAL *);
 extern void a68g_sin_complex (A68_REAL *, A68_REAL *);
 extern void a68g_sqrt_complex (A68_REAL *, A68_REAL *);
@@ -2740,6 +2936,7 @@ extern void genie_argv (NODE_T *);
 extern void genie_call_operator (NODE_T *, ADDR_T);
 extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
 extern void genie_check_initialisation (NODE_T *, BYTE_T *, MOID_T *);
+extern void genie_columns (NODE_T *);
 extern void genie_create_pipe (NODE_T *);
 extern void genie_declaration (NODE_T *);
 extern void genie_enquiry_clause (NODE_T *);
@@ -2764,6 +2961,7 @@ extern void genie_proc_variable_dec (NODE_T *);
 extern void genie_push_undefined (NODE_T *, MOID_T *);
 extern void genie_read_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
 extern void genie_reset_errno (NODE_T *);
+extern void genie_rows (NODE_T *);
 extern void genie_serial_clause (NODE_T *, jmp_buf *);
 extern void genie_serial_units (NODE_T *, NODE_T **, jmp_buf *, int);
 extern void genie_strerror (NODE_T *);
@@ -2864,11 +3062,11 @@ extern void write_source_line (FILE_T, LINE_T *, NODE_T *, int);
 extern void write_source_listing (void);
 extern void write_tree_listing (void);
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
 extern void edit (char *);
 #endif
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 extern BOOL_T is_main_thread (void);
 extern void genie_abend_all_threads (NODE_T *, jmp_buf *, NODE_T *);
 extern void genie_set_exit_from_threads (int);
@@ -3452,7 +3650,7 @@ extern GPROC genie_file_is_fifo;
 extern GPROC genie_file_is_link;
 #endif
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 extern GPROC genie_down_sema;
 extern GPROC genie_level_int_sema;
 extern GPROC genie_level_sema_int;
@@ -3685,7 +3883,7 @@ extern GPROC genie_num_yotta;
 extern GPROC genie_num_zepto;
 extern GPROC genie_num_zetta;
 
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
 extern GPROC genie_draw_aspect;
 extern GPROC genie_draw_atom;
 extern GPROC genie_draw_background_colour;
@@ -3711,7 +3909,7 @@ extern GPROC genie_draw_textangle;
 extern GPROC genie_make_device;
 #endif
 
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+#if defined HAVE_GNU_GSL
 extern GPROC genie_airy_ai_deriv_real;
 extern GPROC genie_airy_ai_real;
 extern GPROC genie_airy_bi_deriv_real;
@@ -3841,7 +4039,7 @@ extern GPROC genie_vector_sub;
 extern GPROC genie_vector_times_matrix;
 #endif
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
 extern GPROC genie_curses_clear;
 extern GPROC genie_curses_columns;
 extern GPROC genie_curses_end;
@@ -3853,7 +4051,7 @@ extern GPROC genie_curses_refresh;
 extern GPROC genie_curses_start;
 #endif
 
-#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
+#if defined HAVE_POSTGRESQL
 extern GPROC genie_pq_backendpid;
 extern GPROC genie_pq_cmdstatus;
 extern GPROC genie_pq_cmdtuples;
@@ -3887,7 +4085,6 @@ extern GPROC genie_pq_user;
 /* Diagnostic texts */
 /********************/
 
-#define ERROR_SPECIFICATION (errno == 0 ? NO_TEXT : strerror (errno))
 #define ERROR_ACCESSING_NIL "attempt to access N"
 #define ERROR_ALIGNMENT "alignment error"
 #define ERROR_ARGUMENT_NUMBER "incorrect number of arguments for M"

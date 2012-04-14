@@ -22,7 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "a68g.h"
 
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
 
 /*
 This file contains the Algol68G interface to libplot. Note that Algol68G is not
@@ -797,12 +797,12 @@ void genie_make_device (NODE_T * p)
   }
 /* Fill in page_size */
   size = a68_string_size (p, ref_page);
-  if (INITIALISED (&(PAGE_SIZE (&DEVICE (file)))) && !IS_NIL (PAGE_SIZE (&DEVICE (file)))) {
-    UNBLOCK_GC_HANDLE (&PAGE_SIZE (&DEVICE (file)));
+  if (INITIALISED (&(A68_PAGE_SIZE (&DEVICE (file)))) && !IS_NIL (A68_PAGE_SIZE (&DEVICE (file)))) {
+    UNBLOCK_GC_HANDLE (&A68_PAGE_SIZE (&DEVICE (file)));
   }
-  PAGE_SIZE (&DEVICE (file)) = heap_generator (p, MODE (STRING), 1 + size);
-  BLOCK_GC_HANDLE (&PAGE_SIZE (&DEVICE (file)));
-  ASSERT (a_to_c_string (p, DEREF (char, &PAGE_SIZE (&DEVICE (file))), ref_page) != NO_TEXT);
+  A68_PAGE_SIZE (&DEVICE (file)) = heap_generator (p, MODE (STRING), 1 + size);
+  BLOCK_GC_HANDLE (&A68_PAGE_SIZE (&DEVICE (file)));
+  ASSERT (a_to_c_string (p, DEREF (char, &A68_PAGE_SIZE (&DEVICE (file))), ref_page) != NO_TEXT);
 /* Fill in device */
   size = a68_string_size (p, ref_device);
   if (INITIALISED (&(DEVICE (&DEVICE (file)))) && !IS_NIL (DEVICE (&DEVICE (file)))) {
@@ -837,8 +837,8 @@ BOOL_T close_device (NODE_T * p, A68_FILE * f)
     if (!IS_NIL (DEVICE (&DEVICE (f)))) {
       UNBLOCK_GC_HANDLE (&(DEVICE (&DEVICE (f))));
     }
-    if (!IS_NIL (PAGE_SIZE (&DEVICE (f)))) {
-      UNBLOCK_GC_HANDLE (&(PAGE_SIZE (&DEVICE (f))));
+    if (!IS_NIL (A68_PAGE_SIZE (&DEVICE (f)))) {
+      UNBLOCK_GC_HANDLE (&(A68_PAGE_SIZE (&DEVICE (f))));
     }
   }
   if (pl_closepl_r (PLOTTER (&DEVICE (f))) < 0) {
@@ -909,7 +909,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 /*-----------------------------------------+
 | Supported plotter type - X Window System |
 +-----------------------------------------*/
-    char *z = DEREF (char, &PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
+    char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 /* Establish page size */
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
@@ -961,7 +961,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 /*-----------------------------------------+
 | Supported plotter type - Portable aNyMap |
 +-----------------------------------------*/
-    char *z = DEREF (char, &PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
+    char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 /* Establish page size */
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
@@ -1022,7 +1022,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 /*------------------------------------+
 | Supported plotter type - pseudo GIF |
 +------------------------------------*/
-    char *z = DEREF (char, &PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
+    char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 /* Establish page size */
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PAGE_SIZE);
@@ -1106,7 +1106,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_ALLOCATE);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-    (void) pl_setplparam (PLOTTER_PARAMS (&DEVICE (f)), "PAGESIZE", DEREF (char, &PAGE_SIZE (&DEVICE (f))));
+    (void) pl_setplparam (PLOTTER_PARAMS (&DEVICE (f)), "PAGESIZE", DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))));
     PLOTTER (&DEVICE (f)) = pl_newpl_r ("ps", NULL, STREAM (&DEVICE (f)), stderr, PLOTTER_PARAMS (&DEVICE (f)));
     if (PLOTTER (&DEVICE (f)) == NULL) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_DEVICE_CANNOT_OPEN);

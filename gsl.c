@@ -22,20 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "a68g.h"
 
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
-
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_fft_complex.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_permutation.h>
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_integration.h>
+#if defined HAVE_GNU_GSL
 
 static NODE_T *error_node = NO_NODE;
 
@@ -2847,4 +2834,4 @@ void genie_laplace (NODE_T * p)
   (void) gsl_set_error_handler (save_handler);
 }
 
-#endif /* HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL */
+#endif /* defined HAVE_GNU_GSL */

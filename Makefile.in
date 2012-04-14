@@ -125,9 +125,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
-LEX = @LEX@
-LEXLIB = @LEXLIB@
-LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -145,8 +142,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-YACC = @YACC@
-YFLAGS = @YFLAGS@
+a68g_exists = @a68g_exists@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -210,7 +206,8 @@ TESTS = check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-0
 pkginclude_HEADERS = a68g.h a68g-config.h
 man_MANS = a68g.1
 doc_DATA = AUTHORS COPYING NEWS README 
-EXTRA_DIST = $(man_MANS) check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68
+EXTRA_DIST = $(man_MANS) a68g-config.win32.h check-01.a68 check-02.a68 check-03.a68 check-04.a68 check-05.a68 check-06.a68 check-07.a68 check-08.a68 check-09.a68
+CYGWIN_RELEASE = 0
 all: a68g-config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -939,6 +936,15 @@ uninstall-man: uninstall-man1
 	uninstall-am uninstall-binPROGRAMS uninstall-docDATA \
 	uninstall-man uninstall-man1 uninstall-pkgincludeHEADERS
 
+
+cygwin:
+	rm -fr release/cygwin
+	make install prefix=release/cygwin/usr
+	cd release/cygwin/usr; mv doc share/; rm -fr include
+	cd release/cygwin/usr/share/doc; mv * $(PACKAGE_TARNAME) # optionally strip version
+	cd release/cygwin; tar -cf $(PACKAGE_TARNAME)-$(PACKAGE_VERSION)-$(CYGWIN_RELEASE).tar usr
+	cd release/cygwin; bzip2 $(PACKAGE_TARNAME)-$(PACKAGE_VERSION)-$(CYGWIN_RELEASE).tar
+	gunzip -c ../$(PACKAGE_TARNAME)-$(PACKAGE_VERSION).tar.gz | bzip2 -c > release/cygwin/$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)-$(CYGWIN_RELEASE)-src.tar.bz2
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

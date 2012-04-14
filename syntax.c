@@ -1029,7 +1029,7 @@ static BOOL_T read_script_file (void)
       ASSERT (io_read (source, &ch, 1) == 1);
     }
     linenum[k] = NULL_CHAR;
-    num = strtol (linenum, NO_VAR, 10);
+    num = (int) strtol (linenum, NO_VAR, 10);
     ABEND (errno == ERANGE, "strange line number", NO_TEXT);
 /* COPY original line into buffer */
     ASSERT (io_read (source, &ch, 1) == 1);
@@ -3611,7 +3611,7 @@ static void empty_clause (NODE_T * p)
   diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_CLAUSE_WITHOUT_VALUE);
 }
 
-#if ! (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if ! defined HAVE_PARALLEL_CLAUSE
 
 /*!
 \brief diagnose for parallel clause
@@ -4322,7 +4322,7 @@ void bottom_up_parser (NODE_T * p)
       }
 /* Determine the encompassing enclosed clause */
       for (q = p; q != NO_NODE; FORWARD (q)) {
-    #if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+    #if defined HAVE_PARALLEL_CLAUSE
         reduce (q, NO_NOTE, NO_TICK, PARALLEL_CLAUSE, PAR_SYMBOL, COLLATERAL_CLAUSE, STOP);
     #else
         reduce (q, par_clause, NO_TICK, PARALLEL_CLAUSE, PAR_SYMBOL, COLLATERAL_CLAUSE, STOP);
@@ -4883,7 +4883,7 @@ static void reduce_primary_parts (NODE_T * p, int expect)
     }
   }
   for (q = p; q != NO_NODE; FORWARD (q)) {
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
     reduce (q, NO_NOTE, NO_TICK, PARALLEL_CLAUSE, PAR_SYMBOL, COLLATERAL_CLAUSE, STOP);
 #else
     reduce (q, par_clause, NO_TICK, PARALLEL_CLAUSE, PAR_SYMBOL, COLLATERAL_CLAUSE, STOP);
@@ -9643,7 +9643,7 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
               if (strlen (txt) > 0) {
                 ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " and ") >= 0);
               }
-              ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH, n)) >= 0);
+              ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, "%s", moid_to_string (MOID (u), MOID_ERROR_WIDTH, n)) >= 0);
             }
           }
         }
@@ -9666,7 +9666,7 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
             if (strlen (txt) > 0) {
               ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " and ") >= 0);
             }
-            ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH, n)) >= 0);
+            ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, "%s", moid_to_string (MOID (u), MOID_ERROR_WIDTH, n)) >= 0);
           }
         }
       }
@@ -9686,7 +9686,7 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
             if (strlen (txt) > 0) {
               ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, " and ") >= 0);
             }
-            ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, moid_to_string (MOID (u), MOID_ERROR_WIDTH, n)) >= 0);
+            ASSERT (snprintf (TAIL (txt), SNPRINTF_SIZE, "%s", moid_to_string (MOID (u), MOID_ERROR_WIDTH, n)) >= 0);
           }
         }
       }

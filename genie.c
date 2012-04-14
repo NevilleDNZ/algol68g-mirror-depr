@@ -133,7 +133,7 @@ static PROP_T genie_widening (NODE_T *);
 static PROP_T genie_assignation_quick (NODE_T * p);
 static PROP_T genie_loop (volatile NODE_T *);
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 static PROP_T genie_parallel (NODE_T *);
 #endif
 
@@ -203,7 +203,7 @@ void change_masks (NODE_T * p, unsigned mask, BOOL_T set)
 
 void exit_genie (NODE_T * p, int ret)
 {
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
   genie_curses_end (p);
 #endif
   if (!in_execution) {
@@ -222,7 +222,7 @@ void exit_genie (NODE_T * p, int ret)
     if (ret > A68_FORCE_QUIT) {
       ret -= A68_FORCE_QUIT;
     }
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
     if (!is_main_thread ()) {
       genie_set_exit_from_threads (ret);
     } else {
@@ -2668,7 +2668,7 @@ static PROP_T genie_voiding_assignation (NODE_T * p)
   SOURCE (&self) = p;
   EXECUTE_UNIT (dst);
   POP_OBJECT (p, &z, A68_REF);
-  caution = IS_IN_HEAP (&z);
+  caution = (BOOL_T) IS_IN_HEAP (&z);
   if (caution) {
     UP_BLOCK_GC;
   }
@@ -3031,7 +3031,7 @@ static void genie_jump (NODE_T * p)
     }
   }
 /* Beam us up, Scotty! */
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   {
     int curlev = running_par_level, tarlev = PAR_LEVEL (NODE (TAX (label)));
     if (curlev == tarlev) {
@@ -4245,7 +4245,7 @@ static PROP_T genie_enclosed (volatile NODE_T * p)
       }
       break;
     }
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   case PARALLEL_CLAUSE:
     {
       (void) genie_parallel ((NODE_T *) NEXT_SUB (p));
@@ -5925,7 +5925,7 @@ void gc_heap (NODE_T * p, ADDR_T fp)
 /* Must start with fp = current frame_pointer */
   A68_HANDLE *z;
   double t0, t1;
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) ==0) {
     return;
   }
@@ -6486,7 +6486,7 @@ char *propagator_name (PROP_PROC * p)
   if (p == genie_or_function) {
     return ("genie_or_function");
   }
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   if (p == genie_parallel) {
     return ("genie_parallel");
   }
@@ -6560,7 +6560,7 @@ char *propagator_name (PROP_PROC * p)
   return (NO_TEXT);
 }
 
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
 
 typedef struct A68_STACK_DESCRIPTOR A68_STACK_DESCRIPTOR;
 typedef struct A68_THREAD_CONTEXT A68_THREAD_CONTEXT;
@@ -6942,7 +6942,7 @@ static void *start_genie_parallel (void *arg)
   NODE_T *p;
   BOOL_T units_active;
   (void) arg;
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {
     save_block_gc = block_gc;
     UP_BLOCK_GC;
@@ -6964,7 +6964,7 @@ static void *start_genie_parallel (void *arg)
     }
   } while (units_active);
   genie_abend_thread ();
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {
     block_gc = save_block_gc;
   }

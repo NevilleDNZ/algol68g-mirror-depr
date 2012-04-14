@@ -22,15 +22,14 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "a68g.h"
 
+#if defined HAVE_WINSOCK_H
+#include <winsock.h>
+#endif
+
 #if defined HAVE_HTTP
 
 #if defined HAVE_WIN32
-#include <winsock.h>
 typedef int socklen_t;
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #endif /* defined HAVE_WIN32 */
 
 #define PROTOCOL "tcp"

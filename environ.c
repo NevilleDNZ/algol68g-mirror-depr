@@ -888,7 +888,7 @@ static void stand_prelude (void)
   m = a68_proc (MODE (CHAR), MODE (INT), MODE (ROW_CHAR), NO_MOID);
   a68_op (A68_STD, "ELEM", m, genie_elem_string);
 /* SEMA ops */
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   m = a68_proc (MODE (SEMA), MODE (INT), NO_MOID);
   a68_op (A68_STD, "LEVEL", m, genie_level_sema_int);
   m = a68_proc (MODE (INT), MODE (SEMA), NO_MOID);
@@ -1418,7 +1418,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "carccos", m, genie_arccos_complex);
   a68_idf (A68_EXT, "complexarctan", m, genie_arctan_complex);
   a68_idf (A68_EXT, "carctan", m, genie_arctan_complex);
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+#if defined HAVE_GNU_GSL
   a68_idf (A68_EXT, "complexsinh", m, genie_sinh_complex);
   a68_idf (A68_EXT, "csinh", m, genie_sinh_complex);
   a68_idf (A68_EXT, "complexcosh", m, genie_cosh_complex);
@@ -1903,7 +1903,7 @@ static void stand_extensions (void)
 {
   MOID_T *m = NO_MOID;
   (void) m;                     /* To fool cc in case we have none of the libraries */
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
 /* Drawing */
   m = a68_proc (MODE (BOOL), MODE (REF_FILE), MODE (STRING), MODE (STRING), NO_MOID);
   a68_idf (A68_EXT, "drawdevice", m, genie_make_device);
@@ -1949,7 +1949,7 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "drawbackgroundcolorname", m, genie_draw_background_colour_name);
   a68_idf (A68_EXT, "drawbackgroundcolourname", m, genie_draw_background_colour_name);
 #endif
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+#if defined HAVE_GNU_GSL
   m = proc_real_real;
   a68_idf (A68_EXT, "erf", m, genie_erf_real);
   a68_idf (A68_EXT, "erfc", m, genie_erfc_real);
@@ -2174,6 +2174,8 @@ static void stand_extensions (void)
 #endif
 /* UNIX things */
   m = proc_int;
+  a68_idf (A68_EXT, "rows", m, genie_rows);
+  a68_idf (A68_EXT, "columns", m, genie_columns);
   a68_idf (A68_EXT, "argc", m, genie_argc);
   a68_idf (A68_EXT, "errno", m, genie_errno);
   a68_idf (A68_EXT, "fork", m, genie_fork);
@@ -2233,7 +2235,7 @@ static void stand_extensions (void)
   m = a68_proc (MODE (INT), MODE (STRING), MODE (STRING), MODE (REF_STRING), NO_MOID);
   a68_idf (A68_EXT, "subinstring", m, genie_sub_in_string);
 #endif
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
   m = proc_void;
   a68_idf (A68_EXT, "cursesstart", m, genie_curses_start);
   a68_idf (A68_EXT, "cursesend", m, genie_curses_end);
@@ -2249,7 +2251,7 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "curseslines", m, genie_curses_lines);
   a68_idf (A68_EXT, "cursescolumns", m, genie_curses_columns);
 #endif
-#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
+#if HAVE_POSTGRESQL
   m = a68_proc (MODE (INT), MODE (REF_FILE), MODE (STRING), MODE (REF_STRING), NO_MOID);
   a68_idf (A68_EXT, "pqconnectdb", m, genie_pq_connectdb);
   m = a68_proc (MODE (INT), MODE (REF_FILE), NO_MOID);
@@ -2319,14 +2321,6 @@ scientific library. When GNU scientific library is not installed then the
 routines in this file will give a runtime error when called. You can also choose
 to not have them defined in "prelude.c".
 */
-
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
-#endif
 
 double inverf (double);
 double inverfc (double);
@@ -5950,7 +5944,7 @@ void genie_lj_f_12_6 (NODE_T * p)
   VALUE (e) = 24.0 * VALUE (e) * u * u6 * (1.0 - 2.0 * u6);
 }
 
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+#if defined HAVE_GNU_GSL
 
 /* "Special" functions - but what is so "special" about them? */
 
@@ -6476,13 +6470,7 @@ Some routines are based on
 * Abramowitz and Stegun.
 */
 
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
-
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
+#if defined HAVE_GNU_GSL
 
 #define GSL_COMPLEX_FUNCTION(f)\
   gsl_complex x, z;\
@@ -7584,7 +7572,7 @@ void genie_atan_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+#if defined HAVE_GNU_GSL
 
 /*!
 \brief PROC csinh = (COMPLEX) COMPLEX
@@ -7646,7 +7634,7 @@ void genie_arctanh_complex (NODE_T * p)
   GSL_COMPLEX_FUNCTION (gsl_complex_arctanh);
 }
 
-#endif /* HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL */
+#endif /* defined HAVE_GNU_GSL */
 
 /* Standard prelude implementation, transput */
 
@@ -8434,7 +8422,7 @@ void genie_init_transput (NODE_T * p)
   init_channel (&stand_error_channel, A68_FALSE, A68_FALSE, A68_FALSE, A68_TRUE, A68_FALSE, A68_FALSE);
   init_channel (&associate_channel, A68_TRUE, A68_TRUE, A68_TRUE, A68_TRUE, A68_FALSE, A68_FALSE);
   init_channel (&skip_channel, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE);
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
   init_channel (&stand_draw_channel, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE, A68_TRUE);
 #else /*  */
   init_channel (&stand_draw_channel, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE, A68_FALSE, A68_TRUE);
@@ -8847,7 +8835,7 @@ void genie_close (NODE_T * p)
     return;
   }
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
   if (DEVICE_OPENED (&DEVICE (file))) {
     ASSERT(close_device (p, file) == A68_TRUE);
     STREAM (&DEVICE (file)) = NO_STREAM;
@@ -8878,7 +8866,7 @@ void genie_lock (NODE_T * p)
     return;
   }
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
   if (DEVICE_OPENED (&DEVICE (file))) {
     ASSERT(close_device (p, file) == A68_TRUE);
     STREAM (&DEVICE (file)) = NO_STREAM;
@@ -8918,7 +8906,7 @@ void genie_erase (NODE_T * p)
     return;
   }
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
   if (DEVICE_OPENED (&DEVICE (file))) {
     ASSERT(close_device (p, file) == A68_TRUE);
     STREAM (&DEVICE (file)) = NO_STREAM;
@@ -9029,14 +9017,14 @@ void genie_set (NODE_T * p)
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_ENDED);
         exit_genie (p, A68_RUNTIME_ERROR);
       }
-      PUSH_PRIMITIVE (p, lseek (FD (file), 0, SEEK_CUR), A68_INT);
+      PUSH_PRIMITIVE (p, (int) lseek (FD (file), 0, SEEK_CUR), A68_INT);
     } else {
       res = lseek (FD (file), curpos, SEEK_SET);
       if (res == -1 || errno != 0) {
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_SET);
         exit_genie (p, A68_RUNTIME_ERROR);
       }
-      PUSH_PRIMITIVE (p, res, A68_INT);
+      PUSH_PRIMITIVE (p, (int) res, A68_INT);
     }
   }
 }
@@ -10211,7 +10199,7 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
   if (m == MODE (INT)) {
     A68_INT *z = (A68_INT *) item;
     char *end;
-    VALUE (z) = strtol (a, &end, 10);
+    VALUE (z) = (int) strtol (a, &end, 10);
     if (end[0] == NULL_CHAR && errno == 0) {
       STATUS (z) = INITIALISED_MASK;
       return (A68_TRUE);
@@ -10761,7 +10749,7 @@ void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref
     }
   }
   if (errno != 0) {
-    ABEND (IS_NIL (ref_file), "conversion error: ", strerror (errno));
+    ABEND (IS_NIL (ref_file), "conversion error: ", error_specification ());
     transput_error (p, ref_file, mode);
   }
 }
@@ -13258,7 +13246,7 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
     if (att == GENERAL_C_PATTERN) {
       char *expch = strchr (str, EXPONENT_CHAR);
       if (expch != NO_TEXT) {
-        expval = strtol (&(expch[1]), NO_VAR, 10);
+        expval = (int) strtol (&(expch[1]), NO_VAR, 10);
       }
     }
     if ((att == FIXED_C_PATTERN) || (att == GENERAL_C_PATTERN && (expval > -4 && expval <= after))) {
@@ -15538,7 +15526,7 @@ double a68g_pow_real_int (double x, int n)
     case 5: {double y = x * x; return (x * y * y);}
     case 6: {double y = x * x * x; return (y * y);}
     default: {
-      int expo = 1, m = labs (n);
+      int expo = 1, m = (int) labs (n);
       BOOL_T cont = (m > 0);
       double mult = x, prod = 1;
       while (cont) {
@@ -16974,8 +16962,6 @@ extern A68_CHANNEL stand_in_channel, stand_out_channel, stand_draw_channel, stan
 
 #if defined HAVE_DIRENT_H
 
-#include <dirent.h>
-
 /*!
 \brief PROC (STRING) [] STRING directory
 \param p position in tree
@@ -17112,6 +17098,28 @@ void genie_localtime (NODE_T * p)
     stack_pointer = sp;
     PUSH_REF (p, row);
   }
+}
+
+/*!
+\brief PROC INT rows
+\param p position in tree
+**/
+
+void genie_rows (NODE_T * p)
+{
+  RESET_ERRNO;
+  PUSH_PRIMITIVE (p, term_heigth, A68_INT);
+}
+
+/*!
+\brief PROC INT columns
+\param p position in tree
+**/
+
+void genie_columns (NODE_T * p)
+{
+  RESET_ERRNO;
+  PUSH_PRIMITIVE (p, term_width, A68_INT);
 }
 
 /*!
@@ -17873,7 +17881,7 @@ Be sure to know what you are doing when you use this, but on the other hand,
 "reset" will always restore your terminal. 
 */
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
 
 #define CHECK_CURSES_RETVAL(f) {\
   if (!(f)) {\
@@ -18074,7 +18082,7 @@ void genie_curses_move (NODE_T * p)
   CHECK_CURSES_RETVAL(move (VALUE (&i), VALUE (&j)) != ERR);
 }
 
-#endif /* HAVE_CURSES_H && defined HAVE_LIBNCURSES */
+#endif /* HAVE_CURSES */
 
 #if defined HAVE_REGEX_H
 /*!

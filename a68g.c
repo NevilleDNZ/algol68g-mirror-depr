@@ -36,12 +36,6 @@ detailed description of Algol68G.
 int global_argc; /* Keep argc and argv for reference from A68 */
 char **global_argv;
 
-#if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
-#include <term.h>
-char term_buffer[2 * KILOBYTE];
-char *term_type;
-#endif
-
 BOOL_T in_execution;
 BYTE_T *system_stack_offset;
 MODES_T a68_modes;
@@ -52,7 +46,7 @@ clock_t clock_res;
 int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
 int stack_size;
 int symbol_table_count, mode_count;
-int term_width;
+int term_heigth, term_width;
 static int max_simplout_size;
 static POSTULATE_T *postulates;
 
@@ -75,6 +69,89 @@ static void build_script (void);
 static void load_script (void);
 static void rewrite_script_source (void);
 #endif
+
+#if ! defined HAVE_SNPRINTF
+
+/*
+Apparently some systems do not support snprintf.
+This stub looks unsafe but should work with a68g.
+*/
+
+/*
+\brief print in a fixed-length buffer
+\param buf buffer to use
+\param size size of buffer
+\param fmt format string
+\return characters printed
+*/
+
+int a68g_snprintf (char *buf, size_t size, char *fmt, ...)
+{
+  va_list p;
+  int len;
+  va_start (p, fmt);
+  (void) vsprintf (buf, fmt, p);
+  len = (int) strlen (buf);
+  ABEND (len >= (int) size, "snprintf overflow", NO_TEXT);
+  va_end (p);
+  return (len);
+}
+
+#endif
+
+/*!
+\brief return error test from errno
+\return same
+*/
+
+char *error_specification (void)
+{
+  static char txt[BUFFER_SIZE];
+  if (errno == 0) {
+    ASSERT (snprintf (txt, SNPRINTF_SIZE, "no information") >= 0);
+  } else {
+    ASSERT (snprintf (txt, SNPRINTF_SIZE, "%s", strerror (errno)) >= 0);
+  }
+  if (strlen (txt) > 0) {
+    txt[0] = TO_LOWER (txt[0]);
+  }
+  return (txt);
+}
+
+/*!
+\brief open a file in ~/.a68g, if possible
+\param fn file name
+\param mode mode
+\return pointer to descriptor
+*/
+
+FILE *a68g_fopen (char *fn, char *mode, char *new_fn)
+{
+#if defined HAVE_WIN32 || ! defined HAVE_DIRENT_H
+  ASSERT (snprintf (new_fn, SNPRINTF_SIZE, "%s", fn) >= 0);
+  return (fopen (new_fn, mode));
+#else
+  char dn[BUFFER_SIZE];
+  int rc;
+  RESET_ERRNO;
+  ASSERT (snprintf (dn, SNPRINTF_SIZE, "%s/%s", getenv ("HOME"), A68_DIR) >= 0);
+  rc = mkdir (dn, (mode_t) (S_IRUSR | S_IWUSR | S_IXUSR));
+  if (rc == 0 || (rc == -1 && errno == EEXIST)) {
+    struct stat status;
+    if (stat (dn, &status) == 0 && S_ISDIR (ST_MODE (&status)) != 0) {
+      FILE *f;
+      ASSERT (snprintf (new_fn, SNPRINTF_SIZE, "%s/%s", dn, fn) >= 0);
+      f = fopen (new_fn, mode);
+      if (f != NO_FILE) {
+        return (f);
+      }
+    }    
+  }
+  ASSERT (snprintf (new_fn, SNPRINTF_SIZE, "%s", fn) >= 0);
+  return (fopen (new_fn, mode));
+#endif
+}
+
 
 /*!
 \brief print k bytes from z; debugging routine
@@ -150,9 +227,6 @@ void state_license (FILE_T f)
 
 void state_version (FILE_T f)
 {
-#if ! defined HAVE_WIN32
-  char txt[BUFFER_SIZE];
-#endif
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
   }
@@ -174,13 +248,13 @@ void state_version (FILE_T f)
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Editor is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is supported.\n") >= 0);
 #else
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Curses is supported.\n") >= 0);
 #else
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Curses is not supported.\n") >= 0);
@@ -198,32 +272,32 @@ void state_version (FILE_T f)
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "TCP/IP is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if (defined HAVE_PLOT_H && defined HAVE_LIBPLOT)
+#if defined HAVE_GNU_PLOTUTILS
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libplot is supported.\n") >= 0);
 #else
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libplot is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if (defined HAVE_GSL_GSL_BLAS_H && defined HAVE_LIBGSL)
+#if defined HAVE_GNU_GSL
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU Scientific Library is supported.\n") >= 0);
 #else
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU Scientific Library is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
+#if defined HAVE_POSTGRESQL
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PostgreSQL is supported.\n") >= 0);
 #else
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "PostgreSQL is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if ! defined HAVE_WIN32
-  if (confstr (_CS_GNU_LIBC_VERSION, txt, BUFFER_SIZE) > (size_t) 0) {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libc version %s.\n", txt) >= 0);
+#if defined _CS_GNU_LIBC_VERSION && ! defined HAVE_WIN32
+  if (confstr (_CS_GNU_LIBC_VERSION, input_line, BUFFER_SIZE) > (size_t) 0) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libc version %s.\n", input_line) >= 0);
     WRITE (f, output_line);
   }
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
-  if (confstr (_CS_GNU_LIBPTHREAD_VERSION, txt, BUFFER_SIZE) > (size_t) 0) {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libpthread version %s.\n", txt) >= 0);
+#if (defined HAVE_PARALLEL_CLAUSE && defined _CS_GNU_LIBPTHREAD_VERSION)
+  if (confstr (_CS_GNU_LIBPTHREAD_VERSION, input_line, BUFFER_SIZE) > (size_t) 0) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "GNU libpthread version %s.\n", input_line) >= 0);
     WRITE (f, output_line);
   }
 #endif
@@ -297,21 +371,7 @@ int main (int argc, char *argv[])
 /* Try to read maximum line width on the terminal,
    used to pretty print diagnostics to same.
  */
-#if (defined HAVE_TERM_H && defined HAVE_LIBTERMCAP)
-  term_type = getenv ("TERM");
-  if (term_type == NO_TEXT) {
-    term_width = MAX_LINE_WIDTH;
-  } else if (tgetent (term_buffer, term_type) < 0) {
-    term_width = MAX_LINE_WIDTH;
-  } else {
-    term_width = tgetnum ("co");
-  }
-  if (term_width <= 1) {
-    term_width = MAX_LINE_WIDTH;
-  }
-#else
-  term_width = MAX_LINE_WIDTH;
-#endif
+  a68g_getty (&term_heigth, &term_width);
 /* Determine clock resolution */
   {
     clock_t t0 = clock (), t1;
@@ -321,7 +381,7 @@ int main (int argc, char *argv[])
     clock_res = (t1 - t0) / (clock_t) CLOCKS_PER_SEC;
   }
 /* Set the main thread id */
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
   main_thread_id = pthread_self ();
 #endif
   heap_is_fluid = A68_TRUE;
@@ -374,12 +434,12 @@ int main (int argc, char *argv[])
 /* Start the UI */
     init_before_tokeniser ();
     if (OPTION_EDIT (&program)) {
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
       edit (output_line);
 #else 
       errno = ENOTSUP;
-      SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, "EDIT requires the ncurses library");
+      SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, "editor requires the ncurses library");
 #endif
     }
 /* Running a script */
@@ -680,7 +740,7 @@ Accept various silent extensions.
       NEST (TABLE (TOP_NODE (&program))) = symbol_table_count = 3;
       reset_symbol_table_nest_count (TOP_NODE (&program));
       fill_symbol_table_outer (TOP_NODE (&program), TABLE (TOP_NODE (&program)));
-#if (defined HAVE_PTHREAD_H && defined HAVE_LIBPTHREAD)
+#if defined HAVE_PARALLEL_CLAUSE
       set_par_level (TOP_NODE (&program), 0);
 #endif
       set_nest (TOP_NODE (&program), NO_NODE);
@@ -1008,7 +1068,7 @@ void a68g_exit (int code)
   free_file_entries ();
 /* Close the terminal */
   io_close_tty_line ();
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
+#if defined HAVE_CURSES
 /* 
 "curses" might still be open if it was not closed from A68, or the program
 was interrupted, or a runtime error occured. That wreaks havoc on your
@@ -1401,7 +1461,7 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
   } else {
     char *suffix;
     RESET_ERRNO;
-    k = strtol (num, &suffix, 0);      /* Accept also octal and hex */
+    k = (int) strtol (num, &suffix, 0);      /* Accept also octal and hex */
     *error = (BOOL_T) (suffix == num);
     if (errno != 0 || *error) {
       option_error (start_l, start_c, "conversion error in");
@@ -1614,19 +1674,21 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               error = (BOOL_T) ((FORWARD (i)) == NO_OPTION_LIST);
             }
             if (!error) {
-              char name[BUFFER_SIZE];
+              char name[BUFFER_SIZE], new_name[BUFFER_SIZE];
               FILE *f;
+              int s_errno = errno;
               bufcpy (name, HIDDEN_TEMP_FILE_NAME, BUFFER_SIZE);
               bufcat (name, ".cmd.a68", BUFFER_SIZE);
-              f = fopen (name, "w");
+              f = a68g_fopen (name, "w", new_name);
               ABEND (f == NO_FILE, "cannot open temp file", NO_TEXT);
+              errno = s_errno;
               if (eq (p, "Execute") || eq (p, "X")) {
                 fprintf (f, "(%s)\n", STR (i));
               } else {
                 fprintf (f, "(print ((%s)))\n", STR (i));
               }
               ASSERT (fclose (f) == 0);
-              FILE_INITIAL_NAME (&program) = new_string (name);
+              FILE_INITIAL_NAME (&program) = new_string (new_name);
             } else {
               option_error (start_l, start_c, "unit required by");
             }
@@ -1793,7 +1855,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           OPTION_REGRESSION_TEST (&program) = A68_TRUE;
           OPTION_TIME_LIMIT (&program) = 120;
           OPTION_KEEP (&program) = A68_TRUE;
-          term_width = MAX_LINE_WIDTH;
+          term_width = MAX_TERM_WIDTH;
         }
 /* LOCAL assumes include files in the current directory - undocumented option */
         else if (eq (p, "LOCal")) {
@@ -2029,12 +2091,9 @@ void default_mem_sizes (void)
 void read_rc_options (void)
 {
   FILE *f;
-  int len = 2 + (int) strlen (a68g_cmd_name) + (int) strlen ("rc");
-  char *name = (char *) get_heap_space ((size_t) len);
-  bufcpy (name, ".", len);
-  bufcat (name, a68g_cmd_name, len);
-  bufcat (name, "rc", len);
-  f = fopen (name, "r");
+  char name[BUFFER_SIZE], new_name[BUFFER_SIZE];
+  ASSERT (snprintf (name, SNPRINTF_SIZE, ".%src", a68g_cmd_name) >= 0);
+  f = a68g_fopen (name, "r", new_name);
   if (f != NO_FILE) {
     while (!feof (f)) {
       if (fgets (input_line, BUFFER_SIZE, f) != NO_TEXT) {
@@ -2890,7 +2949,66 @@ void write_listing_header (void)
 
 /* Small utility routines */
 
+/*!
+\brief get terminal size
+\param h heigth in lines
+\param c width in columns
+**/
+
+void a68g_getty (int * h, int * c)
+{
+/* Default action first */
+  (* h) = MAX_TERM_HEIGTH;
+  (* c) = MAX_TERM_WIDTH;
+#if (defined HAVE_SYS_IOCTL_H && defined TIOCGWINSZ)
+  {
+    struct winsize w;
+    if (ioctl (0, TIOCGWINSZ, &w) == 0) {
+      (* h) = w.ws_row;
+      (* c) = w.ws_col;
+    }
+  }
+#elif (defined HAVE_SYS_IOCTL_H && defined TIOCGSIZE)
+  {
+    struct ttysize w;
+    (void) ioctl (0, TIOCGSIZE, &w);
+    if (w.ts_lines > 0) {
+      (* h) = w.ts_lines;
+    }
+    if (w.ts_cols > 0) {
+      (* c) = w.ts_cols;
+    }
+  }
+#elif (defined HAVE_SYS_IOCTL_H && defined WIOCGETD)
+  {
+    struct uwdata w;
+    (void) ioctl (0, WIOCGETD, &w);
+    if (w.uw_heigth > 0 && w.uw_vs != 0) {
+      (* h) = w.uw_heigth / w.uw_vs;
+    }
+    if (w.uw_width > 0 && w.uw_hs != 0) {
+      (* c) = w.uw_width / w.uw_hs;
+    }
+  }
+#endif
+}
+
 /* Signal handlers */
+
+/*!
+\brief signal for window resize
+\param i dummy
+**/
+
+#if defined SIGWINCH
+static void sigwinch_handler (int i)
+{
+  (void) i;
+  ABEND (signal (SIGWINCH, sigwinch_handler) == SIG_ERR, "cannot install SIGWINCH handler", NO_TEXT);
+  a68g_getty (&term_heigth, &term_width);
+  return;
+}
+#endif
 
 /*!
 \brief signal reading for segment violation
@@ -2971,6 +3089,9 @@ void install_signal_handlers (void)
 {
   ABEND (signal (SIGINT, sigint_handler) == SIG_ERR, "cannot install SIGINT handler", NO_TEXT);
   ABEND (signal (SIGSEGV, sigsegv_handler) == SIG_ERR, "cannot install SIGSEGV handler", NO_TEXT);
+#if defined SIGWINCH
+  ABEND (signal (SIGWINCH, sigwinch_handler) == SIG_ERR, "cannot install SIGWINCH handler", NO_TEXT);
+#endif
 #if ! defined HAVE_WIN32
   ABEND (signal (SIGALRM, sigalrm_handler) == SIG_ERR, "cannot install SIGALRM handler", NO_TEXT);
   ABEND (signal (SIGPIPE, sigpipe_handler) == SIG_ERR, "cannot install SIGPIPE handler", NO_TEXT);
@@ -3841,7 +3962,7 @@ void bufcat (char *dst, char *src, int len)
     for (; n-- != 0 && d[0] != NULL_CHAR; d++) {
       ;
     }
-    dlen = d - dst;
+    dlen = (int) (d - dst);
     n = len - dlen;
     if (n > 0) {
       while (s[0] != NULL_CHAR) {
@@ -4047,23 +4168,23 @@ static void get_init_sylls (char *in, char *out)
 {
   char *coda;
   while (*in != NULL_CHAR) {
-    if (isalpha (*in)) {
-      while (*in != NULL_CHAR && isalpha (*in) && !is_vowel (*in)) {
-        *out++ = (char) toupper (*in++);
+    if (IS_ALPHA (*in)) {
+      while (*in != NULL_CHAR && IS_ALPHA (*in) && !is_vowel (*in)) {
+        *out++ = (char) TO_UPPER (*in++);
       }
       while (*in != NULL_CHAR && is_vowel (*in)) {
-        *out++ = (char) toupper (*in++);
+        *out++ = (char) TO_UPPER (*in++);
       }
       coda = out;
       while (*in != NULL_CHAR && is_consonant (*in)) {
-        *out++ = (char) toupper (*in++);
+        *out++ = (char) TO_UPPER (*in++);
         *out = NULL_CHAR;
-        if (!is_coda (coda, out - coda)) {
+        if (!is_coda (coda, (int) (out - coda))) {
           out--;
           break;
         }
       }
-      while (*in != NULL_CHAR && isalpha (*in)) {
+      while (*in != NULL_CHAR && IS_ALPHA (*in)) {
         in++;
       }
       *out++ = '+';
@@ -4765,10 +4886,6 @@ void apropos (FILE_T f, char *prompt, char *item)
 
 /* Error handling routines */
 
-#if (defined HAVE_CURSES_H && defined HAVE_LIBNCURSES)
-#include <curses.h>
-#endif
-
 #define TABULATE(n) (8 * (n / 8 + 1) - n)
 
 /*!
@@ -4822,7 +4939,7 @@ static char *char_to_str (char ch)
 
 static void pretty_diag (FILE_T f, char *p)
 {
-  int pos = 1, line_width = (f == STDOUT_FILENO ? term_width : MAX_LINE_WIDTH);
+  int pos = 1, line_width = (f == STDOUT_FILENO ? term_width : MAX_TERM_WIDTH);
   while (p[0] != NULL_CHAR) {
     char *q;
     int k;
@@ -4868,7 +4985,7 @@ void abend (char *reason, char *info, char *file, int line)
   }
   if (errno != 0) {
     bufcat (output_line, " (", BUFFER_SIZE);
-    bufcat (output_line, ERROR_SPECIFICATION, BUFFER_SIZE);
+    bufcat (output_line, error_specification (), BUFFER_SIZE);
     bufcat (output_line, ")", BUFFER_SIZE);
   }
   io_close_tty_line ();
@@ -4942,7 +5059,7 @@ void write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
   char *c, *c0;
   int continuations = 0;
   int pos = 5, col;
-  int line_width = (f == STDOUT_FILENO ? term_width : MAX_LINE_WIDTH);
+  int line_width = (f == STDOUT_FILENO ? term_width : MAX_TERM_WIDTH);
   BOOL_T line_ended;
 /* Terminate properly */
   if ((STRING (p))[strlen (STRING (p)) - 1] == NEWLINE_CHAR) {
@@ -5145,7 +5262,7 @@ void diagnostics_to_terminal (LINE_T * p, int what)
 void scan_error (LINE_T * u, char *v, char *txt)
 {
   if (errno != 0) {
-    diagnostic_line (A68_SUPPRESS_SEVERITY, u, v, txt, ERROR_SPECIFICATION);
+    diagnostic_line (A68_SUPPRESS_SEVERITY, u, v, txt, error_specification ());
   } else {
     diagnostic_line (A68_SUPPRESS_SEVERITY, u, v, txt, ERROR_UNSPECIFIED);
   }
@@ -5521,7 +5638,7 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
     COMPOSE_DIAGNOSTIC;
 /* Add information from errno, if any */
     if (err != 0) {
-      char *loc_str2 = new_string (ERROR_SPECIFICATION);
+      char *loc_str2 = new_string (error_specification ());
       if (loc_str2 != NO_TEXT) {
         char *stu;
         bufcat (b, " (", BUFFER_SIZE);
@@ -5598,7 +5715,7 @@ void diagnostic_line (int sev, LINE_T * line, char *pos, char *loc_str, ...)
     COMPOSE_DIAGNOSTIC;
 /* Add information from errno, if any */
     if (err != 0) {
-      char *loc_str2 = new_string (ERROR_SPECIFICATION);
+      char *loc_str2 = new_string (error_specification ());
       if (loc_str2 != NO_TEXT) {
         char *stu;
         bufcat (b, " (", BUFFER_SIZE);

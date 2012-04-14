@@ -36,7 +36,7 @@ Error codes:
 #include "a68g-config.h"
 #endif
 
-#if (defined HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ)
+#if defined HAVE_POSTGRESQL
 
 #include "a68g.h"
 
@@ -939,4 +939,4 @@ void genie_pq_backendpid (NODE_T * p)
   }
 }
 
-#endif /* HAVE_LIBPQ_FE_H && defined HAVE_LIBPQ */
+#endif /* HAVE_POSTGRESQL */

@@ -461,7 +461,7 @@ MP_T *string_to_mp (NODE_T * p, MP_T * z, char *s, int digits)
   expo = 0;
   if (s[i] != NULL_CHAR && TO_UPPER (s[i]) == TO_UPPER (EXPONENT_CHAR)) {
     char *end;
-    expo = strtol (&(s[++i]), &end, 10);
+    expo = (int) strtol (&(s[++i]), &end, 10);
     ok = (BOOL_T) (end[0] == NULL_CHAR);
   } else {
     ok = (BOOL_T) (s[i] == NULL_CHAR);
