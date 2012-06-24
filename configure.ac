@@ -1,4 +1,4 @@
-AC_INIT([algol68g], [2.3.9], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [2.4.1], [Marcel van der Veer <algol68g@xs4all.nl>])
 #
 # Algol 68 Genie "configure.ac" from "a68g-tools".
 #
@@ -155,6 +155,7 @@ esac
 AC_ARG_ENABLE(arch, [AS_HELP_STRING([--enable-arch=cpu], [if using gcc, enable emitting architecture-tuned assembly code (default is "no")])], , enable_arch=no) 
 AC_ARG_ENABLE(compiler, [AS_HELP_STRING([--enable-compiler], [enable unit compiler (default is "yes")])], , enable_compiler=yes) 
 AC_ARG_ENABLE(curses, [AS_HELP_STRING([--enable-curses], [if installed, enable curses library (default is "yes")])], , enable_curses=yes) 
+AC_ARG_ENABLE(readline, [AS_HELP_STRING([--enable-readline], [if installed, enable readline library (default is "yes")])], , enable_readline=yes) 
 AC_ARG_ENABLE(gsl, [AS_HELP_STRING([--enable-gsl], [if installed, enable GNU Scientific Library (default is "yes")])], , enable_gsl=yes) 
 AC_ARG_ENABLE(parallel, [AS_HELP_STRING([--enable-parallel], [enable Algol 68 parallel-clause (default is "yes")])], , enable_parallel=yes) 
 AC_ARG_ENABLE(pic, [AS_HELP_STRING([--enable-pic=option], [if using gcc, enable option to generate PIC (default is "-fPIC")])], , enable_pic="-fPIC") 
@@ -167,10 +168,10 @@ AC_ARG_ENABLE(postgresql, [AS_HELP_STRING([--enable-postgresql], [if installed, 
 #
 
 AC_MSG_NOTICE([initialising...])
-AM_INIT_AUTOMAKE([gnu])
+AM_INIT_AUTOMAKE([subdir-objects])
 AC_PREFIX_DEFAULT(/usr/local)
-AC_CONFIG_SRCDIR([a68g.h])
-AC_CONFIG_HEADERS([a68g-config.h])
+AC_CONFIG_SRCDIR([source/a68g.h])
+AC_CONFIG_HEADERS([source/a68g-config.h])
 AC_PROG_INSTALL
 AC_CHECK_PROG(a68g_exists, a68g, "yes")
 
@@ -392,12 +393,24 @@ if test "x$enable_curses" = "xyes"; then
     AC_CHECK_HEADERS([ncurses/curses.h], [enable_curses=yes], [], [])
   fi
   if test "x$enable_curses" = "xyes"; then
-    AC_CHECK_LIB([curses], [initscr], [], [enable_curses=no])
+    AC_CHECK_LIB([ncurses], [initscr], [], [enable_curses=no])
+    if test "x$enable_curses" = "xyes"; then
+      if test "x$enable_readline" = "xyes"; then
+        AC_CHECK_HEADERS([readline/readline.h], [], [enable_readline=no], [])
+        AC_CHECK_HEADERS([readline/history.h], [], [enable_readline=no], [])
+        if test "x$enable_readline" = "xyes"; then
+          AC_CHECK_LIB([readline], [readline], [], [enable_readline=no], [-lcurses])
+          if test "x$enable_readline" = "xyes"; then
+            AC_DEFINE(HAVE_READLINE, 1, [Define this if readline was detected]) 
+          fi
+        fi
+      fi
+    fi
     if test "x$enable_curses" = "xno"; then
-      AC_CHECK_LIB([ncurses], [initscr], [enable_curses=yes], [])
+      AC_CHECK_LIB([curses], [initscr], [enable_curses=yes], [])
     fi
     if test "x$enable_curses" = "xyes"; then
-      AC_DEFINE(HAVE_CURSES, 1, [Define this if a good curses installation was detected]) 
+      AC_DEFINE(HAVE_CURSES, 1, [Define this if curses was detected]) 
     fi
   fi
 fi

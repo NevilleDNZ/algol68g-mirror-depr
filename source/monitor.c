@@ -554,16 +554,14 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
       if (strcmp (NSYMBOL (NODE (i)), sym) == 0) {
         if (IS (MOID (i), PROC_SYMBOL)) {
           static A68_PROCEDURE z;
-          STATUS (&z) = (STATUS_MASK) (INITIALISED_MASK | STANDENV_PROC_MASK);
+          STATUS (&z) = (STATUS_MASK) (INIT_MASK | STANDENV_PROC_MASK);
           PROCEDURE (&(BODY (&z))) = PROCEDURE (i);
           ENVIRON (&z) = 0;
           LOCALE (&z) = NO_HANDLE;
           MOID (&z) = MOID (i);
           PUSH_PROCEDURE (p, z);
         } else {
-          UP_BLOCK_GC;
           (*(PROCEDURE (i))) (p);
-          DOWN_BLOCK_GC;
         }
         push_mode (f, MOID (i));
         return;
@@ -596,7 +594,7 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
     } else if (IS (_m_stack[k], REF_SYMBOL)) {
       A68_REF *v = (A68_REF *) STACK_ADDRESS (sp_2);
       PUSH_REF (p, *v);
-      sp_2 += ALIGNED_SIZE_OF (A68_REF);
+      sp_2 += A68_REF_SIZE;
       deref (p, k, STRONG);
       if (_m_stack[k] != MOID (u)) {
         ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s to %s", moid_to_string (_m_stack[k], MOID_WIDTH, NO_NODE), moid_to_string (MOID (u), MOID_WIDTH, NO_NODE)) >= 0);
@@ -649,7 +647,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
   for (; u != NO_PACK; FORWARD (u), FORWARD (v)) {
     if (strcmp (field, TEXT (u)) == 0) {
       if (name) {
-        A68_REF *z = (A68_REF *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REF)));
+        A68_REF *z = (A68_REF *) (STACK_OFFSET (-A68_REF_SIZE));
         CHECK_MON_REF (p, *z, moid);
         OFFSET (z) += OFFSET (v);
       } else {
@@ -882,9 +880,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         MOID (&q) = MOID (opt);
         INFO (&q) = INFO (p);
         NSYMBOL (&q) = NSYMBOL (p);
-        UP_BLOCK_GC;
         (void) ((*(PROCEDURE (opt)))) (&q);
-        DOWN_BLOCK_GC;
         push_mode (f, SUB_MOID (opt));
       }
     }
@@ -906,9 +902,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
     MOID (&q) = MOID (opt);
     INFO (&q) = INFO (p);
     NSYMBOL (&q) = NSYMBOL (p);
-    UP_BLOCK_GC;
     (void) ((*(PROCEDURE (opt))) (&q));
-    DOWN_BLOCK_GC;
     push_mode (f, SUB_MOID (opt));
   } else if (attr == REF_SYMBOL) {
     int refs = 0, length = 0;
@@ -993,7 +987,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_IN_DENOTATION, m);
         exit_genie (p, A68_RUNTIME_ERROR);
       }
-      z[0] = (MP_T) (INITIALISED_MASK | CONSTANT_MASK);
+      z[0] = (MP_T) (INIT_MASK | CONSTANT_MASK);
       push_mode (f, m);
       SCAN_CHECK (f, p);
     } else {
@@ -1272,7 +1266,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONG_BITS:
     {
       MP_T *z = (MP_T *) w;
-      initialised = (BOOL_T) ((unsigned) z[0] & INITIALISED_MASK);
+      initialised = (BOOL_T) ((unsigned) z[0] & INIT_MASK);
       recognised = A68_TRUE;
       break;
     }
@@ -1281,7 +1275,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONGLONG_BITS:
     {
       MP_T *z = (MP_T *) w;
-      initialised = (BOOL_T) ((unsigned) z[0] & INITIALISED_MASK);
+      initialised = (BOOL_T) ((unsigned) z[0] & INIT_MASK);
       recognised = A68_TRUE;
       break;
     }
@@ -1289,7 +1283,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
     {
       MP_T *r = (MP_T *) w;
       MP_T *i = (MP_T *) (w + size_long_mp ());
-      initialised = (BOOL_T) (((unsigned) r[0] & INITIALISED_MASK) && ((unsigned) i[0] & INITIALISED_MASK));
+      initialised = (BOOL_T) (((unsigned) r[0] & INIT_MASK) && ((unsigned) i[0] & INIT_MASK));
       recognised = A68_TRUE;
       break;
     }
@@ -1297,7 +1291,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
     {
       MP_T *r = (MP_T *) w;
       MP_T *i = (MP_T *) (w + size_long_mp ());
-      initialised = (BOOL_T) (((unsigned) r[0] & INITIALISED_MASK) && ((unsigned) i[0] & INITIALISED_MASK));
+      initialised = (BOOL_T) (((unsigned) r[0] & INIT_MASK) && ((unsigned) i[0] & INIT_MASK));
       recognised = A68_TRUE;
       break;
     }
@@ -1353,8 +1347,8 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_PIPE:
     {
       A68_REF *pipe_read = (A68_REF *) w;
-      A68_REF *pipe_write = (A68_REF *) (w + ALIGNED_SIZE_OF (A68_REF));
-      A68_INT *pid = (A68_INT *) (w + 2 * ALIGNED_SIZE_OF (A68_REF));
+      A68_REF *pipe_write = (A68_REF *) (w + A68_REF_SIZE);
+      A68_INT *pid = (A68_INT *) (w + 2 * A68_REF_SIZE);
       initialised = (BOOL_T) (INITIALISED (pipe_read) && INITIALISED (pipe_write) && INITIALISED (pid));
       recognised = A68_TRUE;
       break;
@@ -2091,7 +2085,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         char *cexpr = mod;
         BOOL_T set = A68_FALSE;
         SKIP_ONE_SYMBOL (cexpr);
-        change_breakpoints (TOP_NODE (&program), BREAKPOINT_MASK, k, &set, new_string (cexpr));
+        change_breakpoints (TOP_NODE (&program), BREAKPOINT_MASK, k, &set, new_string (cexpr, NO_TEXT));
         if (set == A68_FALSE) {
           monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         }
@@ -2120,7 +2114,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         free (watchpoint_expression);
         watchpoint_expression = NO_TEXT;
       }
-      watchpoint_expression = new_string (cexpr);
+      watchpoint_expression = new_string (cexpr, NO_TEXT);
       change_masks (TOP_NODE (&program), BREAKPOINT_WATCH_MASK, A68_TRUE);
     } else if (match_string (sym, "Clear", BLANK_CHAR)) {
       char *mod = sym;
@@ -2299,7 +2293,6 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
 {
   ADDR_T top_sp = stack_pointer;
   volatile BOOL_T res = A68_FALSE;
-  UP_BLOCK_GC;
   mon_errors = 0;
   if (EXPR (INFO (p)) != NO_TEXT) {
     evaluate (STDOUT_FILENO, p, EXPR (INFO (p)));
@@ -2314,7 +2307,7 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
     } else if (TOP_MODE == MODE (BOOL)) {
       A68_BOOL z;
       POP_OBJECT (p, &z, A68_BOOL);
-      res = (BOOL_T) (STATUS (&z) == INITIALISED_MASK && VALUE (&z) == A68_TRUE);
+      res = (BOOL_T) (STATUS (&z) == INIT_MASK && VALUE (&z) == A68_TRUE);
     } else {
       monitor_error ("deleted invalid breakpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
       if (EXPR (INFO (p)) != NO_TEXT) {
@@ -2325,7 +2318,6 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
     }
   }
   stack_pointer = top_sp;
-  DOWN_BLOCK_GC;
   return (res);
 }
 
@@ -2338,7 +2330,6 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
 {
   ADDR_T top_sp = stack_pointer;
   volatile BOOL_T res = A68_FALSE;
-  UP_BLOCK_GC;
   mon_errors = 0;
   if (watchpoint_expression != NO_TEXT) {
     evaluate (STDOUT_FILENO, p, watchpoint_expression);
@@ -2354,7 +2345,7 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
     if (TOP_MODE == MODE (BOOL)) {
       A68_BOOL z;
       POP_OBJECT (p, &z, A68_BOOL);
-      res = (BOOL_T) (STATUS (&z) == INITIALISED_MASK && VALUE (&z) == A68_TRUE);
+      res = (BOOL_T) (STATUS (&z) == INIT_MASK && VALUE (&z) == A68_TRUE);
     } else {
       monitor_error ("deleted invalid watchpoint expression yielding mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
       if (watchpoint_expression != NO_TEXT) {
@@ -2365,7 +2356,6 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
     }
   }
   stack_pointer = top_sp;
-  DOWN_BLOCK_GC;
   return (res);
 }
 
@@ -2447,7 +2437,6 @@ void single_step (NODE_T * p, unsigned mask)
     prompt_set = A68_TRUE;
   }
   in_monitor = A68_TRUE;
-  UP_BLOCK_GC;
   break_proc_level = 0;
   change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
   STATUS_CLEAR (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK);
@@ -2467,7 +2456,6 @@ void single_step (NODE_T * p, unsigned mask)
   }
   stack_pointer = top_sp;
   in_monitor = A68_FALSE;
-  DOWN_BLOCK_GC;
   if (mask == (unsigned) BREAKPOINT_ERROR_MASK) {
     WRITELN (STDOUT_FILENO, "Continuing from an error might corrupt things");
     single_step (p, (unsigned) BREAKPOINT_ERROR_MASK);
@@ -2507,7 +2495,6 @@ void genie_evaluate (NODE_T * p)
 {
   A68_REF u, v;
   volatile ADDR_T top_sp;
-  UP_BLOCK_GC;
   v = empty_string (p);
 /* Pop argument */
   POP_REF (p, (A68_REF *) & u);
@@ -2543,5 +2530,4 @@ void genie_evaluate (NODE_T * p)
   }
   stack_pointer = top_sp;
   PUSH_REF (p, v);
-  DOWN_BLOCK_GC;
 }

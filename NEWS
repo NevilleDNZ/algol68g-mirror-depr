@@ -1,10 +1,25 @@
+Version 2.4.1, June 2012
+* Fixes issue in transput library.
+* Fixes issue in garbage collector.
+* Documentation updates.
+* Better distribution lay-out.
+
+Version 2.4, June 2012
+* Adds pretty-printer.
+* Simplified garbage collector.
+* Adds procedure "read line" (calls GNU readline).
+* Adds procedure "on gc event".
+* Adds option --storage [=] n.
+* Fixes error in option --handles.
+* Removed the field-selector extension.
+
 Version 2.3.9, April 2012
 * Fixes curses build issue.
 * Documentation updates.
 
 Version 2.3.8, April 2012
 * Fixes build issues on Solaris and Cygwin.
-* Adds procedures rows and columns.
+* Adds procedures "rows" and "columns".
 * Documentation updates.
 
 Version 2.3.7, February 2012
@@ -180,7 +195,7 @@ Version 1.11.0, November 2007
 * Improves monitor.
 
 Version 1.10.2, April 2007
-* Adds procedure real.
+* Adds procedure "real".
 * Adds format pattern 'h'.
 * Adds operator OP SET = (INT, L BITS) L BITS.
 * Adds operator OP CLEAR = (INT, L BITS) L BITS.
@@ -190,8 +205,8 @@ Version 1.10.1, December 2006
 
 Version 1.10.0, August 2006
 * Adds basic linear algebra.
-* Adds procedures arctan2, long arctan2 and long long arctan2.
-* Adds procedure execve output.
+* Adds procedures "arctan2", "long arctan2" and "long long arctan2".
+* Adds procedure "execve output".
 * Improves diagnostics.
 * Adds option --no-backtrace.
 
@@ -202,25 +217,25 @@ Version 1.9.1, May 2006
 * 64-bit safe interpreter.
 * Improves monitor/debugger.
 * Adds option --monitor (or --debug).
-* Adds procedure monitor (or --debug).
+* Adds procedure "monitor".
 
 Version 1.9.0, March 2006
 * Adds basic PostgreSQL support.
-* Adds procedure utc time (UNIX).
-* Adds procedure local time (UNIX).
+* Adds procedure "utc time" (UNIX).
+* Adds procedure "local time" (UNIX).
 * Improves diagnostic messages.
 
 Version 1.8.1, November 2005
-* Adds procedure sub in string for substituting regular expressions in a string (UNIX).
+* Adds procedure "sub in string" (UNIX).
 * Adds option --portcheck cf. standard hardware representation.
 * Adds option --pedantic.
 
 Version 1.8.0, July 2005
-* Adds procedure http content for fetching web page contents (UNIX).
-* Adds procedure tcp request for sending requests via TCP (UNIX).
-* Adds procedure grep in string for matching regular expressions in a string (UNIX).
-* Adds procedure last char in string to find last occurrence of a character in a string.
-* Adds procedure string in string to find first occurrence of a string in a string.
+* Adds procedure "http content" (UNIX).
+* Adds procedure "tcp request" (UNIX).
+* Adds procedure "grep in string" (UNIX).
+* Adds procedure "last char in string".
+* Adds procedure "string in string".
 * Adds keyword UNTIL to implement post checked loop.
 * Adds keyword DOWNTO to complement TO.
 * Adds keyword ANDTH as alternative for ANDF and keyword OREL as alternative for ORF.

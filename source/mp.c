@@ -338,7 +338,7 @@ void set_longlong_mp_digits (int n)
 MP_T *set_mp_short (MP_T * z, MP_T x, int x_expo, int digits)
 {
   MP_T *d = &MP_DIGIT ((z), 2);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_EXPONENT (z) = (MP_T) x_expo;
   MP_DIGIT (z, 1) = (MP_T) x;
   while (--digits) {
@@ -810,7 +810,7 @@ MP_T *pack_mp_bits (NODE_T * p, MP_T * u, unsigned *row, MOID_T * m)
       (void) mul_mp_digit (p, v, v, (MP_T) MP_BITS_RADIX, digits);
     }
   }
-  MP_STATUS (u) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (u) = (MP_T) INIT_MASK;
   stack_pointer = pop_sp;
   return (u);
 }
@@ -996,7 +996,7 @@ MP_T *add_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
 {
   ADDR_T pop_sp = stack_pointer;
   MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
 /* Trivial cases */
   if (MP_DIGIT (x, 1) == (MP_T) 0) {
     MOVE_MP (z, y, digits);
@@ -1074,7 +1074,7 @@ MP_T *sub_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   int fnz, k;
   MP_T *w, z_1, x_1 = MP_DIGIT (x, 1), y_1 = MP_DIGIT (y, 1);
   BOOL_T negative = A68_FALSE;
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
 /* Trivial cases */
   if (MP_DIGIT (x, 1) == (MP_T) 0) {
     MOVE_MP (z, y, digits);
@@ -1188,7 +1188,7 @@ MP_T *mul_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   if (x_1 == 0 || y_1 == 0) {
     stack_pointer = pop_sp;
     MP_DIGIT (x, 1) = x_1;
@@ -1279,7 +1279,7 @@ guesses without separate correction steps.
   ABEND (oflow <= 1, "inadequate MP_RADIX", NO_TEXT);
   MP_DIGIT (x, 1) = ABS (x_1);
   MP_DIGIT (y, 1) = ABS (y_1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
 /* `w' will be the working nominator in which the quotient develops */
   STACK_MP (w, p, digits_w);
   MP_EXPONENT (w) = MP_EXPONENT (x) - MP_EXPONENT (y);
@@ -1372,7 +1372,7 @@ MP_T *over_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   (void) div_mp (p, z_g, x_g, y_g, digits_g);
   trunc_mp (p, z_g, z_g, digits_g);
   (void) shorten_mp (p, z, digits, z_g, digits_g);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
 /* Restore and exit */
   stack_pointer = pop_sp;
   return (z);
@@ -1429,7 +1429,7 @@ MP_T *mul_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
   int j, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   y = ABS (y_1);
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
@@ -1466,7 +1466,7 @@ MP_T *half_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   int j, digits_h = 2 + digits;
   ADDR_T pop_sp = stack_pointer;
   MP_DIGIT (x, 1) = ABS (x_1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   STACK_MP (w, p, digits_h);
   SET_MP_ZERO (w, digits_h);
 /* Calculate x * 0.5 */
@@ -1513,7 +1513,7 @@ MP_T *div_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
   ABEND (oflow <= 1, "inadequate MP_RADIX", NO_TEXT);
 /* Work with positive operands */
   MP_DIGIT (x, 1) = ABS (x_1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   y = ABS (y_1);
   STACK_MP (w, p, digits_w);
   MP_EXPONENT (w) = MP_EXPONENT (x);
@@ -3520,7 +3520,7 @@ void eq_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
-  STATUS (z) = INITIALISED_MASK;
+  STATUS (z) = INIT_MASK;
   VALUE (z) = (MP_DIGIT (v, 1) == 0 ? A68_TRUE : A68_FALSE);
   stack_pointer = pop_sp;
 }
@@ -3540,7 +3540,7 @@ void ne_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
-  STATUS (z) = INITIALISED_MASK;
+  STATUS (z) = INIT_MASK;
   VALUE (z) = (MP_DIGIT (v, 1) != 0 ? A68_TRUE : A68_FALSE);
   stack_pointer = pop_sp;
 }
@@ -3560,7 +3560,7 @@ void lt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
-  STATUS (z) = INITIALISED_MASK;
+  STATUS (z) = INIT_MASK;
   VALUE (z) = (MP_DIGIT (v, 1) < 0 ? A68_TRUE : A68_FALSE);
   stack_pointer = pop_sp;
 }
@@ -3580,7 +3580,7 @@ void le_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
-  STATUS (z) = INITIALISED_MASK;
+  STATUS (z) = INIT_MASK;
   VALUE (z) = (MP_DIGIT (v, 1) <= 0 ? A68_TRUE : A68_FALSE);
   stack_pointer = pop_sp;
 }
@@ -3600,7 +3600,7 @@ void gt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
-  STATUS (z) = INITIALISED_MASK;
+  STATUS (z) = INIT_MASK;
   VALUE (z) = (MP_DIGIT (v, 1) > 0 ? A68_TRUE : A68_FALSE);
   stack_pointer = pop_sp;
 }
@@ -3620,7 +3620,7 @@ void ge_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   MP_T *v;
   STACK_MP (v, p, digits);
   (void) sub_mp (p, v, x, y, digits);
-  STATUS (z) = INITIALISED_MASK;
+  STATUS (z) = INIT_MASK;
   VALUE (z) = (MP_DIGIT (v, 1) >= 0 ? A68_TRUE : A68_FALSE);
   stack_pointer = pop_sp;
 }
@@ -3646,7 +3646,7 @@ MP_T *round_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
     (void) sub_mp (p, z, x, y, digits);
     (void) trunc_mp (p, z, z, digits);
   }
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   return (z);
 }
 
@@ -3674,7 +3674,7 @@ MP_T *entier_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
       (void) sub_mp (p, z, z, y, digits);
     }
   }
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   return (z);
 }
 
@@ -3694,7 +3694,7 @@ MP_T *abs_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
     MOVE_MP (z, x, digits);
   }
   MP_DIGIT (z, 1) = fabs (MP_DIGIT (z, 1));
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   return (z);
 }
 
@@ -3714,6 +3714,6 @@ MP_T *minus_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
     MOVE_MP (z, x, digits);
   }
   MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;
+  MP_STATUS (z) = (MP_T) INIT_MASK;
   return (z);
 }

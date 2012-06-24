@@ -62,6 +62,7 @@ static char * extensions[EXTENSIONS] = {
 
 static void announce_phase (char *);
 static void compiler_interpreter (void);
+static void default_mem_sizes (int);
 static void moid_to_string_2 (char *, MOID_T *, int *, NODE_T *);
 
 #if defined HAVE_COMPILER
@@ -393,7 +394,7 @@ int main (int argc, char *argv[])
     init_options ();
     SOURCE_SCAN (&program) = 1;
     default_options (&program);
-    default_mem_sizes ();
+    default_mem_sizes (1);
 /* Initialise core */
     stack_segment = NO_BYTE;
     heap_segment = NO_BYTE;
@@ -408,6 +409,7 @@ int main (int argc, char *argv[])
     FILE_OBJECT_NAME (&program) = NO_TEXT;
     FILE_LIBRARY_NAME (&program) = NO_TEXT;
     FILE_BINARY_NAME (&program) = NO_TEXT;
+    FILE_PRETTY_NAME (&program) = NO_TEXT;
     FILE_SCRIPT_NAME (&program) = NO_TEXT;
     FILE_DIAGS_NAME (&program) = NO_TEXT;
 /* Options are processed here */
@@ -481,7 +483,7 @@ static BOOL_T strip_extension (char * ext)
     char *fn = (char *) get_heap_space ((size_t) (nlen + 1));
     bufcpy (fn, FILE_SOURCE_NAME (&program), nlen);
     fn[nlen - xlen] = NULL_CHAR;
-    FILE_GENERIC_NAME (&program) = new_string (fn);
+    FILE_GENERIC_NAME (&program) = new_string (fn, NO_TEXT);
     return (A68_TRUE);
   } else {
     return (A68_FALSE);
@@ -513,8 +515,8 @@ static void open_with_extensions (void)
     if (FILE_SOURCE_FD (&program) != -1) {
       int l;
       BOOL_T cont = A68_TRUE;
-      FILE_SOURCE_NAME (&program) = new_string (fn);
-      FILE_GENERIC_NAME (&program) = new_string (fn);
+      FILE_SOURCE_NAME (&program) = new_string (fn, NO_TEXT);
+      FILE_GENERIC_NAME (&program) = new_string (fn, NO_TEXT);
       for (l = 0; l < EXTENSIONS && cont; l ++) {
         if (strip_extension (extensions[l])) {
           cont = A68_FALSE;
@@ -576,6 +578,7 @@ static void compiler_interpreter (void)
   FILE_LISTING_WRITEMOOD (&program) = A68_TRUE;
   FILE_OBJECT_OPENED (&program) = A68_FALSE;
   FILE_OBJECT_WRITEMOOD (&program) = A68_TRUE;
+  FILE_PRETTY_OPENED (&program) = A68_FALSE;
   FILE_SCRIPT_OPENED (&program) = A68_FALSE;
   FILE_SCRIPT_WRITEMOOD (&program) = A68_FALSE;
   FILE_SOURCE_OPENED (&program) = A68_FALSE;
@@ -597,7 +600,7 @@ Accept various silent extensions.
   ABEND (FILE_SOURCE_NAME (&program) == NO_TEXT, "no source file name", NO_TEXT);
   ABEND (FILE_GENERIC_NAME (&program) == NO_TEXT, "no generic file name", NO_TEXT);
 /* Isolate the path name */
-  FILE_PATH (&program) = new_string (FILE_GENERIC_NAME (&program));
+  FILE_PATH (&program) = new_string (FILE_GENERIC_NAME (&program), NO_TEXT);
   path_set = A68_FALSE;
   for (k = (int) strlen (FILE_PATH (&program)); k >= 0 && path_set == A68_FALSE; k--) {
 #if defined WIN32
@@ -633,6 +636,11 @@ Accept various silent extensions.
   FILE_LISTING_NAME (&program) = (char *) get_heap_space ((size_t) len);
   bufcpy (FILE_LISTING_NAME (&program), FILE_GENERIC_NAME (&program), len);
   bufcat (FILE_LISTING_NAME (&program), LISTING_EXTENSION, len);
+/* Pretty file */
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&program)) + (int) strlen (PRETTY_EXTENSION);
+  FILE_PRETTY_NAME (&program) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_PRETTY_NAME (&program), FILE_GENERIC_NAME (&program), len);
+  bufcat (FILE_PRETTY_NAME (&program), PRETTY_EXTENSION, len);
 /* Script file */
   len = 1 + (int) strlen (FILE_GENERIC_NAME (&program)) + (int) strlen (SCRIPT_EXTENSION);
   FILE_SCRIPT_NAME (&program) = (char *) get_heap_space ((size_t) len);
@@ -783,7 +791,6 @@ Accept various silent extensions.
     announce_phase ("coercion enforcer");
     coercion_inserter (TOP_NODE (&program));
     widen_denotation (TOP_NODE (&program));
-    protect_from_gc (TOP_NODE (&program));
     get_max_simplout_size (TOP_NODE (&program));
     set_moid_sizes (TOP_MOID (&program));
     assign_offsets_table (a68g_standenv);
@@ -942,6 +949,12 @@ Compilation on Mac OS X using gcc
     diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, TOP_NODE (&program), WARNING_OPTIMISATION);
   }
 #endif
+/* Indenter */
+  if (ERROR_COUNT (&program) == 0 && OPTION_PRETTY (&program)) {
+    announce_phase ("indenter");
+    indenter (&program);
+    verbosity ();
+  }
 /* Interpreter */
   diagnostics_to_terminal (TOP_LINE (&program), A68_ALL_DIAGNOSTICS);
   if (ERROR_COUNT (&program) == 0 && OPTION_COMPILE (&program) == A68_FALSE && (OPTION_CHECK_ONLY (&program) ? OPTION_RUN (&program) : A68_TRUE)) {
@@ -999,7 +1012,6 @@ Compilation on Mac OS X using gcc
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\nGenie finished in %.2f seconds\n", seconds () - cputime_0) >= 0);
       WRITE (STDOUT_FILENO, output_line);
     }
-    /* ASSERT (block_gc == 0); fails in case we jumped out of a RTS routine! */
     verbosity ();
   }
 /* Setting up listing file */
@@ -1202,7 +1214,7 @@ static void load_script (void)
   }
   input_line[k] = NULL_CHAR;
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, input_line) >= 0);
-  FILE_INITIAL_NAME (&program) = new_string (cmd);
+  FILE_INITIAL_NAME (&program) = new_string (cmd, NO_TEXT);
 /* Read options */
   input_line[0] = NULL_CHAR;
   k = 0;
@@ -1272,6 +1284,8 @@ void default_options (MODULE_T *p)
   OPTION_COMPILE (p) = A68_FALSE;
   OPTION_CROSS_REFERENCE (p) = A68_FALSE;
   OPTION_DEBUG (p) = A68_FALSE;
+  OPTION_INDENT (p) = 2;
+  OPTION_FOLD (p) = A68_FALSE;
   OPTION_KEEP (p) = A68_FALSE;
   OPTION_LOCAL (p) = A68_FALSE;
   OPTION_MOID_LISTING (p) = A68_FALSE;
@@ -1280,6 +1294,7 @@ void default_options (MODULE_T *p)
   OPTION_OPTIMISE (p) = A68_FALSE;
   OPTION_PORTCHECK (p) = A68_FALSE;
   OPTION_PRAGMAT_SEMA (p) = A68_TRUE;
+  OPTION_PRETTY (p) = A68_FALSE;
   OPTION_QUIET (p) = A68_FALSE;
   OPTION_REDUCTIONS (p) = A68_FALSE;
   OPTION_REGRESSION_TEST (p) = A68_FALSE;
@@ -1334,7 +1349,7 @@ static char *strip_sign (char *p)
   while (p[0] == '-' || p[0] == '+') {
     p++;
   }
-  return (new_string (p));
+  return (new_string (p, NO_TEXT));
 }
 
 /*!
@@ -1349,7 +1364,7 @@ void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
   if (*l == NO_OPTION_LIST) {
     *l = (OPTION_LIST_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (OPTION_LIST_T));
     SCAN (*l) = SOURCE_SCAN (&program);
-    STR (*l) = new_string (str);
+    STR (*l) = new_string (str, NO_TEXT);
     PROCESSED (*l) = A68_FALSE;
     LINE (*l) = line;
     NEXT (*l) = NO_OPTION_LIST;
@@ -1550,7 +1565,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (!minus_sign && cmd_line) {
 /* Item without '-'s is a filename */
           if (!name_set) {
-            FILE_INITIAL_NAME (&program) = new_string (p);
+            FILE_INITIAL_NAME (&program) = new_string (p, NO_TEXT);
             name_set = A68_TRUE;
           } else {
             option_error (NO_LINE, start_c, "multiple source file names at");
@@ -1582,7 +1597,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&program) = new_string (STR (i));
+              FILE_INITIAL_NAME (&program) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -1598,7 +1613,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             FORWARD (i);
           }
           if (i != NO_OPTION_LIST) {
-            OPTION_TARGET (&program) = new_string (STR (i));
+            OPTION_TARGET (&program) = new_string (STR (i), NO_TEXT);
           } else {
             option_error (start_l, start_c, "missing argument in");
           }
@@ -1609,7 +1624,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           FORWARD (i);
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&program) = new_string (STR (i));
+              FILE_INITIAL_NAME (&program) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -1627,7 +1642,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           if (i != NO_OPTION_LIST) {
             ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s verification \"%s\" does not match script verification \"%s\"", a68g_cmd_name, PACKAGE_STRING, STR (i)) >= 0);
-            ABEND (strcmp (PACKAGE_STRING, STR (i)) != 0, new_string (output_line), "rebuild the script");
+            ABEND (strcmp (PACKAGE_STRING, STR (i)) != 0, new_string (output_line, NO_TEXT), "rebuild the script");
           } else {
             option_error (start_l, start_c, "missing argument in");
           }
@@ -1688,7 +1703,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
                 fprintf (f, "(print ((%s)))\n", STR (i));
               }
               ASSERT (fclose (f) == 0);
-              FILE_INITIAL_NAME (&program) = new_string (new_name);
+              FILE_INITIAL_NAME (&program) = new_string (new_name, NO_TEXT);
             } else {
               option_error (start_l, start_c, "unit required by");
             }
@@ -1696,7 +1711,17 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, "missing argument in");
           }
         }
-/* HEAP, HANDLES, STACK, FRAME and OVERHEAD  set core allocation */
+/* STORAGE, HEAP, HANDLES, STACK, FRAME and OVERHEAD set core allocation */
+        else if (eq (p, "STOrage")) {
+          BOOL_T error = A68_FALSE;
+          int k = fetch_integral (p, &i, &error);
+/* Adjust size */
+          if (error || errno > 0) {
+            option_error (start_l, start_c, "conversion error in");
+          } else if (k > 0) {
+            default_mem_sizes (k);
+          }
+        }
         else if (eq (p, "HEAP") || eq (p, "HANDLES") || eq (p, "STACK") || eq (p, "FRAME") || eq (p, "OVERHEAD")) {
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
@@ -1710,7 +1735,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             }
             if (eq (p, "HEAP")) {
               heap_size = k;
-            } else if (eq (p, "HANDLE")) {
+            } else if (eq (p, "HANDLES")) {
               handle_pool_size = k;
             } else if (eq (p, "STACK")) {
               expr_stack_size = k;
@@ -1780,7 +1805,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           FORWARD (i);
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&program) = new_string (STR (i));
+              FILE_INITIAL_NAME (&program) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -1815,6 +1840,22 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 /* BRACKETS extends Algol 68 syntax for brackets */
         else if (eq (p, "BRackets")) {
           OPTION_BRACKETS (&program) = A68_TRUE;
+        }
+/* PRETTY and INDENT perform basic pretty printing.
+   This is meant for synthetic code. */
+        else if (eq (p, "PRETty-print")) {
+          OPTION_PRETTY (&program) = A68_TRUE;
+          OPTION_CHECK_ONLY (&program) = A68_TRUE;
+        }
+        else if (eq (p, "INDENT")) {
+          OPTION_PRETTY (&program) = A68_TRUE;
+          OPTION_CHECK_ONLY (&program) = A68_TRUE;
+        }
+/* FOLD performs constant folding in basic lay-out formatting. */
+        else if (eq (p, "FOLD")) {
+          OPTION_INDENT (&program) = A68_TRUE;
+          OPTION_FOLD (&program) = A68_TRUE;
+          OPTION_CHECK_ONLY (&program) = A68_TRUE;
         }
 /* REDUCTIONS gives parser reductions.*/
         else if (eq (p, "REDuctions")) {
@@ -2075,12 +2116,15 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 \brief set default core size
 **/
 
-void default_mem_sizes (void)
+static void default_mem_sizes (int n)
 {
-  frame_stack_size = 3 * MEGABYTE;
-  expr_stack_size = MEGABYTE;
-  heap_size = 24 * MEGABYTE;
-  handle_pool_size = 4 * MEGABYTE;
+  if (n < 0 || n > 20) {
+    n = 1;
+  }
+  frame_stack_size = 6 * n * MEGABYTE;
+  expr_stack_size = 2 * n * MEGABYTE;
+  heap_size = 48 * n * MEGABYTE;
+  handle_pool_size = 8 * n * MEGABYTE;
   storage_overhead = MIN_MEM_SIZE;
 }
 
@@ -2134,8 +2178,8 @@ void isolate_options (char *p, LINE_T * line)
   char *q;
 /* 'q' points at first significant char in item .*/
   while (p[0] != NULL_CHAR) {
-/* Skip white space .. */
-    while ((p[0] == BLANK_CHAR || p[0] == TAB_CHAR || p[0] == ',') && p[0] != NULL_CHAR) {
+/* Skip white space etc */
+    while ((p[0] == BLANK_CHAR || p[0] == TAB_CHAR || p[0] == ',' || p[0] == NEWLINE_CHAR) && p[0] != NULL_CHAR) {
       p++;
     }
 /* ... then tokenise an item */
@@ -2163,7 +2207,7 @@ void isolate_options (char *p, LINE_T * line)
           p++;
         } else {
           /* Skip item */
-          while (p[0] != BLANK_CHAR && p[0] != NULL_CHAR && p[0] != '=' && p[0] != ',') {
+          while (p[0] != BLANK_CHAR && p[0] != NULL_CHAR && p[0] != '=' && p[0] != ',' && p[0] != NEWLINE_CHAR) {
             p++;
           }
         }
@@ -2477,11 +2521,6 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
               ASSERT (snprintf (output_line, SNPRINTF_SIZE, "generator ") >= 0);
               break;
             }
-          case BLOCK_GC_REF:
-            {
-              ASSERT (snprintf (output_line, SNPRINTF_SIZE, "sweep protect ") >= 0);
-              break;
-            }
           }
           WRITE (f, output_line);
           a68g_print_mode (f, MOID (s));
@@ -2700,10 +2739,6 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
       }
       if (GINFO (p) != NO_GINFO && COMPILE_NODE (GINFO (p)) > 0) {
         ASSERT (snprintf (output_line, SNPRINTF_SIZE, ", %6d", COMPILE_NODE (GINFO (p))) >= 0);
-        WRITE (f, output_line);
-      }
-      if (GINFO (p) != NO_GINFO && BLOCK_REF (GINFO (p)) != NO_TAG) {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, " *") >= 0);
         WRITE (f, output_line);
       }
     }
@@ -3121,16 +3156,33 @@ BYTE_T *get_heap_space (size_t s)
 }
 
 /*!
-\brief make a new copy of "t"
+\brief make a new copy of concatenated strings
 \param t text
 \return pointer
 **/
 
-char *new_string (char *t)
+char *new_string (char *t, ...)
 {
-  int n = (int) (strlen (t) + 1);
-  char *z = (char *) get_heap_space ((size_t) n);
-  bufcpy (z, t, n);
+  va_list vl;
+  char *q, *z;
+  int len = 0;
+  va_start (vl, t);
+  q = t;
+  while (q != NO_TEXT) {
+    len += (int) strlen (q);
+    q = va_arg (vl, char *);
+  }
+  va_end (vl);
+  len ++;
+  z = (char *) get_heap_space ((size_t) len);
+  z[0] = NULL_CHAR;
+  q = t;
+  va_start (vl, t);
+  while (q != NO_TEXT) {
+    bufcat (z, q, len);
+    q = va_arg (vl, char *);
+  }
+  va_end (vl);
   return (z);
 }
 
@@ -3285,6 +3337,8 @@ NODE_INFO_T *new_node_info (void)
   PROCEDURE_LEVEL (z) = 0;
   CHAR_IN_LINE (z) = NO_TEXT;
   SYMBOL (z) = NO_TEXT;
+  PRAGMENT (z) = NO_TEXT;
+  PRAGMENT_TYPE (z) = 0;
   LINE (z) = NO_LINE;
   return (z);
 }
@@ -3311,7 +3365,6 @@ GINFO_T *new_genie_info (void)
   LEVEL (z) = 0;
   ARGSIZE (z) = 0;
   SIZE (z) = 0;
-  BLOCK_REF (z) = NO_TAG;
   COMPILE_NAME (z) = NO_TEXT;
   COMPILE_NODE (z) = 0;
   return (z);
@@ -3817,7 +3870,7 @@ void init_heap (void)
   int handle_a_size = A68_ALIGN (handle_pool_size);
   int frame_a_size = A68_ALIGN (frame_stack_size);
   int expr_a_size = A68_ALIGN (expr_stack_size);
-  int total_size = A68_ALIGN (heap_a_size + handle_a_size + frame_a_size + expr_a_size);
+  int total_size = A68_ALIGN (heap_a_size + handle_a_size + frame_a_size + 2 * expr_a_size);
   BYTE_T *core = (BYTE_T *) (A68_ALIGN_T *) malloc ((size_t) total_size);
   ABEND (core == NO_BYTE, ERROR_OUT_OF_CORE, NO_TEXT);
   heap_segment = &core[0];
@@ -4356,7 +4409,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "BITS_DENOTATION",
   "BITS_PATTERN",
   "BITS_SYMBOL",
-  "BLOCK_GC_REF",
   "BOLD_COMMENT_SYMBOL",
   "BOLD_PRAGMAT_SYMBOL",
   "BOLD_TAG",
@@ -4383,7 +4435,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "CAST",
   "CHANNEL_SYMBOL",
   "CHAR_C_PATTERN",
-  "CHAR_DENOTATION",
   "CHAR_SYMBOL",
   "CHOICE",
   "CHOICE_PATTERN",
@@ -4446,7 +4497,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "FALSE_SYMBOL",
   "FIELD",
   "FIELD_IDENTIFIER",
-  "FIELD_SELECTION",
   "FILE_SYMBOL",
   "FIRM",
   "FIXED_C_PATTERN",
@@ -4622,8 +4672,6 @@ static char *attribute_names[WILDCARD + 1] = {
   "ROUTINE_UNIT",
   "ROWING",
   "ROWS_SYMBOL",
-  "ROW_ASSIGNATION",
-  "ROW_ASSIGN_SYMBOL",
   "ROW_CHAR_DENOTATION",
   "ROW_FUNCTION",
   "ROW_SYMBOL",
@@ -4813,7 +4861,9 @@ static A68_INFO info_text[] = {
   {"options", "--pragmats, --nopragmats", "switch elaboration of pragmat items on or off"},
   {"options", "--precision \"number\"", "set precision for long long modes to \"number\" significant digits"},
   {"options", "--preludelisting", "make a listing of preludes"},
+  {"options", "--pretty-print", "pretty-print the source file"},
   {"options", "--print unit", "print value yielded by algol 68 unit \"unit\""},
+  {"options", "--quiet", "suppresses all warning diagnostics"},
   {"options", "--quotestropping", "set stropping mode to quote stropping"},
   {"options", "--reductions", "print parser reductions"},
   {"options", "--run", "override --check/--norun options"},
@@ -5420,7 +5470,7 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
     bufcat (a, ")", BUFFER_SIZE);
   }
   bufcat (a, ".", BUFFER_SIZE);
-  TEXT (msg) = new_string (a);
+  TEXT (msg) = new_string (a, NO_TEXT);
   WHERE (msg) = p;
   LINE (msg) = line;
   SYMBOL (msg) = pos;
@@ -5443,7 +5493,7 @@ L line number
 M moid - if error mode return without giving a message
 N mode - MODE (NIL)
 O moid - operand
-S quoted symbol
+S quoted symbol, when possible with typographical display features
 U unquoted string literal
 X expected attribute
 Z quoted string literal. 
@@ -5556,8 +5606,25 @@ Z quoted string literal.
       }\
     } else if (t[0] == 'S') {\
       if (p != NO_NODE && NSYMBOL (p) != NO_TEXT) {\
+        char *txt = NSYMBOL (p);\
+        char *sym = NCHAR_IN_LINE (p);\
+        int n = 0, size = (int) strlen (txt);\
 	bufcat (b, "\"", BUFFER_SIZE);\
-	bufcat (b, NSYMBOL (p), BUFFER_SIZE);\
+        if (txt[0] != sym[0] || (int) strlen (sym) - 1 <= size) {\
+	  bufcat (b, NSYMBOL (p), BUFFER_SIZE);\
+        } else {\
+          while (n < size) {\
+            char str[2];\
+            str[0] = sym[0];\
+            str[1] = NULL_CHAR;\
+            bufcat (b, str, BUFFER_SIZE);\
+            if (TO_LOWER (txt[0]) == TO_LOWER (sym[0])) {\
+              txt ++;\
+              n ++;\
+            }\
+            sym ++;\
+          }\
+        }\
 	bufcat (b, "\"", BUFFER_SIZE);\
       } else {\
 	bufcat (b, "symbol", BUFFER_SIZE);\
@@ -5570,7 +5637,7 @@ Z quoted string literal.
       char z[BUFFER_SIZE];\
       /* ASSERT (snprintf(z, SNPRINTF_SIZE, "\"%s\"", TEXT (find_keyword_from_attribute (top_keyword, att))) >= 0); */\
       (void) non_terminal_string (z, att);\
-      bufcat (b, new_string (z), BUFFER_SIZE);\
+      bufcat (b, new_string (z, NO_TEXT), BUFFER_SIZE);\
     } else if (t[0] == 'Y') {\
       char *loc_string = va_arg (args, char *);\
       bufcat (b, loc_string, BUFFER_SIZE);\
@@ -5638,7 +5705,7 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
     COMPOSE_DIAGNOSTIC;
 /* Add information from errno, if any */
     if (err != 0) {
-      char *loc_str2 = new_string (error_specification ());
+      char *loc_str2 = new_string (error_specification (), NO_TEXT);
       if (loc_str2 != NO_TEXT) {
         char *stu;
         bufcat (b, " (", BUFFER_SIZE);
@@ -5715,7 +5782,7 @@ void diagnostic_line (int sev, LINE_T * line, char *pos, char *loc_str, ...)
     COMPOSE_DIAGNOSTIC;
 /* Add information from errno, if any */
     if (err != 0) {
-      char *loc_str2 = new_string (error_specification ());
+      char *loc_str2 = new_string (error_specification (), NO_TEXT);
       if (loc_str2 != NO_TEXT) {
         char *stu;
         bufcat (b, " (", BUFFER_SIZE);
@@ -5792,7 +5859,6 @@ void set_up_tables (void)
     add_keyword (&top_keyword, TRANSPOSE_SYMBOL, "TRNSP");
     add_keyword (&top_keyword, ROW_SYMBOL, "ROW");
     add_keyword (&top_keyword, COLUMN_SYMBOL, "COL");
-    add_keyword (&top_keyword, ROW_ASSIGN_SYMBOL, "::=");
     add_keyword (&top_keyword, CODE_SYMBOL, "CODE");
     add_keyword (&top_keyword, EDOC_SYMBOL, "EDOC");
     add_keyword (&top_keyword, ANDF_SYMBOL, "THEF");
@@ -5919,7 +5985,7 @@ static void max_unitings_to_simplout (NODE_T * p, int *max)
 
 void get_max_simplout_size (NODE_T * p)
 {
-  max_simplout_size = ALIGNED_SIZE_OF (A68_REF); /* For anonymous SKIP */
+  max_simplout_size = A68_REF_SIZE; /* For anonymous SKIP */
   max_unitings_to_simplout (p, &max_simplout_size);
 }
 
@@ -5968,7 +6034,7 @@ static int moid_size_2 (MOID_T * p)
   } else if (p == MODE (CHAR)) {
     return (ALIGNED_SIZE_OF (A68_CHAR));
   } else if (p == MODE (ROW_CHAR)) {
-    return (ALIGNED_SIZE_OF (A68_REF));
+    return (A68_REF_SIZE);
   } else if (p == MODE (BITS)) {
     return (ALIGNED_SIZE_OF (A68_BITS));
   } else if (p == MODE (LONG_BITS)) {
@@ -5986,7 +6052,7 @@ static int moid_size_2 (MOID_T * p)
   } else if (p == MODE (FORMAT)) {
     return (ALIGNED_SIZE_OF (A68_FORMAT));
   } else if (p == MODE (SEMA)) {
-    return (ALIGNED_SIZE_OF (A68_REF));
+    return (A68_REF_SIZE);
   } else if (p == MODE (SOUND)) {
     return (ALIGNED_SIZE_OF (A68_SOUND));
   } else if (p == MODE (COLLITEM)) {
@@ -6011,14 +6077,14 @@ static int moid_size_2 (MOID_T * p)
     if ((int) size_longlong_mp () > k) {
       k = (int) size_longlong_mp ();
     }
-    if (ALIGNED_SIZE_OF (A68_REF) > k) {
-      k = ALIGNED_SIZE_OF (A68_REF);
+    if (A68_REF_SIZE > k) {
+      k = A68_REF_SIZE;
     }
     return (ALIGNED_SIZE_OF (A68_UNION) + k);
   } else if (p == MODE (SIMPLIN)) {
     int k = 0;
-    if (ALIGNED_SIZE_OF (A68_REF) > k) {
-      k = ALIGNED_SIZE_OF (A68_REF);
+    if (A68_REF_SIZE > k) {
+      k = A68_REF_SIZE;
     }
     if (ALIGNED_SIZE_OF (A68_FORMAT) > k) {
       k = ALIGNED_SIZE_OF (A68_FORMAT);
@@ -6033,13 +6099,13 @@ static int moid_size_2 (MOID_T * p)
   } else if (p == MODE (SIMPLOUT)) {
     return (ALIGNED_SIZE_OF (A68_UNION) + max_simplout_size);
   } else if (IS (p, REF_SYMBOL)) {
-    return (ALIGNED_SIZE_OF (A68_REF));
+    return (A68_REF_SIZE);
   } else if (IS (p, PROC_SYMBOL)) {
     return (ALIGNED_SIZE_OF (A68_PROCEDURE));
   } else if (IS (p, ROW_SYMBOL) && p != MODE (ROWS)) {
-    return (ALIGNED_SIZE_OF (A68_REF));
+    return (A68_REF_SIZE);
   } else if (p == MODE (ROWS)) {
-    return (ALIGNED_SIZE_OF (A68_UNION) + ALIGNED_SIZE_OF (A68_REF));
+    return (ALIGNED_SIZE_OF (A68_UNION) + A68_REF_SIZE);
   } else if (IS (p, FLEX_SYMBOL)) {
     return moid_size (SUB (p));
   } else if (IS (p, STRUCT_SYMBOL)) {
@@ -6370,5 +6436,5 @@ char *moid_to_string (MOID_T * n, int w, NODE_T * idf)
   } else {
     bufcat (a, "null", BUFFER_SIZE);
   }
-  return (new_string (a));
+  return (new_string (a, NO_TEXT));
 }

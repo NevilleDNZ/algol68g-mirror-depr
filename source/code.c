@@ -114,13 +114,11 @@ static int indentation = 0;
 static char line[BUFFER_SIZE];
 
 static BOOL_T basic_unit (NODE_T *);
-static BOOL_T constant_unit (NODE_T *);
 static char *compile_unit (NODE_T *, FILE_T, BOOL_T);
 static void inline_unit (NODE_T *, FILE_T, int);
 static void compile_units (NODE_T *, FILE_T);
 static void indent (FILE_T, char *);
 static void indentf (FILE_T, int);
-static void push_unit (NODE_T *);
 
 /* The phases we go through */
 enum {L_NONE = 0, L_DECLARE = 1, L_INITIALISE, L_EXECUTE, L_EXECUTE_2, L_YIELD, L_PUSH};
@@ -883,7 +881,7 @@ static BOOL_T denotation_mode (MOID_T * m)
 \return same
 **/
 
-static BOOL_T folder_mode (MOID_T * m)
+BOOL_T folder_mode (MOID_T * m)
 {
   if (primitive_mode (m)) {
     return (A68_TRUE);
@@ -1479,7 +1477,7 @@ static BOOL_T constant_formula (NODE_T * p)
 \return same
 **/
 
-static BOOL_T constant_unit (NODE_T * p)
+BOOL_T constant_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
@@ -1557,7 +1555,6 @@ static BOOL_T constant_unit (NODE_T * p)
 /*!
 \brief push denotation
 \param p position in tree
-\return same
 **/
 
 static void push_denotation (NODE_T * p)
@@ -1603,7 +1600,6 @@ static void push_denotation (NODE_T * p)
 
 /*!
 \brief push widening
-\param out output file descriptor
 \param p starting node
 **/
 
@@ -1627,7 +1623,6 @@ static void push_widening (NODE_T * p)
 
 /*!
 \brief code collateral units
-\param out output file descriptor
 \param p starting node
 **/
 
@@ -1646,7 +1641,6 @@ static void push_collateral_units (NODE_T * p)
 /*!
 \brief code argument
 \param p starting node
-\return same
 **/
 
 static void push_argument (NODE_T * p)
@@ -1661,12 +1655,11 @@ static void push_argument (NODE_T * p)
 }
 
 /*!
-\brief whether constant unit
+\brief push unit
 \param p starting node
-\return same
 **/
 
-static void push_unit (NODE_T * p)
+void push_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1741,8 +1734,8 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
       POP_OBJECT (p, &im, A68_REAL);
       POP_OBJECT (p, &re, A68_REAL);
       indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_COMPLEX %s = {", acc));
-      undentf (out, snprintf (line, SNPRINTF_SIZE, "{INITIALISED_MASK, %.*g}", REAL_WIDTH, VALUE (&re)));
-      undentf (out, snprintf (line, SNPRINTF_SIZE, ", {INITIALISED_MASK, %.*g}", REAL_WIDTH, VALUE (&im)));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, "{INIT_MASK, %.*g}", REAL_WIDTH, VALUE (&re)));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, ", {INIT_MASK, %.*g}", REAL_WIDTH, VALUE (&im)));
       undent (out, "};\n");
       ABEND (stack_pointer > 0, "stack not empty", NO_TEXT);
     } else if (LONG_MODE (MOID (p))) {
@@ -1753,7 +1746,7 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
       stack_pointer = 0;
       push_unit (p);
       POP (p, &z, MOID_SIZE (MOID (p)));
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INITIALISED_MASK, %.0f", acc, z[1]));
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INIT_MASK, %.0f", acc, z[1]));
       for (k = 1; k <= LONG_MP_DIGITS; k ++) {
         undentf (out, snprintf (line, SNPRINTF_SIZE, ", %.0f", z[k + 1]));
       } 
@@ -2161,7 +2154,7 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
     if (genie_string_to_value_internal (p, MOID (p), NSYMBOL (s), (BYTE_T *) & z) == A68_FALSE) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (INT));
     }
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INITIALISED_MASK, %.0f", acc, z[1]));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INIT_MASK, %.0f", acc, z[1]));
     for (k = 1; k <= LONG_MP_DIGITS; k ++) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, ", %.0f", z[k + 1]));
     } 
@@ -2244,8 +2237,8 @@ static void inline_widening (NODE_T * p, FILE_T out, int phase)
       inline_unit (SUB (p), out, L_DECLARE);
     } else if (phase == L_EXECUTE) {
       inline_unit (SUB (p), out, L_EXECUTE);
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "STATUS_RE (%s) = INITIALISED_MASK;\n", acc));
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "STATUS_IM (%s) = INITIALISED_MASK;\n", acc));
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "STATUS_RE (%s) = INIT_MASK;\n", acc));
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "STATUS_IM (%s) = INIT_MASK;\n", acc));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "RE (%s) = (double) (", acc));
       inline_unit (SUB (p), out, L_YIELD);
       undent (out, ");\n");
@@ -3526,7 +3519,7 @@ static void compile_push (NODE_T * p, FILE_T out) {
 
 static void compile_assign (NODE_T * p, FILE_T out, char * dst) {
   if (primitive_mode (MOID (p))) {
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INITIALISED_MASK;\n", dst));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INIT_MASK;\n", dst));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (%s) = ", dst));
     inline_unit (p, out, L_YIELD);
     undent (out, ";\n");
@@ -3931,7 +3924,7 @@ static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
       indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) FRAME_OBJECT (%d);\n", arg, inline_mode (MOID (p)), *size));
       (*size) += MOID_SIZE (MOID (p));
     } else if (phase == L_YIELD && primitive_mode (MOID (p))) {
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INITIALISED_MASK;\n", arg));
+      indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INIT_MASK;\n", arg));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (%s) = ", arg));
       inline_unit (p, out, L_YIELD);
       undent (out, ";\n");
@@ -3978,7 +3971,6 @@ static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
     print_declarations (out, root_idf);
 /* Initialise */
     if (compose_fun != A68_MAKE_NOTHING) {
-      indent (out, "UP_BLOCK_GC;\n");
     }
     get_stack (idf, out, fun, "A68_PROCEDURE");
     indentf (out, snprintf (line, SNPRINTF_SIZE, "body = SUB (NODE (&BODY (%s)));\n", fun));
@@ -3993,10 +3985,8 @@ static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
     if (GC_MODE (SUB_MOID (idf))) {
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "BLOCK_GC_TOS (_N_ (%d));\n", NUMBER (p)));
     }
     if (compose_fun == A68_MAKE_FUNCTION) {
-      indent (out, "DOWN_BLOCK_GC;\n");
       (void) make_name (fn, "_deproc", "", NUMBER (p));
       write_fun_postlude (p, out, fn);
     }
@@ -4039,7 +4029,6 @@ static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose
 /* Initialise */
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
     if (compose_fun != A68_MAKE_NOTHING) {
-      indent (out, "UP_BLOCK_GC;\n");
     }
     get_stack (idf, out, fun, "A68_PROCEDURE");
     indentf (out, snprintf (line, SNPRINTF_SIZE, "body = SUB (NODE (&BODY (%s)));\n", fun));
@@ -4055,7 +4044,6 @@ static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose
     indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
     indent (out, "CLOSE_FRAME;\n");
     if (compose_fun == A68_MAKE_FUNCTION) {
-      indent (out, "DOWN_BLOCK_GC;\n");
       (void) make_name (fn, "_void_deproc", "", NUMBER (p));
       write_fun_postlude (p, out, fn);
     }
@@ -4133,7 +4121,6 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
 /* Initialise */
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
     if (compose_fun != A68_MAKE_NOTHING) {
-      indent (out, "UP_BLOCK_GC;\n");
     }
     inline_arguments (args, out, L_INITIALISE, &size);
     get_stack (idf, out, fun, "A68_PROCEDURE");
@@ -4154,10 +4141,8 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
     if (GC_MODE (SUB_MOID (proc))) {
-      indentf (out, snprintf (line, SNPRINTF_SIZE, "BLOCK_GC_TOS (_N_ (%d));\n", NUMBER (p)));
     }
     if (compose_fun == A68_MAKE_FUNCTION) {
-      indent (out, "DOWN_BLOCK_GC;\n");
       (void) make_name (fn, "_call", "", NUMBER (p));
       write_fun_postlude (p, out, fn);
     }
@@ -4214,7 +4199,6 @@ static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
 /* Initialise */
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
     if (compose_fun != A68_MAKE_NOTHING) {
-      indent (out, "UP_BLOCK_GC;\n");
     }
     inline_arguments (args, out, L_INITIALISE, &size);
     get_stack (idf, out, fun, "A68_PROCEDURE");
@@ -4236,7 +4220,6 @@ static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
     indent (out, "CLOSE_FRAME;\n");
     indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
     if (compose_fun == A68_MAKE_FUNCTION) {
-      indent (out, "DOWN_BLOCK_GC;\n");
       (void) make_name (fn, "_void_call", "", NUMBER (p));
       write_fun_postlude (p, out, fn);
     }
@@ -5283,10 +5266,10 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
   indentation++;
   if (gc) {
-    indent (out, "PREEMPTIVE_GC;\n");
+    indent (out, "/* PREEMPTIVE_GC; */\n");
   }
   if (for_part != NO_NODE) {
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INITIALISED_MASK;\n", z));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INIT_MASK;\n", z));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (%s) = %s;\n", z, idf));
   }
   units = decs = 0;
@@ -5343,7 +5326,7 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
   char * fn = (fun) (p, out, compose_fun);\
   if (compose_fun == A68_MAKE_FUNCTION && fn != NO_TEXT) {\
     ABEND (strlen (fn) > 32, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);\
-    COMPILE_NAME (GINFO (p)) = new_string (fn);\
+    COMPILE_NAME (GINFO (p)) = new_string (fn, NO_TEXT);\
     if (SUB (p) != NO_NODE && COMPILE_NODE (GINFO (SUB (p))) > 0) {\
       COMPILE_NODE (GINFO (p)) = COMPILE_NODE (GINFO (SUB (p)));\
     } else {\
@@ -5372,7 +5355,7 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
       char * fn2 = compile_basic_conditional (p, out, compose_fun);
       if (compose_fun == A68_MAKE_FUNCTION && fn2 != NO_TEXT) {
         ABEND (strlen (fn2) > 32, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
-        COMPILE_NAME (GINFO (p)) = new_string (fn2);
+        COMPILE_NAME (GINFO (p)) = new_string (fn2, NO_TEXT);
         if (SUB (p) != NO_NODE && COMPILE_NODE (GINFO (SUB (p))) > 0) {
           COMPILE_NODE (GINFO (p)) = COMPILE_NODE (GINFO (SUB (p)));
         } else {

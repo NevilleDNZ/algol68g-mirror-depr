@@ -1,0 +1,78 @@
+PR echo "[10] 'Mastermind' code breaker" PR
+
+# This breaks a unique code of `n' pegs and `m' colours you think of. #
+
+INT pegs = 4, colours = 6;
+
+MODE LIST = FLEX [1 : 0] COMBINATION, 
+     COMBINATION = [pegs] COLOUR, 
+     COLOUR = INT;
+
+# The code that this program will crack: #
+COMBINATION code := (4, 3, 6, 5);
+
+OP +:= = (REF LIST u, COMBINATION v) REF LIST:
+   # Add one combination to a list. #
+   (sweep heap; [UPB u + 1] COMBINATION w; 
+    w[ : UPB u] := u; 
+    w[UPB w] := v;
+   u := w
+   );
+
+PROC gen = (REF COMBINATION part, INT peg) VOID:
+# Generate all unique [colours!/(colours-pegs)!] combinations. #
+     IF peg > pegs
+     THEN all combs +:= part
+     ELSE FOR i TO colours
+          DO IF BOOL unique := TRUE;
+                FOR j TO peg - 1 WHILE unique
+                DO unique := part[j] ~= i
+                OD;
+                unique
+             THEN part[peg] := i;
+                  gen (part, peg + 1)
+             FI
+          OD
+     FI;
+
+LIST all combs;
+gen (LOC COMBINATION, 1);
+INT len = UPB (whole (UPB all combs, 0));
+
+PROC rate = (COMBINATION ref, guess, REF INT pos ok, col ok) VOID:
+  (col ok := pos ok := 0;
+   FOR u TO pegs
+   DO FOR v TO pegs
+      DO IF ref[u] = guess[v]
+         THEN (u = v | pos ok | col ok) +:= 1 
+         FI
+      OD
+   OD);
+
+PROC end = (COMBINATION win) VOID:
+     BEGIN printf (($l"solution is "n(pegs)(d)$, win));
+           printf (($lg(0)" collections"$, collections)); 
+           stop
+     END;
+
+PROC break code = (REF LIST sieved) VOID:
+     # Present a trial and sieve the list with the score. #
+     CASE UPB sieved + 1
+     IN printf ($"Inconsistent scores"$),
+        end (sieved[1])
+     OUT printf (($l"guess out of "g(-len)" candidates is"xn(pegs)(d)$, UPB sieved, sieved[1]));
+         INT col ok := 0, pos ok := 0;
+         rate (code, sieved[1], pos ok, col ok);
+         printf (($" rating: ", n(pos ok)"B", n(col ok)"W" $));
+         (pos ok = pegs | end (sieved[1]));
+         # Survivors are combinations with score as rated. #
+         LIST survivors;
+         FOR i FROM 2 TO UPB sieved
+         DO INT col ok i, pos ok i;
+            rate (sieved[1], sieved[i], pos ok i, col ok i);
+            (col ok = col ok i AND pos ok = pos ok i | survivors +:= sieved[i])
+         OD;
+         break code (survivors) 
+     ESAC;
+
+break code (all combs)

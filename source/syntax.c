@@ -251,28 +251,36 @@ static void reduce (NODE_T *, void (*)(NODE_T *), BOOL_T *, ...);
 
 /* Standard environ */
 
-static char bold_prelude_start[] = "\
-BEGIN MODE DOUBLE = LONG REAL, QUAD = LONG LONG REAL;!\
-      start: commence:!\
-      BEGIN!";
+static char *bold_prelude_start[] = {
+  "BEGIN MODE DOUBLE = LONG REAL, QUAD = LONG LONG REAL;",
+  "      start: commence:",
+  "      BEGIN",
+  NO_TEXT
+  };
 
-static char bold_postlude[] = "\
-      END;!\
-      stop: abort: halt: SKIP!\
-END!";
+static char *bold_postlude[] = {
+  "      END;",
+  "      stop: abort: halt: SKIP",
+  "END",
+  NO_TEXT
+  };
 
-static char quote_prelude_start[] = "\
-'BEGIN' 'MODE' 'DOUBLE' = 'LONG' 'REAL',!\
-               'QUAD' = 'LONG' 'LONG' 'REAL',!\
-               'DEVICE' = 'FILE',!\
-               'TEXT' = 'STRING';!\
-        START: COMMENCE:!\
-        'BEGIN'!";
+static char *quote_prelude_start[] = {
+  "'BEGIN' 'MODE' 'DOUBLE' = 'LONG' 'REAL',"
+  "               'QUAD' = 'LONG' 'LONG' 'REAL',"
+  "               'DEVICE' = 'FILE',"
+  "               'TEXT' = 'STRING';"
+  "        START: COMMENCE:"
+  "        'BEGIN'",
+  NO_TEXT
+  };
 
-static char quote_postlude[] = "\
-        'END';!\
-        STOP: ABORT: HALT: 'SKIP'!\
-'END'!";
+static char *quote_postlude[] = {
+  "     'END';",
+  "     STOP: ABORT: HALT: 'SKIP'",
+  "'END'",
+  NO_TEXT
+  };
 
 /*!
 \brief is_ref_refety_flex
@@ -970,9 +978,16 @@ static int get_source_size (void)
 \param name either "prelude" or "postlude"
 **/
 
-static void append_environ (char *str, LINE_T ** ref_l, int *line_num, char *name)
+static void append_environ (char *str[], LINE_T ** ref_l, int *line_num, char *name)
 {
-  char *text = new_string (str);
+  int k;
+  for (k = 0; str[k] != NO_TEXT; k ++) {
+    int zero_line_num = 0;
+    (*line_num)++;
+    append_source_line (str[k], ref_l, &zero_line_num, name);
+  } 
+/*
+  char *text = new_string (str, NO_TEXT);
   while (text != NO_TEXT && text[0] != NULL_CHAR) {
     char *car = text;
     char *cdr = a68g_strchr (text, '!');
@@ -983,6 +998,7 @@ static void append_environ (char *str, LINE_T ** ref_l, int *line_num, char *nam
     ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s\n", car) >= 0);
     append_source_line (edit_line, ref_l, &zero_line_num, name);
   }
+*/
 }
 
 /*!
@@ -1057,7 +1073,7 @@ static BOOL_T read_source_file (void)
   int line_num = 0, k, bytes_read;
   ssize_t l;
   FILE_T f = FILE_SOURCE_FD (&program);
-  char *prelude_start, *postlude, *buffer;
+  char **prelude_start, **postlude, *buffer;
 /* Prelude */
   if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
     prelude_start = bold_prelude_start;
@@ -1066,7 +1082,7 @@ static BOOL_T read_source_file (void)
     prelude_start = quote_prelude_start;
     postlude = quote_postlude;
   } else {
-    prelude_start = postlude = NO_TEXT;
+    prelude_start = postlude = NO_VAR;
   }
   append_environ (prelude_start, &ref_l, &line_num, "prelude");
 /* Read the file into a single buffer, so we save on system calls */
@@ -1168,16 +1184,18 @@ static void get_good_char (char *ref_c, LINE_T ** ref_l, char **ref_s)
 \param type type of pragment (#, CO, COMMENT, PR, PRAGMAT)
 \param ref_l source line we're scanning
 \param ref_s character (in source line) we're scanning
+\return pragment text as a string for binding in the tree
 **/
 
-static void pragment (int type, LINE_T ** ref_l, char **ref_c)
+static char *pragment (int type, LINE_T ** ref_l, char **ref_c)
 {
 #define INIT_BUFFER {chars_in_buf = 0; scan_buf[chars_in_buf] = NULL_CHAR;}
 #define ADD_ONE_CHAR(ch) {scan_buf[chars_in_buf ++] = ch; scan_buf[chars_in_buf] = NULL_CHAR;}
   char c = **ref_c, *term_s = NO_TEXT, *start_c = *ref_c;
+  char *z;
   LINE_T *start_l = *ref_l;
   int term_s_length, chars_in_buf;
-  BOOL_T stop;
+  BOOL_T stop, pragmat = A68_FALSE;
 /* Set terminator */
   if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
@@ -1188,8 +1206,10 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
       term_s = "COMMENT";
     } else if (type == STYLE_I_PRAGMAT_SYMBOL) {
       term_s = "PR";
+      pragmat = A68_TRUE;
     } else if (type == BOLD_PRAGMAT_SYMBOL) {
       term_s = "PRAGMAT";
+      pragmat = A68_TRUE;
     }
   } else if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
@@ -1200,20 +1220,21 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
       term_s = "'COMMENT'";
     } else if (type == STYLE_I_PRAGMAT_SYMBOL) {
       term_s = "'PR'";
+      pragmat = A68_TRUE;
     } else if (type == BOLD_PRAGMAT_SYMBOL) {
       term_s = "'PRAGMAT'";
+      pragmat = A68_TRUE;
     }
   }
   term_s_length = (int) strlen (term_s);
-/* Scan for terminator, and process pragmat items */
+/* Scan for terminator */
   INIT_BUFFER;
-  get_good_char (&c, ref_l, ref_c);
   stop = A68_FALSE;
   while (stop == A68_FALSE) {
     SCAN_ERROR (c == STOP_CHAR, start_l, start_c, ERROR_UNTERMINATED_PRAGMENT);
 /* A ".." or '..' delimited string in a PRAGMAT */
-    if ((c == QUOTE_CHAR || (c == '\'' && OPTION_STROPPING (&program) == UPPER_STROPPING))
-        && (type == STYLE_I_PRAGMAT_SYMBOL || type == BOLD_PRAGMAT_SYMBOL)) {
+    if (pragmat && (c == QUOTE_CHAR || 
+        (c == '\'' && OPTION_STROPPING (&program) == UPPER_STROPPING))) {
       char delim = c;
       BOOL_T eos = A68_FALSE;
       ADD_ONE_CHAR (c);
@@ -1222,8 +1243,8 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
         SCAN_ERROR (EOL (c), start_l, start_c, ERROR_LONG_STRING);
         if (c == delim) {
           ADD_ONE_CHAR (delim);
-          c = next_char (ref_l, ref_c, A68_FALSE);
           save_state (*ref_l, *ref_c, c);
+          c = next_char (ref_l, ref_c, A68_FALSE);
           if (c == delim) {
             c = next_char (ref_l, ref_c, A68_FALSE);
           } else {
@@ -1237,14 +1258,9 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
           unworthy (start_l, start_c, c);
         }
       }
-    }
-/* On newline we empty the buffer and scan options when appropriate */
-    else if (EOL (c)) {
-      if (type == STYLE_I_PRAGMAT_SYMBOL || type == BOLD_PRAGMAT_SYMBOL) {
-        isolate_options (scan_buf, start_l);
-      }
-      INIT_BUFFER;
-    } else if (IS_PRINT (c)) {
+    } else if (EOL (c)) {
+      ADD_ONE_CHAR (NEWLINE_CHAR);
+    } else if (IS_PRINT (c) || IS_SPACE (c)) {
       ADD_ONE_CHAR (c);
     }
     if (chars_in_buf >= term_s_length) {
@@ -1254,6 +1270,11 @@ static void pragment (int type, LINE_T ** ref_l, char **ref_c)
     c = next_char (ref_l, ref_c, A68_FALSE);
   }
   scan_buf[chars_in_buf - term_s_length] = NULL_CHAR;
+  z = new_string (term_s, scan_buf, term_s, NO_TEXT);
+  if (type == STYLE_I_PRAGMAT_SYMBOL || type == BOLD_PRAGMAT_SYMBOL) {
+    isolate_options (scan_buf, start_l);
+  }
+  return (z);
 #undef ADD_ONE_CHAR
 #undef INIT_BUFFER
 }
@@ -1796,6 +1817,8 @@ static void make_lower_case (char *p)
 
 static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, char **s, LINE_T ** start_l, char **start_c)
 {
+  char *lpr = NO_TEXT;
+  int lprt = 0;
   while (l != NO_VAR && !stop_scanner) {
     int att = 0;
     get_next_token (in_format, l, s, start_l, start_c, &att);
@@ -1837,12 +1860,23 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
           c = TEXT (kw);
 /* Handle pragments */
           if (att == STYLE_II_COMMENT_SYMBOL || att == STYLE_I_COMMENT_SYMBOL || att == BOLD_COMMENT_SYMBOL) {
-            pragment (ATTRIBUTE (kw), l, s);
+            char *nlpr = pragment (ATTRIBUTE (kw), l, s);
+            if (lpr == NO_TEXT || (int) strlen (lpr) == 0) {
+              lpr = nlpr;
+            } else {
+              lpr = new_string (lpr, "\n\n", nlpr, NO_TEXT);
+            }
+            lprt = att;
             make_node = A68_FALSE;
           } else if (att == STYLE_I_PRAGMAT_SYMBOL || att == BOLD_PRAGMAT_SYMBOL) {
-            pragment (ATTRIBUTE (kw), l, s);
+            char *nlpr = pragment (ATTRIBUTE (kw), l, s);
+            if (lpr == NO_TEXT || (int) strlen (lpr) == 0) {
+              lpr = nlpr;
+            } else {
+              lpr = new_string (lpr, "\n\n", nlpr, NO_TEXT);
+            }
+            lprt = att;
             if (!stop_scanner) {
-              isolate_options (scan_buf, *start_l);
               (void) set_options (OPTION_LIST (&program), A68_FALSE);
               make_node = A68_FALSE;
             }
@@ -1887,6 +1921,12 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
         TABLE (q) = NO_TABLE;
         MOID (q) = NO_MOID;
         TAX (q) = NO_TAG;
+        if (lpr != NO_TEXT) {
+          NPRAGMENT (q) = lpr;
+          NPRAGMENT_TYPE (q) = lprt;
+          lpr = NO_TEXT;
+          lprt = 0;
+        }
         if (*root != NO_NODE) {
           NEXT (*root) = q;
         }
@@ -1954,10 +1994,8 @@ BOOL_T lexical_analyser (void)
       return (A68_FALSE);
     }
   } else {
-    max_scan_buf_length += (int) strlen (bold_prelude_start) + (int) strlen (bold_postlude);
-    max_scan_buf_length += (int) strlen (quote_prelude_start) + (int) strlen (quote_postlude);
-/* Allocate a scan buffer with 8 bytes extra space */
-    scan_buf = (char *) get_temp_heap_space ((unsigned) (8 + max_scan_buf_length));
+    max_scan_buf_length += KILOBYTE; /* for the environ, more than enough */
+    scan_buf = (char *) get_temp_heap_space ((unsigned) max_scan_buf_length);
 /* Errors in file? */
     if (!read_source_file ()) {
       return (A68_FALSE);
@@ -2171,19 +2209,21 @@ void put_refinements (void)
 /*****************************************************/
 
 /*!
-\brief insert node
+\brief insert alt equals symbol
 \param p node after which to insert
 \param att attribute for new node
 **/
 
-static void insert_node (NODE_T * p, int att)
+static void insert_alt_equals (NODE_T * p)
 {
   NODE_T *q = new_node ();
   *q = *p;
-  if (GINFO (p) != NO_GINFO) {
-    GINFO (q) = new_genie_info ();
-  }
-  ATTRIBUTE (q) = att;
+  INFO (q) = new_node_info ();
+  *INFO (q) = *INFO (p);
+  GINFO (q) = new_genie_info ();
+  *GINFO (q) = *GINFO (p);
+  ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
+  NSYMBOL (q) = TEXT (add_token (&top_token, "="));
   NEXT (p) = q;
   PREVIOUS (q) = p;
   if (NEXT (q) != NO_NODE) {
@@ -2428,7 +2468,6 @@ static BOOL_T dont_mark_here (NODE_T * p)
   case PROC_SYMBOL:
   case REAL_SYMBOL:
   case REF_SYMBOL:
-  case ROW_ASSIGN_SYMBOL:
   case ROWS_SYMBOL:
   case ROW_SYMBOL:
   case SEMA_SYMBOL:
@@ -3881,7 +3920,7 @@ static void extract_priorities (NODE_T * p)
               diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_OPERATOR_INVALID_END);
             }
             ATTRIBUTE (q) = DEFINING_OPERATOR;
-            insert_node (q, ALT_EQUALS_SYMBOL);
+            insert_alt_equals (q);
             q = NEXT_NEXT (q);
             GET_PRIORITY (q, k);
             ATTRIBUTE (q) = PRIORITY;
@@ -3922,7 +3961,7 @@ static void extract_operators (NODE_T * p)
         do {
           FORWARD (q);
           detect_redefined_keyword (q, OPERATOR_DECLARATION);
-/* An unacceptable operator tag like ++ or && gives strange errors so we catch it here */
+/* Unacceptable operator tags like ++ or && could give strange errors */
           if (whether (q, OPERATOR, OPERATOR, STOP)) {
             diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG);
             ATTRIBUTE (q) = DEFINING_OPERATOR;
@@ -3959,7 +3998,7 @@ static void extract_operators (NODE_T * p)
                 diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_OPERATOR_INVALID_END);
               }
               ATTRIBUTE (q) = DEFINING_OPERATOR;
-              insert_node (q, ALT_EQUALS_SYMBOL);
+              insert_alt_equals (q);
               ASSERT (add_tag (TABLE (p), OP_SYMBOL, q, NO_MOID, STOP) != NO_TAG);
               FORWARD (q);
               q = skip_unit (q);
@@ -12621,124 +12660,11 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 }
 
 /*!
-\brief mode check field selection
-\param p position in tree
-\param x expected soid
-\param y resulting soid
-\return whether construct is a CALL, SLICE or FIELD_SELECTION
-**/
-
-static void mode_check_field_identifiers (NODE_T * p, MOID_T ** m, NODE_T ** seq)
-{
-  for (; p != NO_NODE; FORWARD (p)) {
-    if (IS (p, UNIT)) {
-      MOID (p) = (*m);
-      mode_check_field_identifiers (SUB (p), m, seq);
-      if (MOID (p) != MODE (ERROR)) {
-        ATTRIBUTE (p) = FIELD_IDENTIFIER;
-      }
-      NODE_PACK (p) = NODE_PACK (SUB (p));
-      SEQUENCE (*seq) = p;
-      (*seq) = p;
-      SUB (p) = NO_NODE;
-    } else if (IS (p, TERTIARY)) {
-      MOID (p) = (*m);
-      mode_check_field_identifiers (SUB (p), m, seq);
-      NODE_PACK (p) = NODE_PACK (SUB (p));
-    } else if (IS (p, SECONDARY)) {
-      MOID (p) = (*m);
-      mode_check_field_identifiers (SUB (p), m, seq);
-      NODE_PACK (p) = NODE_PACK (SUB (p));
-    } else if (IS (p, PRIMARY)) {
-      MOID (p) = (*m);
-      mode_check_field_identifiers (SUB (p), m, seq);
-      NODE_PACK (p) = NODE_PACK (SUB (p));
-    } else if (IS (p, IDENTIFIER)) {
-      BOOL_T coerce;
-      MOID_T *n, *str;
-      PACK_T *t, *t_2;
-      char *fs;
-      n = (*m);
-      coerce = A68_TRUE;
-      while (coerce) {
-        if (IS (n, STRUCT_SYMBOL)) {
-          coerce = A68_FALSE;
-          t = PACK (n);
-        } else if (IS (n, REF_SYMBOL) && (IS (SUB (n), ROW_SYMBOL) || IS (SUB (n), FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
-          coerce = A68_FALSE;
-          t = PACK (MULTIPLE (n));
-        } else if ((IS (n, ROW_SYMBOL) || IS (n, FLEX_SYMBOL)) && MULTIPLE (n) != NO_MOID) {
-          coerce = A68_FALSE;
-          t = PACK (MULTIPLE (n));
-        } else if (IS (n, REF_SYMBOL) && is_name_struct (n)) {
-          coerce = A68_FALSE;
-          t = PACK (NAME (n));
-        } else if (is_deprefable (n)) {
-          coerce = A68_TRUE;
-          n = SUB (n);
-          t = NO_PACK;
-        } else {
-          coerce = A68_FALSE;
-          t = NO_PACK;
-        }
-      }
-      if (t == NO_PACK) {
-        if (IF_MODE_IS_WELL (*m)) {
-          diagnostic_node (A68_ERROR, p, ERROR_NO_STRUCT, (*m), CONSTRUCT);
-        }
-        (*m) = MODE (ERROR);
-        return;
-      }
-      fs = NSYMBOL (p);
-      str = n;
-      while (IS (str, REF_SYMBOL)) {
-        str = SUB (str);
-      }
-      if (IS (str, FLEX_SYMBOL)) {
-        str = SUB (str);
-      }
-      if (IS (str, ROW_SYMBOL)) {
-        str = SUB (str);
-      }
-      t_2 = PACK (str);
-      while (t != NO_PACK && t_2 != NO_PACK) {
-        if (TEXT (t) == fs) {
-          (*m) = MOID (t);
-          MOID (p) = (*m);
-          NODE_PACK (p) = t_2;
-          return;
-        }
-        FORWARD (t);
-        FORWARD (t_2);
-      }
-      diagnostic_node (A68_ERROR, p, ERROR_NO_FIELD, str, fs);
-      (*m) = MODE (ERROR);
-    } else if (IS (p, GENERIC_ARGUMENT) || IS (p, GENERIC_ARGUMENT_LIST)) {
-      mode_check_field_identifiers (SUB (p), m, seq);
-    } else if (is_one_of (p, COMMA_SYMBOL, OPEN_SYMBOL, CLOSE_SYMBOL, SUB_SYMBOL, BUS_SYMBOL, STOP)) {
-/* ok */;
-    } else {
-      diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, FIELD_IDENTIFIER);
-      (*m) = MODE (ERROR);
-    }
-  }
-}
-
-static void mode_check_field_selection (NODE_T * p, MOID_T * m, SOID_T * x, SOID_T * y)
-{
-  MOID_T *ori = m;
-  NODE_T *seq = p;
-  mode_check_field_identifiers (NEXT (p), &ori, &seq);
-  MOID (p) = MOID (SUB (p));
-  make_soid (y, SORT (x), ori, 0);
-}
-
-/*!
 \brief mode check specification
 \param p position in tree
 \param x expected soid
 \param y resulting soid
-\return whether construct is a CALL, SLICE or FIELD_SELECTION
+\return whether construct is a CALL or SLICE
 **/
 
 static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
@@ -12757,9 +12683,6 @@ static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
 /* Assume SLICE */
     mode_check_slice (p, ori, x, y);
     return (SLICE);
-  } else if (IS (m, STRUCT_SYMBOL)) {
-    mode_check_field_selection (p, ori, x, y);
-    return (FIELD_SELECTION);
   } else {
     if (m != MODE (ERROR)) {
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_MODE_SPECIFICATION, m);
@@ -13075,11 +12998,6 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 /* Ex primary */
   } else if (IS (p, SPECIFICATION)) {
     ATTRIBUTE (p) = mode_check_specification (SUB (p), x, y);
-    if (IS (p, FIELD_SELECTION) && OPTION_PORTCHECK (&program)) {
-      diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION);
-    } else if (IS (p, FIELD_SELECTION)) {
-      diagnostic_node (A68_WARNING, p, WARNING_EXTENSION);
-    }
     warn_for_voiding (p, x, y, ATTRIBUTE (p));
   } else if (IS (p, CAST)) {
     mode_check_cast (SUB (p), x, y);
@@ -13812,18 +13730,6 @@ static void coerce_assertion (NODE_T * p)
 }
 
 /*!
-\brief coerce field-selection
-\param p position in tree
-**/
-
-static void coerce_field_selection (NODE_T * p)
-{
-  SOID_T w;
-  make_soid (&w, /* WEAK */ STRONG, MOID (p), 0);
-  coerce_unit (SUB_NEXT (p), &w);
-}
-
-/*!
 \brief coerce selection
 \param p position in tree
 **/
@@ -14040,9 +13946,6 @@ static void coerce_unit (NODE_T * p, SOID_T * q)
     INSERT_COERCIONS (p, MOID (p), q);
   } else if (IS (p, SLICE)) {
     coerce_slice (SUB (p));
-    INSERT_COERCIONS (p, MOID (p), q);
-  } else if (IS (p, FIELD_SELECTION)) {
-    coerce_field_selection (SUB (p));
     INSERT_COERCIONS (p, MOID (p), q);
   } else if (IS (p, CAST)) {
     coerce_cast (SUB (p));
@@ -14818,14 +14721,6 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
     scope_enclosed_clause (SUB (NEXT_SUB (p)), &x);
     (void) scope_check (x, NOT_TRANSIENT, LEX_LEVEL (p));
     scope_add (s, p, scope_find_youngest (x));
-  } else if (IS (p, FIELD_SELECTION)) {
-    SCOPE_T *ns = NO_SCOPE;
-    scope_statement (SUB (p), &ns);
-    (void) scope_check (ns, NOT_TRANSIENT, LEX_LEVEL (p));
-    if (is_ref_refety_flex (MOID (SUB (p)))) {
-      scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
-    }
-    scope_add (s, p, scope_find_youngest (ns));
   } else if (IS (p, SELECTION)) {
     SCOPE_T *ns = NO_SCOPE;
     scope_statement (NEXT_SUB (p), &ns);

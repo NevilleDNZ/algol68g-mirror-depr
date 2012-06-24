@@ -1,4 +1,4 @@
-.Dd April 15, 2012
+.Dd June 24, 2012
 .Dt A68G 1 PRM
 .Os LINUX
 .
@@ -34,7 +34,9 @@ a68g
 .Op Fl -pragmats | Fl -no-pragmats
 .Op Fl -precision Ar number
 .Op Fl -prelude-listing
+.Op Fl -pretty-print
 .Op Fl -print Ar unit | -p Ar unit
+.Op Fl -quiet
 .Op Fl -quote-stropping
 .Op Fl -reductions
 .Op Fl -rerun
@@ -163,8 +165,14 @@ significant digits.
 .It Fl -prelude-listing
 Generate a listing of preludes.
 .
+.It Fl -pretty-print
+Pretty-print the source file.
+.
 .It Fl -print Ar unit | Fl -p Ar unit
 Print the value yielded by the Algol 68 unit. In this way one-liners can be executed from the command line.
+.
+.It Fl -quiet
+Suppress all warning messages.
 .
 .It Fl -quote-stropping
 Use quote stropping.

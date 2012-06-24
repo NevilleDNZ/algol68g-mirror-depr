@@ -94,6 +94,14 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #include <ncurses/curses.h>
 #endif
 
+#if defined HAVE_READLINE_READLINE_H
+#include <readline/readline.h>
+#endif
+
+#if defined HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+
 #if defined HAVE_DIRENT_H 
 #include <dirent.h> 
 #endif
@@ -383,6 +391,7 @@ extern int a68g_snprintf (char *, size_t, char *, ...);
 #define NULL_CHAR '\0'
 #define OBJECT_EXTENSION ".c"
 #define POINT_CHAR '.'
+#define PRETTY_EXTENSION ".f"
 #define PRIMAL_SCOPE 0
 #define QUOTE_CHAR '"'
 #define RADIX_CHAR 'r'
@@ -398,6 +407,7 @@ extern int a68g_snprintf (char *, size_t, char *, ...);
 /* Various forms of NIL */
 
 #define NO_ARRAY ((A68_ARRAY *) NULL)
+#define NO_A68_REF ((A68_REF *) NULL)
 #define NO_BOOK ((BOOK_T *) NULL)
 #define NO_BOOL ((BOOL_T *) NULL)
 #define NO_BYTE ((BYTE_T *) NULL)
@@ -445,7 +455,7 @@ extern int a68g_snprintf (char *, size_t, char *, ...);
 #define IN_HEAP_MASK ((STATUS_MASK) 0x00000001)
 #define IN_FRAME_MASK ((STATUS_MASK) 0x00000002)
 #define IN_STACK_MASK ((STATUS_MASK) 0x00000004)
-#define INITIALISED_MASK ((STATUS_MASK) 0x00000010)
+#define INIT_MASK ((STATUS_MASK) 0x00000010)
 #define CONSTANT_MASK ((STATUS_MASK) 0x00000020)
 #define BLOCK_GC_MASK ((STATUS_MASK) 0x00000040)
 #define COOKIE_MASK ((STATUS_MASK) 0x00000100)
@@ -458,6 +468,7 @@ extern int a68g_snprintf (char *, size_t, char *, ...);
 #define CROSS_REFERENCE_MASK ((STATUS_MASK) 0x00010000)
 #define TREE_MASK ((STATUS_MASK) 0x00020000)
 #define CODE_MASK ((STATUS_MASK) 0x00040000)
+#define NOT_NEEDED_MASK ((STATUS_MASK) 0x00080000)
 #define SOURCE_MASK ((STATUS_MASK) 0x00100000)
 #define ASSERT_MASK ((STATUS_MASK) 0x00200000)
 #define NIL_MASK ((STATUS_MASK) 0x00400000)
@@ -510,7 +521,6 @@ enum
   BITS_DENOTATION,
   BITS_PATTERN,
   BITS_SYMBOL,
-  BLOCK_GC_REF,
   BOLD_COMMENT_SYMBOL,
   BOLD_PRAGMAT_SYMBOL,
   BOLD_TAG,
@@ -537,7 +547,6 @@ enum
   CAST,
   CHANNEL_SYMBOL,
   CHAR_C_PATTERN,
-  CHAR_DENOTATION,
   CHAR_SYMBOL,
   CHOICE,
   CHOICE_PATTERN,
@@ -600,7 +609,6 @@ enum
   FALSE_SYMBOL,
   FIELD,
   FIELD_IDENTIFIER,
-  FIELD_SELECTION,
   FILE_SYMBOL,
   FIRM,
   FIXED_C_PATTERN,
@@ -776,8 +784,6 @@ enum
   ROUTINE_UNIT,
   ROWING,
   ROWS_SYMBOL,
-  ROW_ASSIGNATION,
-  ROW_ASSIGN_SYMBOL,
   ROW_CHAR_DENOTATION,
   ROW_FUNCTION,
   ROW_SYMBOL,
@@ -930,7 +936,7 @@ struct ACTIVATION_RECORD
   NODE_T *node;
   jmp_buf *jump_stat;
   BOOL_T proc_frame;
-  int frame_no, frame_level, parameter_level, blocks;
+  int frame_no, frame_level, parameter_level;
 #if defined HAVE_PARALLEL_CLAUSE
   pthread_t thread_id;
 #endif
@@ -964,7 +970,7 @@ struct DIAGNOSTIC_T
 struct FILES_T
 {
   char *path, *initial_name, *generic_name;
-  struct A68_STREAM binary, diags, library, script, object, source, listing;
+  struct A68_STREAM binary, diags, library, script, object, source, listing, pretty;
 };
 
 struct KEYWORD_T
@@ -999,12 +1005,8 @@ struct MODES_T
 struct OPTIONS_T
 {
   OPTION_LIST_T *list;
-  BOOL_T backtrace, brackets, check_only, clock, cross_reference, debug, compile, keep, local, moid_listing, 
-   object_listing, optimise, portcheck, pragmat_sema, reductions, regression_test, run, rerun,
-  run_script, source_listing, standard_prelude_listing, statistics_listing, 
-  strict, stropping, trace, tree_listing, unused, verbose, version, edit,
-  no_warnings, quiet; 
-  int time_limit, opt_level;
+  BOOL_T backtrace, brackets, check_only, clock, cross_reference, debug, compile, keep, fold, local, moid_listing, object_listing, optimise, portcheck, pragmat_sema, pretty, reductions, regression_test, run, rerun, run_script, source_listing, standard_prelude_listing, statistics_listing, strict, stropping, trace, tree_listing, unused, verbose, version, edit, no_warnings, quiet; 
+  int time_limit, opt_level, indent;
   char *target; 
   STATUS_MASK nodemask;
 };
@@ -1051,8 +1053,8 @@ struct NODE_T
 
 struct NODE_INFO_T
 {
-  int procedure_level, priority;
-  char *char_in_line, *symbol, *expr;
+  int procedure_level, priority, pragment_type;
+  char *char_in_line, *symbol, *pragment, *expr;
   LINE_T *line;
 };
 
@@ -1063,7 +1065,6 @@ struct GINFO_T
   BYTE_T *offset;
   MOID_T *partial_proc, *partial_locale;
   NODE_T *parent;
-  TAG_T *block_ref;
   char *compile_name;
   int level, argsize, size, compile_node;
   void *constant;
@@ -1200,7 +1201,7 @@ struct A68_BOOL
 
 struct A68_CHAR
 {
-  BYTE_T status;
+  STATUS_MASK status;
   int value;
 };
 
@@ -1271,7 +1272,7 @@ struct A68_FILE
   A68_FORMAT format;
   A68_PROCEDURE file_end_mended, page_end_mended, line_end_mended, value_error_mended, open_error_mended, transput_error_mended, format_end_mended, format_error_mended;
   A68_REF identification, terminator, string;
-  ADDR_T frame_pointer, stack_pointer;	/* Since formats open frames*/
+  ADDR_T frame_pointer, stack_pointer; /* Since formats open frames*/
   BOOL_T read_mood, write_mood, char_mood, draw_mood, opened, open_exclusive, end_of_file, tmp_file;
   FILE_T fd;
   int transput_buffer, strpos, file_entry;
@@ -1386,6 +1387,9 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 /* Miscellaneous macros */
 
+#define A68_REF_SIZE (ALIGNED_SIZE_OF (A68_REF))
+#define A68_UNION_SIZE (ALIGNED_SIZE_OF (A68_UNION))
+
 #define A68_ALIGN(s) ((int) ((s) % A68_ALIGNMENT) == 0 ? (s) : ((s) - (s) % A68_ALIGNMENT + A68_ALIGNMENT))
 #define A68_ALIGNMENT ((int) (sizeof (A68_ALIGN_T)))
 #define A68_ALIGN_8(s) ((int) ((s) % 8) == 0 ? (s) : ((s) - (s) % 8 + 8))
@@ -1422,6 +1426,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define A68G_STANDENV_PROC(p) ((p)->a68g_standenv_proc)
 #define ACTION(p) ((p)->action)
 #define ACTIVE(p) ((p)->active)
+#define ADDR(p) ((p)->addr)
 #define ALTS(p) ((p)->alts)
 #define ANNOTATION(p) ((p)->annotation)
 #define ANONYMOUS(p) ((p)->anonymous)
@@ -1434,8 +1439,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define BEGIN(p) ((p)->begin)
 #define BIN(p) ((p)->bin)
 #define BITS_PER_SAMPLE(p) ((p)->bits_per_sample)
-#define BLOCKS(p) ((p)->blocks)
-#define BLOCK_REF(p) ((p)->block_ref)
 #define BLUE(p) ((p)->blue)
 #define BL_END(p) ((p)->bl_end)
 #define BL_START(p) ((p)->bl_start)
@@ -1526,6 +1529,10 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define FILE_OBJECT_OPENED(p) (FILES (p).object.opened)
 #define FILE_OBJECT_WRITEMOOD(p) (FILES (p).object.writemood)
 #define FILE_PATH(p) (FILES (p).path)
+#define FILE_PRETTY_FD(p) (FILES (p).pretty.fd)
+#define FILE_PRETTY_NAME(p) (FILES (p).pretty.name)
+#define FILE_PRETTY_OPENED(p) (FILES (p).pretty.opened)
+#define FILE_PRETTY_WRITEMOOD(p) (FILES (p).pretty.writemood)
 #define FILE_SCRIPT_NAME(p) (FILES (p).script.name)
 #define FILE_SCRIPT_OPENED(p) (FILES (p).script.opened)
 #define FILE_SCRIPT_WRITEMOOD(p) (FILES (p).script.writemood)
@@ -1624,6 +1631,9 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define NODE_DEFINED(p) ((p)->node_defined)
 #define NODE_PACK(p) ((p)->pack)
 #define NON_LOCAL(p) ((p)->non_local)
+#define NCHAR_IN_LINE(p) (CHAR_IN_LINE (INFO (p)))
+#define NPRAGMENT(p) (PRAGMENT (INFO (p)))
+#define NPRAGMENT_TYPE(p) (PRAGMENT_TYPE (INFO (p)))
 #define NSYMBOL(p) (SYMBOL (INFO (p)))
 #define NUM(p) ((p)->num)
 #define NUMBER(p) ((p)->number)
@@ -1645,6 +1655,8 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define OPTION_CROSS_REFERENCE(p) (OPTIONS (p).cross_reference)
 #define OPTION_DEBUG(p) (OPTIONS (p).debug)
 #define OPTION_EDIT(p) (OPTIONS (p).edit)
+#define OPTION_FOLD(p) (OPTIONS (p).fold)
+#define OPTION_INDENT(p) (OPTIONS (p).indent)
 #define OPTION_KEEP(p) (OPTIONS (p).keep)
 #define OPTION_LIST(p) (OPTIONS (p).list)
 #define OPTION_LOCAL(p) (OPTIONS (p).local)
@@ -1656,6 +1668,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define OPTION_OPT_LEVEL(p) (OPTIONS (p).opt_level)
 #define OPTION_PORTCHECK(p) (OPTIONS (p).portcheck)
 #define OPTION_PRAGMAT_SEMA(p) (OPTIONS (p).pragmat_sema)
+#define OPTION_PRETTY(p) (OPTIONS (p).pretty)
 #define OPTION_QUIET(p) (OPTIONS (p).quiet)
 #define OPTION_REDUCTIONS(p) (OPTIONS (p).reductions)
 #define OPTION_REGRESSION_TEST(p) (OPTIONS (p).regression_test)
@@ -1682,7 +1695,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define A68_PAGE_SIZE(p) ((p)->page_size)
 #define PARAMETERS(p) ((p)->parameters)
 #define PARAMETER_LEVEL(p) ((p)->parameter_level)
-#define PARAMS(p) ((p)->params)
+#define GSL_PARAMS(p) ((p)->params)
 #define PARENT(p) ((p)->parent)
 #define PARTIAL_LOCALE(p) ((p)->partial_locale)
 #define PARTIAL_PROC(p) ((p)->partial_proc)
@@ -1697,6 +1710,8 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define POINTER(p) ((p)->pointer)
 #define PORTABLE(p) ((p)->portable)
 #define POS(p) ((p)->pos)
+#define PRAGMENT(p) ((p)->pragment)
+#define PRAGMENT_TYPE(p) ((p)->pragment_type)
 #define PRECMD(p) ((p)->precmd)
 #define PREVIOUS(p) ((p)->previous)
 #define PRINT_STATUS(p) ((p)->print_status)
@@ -1935,45 +1950,21 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define PREEMPTIVE_GC {\
   double f = (double) heap_pointer / (double) heap_size;\
   double h = (double) free_handle_count / (double) max_handle_count;\
-  if (f > 0.8 || h < 0.2) {\
+  if ((f > 0.8 || h < 0.2) && stack_pointer == stack_start) {\
     gc_heap ((NODE_T *) p, frame_pointer);\
   }}
 
-/* Store intermediate REF to save it from the GC */
-
-#define BLOCK_GC_REF(p, z)\
-  if (BLOCK_REF (p) != NO_TAG) {\
-    *(A68_REF *) FRAME_LOCAL (frame_pointer, OFFSET (BLOCK_REF (p))) = *(A68_REF *) (z);\
-  }
-
-/* Store REF on top of stack to save it from the GC */
-
-#define BLOCK_GC_TOS(p)\
-  if (BLOCK_REF (GINFO (p)) != NO_TAG) {\
-    *(A68_REF *) FRAME_LOCAL (frame_pointer, OFFSET (BLOCK_REF (GINFO (p)))) =\
-    *(A68_REF *) (STACK_OFFSET (- ALIGNED_SIZE_OF (A68_REF)));\
-  }
-
 /* Save a handle from the GC */
 
-#define BLOCK_GC_HANDLE(z) { if (IS_IN_HEAP (z)) {STATUS_SET (REF_HANDLE(z), BLOCK_GC_MASK);} }
-#define UNBLOCK_GC_HANDLE(z) { if (IS_IN_HEAP (z)) {STATUS_CLEAR (REF_HANDLE (z), BLOCK_GC_MASK);} }
-
-/* Only the main thread can invoke or (un)block the GC */
-
-#if defined HAVE_PARALLEL_CLAUSE
-#define UP_BLOCK_GC {\
-  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
-    block_gc++;\
+#define BLOCK_GC_HANDLE(z) {\
+  if (IS_IN_HEAP (z)) {\
+    STATUS_SET (REF_HANDLE(z), BLOCK_GC_MASK);\
   }}
-#define DOWN_BLOCK_GC {\
-  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
-    block_gc--;\
+
+#define UNBLOCK_GC_HANDLE(z) {\
+  if (IS_IN_HEAP (z)) {\
+    STATUS_CLEAR (REF_HANDLE (z), BLOCK_GC_MASK);\
   }}
-#else
-#define UP_BLOCK_GC {block_gc++;}
-#define DOWN_BLOCK_GC {block_gc--;}
-#endif
 
 /* Tests for objects of mode INT */
 
@@ -2059,7 +2050,7 @@ still is sufficient overhead to make it to the next check.
 
 #define FRAME_ADDRESS(n) ((BYTE_T *) &(stack_segment[n]))
 #define FACT(n) ((ACTIVATION_RECORD *) FRAME_ADDRESS (n))
-#define FRAME_CLEAR(m) FILL_ALIGNED ((BYTE_T *) FRAME_OFFSET (FRAME_INFO_SIZE), 0, (m))
+#define FRAME_CLEAR(m) FILL ((BYTE_T *) FRAME_OFFSET (FRAME_INFO_SIZE), 0, (m))
 #define FRAME_BLOCKS(n) (BLOCKS (FACT (n)))
 #define FRAME_DYNAMIC_LINK(n) (DYNAMIC_LINK (FACT (n)))
 #define FRAME_DNS(n) (DYNAMIC_SCOPE (FACT (n)))
@@ -2152,9 +2143,9 @@ returns: static link for stack frame at 'new_lex_lvl'.
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act, *pre;\
   STATIC_LINK_FOR_FRAME (static_link, LEX_LEVEL (p));\
-  pre = FACT  (frame_pointer);\
+  pre = FACT (frame_pointer);\
   frame_pointer += FRAME_SIZE (dynamic_link);\
-  act = FACT  (frame_pointer);\
+  act = FACT (frame_pointer);\
   FRAME_NO (act) = FRAME_NO (pre) + 1;\
   FRAME_LEVEL (act) = LEX_LEVEL (p);\
   PARAMETER_LEVEL (act) = PARAMETER_LEVEL (pre);\
@@ -2166,16 +2157,15 @@ returns: static link for stack frame at 'new_lex_lvl'.
   JUMP_STAT (act) = NO_JMP_BUF;\
   PROC_FRAME (act) = A68_FALSE;\
   THREAD_ID (act) = pthread_self ();\
-  BLOCKS (act) = block_gc;\
   }
 #else
 #define OPEN_STATIC_FRAME(p) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act, *pre;\
   STATIC_LINK_FOR_FRAME (static_link, LEX_LEVEL (p));\
-  pre = FACT  (frame_pointer);\
+  pre = FACT (frame_pointer);\
   frame_pointer += FRAME_SIZE (dynamic_link);\
-  act = FACT  (frame_pointer);\
+  act = FACT (frame_pointer);\
   FRAME_NO (act) = FRAME_NO (pre) + 1;\
   FRAME_LEVEL (act) = LEX_LEVEL (p);\
   PARAMETER_LEVEL (act) = PARAMETER_LEVEL (pre);\
@@ -2186,7 +2176,6 @@ returns: static link for stack frame at 'new_lex_lvl'.
   NODE (act) = p;\
   JUMP_STAT (act) = NO_JMP_BUF;\
   PROC_FRAME (act) = A68_FALSE;\
-  BLOCKS (act) = block_gc;\
   }
 #endif
 
@@ -2194,7 +2183,6 @@ returns: static link for stack frame at 'new_lex_lvl'.
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act;\
-  PREEMPTIVE_GC;\
   LOW_STACK_ALERT (p);\
   static_link = (environ > 0 ? environ : frame_pointer);\
   if (frame_pointer < static_link) {\
@@ -2202,7 +2190,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
     exit_genie (p, A68_RUNTIME_ERROR);\
   }\
   frame_pointer += FRAME_SIZE (dynamic_link);\
-  act = FACT  (frame_pointer);\
+  act = FACT (frame_pointer);\
   FRAME_NO (act) = FRAME_NUMBER (dynamic_link) + 1;\
   FRAME_LEVEL (act) = LEX_LEVEL (p);\
   PARAMETER_LEVEL (act) = LEX_LEVEL (p);\
@@ -2214,13 +2202,11 @@ returns: static link for stack frame at 'new_lex_lvl'.
   JUMP_STAT (act) = NO_JMP_BUF;\
   PROC_FRAME (act) = A68_TRUE;\
   THREAD_ID (act) = pthread_self ();\
-  BLOCKS (act) = block_gc;\
   }
 #else
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
   ACTIVATION_RECORD *act;\
-  PREEMPTIVE_GC;\
   LOW_STACK_ALERT (p);\
   static_link = (environ > 0 ? environ : frame_pointer);\
   if (frame_pointer < static_link) {\
@@ -2228,7 +2214,7 @@ returns: static link for stack frame at 'new_lex_lvl'.
     exit_genie (p, A68_RUNTIME_ERROR);\
   }\
   frame_pointer += FRAME_SIZE (dynamic_link);\
-  act = FACT  (frame_pointer);\
+  act = FACT (frame_pointer);\
   FRAME_NO (act) = FRAME_NUMBER (dynamic_link) + 1;\
   FRAME_LEVEL (act) = LEX_LEVEL (p);\
   PARAMETER_LEVEL (act) = LEX_LEVEL (p);\
@@ -2239,29 +2225,13 @@ returns: static link for stack frame at 'new_lex_lvl'.
   NODE (act) = p;\
   JUMP_STAT (act) = NO_JMP_BUF;\
   PROC_FRAME (act) = A68_TRUE;\
-  BLOCKS (act) = block_gc;\
   }
 #endif
 
-/*
-Upon closing a frame we restore block_gc.
-This to avoid that a RTS routine that blocks the garbage collector,
-leaves it inoperative in case the routine quits through an event.
-*/
-
-#if defined HAVE_PARALLEL_CLAUSE
 #define CLOSE_FRAME {\
-  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) != 0) {\
-    block_gc = FRAME_BLOCKS (frame_pointer);\
-  }\
-  frame_pointer = FRAME_DYNAMIC_LINK (frame_pointer);\
+  ACTIVATION_RECORD *act = FACT (frame_pointer);\
+  frame_pointer = DYNAMIC_LINK (act);\
   }
-#else
-#define CLOSE_FRAME {\
-  block_gc = FRAME_BLOCKS (frame_pointer);\
-  frame_pointer = FRAME_DYNAMIC_LINK (frame_pointer);\
-  }
-#endif
 
 /* Macros for check on initialisation of values */
 
@@ -2305,12 +2275,11 @@ qualifier to a pointer. This is safe here.
 /* Macros for the evaluation stack */
 /***********************************/
 
-#define INCREMENT_STACK_POINTER(err, i) {stack_pointer += (ADDR_T) A68_ALIGN (i); (void) (err);}
+#define INCREMENT_STACK_POINTER(err, i)\
+  {stack_pointer += (ADDR_T) A68_ALIGN (i); (void) (err);}
 
-#define DECREMENT_STACK_POINTER(err, i) {\
-  stack_pointer -= A68_ALIGN (i);\
-  (void) (err);\
-  }
+#define DECREMENT_STACK_POINTER(err, i)\
+  {stack_pointer -= A68_ALIGN (i); (void) (err);}
 
 #define PUSH(p, addr, size) {\
   BYTE_T *_sp_ = STACK_TOP;\
@@ -2353,9 +2322,17 @@ qualifier to a pointer. This is safe here.
 
 #define PUSH_PRIMITIVE(p, z, mode) {\
   mode *_x_ = (mode *) STACK_TOP;\
-  STATUS (_x_) = INITIALISED_MASK;\
+  STATUS (_x_) = INIT_MASK;\
   VALUE (_x_) = (z);\
-  INCREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (mode));\
+  INCREMENT_STACK_POINTER ((p), ALIGNED_SIZE_OF (mode));\
+  }
+
+#define PUSH_PRIMAL(p, z, m) {\
+  A68_##m *_x_ = (A68_##m *) STACK_TOP;\
+  int _size_ = ALIGNED_SIZE_OF (A68_##m);\
+  STATUS (_x_) = INIT_MASK;\
+  VALUE (_x_) = (z);\
+  INCREMENT_STACK_POINTER ((p), _size_);\
   }
 
 #define PUSH_OBJECT(p, z, mode) {\
@@ -2369,8 +2346,8 @@ qualifier to a pointer. This is safe here.
   }
 
 #define PUSH_COMPLEX(p, re, im) {\
-  PUSH_PRIMITIVE (p, re, A68_REAL);\
-  PUSH_PRIMITIVE (p, im, A68_REAL);\
+  PUSH_PRIMAL (p, re, REAL);\
+  PUSH_PRIMAL (p, im, REAL);\
   }
 
 #define POP_COMPLEX(p, re, im) {\
@@ -2380,14 +2357,14 @@ qualifier to a pointer. This is safe here.
 
 #define PUSH_BYTES(p, k) {\
   A68_BYTES *_z_ = (A68_BYTES *) STACK_TOP;\
-  STATUS (_z_) = INITIALISED_MASK;\
+  STATUS (_z_) = INIT_MASK;\
   strncpy (VALUE (_z_), k, BYTES_WIDTH);\
   INCREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (A68_BYTES));\
   }
 
 #define PUSH_LONG_BYTES(p, k) {\
   A68_LONG_BYTES *_z_ = (A68_LONG_BYTES *) STACK_TOP;\
-  STATUS (_z_) = INITIALISED_MASK;\
+  STATUS (_z_) = INIT_MASK;\
   strncpy (VALUE (_z_), k, LONG_BYTES_WIDTH);\
   INCREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (A68_LONG_BYTES));\
   }
@@ -2399,16 +2376,22 @@ qualifier to a pointer. This is safe here.
 #define POP_REF(p, z) POP_OBJECT (p, z, A68_REF)
 #define POP_PROCEDURE(p, z) POP_OBJECT (p, z, A68_PROCEDURE)
 
-#define PUSH_UNION(p, z) PUSH_PRIMITIVE (p, z, A68_UNION)
+#define PUSH_UNION(p, z) {\
+  A68_UNION *_x_ = (A68_UNION *) STACK_TOP;\
+  STATUS (_x_) = INIT_MASK;\
+  VALUE (_x_) = (z);\
+  INCREMENT_STACK_POINTER ((p), ALIGNED_SIZE_OF (A68_UNION));\
+  }
+
 
 /* Macro's for standard environ */
 
-#define A68_ENV_INT(n, k) void n (NODE_T *p) {PUSH_PRIMITIVE (p, (k), A68_INT);}
-#define A68_ENV_REAL(n, z) void n (NODE_T *p) {PUSH_PRIMITIVE (p, (z), A68_REAL);}
+#define A68_ENV_INT(n, k) void n (NODE_T *p) {PUSH_PRIMAL (p, (k), INT);}
+#define A68_ENV_REAL(n, z) void n (NODE_T *p) {PUSH_PRIMAL (p, (z), REAL);}
 
 /* Interpreter macros */
 
-#define INITIALISED(z) ((BOOL_T) (STATUS (z) & INITIALISED_MASK))
+#define INITIALISED(z) ((BOOL_T) (STATUS (z) & INIT_MASK))
 #define LHS_MODE(p) (MOID (PACK (MOID (p))))
 #define RHS_MODE(p) (MOID (NEXT (PACK (MOID (p)))))
 
@@ -2444,7 +2427,7 @@ qualifier to a pointer. This is safe here.
 
 #define SET_MP_ZERO(z, digits) {\
   MP_T *_m_d = &MP_DIGIT ((z), 1); int _m_k = digits;\
-  MP_STATUS (z) = (MP_T) INITIALISED_MASK;\
+  MP_STATUS (z) = (MP_T) INIT_MASK;\
   MP_EXPONENT (z) = 0.0;\
   while (_m_k--) {*_m_d++ = 0.0;}\
   }
@@ -2484,38 +2467,38 @@ qualifier to a pointer. This is safe here.
 #define a68g_arg_complex(/* A68_REAL * */ z) atan2 (IM (z), RE (z))
 
 #define a68g_i_complex(/* A68_REAL * */ z, /* double */ re, im) {\
-  STATUS_RE (z) = INITIALISED_MASK;\
-  STATUS_IM (z) = INITIALISED_MASK;\
+  STATUS_RE (z) = INIT_MASK;\
+  STATUS_IM (z) = INIT_MASK;\
   RE (z) = re;\
   IM (z) = im;}
 
 #define a68g_minus_complex(/* A68_REAL * */ z, x) {\
-  STATUS_RE (z) = INITIALISED_MASK;\
-  STATUS_IM (z) = INITIALISED_MASK;\
+  STATUS_RE (z) = INIT_MASK;\
+  STATUS_IM (z) = INIT_MASK;\
   RE (z) = -RE (x);\
   IM (z) = -IM (x);}
 
 #define a68g_conj_complex(/* A68_REAL * */ z, x) {\
-  STATUS_RE (z) = INITIALISED_MASK;\
-  STATUS_IM (z) = INITIALISED_MASK;\
+  STATUS_RE (z) = INIT_MASK;\
+  STATUS_IM (z) = INIT_MASK;\
   RE (z) = RE (x);\
   IM (z) = -IM (x);}
 
 #define a68g_add_complex(/* A68_REAL * */ z, x, y) {\
-  STATUS_RE (z) = INITIALISED_MASK;\
-  STATUS_IM (z) = INITIALISED_MASK;\
+  STATUS_RE (z) = INIT_MASK;\
+  STATUS_IM (z) = INIT_MASK;\
   RE (z) = RE (x) + RE (y);\
   IM (z) = IM (x) + IM (y);}
 
 #define a68g_sub_complex(/* A68_REAL * */ z, x, y) {\
-  STATUS_RE (z) = INITIALISED_MASK;\
-  STATUS_IM (z) = INITIALISED_MASK;\
+  STATUS_RE (z) = INIT_MASK;\
+  STATUS_IM (z) = INIT_MASK;\
   RE (z) = RE (x) - RE (y);\
   IM (z) = IM (x) - IM (y);}
 
 #define a68g_mul_complex(/* A68_REAL * */ z, x, y) {\
-  STATUS_RE (z) = INITIALISED_MASK;\
-  STATUS_IM (z) = INITIALISED_MASK;\
+  STATUS_RE (z) = INIT_MASK;\
+  STATUS_IM (z) = INIT_MASK;\
   RE (z) = RE (x) * RE (y) - IM (x) * IM (y);\
   IM (z) = IM (x) * RE (y) + RE (x) * IM (y);}
 
@@ -2754,7 +2737,7 @@ extern TOKEN_T *top_token;
 extern char **global_argv, *watchpoint_expression, a68g_cmd_name[], output_line[], edit_line[], input_line[];
 extern clock_t clock_res;
 extern double cputime_0, garbage_seconds;
-extern int block_gc, frame_stack_size, expr_stack_size, heap_size, handle_pool_size, free_handle_count, max_handle_count, garbage_collects, global_argc, global_level, max_lex_lvl, new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos, stack_limit, frame_stack_limit, expr_stack_limit, stack_size, storage_overhead, symbol_table_count, mode_count, term_heigth, term_width, varying_mp_digits;
+extern int frame_stack_size, expr_stack_size, heap_size, handle_pool_size, free_handle_count, max_handle_count, garbage_collects, global_argc, global_level, max_lex_lvl, new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos, stack_limit, frame_stack_limit, expr_stack_limit, stack_size, storage_overhead, symbol_table_count, mode_count, term_heigth, term_width, varying_mp_digits;
 extern jmp_buf genie_exit_label;
 
 #if defined HAVE_CURSES
@@ -2830,7 +2813,7 @@ extern char *fixed (NODE_T * p);
 extern char *get_transput_buffer (int);
 extern char *moid_to_string (MOID_T *, int, NODE_T *);
 extern char *new_fixed_string (char *);
-extern char *new_string (char *);
+extern char *new_string (char *, ...);
 extern char *new_temp_string (char *);
 extern char *non_terminal_string (char *, int);
 extern char *phrase_to_text (NODE_T *, NODE_T **);
@@ -2913,7 +2896,6 @@ extern void check_parenthesis (NODE_T *);
 extern void coercion_inserter (NODE_T *);
 extern void collect_taxes (NODE_T *);
 extern void compiler (FILE_T);
-extern void default_mem_sizes (void);
 extern void default_options (MODULE_T *);
 extern void diagnostic_line (int, LINE_T *, char *, char *, ...);
 extern void diagnostic_node (int, NODE_T *, char *, ...);
@@ -2926,7 +2908,6 @@ extern void fill_symbol_table_outer (NODE_T *, TABLE_T *);
 extern void finalise_symbol_table_setup (NODE_T *, int);
 extern void format_error (NODE_T *, A68_REF, char *);
 extern void free_file_entries (void);
-extern void free_file_entry (NODE_T *, int);
 extern void free_genie_heap (NODE_T *);
 extern void free_postulate_list (POSTULATE_T *, POSTULATE_T *);
 extern void gc_heap (NODE_T *, ADDR_T);
@@ -2935,6 +2916,7 @@ extern void genie_argc (NODE_T *);
 extern void genie_argv (NODE_T *);
 extern void genie_call_operator (NODE_T *, ADDR_T);
 extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
+extern void genie_call_event_routine (NODE_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
 extern void genie_check_initialisation (NODE_T *, BYTE_T *, MOID_T *);
 extern void genie_columns (NODE_T *);
 extern void genie_create_pipe (NODE_T *);
@@ -2976,6 +2958,10 @@ extern void get_global_level (NODE_T *);
 extern void get_max_simplout_size (NODE_T *);
 extern void get_refinements (void);
 extern void get_stack_size (void);
+extern void indenter (MODULE_T *);
+extern BOOL_T folder_mode (MOID_T *);
+extern void push_unit (NODE_T *);
+extern BOOL_T constant_unit (NODE_T *);
 extern void init_curses (void);
 extern void init_file_entries (void);
 extern void init_file_entry (int);
@@ -3026,8 +3012,8 @@ extern void reset_symbol_table_nest_count (NODE_T *);
 extern void reset_transput_buffer (int);
 extern void scan_error (LINE_T *, char *, char *);
 extern void scope_checker (NODE_T *);
-extern void set_default_mended_procedure (A68_PROCEDURE *);
-extern void set_default_mended_procedures (A68_FILE *);
+extern void set_default_event_procedure (A68_PROCEDURE *);
+extern void set_default_event_procedures (A68_FILE *);
 extern void set_moid_sizes (MOID_T *);
 extern void set_nest (NODE_T *, NODE_T *);
 extern void set_par_level (NODE_T *, int);
@@ -3463,6 +3449,7 @@ extern GPROC genie_odd_long_mp;
 extern GPROC genie_on_file_end;
 extern GPROC genie_on_format_end;
 extern GPROC genie_on_format_error;
+extern GPROC genie_on_gc_event;
 extern GPROC genie_on_line_end;
 extern GPROC genie_on_open_error;
 extern GPROC genie_on_page_end;
@@ -3540,6 +3527,7 @@ extern GPROC genie_read_longlong_int;
 extern GPROC genie_read_longlong_real;
 extern GPROC genie_read_real;
 extern GPROC genie_read_string;
+extern GPROC genie_read_line;
 extern GPROC genie_real;
 extern GPROC genie_real_lengths;
 extern GPROC genie_real_shorths;
@@ -4041,6 +4029,21 @@ extern GPROC genie_vector_times_matrix;
 
 #if defined HAVE_CURSES
 extern GPROC genie_curses_clear;
+extern GPROC genie_curses_del_char;
+extern GPROC genie_curses_green;
+extern GPROC genie_curses_cyan;
+extern GPROC genie_curses_white;
+extern GPROC genie_curses_red;
+extern GPROC genie_curses_yellow;
+extern GPROC genie_curses_magenta;
+extern GPROC genie_curses_blue;
+extern GPROC genie_curses_green_inverse;
+extern GPROC genie_curses_cyan_inverse;
+extern GPROC genie_curses_white_inverse;
+extern GPROC genie_curses_red_inverse;
+extern GPROC genie_curses_yellow_inverse;
+extern GPROC genie_curses_magenta_inverse;
+extern GPROC genie_curses_blue_inverse;
 extern GPROC genie_curses_columns;
 extern GPROC genie_curses_end;
 extern GPROC genie_curses_getchar;
@@ -4259,3 +4262,4 @@ extern GPROC genie_pq_user;
 
 #endif /* ! defined A68G_ALGOL68G_H */
 
+extern A68_PROCEDURE on_gc_event;

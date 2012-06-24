@@ -1,169 +1,152 @@
-# Commands for this miniature LISP interpreter
-1 2 3 4
-append ( 1 2 ) ( 3 4 )
-+ 1 ( * 2 3 )
+COMMENT Example input for this nano-LISP interpreter
+1 b 3 d
+evaluate append (+ 1 2) (a b)
+(+ 1 2)
+* 2 (+ 1 (^ 2 3))
 quit
-#
+COMMENT
 
-PR echo "[3] Miniature LISP interpreter" PR
+PR echo "[3] Nano-LISP interpreter" PR
    
 # Data structure to represent a list #
-   
-   MODE NUMBER = LONG INT,
-        VALUE = UNION (ATOM, LIST),
-        ATOM  = STRING,
-        LIST  = REF NODE,
-        NODE  = STRUCT (VALUE car, cdr);
-   
-   LIST nil = NIL;
 
-   PROC error = (STRING t) VOID: print ((new line, "error: ", t));
-   
-   PROC is atom = (VALUE v) BOOL: (v | (ATOM): TRUE | FALSE);
-   PROC is nil = (VALUE v) BOOL: (v | (LIST l): l :=: nil | FALSE);
-   
-   PROC value to number = (VALUE v) NUMBER:
-        CASE v
-        IN (ATOM a): BEGIN NUMBER sum := 0, weight := 1;
-                           FOR i FROM UPB a BY -1 TO LWB a
-                           DO sum +:= weight * (ABS a[i] - ABS "0");
-                              weight *:= 10
-                           OD;
-                           sum
-                     END,
-           (LIST l): (is nil (l) | error ("numeral of nil"); 0 | value to number (CAR l))
-        ESAC;
-   
-   PROC number to atom = (NUMBER n) ATOM: whole (n, 0);
-   
-   OP CONS = (VALUE v, w) VALUE: HEAP NODE := (v, w);
-   PRIO CONS = 9;
-   
-   OP + = (VALUE v, w) VALUE:
-      CASE v
-      IN (ATOM a): v CONS (w | (ATOM): w, (LIST): CAR w),
-         (LIST k): IF is nil (k)
-                   THEN w
-                   ELIF is nil (CDR k)
-                   THEN CAR k CONS (w | (ATOM): w, (LIST): CAR w)
-                   ELSE CAR k CONS (CDR k + w)
-                   FI
-      ESAC;
-   
-   OP CAR = (VALUE v) VALUE:
-      CASE v
-      IN (ATOM): (error ("car of atom"); nil),
-         (LIST l): (l :=: nil | error ("car of nil"); nil | car OF l)
-      ESAC;
-   
-   OP CDR = (VALUE v) VALUE:
-      CASE v
-      IN (ATOM): (error ("cdr of atom"); nil),
-         (LIST l): (l :=: nil | error ("cdr of nil"); nil | cdr OF l)
-      ESAC;
-   
-   OP EQ = (VALUE v, w) BOOL:
-      CASE v
-      IN (ATOM a): (w | (ATOM b): a = b | FALSE),
-         (LIST l): (w | (LIST k): l :=: k | FALSE)
-      ESAC;
-   
-   PROC print list = (LIST l) VOID:
-        CASE print value (CAR l);
-             CDR l
-        IN (ATOM a): (print (blank); print value (a)),
-           (LIST k): (~ is nil (k) | print (blank); print list (k))
-        ESAC;
-   
-   PROC print value = (VALUE v) VOID:
-        CASE v
-        IN (ATOM a): print (a),
-           (LIST l): (is nil (l) | print ("nil") | (print ("("); print list (l); print (")")))
-        ESAC;
-   
-   PROC interpreter = (ATOM cmd, VALUE args) VALUE:
-        IF cmd = "'"
-        THEN CAR args
-        ELIF cmd = "+"
-        THEN number to atom (value to number (evaluate (CAR args)) + value to number (evaluate (CDR args)))
-        ELIF cmd = "-"
-        THEN number to atom (value to number (evaluate (CAR args)) - value to number (evaluate (CDR args)))
-        ELIF cmd = "*"
-        THEN number to atom (value to number (evaluate (CAR args)) * value to number (evaluate (CDR args)))
-        ELIF cmd = "/"
-        THEN number to atom (value to number (evaluate (CAR args)) OVER value to number (evaluate (CDR args)))
-        ELIF cmd = "append"
-        THEN CAR args + CDR args
-        ELIF cmd = "evaluate"
-        THEN evaluate (args)
-        ELIF cmd = "quit"
-        THEN stop
-        ELSE cmd CONS args
-        FI;
-   
-   PROC evaluate = (VALUE v) VALUE:
-        CASE v
-        IN (ATOM a): a,
-           (LIST k): IF is nil (k)
-                     THEN nil
-                     ELSE CASE CAR k
-                          IN (ATOM a): interpreter (a, CDR k),
-                             (LIST l): evaluate (CAR k) CONS evaluate (CDR k)
-                          ESAC
-                     FI
-        ESAC;
-   
-# Construct a list #
-   
-   MODE STACK = STRUCT (STRING elem, REF STACK next);
-   REF STACK stack := NIL;
-   
-   PROC pop = VOID: stack := next OF stack;
-   PROC push = (STRING s) VOID: stack := HEAP STACK := (s, stack);
-   PROC top = STRING: elem OF stack;
-   
-   PROC parse stack = VALUE:
-        IF stack :=: REF STACK (NIL)
-        THEN nil
-        ELIF top = "("
-        THEN pop;
-             VALUE left value := parse stack;
-             left value CONS parse stack
-        ELIF top = ")"
-        THEN pop;
-             nil
-        ELSE VALUE left value := HEAP ATOM := top;
-             pop;
-             left value CONS parse stack
-        FI;
-   
-# In this case we parse from a string #
-   
-   PROC parse string = (STRING s) VALUE:
-        BEGIN stack := NIL;
-              INT i := UPB s;
-              WHILE i > LWB s
-              DO WHILE i > LWB s ANDF s[i] = " " DO i -:= 1 OD;
-                 INT j = i;
-                 WHILE i > LWB s ANDF s[i] ~= " " DO i -:= 1 OD;
-                 IF i + 1 <= j
-                 THEN push (s[i + 1 .. j])
-                 FI
-              OD;
-              parse stack
-        END;
-   
-# A test program #
-   
-   FILE f;
-   VOID (open (f, program idf, standin channel));
-   get (f, new line);
-   DO STRING s;
-      get (f, (s, new line));
-      VALUE l := parse string (blank + s);
-      print (">");
-      print value (l);
-      new line (stand out);
-      print value (evaluate (l));
-      new line (stand out)
-   OD
+MODE VALUE  = UNION (ATOM, LIST),
+     ATOM   = STRING, 
+     LIST   = REF NODE,
+     NODE   = STRUCT (VALUE head, tail);
+
+LIST no list = NIL;
+
+OP NOLIST = (VALUE v) BOOL: 
+  (v | (LIST l): l IS no list | FALSE);
+
+OP HEAD = (VALUE v) VALUE:
+  (v | (LIST l): (NOLIST l | no list | head OF l) | no list);
+
+OP TAIL = (VALUE v) VALUE:
+  (v | (LIST l): (NOLIST l | no list | tail OF l) | no list);
+
+OP NUMBER = (VALUE v) INT:
+  CASE v
+  IN (ATOM a): 
+       BEGIN # use transput library for conversion # 
+         FILE g, INT n;
+         associate (g, NEW ATOM := a);
+         get (g, n);
+         close (g);
+         n
+       END,
+     (LIST l): 
+       (NOLIST l | SKIP | NUMBER HEAD l)
+  ESAC;
+
+OP NUMBER = (INT n) ATOM: whole (n, 0);
+
+OP CONS = (VALUE v, w) VALUE: NEW NODE := (v, w);
+
+PRIO CONS = 9;
+
+OP + = (VALUE v, w) VALUE:
+   CASE v
+   IN (ATOM a): v CONS (w | (ATOM): w, (LIST): HEAD w),
+      (LIST k): 
+        IF NOLIST k
+        THEN w
+        ELSE HEAD k CONS IF NOLIST TAIL k
+                         THEN (w | (ATOM): w, (LIST): HEAD w)
+                         ELSE TAIL k + w
+                         FI
+        FI
+   ESAC;
+
+PROC print value = (VALUE v) VOID:
+  CASE v
+  IN (ATOM a): print (a),
+     (LIST l): 
+       IF NOLIST l 
+       THEN print ("nil") 
+       ELSE PROC print list = (LIST l) VOID:
+              CASE print value (HEAD l);
+                TAIL l
+              IN (ATOM a): (print (blank); print value (a)),
+              (LIST k): (~ NOLIST k | print (blank); print list (k))
+              ESAC;
+            print ("("); print list (l); print (")")
+       FI
+  ESAC;
+
+OP EVAL = (VALUE v) VALUE:
+  CASE v
+  IN (ATOM a): a,
+     (LIST k): IF NOLIST k
+               THEN no list
+               ELSE CASE HEAD k
+                    IN (ATOM a): interpreter (a, TAIL k),
+                       (LIST l): EVAL HEAD k CONS EVAL TAIL k
+                    ESAC
+               FI
+  ESAC;
+
+PROC interpreter = (ATOM cmd, VALUE arg) VALUE:
+  IF BOOL found := FALSE, VALUE v;
+    [] STRUCT (STRING cmd, PROC (VALUE) VALUE action) table =
+      (("'", (VALUE arg) VALUE: HEAD arg), 
+       ("+", (VALUE arg) VALUE: NUMBER (NUMBER EVAL HEAD arg + NUMBER EVAL TAIL arg)),
+       ("-", (VALUE arg) VALUE: NUMBER (NUMBER EVAL HEAD arg - NUMBER EVAL TAIL arg)),
+       ("*", (VALUE arg) VALUE: NUMBER (NUMBER EVAL HEAD arg * NUMBER EVAL TAIL arg)),
+       ("/", (VALUE arg) VALUE: NUMBER (NUMBER EVAL HEAD arg OVER NUMBER EVAL TAIL arg)),
+       ("^", (VALUE arg) VALUE: NUMBER (NUMBER EVAL HEAD arg ** NUMBER EVAL TAIL arg)),
+       ("append", (VALUE arg) VALUE: EVAL HEAD arg + EVAL TAIL arg),
+       ("evaluate", (VALUE arg) VALUE: EVAL arg),
+       ("quit", (VALUE arg) VALUE: stop)
+      );
+    FOR k TO UPB table WHILE ~found
+    DO (found := cmd = cmd OF table[k] | v := (action OF table[k]) (arg))
+    OD;
+    found
+  THEN v
+  ELSE cmd CONS arg
+  FI;
+
+# Driver program executes commands at top of file #
+
+FILE f;
+VOID (open (f, program idf, standin channel));
+get (f, new line);
+DO STRING s, INT i;
+   get (f, (s, new line));
+   i := LWB s;
+
+   PROC to rpn = VALUE:
+     IF WHILE i <= UPB s 
+        THEF is space (s[i])
+        DO i +:= 1
+        OD;
+        i > UPB s
+     THEN no list
+     ELIF s[i] = ")"
+     THEN i +:= 1;
+          no list
+     ELIF s[i] = "("
+     THEN i +:= 1;
+          VALUE lhs := to rpn;
+          VALUE rhs := to rpn;
+          lhs CONS rhs
+     ELSE STRING arg := s[i];
+          i +:= 1;
+          WHILE i <= UPB s 
+          THEF is alnum (s[i])
+          DO arg +:= s[i];
+             i +:= 1
+          OD;
+          VALUE lhs := NEW VALUE := arg;
+          VALUE rhs := to rpn;
+          lhs CONS rhs
+     FI;
+
+   VALUE l := to rpn;
+   print value (l);
+   new line (stand out);
+   print value (EVAL l);
+   new line (stand out)
+OD

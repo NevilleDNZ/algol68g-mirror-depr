@@ -1,4 +1,4 @@
-PR echo "[7] Hamming numbers" precision=100 PR
+PR echo "[7] Hamming numbers" precision=100 storage=16 PR
 
 MODE SERIES = FLEX [1 : 0] UNT, # Initially, no elements #
      UNT = LONG LONG INT; # A 100-digit unsigned integer #
@@ -17,7 +17,6 @@ PROC hamming number = (INT n) UNT: # The n-th Hamming number #
             OP +:= = (REF SERIES s, UNT elem) VOID:
                # Extend a series by one element, only keep the elements you need #
                (INT lwb = (i MIN j) MIN k, upb = UPB s; 
-                preemptive sweep heap;
                 REF SERIES new s = HEAP FLEX [lwb : upb + 1] UNT;
                 (new s[lwb : upb] := s[lwb : upb], new s[upb + 1] := elem);
                 s := new s
@@ -32,7 +31,8 @@ PROC hamming number = (INT n) UNT: # The n-th Hamming number #
      ESAC;
 
 FOR k TO 20
-DO print ((whole (hamming number (k), 0), newline)) 
+DO print ((whole (hamming number (k), 0), newline));
+   preemptive sweep heap
 OD;
 print (whole (hamming number (1 691), 0))
 
