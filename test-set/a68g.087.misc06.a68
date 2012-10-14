@@ -1,0 +1,38 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#misc06#
+
+PR timelimit 5 PR
+BEGIN # Test recursion by Ackermann function.
+          This program should be run with successive inputs:
+          1, 2, 3, 4 and 5,  and will crash at a certain depth.
+          See: Y. Sundblad, A Study of the Highly Recursive Ackermann Function
+          as a Test of Recursive Procedures, NA 18, Royal Institute of
+          Technology, Stockholm #
+      PROC ack = (INT m, n) INT:
+           IF m = 0
+           THEN n + 1
+           ELIF n = 0
+           THEN ack (m - 1, 1)
+           ELSE ack (m - 1, ack (m, n - 1))
+           FI # ack # ;
+      
+      INT m;
+      
+      #  read(m);# m := 1;
+      #  read(m);# m := 2;
+      #  read(m);# m := 3;
+      FOR n FROM 0 
+      DO print ((newline, m, n, ack (m, n), newline))
+      OD
+END

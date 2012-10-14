@@ -1,11 +1,13 @@
-/*!
-\file code.c
-\brief emit C code for Algol 68 constructs.
-*/
+/**
+@file code.c
+@author J. Marcel van der Veer
+@brief Emit C code for Algol 68 constructs.
+@section Copyright
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,9 +20,9 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-/*
+@section Description
+
 This file generates optimised C routines for many units in an Algol 68 source
 program. A68G 1.x contained some general optimised routines. These are
 decommissioned in A68G 2.x that dynamically generates routines depending
@@ -52,9 +54,7 @@ translates into
 
 There are no optimisations that are easily recognised by the back end compiler,
 for instance symbolic simplification.
-*/
 
-/*
 You will find here and there lines
 
   if (DEBUG_LEVEL >= ...) 
@@ -64,8 +64,9 @@ which I use to debug the compiler - MvdV.
 2: also basic unit compilation 
 3: also better fetching of data from the stack
 4: also compile enclosed clauses
-Below definition switches everything on.
-*/
+Below definition switches everything on:
+#define DEBUG_LEVEL 9
+**/
 
 #define DEBUG_LEVEL 9
 
@@ -539,10 +540,10 @@ static TRANSLATION constants[] = {
 /* Pretty printing stuff. */
 /**************************/
 
-/*!
-\brief write indented text
-\param out output file descriptor
-\param str text
+/**
+@brief Write indented text.
+@param out Output file descriptor.
+@param str Text.
 **/
 
 static void indent (FILE_T out, char *str)
@@ -557,10 +558,10 @@ static void indent (FILE_T out, char *str)
   WRITE (out, str);
 }
 
-/*!
-\brief write unindented text
-\param out output file descriptor
-\param str text
+/**
+@brief Write unindented text.
+@param out Output file descriptor.
+@param str Text.
 **/
 
 static void undent (FILE_T out, char *str)
@@ -571,10 +572,10 @@ static void undent (FILE_T out, char *str)
   WRITE (out, str);
 }
 
-/*!
-\brief write indent text
-\param out output file descriptor
-\param ret bytes written by snprintf
+/**
+@brief Write indent text.
+@param out Output file descriptor.
+@param ret Bytes written by snprintf.
 **/
 
 static void indentf (FILE_T out, int ret)
@@ -589,10 +590,10 @@ static void indentf (FILE_T out, int ret)
   }
 }
 
-/*!
-\brief write unindent text
-\param out output file descriptor
-\param ret bytes written by snprintf
+/**
+@brief Write unindent text.
+@param out Output file descriptor.
+@param ret Bytes written by snprintf.
 **/
 
 static void undentf (FILE_T out, int ret)
@@ -612,11 +613,11 @@ static void undentf (FILE_T out, int ret)
 /* Pretty printing of C declarations */
 /*************************************/
 
-/*!
-\brief add declaration to a tree
-\param p top token
-\param t token text
-\return new entry
+/**
+@brief Add declaration to a tree.
+@param p Top token.
+@param t Token text.
+@return New entry.
 **/
 
 typedef struct DEC_T DEC_T;
@@ -629,11 +630,12 @@ struct DEC_T {
 
 static DEC_T *root_idf = NO_DEC;
 
-/*!
-\brief add declaration to a tree
-\param p top declaration
-\param idf identifier name
-\return new entry
+/**
+@brief Add declaration to a tree.
+@param p Top declaration.
+@param level Pointer level (0, 1 = *, 2 = **, etcetera)
+@param idf Identifier name.
+@return New entry.
 **/
 
 DEC_T *add_identifier (DEC_T ** p, int level, char *idf)
@@ -650,19 +652,20 @@ DEC_T *add_identifier (DEC_T ** p, int level, char *idf)
       return (*p);
     }
   }
-  *p = (DEC_T *) get_temp_heap_space ((size_t) ALIGNED_SIZE_OF (DEC_T));
+  *p = (DEC_T *) get_temp_heap_space ((size_t) SIZE_AL (DEC_T));
   TEXT (*p) = z;
   LEVEL (*p) = level;
   SUB (*p) = LESS (*p) = MORE (*p) = NO_DEC;
   return (*p);
 }
 
-/*!
-\brief add declaration to a tree
-\param p top declaration
-\param mode mode for identifier
-\param idf identifier name
-\return new entry
+/**
+@brief Add declaration to a tree.
+@param p Top declaration.
+@param mode Mode for identifier.
+@param level Pointer level (0, 1 = *, 2 = **, etcetera)
+@param idf Identifier name.
+@return New entry.
 **/
 
 DEC_T *add_declaration (DEC_T ** p, char *mode, int level, char *idf)
@@ -675,11 +678,11 @@ DEC_T *add_declaration (DEC_T ** p, char *mode, int level, char *idf)
     } else if (k > 0) {
       p = &MORE (*p);
     } else {
-      (void) add_identifier(&SUB(*p), level, idf);
+      (void) add_identifier (&SUB(*p), level, idf);
       return (*p);
     }
   }
-  *p = (DEC_T *) get_temp_heap_space ((size_t) ALIGNED_SIZE_OF (DEC_T));
+  *p = (DEC_T *) get_temp_heap_space ((size_t) SIZE_AL (DEC_T));
   TEXT (*p) = z;
   LEVEL (*p) = -1;
   SUB (*p) = LESS (*p) = MORE (*p) = NO_DEC;
@@ -689,10 +692,10 @@ DEC_T *add_declaration (DEC_T ** p, char *mode, int level, char *idf)
 
 static BOOL_T put_idf_comma = A68_TRUE;
 
-/*!
-\brief print identifiers (following mode)
-\param out file to print to
-\param p top token
+/**
+@brief Print identifiers (following mode).
+@param out File to print to.
+@param p Top token.
 **/
 
 void print_identifiers (FILE_T out, DEC_T *p)
@@ -716,10 +719,10 @@ void print_identifiers (FILE_T out, DEC_T *p)
   }
 }
 
-/*!
-\brief print declarations
-\param out file to print to
-\param p top token
+/**
+@brief Print declarations.
+@param out File to print to.
+@param p Top token.
 **/
 
 void print_declarations (FILE_T out, DEC_T *p)
@@ -754,11 +757,13 @@ enum {BOOK_NONE = 0, BOOK_DECL, BOOK_INIT, BOOK_DEREF, BOOK_ARRAY, BOOK_COMPILE}
 BOOK_T temp_book[MAX_BOOK];
 int temp_book_pointer;
 
-/*!
-\brief book identifier to keep track of it for CSE
-\param number number given to it
-\param action some identification as L_DECLARE or DEREFERENCING
-\param phase phase in which booking is made
+/**
+@brief Book identifier to keep track of it for CSE.
+@param action Some identification as L_DECLARE or DEREFERENCING.
+@param phase Phase in which booking is made.
+@param idf Identifier name.
+@param info Identifier information.
+@param number Unique identifying number.
 **/
 
 static void sign_in (int action, int phase, char * idf, void * info, int number)
@@ -773,11 +778,12 @@ static void sign_in (int action, int phase, char * idf, void * info, int number)
   }
 }
 
-/*!
-\brief whether identifier is signed_in
-\param action some identification as L_DECLARE or DEREFERENCING
-\param phase phase in which booking is made
-\return number given to it
+/**
+@brief Whether identifier is signed_in.
+@param action Some identification as L_DECLARE or DEREFERENCING.
+@param phase Phase in which booking is made.
+@param idf Identifier name.
+@return Number given to it.
 **/
 
 static BOOK_T * signed_in (int action, int phase, char * idf)
@@ -791,12 +797,13 @@ static BOOK_T * signed_in (int action, int phase, char * idf)
   return (NO_BOOK);
 }
 
-/*!
-\brief make name
-\param buf output buffer
-\param name appropriate name
-\param n distinghuising number
-\return output buffer
+/**
+@brief Make name.
+@param buf Output buffer.
+@param name Appropriate name.
+@param tag Optional tag to name.
+@param n Unique identifying number.
+@return Output buffer.
 **/
 
 static char * make_name (char * buf, char * name, char * tag, int n)
@@ -810,11 +817,11 @@ static char * make_name (char * buf, char * name, char * tag, int n)
   return (buf);
 }
 
-/*!
-\brief whether two sub-trees are the same Algol 68 construct
-\param l left-hand tree
-\param r right-hand tree
-\return same
+/**
+@brief Whether two sub-trees are the same Algol 68 construct.
+@param l Left-hand tree.
+@param r Right-hand tree.
+@return See brief description.
 **/
 
 static BOOL_T same_tree (NODE_T * l, NODE_T *r)
@@ -835,10 +842,10 @@ static BOOL_T same_tree (NODE_T * l, NODE_T *r)
 /* Basic mode check */
 /********************/
 
-/*!
-\brief whether primitive mode, with simple C equivalent
-\param m mode to check
-\return same
+/**
+@brief Whether primitive mode, with simple C equivalent.
+@param m Mode to check.
+@return See brief description.
 **/
 
 static BOOL_T primitive_mode (MOID_T * m)
@@ -858,10 +865,10 @@ static BOOL_T primitive_mode (MOID_T * m)
   }
 }
 
-/*!
-\brief whether mode for which denotations are compiled
-\param m mode to check
-\return same
+/**
+@brief Whether mode for which denotations are compiled.
+@param m Mode to check.
+@return See brief description.
 **/
 
 static BOOL_T denotation_mode (MOID_T * m)
@@ -875,10 +882,10 @@ static BOOL_T denotation_mode (MOID_T * m)
   }
 }
 
-/*!
-\brief whether mode is handled by the constant folder
-\param m mode to check
-\return same
+/**
+@brief Whether mode is handled by the constant folder.
+@param m Mode to check.
+@return See brief description.
 **/
 
 BOOL_T folder_mode (MOID_T * m)
@@ -894,10 +901,10 @@ BOOL_T folder_mode (MOID_T * m)
   }
 }
 
-/*!
-\brief whether basic mode, for which units are compiled
-\param m mode to check
-\return same
+/**
+@brief Whether basic mode, for which units are compiled.
+@param m Mode to check.
+@return See brief description.
 **/
 
 static BOOL_T basic_mode (MOID_T * m)
@@ -931,10 +938,10 @@ static BOOL_T basic_mode (MOID_T * m)
   }
 }
 
-/*!
-\brief whether basic mode, which is not a row
-\param m mode to check
-\return same
+/**
+@brief Whether basic mode, which is not a row.
+@param m Mode to check.
+@return See brief description.
 **/
 
 static BOOL_T basic_mode_non_row (MOID_T * m)
@@ -960,11 +967,11 @@ static BOOL_T basic_mode_non_row (MOID_T * m)
   }
 }
 
-/*!
-\brief whether stems from certain attribute
-\param p position in tree
-\param att attribute to comply to
-\return same
+/**
+@brief Whether stems from certain attribute.
+@param p Node in syntax tree.
+@param att Attribute to comply to.
+@return See brief description.
 **/
 
 static NODE_T * locate (NODE_T * p, int att)
@@ -991,10 +998,10 @@ static NODE_T * locate (NODE_T * p, int att)
 /* Whether a unit is sufficiently "basic" to be compiled. */
 /**********************************************************/
 
-/*!
-\brief whether basic collateral clause
-\param p position in tree
-\return same
+/**
+@brief Whether basic collateral clause.
+@param p Node in syntax tree.
+@return See brief description.
 **/
 
 static BOOL_T basic_collateral (NODE_T * p)
@@ -1008,10 +1015,12 @@ static BOOL_T basic_collateral (NODE_T * p)
   }
 }
 
-/*!
-\brief whether basic serial clause
-\param p position in tree
-\return same
+/**
+@brief Whether basic serial clause.
+@param p Node in syntax tree.
+@param total Total units.
+@param good Basic units.
+@return See brief description.
 **/
 
 static void count_basic_units (NODE_T * p, int * total, int * good)
@@ -1030,11 +1039,11 @@ static void count_basic_units (NODE_T * p, int * total, int * good)
   }
 }
 
-/*!
-\brief whether basic serial clause
-\param p position in tree
-\param want > 0 is how many units we allow, <= 0 is don't care
-\return same
+/**
+@brief Whether basic serial clause.
+@param p Node in syntax tree.
+@param want > 0 is how many units we allow, <= 0 is don't care
+@return See brief description.
 **/
 
 static BOOL_T basic_serial (NODE_T * p, int want)
@@ -1048,10 +1057,10 @@ static BOOL_T basic_serial (NODE_T * p, int want)
   }
 }
 
-/*!
-\brief whether basic indexer
-\param p position in tree
-\return same
+/**
+@brief Whether basic indexer.
+@param p Node in syntax tree.
+@return See brief description.
 **/
 
 static BOOL_T basic_indexer (NODE_T * p)
@@ -1067,10 +1076,10 @@ static BOOL_T basic_indexer (NODE_T * p)
   }
 }
 
-/*!
-\brief whether basic slice
-\param p starting node
-\return same
+/**
+@brief Whether basic slice.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_slice (NODE_T * p)
@@ -1086,10 +1095,10 @@ static BOOL_T basic_slice (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether basic argument
-\param p starting node
-\return same
+/**
+@brief Whether basic argument.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_argument (NODE_T * p)
@@ -1103,10 +1112,10 @@ static BOOL_T basic_argument (NODE_T * p)
   }
 }
 
-/*!
-\brief whether basic call
-\param p starting node
-\return same
+/**
+@brief Whether basic call.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_call (NODE_T * p)
@@ -1129,10 +1138,10 @@ static BOOL_T basic_call (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether basic monadic formula
-\param p starting node
-\return same
+/**
+@brief Whether basic monadic formula.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_monadic_formula (NODE_T * p)
@@ -1150,10 +1159,10 @@ static BOOL_T basic_monadic_formula (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether basic dyadic formula
-\param p starting node
-\return same
+/**
+@brief Whether basic dyadic formula.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_formula (NODE_T * p)
@@ -1176,10 +1185,10 @@ static BOOL_T basic_formula (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether basic conditional clause
-\param p starting node
-\return same
+/**
+@brief Whether basic conditional clause.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_conditional (NODE_T * p)
@@ -1207,10 +1216,10 @@ static BOOL_T basic_conditional (NODE_T * p)
   }
 }
 
-/*!
-\brief whether basic unit
-\param p starting node
-\return same
+/**
+@brief Whether basic unit.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T basic_unit (NODE_T * p)
@@ -1326,10 +1335,10 @@ static BOOL_T basic_unit (NODE_T * p)
 /* Constant unit check */
 /***********************/
 
-/*!
-\brief whether constant collateral clause
-\param p position in tree
-\return same
+/**
+@brief Whether constant collateral clause.
+@param p Node in syntax tree.
+@return See brief description.
 **/
 
 static BOOL_T constant_collateral (NODE_T * p)
@@ -1343,10 +1352,12 @@ static BOOL_T constant_collateral (NODE_T * p)
   }
 }
 
-/*!
-\brief whether constant serial clause
-\param p position in tree
-\return same
+/**
+@brief Whether constant serial clause.
+@param p Node in syntax tree.
+@param total Total units.
+@param good Basic units.
+@return See brief description.
 **/
 
 static void count_constant_units (NODE_T * p, int * total, int * good)
@@ -1365,11 +1376,11 @@ static void count_constant_units (NODE_T * p, int * total, int * good)
   }
 }
 
-/*!
-\brief whether constant serial clause
-\param p position in tree
-\param want > 0 is how many units we allow, <= 0 is don't care
-\return same
+/**
+@brief Whether constant serial clause.
+@param p Node in syntax tree.
+@param want > 0 is how many units we allow, <= 0 is don't care
+@return See brief description.
 **/
 
 static BOOL_T constant_serial (NODE_T * p, int want)
@@ -1383,10 +1394,10 @@ static BOOL_T constant_serial (NODE_T * p, int want)
   }
 }
 
-/*!
-\brief whether constant argument
-\param p starting node
-\return same
+/**
+@brief Whether constant argument.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T constant_argument (NODE_T * p)
@@ -1400,10 +1411,10 @@ static BOOL_T constant_argument (NODE_T * p)
   }
 }
 
-/*!
-\brief whether constant call
-\param p starting node
-\return same
+/**
+@brief Whether constant call.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T constant_call (NODE_T * p)
@@ -1424,10 +1435,10 @@ static BOOL_T constant_call (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether constant monadic formula
-\param p starting node
-\return same
+/**
+@brief Whether constant monadic formula.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T constant_monadic_formula (NODE_T * p)
@@ -1445,10 +1456,10 @@ static BOOL_T constant_monadic_formula (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether constant dyadic formula
-\param p starting node
-\return same
+/**
+@brief Whether constant dyadic formula.
+@param p Starting node.
+@return See brief description.
 **/
 
 static BOOL_T constant_formula (NODE_T * p)
@@ -1471,10 +1482,10 @@ static BOOL_T constant_formula (NODE_T * p)
   return (A68_FALSE);
 }
 
-/*!
-\brief whether constant unit
-\param p starting node
-\return same
+/**
+@brief Whether constant unit.
+@param p Starting node.
+@return See brief description.
 **/
 
 BOOL_T constant_unit (NODE_T * p)
@@ -1552,9 +1563,9 @@ BOOL_T constant_unit (NODE_T * p)
 /* Evaluate compile-time expressions using interpreter routines. */
 /*****************************************************************/
 
-/*!
-\brief push denotation
-\param p position in tree
+/**
+@brief Push denotation.
+@param p Node in syntax tree.
 **/
 
 static void push_denotation (NODE_T * p)
@@ -1573,7 +1584,7 @@ static void push_denotation (NODE_T * p)
   if (genie_string_to_value_internal (p, MODE (mode), NSYMBOL (s), (BYTE_T *) z) == A68_FALSE) {\
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (mode));\
   }\
-  PUSH (p, &z, MOID_SIZE (MODE (mode)));}
+  PUSH (p, &z, SIZE (MODE (mode)));}
 /**/
   if (MOID (p) == MODE (INT)) {
     PUSH_DENOTATION (INT, A68_INT);
@@ -1598,9 +1609,9 @@ static void push_denotation (NODE_T * p)
 #undef PUSH_LONG_DENOTATION
 }
 
-/*!
-\brief push widening
-\param p starting node
+/**
+@brief Push widening.
+@param p Starting node.
 **/
 
 static void push_widening (NODE_T * p)
@@ -1621,9 +1632,9 @@ static void push_widening (NODE_T * p)
   }
 }
 
-/*!
-\brief code collateral units
-\param p starting node
+/**
+@brief Code collateral units.
+@param p Starting node.
 **/
 
 static void push_collateral_units (NODE_T * p)
@@ -1638,9 +1649,9 @@ static void push_collateral_units (NODE_T * p)
   }
 }
 
-/*!
-\brief code argument
-\param p starting node
+/**
+@brief Code argument.
+@param p Starting node.
 **/
 
 static void push_argument (NODE_T * p)
@@ -1654,9 +1665,9 @@ static void push_argument (NODE_T * p)
   }
 }
 
-/*!
-\brief push unit
-\param p starting node
+/**
+@brief Push unit.
+@param p Starting node.
 **/
 
 void push_unit (NODE_T * p)
@@ -1717,9 +1728,11 @@ void push_unit (NODE_T * p)
   }
 }
 
-/*!
-\brief code constant folding
-\param p node to start
+/**
+@brief Code constant folding.
+@param p Node to start.
+@param out Output file descriptor.
+@param phase Phase of code generation.
 **/
 
 static void constant_folder (NODE_T * p, FILE_T out, int phase)
@@ -1745,7 +1758,7 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
       (void) make_name (acc, CON, "", NUMBER (p));
       stack_pointer = 0;
       push_unit (p);
-      POP (p, &z, MOID_SIZE (MOID (p)));
+      POP (p, &z, SIZE (MOID (p)));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INIT_MASK, %.0f", acc, z[1]));
       for (k = 1; k <= LONG_MP_DIGITS; k ++) {
         undentf (out, snprintf (line, SNPRINTF_SIZE, ", %.0f", z[k + 1]));
@@ -1854,6 +1867,11 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
 /* Auxilliary routines for emitting C code. */
 /********************************************/
 
+/**
+@brief Whether frame needs initialisation.
+@param p Node in syntax tree.
+**/
+
 static BOOL_T need_initialise_frame (NODE_T * p)
 {
   TAG_T *tag;
@@ -1874,10 +1892,12 @@ static BOOL_T need_initialise_frame (NODE_T * p)
   }
 }
 
-/*!
-\brief comment source line
-\param p position in tree
-\param out output file descriptor
+/**
+@brief Comment source line.
+@param p Node in syntax tree.
+@param out Output file descriptor.
+@param want_space Space required.
+@param max_print Maximum items to print.
 **/
 
 static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_print)
@@ -1951,10 +1971,10 @@ static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_prin
 #undef UNDENT
 }
 
-/*!
-\brief comment source line
-\param p position in tree
-\param out output file descriptor
+/**
+@brief Comment source line.
+@param p Node in syntax tree.
+@param out Output file descriptor.
 **/
 
 static void comment_source (NODE_T * p, FILE_T out)
@@ -1965,10 +1985,10 @@ static void comment_source (NODE_T * p, FILE_T out)
   undent (out, " */\n");
 }
 
-/*!
-\brief inline comment source line
-\param p position in tree
-\param out output file descriptor
+/**
+@brief Inline comment source line.
+@param p Node in syntax tree.
+@param out Output file descriptor.
 **/
 
 static void inline_comment_source (NODE_T * p, FILE_T out)
@@ -1979,9 +1999,9 @@ static void inline_comment_source (NODE_T * p, FILE_T out)
   undent (out, " */");
 }
 
-/*!
-\brief write prelude
-\param out output file descriptor
+/**
+@brief Write prelude.
+@param out Output file descriptor.
 **/
 
 static void write_prelude (FILE_T out)
@@ -2006,9 +2026,9 @@ static void write_prelude (FILE_T out)
   indent (out, "#define _V_(z) (VALUE (z))\n\n");
 }
 
-/*!
-\brief write initialisation of frame
-\**/
+/**
+@brief Write initialisation of frame.
+**/
 
 static void init_static_frame (FILE_T out, NODE_T * p)
 {
@@ -2027,12 +2047,12 @@ static void init_static_frame (FILE_T out, NODE_T * p)
 /* COMPILATION OF PARTIAL UNITS */
 /********************************/
 
-/*!
-\brief code getting objects from the stack
-\param p position in tree
-\param out output file descriptor
-\param dst where to store
-\param cast mode to cast to
+/**
+@brief Code getting objects from the stack.
+@param p Node in syntax tree.
+@param out Output file descriptor.
+@param dst Where to store.
+@param cast Mode to cast to.
 **/
 
 static void get_stack (NODE_T * p, FILE_T out, char * dst, char * cast) 
@@ -2048,11 +2068,11 @@ static void get_stack (NODE_T * p, FILE_T out, char * dst, char * cast)
   } 
 }
 
-/*!
-\brief code function prelude
-\param out output file descriptor
-\param p position in tree
-\param fn function name
+/**
+@brief Code function prelude.
+@param out Output file descriptor.
+@param p Node in syntax tree.
+@param fn Function name.
 **/
 
 static void write_fun_prelude (NODE_T * p, FILE_T out, char * fn)
@@ -2063,11 +2083,11 @@ static void write_fun_prelude (NODE_T * p, FILE_T out, char * fn)
   temp_book_pointer = 0;
 }
 
-/*!
-\brief code function postlude
-\param out output file descriptor
-\param p position in tree
-\param fn function name
+/**
+@brief Code function postlude.
+@param out Output file descriptor.
+@param p Node in syntax tree.
+@param fn Function name.
 **/
 
 static void write_fun_postlude (NODE_T * p, FILE_T out, char * fn)
@@ -2078,10 +2098,10 @@ static void write_fun_postlude (NODE_T * p, FILE_T out, char * fn)
   temp_book_pointer = 0;
 }
 
-/*!
-\brief code internal a68g mode
-\param m mode to check
-\return same
+/**
+@brief Code internal a68g mode.
+@param m Mode to check.
+@return See brief description.
 **/
 
 static char *internal_mode (MOID_T * m)
@@ -2101,10 +2121,10 @@ static char *internal_mode (MOID_T * m)
   }
 }
 
-/*!
-\brief code an A68 mode
-\param m mode to code
-\return internal identifier for mode
+/**
+@brief Code an A68 mode.
+@param m Mode to code.
+@return Internal identifier for mode.
 **/
 
 static char * inline_mode (MOID_T * m)
@@ -2136,11 +2156,11 @@ static char * inline_mode (MOID_T * m)
   }
 }
 
-/*!
-\brief code denotation
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code denotation.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_denotation (NODE_T * p, FILE_T out, int phase)
@@ -2210,11 +2230,11 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code widening
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code widening.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_widening (NODE_T * p, FILE_T out, int phase)
@@ -2279,11 +2299,11 @@ static void inline_widening (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code dereferencing of identifier
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code dereferencing of identifier.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
@@ -2338,11 +2358,11 @@ static void inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code identifier
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code identifier.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_identifier (NODE_T * p, FILE_T out, int phase)
@@ -2409,11 +2429,13 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code indexer
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code indexer.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
+@param k Counter.
+@param tup Tuple pointer.
 **/
 
 static void inline_indexer (NODE_T * p, FILE_T out, int phase, int * k, char * tup)
@@ -2439,11 +2461,11 @@ static void inline_indexer (NODE_T * p, FILE_T out, int phase, int * k, char * t
   }
 }
 
-/*!
-\brief code dereferencing of slice
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code dereferencing of slice.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
@@ -2530,11 +2552,11 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code slice REF [] MODE -> REF MODE
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code slice REF [] MODE -> REF MODE.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
@@ -2613,11 +2635,11 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code slice [] MODE -> MODE
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code slice [] MODE -> MODE.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_slice (NODE_T * p, FILE_T out, int phase)
@@ -2699,11 +2721,11 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code monadic formula
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code monadic formula.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
@@ -2776,11 +2798,11 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code dyadic formula
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code dyadic formula.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_formula (NODE_T * p, FILE_T out, int phase)
@@ -2890,10 +2912,12 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code argument
-\param p starting node
-\return same
+/**
+@brief Code argument.
+@param p Starting node.
+@param out Output file descriptor.
+@param phase Phase of code generation.
+@return See brief description.
 **/
 
 static void inline_single_argument (NODE_T * p, FILE_T out, int phase)
@@ -2909,10 +2933,12 @@ static void inline_single_argument (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code call
-\param p starting node
-\return same
+/**
+@brief Code call.
+@param p Starting node.
+@param out Output file descriptor.
+@param phase Phase of code generation.
+@return See brief description.
 **/
 
 static void inline_call (NODE_T * p, FILE_T out, int phase)
@@ -2975,10 +3001,11 @@ static void inline_call (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code collateral units
-\param out output file descriptor
-\param p starting node
+/**
+@brief Code collateral units.
+@param out Output file descriptor.
+@param p Starting node.
+@param phase Phase of compilation.
 **/
 
 static void inline_collateral_units (NODE_T * p, FILE_T out, int phase)
@@ -3001,10 +3028,11 @@ static void inline_collateral_units (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code collateral units
-\param out output file descriptor
-\param p starting node
+/**
+@brief Code collateral units.
+@param out Output file descriptor.
+@param p Starting node.
+@param phase Compilation phase.
 **/
 
 static void inline_collateral (NODE_T * p, FILE_T out, int phase)
@@ -3033,11 +3061,11 @@ static void inline_collateral (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code basic closed clause
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code basic closed clause.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_closed (NODE_T * p, FILE_T out, int phase)
@@ -3053,11 +3081,11 @@ static void inline_closed (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code basic closed clause
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code basic closed clause.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_conditional (NODE_T * p, FILE_T out, int phase)
@@ -3109,11 +3137,11 @@ mode required.
   }
 }
 
-/*!
-\brief code dereferencing of selection
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code dereferencing of selection.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
@@ -3176,11 +3204,11 @@ static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code selection
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code selection.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_selection (NODE_T * p, FILE_T out, int phase)
@@ -3233,11 +3261,11 @@ static void inline_selection (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code selection
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code selection.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
@@ -3290,11 +3318,11 @@ static void inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code identifier
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code identifier.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
@@ -3330,10 +3358,11 @@ static void inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
   }
 }
 
-/*!
-\brief code identity-relation
-\param p starting node
-\param out output file descriptor
+/**
+@brief Code identity-relation.
+@param p Starting node.
+@param out Output file descriptor.
+@param phase Phase of code generation.
 **/
 
 static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
@@ -3393,11 +3422,11 @@ static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
 #undef GOOD
 }
 
-/*!
-\brief code unit
-\param p starting node
-\param out object file
-\param phase phase of code generation
+/**
+@brief Code unit.
+@param p Starting node.
+@param out Object file.
+@param phase Phase of code generation.
 **/
 
 static void inline_unit (NODE_T * p, FILE_T out, int phase)
@@ -3473,11 +3502,11 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
 /* COMPILATION OF COMPLETE UNITS */
 /*********************************/
 
-/*!
-\brief compile code clause
-\param out output file descriptor
-\param p starting node
-\return function name or NO_NODE
+/**
+@brief Compile code clause.
+@param out Output file descriptor.
+@param p Starting node.
+@return Function name or NO_NODE.
 **/
 
 static void embed_code_clause (NODE_T * p, FILE_T out)
@@ -3490,10 +3519,10 @@ static void embed_code_clause (NODE_T * p, FILE_T out)
   }
 }
 
-/*!
-\brief compile push
-\param p starting node
-\param out output file descriptor
+/**
+@brief Compile push.
+@param p Starting node.
+@param out Output file descriptor.
 **/
 
 static void compile_push (NODE_T * p, FILE_T out) {
@@ -3504,17 +3533,18 @@ static void compile_push (NODE_T * p, FILE_T out) {
   } else if (basic_mode (MOID (p))) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "MOVE ((void *) STACK_TOP, (void *) "));
     inline_unit (p, out, L_YIELD);
-    undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", MOID_SIZE (MOID (p))));
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer += %d;\n", MOID_SIZE (MOID (p))));
+    undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", SIZE (MOID (p))));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer += %d;\n", SIZE (MOID (p))));
   } else {
     ABEND (A68_TRUE, "cannot push", moid_to_string (MOID (p), 80, NO_NODE));
   }
 }
 
-/*!
-\brief compile assign (C source to C destination)
-\param p starting node
-\param out output file descriptor
+/**
+@brief Compile assign (C source to C destination).
+@param p Starting node.
+@param out Output file descriptor.
+@param dst String denoting destination.
 **/
 
 static void compile_assign (NODE_T * p, FILE_T out, char * dst) {
@@ -3530,17 +3560,18 @@ static void compile_assign (NODE_T * p, FILE_T out, char * dst) {
   } else if (basic_mode (MOID (p))) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "MOVE ((void *) %s, (void *) ", dst));
     inline_unit (p, out, L_YIELD);
-    undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", MOID_SIZE (MOID (p))));
+    undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", SIZE (MOID (p))));
   } else {
     ABEND (A68_TRUE, "cannot assign", moid_to_string (MOID (p), 80, NO_NODE));
   }
 }
 
-/*!
-\brief compile denotation
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile denotation.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_denotation (NODE_T * p, FILE_T out, int compose_fun)
@@ -3563,7 +3594,7 @@ static char * compile_denotation (NODE_T * p, FILE_T out, int compose_fun)
     } else {
       indentf (out, snprintf (line, SNPRINTF_SIZE, "PUSH (p, "));
       inline_unit (p, out, L_YIELD);
-      undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", MOID_SIZE (MOID (p))));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", SIZE (MOID (p))));
     }
     (void) make_name (fn, "_denotation", "", NUMBER (p));
     if (compose_fun == A68_MAKE_FUNCTION) {
@@ -3575,11 +3606,12 @@ static char * compile_denotation (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile cast
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile cast.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_cast (NODE_T * p, FILE_T out, int compose_fun)
@@ -3606,11 +3638,12 @@ static char * compile_cast (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile identifier
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile identifier.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_identifier (NODE_T * p, FILE_T out, int compose_fun)
@@ -3637,11 +3670,12 @@ static char * compile_identifier (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile dereference identifier
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile dereference identifier.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_dereference_identifier (NODE_T * p, FILE_T out, int compose_fun)
@@ -3668,11 +3702,12 @@ static char * compile_dereference_identifier (NODE_T * p, FILE_T out, int compos
   }
 }
 
-/*!
-\brief compile slice
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile slice.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_slice (NODE_T * p, FILE_T out, int compose_fun)
@@ -3699,11 +3734,12 @@ static char * compile_slice (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile slice
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile slice.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_dereference_slice (NODE_T * p, FILE_T out, int compose_fun)
@@ -3730,11 +3766,12 @@ static char * compile_dereference_slice (NODE_T * p, FILE_T out, int compose_fun
   }
 }
 
-/*!
-\brief compile selection
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile selection.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_selection (NODE_T * p, FILE_T out, int compose_fun)
@@ -3761,11 +3798,12 @@ static char * compile_selection (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile selection
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile selection.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_dereference_selection (NODE_T * p, FILE_T out, int compose_fun)
@@ -3792,11 +3830,12 @@ static char * compile_dereference_selection (NODE_T * p, FILE_T out, int compose
   }
 }
 
-/*!
-\brief compile formula
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile formula.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_formula (NODE_T * p, FILE_T out, int compose_fun)
@@ -3823,11 +3862,12 @@ static char * compile_formula (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile voiding formula
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile voiding formula.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_voiding_formula (NODE_T * p, FILE_T out, int compose_fun)
@@ -3861,11 +3901,12 @@ static char * compile_voiding_formula (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile uniting
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile uniting.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
@@ -3889,7 +3930,7 @@ static char * compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "PUSH_UNION (_N_ (%d), %s);\n", NUMBER (p), internal_mode (v)));
     inline_unit (q, out, L_EXECUTE);
     compile_push (q, out);
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s + %d;\n", pop0, MOID_SIZE (u)));
+    indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s + %d;\n", pop0, SIZE (u)));
     if (compose_fun == A68_MAKE_FUNCTION) {
       write_fun_postlude (p, out, fn);
     }
@@ -3899,10 +3940,12 @@ static char * compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile inline arguments
-\param out output file descriptor
-\param p starting node
+/**
+@brief Compile inline arguments.
+@param p Starting node.
+@param out Output file descriptor.
+@param phase Compilation phase.
+@param size Position in frame stack.
 **/
 
 static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
@@ -3922,7 +3965,7 @@ static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
       inline_unit (p, out, L_EXECUTE);
     } else if (phase == L_EXECUTE) {
       indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (%s *) FRAME_OBJECT (%d);\n", arg, inline_mode (MOID (p)), *size));
-      (*size) += MOID_SIZE (MOID (p));
+      (*size) += SIZE (MOID (p));
     } else if (phase == L_YIELD && primitive_mode (MOID (p))) {
       indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INIT_MASK;\n", arg));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (%s) = ", arg));
@@ -3931,7 +3974,7 @@ static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
     } else if (phase == L_YIELD && basic_mode (MOID (p))) {
       indentf (out, snprintf (line, SNPRINTF_SIZE, "MOVE ((void *) %s, (void *) ", arg));
       inline_unit (p, out, L_YIELD);
-      undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", MOID_SIZE (MOID (p))));
+      undentf (out, snprintf (line, SNPRINTF_SIZE, ", %d);\n", SIZE (MOID (p))));
     }
   } else {
     inline_arguments (SUB (p), out, phase, size);
@@ -3939,11 +3982,12 @@ static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
   }
 }
 
-/*!
-\brief compile deproceduring
-\param out output file descriptor
-\param p starting node
-\return function name or NO_NODE
+/**
+@brief Compile deproceduring.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name or NO_NODE.
 **/
 
 static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
@@ -3994,11 +4038,12 @@ static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile deproceduring
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile deproceduring.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
@@ -4051,11 +4096,12 @@ static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose
   }
 }
 
-/*!
-\brief compile call
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile call.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
@@ -4150,11 +4196,12 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile call
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile call.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
@@ -4227,11 +4274,12 @@ static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile voiding assignation
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile voiding assignation.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_voiding_assignation_selection (NODE_T * p, FILE_T out, int compose_fun)
@@ -4288,11 +4336,12 @@ static char * compile_voiding_assignation_selection (NODE_T * p, FILE_T out, int
   }
 }
 
-/*!
-\brief compile voiding assignation
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile voiding assignation.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int compose_fun)
@@ -4372,11 +4421,12 @@ static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int com
   }
 }
 
-/*!
-\brief compile voiding assignation
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile voiding assignation.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, int compose_fun)
@@ -4435,11 +4485,12 @@ static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, in
   }
 }
 
-/*!
-\brief compile identity-relation
-\param p starting node
-\param out output file descriptor
-\return function name
+/**
+@brief Compile identity-relation.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_identity_relation (NODE_T * p, FILE_T out, int compose_fun)
@@ -4492,10 +4543,12 @@ static char * compile_identity_relation (NODE_T * p, FILE_T out, int compose_fun
 #undef GOOD
 }
 
-/*!
-\brief compile closed clause
-\param out output file descriptor
-\param p starting node
+/**
+@brief Compile closed clause.
+@param out Output file descriptor.
+@param decs Number of declarations.
+@param pop Value to restore stack pointer to. 
+@param p Starting node.
 **/
 
 static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char * pop)
@@ -4561,6 +4614,17 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
   }
 }
 
+/**
+@brief Compile closed clause.
+@param p Starting node.
+@param out Output file descriptor.
+@param last Last unit generated. 
+@param units Number of units.
+@param decs Number of declarations.
+@param pop Value to restore stack pointer to. 
+@param compose_fun Whether to compose a function.
+**/
+
 static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int * units, int * decs, char * pop, int compose_fun)
 {
   for (; p != NO_NODE; FORWARD (p)) {
@@ -4622,10 +4686,11 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
   }
 }
 
-/*!
-\brief embed serial clause
-\param out output file descriptor
-\param p starting node
+/**
+@brief Embed serial clause.
+@param p Starting node.
+@param out Output file descriptor.
+@param pop Value to restore stack pointer to. 
 */
 
 static void embed_serial_clause (NODE_T * p, FILE_T out, char * pop) 
@@ -4638,11 +4703,12 @@ static void embed_serial_clause (NODE_T * p, FILE_T out, char * pop)
   indent (out, "CLOSE_FRAME;\n");
 }
 
-/*!
-\brief compile code clause
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile code clause.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_code_clause (NODE_T * p, FILE_T out, int compose_fun)
@@ -4661,11 +4727,12 @@ static char * compile_code_clause (NODE_T * p, FILE_T out, int compose_fun)
   return (fn);
 }
 
-/*!
-\brief compile closed clause
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile closed clause.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
@@ -4698,11 +4765,12 @@ static char * compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
 }
 
-/*!
-\brief compile collateral clause
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile collateral clause.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_collateral_clause (NODE_T * p, FILE_T out, int compose_fun)
@@ -4729,11 +4797,12 @@ static char * compile_collateral_clause (NODE_T * p, FILE_T out, int compose_fun
   }
 }
 
-/*!
-\brief compile conditional clause
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile conditional clause.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun)
@@ -4792,11 +4861,12 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
   return (fn);
 }
 
-/*!
-\brief compile conditional clause
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile conditional clause.
+@param p Starting node.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fun)
@@ -4916,12 +4986,15 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   return (fn);
 }
 
-/*!
-\brief compile unit from integral-case in-part
-\param p position in tree
-\param k value of enquiry clause
-\param count unit counter
-\return whether a unit was compiled
+/**
+@brief Compile unit from integral-case in-part.
+@param p Node in syntax tree.
+@param out Output file descriptor.
+@param sym Node in syntax tree. 
+@param k Value of enquiry clause.
+@param count Unit counter.
+@param compose_fun Whether to compose a function.
+@return Whether a unit was compiled.
 **/
 
 BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int * count, int compose_fun)
@@ -4969,9 +5042,11 @@ BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int 
   }
 }
 
-/*!
-\brief compile integral-case-clause
-\param p position in tree
+/**
+@brief Compile integral-case-clause.
+@param p Node in syntax tree.
+@param out Output file descriptor.
+@param compose_fun Whether to compose a function.
 **/
 
 static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
@@ -5068,11 +5143,12 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   return (fn);
 }
 
-/*!
-\brief compile loop clause
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile loop clause.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
@@ -5312,11 +5388,12 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   return (fn);
 }
 
-/*!
-\brief compile serial units
-\param out output file descriptor
-\param p starting node
-\return function name
+/**
+@brief Compile serial units.
+@param out Output file descriptor.
+@param p Starting node.
+@param compose_fun Whether to compose a function.
+@return Function name.
 **/
 
 static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
@@ -5428,10 +5505,10 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
 #undef COMPILE
 }
 
-/*!
-\brief compile units
-\param p starting node
-\param out output file descriptor
+/**
+@brief Compile units.
+@param p Starting node.
+@param out Output file descriptor.
 **/
 
 void compile_units (NODE_T * p, FILE_T out)
@@ -5452,10 +5529,9 @@ void compile_units (NODE_T * p, FILE_T out)
   temp_heap_pointer = pop_temp_heap_pointer;
 }
 
-/*!
-\brief compiler driver
-\param p module to compile
-\param out output file descriptor
+/**
+@brief Compiler driver.
+@param out Output file descriptor.
 **/
 
 void compiler (FILE_T out)

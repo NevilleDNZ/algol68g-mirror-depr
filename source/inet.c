@@ -1,11 +1,14 @@
-/*!
-\file inet.c
-\brief standard prelude implementation
-*/
+/**
+@file inet.c
+@author J. Marcel van der Veer.
+@brief Internet TCP and HTTP support routines. 
 
-/*
+@section Copyright
+
 This file is part of Algol68G - an Algol 68 interpreter.
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,7 +21,7 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+**/
 
 #include "a68g.h"
 
@@ -40,9 +43,9 @@ typedef int socklen_t;
 
 #if defined HAVE_WIN32
 
-/*!
-\brief send GET request to server and yield answer (TCP/HTTP only)
-\param p position in tree
+/**
+@brief Send GET request to server and yield answer (TCP/HTTP only).
+@param p Node in syntax tree.
 **/
 
 void genie_http_content (NODE_T * p)
@@ -126,7 +129,7 @@ This warning can be safely ignored.
     WSACleanup ();
     return;
   }
-  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
+  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) SIZE_AL (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     WSACleanup ();
@@ -166,9 +169,9 @@ This warning can be safely ignored.
   WSACleanup ();
 }
 
-/*!
-\brief send request to server and yield answer (TCP only)
-\param p position in tree
+/**
+@brief Send request to server and yield answer (TCP only).
+@param p Node in syntax tree.
 **/
 
 void genie_tcp_request (NODE_T * p)
@@ -250,7 +253,7 @@ This warning can be safely ignored.
     WSACleanup ();
     return;
   }
-  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
+  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) SIZE_AL (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     WSACleanup ();
@@ -292,9 +295,9 @@ This warning can be safely ignored.
 
 #else /* ! defined HAVE_WIN32 */
 
-/*!
-\brief send GET request to server and yield answer (TCP/HTTP only)
-\param p position in tree
+/**
+@brief Send GET request to server and yield answer (TCP/HTTP only).
+@param p Node in syntax tree.
 **/
 
 void genie_http_content (NODE_T * p)
@@ -369,7 +372,7 @@ This warning can be safely ignored.
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
   }
-  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
+  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) SIZE_AL (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     ASSERT (close (socket_id) == 0);
@@ -429,9 +432,9 @@ This warning can be safely ignored.
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }
 
-/*!
-\brief send request to server and yield answer (TCP only)
-\param p position in tree
+/**
+@brief Send request to server and yield answer (TCP only).
+@param p Node in syntax tree.
 **/
 
 void genie_tcp_request (NODE_T * p)
@@ -504,7 +507,7 @@ This warning can be safely ignored.
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     return;
   }
-  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) ALIGNED_SIZE_OF (socket_address));
+  conn = connect (socket_id, (const struct sockaddr *) &socket_address, (socklen_t) SIZE_AL (socket_address));
   if (conn < 0) {
     PUSH_PRIMITIVE (p, (errno == 0 ? 1 : errno), A68_INT);
     ASSERT (close (socket_id) == 0);

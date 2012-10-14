@@ -1,11 +1,15 @@
-/*!
-\file pretty.c
-\brief Pretty-printer for Algol 68 programs
-*/
+/**
+@file pretty.c
+@author J. Marcel van der Veer.
+@brief Pretty-printer for Algol 68 programs.
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
+@section Copyright
+
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
+
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,10 +22,12 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-/* Basic indenter for hopeless code.
-   It applies one style only. */
+@section Description
+
+Basic indenter for hopeless code.
+It applies one style only.
+**/
 
 #include "a68g.h"
 
@@ -46,8 +52,8 @@ static void in_serial (NODE_T *, BOOL_T, NODE_T **);
 static void in_statement (NODE_T *);
 static void in_format (NODE_T *);
 
-/*!
-\brief write newline and indent
+/**
+@brief Write newline and indent.
 **/
 
 static void put_nl (void)
@@ -58,9 +64,9 @@ static void put_nl (void)
   }
 }
 
-/*!
-\brief write a string
-\param txt
+/**
+@brief Write a string.
+@param txt
 **/
 
 static void put_str (char *txt)
@@ -69,9 +75,9 @@ static void put_str (char *txt)
   col += (int) strlen (txt);
 }
 
-/*!
-\brief write a character
-\param ch
+/**
+@brief Write a character.
+@param ch
 **/
 
 static void put_ch (char ch)
@@ -82,9 +88,9 @@ static void put_ch (char ch)
   put_str (str);
 }
 
-/*!
-\brief write pragment string
-\param p position in tree
+/**
+@brief Write pragment string.
+@param p Node in syntax tree.
 **/
 
 static void put_pragment (NODE_T *p)
@@ -99,9 +105,10 @@ static void put_pragment (NODE_T *p)
   }
 }
 
-/*!
-\brief write pragment string
-\param p position in tree
+/**
+@brief Write pragment string.
+@param p Node in syntax tree.
+@param keyw Whether keyword.
 **/
 
 static void pragment (NODE_T *p, BOOL_T keyw)
@@ -132,10 +139,10 @@ static void pragment (NODE_T *p, BOOL_T keyw)
     }
   }}
 
-/*!
-\brief write with typographic display features
-\param p position in tree
-\param keyw
+/**
+@brief Write with typographic display features.
+@param p Node in syntax tree.
+@param keyw
 **/
 
 static void put_sym (NODE_T *p, BOOL_T keyw)
@@ -160,11 +167,11 @@ static void put_sym (NODE_T *p, BOOL_T keyw)
   }
 }
 
-/*!
-\brief count units and separators in a sub-tree
-\param p position in tree
-\param units
-\param seps
+/**
+@brief Count units and separators in a sub-tree.
+@param p Node in syntax tree.
+@param units
+@param seps
 **/
 
 static void count (NODE_T *p, int *units, int *seps)
@@ -184,11 +191,11 @@ static void count (NODE_T *p, int *units, int *seps)
   }
 }
 
-/*!
-\brief count units and separators in a sub-tree
-\param p position in tree
-\param units
-\param seps
+/**
+@brief Count units and separators in a sub-tree.
+@param p Node in syntax tree.
+@param units
+@param seps
 **/
 
 static void count_stowed (NODE_T *p, int *units, int *seps)
@@ -213,11 +220,11 @@ static void count_stowed (NODE_T *p, int *units, int *seps)
   }
 }
 
-/*!
-\brief count enclosed_clauses in a sub-tree
-\param p position in tree
-\param enclos
-\param seps
+/**
+@brief Count enclosed_clauses in a sub-tree.
+@param p Node in syntax tree.
+@param enclos
+@param seps
 **/
 
 static void count_enclos (NODE_T *p, int *enclos, int *seps)
@@ -236,9 +243,9 @@ static void count_enclos (NODE_T *p, int *enclos, int *seps)
   }
 }
 
-/*!
-\brief indent sizety
-\param p position in tree
+/**
+@brief Indent sizety.
+@param p Node in syntax tree.
 **/
 
 static void in_sizety (NODE_T * p)
@@ -253,9 +260,11 @@ static void in_sizety (NODE_T * p)
   }
 }
 
-/*!
-\brief indent generic list
-\param p position in tree
+/**
+@brief Indent generic list.
+@param p Node in syntax tree.
+@param what Pointer to node that will explain list type.
+@param one_liner Whether construct is one-liner.
 **/
 
 static void in_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
@@ -320,9 +329,9 @@ static void in_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
   }
 }
 
-/*!
-\brief indent declarer pack
-\param p position in tree
+/**
+@brief Indent declarer pack.
+@param p Node in syntax tree.
 **/
 
 static void in_pack (NODE_T *p)
@@ -348,9 +357,9 @@ static void in_pack (NODE_T *p)
   }
 }
 
-/*!
-\brief indent declarer
-\param p position in tree
+/**
+@brief Indent declarer.
+@param p Node in syntax tree.
 **/
 
 static void in_declarer (NODE_T *p)
@@ -409,9 +418,9 @@ static void in_declarer (NODE_T *p)
   }
 }
 
-/*!
-\brief indent conditional
-\param p position in tree
+/**
+@brief Indent conditional.
+@param p Node in syntax tree.
 **/
 
 static void in_conditional (NODE_T *p)
@@ -473,9 +482,9 @@ static void in_conditional (NODE_T *p)
   }
 }
 
-/*!
-\brief indent integer case clause
-\param p position in tree
+/**
+@brief Indent integer case clause.
+@param p Node in syntax tree.
 **/
 
 static void in_case (NODE_T *p)
@@ -543,9 +552,9 @@ static void in_case (NODE_T *p)
   }
 }
 
-/*!
-\brief indent conformity clause
-\param p position in tree
+/**
+@brief Indent conformity clause.
+@param p Node in syntax tree.
 **/
 
 static void in_conformity (NODE_T *p)
@@ -613,9 +622,9 @@ static void in_conformity (NODE_T *p)
   }
 }
 
-/*!
-\brief indent loop
-\param p position in tree
+/**
+@brief Indent loop.
+@param p Node in syntax tree.
 **/
 
 static void in_loop (NODE_T * p)
@@ -683,9 +692,9 @@ static void in_loop (NODE_T * p)
   }
 }
 
-/*!
-\brief indent closed clause
-\param p position in tree
+/**
+@brief Indent closed clause.
+@param p Node in syntax tree.
 **/
 
 static void in_closed (NODE_T *p)
@@ -726,9 +735,9 @@ static void in_closed (NODE_T *p)
   }
 }
 
-/*!
-\brief indent collateral clause
-\param p position in tree
+/**
+@brief Indent collateral clause.
+@param p Node in syntax tree.
 **/
 
 static void in_collateral (NODE_T *p)
@@ -745,9 +754,9 @@ static void in_collateral (NODE_T *p)
   ind = pop_ind;
 }
 
-/*!
-\brief indent enclosed clause
-\param p position in tree
+/**
+@brief Indent enclosed clause.
+@param p Node in syntax tree.
 **/
 
 static void in_enclosed (NODE_T *p)
@@ -772,9 +781,9 @@ static void in_enclosed (NODE_T *p)
   }
 }
 
-/*!
-\brief indent a literal
-\param txt
+/**
+@brief Indent a literal.
+@param txt
 **/
 
 static void in_literal (char *txt)
@@ -791,9 +800,9 @@ static void in_literal (char *txt)
   put_str ("\"");
 }
 
-/*!
-\brief indent denotation
-\param p position in tree
+/**
+@brief Indent denotation.
+@param p Node in syntax tree.
 **/
 
 static void in_denotation (NODE_T *p)
@@ -808,9 +817,9 @@ static void in_denotation (NODE_T *p)
   }
 }
 
-/*!
-\brief indent label
-\param p position in tree
+/**
+@brief Indent label.
+@param p Node in syntax tree.
 **/
 
 static void in_label (NODE_T *p)
@@ -825,9 +834,9 @@ static void in_label (NODE_T *p)
   }
 }
 
-/*!
-\brief indent literal list
-\param p position in tree
+/**
+@brief Indent literal list.
+@param p Node in syntax tree.
 **/
 
 static void in_collection (NODE_T *p)
@@ -845,9 +854,9 @@ static void in_collection (NODE_T *p)
   }
 }
 
-/*!
-\brief indent format text
-\param p position in tree
+/**
+@brief Indent format text.
+@param p Node in syntax tree.
 **/
 
 static void in_format (NODE_T *p)
@@ -907,9 +916,9 @@ static void in_format (NODE_T *p)
   }
 }
 
-/*!
-\brief constant folder - replace constant statement with value
-\param p position in tree
+/**
+@brief Constant folder - replace constant statement with value.
+@param p Node in syntax tree.
 **/
 
 static BOOL_T in_folder (NODE_T *p)
@@ -988,9 +997,9 @@ static BOOL_T in_folder (NODE_T *p)
   return (A68_FALSE);
 }
 
-/*!
-\brief indent statement
-\param p position in tree
+/**
+@brief Indent statement.
+@param p Node in syntax tree.
 **/
 
 static void in_statement (NODE_T *p)
@@ -1171,9 +1180,9 @@ static void in_statement (NODE_T *p)
   }
 }
 
-/*!
-\brief indent identifier declarations
-\param p position in tree
+/**
+@brief Indent identifier declarations.
+@param p Node in syntax tree.
 **/
 
 static void in_iddecl (NODE_T *p)
@@ -1206,9 +1215,9 @@ static void in_iddecl (NODE_T *p)
   }
 }
 
-/*!
-\brief indent procedure declarations
-\param p position in tree
+/**
+@brief Indent procedure declarations.
+@param p Node in syntax tree.
 **/
 
 static void in_procdecl (NODE_T *p)
@@ -1239,9 +1248,9 @@ static void in_procdecl (NODE_T *p)
   }
 }
 
-/*!
-\brief indent operator declarations
-\param p position in tree
+/**
+@brief Indent operator declarations.
+@param p Node in syntax tree.
 **/
 
 static void in_opdecl (NODE_T *p)
@@ -1276,9 +1285,9 @@ static void in_opdecl (NODE_T *p)
   }
 }
 
-/*!
-\brief indent priority declarations
-\param p position in tree
+/**
+@brief Indent priority declarations.
+@param p Node in syntax tree.
 **/
 
 static void in_priodecl (NODE_T *p)
@@ -1306,9 +1315,9 @@ static void in_priodecl (NODE_T *p)
   }
 }
 
-/*! 
-\brief indent mode declarations
-\param p position in tree
+/** 
+@brief Indent mode declarations.
+@param p Node in syntax tree.
 **/
 
 static void in_modedecl (NODE_T *p)
@@ -1338,9 +1347,10 @@ static void in_modedecl (NODE_T *p)
   }
 }
 
-/*!
-\brief indent declaration list
-\param p position in tree
+/**
+@brief Indent declaration list.
+@param p Node in syntax tree.
+@param one_liner Whether construct is one-liner.
 **/
 
 static void in_declist (NODE_T *p, BOOL_T one_liner)
@@ -1381,9 +1391,11 @@ static void in_declist (NODE_T *p, BOOL_T one_liner)
   }
 }
 
-/*!
-\brief indent serial clause
-\param p position in tree
+/**
+@brief Indent serial clause.
+@param p Node in syntax tree.
+@param one_liner Whether construct is one-liner.
+@param what Pointer telling type of construct.
 **/
 
 static void in_serial (NODE_T *p, BOOL_T one_liner, NODE_T **what)
@@ -1423,9 +1435,9 @@ static void in_serial (NODE_T *p, BOOL_T one_liner, NODE_T **what)
   }
 }
 
-/*!
-\brief do not pretty-print the environ
-\param p position in tree
+/**
+@brief Do not pretty-print the environ.
+@param p Node in syntax tree.
 **/
 
 static void skip_environ (NODE_T *p)
@@ -1441,9 +1453,9 @@ static void skip_environ (NODE_T *p)
   }
 }
 
-/*!
-\brief indenter driver
-\param p position in tree
+/**
+@brief Indenter driver.
+@param q Module to indent.
 **/
 
 void indenter (MODULE_T *q)

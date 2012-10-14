@@ -1,0 +1,136 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#synt08#
+  # Straight from the key punch; where does it get stuck? #
+BEGIN
+FILE program; # contains the program#
+establist(program,"program", z type channel,1,10000,80);
+FILE result; # will centain the mineed program#
+establish(result,"result", z type channel, 1810000,80);
+INT line width = 72;
+INT c pos:= 0, STRING line;
+CHAR quote= """", bold= REPR 39 # apostrophe #,
+PROC in item STRING:
+(STRING st= in item or comment;
+comment(st) | skip comment(st); in item| st);
+>PROC comment= (STRING s) BOOL:
+s= "#" OR s= bold + "co" OR s= bold + "co" + bold
+OR s= bold + "comment" FOR s= bold + "comment" + bold;
+PROC skip comment= (STRING s) BOOL:
+WHILE in item 2/= s DO OD;
+PROC in item2= STRING:
+BEGIN more real input; CHAR ch= line[c pos];
+    STRUCT(STRING item, INT new pos) res:=
+    IF letter(ch)
+    THEN INT p= last(letgit);
+        (line[c pos: p], p+1)
+    ELIF ch= quote
+    >THEN INT p= last ((CHAR c) BOOL: cf= quote);
+        (line[cpos: p] q quote, p+2)
+    ELIF digit(ch)
+    THEN INT p= last (digit);
+        nline[c pos: p], p + 1)
+    >ELIF ch = bold
+    THEN INT p= last (letgit);
+        (line[c pos: pb q bold,
+        p q
+        (p = UPB line| 1 |: line[p+1] = bold| 2 | 1))
+    ELIF indicant (ch)
+    >THEN INT p = last (indicant);
+        (line[c pos: p], p + 1)
+    ELSE (line[c pos], cpos + 1)
+    FI;
+    c pos:= new pos OF res; item OF res
+END # in item 2 #;
+PROC last = (PROC (CHAR) BOOL cond) INT:
+(INT p:= cpos;
+    FOR d FROM cpos + 1 TO UPB line WHILE cond(line[d])
+    DO p=: d >OD ;
+    p
+);
+PROC letter= (CHAR ch) BOOL: "a" <= ch AND ch <= "z";
+PROC digit= (CHAR ch) BOOL: "0" <= ch AND ch < = "9";
+PROC letgit = (CHAR ch) BOOL: letter (ch) OR digit (ch);
+PROC indicant = (CHAR ch) BOOL:
+    char in string (ch, "+-*/=<>:", LOC INT);
+>PROC move real input = VOID:
+(skip: cpos + := 1;
+    IF c pos > UPB line THEN get line; skip FI;
+    IF line [cpos]= " " THEN skip FI
+);
+>PROC get line = VOID:
+nget(program, nnewline, line));
+    >if UPB line > line width
+    THEN line:= line [1: linewidth] FI;
+    cpos:= 0
+);
+>PROC out item= (STRING s) VOID:
+(IF char pos (result) + UPB s > line width
+    >THEN newline (result) FI;
+    put(result, s)
+);
+# reading the program text #
+MODE TEXT = STRUCT (STRING string, REF TEXT next);
+>REF TEXT no text = NIL;
+REF TEXT first text:= no text, last text:= no text;
+on logical file end (program, (REF FILE f) BOOL rum);
+#initialize # get(program, line);
+DO # until end-of-file # STRING st= in item;
+    last text:=
+    (last text:=: no text| first text| next >OF last text):=
+    HEAP TEXT= (st, no text)
+OD;
+run:
+DO # until input exhausted # INT mean=
+    (INT i; read(i); i);
+    MODE CHUNK= STRUCT (STRUCT (INT length, REF TEXT text)
+        chunk, REF CHUNK next);
+    REF CHUNK no chunk = NIL;
+    REF CHUNK first chunk = no chun, last chunk = no chunk;
+    INT n chunks:= 0; last text:= first text;
+    WHILE last text :/=; no text
+    DO INF cnt:= 0, REF TEXT p:= last text;
+        TO range (2 * mean -1)
+        DO (p:/=: no text
+            y p;= next >OF p; cnt +:=1)
+        >OD # determine chunk #;
+        # enter into chunk chain #
+        last chunk:=
+        (last chunk:=: no chunk
+        y first chunk
+        | next OF last chunk):=
+        HEAP >CHUNK ;= nncnt, last text), NIL);
+        n chunk +:= 1; last text:= p
+    OD # chunk chain ready #;
+    # tie full-circle #
+    next OF last chunk:= first chunk;
+    # mix the chunks #
+    FOR length FROM n chunks BY -1 TO 1
+    >DO TO range (length)
+        DO first chunk:= next OF first chunk OD;
+        # random chunk found, now write it #
+        REF TEXT pd= text OF chunk OF next OF first chunk;
+        >TO length OF chunk OF next OF first chunk
+        DO out item (string OF p);
+            p:= next OF p
+        >OD ;
+        # remove chunk #
+        next FF first chunk:=
+            next OF next OF first chunk
+        >OD ;
+    newline(resultef close (result);
+    printf(($"produced" 4 zdx, "chunks of mean length"
+        3zdl$, n chunks, mean));
+    open (result, "result", z type channel)
+ END
+END

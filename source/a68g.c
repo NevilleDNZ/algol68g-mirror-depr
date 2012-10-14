@@ -1,11 +1,13 @@
-/*!
-\file algol68g.c
-\brief driver routines for the compiler-interpreter.
-*/                                             
+/**
+@file a68g.c
+@author J. Marcel van der Veer
+@brief Driver routines for the compiler-interpreter.
+@section Copyright
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
+Copyright 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,14 +20,13 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-/*
+@section Description
+
 Algol68G is an Algol 68 compiler-interpreter.
-
 Please refer to the documentation that comes with this distribution for a
 detailed description of Algol68G.
-*/
+**/
 
 #if defined HAVE_CONFIG_H
 #include "a68g-config.h"
@@ -79,11 +80,11 @@ This stub looks unsafe but should work with a68g.
 */
 
 /*
-\brief print in a fixed-length buffer
-\param buf buffer to use
-\param size size of buffer
-\param fmt format string
-\return characters printed
+@brief Print in a fixed-length buffer.
+@param buf Buffer to use.
+@param size Size of buffer.
+@param fmt Format string.
+@return Characters printed.
 */
 
 int a68g_snprintf (char *buf, size_t size, char *fmt, ...)
@@ -100,9 +101,9 @@ int a68g_snprintf (char *buf, size_t size, char *fmt, ...)
 
 #endif
 
-/*!
-\brief return error test from errno
-\return same
+/**
+@brief Return error test from errno.
+@return See brief description.
 */
 
 char *error_specification (void)
@@ -119,11 +120,12 @@ char *error_specification (void)
   return (txt);
 }
 
-/*!
-\brief open a file in ~/.a68g, if possible
-\param fn file name
-\param mode mode
-\return pointer to descriptor
+/**
+@brief Open a file in ~/.a68g, if possible.
+@param fn File name.
+@param mode File mode.
+@param new_fn Edited file name.
+@return Pointer to descriptor.
 */
 
 FILE *a68g_fopen (char *fn, char *mode, char *new_fn)
@@ -154,10 +156,10 @@ FILE *a68g_fopen (char *fn, char *mode, char *new_fn)
 }
 
 
-/*!
-\brief print k bytes from z; debugging routine
-\param z byte string
-\param k length
+/**
+@brief Print k bytes from z; debugging routine.
+@param z Byte string.
+@param k Length.
 **/
 
 void print_bytes (BYTE_T *z, int k)
@@ -170,11 +172,11 @@ void print_bytes (BYTE_T *z, int k)
   ASSERT (fflush (stdout) == 0); /* print_bytes */
 }
 
-/*!
-\brief unformatted write of z to stdout
-\param str prompt
-\param z mp number to print
-\param digits precision in mp-digits
+/**
+@brief Unformatted write of z to stdout.
+@param str Prompt.
+@param z Mp number to print.
+@param digits Precision in mp-digits.
 **/
 
 void raw_write_mp (char *str, MP_T * z, int digits)
@@ -189,9 +191,9 @@ void raw_write_mp (char *str, MP_T * z, int digits)
   ASSERT (fflush (stdout) == 0); /* raw_write_mp */
 }
 
-/*!
-\brief state license of running a68g image
-\param f file number to write to
+/**
+@brief State license of running a68g image.
+@param f File number to write to.
 **/
 
 void state_license (FILE_T f)
@@ -221,9 +223,9 @@ void state_license (FILE_T f)
 #undef PR
 }
 
-/*!
-\brief state version of running a68g image
-\param f file number to write to
+/**
+@brief State version of running a68g image.
+@param f File number to write to.
 **/
 
 void state_version (FILE_T f)
@@ -243,11 +245,6 @@ void state_version (FILE_T f)
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Compilation is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-#if defined HAVE_EDITOR
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Editor is supported.\n") >= 0);
-#else
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Editor is not supported.\n") >= 0);
-#endif
   WRITE (f, output_line);
 #if defined HAVE_PARALLEL_CLAUSE
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is supported.\n") >= 0);
@@ -305,9 +302,9 @@ void state_version (FILE_T f)
 #endif
 }
 
-/*!
-\brief give brief help if someone types 'a68g --help'
-\param f file number
+/**
+@brief Give brief help if someone types 'a68g --help'.
+@param f File number.
 **/
 
 void online_help (FILE_T f)
@@ -322,8 +319,8 @@ void online_help (FILE_T f)
   WRITELN (f, output_line);
 }
 
-/*!
-\brief first initialisations
+/**
+@brief First initialisations.
 **/
 
 static void init_before_tokeniser (void)
@@ -342,11 +339,11 @@ static void init_before_tokeniser (void)
   RESET_ERRNO;
 }
 
-/*!
-\brief main entry point
-\param argc arg count
-\param argv arg string
-\return exit code
+/**
+@brief Main entry point.
+@param argc Arg count.
+@param argv Arg string.
+@return Exit code.
 **/
 
 int main (int argc, char *argv[])
@@ -435,15 +432,6 @@ int main (int argc, char *argv[])
     }
 /* Start the UI */
     init_before_tokeniser ();
-    if (OPTION_EDIT (&program)) {
-#if defined HAVE_CURSES
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
-      edit (output_line);
-#else 
-      errno = ENOTSUP;
-      SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, "editor requires the ncurses library");
-#endif
-    }
 /* Running a script */
 #if defined HAVE_COMPILER
     if (OPTION_RUN_SCRIPT (&program)) {
@@ -465,10 +453,10 @@ int main (int argc, char *argv[])
   }
 }
 
-/*!
-\brief test extension and strip
-\param ext extension to try
-\return whether stripped
+/**
+@brief Test extension and strip.
+@param ext Extension to try.
+@return Whether stripped.
 **/
 
 static BOOL_T strip_extension (char * ext)
@@ -490,8 +478,8 @@ static BOOL_T strip_extension (char * ext)
   }
 }
 
-/*!
-\brief try opening with an extension
+/**
+@brief Try opening with an extension.
 **/
 
 static void open_with_extensions (void)
@@ -526,8 +514,8 @@ static void open_with_extensions (void)
   }
 }
 
-/*!
-\brief pretty print memory size
+/**
+@brief Pretty print memory size.
 **/
 
 char *pretty_size (int k) {
@@ -541,8 +529,8 @@ char *pretty_size (int k) {
   return (edit_line);
 }
 
-/*!
-\brief verbose statistics, only useful when debugging a68g
+/**
+@brief Verbose statistics, only useful when debugging a68g.
 **/
 
 static void verbosity (void)
@@ -550,8 +538,8 @@ static void verbosity (void)
   ;
 }
 
-/*!
-\brief drives compilation and interpretation
+/**
+@brief Drives compilation and interpretation.
 **/
 
 static void compiler_interpreter (void)
@@ -1062,9 +1050,9 @@ Compilation on Mac OS X using gcc
 #endif
 }
 
-/*!
-\brief exit a68g in an orderly manner
-\param code exit code
+/**
+@brief Exit a68g in an orderly manner.
+@param code Exit code.
 **/
 
 void a68g_exit (int code)
@@ -1091,9 +1079,9 @@ terminal
   exit (code);
 }
 
-/*!
-\brief start bookkeeping for a phase
-\param t name of phase
+/**
+@brief Start book keeping for a phase.
+@param t Name of phase.
 **/
 
 static void announce_phase (char *t)
@@ -1107,8 +1095,8 @@ static void announce_phase (char *t)
 
 #if defined HAVE_COMPILER
 
-/*!
-\brief build shell script from program
+/**
+@brief Build shell script from program.
 **/
 
 static void build_script (void)
@@ -1180,8 +1168,8 @@ static void build_script (void)
 
 #if defined HAVE_COMPILER
 
-/*!
-\brief load program from shell script 
+/**
+@brief Load program from shell script .
 **/
 
 static void load_script (void)
@@ -1232,8 +1220,8 @@ static void load_script (void)
 
 #if defined HAVE_COMPILER
 
-/*!
-\brief rewrite source for shell script 
+/**
+@brief Rewrite source for shell script .
 **/
 
 static void rewrite_script_source (void)
@@ -1270,8 +1258,8 @@ Options come from:
 
 OPTIONS_T *options;
 
-/*!
-\brief set default values for options
+/**
+@brief Set default values for options.
 **/
 
 void default_options (MODULE_T *p)
@@ -1312,15 +1300,14 @@ void default_options (MODULE_T *p)
   OPTION_UNUSED (p) = A68_FALSE;
   OPTION_VERBOSE (p) = A68_FALSE;
   OPTION_VERSION (p) = A68_FALSE;
-  OPTION_EDIT (p) = A68_FALSE;
   OPTION_TARGET (p) = NO_TEXT;
 }
 
-/*!
-\brief error handler for options
-\param l source line
-\param option option text
-\param info info text
+/**
+@brief Error handler for options.
+@param l Source line.
+@param option Option text.
+@param info Info text.
 **/
 
 static void option_error (LINE_T * l, char *option, char *info)
@@ -1338,10 +1325,10 @@ static void option_error (LINE_T * l, char *option, char *info)
   scan_error (l, NO_TEXT, edit_line);
 }
 
-/*!
-\brief strip minus preceeding a string
-\param p text to strip
-\return stripped string
+/**
+@brief Strip minus preceeding a string.
+@param p Text to strip.
+@return Stripped string.
 **/
 
 static char *strip_sign (char *p)
@@ -1352,17 +1339,17 @@ static char *strip_sign (char *p)
   return (new_string (p, NO_TEXT));
 }
 
-/*!
-\brief add an option to the list, to be processed later
-\param l option chain to link into
-\param str option text
-\param line source line
+/**
+@brief Add an option to the list, to be processed later.
+@param l Option chain to link into.
+@param str Option text.
+@param line Source line.
 **/
 
 void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
 {
   if (*l == NO_OPTION_LIST) {
-    *l = (OPTION_LIST_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (OPTION_LIST_T));
+    *l = (OPTION_LIST_T *) get_heap_space ((size_t) SIZE_AL (OPTION_LIST_T));
     SCAN (*l) = SOURCE_SCAN (&program);
     STR (*l) = new_string (str, NO_TEXT);
     PROCESSED (*l) = A68_FALSE;
@@ -1373,21 +1360,21 @@ void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
   }
 }
 
-/*!
-\brief initialise option handler
+/**
+@brief Initialise option handler.
 **/
 
 void init_options (void)
 {
-  options = (OPTIONS_T *) malloc ((size_t) ALIGNED_SIZE_OF (OPTIONS_T));
+  options = (OPTIONS_T *) malloc ((size_t) SIZE_AL (OPTIONS_T));
   OPTION_LIST (&program) = NO_OPTION_LIST;
 }
 
-/*!
-\brief test equality of p and q, upper case letters in q are mandatory
-\param p string to match
-\param q pattern
-\return whether equal
+/**
+@brief Test equality of p and q, upper case letters in q are mandatory.
+@param p String to match.
+@param q Pattern.
+@return Whether equal.
 **/
 
 static BOOL_T eq (char *p, char *q)
@@ -1400,9 +1387,9 @@ static BOOL_T eq (char *p, char *q)
   }
 }
 
-/*!
-\brief process echoes gathered in the option list
-\param i option chain
+/**
+@brief Process echoes gathered in the option list.
+@param i Option chain.
 **/
 
 void prune_echoes (OPTION_LIST_T * i)
@@ -1438,12 +1425,12 @@ void prune_echoes (OPTION_LIST_T * i)
   }
 }
 
-/*!
-\brief translate integral option argument
-\param p text
-\param i option chain
-\param error whether error
-\return argument value
+/**
+@brief Translate integral option argument.
+@param p Text.
+@param i Option chain.
+@param error Whether error.
+@return Argument value.
 **/
 
 static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
@@ -1532,11 +1519,11 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
   }
 }
 
-/*!
-\brief process options gathered in the option list
-\param i option chain
-\param cmd_line whether command line argument
-\return whether processing was successful
+/**
+@brief Process options gathered in the option list.
+@param i Option chain.
+@param cmd_line Whether command line argument.
+@return Whether processing was successful.
 **/
 
 BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
@@ -1671,16 +1658,8 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             }
           }
         }
-/* EDIT starts a basic editor */
-        else if (eq (p, "Edit")) {
-          if (cmd_line == A68_FALSE) {
-            option_error (start_l, start_c, "command-line-only");
-          } else {
-            OPTION_EDIT (&program) = A68_TRUE;
-          }
-        }
 /* EXECUTE and PRINT execute their argument as Algol 68 text */
-        else if (eq (p, "EXECute") || eq (p, "X") || eq (p, "Print")) {
+        else if (eq (p, "Execute") || eq (p, "X") || eq (p, "Print")) {
           if (cmd_line == A68_FALSE) {
             option_error (start_l, start_c, "command-line-only");
           } else if ((FORWARD (i)) != NO_OPTION_LIST) {
@@ -2112,8 +2091,8 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
   return ((BOOL_T) (errno == 0));
 }
 
-/*!
-\brief set default core size
+/**
+@brief Set default core size.
 **/
 
 static void default_mem_sizes (int n)
@@ -2128,8 +2107,8 @@ static void default_mem_sizes (int n)
   storage_overhead = MIN_MEM_SIZE;
 }
 
-/*!
-\brief read options from the .rc file
+/**
+@brief Read options from the .rc file.
 **/
 
 void read_rc_options (void)
@@ -2154,8 +2133,8 @@ void read_rc_options (void)
   }
 }
 
-/*!
-\brief read options from A68G_OPTIONS
+/**
+@brief Read options from A68G_OPTIONS.
 **/
 
 void read_env_options (void)
@@ -2167,10 +2146,10 @@ void read_env_options (void)
   }
 }
 
-/*!
-\brief tokenise string 'p' that holds options
-\param p text
-\param line source line
+/**
+@brief Tokenise string 'p' that holds options.
+@param p Text.
+@param line Source line.
 **/
 
 void isolate_options (char *p, LINE_T * line)
@@ -2228,10 +2207,10 @@ void isolate_options (char *p, LINE_T * line)
 
 char *bar[BUFFER_SIZE];
 
-/*!
-\brief brief_mode_string
-\param p moid to print
-\return pointer to string
+/**
+@brief a68g_print_short_mode.
+@param f File number.
+@param z Moid to print.
 **/
 
 static void a68g_print_short_mode (FILE_T f, MOID_T * z)
@@ -2261,10 +2240,10 @@ static void a68g_print_short_mode (FILE_T f, MOID_T * z)
   }
 }
 
-/*!
-\brief a68g_print_flat_mode
-\param f file number
-\param z moid to print
+/**
+@brief A68g_print_flat_mode.
+@param f File number.
+@param z Moid to print.
 **/
 
 void a68g_print_flat_mode (FILE_T f, MOID_T * z)
@@ -2303,10 +2282,10 @@ void a68g_print_flat_mode (FILE_T f, MOID_T * z)
   }
 }
 
-/*!
-\brief brief_fields_flat
-\param f file number
-\param pack pack to print
+/**
+@brief Brief_fields_flat.
+@param f File number.
+@param pack Pack to print.
 **/
 
 static void a68g_print_short_pack (FILE_T f, PACK_T * pack)
@@ -2321,10 +2300,10 @@ static void a68g_print_short_pack (FILE_T f, PACK_T * pack)
   }
 }
 
-/*!
-\brief a68g_print_mode
-\param f file number
-\param z moid to print
+/**
+@brief A68g_print_mode.
+@param f File number.
+@param z Moid to print.
 **/
 
 void a68g_print_mode (FILE_T f, MOID_T * z)
@@ -2384,10 +2363,10 @@ void a68g_print_mode (FILE_T f, MOID_T * z)
   }
 }
 
-/*!
-\brief print_mode_flat
-\param f file number
-\param m moid to print
+/**
+@brief Print_mode_flat.
+@param f File number.
+@param m Moid to print.
 **/
 
 void print_mode_flat (FILE_T f, MOID_T * m)
@@ -2435,7 +2414,7 @@ void print_mode_flat (FILE_T f, MOID_T * m)
       WRITE (f, output_line);
     }
     if (SIZE (m) > 0) {
-      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " size %d", MOID_SIZE (m)) >= 0);
+      ASSERT (snprintf (output_line, SNPRINTF_SIZE, " size %d", SIZE (m)) >= 0);
       WRITE (f, output_line);
     }
     if (HAS_ROWS (m)) {
@@ -2444,11 +2423,11 @@ void print_mode_flat (FILE_T f, MOID_T * m)
   }
 }
 
-/*!
-\brief xref_tags
-\param f file number
-\param s tag to print
-\param a attribute
+/**
+@brief Xref_tags.
+@param f File number.
+@param s Tag to print.
+@param a Attribute.
 **/
 
 static void xref_tags (FILE_T f, TAG_T * s, int a)
@@ -2546,10 +2525,10 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
   }
 }
 
-/*!
-\brief xref_decs
-\param f file number
-\param t symbol table
+/**
+@brief Xref_decs.
+@param f File number.
+@param t Symbol table.
 **/
 
 static void xref_decs (FILE_T f, TABLE_T * t)
@@ -2574,10 +2553,10 @@ static void xref_decs (FILE_T f, TABLE_T * t)
   }
 }
 
-/*!
-\brief xref1_moid
-\param f file number
-\param p moid to xref
+/**
+@brief Xref1_moid.
+@param f File number.
+@param p Moid to xref.
 **/
 
 static void xref1_moid (FILE_T f, MOID_T * p)
@@ -2587,10 +2566,10 @@ static void xref1_moid (FILE_T f, MOID_T * p)
   print_mode_flat (f, p);
 }
 
-/*!
-\brief moid_listing
-\param f file number
-\param m moid list to xref
+/**
+@brief Moid_listing.
+@param f File number.
+@param m Moid list to xref.
 **/
 
 void moid_listing (FILE_T f, MOID_T * m)
@@ -2607,11 +2586,11 @@ void moid_listing (FILE_T f, MOID_T * m)
   WRITE (f, output_line);
 }
 
-/*!
-\brief cross_reference
-\param file number
-\param p top node
-\param l source line
+/**
+@brief Cross_reference.
+@param f File Number.
+@param p Top node.
+@param l Source line.
 **/
 
 static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
@@ -2640,40 +2619,13 @@ static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
   }
 }
 
-/*!
-\brief write_symbols
-\param file number
-\param p top node
-\param count symbols written
-
-static void write_symbols (FILE_T f, NODE_T * p, int *count)
-{
-  for (; p != NO_NODE && (*count) < 5; FORWARD (p)) {
-    if (SUB (p) != NO_NODE) {
-      write_symbols (f, SUB (p), count);
-    } else {
-      if (*count > 0) {
-        WRITE (f, " ");
-      }
-      (*count)++;
-      if (*count == 5) {
-        WRITE (f, "...");
-      } else {
-        ASSERT (snprintf(output_line, SNPRINTF_SIZE, "%s", NSYMBOL (p)) >= 0);
-        WRITE (f, output_line);
-      }
-    }
-  }
-}
-**/
-
-/*!
-\brief tree_listing
-\param f file number
-\param q top node
-\param x current level
-\param l source line
-\param ld index for indenting and drawing bars connecting nodes
+/**
+@brief Tree listing for source line.
+@param f File number.
+@param q Top node.
+@param x Current level.
+@param l Source line.
+@param ld Index for indenting and drawing bars connecting nodes.
 **/
 
 void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
@@ -2754,11 +2706,11 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
   }
 }
 
-/*!
-\brief leaves_to_print
-\param p top node
-\param l source line
-\return number of nodes to be printed in tree listing
+/**
+@brief Leaves_to_print.
+@param p Top node.
+@param l Source line.
+@return Number of nodes to be printed in tree listing.
 **/
 
 static int leaves_to_print (NODE_T * p, LINE_T * l)
@@ -2774,10 +2726,11 @@ static int leaves_to_print (NODE_T * p, LINE_T * l)
   return (z);
 }
 
-/*!
-\brief list_source_line
-\param f file number
-\param line source line
+/**
+@brief List_source_line.
+@param f File number.
+@param line Source line.
+@param tree List syntax tree, or not.
 **/
 
 void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
@@ -2810,8 +2763,8 @@ void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
   }
 }
 
-/*!
-\brief source_listing
+/**
+@brief Source_listing.
 **/
 
 void write_source_listing (void)
@@ -2840,8 +2793,8 @@ void write_source_listing (void)
   }
 }
 
-/*!
-\brief write_source_listing
+/**
+@brief Write_source_listing.
 **/
 
 void write_tree_listing (void)
@@ -2870,8 +2823,8 @@ void write_tree_listing (void)
   }
 }
 
-/*!
-\brief write_object_listing
+/**
+@brief Write_object_listing.
 **/
 
 void write_object_listing (void)
@@ -2885,8 +2838,8 @@ void write_object_listing (void)
   }
 }
 
-/*!
-\brief write_listing
+/**
+@brief Write_listing.
 **/
 
 void write_listing (void)
@@ -2958,8 +2911,8 @@ void write_listing (void)
   }
 }
 
-/*!
-\brief write_listing_header
+/**
+@brief Write_listing_header.
 **/
 
 void write_listing_header (void)
@@ -2984,10 +2937,10 @@ void write_listing_header (void)
 
 /* Small utility routines */
 
-/*!
-\brief get terminal size
-\param h heigth in lines
-\param c width in columns
+/**
+@brief Get terminal size.
+@param h Heigth in lines.
+@param c Width in columns.
 **/
 
 void a68g_getty (int * h, int * c)
@@ -3030,9 +2983,9 @@ void a68g_getty (int * h, int * c)
 
 /* Signal handlers */
 
-/*!
-\brief signal for window resize
-\param i dummy
+/**
+@brief Signal for window resize.
+@param i Dummy.
 **/
 
 #if defined SIGWINCH
@@ -3045,9 +2998,9 @@ static void sigwinch_handler (int i)
 }
 #endif
 
-/*!
-\brief signal reading for segment violation
-\param i dummy
+/**
+@brief Signal reading for segment violation.
+@param i Dummy.
 **/
 
 static void sigsegv_handler (int i)
@@ -3057,9 +3010,9 @@ static void sigsegv_handler (int i)
   return;
 }
 
-/*!
-\brief raise SYSREQUEST so you get to a monitor
-\param i dummy
+/**
+@brief Raise SYSREQUEST so you get to a monitor.
+@param i Dummy.
 **/
 
 static void sigint_handler (int i)
@@ -3074,9 +3027,9 @@ static void sigint_handler (int i)
 
 #if ! defined HAVE_WIN32
 
-/*!
-\brief signal reading from disconnected terminal
-\param i dummy
+/**
+@brief Signal reading from disconnected terminal.
+@param i Dummy.
 **/
 
 static void sigttin_handler (int i)
@@ -3085,9 +3038,9 @@ static void sigttin_handler (int i)
   ABEND (A68_TRUE, "background process attempts reading from disconnected terminal", NO_TEXT);
 }
 
-/*!
-\brief signal broken pipe
-\param i dummy
+/**
+@brief Signal broken pipe.
+@param i Dummy.
 **/
 
 static void sigpipe_handler (int i)
@@ -3096,9 +3049,9 @@ static void sigpipe_handler (int i)
   ABEND (A68_TRUE, "forked process has broken the pipe", NO_TEXT);
 }
 
-/*!
-\brief signal alarm - time limit check
-\param i dummy
+/**
+@brief Signal alarm - time limit check.
+@param i Dummy.
 **/
 
 static void sigalrm_handler (int i)
@@ -3116,8 +3069,8 @@ static void sigalrm_handler (int i)
 
 #endif /* ! defined HAVE_WIN32 */
 
-/*!
-\brief install_signal_handlers
+/**
+@brief Install_signal_handlers.
 **/
 
 void install_signal_handlers (void)
@@ -3142,10 +3095,10 @@ BOOL_T heap_is_fluid;
 
 static int tag_number = 0;
 
-/*!
-\brief pointer to block of "s" bytes
-\param s block lenght in bytes
-\return same
+/**
+@brief Give pointer to block of "s" bytes.
+@param s Block length in bytes.
+@return See brief description.
 **/
 
 BYTE_T *get_heap_space (size_t s)
@@ -3155,10 +3108,10 @@ BYTE_T *get_heap_space (size_t s)
   return (z);
 }
 
-/*!
-\brief make a new copy of concatenated strings
-\param t text
-\return pointer
+/**
+@brief Make a new copy of concatenated strings.
+@param t Text.
+@return Pointer.
 **/
 
 char *new_string (char *t, ...)
@@ -3186,10 +3139,10 @@ char *new_string (char *t, ...)
   return (z);
 }
 
-/*!
-\brief make a new copy of "t"
-\param t text
-\return pointer
+/**
+@brief Make a new copy of "t".
+@param t Text.
+@return Pointer.
 **/
 
 char *new_fixed_string (char *t)
@@ -3200,10 +3153,10 @@ char *new_fixed_string (char *t)
   return (z);
 }
 
-/*!
-\brief make a new copy of "t"
-\param t text
-\return pointer
+/**
+@brief Make a new copy of "t".
+@param t Text.
+@return Pointer.
 **/
 
 char *new_temp_string (char *t)
@@ -3214,10 +3167,10 @@ char *new_temp_string (char *t)
   return (z);
 }
 
-/*!
-\brief get (preferably fixed) heap space
-\param s size in bytes
-\return pointer to block
+/**
+@brief Get (preferably fixed) heap space.
+@param s Size in bytes.
+@return Pointer to block.
 **/
 
 BYTE_T *get_fixed_heap_space (size_t s)
@@ -3235,10 +3188,10 @@ BYTE_T *get_fixed_heap_space (size_t s)
   }
 }
 
-/*!
-\brief get (preferably temporary) heap space
-\param s size in bytes
-\return pointer to block
+/**
+@brief Get (preferably temporary) heap space.
+@param s Size in bytes.
+@return Pointer to block.
 **/
 
 BYTE_T *get_temp_heap_space (size_t s)
@@ -3256,8 +3209,8 @@ BYTE_T *get_temp_heap_space (size_t s)
   }
 }
 
-/*!
-\brief get size of stack segment
+/**
+@brief Get size of stack segment.
 **/
 
 void get_stack_size (void)
@@ -3282,10 +3235,10 @@ void get_stack_size (void)
   stack_limit = (stack_size > (4 * storage_overhead) ? (stack_size - storage_overhead) : stack_size / 2);
 }
 
-/*!
-\brief convert integer to character
-\param i integer
-\return character
+/**
+@brief Convert integer to character.
+@param i Integer.
+@return Character.
 **/
 
 char digit_to_char (int i)
@@ -3298,10 +3251,10 @@ char digit_to_char (int i)
   }
 }
 
-/*!
-\brief renumber nodes
-\param p position in tree
-\param n node number counter
+/**
+@brief Renumber nodes.
+@param p Node in syntax tree.
+@param n Node number counter.
 **/
 
 void renumber_nodes (NODE_T * p, int *n)
@@ -3312,9 +3265,9 @@ void renumber_nodes (NODE_T * p, int *n)
   }
 }
 
-/*!
-\brief register nodes
-\param p position in tree
+/**
+@brief Register nodes.
+@param p Node in syntax tree.
 **/
 
 void register_nodes (NODE_T * p)
@@ -3325,14 +3278,14 @@ void register_nodes (NODE_T * p)
   }
 }
 
-/*!
-\brief new_node_info
-\return same
+/**
+@brief New_node_info.
+@return See brief description.
 **/
 
 NODE_INFO_T *new_node_info (void)
 {
-  NODE_INFO_T *z = (NODE_INFO_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (NODE_INFO_T));
+  NODE_INFO_T *z = (NODE_INFO_T *) get_fixed_heap_space ((size_t) SIZE_AL (NODE_INFO_T));
   new_node_infos++;
   PROCEDURE_LEVEL (z) = 0;
   CHAR_IN_LINE (z) = NO_TEXT;
@@ -3343,14 +3296,14 @@ NODE_INFO_T *new_node_info (void)
   return (z);
 }
 
-/*!
-\brief new_genie_info
-\return same
+/**
+@brief New_genie_info.
+@return See brief description.
 **/
 
 GINFO_T *new_genie_info (void)
 {
-  GINFO_T *z = (GINFO_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (GINFO_T));
+  GINFO_T *z = (GINFO_T *) get_fixed_heap_space ((size_t) SIZE_AL (GINFO_T));
   new_genie_infos++;
   UNIT (&PROP (z)) = NO_PPROC;
   SOURCE (&PROP (z)) = NO_NODE;
@@ -3370,14 +3323,14 @@ GINFO_T *new_genie_info (void)
   return (z);
 }
 
-/*!
-\brief new_node
-\return same
+/**
+@brief New_node.
+@return See brief description.
 **/
 
 NODE_T *new_node (void)
 {
-  NODE_T *z = (NODE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (NODE_T));
+  NODE_T *z = (NODE_T *) get_fixed_heap_space ((size_t) SIZE_AL (NODE_T));
   new_nodes++;
   STATUS (z) = NULL_MASK;
   CODEX (z) = NULL_MASK;
@@ -3398,15 +3351,15 @@ NODE_T *new_node (void)
   return (z);
 }
 
-/*!
-\brief new_symbol_table
-\param p parent symbol table
-\return same
+/**
+@brief New_symbol_table.
+@param p Parent symbol table.
+@return See brief description.
 **/
 
 TABLE_T *new_symbol_table (TABLE_T * p)
 {
-  TABLE_T *z = (TABLE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TABLE_T));
+  TABLE_T *z = (TABLE_T *) get_fixed_heap_space ((size_t) SIZE_AL (TABLE_T));
   LEVEL (z) = symbol_table_count++;
   NEST (z) = symbol_table_count;
   ATTRIBUTE (z) = 0;
@@ -3427,14 +3380,14 @@ TABLE_T *new_symbol_table (TABLE_T * p)
   return (z);
 }
 
-/*!
-\brief new_moid
-\return same
+/**
+@brief New_moid.
+@return See brief description.
 **/
 
 MOID_T *new_moid (void)
 {
-  MOID_T *z = (MOID_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (MOID_T));
+  MOID_T *z = (MOID_T *) get_fixed_heap_space ((size_t) SIZE_AL (MOID_T));
   new_modes++;
   ATTRIBUTE (z) = 0;
   NUMBER (z) = 0;
@@ -3442,6 +3395,9 @@ MOID_T *new_moid (void)
   USE (z) = A68_FALSE;
   HAS_ROWS (z) = A68_FALSE;
   SIZE (z) = 0;
+  DIGITS (z) = 0;
+  SIZEC (z) = 0;
+  DIGITSC (z) = 0;
   PORTABLE (z) = A68_TRUE;
   DERIVATE (z) = A68_FALSE;
   NODE (z) = NO_NODE;
@@ -3457,14 +3413,14 @@ MOID_T *new_moid (void)
   return (z);
 }
 
-/*!
-\brief new_pack
-\return same
+/**
+@brief New_pack.
+@return See brief description.
 **/
 
 PACK_T *new_pack (void)
 {
-  PACK_T *z = (PACK_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (PACK_T));
+  PACK_T *z = (PACK_T *) get_fixed_heap_space ((size_t) SIZE_AL (PACK_T));
   MOID (z) = NO_MOID;
   TEXT (z) = NO_TEXT;
   NODE (z) = NO_NODE;
@@ -3475,14 +3431,14 @@ PACK_T *new_pack (void)
   return (z);
 }
 
-/*!
-\brief new_tag
-\return same
+/**
+@brief New_tag.
+@return See brief description.
 **/
 
 TAG_T *new_tag (void)
 {
-  TAG_T *z = (TAG_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TAG_T));
+  TAG_T *z = (TAG_T *) get_fixed_heap_space ((size_t) SIZE_AL (TAG_T));
   STATUS (z) = NULL_MASK;
   CODEX (z) = NULL_MASK;
   TAG_TABLE (z) = NO_TABLE;
@@ -3509,14 +3465,14 @@ TAG_T *new_tag (void)
   return (z);
 }
 
-/*!
-\brief new_source_line
-\return same
+/**
+@brief New_source_line.
+@return See brief description.
 **/
 
 LINE_T *new_source_line (void)
 {
-  LINE_T *z = (LINE_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (LINE_T));
+  LINE_T *z = (LINE_T *) get_fixed_heap_space ((size_t) SIZE_AL (LINE_T));
   MARKER (z)[0] = NULL_CHAR;
   STRING (z) = NO_TEXT;
   FILENAME (z) = NO_TEXT;
@@ -3529,10 +3485,10 @@ LINE_T *new_source_line (void)
   return (z);
 }
 
-/*!
-\brief make special, internal mode
-\param n chain to insert into
-\param m moid number
+/**
+@brief Make special, internal mode.
+@param n Chain to insert into.
+@param m Moid number.
 **/
 
 void make_special_mode (MOID_T ** n, int m)
@@ -3550,12 +3506,12 @@ void make_special_mode (MOID_T ** n, int m)
   ROWED (*n) = NO_MOID;
 }
 
-/*!
-\brief whether x matches c; case insensitive
-\param string string to test
-\param string to match, leading '-' or caps in c are mandatory
-\param alt string terminator other than NULL_CHAR
-\return whether match
+/**
+@brief Whether x matches c; case insensitive.
+@param x String to test.
+@param c To match, leading '-' or caps are mandatory.
+@param alt String terminator other than NULL_CHAR.
+@return Whether match.
 **/
 
 BOOL_T match_string (char *x, char *c, char alt)
@@ -3573,10 +3529,10 @@ BOOL_T match_string (char *x, char *c, char alt)
   return ((BOOL_T) (match ? (x[0] == NULL_CHAR || x[0] == alt) : A68_FALSE));
 }
 
-/*!
-\brief whether attributes match in subsequent nodes
-\param p position in tree
-\return whether match
+/**
+@brief Whether attributes match in subsequent nodes.
+@param p Node in syntax tree.
+@return Whether match.
 **/
 
 BOOL_T whether (NODE_T * p, ...)
@@ -3606,10 +3562,10 @@ BOOL_T whether (NODE_T * p, ...)
   return (A68_TRUE);
 }
 
-/*!
-\brief whether one of a series of attributes matches a node
-\param p position in tree
-\return whether match
+/**
+@brief Whether one of a series of attributes matches a node.
+@param p Node in syntax tree.
+@return Whether match.
 **/
 
 BOOL_T is_one_of (NODE_T * p, ...)
@@ -3630,11 +3586,11 @@ BOOL_T is_one_of (NODE_T * p, ...)
   }
 }
 
-/*!
-\brief isolate nodes p-q making p a branch to p-q
-\param p first node to branch
-\param q last node to branch
-\param t attribute for branch
+/**
+@brief Isolate nodes p-q making p a branch to p-q.
+@param p First node to branch.
+@param q Last node to branch.
+@param t Attribute for branch.
 **/
 
 void make_sub (NODE_T * p, NODE_T * q, int t)
@@ -3662,11 +3618,11 @@ void make_sub (NODE_T * p, NODE_T * q, int t)
   ATTRIBUTE (p) = t;
 }
 
-/*!
-\brief find symbol table at level 'i'
-\param n position in tree
-\param i level
-\return same
+/**
+@brief Find symbol table at level 'i'.
+@param n Node in syntax tree.
+@param i Level.
+@return See brief description.
 **/
 
 TABLE_T *find_level (NODE_T * n, int i)
@@ -3687,9 +3643,9 @@ TABLE_T *find_level (NODE_T * n, int i)
   }
 }
 
-/*!
-\brief time versus arbitrary origin
-\return same
+/**
+@brief Time versus arbitrary origin.
+@return See brief description.
 **/
 
 double seconds (void)
@@ -3697,10 +3653,10 @@ double seconds (void)
   return ((double) clock () / (double) CLOCKS_PER_SEC);
 }
 
-/*!
-\brief whether 'p' is top of lexical level
-\param p position in tree
-\return same
+/**
+@brief Whether 'p' is top of lexical level.
+@param p Node in syntax tree.
+@return See brief description.
 **/
 
 BOOL_T is_new_lexical_level (NODE_T * p)
@@ -3741,10 +3697,10 @@ BOOL_T is_new_lexical_level (NODE_T * p)
   }
 }
 
-/*!
-\brief some_node
-\param t token text
-\return same
+/**
+@brief Some_node.
+@param t Token text.
+@return See brief description.
 **/
 
 NODE_T *some_node (char *t)
@@ -3756,8 +3712,8 @@ NODE_T *some_node (char *t)
   return (z);
 }
 
-/*!
-\brief initialise use of elem-lists
+/**
+@brief Initialise use of elem-lists.
 **/
 
 void init_postulates (void)
@@ -3766,10 +3722,10 @@ void init_postulates (void)
   top_postulate_list = NO_POSTULATE;
 }
 
-/*!
-\brief make old postulates available for new use
-\param start start of list to save
-\param stop first element to not save
+/**
+@brief Make old postulates available for new use.
+@param start Start of list to save.
+@param stop First element to not save.
 **/
 
 void free_postulate_list (POSTULATE_T *start, POSTULATE_T *stop)
@@ -3785,11 +3741,11 @@ void free_postulate_list (POSTULATE_T *start, POSTULATE_T *stop)
   top_postulate_list = start;
 }
 
-/*!
-\brief add elements to elem-list
-\param p postulate chain
-\param a moid 1
-\param b moid 2
+/**
+@brief Add elements to elem-list.
+@param p Postulate chain.
+@param a Moid 1.
+@param b Moid 2.
 **/
 
 void make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
@@ -3799,7 +3755,7 @@ void make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
     new_one = top_postulate_list;
     FORWARD (top_postulate_list);
   } else {
-    new_one = (POSTULATE_T *) get_temp_heap_space ((size_t) ALIGNED_SIZE_OF (POSTULATE_T));
+    new_one = (POSTULATE_T *) get_temp_heap_space ((size_t) SIZE_AL (POSTULATE_T));
     new_postulates++;
   }
   A (new_one) = a;
@@ -3808,12 +3764,12 @@ void make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
   *p = new_one;
 }
 
-/*!
-\brief where elements are in the list
-\param p postulate chain
-\param a moid 1
-\param b moid 2
-\return containing postulate
+/**
+@brief Where elements are in the list.
+@param p Postulate chain.
+@param a Moid 1.
+@param b Moid 2.
+@return Containing postulate.
 **/
 
 POSTULATE_T *is_postulated_pair (POSTULATE_T * p, MOID_T * a, MOID_T * b)
@@ -3826,11 +3782,11 @@ POSTULATE_T *is_postulated_pair (POSTULATE_T * p, MOID_T * a, MOID_T * b)
   return (NO_POSTULATE);
 }
 
-/*!
-\brief where element is in the list
-\param p postulate chain
-\param a moid 1
-\return containing postulate
+/**
+@brief Where element is in the list.
+@param p Postulate chain.
+@param a Moid 1.
+@return Containing postulate.
 **/
 
 POSTULATE_T *is_postulated (POSTULATE_T * p, MOID_T * a)
@@ -3847,8 +3803,8 @@ POSTULATE_T *is_postulated (POSTULATE_T * p, MOID_T * a)
 | Control of C heap |
 +------------------*/
 
-/*!
-\brief discard_heap
+/**
+@brief Discard_heap.
 **/
 
 void discard_heap (void)
@@ -3860,8 +3816,8 @@ void discard_heap (void)
   temp_heap_pointer = 0;
 }
 
-/*!
-\brief initialise C and A68 heap management
+/**
+@brief Initialise C and A68 heap management.
 **/
 
 void init_heap (void)
@@ -3883,11 +3839,11 @@ void init_heap (void)
   stack_end = stack_start + expr_a_size;
 }
 
-/*!
-\brief add token to the token tree
-\param p top token
-\param t token text
-\return new entry
+/**
+@brief Add token to the token tree.
+@param p Top token.
+@param t Token text.
+@return New entry.
 **/
 
 TOKEN_T *add_token (TOKEN_T ** p, char *t)
@@ -3903,17 +3859,17 @@ TOKEN_T *add_token (TOKEN_T ** p, char *t)
       return (*p);
     }
   }
-  *p = (TOKEN_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (TOKEN_T));
+  *p = (TOKEN_T *) get_fixed_heap_space ((size_t) SIZE_AL (TOKEN_T));
   TEXT (*p) = z;
   LESS (*p) = MORE (*p) = NO_TOKEN;
   return (*p);
 }
 
-/*!
-\brief find keyword, from token name
-\param p top keyword
-\param t token text to find
-\return entry
+/**
+@brief Find keyword, from token name.
+@param p Top keyword.
+@param t Token text to find.
+@return Entry.
 **/
 
 KEYWORD_T *find_keyword (KEYWORD_T * p, char *t)
@@ -3931,11 +3887,11 @@ KEYWORD_T *find_keyword (KEYWORD_T * p, char *t)
   return (NO_KEYWORD);
 }
 
-/*!
-\brief find keyword, from attribute
-\param p top keyword
-\param a token attribute
-\return entry
+/**
+@brief Find keyword, from attribute.
+@param p Top keyword.
+@param a Token attribute.
+@return Entry.
 **/
 
 KEYWORD_T *find_keyword_from_attribute (KEYWORD_T * p, int a)
@@ -3964,10 +3920,10 @@ static double pow_10[] = {
   10.0, 100.0, 1.0e4, 1.0e8, 1.0e16, 1.0e32, 1.0e64, 1.0e128, 1.0e256
 };
 
-/*!
-\brief 10 ** expo
-\param expo exponent
-\return same
+/**
+@brief 10 ** expo
+@param expo Exponent.
+@return See brief description.
 **/
 
 double ten_up (int expo)
@@ -3987,11 +3943,11 @@ double ten_up (int expo)
   return (neg_expo ? 1 / dbl_expo : dbl_expo);
 }
 
-/*!
-\brief search first char in string
-\param str string to search
-\param c character to find
-\return pointer to first "c" in "str"
+/**
+@brief Search first char in string.
+@param str String to search.
+@param c Character to find.
+@return Pointer to first "c" in "str".
 **/
 
 char *a68g_strchr (char *str, int c)
@@ -3999,11 +3955,11 @@ char *a68g_strchr (char *str, int c)
   return (strchr (str, c));
 }
 
-/*!
-\brief safely append to buffer
-\param dst text buffer
-\param src text to append
-\param len size of dst
+/**
+@brief Safely append to buffer.
+@param dst Text buffer.
+@param src Text to append.
+@param len Size of dst.
 **/
 
 void bufcat (char *dst, char *src, int len)
@@ -4032,11 +3988,11 @@ void bufcat (char *dst, char *src, int len)
   }
 }
 
-/*!
-\brief safely copy to buffer
-\param dst text buffer
-\param src text to append
-\param siz size of dst
+/**
+@brief Safely copy to buffer.
+@param dst Text buffer.
+@param src Text to append.
+@param len Size of dst.
 **/
 
 void bufcpy (char *dst, char *src, int len)
@@ -4061,13 +4017,13 @@ void bufcpy (char *dst, char *src, int len)
   }
 }
 
-/*!
-\brief grep in string (STRING, STRING, REF INT, REF INT) INT
-\param pat search string or regular expression if supported
-\param str string to match
-\param start index of first character in first matching substring
-\param start index of last character in first matching substring
-\return 0: match, 1: no match, 2: no core, 3: other error
+/**
+@brief grep in string (STRING, STRING, REF INT, REF INT) INT.
+@param pat Search string or regular expression if supported.
+@param str String to match.
+@param start Index of first character in first matching substring.
+@param end Index of last character in first matching substring.
+@return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
 int grep_in_string (char *pat, char *str, int *start, int *end)
@@ -4085,7 +4041,7 @@ int grep_in_string (char *pat, char *str, int *start, int *end)
   if (nmatch == 0) {
     nmatch = 1;
   }
-  matches = malloc ((size_t) (nmatch * ALIGNED_SIZE_OF (regmatch_t)));
+  matches = malloc ((size_t) (nmatch * SIZE_AL (regmatch_t)));
   if (nmatch > 0 && matches == NO_REGMATCH) {
     regfree (&compiled);
     return (2);
@@ -4138,10 +4094,10 @@ static int error_length (char *);
 static BOOL_T remove_extra_coda (char *);
 static void make_acronym (char *, char *);
 
-/*!
-\brief whether ch is a vowel
-\param ch character under test
-\return same
+/**
+@brief Whether ch is a vowel.
+@param ch Character under test.
+@return See brief description.
 **/
 
 static BOOL_T is_vowel (char ch)
@@ -4149,10 +4105,10 @@ static BOOL_T is_vowel (char ch)
   return ((BOOL_T) (a68g_strchr ("aeiouAEIOU", ch) != NO_TEXT));
 }
 
-/*!
-\brief whether ch is consonant
-\param ch character under test
-\return same
+/**
+@brief Whether ch is consonant.
+@param ch Character under test.
+@return See brief description.
 **/
 
 static BOOL_T is_consonant (char ch)
@@ -4184,11 +4140,11 @@ static char *codas[] = {
   "X", "XT"
 };
 
-/*!
-\brief compare function to pass to bsearch
-\param key key to search
-\param data data to search in
-\return difference between key and data
+/**
+@brief Compare function to pass to bsearch.
+@param key Key to search.
+@param data Data to search in.
+@return Difference between key and data.
 **/
 
 static int qsort_strcmp (const void *key, const void *data)
@@ -4196,11 +4152,11 @@ static int qsort_strcmp (const void *key, const void *data)
   return (strcmp ((char *) key, *(char **) data));
 }
 
-/*!
-\brief whether first characters of string are a coda
-\param str string under test
-\param len number of characters
-\return same
+/**
+@brief Whether first characters of string are a coda.
+@param str String under test.
+@param len Number of characters.
+@return See brief description.
 **/
 
 static BOOL_T is_coda (char *str, int len)
@@ -4211,10 +4167,10 @@ static BOOL_T is_coda (char *str, int len)
   return ((BOOL_T) (bsearch (str2, codas, sizeof (codas) / sizeof (char *), sizeof (char *), qsort_strcmp) != NULL));
 }
 
-/*!
-\brief get_init_sylls
-\param in input string
-\param out output string
+/**
+@brief Get_init_sylls.
+@param in Input string.
+@param out Output string.
 **/
 
 static void get_init_sylls (char *in, char *out)
@@ -4248,9 +4204,9 @@ static void get_init_sylls (char *in, char *out)
   out[-1] = NULL_CHAR;
 }
 
-/*!
-\brief reduce vowels in string
-\param str string
+/**
+@brief Reduce vowels in string.
+@param str String.
 **/
 
 static void reduce_vowels (char *str)
@@ -4278,10 +4234,10 @@ static void reduce_vowels (char *str)
   }
 }
 
-/*!
-\brief remove boundaries in string
-\param str string
-\param max_len maximym length
+/**
+@brief Remove boundaries in string.
+@param str String.
+@param max_len Maximym length.
 **/
 
 static void remove_boundaries (char *str, int max_len)
@@ -4301,10 +4257,10 @@ static void remove_boundaries (char *str, int max_len)
   }
 }
 
-/*!
-\brief error_length
-\param str string
-\return same
+/**
+@brief Error_length.
+@param str String.
+@return See brief description.
 **/
 
 static int error_length (char *str)
@@ -4319,10 +4275,10 @@ static int error_length (char *str)
   return (len);
 }
 
-/*!
-\brief remove extra coda
-\param str string
-\return whether operation succeeded
+/**
+@brief Remove extra coda.
+@param str String.
+@return Whether operation succeeded.
 **/
 
 static BOOL_T remove_extra_coda (char *str)
@@ -4339,10 +4295,10 @@ static BOOL_T remove_extra_coda (char *str)
   return (A68_FALSE);
 }
 
-/*!
-\brief make acronym
-\param in input string
-\param out output string
+/**
+@brief Make acronym.
+@param in Input string.
+@param out Output string.
 **/
 
 static void make_acronym (char *in, char *out)
@@ -4353,9 +4309,9 @@ static void make_acronym (char *in, char *out)
   remove_boundaries (out, 8);
 }
 
-/*!
-\brief push acronym of string in stack
-\param p position in tree
+/**
+@brief Push acronym of string on stack.
+@param p Node in syntax tree.
 **/
 
 void genie_acronym (NODE_T * p)
@@ -4743,11 +4699,11 @@ static char *attribute_names[WILDCARD + 1] = {
   "WILDCARD"
 };
 
-/*!
-\brief non_terminal_string
-\param buf text buffer
-\param att attribute
-\return buf, containing name of non terminal string
+/**
+@brief Non_terminal_string.
+@param buf Text buffer.
+@param att Attribute.
+@return Buf, containing name of non terminal string.
 **/
 
 char *non_terminal_string (char *buf, int att)
@@ -4773,10 +4729,10 @@ char *non_terminal_string (char *buf, int att)
   }
 }
 
-/*!
-\brief standard_environ_proc_name
-\param f routine that implements a standard environ item
-\return name of that what "f" implements
+/**
+@brief Standard_environ_proc_name.
+@param f Routine that implements a standard environ item.
+@return Name of that what "f" implements.
 **/
 
 char *standard_environ_proc_name (GPROC f)
@@ -4884,11 +4840,11 @@ static A68_INFO info_text[] = {
   {NO_TEXT, NO_TEXT, NO_TEXT}
 };
 
-/*!
-\brief print_info
-\param f file number
-\param prompt prompt text
-\param k index of info item to print
+/**
+@brief Print_info.
+@param f File number.
+@param prompt Prompt text.
+@param k Index of info item to print.
 **/
 
 static void print_info (FILE_T f, char *prompt, int k)
@@ -4901,11 +4857,11 @@ static void print_info (FILE_T f, char *prompt, int k)
   WRITELN (f, output_line);
 }
 
-/*!
-\brief apropos
-\param f file number
-\param prompt prompt text
-\param info item to print
+/**
+@brief Apropos.
+@param f File number.
+@param prompt Prompt text.
+@param item Item to print.
 **/
 
 void apropos (FILE_T f, char *prompt, char *item)
@@ -4938,10 +4894,10 @@ void apropos (FILE_T f, char *prompt, char *item)
 
 #define TABULATE(n) (8 * (n / 8 + 1) - n)
 
-/*!
-\brief whether unprintable control character
-\param ch character under test
-\return same
+/**
+@brief Whether unprintable control character.
+@param ch Character under test.
+@return See brief description.
 **/
 
 BOOL_T unprintable (char ch)
@@ -4949,10 +4905,10 @@ BOOL_T unprintable (char ch)
   return ((BOOL_T) (!IS_PRINT (ch) && ch != TAB_CHAR));
 }
 
-/*!
-\brief format for printing control character
-\param ch control character
-\return string containing formatted character
+/**
+@brief Format for printing control character.
+@param ch Control character.
+@return String containing formatted character.
 **/
 
 char *ctrl_char (int ch)
@@ -4967,10 +4923,10 @@ char *ctrl_char (int ch)
   return (loc_str);
 }
 
-/*!
-\brief widen single char to string
-\param ch character
-\return (short) string
+/**
+@brief Widen single char to string.
+@param ch Character.
+@return (short) string
 **/
 
 static char *char_to_str (char ch)
@@ -4981,10 +4937,10 @@ static char *char_to_str (char ch)
   return (loc_str);
 }
 
-/*!
-\brief pretty-print diagnostic 
-\param f file number
-\param p text
+/**
+@brief Pretty-print diagnostic .
+@param f File number.
+@param p Text.
 **/
 
 static void pretty_diag (FILE_T f, char *p)
@@ -5018,12 +4974,12 @@ static void pretty_diag (FILE_T f, char *p)
   }
 }
 
-/*!
-\brief abnormal end
-\param reason why abend
-\param info additional info
-\param file name of source file where abend
-\param line line in source file where abend
+/**
+@brief Abnormal end.
+@param reason Why abend.
+@param info Additional info.
+@param file Name of source file where abend.
+@param line Line in source file where abend.
 **/
 
 void abend (char *reason, char *info, char *file, int line)
@@ -5043,10 +4999,10 @@ void abend (char *reason, char *info, char *file, int line)
   a68g_exit (EXIT_FAILURE);
 }
 
-/*!
-\brief position in line 
-\param p source line 
-\param q node pertaining to "p"
+/**
+@brief Position in line .
+@param p Source line .
+@param q Node pertaining to "p".
 **/
 
 static char *where_pos (LINE_T * p, NODE_T * q)
@@ -5069,11 +5025,11 @@ static char *where_pos (LINE_T * p, NODE_T * q)
   return (pos);
 }
 
-/*!
-\brief position in line where diagnostic points at
-\param a source line
-\param d diagnostic
-\return pointer to character to mark
+/**
+@brief Position in line where diagnostic points at.
+@param p Source line.
+@param d Diagnostic.
+@return Pointer to character to mark.
 **/
 
 static char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
@@ -5096,12 +5052,12 @@ static char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
   return (pos);
 }
 
-/*!
-\brief write source line to file with diagnostics
-\param f file number
-\param p source line
-\param where node where to mark
-\param diag whether and how to print diagnostics
+/**
+@brief Write source line to file with diagnostics.
+@param f File number.
+@param p Source line.
+@param nwhere Node where to mark.
+@param diag Whether and how to print diagnostics.
 **/
 
 void write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
@@ -5276,10 +5232,10 @@ void write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
   }
 }
 
-/*!
-\brief write diagnostics to STDOUT
-\param p source line
-\param what severity of diagnostics to print
+/**
+@brief Write diagnostics to STDOUT.
+@param p Source line.
+@param what Severity of diagnostics to print.
 **/
 
 void diagnostics_to_terminal (LINE_T * p, int what)
@@ -5302,11 +5258,11 @@ void diagnostics_to_terminal (LINE_T * p, int what)
   }
 }
 
-/*!
-\brief give an intelligible error and exit
-\param u source line
-\param v where to mark
-\param txt error text
+/**
+@brief Give an intelligible error and exit.
+@param u Source line.
+@param v Where to mark.
+@param txt Error text.
 **/
 
 void scan_error (LINE_T * u, char *v, char *txt)
@@ -5319,11 +5275,11 @@ void scan_error (LINE_T * u, char *v, char *txt)
   longjmp (RENDEZ_VOUS (&program), 1);
 }
 
-/*
-\brief get severity text
-\param sev severity
-\return same
-*/
+/**
+@brief Get severity text.
+@param sev Severity.
+@return See brief description.
+**/
 
 static char *get_severity (int sev)
 {
@@ -5359,10 +5315,10 @@ static char *get_severity (int sev)
   }
 }
 
-/*!
-\brief print diagnostic
-\param sev severity
-\param b diagnostic text
+/**
+@brief Print diagnostic.
+@param sev Severity.
+@param b Diagnostic text.
 */
 
 static void write_diagnostic (int sev, char *b)
@@ -5379,19 +5335,19 @@ static void write_diagnostic (int sev, char *b)
   pretty_diag (STDOUT_FILENO, output_line);
 }
 
-/*!
-\brief add diagnostic to source line
-\param line source line
-\param pos where to mark
-\param p node to mark
-\param sev severity
-\param b diagnostic text
+/**
+@brief Add diagnostic to source line.
+@param line Source line.
+@param pos Where to mark.
+@param p Node to mark.
+@param sev Severity.
+@param b Diagnostic text.
 */
 
 static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
 {
 /* Add diagnostic and choose GNU style or non-GNU style */
-  DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (DIAGNOSTIC_T));
+  DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) SIZE_AL (DIAGNOSTIC_T));
   DIAGNOSTIC_T **ref_msg;
   char a[BUFFER_SIZE], st[SMALL_BUFFER_SIZE], nst[BUFFER_SIZE];
   char *severity = get_severity (sev);
@@ -5461,7 +5417,7 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
       ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", a68g_cmd_name, st, (unsigned) k, b) >= 0);
     }
   }
-  msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) ALIGNED_SIZE_OF (DIAGNOSTIC_T));
+  msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) SIZE_AL (DIAGNOSTIC_T));
   *ref_msg = msg;
   ATTRIBUTE (msg) = sev;
   if (nst[0] != NULL_CHAR) {
@@ -5655,15 +5611,15 @@ Z quoted string literal.
     t++;\
   }
 
-/*!
-\brief give a diagnostic message
-\param sev severity
-\param p position in tree
-\param loc_str message string
-\param ... various arguments needed by special symbols in loc_str
+/**
+@brief Give a diagnostic message.
+@param sev Severity.
+@param p Node in syntax tree.
+@param loc_str Message string.
+@param ... various arguments needed by special symbols in loc_str
 **/
 
-void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
+void diagnostic_node (STATUS_MASK sev, NODE_T * p, char *loc_str, ...)
 {
   va_list args;
   MOID_T *moid = NO_MOID;
@@ -5702,18 +5658,23 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
   }
   if (shortcut == A68_FALSE) {
 /* Synthesize diagnostic message */
-    COMPOSE_DIAGNOSTIC;
+    if ((sev & A68_NO_SYNTHESIS) != NULL_MASK) {
+      sev &= ~A68_NO_SYNTHESIS;
+      bufcat (b, t, BUFFER_SIZE);
+    } else {
+      COMPOSE_DIAGNOSTIC;
 /* Add information from errno, if any */
-    if (err != 0) {
-      char *loc_str2 = new_string (error_specification (), NO_TEXT);
-      if (loc_str2 != NO_TEXT) {
-        char *stu;
-        bufcat (b, " (", BUFFER_SIZE);
-        for (stu = loc_str2; stu[0] != NULL_CHAR; stu++) {
-          stu[0] = (char) TO_LOWER (stu[0]);
+      if (err != 0) {
+        char *loc_str2 = new_string (error_specification (), NO_TEXT);
+        if (loc_str2 != NO_TEXT) {
+          char *stu;
+          bufcat (b, " (", BUFFER_SIZE);
+          for (stu = loc_str2; stu[0] != NULL_CHAR; stu++) {
+            stu[0] = (char) TO_LOWER (stu[0]);
+          }
+          bufcat (b, loc_str2, BUFFER_SIZE);
+          bufcat (b, ")", BUFFER_SIZE);
         }
-        bufcat (b, loc_str2, BUFFER_SIZE);
-        bufcat (b, ")", BUFFER_SIZE);
       }
     }
   }
@@ -5731,15 +5692,16 @@ void diagnostic_node (int sev, NODE_T * p, char *loc_str, ...)
   va_end (args);
 }
 
-/*!
-\brief give a diagnostic message
-\param sev severity
-\param p position in tree
-\param loc_str message string
-\param ... various arguments needed by special symbols in loc_str
+/**
+@brief Give a diagnostic message.
+@param sev Severity.
+@param line Source line.
+@param pos Position in source line.
+@param loc_str Message string.
+@param ... various arguments needed by special symbols in loc_str
 **/
 
-void diagnostic_line (int sev, LINE_T * line, char *pos, char *loc_str, ...)
+void diagnostic_line (STATUS_MASK sev, LINE_T * line, char *pos, char *loc_str, ...)
 {
   va_list args;
   MOID_T *moid = NO_MOID;
@@ -5819,11 +5781,11 @@ void diagnostic_line (int sev, LINE_T * line, char *pos, char *loc_str, ...)
   va_end (args);
 }
 
-/*!
-\brief add keyword to the tree
-\param p top keyword
-\param a attribute
-\param t keyword text
+/**
+@brief Add keyword to the tree.
+@param p Top keyword.
+@param a Attribute.
+@param t Keyword text.
 **/
 
 static void add_keyword (KEYWORD_T ** p, int a, char *t)
@@ -5836,14 +5798,14 @@ static void add_keyword (KEYWORD_T ** p, int a, char *t)
       p = &MORE (*p);
     }
   }
-  *p = (KEYWORD_T *) get_fixed_heap_space ((size_t) ALIGNED_SIZE_OF (KEYWORD_T));
+  *p = (KEYWORD_T *) get_fixed_heap_space ((size_t) SIZE_AL (KEYWORD_T));
   ATTRIBUTE (*p) = a;
   TEXT (*p) = t;
   LESS (*p) = MORE (*p) = NO_KEYWORD;
 }
 
-/*!
-\brief make tables of keywords and non-terminals
+/**
+@brief Make tables of keywords and non-terminals.
 **/
 
 void set_up_tables (void)
@@ -5956,10 +5918,10 @@ void set_up_tables (void)
 
 /* Next are routines to calculate the size of a mode */
 
-/*!
-\brief max unitings to simplout
-\param p position in tree
-\param max maximum calculated moid size
+/**
+@brief Max unitings to simplout.
+@param p Node in syntax tree.
+@param max Maximum calculated moid size.
 **/
 
 static void max_unitings_to_simplout (NODE_T * p, int *max)
@@ -5978,9 +5940,9 @@ static void max_unitings_to_simplout (NODE_T * p, int *max)
   }
 }
 
-/*!
-\brief get max simplout size
-\param p position in tree
+/**
+@brief Get max simplout size.
+@param p Node in syntax tree.
 **/
 
 void get_max_simplout_size (NODE_T * p)
@@ -5989,22 +5951,32 @@ void get_max_simplout_size (NODE_T * p)
   max_unitings_to_simplout (p, &max_simplout_size);
 }
 
-/*!
-\brief set moid sizes
-\param z moid to start from
+/**
+@brief Set moid sizes.
+@param z Moid to start from.
 **/
 
 void set_moid_sizes (MOID_T * z)
 {
   for (; z != NO_MOID; FORWARD (z)) {
     SIZE (z) = moid_size (z);
+    DIGITS (z) = moid_digits (z);
   }
+/* Next is guaranteed */
+  SIZE (MODE (LONG_REAL)) = moid_size (MODE (LONG_REAL));
+  DIGITS (MODE (LONG_REAL)) = moid_digits (MODE (LONG_REAL));
+  SIZE (MODE (LONGLONG_REAL)) = moid_size (MODE (LONGLONG_REAL));
+  DIGITS (MODE (LONGLONG_REAL)) = moid_digits (MODE (LONGLONG_REAL));
+  SIZEC (MODE (LONG_COMPLEX)) = SIZE (MODE (LONG_REAL));
+  DIGITSC (MODE (LONG_COMPLEX)) = DIGITS (MODE (LONG_REAL));
+  SIZEC (MODE (LONGLONG_COMPLEX)) = SIZE (MODE (LONGLONG_REAL));
+  DIGITSC (MODE (LONGLONG_COMPLEX)) = DIGITS (MODE (LONGLONG_REAL));
 }
 
-/*!
-\brief moid size 2
-\param p moid to calculate
-\return moid size
+/**
+@brief Moid size 2.
+@param p Moid to calculate.
+@return Moid size.
 **/
 
 static int moid_size_2 (MOID_T * p)
@@ -6018,49 +5990,49 @@ static int moid_size_2 (MOID_T * p)
   } else if (p == MODE (VOID)) {
     return (0);
   } else if (p == MODE (INT)) {
-    return (ALIGNED_SIZE_OF (A68_INT));
+    return (SIZE_AL (A68_INT));
   } else if (p == MODE (LONG_INT)) {
     return ((int) size_long_mp ());
   } else if (p == MODE (LONGLONG_INT)) {
     return ((int) size_longlong_mp ());
   } else if (p == MODE (REAL)) {
-    return (ALIGNED_SIZE_OF (A68_REAL));
+    return (SIZE_AL (A68_REAL));
   } else if (p == MODE (LONG_REAL)) {
     return ((int) size_long_mp ());
   } else if (p == MODE (LONGLONG_REAL)) {
     return ((int) size_longlong_mp ());
   } else if (p == MODE (BOOL)) {
-    return (ALIGNED_SIZE_OF (A68_BOOL));
+    return (SIZE_AL (A68_BOOL));
   } else if (p == MODE (CHAR)) {
-    return (ALIGNED_SIZE_OF (A68_CHAR));
+    return (SIZE_AL (A68_CHAR));
   } else if (p == MODE (ROW_CHAR)) {
     return (A68_REF_SIZE);
   } else if (p == MODE (BITS)) {
-    return (ALIGNED_SIZE_OF (A68_BITS));
+    return (SIZE_AL (A68_BITS));
   } else if (p == MODE (LONG_BITS)) {
     return ((int) size_long_mp ());
   } else if (p == MODE (LONGLONG_BITS)) {
     return ((int) size_longlong_mp ());
   } else if (p == MODE (BYTES)) {
-    return (ALIGNED_SIZE_OF (A68_BYTES));
+    return (SIZE_AL (A68_BYTES));
   } else if (p == MODE (LONG_BYTES)) {
-    return (ALIGNED_SIZE_OF (A68_LONG_BYTES));
+    return (SIZE_AL (A68_LONG_BYTES));
   } else if (p == MODE (FILE)) {
-    return (ALIGNED_SIZE_OF (A68_FILE));
+    return (SIZE_AL (A68_FILE));
   } else if (p == MODE (CHANNEL)) {
-    return (ALIGNED_SIZE_OF (A68_CHANNEL));
+    return (SIZE_AL (A68_CHANNEL));
   } else if (p == MODE (FORMAT)) {
-    return (ALIGNED_SIZE_OF (A68_FORMAT));
+    return (SIZE_AL (A68_FORMAT));
   } else if (p == MODE (SEMA)) {
     return (A68_REF_SIZE);
   } else if (p == MODE (SOUND)) {
-    return (ALIGNED_SIZE_OF (A68_SOUND));
+    return (SIZE_AL (A68_SOUND));
   } else if (p == MODE (COLLITEM)) {
-    return (ALIGNED_SIZE_OF (A68_COLLITEM));
+    return (SIZE_AL (A68_COLLITEM));
   } else if (p == MODE (NUMBER)) {
     int k = 0;
-    if (ALIGNED_SIZE_OF (A68_INT) > k) {
-      k = ALIGNED_SIZE_OF (A68_INT);
+    if (SIZE_AL (A68_INT) > k) {
+      k = SIZE_AL (A68_INT);
     }
     if ((int) size_long_mp () > k) {
       k = (int) size_long_mp ();
@@ -6068,8 +6040,8 @@ static int moid_size_2 (MOID_T * p)
     if ((int) size_longlong_mp () > k) {
       k = (int) size_longlong_mp ();
     }
-    if (ALIGNED_SIZE_OF (A68_REAL) > k) {
-      k = ALIGNED_SIZE_OF (A68_REAL);
+    if (SIZE_AL (A68_REAL) > k) {
+      k = SIZE_AL (A68_REAL);
     }
     if ((int) size_long_mp () > k) {
       k = (int) size_long_mp ();
@@ -6080,34 +6052,34 @@ static int moid_size_2 (MOID_T * p)
     if (A68_REF_SIZE > k) {
       k = A68_REF_SIZE;
     }
-    return (ALIGNED_SIZE_OF (A68_UNION) + k);
+    return (SIZE_AL (A68_UNION) + k);
   } else if (p == MODE (SIMPLIN)) {
     int k = 0;
     if (A68_REF_SIZE > k) {
       k = A68_REF_SIZE;
     }
-    if (ALIGNED_SIZE_OF (A68_FORMAT) > k) {
-      k = ALIGNED_SIZE_OF (A68_FORMAT);
+    if (SIZE_AL (A68_FORMAT) > k) {
+      k = SIZE_AL (A68_FORMAT);
     }
-    if (ALIGNED_SIZE_OF (A68_PROCEDURE) > k) {
-      k = ALIGNED_SIZE_OF (A68_PROCEDURE);
+    if (SIZE_AL (A68_PROCEDURE) > k) {
+      k = SIZE_AL (A68_PROCEDURE);
     }
-    if (ALIGNED_SIZE_OF (A68_SOUND) > k) {
-      k = ALIGNED_SIZE_OF (A68_SOUND);
+    if (SIZE_AL (A68_SOUND) > k) {
+      k = SIZE_AL (A68_SOUND);
     }
-    return (ALIGNED_SIZE_OF (A68_UNION) + k);
+    return (SIZE_AL (A68_UNION) + k);
   } else if (p == MODE (SIMPLOUT)) {
-    return (ALIGNED_SIZE_OF (A68_UNION) + max_simplout_size);
+    return (SIZE_AL (A68_UNION) + max_simplout_size);
   } else if (IS (p, REF_SYMBOL)) {
     return (A68_REF_SIZE);
   } else if (IS (p, PROC_SYMBOL)) {
-    return (ALIGNED_SIZE_OF (A68_PROCEDURE));
+    return (SIZE_AL (A68_PROCEDURE));
   } else if (IS (p, ROW_SYMBOL) && p != MODE (ROWS)) {
     return (A68_REF_SIZE);
   } else if (p == MODE (ROWS)) {
-    return (ALIGNED_SIZE_OF (A68_UNION) + A68_REF_SIZE);
+    return (SIZE_AL (A68_UNION) + A68_REF_SIZE);
   } else if (IS (p, FLEX_SYMBOL)) {
-    return moid_size (SUB (p));
+    return (moid_size (SUB (p)));
   } else if (IS (p, STRUCT_SYMBOL)) {
     PACK_T *z = PACK (p);
     int size = 0;
@@ -6123,7 +6095,7 @@ static int moid_size_2 (MOID_T * p)
         size = moid_size (MOID (z));
       }
     }
-    return (ALIGNED_SIZE_OF (A68_UNION) + size);
+    return (SIZE_AL (A68_UNION) + size);
   } else if (PACK (p) != NO_PACK) {
     PACK_T *z = PACK (p);
     int size = 0;
@@ -6137,28 +6109,68 @@ static int moid_size_2 (MOID_T * p)
   }
 }
 
-/*!
-\brief moid size
-\param p moid to set size
-\return moid size
+/**
+@brief Moid digits 2.
+@param p Moid to calculate.
+@return Moid digits.
+**/
+
+static int moid_digits_2 (MOID_T * p)
+{
+  if (p == NO_MOID) {
+    return (0);
+  } else if (EQUIVALENT (p) != NO_MOID) {
+    return (moid_digits_2 (EQUIVALENT (p)));
+  } else if (p == MODE (LONG_INT)) {
+    return ((int) long_mp_digits ());
+  } else if (p == MODE (LONGLONG_INT)) {
+    return ((int) longlong_mp_digits ());
+  } else if (p == MODE (LONG_REAL)) {
+    return ((int) long_mp_digits ());
+  } else if (p == MODE (LONGLONG_REAL)) {
+    return ((int) longlong_mp_digits ());
+  } else if (p == MODE (LONG_BITS)) {
+    return ((int) long_mp_digits ());
+  } else if (p == MODE (LONGLONG_BITS)) {
+    return ((int) longlong_mp_digits ());
+  } else {
+    return (0);
+  }
+}
+
+/**
+@brief Moid size.
+@param p Moid to set size.
+@return Moid size.
 **/
 
 int moid_size (MOID_T * p)
 {
-  SIZE (p) = moid_size_2 (p);
+  SIZE (p) = A68_ALIGN (moid_size_2 (p));
   return (SIZE (p));
+}
+
+/**
+@brief Moid digits.
+@param p Moid to set size.
+@return Moid size.
+**/
+
+int moid_digits (MOID_T * p)
+{
+  DIGITS (p) = moid_digits_2 (p);
+  return (DIGITS (p));
 }
 
 /******************************/
 /* A pretty printer for moids */
 /******************************/
 
-/*!
-\brief moid to string 3
-\param dst text buffer
-\param str string to concatenate
-\param w estimated width
-\param idf print indicants if one exists in this range
+/**
+@brief Add string to MOID text.
+@param dst Text buffer.
+@param str String to concatenate.
+@param w Estimated width.
 **/
 
 static void add_to_moid_text (char *dst, char *str, int *w)
@@ -6167,11 +6179,11 @@ static void add_to_moid_text (char *dst, char *str, int *w)
   (*w) -= (int) strlen (str);
 }
 
-/*!
-\brief find a tag, searching symbol tables towards the root
-\param table symbol table to search
-\param mode mode of the tag
-\return entry in symbol table
+/**
+@brief Find a tag, searching symbol tables towards the root.
+@param table Symbol table to search.
+@param mode Mode of the tag.
+@return Entry in symbol table.
 **/
 
 TAG_T *find_indicant_global (TABLE_T * table, MOID_T * mode)
@@ -6189,13 +6201,13 @@ TAG_T *find_indicant_global (TABLE_T * table, MOID_T * mode)
   }
 }
 
-/*!
-\brief pack to string
-\param b text buffer
-\param p pack
-\param w estimated width
-\param text include field names
-\param idf print indicants if one exists in this range
+/**
+@brief Pack to string.
+@param b Text buffer.
+@param p Pack.
+@param w Estimated width.
+@param text Include field names.
+@param idf Print indicants if one exists in this range.
 **/
 
 static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * idf)
@@ -6214,12 +6226,12 @@ static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * i
   }
 }
 
-/*!
-\brief moid to string 2
-\param b text buffer
-\param n moid
-\param w estimated width
-\param idf print indicants if one exists in this range
+/**
+@brief Moid to string 2.
+@param b Text buffer.
+@param n Moid.
+@param w Estimated width.
+@param idf Print indicants if one exists in this range.
 **/
 
 static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
@@ -6415,12 +6427,12 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
   }
 }
 
-/*!
-\brief pretty-formatted mode "n"; "w" is a measure of width
-\param n moid
-\param w estimated width; if w is exceeded, modes are abbreviated
-\param idf print indicants if one exists in this range
-\return text buffer
+/**
+@brief Pretty-formatted mode "n"; "w" is a measure of width.
+@param n Moid.
+@param w Estimated width; if w is exceeded, modes are abbreviated.
+@param idf Print indicants if one exists in this range.
+@return Text buffer.
 **/
 
 char *moid_to_string (MOID_T * n, int w, NODE_T * idf)

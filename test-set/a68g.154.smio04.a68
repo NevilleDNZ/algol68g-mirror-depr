@@ -1,0 +1,96 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#smio04#
+BEGIN
+# 10/08/73, R van Vliet; 30/09/75, revised.
+Test the print and putroutines.#
+    INT max ch n = # actual max char, formerly
+        max char[standout channel] #
+    (FILE f:= standout; INT i;
+        on line end(f, (REF FILE f)BOOL: GOTO out);
+        DO put(f, space) OD;
+    out: i:= char number(f) -1; TO i DO put(f, backspace) OD; i);
+  print(("Test 2", new line,
+    "Test layout-procedures", new line, newline));
+    print((new line, "Check space, backspace and character number",
+                  newline));
+    BEGIN
+      INT inspect, k;
+      PROC ilchcount =VOID:
+        (INT i =char number(standout);
+       print((newline,
+         "Illegal character number", i, "at position", k, newline));
+       GOTO printdots
+        );
+      BOOL line end;
+      FILE auxout:=standout;
+      on line end (    auxout ,(REF FILE f)BOOL:
+        (  inspect :=char number(standout);
+          print(backspace);
+          line end := TRUE)
+        );
+      BEGIN
+        k:= 1; line end := FALSE #'on line end' not called yet#;
+        WHILE NOT line end DO
+           IF char number (standout) NE k
+          #Check the character count. Be aware that 'auxout'
+          and 'standout' refer to the same book.#
+          THEN ilchcount
+          ELSE k +:=1; put(auxout, space)
+        FI #end of line reached# OD;
+        IF max ch n /= inspect -1 THEN
+            print((newline,
+               "Not all lines of standout have the same length",
+                newline))
+         FI;
+        k -:= 1;
+        line end := FALSE;
+        TO max ch n DO
+        IF k NE char number(standout)
+          THEN ilchcount
+          ELSE k -:=1; put(auxout, backspace)
+        FI # back at the beginning of the line# OD;
+        print((new line,
+                "This line should be preceded by one blank line"));
+        print((new line,
+          "Char number of standout is at most",
+                max ch n, new line))
+      END;
+    printdots:
+      print((new line,
+        "Print 3 lines, having a dot at every second position",
+       newline));
+      (BY 2 TO max ch n  -1 DO    print((space, ".")) OD;
+        print(new line);
+        TO (ODD max ch n | max ch n -1 | max ch n) DO
+             print(space) OD;
+        FROM char number(standout) BY -2 TO 3 DO
+        print((backspace, ".", backspace, backspace)) OD;
+        print(new line);
+        BY 2 TO max ch n -1 DO
+        print((space, space, backspace, backspace, space, ".")) OD;
+        print(new line)
+      )
+    END;
+    print((new line, "A check on lines and pages", newline));
+    BEGIN
+      PROC print lp = VOID:
+        print(("Line number", line number(standout),
+               ", page number", page number(standout), ".", new line));
+      print lp;
+      print(new line);
+      print lp;
+      print(new page);
+      print lp
+    END
+END

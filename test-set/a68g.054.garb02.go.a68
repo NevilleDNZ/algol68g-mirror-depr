@@ -1,0 +1,27 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#garb02#
+BEGIN # Test garbage collector #
+      REF [] REAL x, y,
+      INT n := 0;
+      
+      l: x := HEAP [1 : 1000] REAL;
+      y := HEAP [1 : 1000] REAL;
+      IF (n +:= 1) < 1000
+      THEN l
+      FI;
+      print (("collections, garbage, collect seconds:", newline));
+      print ((collections, garbage, 
+              # collect seconds, #
+              newline))
+END

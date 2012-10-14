@@ -1,0 +1,28 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#simp13#
+BEGIN # continued fraction #
+      OP / = ([] REAL a, b) REAL:
+         (UPB a = 0 | 0 | a[1] / (b[1] + a[2 : ] / b[2 : ])),
+      [1 : 20] REAL x, y;
+      
+      FOR i TO 20 
+      DO x[i] := (i - 1) ** 2;
+         y[i] := 2 * i - 1
+      OD;
+      x[1] := 1;
+      FOR i TO 20 
+      DO print (4 * (x[1 : i] / y[1 : i]))
+      OD
+# approximations of pi #
+END

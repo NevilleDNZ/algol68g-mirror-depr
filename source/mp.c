@@ -1,11 +1,13 @@
-/*!
-\file mp.c
-\brief multiprecision arithmetic library
-*/
+/**
+@file mp.c
+@author J. Marcel van der Veer.
+@brief Multiprecision arithmetic library.
+@section Copyright
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
+Copyright 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,10 +20,10 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-/*
-A MULTIPRECISION ARITHMETIC LIBRARY FOR ALGOL68G
+@section Description
+
+This is a multiprecision arithmetic library for Algol68G.
 
 The question that is often raised is what applications justify multiprecision
 calculations. A number of applications, some of them practical, have surfaced
@@ -119,7 +121,7 @@ is also in range [0 .. MP_RADIX>. Do not specify less than 2 digits.
 Since this software is distributed without any warranty, it is your
 responsibility to validate the behaviour of the routines and their accuracy
 using the source code provided. See the GNU General Public License for details.
-*/
+**/
 
 #if defined HAVE_CONFIG_H
 #include "a68g-config.h"
@@ -162,9 +164,9 @@ We follow D.M. Smith in his recommendations for precisions greater than LONG.
 
 #define FUN_DIGITS(n) ((n) + GUARD_DIGITS (n))
 
-/*!
-\brief length in bytes of a long mp number
-\return length in bytes of a long mp number
+/**
+@brief Length in bytes of a long mp number.
+@return Length in bytes of a long mp number.
 **/
 
 size_t size_long_mp (void)
@@ -172,9 +174,9 @@ size_t size_long_mp (void)
   return ((size_t) SIZE_MP (LONG_MP_DIGITS));
 }
 
-/*!
-\brief length in digits of a long mp number
-\return length in digits of a long mp number
+/**
+@brief Length in digits of a long mp number.
+@return Length in digits of a long mp number.
 **/
 
 int long_mp_digits (void)
@@ -182,9 +184,9 @@ int long_mp_digits (void)
   return (LONG_MP_DIGITS);
 }
 
-/*!
-\brief length in bytes of a long long mp number
-\return length in bytes of a long long mp number
+/**
+@brief Length in bytes of a long long mp number.
+@return Length in bytes of a long long mp number.
 **/
 
 size_t size_longlong_mp (void)
@@ -192,9 +194,9 @@ size_t size_longlong_mp (void)
   return ((size_t) (SIZE_MP (varying_mp_digits)));
 }
 
-/*!
-\brief length in digits of a long long mp number
-\return length in digits of a long long mp number
+/**
+@brief Length in digits of a long long mp number.
+@return Length in digits of a long long mp number.
 **/
 
 int longlong_mp_digits (void)
@@ -202,42 +204,10 @@ int longlong_mp_digits (void)
   return (varying_mp_digits);
 }
 
-/*!
-\brief length in digits of mode
-\param m mode
-\return length in digits of mode m
-**/
-
-int get_mp_digits (MOID_T * m)
-{
-  if (m == MODE (LONG_INT) || m == MODE (LONG_REAL) || m == MODE (LONG_COMPLEX) || m == MODE (LONG_BITS)) {
-    return (long_mp_digits ());
-  } else if (m == MODE (LONGLONG_INT) || m == MODE (LONGLONG_REAL) || m == MODE (LONGLONG_COMPLEX) || m == MODE (LONGLONG_BITS)) {
-    return (longlong_mp_digits ());
-  }
-  return (0);
-}
-
-/*!
-\brief length in bytes of mode
-\param m mode
-\return length in bytes of mode m
-**/
-
-int get_mp_size (MOID_T * m)
-{
-  if (m == MODE (LONG_INT) || m == MODE (LONG_REAL) || m == MODE (LONG_COMPLEX) || m == MODE (LONG_BITS)) {
-    return ((int) size_long_mp ());
-  } else if (m == MODE (LONGLONG_INT) || m == MODE (LONGLONG_REAL) || m == MODE (LONGLONG_COMPLEX) || m == MODE (LONGLONG_BITS)) {
-    return ((int) size_longlong_mp ());
-  }
-  return (0);
-}
-
-/*!
-\brief length in bits of mode
-\param m mode
-\return length in bits of mode m
+/**
+@brief Length in bits of mode.
+@param m Mode.
+@return Length in bits of mode m.
 **/
 
 int get_mp_bits_width (MOID_T * m)
@@ -250,10 +220,10 @@ int get_mp_bits_width (MOID_T * m)
   return (0);
 }
 
-/*!
-\brief length in words of mode
-\param m mode
-\return length in words of mode m
+/**
+@brief Length in words of mode.
+@param m Mode.
+@return Length in words of mode m.
 **/
 
 int get_mp_bits_words (MOID_T * m)
@@ -266,10 +236,10 @@ int get_mp_bits_words (MOID_T * m)
   return (0);
 }
 
-/*!
-\brief whether z is a valid LONG INT
-\param z mp number
-\return same
+/**
+@brief Whether z is a valid LONG INT.
+@param z Multiprecision number.
+@return See brief description.
 **/
 
 BOOL_T check_long_int (MP_T * z)
@@ -277,10 +247,10 @@ BOOL_T check_long_int (MP_T * z)
   return ((BOOL_T) ((MP_EXPONENT (z) >= (MP_T) 0) && (MP_EXPONENT (z) < (MP_T) LONG_MP_DIGITS)));
 }
 
-/*!
-\brief whether z is a valid LONG LONG INT
-\param z mp number
-\return same
+/**
+@brief Whether z is a valid LONG LONG INT.
+@param z Multiprecision number.
+@return See brief description.
 **/
 
 BOOL_T check_longlong_int (MP_T * z)
@@ -288,11 +258,11 @@ BOOL_T check_longlong_int (MP_T * z)
   return ((BOOL_T) ((MP_EXPONENT (z) >= (MP_T) 0) && (MP_EXPONENT (z) < (MP_T) varying_mp_digits)));
 }
 
-/*!
-\brief whether z is a valid representation for its mode
-\param z mp number
-\param m mode
-\return same
+/**
+@brief Whether z is a valid representation for its mode.
+@param z Multiprecision number.
+@param m Mode.
+@return See brief description.
 **/
 
 BOOL_T check_mp_int (MP_T * z, MOID_T * m)
@@ -305,10 +275,10 @@ BOOL_T check_mp_int (MP_T * z, MOID_T * m)
   return (A68_FALSE);
 }
 
-/*!
-\brief convert precision to digits for long long number
-\param n precision to convert
-\return same
+/**
+@brief Convert precision to digits for long long number.
+@param n Precision to convert.
+@return See brief description.
 **/
 
 int int_to_mp_digits (int n)
@@ -316,9 +286,9 @@ int int_to_mp_digits (int n)
   return (2 + (int) ceil ((double) n / (double) LOG_MP_BASE));
 }
 
-/*!
-\brief set number of digits for long long numbers
-\param n number of digits
+/**
+@brief Set number of digits for long long numbers.
+@param n Number of digits.
 **/
 
 void set_longlong_mp_digits (int n)
@@ -326,13 +296,13 @@ void set_longlong_mp_digits (int n)
   varying_mp_digits = n;
 }
 
-/*!
-\brief set "z" to short value x * MP_RADIX ** x_expo
-\param z mp number to set
-\param x most significant mp digit
-\param x_expo mp exponent
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to short value x * MP_RADIX ** x_expo.
+@param z Multiprecision number to set.
+@param x Most significant mp digit.
+@param x_expo Multiprecision exponent.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *set_mp_short (MP_T * z, MP_T x, int x_expo, int digits)
@@ -347,13 +317,13 @@ MP_T *set_mp_short (MP_T * z, MP_T x, int x_expo, int digits)
   return (z);
 }
 
-/*!
-\brief test whether x = y
-\param p position in tree
-\param x mp number 1
-\param y mp number 2
-\param digits precision in mp-digits
-\return same
+/**
+@brief Test whether x = y.
+@param p Node in syntax tree.
+@param x Multiprecision number 1.
+@param y Multiprecision number 2.
+@param digits Precision in mp-digits.
+@return See brief description.
 **/
 
 static BOOL_T same_mp (NODE_T * p, MP_T * x, MP_T * y, int digits)
@@ -372,12 +342,12 @@ static BOOL_T same_mp (NODE_T * p, MP_T * x, MP_T * y, int digits)
   }
 }
 
-/*!
-\brief align 10-base z in a MP_RADIX mantissa
-\param z mp number
-\param expo
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Align 10-base z in a MP_RADIX mantissa.
+@param z Multiprecision number.
+@param expo
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 static MP_T *align_mp (MP_T * z, int *expo, int digits)
@@ -403,13 +373,13 @@ static MP_T *align_mp (MP_T * z, int *expo, int digits)
   return (z);
 }
 
-/*!
-\brief transform string into multi-precision number
-\param p position in tree
-\param z mp number
-\param s string to convert
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Transform string into multi-precision number.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param s String to convert.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *string_to_mp (NODE_T * p, MP_T * z, char *s, int digits)
@@ -479,13 +449,13 @@ MP_T *string_to_mp (NODE_T * p, MP_T * z, char *s, int digits)
   }
 }
 
-/*!
-\brief convert integer to multi-precison number
-\param p position in tree
-\param z mp number
-\param k integer to convert
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Convert integer to multi-precison number.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param k Integer to convert.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *int_to_mp (NODE_T * p, MP_T * z, int k, int digits)
@@ -509,13 +479,13 @@ MP_T *int_to_mp (NODE_T * p, MP_T * z, int k, int digits)
   return (z);
 }
 
-/*!
-\brief convert unsigned to multi-precison number
-\param p position in tree
-\param z mp number
-\param k unsigned to convert
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Convert unsigned to multi-precison number.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param k Unsigned to convert.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *unsigned_to_mp (NODE_T * p, MP_T * z, unsigned k, int digits)
@@ -535,12 +505,12 @@ MP_T *unsigned_to_mp (NODE_T * p, MP_T * z, unsigned k, int digits)
   return (z);
 }
 
-/*!
-\brief convert multi-precision number to integer
-\param p position in tree
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Convert multi-precision number to integer.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 int mp_to_int (NODE_T * p, MP_T * z, int digits)
@@ -577,12 +547,12 @@ We do not use "mp_to_real" since int could be wider than 2 ** 52.
   return (negative ? -sum : sum);
 }
 
-/*!
-\brief convert multi-precision number to unsigned
-\param p position in tree
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Convert multi-precision number to unsigned.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 unsigned mp_to_unsigned (NODE_T * p, MP_T * z, int digits)
@@ -614,13 +584,13 @@ could be wider than 2 ** 52.
   return (sum);
 }
 
-/*!
-\brief convert double to multi-precison number
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Convert double to multi-precison number.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *real_to_mp (NODE_T * p, MP_T * z, double x, int digits)
@@ -677,12 +647,12 @@ MP_T *real_to_mp (NODE_T * p, MP_T * z, double x, int digits)
   return (z);
 }
 
-/*!
-\brief convert multi-precision number to double
-\param p position in tree
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Convert multi-precision number to double.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 double mp_to_real (NODE_T * p, MP_T * z, int digits)
@@ -704,21 +674,21 @@ double mp_to_real (NODE_T * p, MP_T * z, int digits)
   }
 }
 
-/*!
-\brief convert z to a row of unsigned in the stack
-\param p position in tree
-\param z mp number
-\param m mode of "z"
-\return result "z"
+/**
+@brief Convert z to a row of unsigned in the stack.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param m Mode of "z".
+@return Result "z".
 **/
 
 unsigned *stack_mp_bits (NODE_T * p, MP_T * z, MOID_T * m)
 {
-  int digits = get_mp_digits (m), words = get_mp_bits_words (m), k, lim;
+  int digits = DIGITS (m), words = get_mp_bits_words (m), k, lim;
   unsigned *row, mask;
   MP_T *u, *v, *w;
   row = (unsigned *) STACK_ADDRESS (stack_pointer);
-  INCREMENT_STACK_POINTER (p, words * ALIGNED_SIZE_OF (unsigned));
+  INCREMENT_STACK_POINTER (p, words * SIZE_AL (unsigned));
   STACK_MP (u, p, digits);
   STACK_MP (v, p, digits);
   STACK_MP (w, p, digits);
@@ -753,34 +723,34 @@ unsigned *stack_mp_bits (NODE_T * p, MP_T * z, MOID_T * m)
   return (row);
 }
 
-/*!
-\brief whether LONG BITS value is in range
-\param p position in tree
-\param u mp number
-\param m mode of "u"
+/**
+@brief Whether LONG BITS value is in range.
+@param p Node in syntax tree.
+@param u Multiprecision number.
+@param m Mode of "u".
 **/
 
 void check_long_bits_value (NODE_T * p, MP_T * u, MOID_T * m)
 {
-  if (MP_EXPONENT (u) >= (MP_T) (get_mp_digits (m) - 1)) {
+  if (MP_EXPONENT (u) >= (MP_T) (DIGITS (m) - 1)) {
     ADDR_T pop_sp = stack_pointer;
     (void) stack_mp_bits (p, u, m);
     stack_pointer = pop_sp;
   }
 }
 
-/*!
-\brief convert row of unsigned to LONG BITS
-\param p position in tree
-\param u mp number
-\param row
-\param m mode of "u"
-\return result "u"
+/**
+@brief Convert row of unsigned to LONG BITS.
+@param p Node in syntax tree.
+@param u Multiprecision number.
+@param row
+@param m Mode of "u".
+@return Result "u".
 **/
 
 MP_T *pack_mp_bits (NODE_T * p, MP_T * u, unsigned *row, MOID_T * m)
 {
-  int digits = get_mp_digits (m), words = get_mp_bits_words (m), k, lim;
+  int digits = DIGITS (m), words = get_mp_bits_words (m), k, lim;
   ADDR_T pop_sp = stack_pointer;
   MP_T *v, *w;
 /* Discard excess bits */
@@ -815,11 +785,11 @@ MP_T *pack_mp_bits (NODE_T * p, MP_T * u, unsigned *row, MOID_T * m)
   return (u);
 }
 
-/*!
-\brief normalise positive intermediate, fast
-\param w argument
-\param k last digit to normalise
-\param digits precision in mp-digits
+/**
+@brief Normalise positive intermediate, fast.
+@param w Argument.
+@param k Last digit to normalise.
+@param digits Precision in mp-digits.
 **/
 
 static void norm_mp_light (MP_T * w, int k, int digits)
@@ -838,11 +808,11 @@ static void norm_mp_light (MP_T * w, int k, int digits)
   }
 }
 
-/*!
-\brief normalise positive intermediate
-\param w argument
-\param k last digit to normalise
-\param digits precision in mp-digits
+/**
+@brief Normalise positive intermediate.
+@param w Argument.
+@param k Last digit to normalise.
+@param digits Precision in mp-digits.
 **/
 
 static void norm_mp (MP_T * w, int k, int digits)
@@ -863,11 +833,11 @@ static void norm_mp (MP_T * w, int k, int digits)
   }
 }
 
-/*!
-\brief round multi-precision number
-\param z result
-\param w argument, must be positive
-\param digits precision in mp-digits
+/**
+@brief Round multi-precision number.
+@param z Result.
+@param w Argument, must be positive.
+@param digits Precision in mp-digits.
 **/
 
 static void round_internal_mp (MP_T * z, MP_T * w, int digits)
@@ -893,12 +863,12 @@ static void round_internal_mp (MP_T * z, MP_T * w, int digits)
   }
 }
 
-/*!
-\brief truncate at decimal point
-\param p position in tree
-\param z result
-\param x argument
-\param digits precision in mp-digits
+/**
+@brief Truncate at decimal point.
+@param p Node in syntax tree.
+@param z Result.
+@param x Argument.
+@param digits Precision in mp-digits.
 **/
 
 void trunc_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -918,14 +888,14 @@ void trunc_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   }
 }
 
-/*!
-\brief shorten and round
-\param p position in tree
-\param z result
-\param digits precision in mp-digits
-\param x mp number
-\param digits precision in mp-digits_x
-\return result "z"
+/**
+@brief Shorten and round.
+@param p Node in syntax tree.
+@param z Result.
+@param digits Precision in mp-digits.
+@param x Multiprecision number.
+@param digits_x Precision of "x".
+@return Result "z".
 **/
 
 MP_T *shorten_mp (NODE_T * p, MP_T * z, int digits, MP_T * x, int digits_x)
@@ -955,14 +925,14 @@ MP_T *shorten_mp (NODE_T * p, MP_T * z, int digits, MP_T * x, int digits_x)
   }
 }
 
-/*!
-\brief lengthen x and assign to z
-\param p position in tree
-\param z mp number
-\param digits precision in mp-digits of "z"
-\param x mp number
-\param digits precision in mp-digits of "x"
-\return result "z"
+/**
+@brief Lengthen x and assign to z.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param digits_z Precision in mp-digits of "z".
+@param x Multiprecision number.
+@param digits_x Precision in mp-digits of "x".
+@return Result "z".
 **/
 
 MP_T *lengthen_mp (NODE_T * p, MP_T * z, int digits_z, MP_T * x, int digits_x)
@@ -982,14 +952,14 @@ MP_T *lengthen_mp (NODE_T * p, MP_T * z, int digits_z, MP_T * x, int digits_x)
   return (z);
 }
 
-/*!
-\brief set "z" to the sum of positive "x" and positive "y"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the sum of positive "x" and positive "y".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *add_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1058,14 +1028,14 @@ MP_T *add_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the difference of positive "x" and positive "y"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the difference of positive "x" and positive "y".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *sub_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1171,14 +1141,14 @@ MP_T *sub_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the product of "x" and "y"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the product of "x" and "y".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *mul_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1244,14 +1214,14 @@ MP_T *mul_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the quotient of "x" and "y"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the quotient of "x" and "y".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *div_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1345,14 +1315,14 @@ guesses without separate correction steps.
   return (z);
 }
 
-/*!
-\brief set "z" to the integer quotient of "x" and "y"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the integer quotient of "x" and "y".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *over_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1378,14 +1348,14 @@ MP_T *over_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to x mod y
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to x mod y.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *mod_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1412,14 +1382,14 @@ MP_T *mod_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the product of x and digit y
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the product of x and digit y.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *mul_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
@@ -1451,13 +1421,13 @@ MP_T *mul_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to x/2
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to x/2.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *half_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -1488,14 +1458,14 @@ MP_T *half_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the quotient of x and digit y
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the quotient of x and digit y.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *div_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
@@ -1560,14 +1530,14 @@ MP_T *div_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the integer quotient of "x" and "y"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the integer quotient of "x" and "y".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *over_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
@@ -1590,13 +1560,13 @@ MP_T *over_mp_digit (NODE_T * p, MP_T * z, MP_T * x, MP_T y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to the reciprocal of "x"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to the reciprocal of "x".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *rec_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -1615,14 +1585,14 @@ MP_T *rec_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to "x" ** "n"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param n integer power
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to "x" ** "n".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param n Integer power.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *pow_mp_int (NODE_T * p, MP_T * z, MP_T * x, int n, int digits)
@@ -1655,14 +1625,13 @@ MP_T *pow_mp_int (NODE_T * p, MP_T * z, MP_T * x, int n, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to 10 ** "n"
-\param p position in tree
-\param z mp number
-\param x mp number
-\param n integer power
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to 10 ** "n".
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param n Integer power.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *mp_ten_up (NODE_T * p, MP_T * z, int n, int digits)
@@ -1695,11 +1664,11 @@ MP_T *mp_ten_up (NODE_T * p, MP_T * z, int n, int digits)
   return (z);
 }
 
-/*!
-\brief test on |"z"| > 0.001 for argument reduction in "sin" and "exp"
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Test on |"z"| > 0.001 for argument reduction in "sin" and "exp".
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 static BOOL_T eps_mp (MP_T * z, int digits)
@@ -1742,13 +1711,13 @@ static BOOL_T eps_mp (MP_T * z, int digits)
   }
 }
 
-/*!
-\brief set "z" to sqrt ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to sqrt ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *sqrt_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -1804,13 +1773,13 @@ MP_T *sqrt_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to curt ("x"), the cube root
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to curt ("x"), the cube root.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *curt_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -1869,14 +1838,14 @@ MP_T *curt_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to sqrt ("x"^2 + "y"^2)
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to sqrt ("x"^2 + "y"^2).
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *hypot_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -1915,13 +1884,13 @@ MP_T *hypot_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to exp ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to exp ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *exp_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2004,13 +1973,13 @@ MP_T *exp_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to exp ("x") - 1, assuming "x" to be close to 0
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to exp ("x") - 1, assuming "x" to be close to 0.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *expm1_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2081,12 +2050,12 @@ MP_T *expm1_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief ln scale with digits precision
-\param p position in tree
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Ln scale with digits precision.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *mp_ln_scale (NODE_T * p, MP_T * z, int digits)
@@ -2110,12 +2079,12 @@ MP_T *mp_ln_scale (NODE_T * p, MP_T * z, int digits)
   return (z);
 }
 
-/*!
-\brief ln 10 with digits precision
-\param p position in tree
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Ln 10 with digits precision.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *mp_ln_10 (NODE_T * p, MP_T * z, int digits)
@@ -2139,13 +2108,13 @@ MP_T *mp_ln_10 (NODE_T * p, MP_T * z, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to ln ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to ln ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *ln_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2239,13 +2208,13 @@ MP_T *ln_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to log ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to log ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *log_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2263,14 +2232,14 @@ MP_T *log_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "sh" and "ch" to sinh ("z") and cosh ("z") respectively
-\param p position in tree
-\param sh mp number
-\param ch mp number
-\param z mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "sh" and "ch" to sinh ("z") and cosh ("z") respectively.
+@param p Node in syntax tree.
+@param sh Multiprecision number.
+@param ch Multiprecision number.
+@param z Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *hyp_mp (NODE_T * p, MP_T * sh, MP_T * ch, MP_T * z, int digits)
@@ -2297,13 +2266,13 @@ MP_T *hyp_mp (NODE_T * p, MP_T * sh, MP_T * ch, MP_T * z, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to sinh ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to sinh ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *sinh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2321,13 +2290,13 @@ MP_T *sinh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to asinh ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to asinh ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *asinh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2365,13 +2334,13 @@ MP_T *asinh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   }
 }
 
-/*!
-\brief set "z" to cosh ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to cosh ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *cosh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2389,13 +2358,13 @@ MP_T *cosh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to acosh ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to acosh ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *acosh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2424,13 +2393,13 @@ MP_T *acosh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to tanh ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to tanh ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *tanh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2449,13 +2418,13 @@ MP_T *tanh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to atanh ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to atanh ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *atanh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2478,13 +2447,13 @@ MP_T *atanh_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief return "pi" with "digits" precision, using Borwein & Borwein AGM
-\param p position in tree
-\param api mp number
-\param mult small multiplier
-\param digits precision in mp-digits
-\return result "api"
+/**
+@brief Return "pi" with "digits" precision, using Borwein & Borwein AGM.
+@param p Node in syntax tree.
+@param api Multiprecision number.
+@param mult Small multiplier.
+@param digits Precision in mp-digits.
+@return Result "api".
 **/
 
 MP_T *mp_pi (NODE_T * p, MP_T * api, int mult, int digits)
@@ -2564,13 +2533,13 @@ MP_T *mp_pi (NODE_T * p, MP_T * api, int mult, int digits)
   return (api);
 }
 
-/*!
-\brief set "z" to sin ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to sin ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *sin_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2676,13 +2645,13 @@ MP_T *sin_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to cos ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to cos ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *cos_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2708,13 +2677,13 @@ Compute x mod 2 pi before subtracting to avoid cancellation.
   return (z);
 }
 
-/*!
-\brief set "z" to tan ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to tan ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *tan_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2761,13 +2730,13 @@ MP_T *tan_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to arcsin ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to arcsin ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *asin_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2804,13 +2773,13 @@ MP_T *asin_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to arccos ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to arccos ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *acos_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2851,13 +2820,13 @@ MP_T *acos_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to arctan ("x")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to arctan ("x").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *atan_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -2953,14 +2922,14 @@ MP_T *atan_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief set "z" to atan2 ("x", "y")
-\param p position in tree
-\param z mp number
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return result "z"
+/**
+@brief Set "z" to atan2 ("x", "y").
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Result "z".
 **/
 
 MP_T *atan2_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
@@ -2995,15 +2964,15 @@ MP_T *atan2_mp (NODE_T * p, MP_T * z, MP_T * x, MP_T * y, int digits)
   return (z);
 }
 
-/*!
-\brief set "a" I "b" to "a" I "b" * "c" I "d"
-\param p position in tree
-\param a real mp number
-\param b imaginary mp number
-\param c real mp number
-\param d imaginary mp number
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "a" I "b" to "a" I "b" * "c" I "d".
+@param p Node in syntax tree.
+@param a Real mp number.
+@param b Imaginary mp number.
+@param c Real mp number.
+@param d Imaginary mp number.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *cmul_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
@@ -3035,15 +3004,15 @@ MP_T *cmul_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
   return (a);
 }
 
-/*!
-\brief set "a" I "b" to "a" I "b" / "c" I "d"
-\param p position in tree
-\param a real mp number
-\param b imaginary mp number
-\param c real mp number
-\param d imaginary mp number
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "a" I "b" to "a" I "b" / "c" I "d".
+@param p Node in syntax tree.
+@param a Real mp number.
+@param b Imaginary mp number.
+@param c Real mp number.
+@param d Imaginary mp number.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *cdiv_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
@@ -3094,13 +3063,13 @@ MP_T *cdiv_mp (NODE_T * p, MP_T * a, MP_T * b, MP_T * c, MP_T * d, int digits)
   return (a);
 }
 
-/*!
-\brief set "r" I "i" to sqrt ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to sqrt ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *csqrt_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3170,13 +3139,13 @@ MP_T *csqrt_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (r);
 }
 
-/*!
-\brief set "r" I "i" to exp("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to exp("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *cexp_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3200,13 +3169,13 @@ MP_T *cexp_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (r);
 }
 
-/*!
-\brief set "r" I "i" to ln ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to ln ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *cln_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3236,13 +3205,13 @@ MP_T *cln_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (r);
 }
 
-/*!
-\brief set "r" I "i" to sin ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to sin ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *csin_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3274,13 +3243,13 @@ MP_T *csin_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (r);
 }
 
-/*!
-\brief set "r" I "i" to cos ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to cos ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *ccos_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3313,13 +3282,13 @@ MP_T *ccos_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (r);
 }
 
-/*!
-\brief set "r" I "i" to tan ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to tan ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *ctan_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3346,13 +3315,13 @@ MP_T *ctan_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (r);
 }
 
-/*!
-\brief set "r" I "i" to asin ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to asin ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *casin_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3398,13 +3367,13 @@ MP_T *casin_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (re);
 }
 
-/*!
-\brief set "r" I "i" to acos ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to acos ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *cacos_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3451,13 +3420,13 @@ MP_T *cacos_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (re);
 }
 
-/*!
-\brief set "r" I "i" to atan ("r" I "i")
-\param p position in tree
-\param r mp real part
-\param i mp imaginary part
-\param digits precision in mp-digits
-\return real part of result
+/**
+@brief Set "r" I "i" to atan ("r" I "i").
+@param p Node in syntax tree.
+@param r Multiprecision real part.
+@param i Multiprecision imaginary part.
+@param digits Precision in mp-digits.
+@return Real part of result.
 **/
 
 MP_T *catan_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
@@ -3505,13 +3474,14 @@ MP_T *catan_mp (NODE_T * p, MP_T * r, MP_T * i, int digits)
   return (re);
 }
 
-/*!
-\brief comparison of "x" and "y"
-\param p position in tree
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return whether x = y
+/**
+@brief Comparison of "x" and "y".
+@param p Node in syntax tree.
+@param z Comparison result.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Whether x = y.
 **/
 
 void eq_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
@@ -3525,13 +3495,14 @@ void eq_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief comparison of "x" and "y"
-\param p position in tree
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return whether x != y
+/**
+@brief Comparison of "x" and "y".
+@param p Node in syntax tree.
+@param z Comparison result.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Whether x != y.
 **/
 
 void ne_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
@@ -3545,13 +3516,14 @@ void ne_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief comparison of "x" and "y"
-\param p position in tree
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return whether x < y
+/**
+@brief Comparison of "x" and "y".
+@param p Node in syntax tree.
+@param z Comparison result.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Whether x < y.
 **/
 
 void lt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
@@ -3565,13 +3537,14 @@ void lt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief comparison of "x" and "y"
-\param p position in tree
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return whether x <= y
+/**
+@brief Comparison of "x" and "y".
+@param p Node in syntax tree.
+@param z Comparison result.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Whether x <= y.
 **/
 
 void le_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
@@ -3585,13 +3558,14 @@ void le_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief comparison of "x" and "y"
-\param p position in tree
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return whether x > y
+/**
+@brief Comparison of "x" and "y".
+@param p Node in syntax tree.
+@param z Comparison result.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Whether x > y.
 **/
 
 void gt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
@@ -3605,13 +3579,14 @@ void gt_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief comparison of "x" and "y"
-\param p position in tree
-\param x mp number
-\param y mp number
-\param digits precision in mp-digits
-\return whether x >= y
+/**
+@brief Comparison of "x" and "y".
+@param p Node in syntax tree.
+@param z Comparison result.
+@param x Multiprecision number.
+@param y Multiprecision number.
+@param digits Precision in mp-digits.
+@return Whether x >= y.
 **/
 
 void ge_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
@@ -3625,13 +3600,13 @@ void ge_mp (NODE_T * p, A68_BOOL * z, MP_T * x, MP_T * y, int digits)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief rounding
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return round (x)
+/**
+@brief Rounding.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Round (x).
 **/
 
 MP_T *round_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -3650,13 +3625,13 @@ MP_T *round_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief rounding
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return entier (x)
+/**
+@brief Rounding.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return Entier (x).
 **/
 
 MP_T *entier_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -3678,13 +3653,13 @@ MP_T *entier_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief absolute value
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return |x|
+/**
+@brief Absolute value.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return |x|
 **/
 
 MP_T *abs_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
@@ -3698,13 +3673,13 @@ MP_T *abs_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)
   return (z);
 }
 
-/*!
-\brief change sign
-\param p position in tree
-\param z mp number
-\param x mp number
-\param digits precision in mp-digits
-\return -x
+/**
+@brief Change sign.
+@param p Node in syntax tree.
+@param z Multiprecision number.
+@param x Multiprecision number.
+@param digits Precision in mp-digits.
+@return -x
 **/
 
 MP_T *minus_mp (NODE_T * p, MP_T * z, MP_T * x, int digits)

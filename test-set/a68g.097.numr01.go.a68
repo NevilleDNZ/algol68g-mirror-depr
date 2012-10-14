@@ -1,0 +1,43 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#numr01#
+BEGIN CO This program calculates (x+(1-x)) ** n (which is 1, more or
+          less) for various values of x and n, through binomial expansion.
+          An attempt has been made to localize the precision of the floating
+          point calculations.
+          CO
+      FOR n TO 100 
+      DO CO Begin of length package CO
+         MODE REEL =  # LONG # REAL;
+         
+         #
+             OP * = (REEL x, INT i) REEL: x * LENG i;
+             OP / = (REEL x, INT i) REEL: x / LENG i;
+         #
+         REEL one =  # LONG # 1.0;
+         
+         REEL val1 =  # LONG # 0.99, val2 =  # LONG # 0.9, val3 =  # LONG # 0.5;
+         
+         CO end of length package CO
+         PROC poly = (REEL x, INT n) REEL:
+              (REEL s := one, a := one;
+               
+               FOR i TO n 
+               DO a := a * (one - x) * (n - i + 1) / i;
+                  s := s * x + a
+               OD;
+               s) CO poly CO ;
+         
+         printf (($/zzdx, 3(h(6, 2)x)$, n, poly (val1, n), poly (val2, n), poly (val3, n)))
+      OD
+END

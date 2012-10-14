@@ -1,0 +1,54 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#smio02#
+BEGIN print (("Results must be:", newline, 3, newline, 3.0, newline, 3, 3.0, newline, 2r11, TRUE, newline, 2, 0, newline, 1, newline, TRUE, newline, 6.0, newline, "Empty", newline, "Correct jump out of print parameter", newline, newline, "Results are:", newline));
+      print (IF TRUE
+             THEN 3
+             ELSE 3.0
+             FI);
+      print (newline);
+      print (IF FALSE
+             THEN 3
+             ELSE 3.0
+             FI);
+      print (newline);
+      print (IF TRUE
+             THEN (3, 3.0)
+             ELSE (2r11, TRUE, newline)
+             FI);
+      print (newline);
+      print (IF FALSE
+             THEN (3, 3.0)
+             ELSE (2r11, TRUE, newline)
+             FI);
+      print ((INT i := 1;
+              
+              (i + 1, i - 1, newline)
+             # coll. clause #
+             
+             # serial clause #
+             ));
+      print (UNION ([] INT, BOOL) ([] INT (1)));
+      print (newline);
+      print (UNION ([] INT, BOOL) (BOOL (TRUE)));
+      print (newline);
+      # 'print' works on a union of everything, so also on BOOL or []INT #
+      print ((PROC PROC REF REAL: PROC REF REAL: REF REAL: HEAP REAL) := 6);
+      print (newline);
+      print (());
+      print ("Empty");
+      print (newline);
+      print ((3, sqrt (GOTO l), 5));
+      print ("Error");
+      l: print ("Correct jump out of print parameter")
+END

@@ -1,0 +1,40 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#stow08#
+BEGIN # Test king size indices and midget slices #
+      INT i := 0;
+      
+      WHILE i <= (maxint - 1) OVER 2
+      DO INT maxdex = i := 2 * i + 1;
+         
+         INT mindex = -maxdex;
+         
+         print ((newline, "Bounds:           ", maxdex, mindex, newline));
+         [maxdex : maxdex] REAL maxvec;
+         
+         maxvec[maxdex] := 1;
+         print (("Bounds of maxvec: ", LWB maxvec, UPB maxvec, newline));
+         [mindex : mindex] REAL minvec;
+         
+         minvec[mindex] := 1;
+         print (("Bounds of minvec: ", LWB minvec, UPB minvec, newline));
+         HEAP [maxdex : mindex] REAL flatvec;
+         
+         print (("Bounds of flatvec:", LWB flatvec, UPB flatvec, newline));
+         REF [] REAL u := flatvec;
+         
+         HEAP [1] REAL v;
+         
+         v[LWB u : UPB u@LWB u] := u
+      OD
+END

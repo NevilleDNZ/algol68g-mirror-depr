@@ -1,0 +1,35 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#oper04#
+BEGIN # Operator identification #
+      MODE M = UNION ([] INT, BOOL, STRING);
+      
+      OP + = (REAL a) INT: 2,
+      OP + = (CHAR a) INT: 3,
+      OP + = (M a) INT: 1;
+      
+      PROC prpm = REF PROC M: HEAP PROC M := M: "aap";
+      
+      UNION (BOOL, STRING) b = "b ";
+      
+      FOR n TO 5 
+      DO print (+CASE n
+                IN SKIP, TRUE, IF FALSE
+                   THEN "aa"
+                   ELSE b
+                   FI, prpm
+                OUT LOC [1 : 1] INT := 1
+                ESAC)
+      OD
+# yields 11111 #
+END

@@ -1,0 +1,99 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#appl07#
+BEGIN # Tag list algorithm #
+      MODE TAG = STRUCT (STRING tag, REF TAG chain, REF INFO info);
+      
+      [1 : 11] STRUCT (INT number, REF TAG chain) hashlist;
+      
+      FOR i TO UPB hashlist 
+      DO hash list[i] := (0, NIL)
+      OD;
+      PROC find tag = (STRING tag) REF INFO:
+           BEGIN REF STRUCT (INT number, REF TAG chain) handle = hash list[(INT h := 0;
+    
+    FOR i TO UPB tag 
+    DO h := (2 * h + ABS tag[i]) MOD UPB hashlist
+    OD;
+    h + 1)];
+                 
+                 REF REF TAG ptag := chain OF handle;
+                 
+                 WHILE IF ptag :=: REF TAG (NIL)
+                       THEN REF REF TAG (ptag) := HEAP TAG := (tag, NIL, HEAP INFO);
+                            FALSE
+                       ELIF tag OF ptag < tag
+                       THEN ptag := chain OF ptag;
+                            TRUE
+                       ELIF tag OF ptag = tag
+                       THEN FALSE
+                       ELSE REF TAG (ptag) := (tag, HEAP TAG := ptag, HEAP INFO);
+                            FALSE
+                       FI
+                 DO SKIP
+                 OD;
+                 info OF ptag
+           END # find tag # ;
+      
+      PROC lex order = (PROC (STRING, INFO) VOID act) VOID:
+           ([1 : UPB hashlist] REF TAG entry := chain OF hashlist;
+            
+            WHILE REF REF TAG entry1 := NIL;
+                  
+                  FOR i TO UPB entry 
+                  DO REF REF TAG entry i = entry[i];
+                     
+                     IF entry i :/=: REF TAG (NIL)
+                     THEN IF (entry1 :=: REF REF TAG (NIL) | TRUE | tag OF entry i < tag OF entry1)
+                          THEN entry1 := entry i
+                          FI
+                     FI
+                  OD;
+                  entry1 :/=: REF REF TAG (NIL)
+            DO act (tag OF entry1, info OF entry1);
+               REF REF TAG (entry1) := chain OF entry1
+            OD);
+      
+      COMMENT
+      PROC test = VOID :
+      (print(("Debug;", newline));
+        FOR i TO UPB hashlist
+        DO REF TAG rrt:= chain OF hashlist[i];
+          WHILE rrt ISNT REF TAG (NIL)
+          DO print((tag OF rrt, info OF rrt, newline));
+            rrt:= chain OF rrt
+          OD;
+        print(("End hash;", newline))
+        OD;
+      print(("End debug;", newline))
+      );
+      COMMENT
+      
+      MODE INFO = INT;
+      
+      find tag ("aap") := 1;
+      find tag ("noot") := 4;
+      find tag ("mies") := 3;
+      find tag ("wim") := 5;
+      find tag ("zus") := 6;
+      find tag ("jet") := 2;
+      print (find tag ("aap"));
+      print (find tag ("jet"));
+      print (find tag ("mies"));
+      print (find tag ("noot"));
+      print (find tag ("wim"));
+      print (find tag ("zus"));
+      print (newline);
+      lex order ((STRING st, INFO i) VOID:
+                 print ((st, i, newline)))
+END

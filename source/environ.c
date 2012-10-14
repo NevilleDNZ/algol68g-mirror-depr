@@ -1,11 +1,13 @@
-/*!
-\file environ.c
-\brief standard prelude implementation
-*/
+/**
+@file environ.c
+@author J. Marcel van der Veer.
+@brief Standard prelude implementation.
+@section Copyright
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,7 +20,12 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+
+@section Description
+
+This file implements the standard environ, both as required by the Revised Report as well as the Algol 68 Genie extensions.
+
+**/
 
 #if defined HAVE_CONFIG_H
 #include "a68g-config.h"
@@ -33,15 +40,15 @@ TABLE_T *a68g_standenv;
 
 static MOID_T *proc_int, *proc_real, *proc_real_real, *proc_real_real_real, *proc_real_real_real_real, *proc_complex_complex, *proc_bool, *proc_char, *proc_void;
 
-/*!
-\brief enter tag in standenv symbol table
-\param portable whether portable
-\param a attribute
-\param n node where defined
-\param c name of token
-\param m moid of token
-\param p priority, if applicable
-\param q interpreter routine that executes this token
+/**
+@brief Enter tag in standenv symbol table.
+@param portable Whether portable.
+@param a Attribute.
+@param n Node where defined.
+@param c Name of token.
+@param m Moid of token.
+@param p Priority, if applicable.
+@param q Interpreter routine that executes this token.
 **/
 
 static void add_a68g_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T * m, int p, GPROC * q)
@@ -78,10 +85,10 @@ static void add_a68g_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID
 #undef INSERT_TAG
 }
 
-/*!
-\brief compose PROC moid from arguments - first result, than arguments
-\param m result moid
-\return entry in mode table
+/**
+@brief Compose PROC moid from arguments - first result, than arguments.
+@param m Result moid.
+@return Entry in mode table.
 **/
 
 static MOID_T *a68_proc (MOID_T * m, ...)
@@ -106,11 +113,12 @@ static MOID_T *a68_proc (MOID_T * m, ...)
   return (add_mode (z, PROC_SYMBOL, count_pack_members (p), NO_NODE, m, p));
 }
 
-/*!
-\brief enter an identifier in standenv
-\param n name of identifier
-\param m mode of identifier
-\param q interpreter routine that executes this token
+/**
+@brief Enter an identifier in standenv.
+@param portable Whether item is portable.
+@param n Name of identifier.
+@param m Mode of identifier.
+@param q Interpreter routine that executes this token.
 **/
 
 static void a68_idf (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
@@ -118,11 +126,11 @@ static void a68_idf (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
   add_a68g_standenv (portable, IDENTIFIER, some_node (TEXT (add_token (&top_token, n))), NO_TEXT, m, 0, q);
 }
 
-/*!
-\brief enter a moid in standenv
-\param p sizety
-\param t name of moid
-\param m will point to entry in mode table
+/**
+@brief Enter a moid in standenv.
+@param p Sizety.
+@param t Name of moid.
+@param m Will point to entry in mode table.
 **/
 
 static void a68_mode (int p, char *t, MOID_T ** m)
@@ -130,10 +138,10 @@ static void a68_mode (int p, char *t, MOID_T ** m)
   (*m) = add_mode (&TOP_MOID (&program), STANDARD, p, some_node (TEXT (find_keyword (top_keyword, t))), NO_MOID, NO_PACK);
 }
 
-/*!
-\brief enter a priority in standenv
-\param p name of operator
-\param b priority of operator
+/**
+@brief Enter a priority in standenv.
+@param p Name of operator.
+@param b Priority of operator.
 **/
 
 static void a68_prio (char *p, int b)
@@ -141,11 +149,12 @@ static void a68_prio (char *p, int b)
   add_a68g_standenv (A68_TRUE, PRIO_SYMBOL, some_node (TEXT (add_token (&top_token, p))), NO_TEXT, NO_MOID, b, NO_GPROC);
 }
 
-/*!
-\brief enter operator in standenv
-\param n name of operator
-\param m mode of operator
-\param q interpreter routine that executes this token
+/**
+@brief Enter operator in standenv.
+@param portable Whether item is portable.
+@param n Name of operator.
+@param m Mode of operator.
+@param q Interpreter routine that executes this token.
 **/
 
 static void a68_op (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
@@ -153,8 +162,8 @@ static void a68_op (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
   add_a68g_standenv (portable, OP_SYMBOL, some_node (TEXT (add_token (&top_token, n))), NO_TEXT, m, 0, q);
 }
 
-/*!
-\brief enter standard modes in standenv
+/**
+@brief Enter standard modes in standenv.
 **/
 
 static void stand_moids (void)
@@ -378,8 +387,8 @@ static void stand_moids (void)
   NAME (MODE (REF_PIPE)) = add_mode (&TOP_MOID (&program), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
 }
 
-/*!
-\brief set up standenv - general RR but not transput
+/**
+@brief Set up standenv - general RR but not transput.
 **/
 
 static void stand_prelude (void)
@@ -454,6 +463,8 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "break", m, genie_break);
   a68_idf (A68_EXT, "debug", m, genie_debug);
   a68_idf (A68_EXT, "monitor", m, genie_debug);
+  m = a68_proc (MODE (VOID), MODE (STRING), NO_MOID);
+  a68_idf (A68_EXT, "abend", m, genie_abend); 
   m = a68_proc (MODE (STRING), MODE (STRING), NO_MOID);
   a68_idf (A68_EXT, "evaluate", m, genie_evaluate);
   m = a68_proc (MODE (INT), MODE (STRING), NO_MOID);
@@ -1492,8 +1503,8 @@ static void stand_prelude (void)
   a68_op (A68_EXT, "SAMPLES", m, genie_sound_samples);
 }
 
-/*!
-\brief set up standenv - transput
+/**
+@brief Set up standenv - transput.
 **/
 
 static void stand_transput (void)
@@ -1611,76 +1622,39 @@ static void stand_transput (void)
   a68_idf (A68_STD, "putf", m, genie_write_file_format);
   a68_idf (A68_STD, "putbin", m, genie_write_bin_file);
 /* ALGOL68C type procs */
-  m = proc_int;
-  a68_idf (A68_EXT, "readint", m, genie_read_int);
-  m = a68_proc (MODE (VOID), MODE (INT), NO_MOID);
-  a68_idf (A68_EXT, "printint", m, genie_print_int);
-  m = a68_proc (MODE (LONG_INT), NO_MOID);
-  a68_idf (A68_EXT, "readlongint", m, genie_read_long_int);
-  m = a68_proc (MODE (VOID), MODE (LONG_INT), NO_MOID);
-  a68_idf (A68_EXT, "printlongint", m, genie_print_long_int);
-  m = a68_proc (MODE (LONGLONG_INT), NO_MOID);
-  a68_idf (A68_EXT, "readlonglongint", m, genie_read_longlong_int);
-  m = a68_proc (MODE (VOID), MODE (LONGLONG_INT), NO_MOID);
-  a68_idf (A68_EXT, "printlonglongint", m, genie_print_longlong_int);
-  m = proc_real;
-  a68_idf (A68_EXT, "readreal", m, genie_read_real);
-  m = a68_proc (MODE (VOID), MODE (REAL), NO_MOID);
-  a68_idf (A68_EXT, "printreal", m, genie_print_real);
-  m = a68_proc (MODE (LONG_REAL), NO_MOID);
-  a68_idf (A68_EXT, "readlongreal", m, genie_read_long_real);
-  a68_idf (A68_EXT, "readdouble", m, genie_read_long_real);
-  m = a68_proc (MODE (VOID), MODE (LONG_REAL), NO_MOID);
-  a68_idf (A68_EXT, "printlongreal", m, genie_print_long_real);
-  a68_idf (A68_EXT, "printdouble", m, genie_print_long_real);
-  m = a68_proc (MODE (LONGLONG_REAL), NO_MOID);
-  a68_idf (A68_EXT, "readlonglongreal", m, genie_read_longlong_real);
-  a68_idf (A68_EXT, "readquad", m, genie_read_longlong_real);
-  m = a68_proc (MODE (VOID), MODE (LONGLONG_REAL), NO_MOID);
-  a68_idf (A68_EXT, "printlonglongreal", m, genie_print_longlong_real);
-  a68_idf (A68_EXT, "printquad", m, genie_print_longlong_real);
-  m = a68_proc (MODE (COMPLEX), NO_MOID);
-  a68_idf (A68_EXT, "readcompl", m, genie_read_complex);
-  a68_idf (A68_EXT, "readcomplex", m, genie_read_complex);
-  m = a68_proc (MODE (VOID), MODE (COMPLEX), NO_MOID);
-  a68_idf (A68_EXT, "printcompl", m, genie_print_complex);
-  a68_idf (A68_EXT, "printcomplex", m, genie_print_complex);
-  m = a68_proc (MODE (LONG_COMPLEX), NO_MOID);
-  a68_idf (A68_EXT, "readlongcompl", m, genie_read_long_complex);
-  a68_idf (A68_EXT, "readlongcomplex", m, genie_read_long_complex);
-  m = a68_proc (MODE (VOID), MODE (LONG_COMPLEX), NO_MOID);
-  a68_idf (A68_EXT, "printlongcompl", m, genie_print_long_complex);
-  a68_idf (A68_EXT, "printlongcomplex", m, genie_print_long_complex);
-  m = a68_proc (MODE (LONGLONG_COMPLEX), NO_MOID);
-  a68_idf (A68_EXT, "readlonglongcompl", m, genie_read_longlong_complex);
-  a68_idf (A68_EXT, "readlonglongcomplex", m, genie_read_longlong_complex);
-  m = a68_proc (MODE (VOID), MODE (LONGLONG_COMPLEX), NO_MOID);
-  a68_idf (A68_EXT, "printlonglongcompl", m, genie_print_longlong_complex);
-  a68_idf (A68_EXT, "printlonglongcomplex", m, genie_print_longlong_complex);
-  m = proc_bool;
-  a68_idf (A68_EXT, "readbool", m, genie_read_bool);
-  m = a68_proc (MODE (VOID), MODE (BOOL), NO_MOID);
-  a68_idf (A68_EXT, "printbool", m, genie_print_bool);
-  m = a68_proc (MODE (BITS), NO_MOID);
-  a68_idf (A68_EXT, "readbits", m, genie_read_bits);
-  m = a68_proc (MODE (LONG_BITS), NO_MOID);
-  a68_idf (A68_EXT, "readlongbits", m, genie_read_long_bits);
-  m = a68_proc (MODE (LONGLONG_BITS), NO_MOID);
-  a68_idf (A68_EXT, "readlonglongbits", m, genie_read_longlong_bits);
-  m = a68_proc (MODE (VOID), MODE (BITS), NO_MOID);
-  a68_idf (A68_EXT, "printbits", m, genie_print_bits);
-  m = a68_proc (MODE (VOID), MODE (LONG_BITS), NO_MOID);
-  a68_idf (A68_EXT, "printlongbits", m, genie_print_long_bits);
-  m = a68_proc (MODE (VOID), MODE (LONGLONG_BITS), NO_MOID);
-  a68_idf (A68_EXT, "printlonglongbits", m, genie_print_longlong_bits);
-  m = proc_char;
-  a68_idf (A68_EXT, "readchar", m, genie_read_char);
-  m = a68_proc (MODE (VOID), MODE (CHAR), NO_MOID);
-  a68_idf (A68_EXT, "printchar", m, genie_print_char);
-  a68_idf (A68_EXT, "readstring", MODE (PROC_STRING), genie_read_string);
+#define A68C_DEFIO(name, pname, mode)\
+  m = a68_proc (MODE (mode), MODE (REF_FILE), NO_MOID);\
+  a68_idf (A68_EXT, "get" #name, m, genie_get_##pname);\
+  m = a68_proc (MODE (VOID), MODE (REF_FILE), MODE (mode), NO_MOID);\
+  a68_idf (A68_EXT, "put" #name, m, genie_put_##pname);\
+  m = a68_proc (MODE (mode), NO_MOID);\
+  a68_idf (A68_EXT, "read" #name, m, genie_read_##pname);\
+  m = a68_proc (MODE (VOID), MODE (mode), NO_MOID);\
+  a68_idf (A68_EXT, "print" #name, m, genie_print_##pname);
+
+  A68C_DEFIO(int, int, INT)
+  A68C_DEFIO(longint, long_int, LONG_INT)
+  A68C_DEFIO(longlongint, longlong_int, LONGLONG_INT)
+  A68C_DEFIO(real, real, REAL)
+  A68C_DEFIO(longreal, long_real, LONG_REAL)
+  A68C_DEFIO(double, long_real, LONG_REAL)
+  A68C_DEFIO(longlongreal, longlong_real, LONGLONG_REAL)
+  A68C_DEFIO(quad, longlong_real, LONGLONG_REAL)
+  A68C_DEFIO(compl, complex, COMPLEX)
+  A68C_DEFIO(longcompl, long_complex, LONG_COMPLEX)
+  A68C_DEFIO(longlongcompl, longlong_complex, LONGLONG_COMPLEX)
+  A68C_DEFIO(complex, complex, COMPLEX)
+  A68C_DEFIO(longcomplex, long_complex, LONG_COMPLEX)
+  A68C_DEFIO(longlongcomplex, longlong_complex, LONGLONG_COMPLEX)
+  A68C_DEFIO(bits, bits, BITS)
+  A68C_DEFIO(longbits, long_bits, LONG_BITS)
+  A68C_DEFIO(longlongbits, longlong_bits, LONGLONG_BITS)
+  A68C_DEFIO(bool, bool, BOOL);
+  A68C_DEFIO(char, char, CHAR);
+  A68C_DEFIO(string, string, STRING);
+#undef A68C_DEFIO
+
   a68_idf (A68_EXT, "readline", MODE (PROC_STRING), genie_read_line);
-  m = a68_proc (MODE (VOID), MODE (STRING), NO_MOID);
-  a68_idf (A68_EXT, "printstring", m, genie_print_string);
 /* Constants ex GSL */
   a68_idf (A68_EXT, "cgsspeedoflight", MODE (REAL), genie_cgs_speed_of_light);
   a68_idf (A68_EXT, "cgsgravitationalconstant", MODE (REAL), genie_cgs_gravitational_constant);
@@ -1896,8 +1870,8 @@ static void stand_transput (void)
   a68_idf (A68_EXT, "numyocto", MODE (REAL), genie_num_yocto);
 }
 
-/*!
-\brief set up standenv - extensions
+/**
+@brief Set up standenv - extensions.
 **/
 
 static void stand_extensions (void)
@@ -2186,8 +2160,8 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "setpwd", m, genie_cd);
   m = a68_proc (MODE (BOOL), MODE (STRING), NO_MOID);
   a68_idf (A68_EXT, "fileisdirectory", m, genie_file_is_directory);
-  a68_idf (A68_EXT, "fileisregular", m, genie_file_is_block_device);
-  a68_idf (A68_EXT, "fileisregular", m, genie_file_is_char_device);
+  a68_idf (A68_EXT, "fileisblockdevice", m, genie_file_is_block_device);
+  a68_idf (A68_EXT, "fileischardevice", m, genie_file_is_char_device);
   a68_idf (A68_EXT, "fileisregular", m, genie_file_is_regular);
 #if defined __S_IFIFO
   a68_idf (A68_EXT, "fileisfifo", m, genie_file_is_fifo);
@@ -2305,8 +2279,8 @@ static void stand_extensions (void)
 #endif
 }
 
-/*!
-\brief build the standard environ symbol table
+/**
+@brief Build the standard environ symbol table.
 **/
 
 void make_standard_environ (void)
@@ -2326,7 +2300,7 @@ void make_standard_environ (void)
   stand_extensions ();
 }
 
-/*!
+/**
 Standard prelude implementation, except transput.
 */
 
@@ -2351,9 +2325,9 @@ void n (NODE_T * p) {\
   VALUE (i) = OP (VALUE (i));\
 }
 
-/*!
-\brief PROC (PROC VOID) VOID on gc event
-\param p position in tree
+/**
+@brief PROC (PROC VOID) VOID on gc event
+@param p Node in syntax tree.
 **/
 
 void genie_on_gc_event (NODE_T * p)
@@ -2361,17 +2335,17 @@ void genie_on_gc_event (NODE_T * p)
   POP_PROCEDURE (p, &on_gc_event);
 }
 
-/*!
-\brief generic procedure for OP AND BECOMES (+:=, -:=, ...)
-\param p position in tree
-\param ref mode of destination
-\param f pointer to function that performs operation
+/**
+@brief Generic procedure for OP AND BECOMES (+:=, -:=, ...).
+@param p Node in syntax tree.
+@param ref Mode of destination.
+@param f Pointer to function that performs operation.
 **/
 
 void genie_f_and_becomes (NODE_T * p, MOID_T * ref, GPROC * f)
 {
   MOID_T *mode = SUB (ref);
-  int size = MOID_SIZE (mode);
+  int size = SIZE (mode);
   BYTE_T *src = STACK_OFFSET (-size), *addr;
   A68_REF *dst = (A68_REF *) STACK_OFFSET (-size - A68_REF_SIZE);
   CHECK_REF (p, *dst, ref);
@@ -2420,9 +2394,9 @@ A68_ENV_REAL (genie_cputime, seconds () - cputime_0)
 A68_ENV_INT (genie_stack_pointer, stack_pointer)
 A68_ENV_INT (genie_system_stack_size, stack_size)
 
-/*!
-\brief INT system stack pointer
-\param p position in tree
+/**
+@brief INT system stack pointer
+@param p Node in syntax tree.
 **/
 
 void genie_system_stack_pointer (NODE_T * p)
@@ -2431,14 +2405,14 @@ void genie_system_stack_pointer (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) (system_stack_offset - &stack_offset), A68_INT);
 }
 
-/*!
-\brief LONG INT max long int
-\param p position in tree
+/**
+@brief LONG INT max long int
+@param p Node in syntax tree.
 **/
 
 void genie_long_max_int (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_INT));
+  int digits = DIGITS (MODE (LONG_INT));
   MP_T *z;
   int k, j = 1 + digits;
   STACK_MP (z, p, digits);
@@ -2449,14 +2423,14 @@ void genie_long_max_int (NODE_T * p)
   }
 }
 
-/*!
-\brief LONG LONG INT max long long int
-\param p position in tree
+/**
+@brief LONG LONG INT max long long int
+@param p Node in syntax tree.
 **/
 
 void genie_longlong_max_int (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONGLONG_INT));
+  int digits = DIGITS (MODE (LONGLONG_INT));
   MP_T *z;
   int k, j = 1 + digits;
   STACK_MP (z, p, digits);
@@ -2467,14 +2441,14 @@ void genie_longlong_max_int (NODE_T * p)
   }
 }
 
-/*!
-\brief LONG REAL max long real
-\param p position in tree
+/**
+@brief LONG REAL max long real
+@param p Node in syntax tree.
 **/
 
 void genie_long_max_real (NODE_T * p)
 {
-  int j, digits = get_mp_digits (MODE (LONG_REAL));
+  int j, digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
@@ -2484,14 +2458,14 @@ void genie_long_max_real (NODE_T * p)
   }
 }
 
-/*!
-\brief LONG LONG REAL max long long real
-\param p position in tree
+/**
+@brief LONG LONG REAL max long long real
+@param p Node in syntax tree.
 **/
 
 void genie_longlong_max_real (NODE_T * p)
 {
-  int j, digits = get_mp_digits (MODE (LONGLONG_REAL));
+  int j, digits = DIGITS (MODE (LONGLONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
@@ -2501,14 +2475,14 @@ void genie_longlong_max_real (NODE_T * p)
   }
 }
 
-/*!
-\brief LONG REAL min long real
-\param p position in tree
+/**
+@brief LONG REAL min long real
+@param p Node in syntax tree.
 **/
 
 void genie_long_min_real (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_REAL));
+  int digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   SET_MP_ZERO (z, digits);
@@ -2517,14 +2491,14 @@ void genie_long_min_real (NODE_T * p)
   MP_DIGIT (z, 1) = (MP_T) 1;
 }
 
-/*!
-\brief LONG LONG REAL min long long real
-\param p position in tree
+/**
+@brief LONG LONG REAL min long long real
+@param p Node in syntax tree.
 **/
 
 void genie_longlong_min_real (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONGLONG_REAL));
+  int digits = DIGITS (MODE (LONGLONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   SET_MP_ZERO (z, digits);
@@ -2533,14 +2507,14 @@ void genie_longlong_min_real (NODE_T * p)
   MP_DIGIT (z, 1) = (MP_T) 1;
 }
 
-/*!
-\brief LONG REAL small long real
-\param p position in tree
+/**
+@brief LONG REAL small long real
+@param p Node in syntax tree.
 **/
 
 void genie_long_small_real (NODE_T * p)
 {
-  int j, digits = get_mp_digits (MODE (LONG_REAL));
+  int j, digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
@@ -2551,14 +2525,14 @@ void genie_long_small_real (NODE_T * p)
   }
 }
 
-/*!
-\brief LONG LONG REAL small long long real
-\param p position in tree
+/**
+@brief LONG LONG REAL small long long real
+@param p Node in syntax tree.
 **/
 
 void genie_longlong_small_real (NODE_T * p)
 {
-  int j, digits = get_mp_digits (MODE (LONGLONG_REAL));
+  int j, digits = DIGITS (MODE (LONGLONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
@@ -2569,9 +2543,9 @@ void genie_longlong_small_real (NODE_T * p)
   }
 }
 
-/*!
-\brief BITS max bits
-\param p position in tree
+/**
+@brief BITS max bits
+@param p Node in syntax tree.
 **/
 
 void genie_max_bits (NODE_T * p)
@@ -2579,14 +2553,14 @@ void genie_max_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, A68_MAX_BITS, A68_BITS);
 }
 
-/*!
-\brief LONG BITS long max bits
-\param p position in tree
+/**
+@brief LONG BITS long max bits
+@param p Node in syntax tree.
 **/
 
 void genie_long_max_bits (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_BITS));
+  int digits = DIGITS (MODE (LONG_BITS));
   int width = get_mp_bits_width (MODE (LONG_BITS));
   ADDR_T pop_sp;
   MP_T *z, *one;
@@ -2600,14 +2574,14 @@ void genie_long_max_bits (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief LONG LONG BITS long long max bits
-\param p position in tree
+/**
+@brief LONG LONG BITS long long max bits
+@param p Node in syntax tree.
 **/
 
 void genie_longlong_max_bits (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONGLONG_BITS));
+  int digits = DIGITS (MODE (LONGLONG_BITS));
   int width = get_mp_bits_width (MODE (LONGLONG_BITS));
   ADDR_T pop_sp;
   MP_T *z, *one;
@@ -2621,14 +2595,14 @@ void genie_longlong_max_bits (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief LONG REAL long pi
-\param p position in tree
+/**
+@brief LONG REAL long pi
+@param p Node in syntax tree.
 **/
 
 void genie_pi_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p));
+  int digits = DIGITS (MOID (p));
   MP_T *z;
   STACK_MP (z, p, digits);
   (void) mp_pi (p, z, MP_PI, digits);
@@ -2641,9 +2615,9 @@ void genie_pi_long_mp (NODE_T * p)
 
 A68_MONAD (genie_not_bool, A68_BOOL, (BOOL_T) !)
 
-/*!
-\brief OP ABS = (BOOL) INT
-\param p position in tree
+/**
+@brief OP ABS = (BOOL) INT
+@param p Node in syntax tree.
 **/
 
 void genie_abs_bool (NODE_T * p)
@@ -2671,9 +2645,9 @@ A68_BOOL_DYAD (genie_ne_bool, !=)
 
 A68_MONAD (genie_minus_int, A68_INT, -)
 
-/*!
-\brief OP ABS = (INT) INT
-\param p position in tree
+/**
+@brief OP ABS = (INT) INT
+@param p Node in syntax tree.
 **/
 void genie_abs_int (NODE_T * p)
 {
@@ -2682,9 +2656,9 @@ void genie_abs_int (NODE_T * p)
   VALUE (j) = ABS (VALUE (j));
 }
 
-/*!
-\brief OP SIGN = (INT) INT
-\param p position in tree
+/**
+@brief OP SIGN = (INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sign_int (NODE_T * p)
@@ -2694,9 +2668,9 @@ void genie_sign_int (NODE_T * p)
   VALUE (j) = SIGN (VALUE (j));
 }
 
-/*!
-\brief OP ODD = (INT) INT
-\param p position in tree
+/**
+@brief OP ODD = (INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_odd_int (NODE_T * p)
@@ -2706,9 +2680,9 @@ void genie_odd_int (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&j) >= 0 ? VALUE (&j) : -VALUE (&j)) % 2 == 1), A68_BOOL);
 }
 
-/*!
-\brief OP + = (INT, INT) INT
-\param p position in tree
+/**
+@brief OP + = (INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_add_int (NODE_T * p)
@@ -2719,9 +2693,9 @@ void genie_add_int (NODE_T * p)
   VALUE (i) += VALUE (j);
 }
 
-/*!
-\brief OP - = (INT, INT) INT
-\param p position in tree
+/**
+@brief OP - = (INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sub_int (NODE_T * p)
@@ -2732,9 +2706,9 @@ void genie_sub_int (NODE_T * p)
   VALUE (i) -= VALUE (j);
 }
 
-/*!
-\brief OP * = (INT, INT) INT
-\param p position in tree
+/**
+@brief OP * = (INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_mul_int (NODE_T * p)
@@ -2745,9 +2719,9 @@ void genie_mul_int (NODE_T * p)
   VALUE (i) *= VALUE (j);
 }
 
-/*!
-\brief OP OVER = (INT, INT) INT
-\param p position in tree
+/**
+@brief OP OVER = (INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_over_int (NODE_T * p)
@@ -2758,9 +2732,9 @@ void genie_over_int (NODE_T * p)
   VALUE (i) /= VALUE (j);
 }
 
-/*!
-\brief OP MOD = (INT, INT) INT
-\param p position in tree
+/**
+@brief OP MOD = (INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_mod_int (NODE_T * p)
@@ -2776,9 +2750,9 @@ void genie_mod_int (NODE_T * p)
   VALUE (i) = k;
 }
 
-/*!
-\brief OP / = (INT, INT) REAL
-\param p position in tree
+/**
+@brief OP / = (INT, INT) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_div_int (NODE_T * p)
@@ -2790,9 +2764,9 @@ void genie_div_int (NODE_T * p)
   PUSH_PRIMITIVE (p, (double) (VALUE (&i)) / (double) (VALUE (&j)), A68_REAL);
 }
 
-/*!
-\brief OP ** = (INT, INT) INT
-\param p position in tree
+/**
+@brief OP ** = (INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pow_int (NODE_T * p)
@@ -2836,9 +2810,9 @@ A68_CMP_INT (genie_gt_int, >)
 A68_CMP_INT (genie_le_int, <=)
 A68_CMP_INT (genie_ge_int, >=)
 
-/*!
-\brief OP +:= = (REF INT, INT) REF INT
-\param p position in tree
+/**
+@brief OP +:= = (REF INT, INT) REF INT
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_int (NODE_T * p)
@@ -2846,9 +2820,9 @@ void genie_plusab_int (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_INT), genie_add_int);
 }
 
-/*!
-\brief OP -:= = (REF INT, INT) REF INT
-\param p position in tree
+/**
+@brief OP -:= = (REF INT, INT) REF INT
+@param p Node in syntax tree.
 **/
 
 void genie_minusab_int (NODE_T * p)
@@ -2856,9 +2830,9 @@ void genie_minusab_int (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_INT), genie_sub_int);
 }
 
-/*!
-\brief OP *:= = (REF INT, INT) REF INT
-\param p position in tree
+/**
+@brief OP *:= = (REF INT, INT) REF INT
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_int (NODE_T * p)
@@ -2866,9 +2840,9 @@ void genie_timesab_int (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_INT), genie_mul_int);
 }
 
-/*!
-\brief OP %:= = (REF INT, INT) REF INT
-\param p position in tree
+/**
+@brief OP %:= = (REF INT, INT) REF INT
+@param p Node in syntax tree.
 **/
 
 void genie_overab_int (NODE_T * p)
@@ -2876,9 +2850,9 @@ void genie_overab_int (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_INT), genie_over_int);
 }
 
-/*!
-\brief OP %*:= = (REF INT, INT) REF INT
-\param p position in tree
+/**
+@brief OP %*:= = (REF INT, INT) REF INT
+@param p Node in syntax tree.
 **/
 
 void genie_modab_int (NODE_T * p)
@@ -2886,14 +2860,14 @@ void genie_modab_int (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_INT), genie_mod_int);
 }
 
-/*!
-\brief OP LENG = (INT) LONG INT
-\param p position in tree
+/**
+@brief OP LENG = (INT) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_lengthen_int_to_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_INT));
+  int digits = DIGITS (MODE (LONG_INT));
   MP_T *z;
   A68_INT k;
   POP_OBJECT (p, &k, A68_INT);
@@ -2902,14 +2876,14 @@ void genie_lengthen_int_to_long_mp (NODE_T * p)
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP LENG = (BITS) LONG BITS
-\param p position in tree
+/**
+@brief OP LENG = (BITS) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_lengthen_unsigned_to_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_INT));
+  int digits = DIGITS (MODE (LONG_INT));
   MP_T *z;
   A68_BITS k;
   POP_OBJECT (p, &k, A68_BITS);
@@ -2918,15 +2892,15 @@ void genie_lengthen_unsigned_to_long_mp (NODE_T * p)
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP SHORTEN = (LONG INT) INT
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_long_mp_to_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *z;
   DECREMENT_STACK_POINTER (p, size);
   z = (MP_T *) STACK_TOP;
@@ -2934,15 +2908,15 @@ void genie_shorten_long_mp_to_int (NODE_T * p)
   PUSH_PRIMITIVE (p, mp_to_int (p, z, digits), A68_INT);
 }
 
-/*!
-\brief OP ODD = (LONG INT) BOOL
-\param p position in tree
+/**
+@brief OP ODD = (LONG INT) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_odd_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   DECREMENT_STACK_POINTER (p, size);
   if (MP_EXPONENT (z) <= (MP_T) (digits - 1)) {
@@ -2952,11 +2926,11 @@ void genie_odd_long_mp (NODE_T * p)
   }
 }
 
-/*!
-\brief test whether z is a valid LONG INT
-\param p position in tree
-\param z mp number
-\param m mode associated with z
+/**
+@brief Test whether z is a valid LONG INT.
+@param p Node in syntax tree.
+@param z Mp number.
+@param m Mode associated with z.
 **/
 
 void test_long_int_range (NODE_T * p, MP_T * z, MOID_T * m)
@@ -2964,15 +2938,15 @@ void test_long_int_range (NODE_T * p, MP_T * z, MOID_T * m)
   PRELUDE_ERROR (!check_mp_int (z, m), p, ERROR_OUT_OF_BOUNDS, m);
 }
 
-/*!
-\brief OP + = (LONG INT, LONG INT) LONG INT
-\param p position in tree
+/**
+@brief OP + = (LONG INT, LONG INT) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_add_long_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
-  int digits = get_mp_digits (m), size = get_mp_size (m);
+  int digits = DIGITS (m), size = SIZE (m);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) add_mp (p, x, x, y, digits);
@@ -2981,15 +2955,15 @@ void genie_add_long_int (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP - = (LONG INT, LONG INT) LONG INT
-\param p position in tree
+/**
+@brief OP - = (LONG INT, LONG INT) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_sub_long_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
-  int digits = get_mp_digits (m), size = get_mp_size (m);
+  int digits = DIGITS (m), size = SIZE (m);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) sub_mp (p, x, x, y, digits);
@@ -2998,15 +2972,15 @@ void genie_sub_long_int (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP * = (LONG INT, LONG INT) LONG INT
-\param p position in tree
+/**
+@brief OP * = (LONG INT, LONG INT) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_mul_long_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
-  int digits = get_mp_digits (m), size = get_mp_size (m);
+  int digits = DIGITS (m), size = SIZE (m);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) mul_mp (p, x, x, y, digits);
@@ -3015,15 +2989,15 @@ void genie_mul_long_int (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP ** = (LONG MODE, INT) LONG INT
-\param p position in tree
+/**
+@brief OP ** = (LONG MODE, INT) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_pow_long_mp_int_int (NODE_T * p)
 {
   MOID_T *m = LHS_MODE (p);
-  int digits = get_mp_digits (m), size = get_mp_size (m);
+  int digits = DIGITS (m), size = SIZE (m);
   A68_INT k;
   MP_T *x;
   POP_OBJECT (p, &k, A68_INT);
@@ -3033,9 +3007,9 @@ void genie_pow_long_mp_int_int (NODE_T * p)
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP +:= = (REF LONG INT, LONG INT) REF LONG INT
-\param p position in tree
+/**
+@brief OP +:= = (REF LONG INT, LONG INT) REF LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_long_int (NODE_T * p)
@@ -3044,9 +3018,9 @@ void genie_plusab_long_int (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_add_long_int);
 }
 
-/*!
-\brief OP -:= = (REF LONG INT, LONG INT) REF LONG INT
-\param p position in tree
+/**
+@brief OP -:= = (REF LONG INT, LONG INT) REF LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_minusab_long_int (NODE_T * p)
@@ -3055,9 +3029,9 @@ void genie_minusab_long_int (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_sub_long_int);
 }
 
-/*!
-\brief OP *:= = (REF LONG INT, LONG INT) REF LONG INT
-\param p position in tree
+/**
+@brief OP *:= = (REF LONG INT, LONG INT) REF LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_long_int (NODE_T * p)
@@ -3072,9 +3046,9 @@ void genie_timesab_long_int (NODE_T * p)
 
 A68_MONAD (genie_minus_real, A68_REAL, -)
 
-/*!
-\brief OP ABS = (REAL) REAL
-\param p position in tree
+/**
+@brief OP ABS = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_abs_real (NODE_T * p)
@@ -3084,9 +3058,9 @@ void genie_abs_real (NODE_T * p)
   VALUE (x) = ABS (VALUE (x));
 }
 
-/*!
-\brief OP ROUND = (REAL) INT
-\param p position in tree
+/**
+@brief OP ROUND = (REAL) INT
+@param p Node in syntax tree.
 **/
 
 void genie_round_real (NODE_T * p)
@@ -3097,9 +3071,9 @@ void genie_round_real (NODE_T * p)
   PUSH_PRIMITIVE (p, a68g_round (VALUE (&x)), A68_INT);
 }
 
-/*!
-\brief OP ENTIER = (REAL) INT
-\param p position in tree
+/**
+@brief OP ENTIER = (REAL) INT
+@param p Node in syntax tree.
 **/
 
 void genie_entier_real (NODE_T * p)
@@ -3110,9 +3084,9 @@ void genie_entier_real (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) floor (VALUE (&x)), A68_INT);
 }
 
-/*!
-\brief OP SIGN = (REAL) INT
-\param p position in tree
+/**
+@brief OP SIGN = (REAL) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sign_real (NODE_T * p)
@@ -3122,9 +3096,9 @@ void genie_sign_real (NODE_T * p)
   PUSH_PRIMITIVE (p, SIGN (VALUE (&x)), A68_INT);
 }
 
-/*!
-\brief OP + = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief OP + = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_add_real (NODE_T * p)
@@ -3135,9 +3109,9 @@ void genie_add_real (NODE_T * p)
   CHECK_REAL_REPRESENTATION (p, VALUE (x));
 }
 
-/*!
-\brief OP - = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief OP - = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sub_real (NODE_T * p)
@@ -3148,9 +3122,9 @@ void genie_sub_real (NODE_T * p)
   CHECK_REAL_REPRESENTATION (p, VALUE (x));
 }
 
-/*!
-\brief OP * = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief OP * = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_mul_real (NODE_T * p)
@@ -3161,9 +3135,9 @@ void genie_mul_real (NODE_T * p)
   CHECK_REAL_REPRESENTATION (p, VALUE (x));
 }
 
-/*!
-\brief OP / = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief OP / = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_div_real (NODE_T * p)
@@ -3174,9 +3148,9 @@ void genie_div_real (NODE_T * p)
   VALUE (x) /= VALUE (y);
 }
 
-/*!
-\brief OP ** = (REAL, INT) REAL
-\param p position in tree
+/**
+@brief OP ** = (REAL, INT) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_pow_real_int (NODE_T * p)
@@ -3211,9 +3185,9 @@ void genie_pow_real_int (NODE_T * p)
   PUSH_PRIMITIVE (p, prod, A68_REAL);
 }
 
-/*!
-\brief OP ** = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief OP ** = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_pow_real (NODE_T * p)
@@ -3255,9 +3229,9 @@ A68_CMP_REAL (genie_gt_real, >)
 A68_CMP_REAL (genie_le_real, <=)
 A68_CMP_REAL (genie_ge_real, >=)
 
-/*!
-\brief OP +:= = (REF REAL, REAL) REF REAL
-\param p position in tree
+/**
+@brief OP +:= = (REF REAL, REAL) REF REAL
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_real (NODE_T * p)
@@ -3265,9 +3239,9 @@ void genie_plusab_real (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_REAL), genie_add_real);
 }
 
-/*!
-\brief OP -:= = (REF REAL, REAL) REF REAL
-\param p position in tree
+/**
+@brief OP -:= = (REF REAL, REAL) REF REAL
+@param p Node in syntax tree.
 **/
 
 void genie_minusab_real (NODE_T * p)
@@ -3275,9 +3249,9 @@ void genie_minusab_real (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_REAL), genie_sub_real);
 }
 
-/*!
-\brief OP *:= = (REF REAL, REAL) REF REAL
-\param p position in tree
+/**
+@brief OP *:= = (REF REAL, REAL) REF REAL
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_real (NODE_T * p)
@@ -3285,9 +3259,9 @@ void genie_timesab_real (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_REAL), genie_mul_real);
 }
 
-/*!
-\brief OP /:= = (REF REAL, REAL) REF REAL
-\param p position in tree
+/**
+@brief OP /:= = (REF REAL, REAL) REF REAL
+@param p Node in syntax tree.
 **/
 
 void genie_divab_real (NODE_T * p)
@@ -3295,14 +3269,14 @@ void genie_divab_real (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_REAL), genie_div_real);
 }
 
-/*!
-\brief OP LENG = (REAL) LONG REAL
-\param p position in tree
+/**
+@brief OP LENG = (REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_lengthen_real_to_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_REAL));
+  int digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
@@ -3311,15 +3285,15 @@ void genie_lengthen_real_to_long_mp (NODE_T * p)
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP SHORTEN = (LONG REAL) REAL
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_long_mp_to_real (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *z;
   DECREMENT_STACK_POINTER (p, size);
   z = (MP_T *) STACK_TOP;
@@ -3327,69 +3301,69 @@ void genie_shorten_long_mp_to_real (NODE_T * p)
   PUSH_PRIMITIVE (p, mp_to_real (p, z, digits), A68_REAL);
 }
 
-/*!
-\brief OP ROUND = (LONG REAL) LONG INT
-\param p position in tree
+/**
+@brief OP ROUND = (LONG REAL) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_round_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   (void) round_mp (p, z, z, digits);
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief OP ENTIER = (LONG REAL) LONG INT
-\param p position in tree
+/**
+@brief OP ENTIER = (LONG REAL) LONG INT
+@param p Node in syntax tree.
 **/
 
 void genie_entier_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (LHS_MODE (p)), size = get_mp_size (LHS_MODE (p));
+  int digits = DIGITS (LHS_MODE (p)), size = SIZE (LHS_MODE (p));
   ADDR_T pop_sp = stack_pointer;
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   (void) entier_mp (p, z, z, digits);
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief PROC long sqrt = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long sqrt = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sqrt_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (sqrt_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long curt = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long curt = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_curt_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (curt_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long exp = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long exp = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_exp_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   ADDR_T pop_sp = stack_pointer;
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) exp_mp (p, x, x, digits);
@@ -3397,14 +3371,14 @@ void genie_exp_long_mp (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief PROC long ln = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long ln = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_ln_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   ADDR_T pop_sp = stack_pointer;
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (ln_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
@@ -3412,14 +3386,14 @@ void genie_ln_long_mp (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief PROC long log = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long log = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_log_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   ADDR_T pop_sp = stack_pointer;
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (log_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
@@ -3427,170 +3401,170 @@ void genie_log_long_mp (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief PROC long sinh = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long sinh = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sinh_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) sinh_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long cosh = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long cosh = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_cosh_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) cosh_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long tanh = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long tanh = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_tanh_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) tanh_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arcsinh = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arcsinh = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arcsinh_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) asinh_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arccosh = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arccosh = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arccosh_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) acosh_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arctanh = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arctanh = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arctanh_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) atanh_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long sin = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long sin = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sin_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) sin_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long cos = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long cos = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_cos_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) cos_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long tan = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long tan = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_tan_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (tan_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arcsin = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arcsin = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_asin_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (asin_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arccos = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arccos = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_acos_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (acos_mp (p, x, x, digits) == NO_MP, p, ERROR_INVALID_ARGUMENT, MOID (p));
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arctan = (LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arctan = (LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_atan_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   (void) atan_mp (p, x, x, digits);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief PROC long arctan2 = (LONG REAL, LONG REAL) LONG REAL
-\param p position in tree
+/**
+@brief PROC long arctan2 = (LONG REAL, LONG REAL) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_atan2_long_mp (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p)), size = get_mp_size (MOID (p));
+  int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   stack_pointer -= size;
@@ -3600,9 +3574,9 @@ void genie_atan2_long_mp (NODE_T * p)
 
 /* Arithmetic operations */
 
-/*!
-\brief OP LENG = (LONG MODE) LONG LONG MODE
-\param p position in tree
+/**
+@brief OP LENG = (LONG MODE) LONG LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
@@ -3614,9 +3588,9 @@ void genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP SHORTEN = (LONG LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
@@ -3632,54 +3606,54 @@ void genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP - = (LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP - = (LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_minus_long_mp (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZE (LHS_MODE (p));
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_DIGIT (z, 1) = -MP_DIGIT (z, 1);
 }
 
-/*!
-\brief OP ABS = (LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP ABS = (LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_abs_long_mp (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZE (LHS_MODE (p));
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_DIGIT (z, 1) = ABS (MP_DIGIT (z, 1));
 }
 
-/*!
-\brief OP SIGN = (LONG MODE) INT
-\param p position in tree
+/**
+@brief OP SIGN = (LONG MODE) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sign_long_mp (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZE (LHS_MODE (p));
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   DECREMENT_STACK_POINTER (p, size);
   PUSH_PRIMITIVE (p, SIGN (MP_DIGIT (z, 1)), A68_INT);
 }
 
-/*!
-\brief OP + = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP + = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_add_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) add_mp (p, x, x, y, digits);
@@ -3687,15 +3661,15 @@ void genie_add_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP - = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP - = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_sub_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) sub_mp (p, x, x, y, digits);
@@ -3703,15 +3677,15 @@ void genie_sub_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP * = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP * = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_mul_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) mul_mp (p, x, x, y, digits);
@@ -3719,15 +3693,15 @@ void genie_mul_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP / = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP / = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_div_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (div_mp (p, x, x, y, digits) == NO_MP, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_REAL));
@@ -3735,15 +3709,15 @@ void genie_div_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP % = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP % = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_over_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (over_mp (p, x, x, y, digits) == NO_MP, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
@@ -3751,15 +3725,15 @@ void genie_over_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP %* = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP %* = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_mod_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   PRELUDE_ERROR (mod_mp (p, x, x, y, digits) == NO_MP, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
@@ -3771,9 +3745,9 @@ void genie_mod_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP +:= = (REF LONG MODE, LONG MODE) REF LONG MODE
-\param p position in tree
+/**
+@brief OP +:= = (REF LONG MODE, LONG MODE) REF LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_long_mp (NODE_T * p)
@@ -3782,9 +3756,9 @@ void genie_plusab_long_mp (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_add_long_mp);
 }
 
-/*!
-\brief OP -:= = (REF LONG MODE, LONG MODE) REF LONG MODE
-\param p position in tree
+/**
+@brief OP -:= = (REF LONG MODE, LONG MODE) REF LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_minusab_long_mp (NODE_T * p)
@@ -3793,9 +3767,9 @@ void genie_minusab_long_mp (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_sub_long_mp);
 }
 
-/*!
-\brief OP *:= = (REF LONG MODE, LONG MODE) REF LONG MODE
-\param p position in tree
+/**
+@brief OP *:= = (REF LONG MODE, LONG MODE) REF LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_long_mp (NODE_T * p)
@@ -3804,9 +3778,9 @@ void genie_timesab_long_mp (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_mul_long_mp);
 }
 
-/*!
-\brief OP /:= = (REF LONG MODE, LONG MODE) REF LONG MODE
-\param p position in tree
+/**
+@brief OP /:= = (REF LONG MODE, LONG MODE) REF LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_divab_long_mp (NODE_T * p)
@@ -3815,9 +3789,9 @@ void genie_divab_long_mp (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_div_long_mp);
 }
 
-/*!
-\brief OP %:= = (REF LONG MODE, LONG MODE) REF LONG MODE
-\param p position in tree
+/**
+@brief OP %:= = (REF LONG MODE, LONG MODE) REF LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_overab_long_mp (NODE_T * p)
@@ -3826,9 +3800,9 @@ void genie_overab_long_mp (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_over_long_mp);
 }
 
-/*!
-\brief OP %*:= = (REF LONG MODE, LONG MODE) REF LONG MODE
-\param p position in tree
+/**
+@brief OP %*:= = (REF LONG MODE, LONG MODE) REF LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_modab_long_mp (NODE_T * p)
@@ -3843,7 +3817,7 @@ void genie_modab_long_mp (NODE_T * p)
 void n (NODE_T * p) {\
   MOID_T *mode = LHS_MODE (p);\
   A68_BOOL z;\
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);\
+  int digits = DIGITS (mode), size = SIZE (mode);\
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);\
   MP_T *y = (MP_T *) STACK_OFFSET (-size);\
   OP (p, &z, x, y, digits);\
@@ -3858,15 +3832,15 @@ A68_CMP_LONG (genie_gt_long_mp, gt_mp)
 A68_CMP_LONG (genie_le_long_mp, le_mp)
 A68_CMP_LONG (genie_ge_long_mp, ge_mp)
 
-/*!
-\brief OP ** = (LONG MODE, INT) LONG MODE
-\param p position in tree
+/**
+@brief OP ** = (LONG MODE, INT) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_pow_long_mp_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   A68_INT k;
   MP_T *x;
   POP_OBJECT (p, &k, A68_INT);
@@ -3875,15 +3849,15 @@ void genie_pow_long_mp_int (NODE_T * p)
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP ** = (LONG MODE, LONG MODE) LONG MODE
-\param p position in tree
+/**
+@brief OP ** = (LONG MODE, LONG MODE) LONG MODE
+@param p Node in syntax tree.
 **/
 
 void genie_pow_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
@@ -3923,9 +3897,9 @@ A68_CMP_CHAR (genie_gt_char, >)
 A68_CMP_CHAR (genie_le_char, <=)
 A68_CMP_CHAR (genie_ge_char, >=)
 
-/*!
-\brief OP ABS = (CHAR) INT
-\param p position in tree
+/**
+@brief OP ABS = (CHAR) INT
+@param p Node in syntax tree.
 **/
 
 void genie_abs_char (NODE_T * p)
@@ -3935,9 +3909,9 @@ void genie_abs_char (NODE_T * p)
   PUSH_PRIMITIVE (p, TO_UCHAR (VALUE (&i)), A68_INT);
 }
 
-/*!
-\brief OP REPR = (INT) CHAR
-\param p position in tree
+/**
+@brief OP REPR = (INT) CHAR
+@param p Node in syntax tree.
 **/
 
 void genie_repr_char (NODE_T * p)
@@ -3979,9 +3953,9 @@ void n (NODE_T * p) {\
 A68_CHAR_CHAR (genie_to_lower, TO_LOWER)
 A68_CHAR_CHAR (genie_to_upper, TO_UPPER)
 
-/*!
-\brief OP + = (CHAR, CHAR) STRING
-\param p position in tree
+/**
+@brief OP + = (CHAR, CHAR) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_add_char (NODE_T * p)
@@ -3998,12 +3972,12 @@ void genie_add_char (NODE_T * p)
   POP_OBJECT (p, &a, A68_CHAR);
   CHECK_INIT (p, INITIALISED (&a), MODE (CHAR));
 /* sum */
-  c = heap_generator (p, MODE (STRING), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  d = heap_generator (p, MODE (STRING), 2 * ALIGNED_SIZE_OF (A68_CHAR));
+  c = heap_generator (p, MODE (STRING), SIZE_AL (A68_ARRAY) + SIZE_AL (A68_TUPLE));
+  d = heap_generator (p, MODE (STRING), 2 * SIZE (MODE (CHAR)));
   GET_DESCRIPTOR (a_3, t_3, &c);
   DIM (a_3) = 1;
   MOID (a_3) = MODE (CHAR);
-  ELEM_SIZE (a_3) = ALIGNED_SIZE_OF (A68_CHAR);
+  ELEM_SIZE (a_3) = SIZE (MODE (CHAR));
   SLICE_OFFSET (a_3) = 0;
   FIELD_OFFSET (a_3) = 0;
   ARRAY (a_3) = d;
@@ -4013,14 +3987,14 @@ void genie_add_char (NODE_T * p)
   SPAN (t_3) = 1;
 /* add chars */
   b_3 = DEREF (BYTE_T, &ARRAY (a_3));
-  MOVE ((BYTE_T *) & b_3[0], (BYTE_T *) & a, ALIGNED_SIZE_OF (A68_CHAR));
-  MOVE ((BYTE_T *) & b_3[ALIGNED_SIZE_OF (A68_CHAR)], (BYTE_T *) & b, ALIGNED_SIZE_OF (A68_CHAR));
+  MOVE ((BYTE_T *) & b_3[0], (BYTE_T *) & a, SIZE (MODE (CHAR)));
+  MOVE ((BYTE_T *) & b_3[SIZE (MODE (CHAR))], (BYTE_T *) & b, SIZE (MODE (CHAR)));
   PUSH_REF (p, c);
 }
 
-/*!
-\brief OP ELEM = (INT, STRING) CHAR # ALGOL68C #
-\param p position in tree
+/**
+@brief OP ELEM = (INT, STRING) CHAR # ALGOL68C #
+@param p Node in syntax tree.
 **/
 
 void genie_elem_string (NODE_T * p)
@@ -4042,9 +4016,9 @@ void genie_elem_string (NODE_T * p)
   PUSH_PRIMITIVE (p, VALUE (ch), A68_CHAR);
 }
 
-/*!
-\brief OP + = (STRING, STRING) STRING
-\param p position in tree
+/**
+@brief OP + = (STRING, STRING) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_add_string (NODE_T * p)
@@ -4065,15 +4039,15 @@ void genie_add_string (NODE_T * p)
   GET_DESCRIPTOR (a_1, t_1, &a);
   l_1 = ROW_SIZE (t_1);
 /* sum */
-  c = heap_generator (p, MODE (STRING), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  d = heap_generator (p, MODE (STRING), (l_1 + l_2) * ALIGNED_SIZE_OF (A68_CHAR));
+  c = heap_generator (p, MODE (STRING), SIZE_AL (A68_ARRAY) + SIZE_AL (A68_TUPLE));
+  d = heap_generator (p, MODE (STRING), (l_1 + l_2) * SIZE (MODE (CHAR)));
 /* Calculate again since garbage collector might have moved data */
   GET_DESCRIPTOR (a_1, t_1, &a);
   GET_DESCRIPTOR (a_2, t_2, &b);
   GET_DESCRIPTOR (a_3, t_3, &c);
   DIM (a_3) = 1;
   MOID (a_3) = MODE (CHAR);
-  ELEM_SIZE (a_3) = ALIGNED_SIZE_OF (A68_CHAR);
+  ELEM_SIZE (a_3) = SIZE (MODE (CHAR));
   SLICE_OFFSET (a_3) = 0;
   FIELD_OFFSET (a_3) = 0;
   ARRAY (a_3) = d;
@@ -4087,23 +4061,23 @@ void genie_add_string (NODE_T * p)
   if (ROW_SIZE (t_1) > 0) {
     b_1 = DEREF (BYTE_T, &ARRAY (a_1));
     for (k = LWB (t_1); k <= UPB (t_1); k++) {
-      MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, k)], ALIGNED_SIZE_OF (A68_CHAR));
-      m += ALIGNED_SIZE_OF (A68_CHAR);
+      MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, k)], SIZE (MODE (CHAR)));
+      m += SIZE (MODE (CHAR));
     }
   }
   if (ROW_SIZE (t_2) > 0) {
     b_2 = DEREF (BYTE_T, &ARRAY (a_2));
     for (k = LWB (t_2); k <= UPB (t_2); k++) {
-      MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_2[INDEX_1_DIM (a_2, t_2, k)], ALIGNED_SIZE_OF (A68_CHAR));
-      m += ALIGNED_SIZE_OF (A68_CHAR);
+      MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_2[INDEX_1_DIM (a_2, t_2, k)], SIZE (MODE (CHAR)));
+      m += SIZE (MODE (CHAR));
     }
   }
   PUSH_REF (p, c);
 }
 
-/*!
-\brief OP * = (INT, STRING) STRING
-\param p position in tree
+/**
+@brief OP * = (INT, STRING) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_times_int_string (NODE_T * p)
@@ -4120,9 +4094,9 @@ void genie_times_int_string (NODE_T * p)
   }
 }
 
-/*!
-\brief OP * = (STRING, INT) STRING
-\param p position in tree
+/**
+@brief OP * = (STRING, INT) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_times_string_int (NODE_T * p)
@@ -4136,9 +4110,9 @@ void genie_times_string_int (NODE_T * p)
   genie_times_int_string (p);
 }
 
-/*!
-\brief OP * = (INT, CHAR) STRING
-\param p position in tree
+/**
+@brief OP * = (INT, CHAR) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_times_int_char (NODE_T * p)
@@ -4155,11 +4129,11 @@ void genie_times_int_char (NODE_T * p)
   POP_OBJECT (p, &str_size, A68_INT);
   PRELUDE_ERROR (VALUE (&str_size) < 0, p, ERROR_INVALID_ARGUMENT, MODE (INT));
 /* Make new_one string */
-  z = heap_generator (p, MODE (ROW_CHAR), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  row = heap_generator (p, MODE (ROW_CHAR), (int) (VALUE (&str_size)) * ALIGNED_SIZE_OF (A68_CHAR));
+  z = heap_generator (p, MODE (ROW_CHAR), SIZE_AL (A68_ARRAY) + SIZE_AL (A68_TUPLE));
+  row = heap_generator (p, MODE (ROW_CHAR), (int) (VALUE (&str_size)) * SIZE (MODE (CHAR)));
   DIM (&arr) = 1;
   MOID (&arr) = MODE (CHAR);
-  ELEM_SIZE (&arr) = ALIGNED_SIZE_OF (A68_CHAR);
+  ELEM_SIZE (&arr) = SIZE (MODE (CHAR));
   SLICE_OFFSET (&arr) = 0;
   FIELD_OFFSET (&arr) = 0;
   ARRAY (&arr) = row;
@@ -4175,14 +4149,14 @@ void genie_times_int_char (NODE_T * p)
     A68_CHAR ch;
     STATUS (&ch) = INIT_MASK;
     VALUE (&ch) = VALUE (&a);
-    *(A68_CHAR *) & base[k * ALIGNED_SIZE_OF (A68_CHAR)] = ch;
+    *(A68_CHAR *) & base[k * SIZE (MODE (CHAR))] = ch;
   }
   PUSH_REF (p, z);
 }
 
-/*!
-\brief OP * = (CHAR, INT) STRING
-\param p position in tree
+/**
+@brief OP * = (CHAR, INT) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_times_char_int (NODE_T * p)
@@ -4196,9 +4170,9 @@ void genie_times_char_int (NODE_T * p)
   genie_times_int_char (p);
 }
 
-/*!
-\brief OP +:= = (REF STRING, STRING) REF STRING
-\param p position in tree
+/**
+@brief OP +:= = (REF STRING, STRING) REF STRING
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_string (NODE_T * p)
@@ -4206,9 +4180,9 @@ void genie_plusab_string (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_STRING), genie_add_string);
 }
 
-/*!
-\brief OP +=: = (STRING, REF STRING) REF STRING
-\param p position in tree
+/**
+@brief OP +=: = (STRING, REF STRING) REF STRING
+@param p Node in syntax tree.
 **/
 
 void genie_plusto_string (NODE_T * p)
@@ -4226,9 +4200,9 @@ void genie_plusto_string (NODE_T * p)
   PUSH_REF (p, refa);
 }
 
-/*!
-\brief OP *:= = (REF STRING, INT) REF STRING
-\param p position in tree
+/**
+@brief OP *:= = (REF STRING, INT) REF STRING
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_string (NODE_T * p)
@@ -4255,10 +4229,10 @@ void genie_timesab_string (NODE_T * p)
   PUSH_REF (p, refa);
 }
 
-/*!
-\brief difference between two STRINGs in the stack
-\param p position in tree
-\return -1 if a < b, 0 if a = b or -1 if a > b
+/**
+@brief Difference between two STRINGs in the stack.
+@param p Node in syntax tree.
+@return -1 if a < b, 0 if a = b or -1 if a > b
 **/
 
 static int string_difference (NODE_T * p)
@@ -4318,9 +4292,9 @@ A68_CMP_STRING (genie_ge_string, >=)
 
 /* RNG functions are in gsl.c.*/
 
-/*!
-\brief PROC first random = (INT) VOID
-\param p position in tree
+/**
+@brief PROC first random = (INT) VOID
+@param p Node in syntax tree.
 **/
 void genie_first_random (NODE_T * p)
 {
@@ -4329,9 +4303,9 @@ void genie_first_random (NODE_T * p)
   init_rng ((unsigned long) VALUE (&i));
 }
 
-/*!
-\brief PROC next random = REAL
-\param p position in tree
+/**
+@brief PROC next random = REAL
+@param p Node in syntax tree.
 **/
 
 void genie_next_random (NODE_T * p)
@@ -4339,9 +4313,9 @@ void genie_next_random (NODE_T * p)
   PUSH_PRIMITIVE (p, rng_53_bit (), A68_REAL);
 }
 
-/*!
-\brief PROC rnd = REAL
-\param p position in tree
+/**
+@brief PROC rnd = REAL
+@param p Node in syntax tree.
 **/
 
 void genie_next_rnd (NODE_T * p)
@@ -4349,14 +4323,14 @@ void genie_next_rnd (NODE_T * p)
   PUSH_PRIMITIVE (p, 2 * rng_53_bit () - 1, A68_REAL);
 }
 
-/*!
-\brief PROC next long random = LONG REAL
-\param p position in tree
+/**
+@brief PROC next long random = LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_long_next_random (NODE_T * p)
 {
-  int digits = get_mp_digits (MOID (p));
+  int digits = DIGITS (MOID (p));
   MP_T *z;
   int k = 2 + digits;
   STACK_MP (z, p, digits);
@@ -4369,9 +4343,9 @@ void genie_long_next_random (NODE_T * p)
 
 /* BYTES operations */
 
-/*!
-\brief OP ELEM = (INT, BYTES) CHAR
-\param p position in tree
+/**
+@brief OP ELEM = (INT, BYTES) CHAR
+@param p Node in syntax tree.
 **/
 
 void genie_elem_bytes (NODE_T * p)
@@ -4388,9 +4362,9 @@ void genie_elem_bytes (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC bytes pack = (STRING) BYTES
-\param p position in tree
+/**
+@brief PROC bytes pack = (STRING) BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_bytespack (NODE_T * p)
@@ -4405,9 +4379,9 @@ void genie_bytespack (NODE_T * p)
   PUSH_BYTES (p, VALUE (&b));
 }
 
-/*!
-\brief PROC bytes pack = (STRING) BYTES
-\param p position in tree
+/**
+@brief PROC bytes pack = (STRING) BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_add_bytes (NODE_T * p)
@@ -4418,9 +4392,9 @@ void genie_add_bytes (NODE_T * p)
   bufcat (VALUE (i), VALUE (j), BYTES_WIDTH);
 }
 
-/*!
-\brief OP +:= = (REF BYTES, BYTES) REF BYTES
-\param p position in tree
+/**
+@brief OP +:= = (REF BYTES, BYTES) REF BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_bytes (NODE_T * p)
@@ -4428,9 +4402,9 @@ void genie_plusab_bytes (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_BYTES), genie_add_bytes);
 }
 
-/*!
-\brief OP +=: = (BYTES, REF BYTES) REF BYTES
-\param p position in tree
+/**
+@brief OP +=: = (BYTES, REF BYTES) REF BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_plusto_bytes (NODE_T * p)
@@ -4449,10 +4423,10 @@ void genie_plusto_bytes (NODE_T * p)
   PUSH_REF (p, z);
 }
 
-/*!
-\brief difference between BYTE strings
-\param p position in tree
-\return difference between objects
+/**
+@brief Difference between BYTE strings.
+@param p Node in syntax tree.
+@return Difference between objects.
 **/
 
 static int compare_bytes (NODE_T * p)
@@ -4478,9 +4452,9 @@ A68_CMP_BYTES (genie_gt_bytes, >)
 A68_CMP_BYTES (genie_le_bytes, <=)
 A68_CMP_BYTES (genie_ge_bytes, >=)
 
-/*!
-\brief OP LENG = (BYTES) LONG BYTES
-\param p position in tree
+/**
+@brief OP LENG = (BYTES) LONG BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_leng_bytes (NODE_T * p)
@@ -4490,9 +4464,9 @@ void genie_leng_bytes (NODE_T * p)
   PUSH_LONG_BYTES (p, VALUE (&a));
 }
 
-/*!
-\brief OP SHORTEN = (LONG BYTES) BYTES
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG BYTES) BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_bytes (NODE_T * p)
@@ -4503,9 +4477,9 @@ void genie_shorten_bytes (NODE_T * p)
   PUSH_BYTES (p, VALUE (&a));
 }
 
-/*!
-\brief OP ELEM = (INT, LONG BYTES) CHAR
-\param p position in tree
+/**
+@brief OP ELEM = (INT, LONG BYTES) CHAR
+@param p Node in syntax tree.
 **/
 
 void genie_elem_long_bytes (NODE_T * p)
@@ -4522,9 +4496,9 @@ void genie_elem_long_bytes (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC long bytes pack = (STRING) LONG BYTES
-\param p position in tree
+/**
+@brief PROC long bytes pack = (STRING) LONG BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_long_bytespack (NODE_T * p)
@@ -4539,9 +4513,9 @@ void genie_long_bytespack (NODE_T * p)
   PUSH_LONG_BYTES (p, VALUE (&b));
 }
 
-/*!
-\brief OP + = (LONG BYTES, LONG BYTES) LONG BYTES
-\param p position in tree
+/**
+@brief OP + = (LONG BYTES, LONG BYTES) LONG BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_add_long_bytes (NODE_T * p)
@@ -4552,9 +4526,9 @@ void genie_add_long_bytes (NODE_T * p)
   bufcat (VALUE (i), VALUE (j), LONG_BYTES_WIDTH);
 }
 
-/*!
-\brief OP +:= = (REF LONG BYTES, LONG BYTES) REF LONG BYTES
-\param p position in tree
+/**
+@brief OP +:= = (REF LONG BYTES, LONG BYTES) REF LONG BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_long_bytes (NODE_T * p)
@@ -4562,9 +4536,9 @@ void genie_plusab_long_bytes (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_LONG_BYTES), genie_add_long_bytes);
 }
 
-/*!
-\brief OP +=: = (LONG BYTES, REF LONG BYTES) REF LONG BYTES
-\param p position in tree
+/**
+@brief OP +=: = (LONG BYTES, REF LONG BYTES) REF LONG BYTES
+@param p Node in syntax tree.
 **/
 
 void genie_plusto_long_bytes (NODE_T * p)
@@ -4583,10 +4557,10 @@ void genie_plusto_long_bytes (NODE_T * p)
   PUSH_REF (p, z);
 }
 
-/*!
-\brief difference between LONG BYTE strings
-\param p position in tree
-\return difference between objects
+/**
+@brief Difference between LONG BYTE strings.
+@param p Node in syntax tree.
+@return Difference between objects.
 **/
 
 static int compare_long_bytes (NODE_T * p)
@@ -4618,9 +4592,9 @@ A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=)
 
 A68_MONAD (genie_not_bits, A68_BITS, ~)
 
-/*!
-\brief OP AND = (BITS, BITS) BITS
-\param p position in tree
+/**
+@brief OP AND = (BITS, BITS) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_and_bits (NODE_T * p)
@@ -4630,9 +4604,9 @@ void genie_and_bits (NODE_T * p)
   VALUE (i) = VALUE (i) & VALUE (j);
 }
 
-/*!
-\brief OP OR = (BITS, BITS) BITS
-\param p position in tree
+/**
+@brief OP OR = (BITS, BITS) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_or_bits (NODE_T * p)
@@ -4642,9 +4616,9 @@ void genie_or_bits (NODE_T * p)
   VALUE (i) = VALUE (i) | VALUE (j);
 }
 
-/*!
-\brief OP XOR = (BITS, BITS) BITS
-\param p position in tree
+/**
+@brief OP XOR = (BITS, BITS) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_xor_bits (NODE_T * p)
@@ -4667,9 +4641,9 @@ void n (NODE_T * p) {\
 A68_CMP_BITS (genie_eq_bits, ==)
 A68_CMP_BITS (genie_ne_bits, !=)
 
-/*!
-\brief OP <= = (BITS, BITS) BOOL
-\param p position in tree
+/**
+@brief OP <= = (BITS, BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_le_bits (NODE_T * p)
@@ -4680,9 +4654,9 @@ void genie_le_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&i) | VALUE (&j)) == VALUE (&j)), A68_BOOL);
 }
 
-/*!
-\brief OP >= = (BITS, BITS) BOOL
-\param p position in tree
+/**
+@brief OP >= = (BITS, BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_ge_bits (NODE_T * p)
@@ -4693,9 +4667,9 @@ void genie_ge_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&i) | VALUE (&j)) == VALUE (&i)), A68_BOOL);
 }
 
-/*!
-\brief OP SHL = (BITS, INT) BITS
-\param p position in tree
+/**
+@brief OP SHL = (BITS, INT) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_shl_bits (NODE_T * p)
@@ -4711,9 +4685,9 @@ void genie_shl_bits (NODE_T * p)
   }
 }
 
-/*!
-\brief OP SHR = (BITS, INT) BITS
-\param p position in tree
+/**
+@brief OP SHR = (BITS, INT) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_shr_bits (NODE_T * p)
@@ -4724,9 +4698,9 @@ void genie_shr_bits (NODE_T * p)
   genie_shl_bits (p);           /* Conform RR */
 }
 
-/*!
-\brief OP ELEM = (INT, BITS) BOOL
-\param p position in tree
+/**
+@brief OP ELEM = (INT, BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_elem_bits (NODE_T * p)
@@ -4744,9 +4718,9 @@ void genie_elem_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&j) & mask) != 0 ? A68_TRUE : A68_FALSE), A68_BOOL);
 }
 
-/*!
-\brief OP SET = (INT, BITS) BITS
-\param p position in tree
+/**
+@brief OP SET = (INT, BITS) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_set_bits (NODE_T * p)
@@ -4764,9 +4738,9 @@ void genie_set_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, VALUE (&j) | mask, A68_BITS);
 }
 
-/*!
-\brief OP CLEAR = (INT, BITS) BITS
-\param p position in tree
+/**
+@brief OP CLEAR = (INT, BITS) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_clear_bits (NODE_T * p)
@@ -4784,9 +4758,9 @@ void genie_clear_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, VALUE (&j) & ~mask, A68_BITS);
 }
 
-/*!
-\brief OP ABS = (BITS) INT
-\param p position in tree
+/**
+@brief OP ABS = (BITS) INT
+@param p Node in syntax tree.
 **/
 
 void genie_abs_bits (NODE_T * p)
@@ -4796,9 +4770,9 @@ void genie_abs_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) (VALUE (&i)), A68_INT);
 }
 
-/*!
-\brief OP BIN = (INT) BITS
-\param p position in tree
+/**
+@brief OP BIN = (INT) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_bin_int (NODE_T * p)
@@ -4809,15 +4783,15 @@ void genie_bin_int (NODE_T * p)
   PUSH_PRIMITIVE (p, (unsigned) (VALUE (&i)), A68_BITS);
 }
 
-/*!
-\brief OP BIN = (LONG INT) LONG BITS
-\param p position in tree
+/**
+@brief OP BIN = (LONG INT) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_bin_long_mp (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
-  int size = get_mp_size (mode);
+  int size = SIZE (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *u = (MP_T *) STACK_OFFSET (-size);
 /* We convert just for the operand check */
@@ -4826,15 +4800,15 @@ void genie_bin_long_mp (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief OP NOT = (LONG BITS) LONG BITS
-\param p position in tree
+/**
+@brief OP NOT = (LONG BITS) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_not_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int size = get_mp_size (mode);
+  int size = SIZE (mode);
   ADDR_T pop_sp = stack_pointer;
   int k, words = get_mp_bits_words (mode);
   MP_T *u = (MP_T *) STACK_OFFSET (-size);
@@ -4846,27 +4820,27 @@ void genie_not_long_mp (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief OP SHORTEN = (LONG BITS) BITS
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG BITS) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_long_mp_to_bits (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   DECREMENT_STACK_POINTER (p, size);
   PUSH_PRIMITIVE (p, mp_to_unsigned (p, z, digits), A68_BITS);
 }
 
-/*!
-\brief get bit from LONG BITS
-\param p position in tree
-\param k element number
-\param z mp number
-\param m mode associated with z
-\return same
+/**
+@brief Get bit from LONG BITS.
+@param p Node in syntax tree.
+@param k Element number.
+@param z Mp number.
+@param m Mode associated with z.
+@return See brief description.
 **/
 
 unsigned elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
@@ -4882,9 +4856,9 @@ unsigned elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
   return ((words[k / MP_BITS_BITS]) & mask);
 }
 
-/*!
-\brief OP ELEM = (INT, LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP ELEM = (INT, LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_elem_long_bits (NODE_T * p)
@@ -4892,18 +4866,18 @@ void genie_elem_long_bits (NODE_T * p)
   A68_INT *i;
   MP_T *z;
   unsigned w;
-  int bits = get_mp_bits_width (MODE (LONG_BITS)), size = get_mp_size (MODE (LONG_BITS));
+  int bits = get_mp_bits_width (MODE (LONG_BITS)), size = SIZE (MODE (LONG_BITS));
   z = (MP_T *) STACK_OFFSET (-size);
-  i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
+  i = (A68_INT *) STACK_OFFSET (-(size + SIZE (MODE (INT))));
   PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = elem_long_bits (p, VALUE (i), z, MODE (LONG_BITS));
-  DECREMENT_STACK_POINTER (p, size + ALIGNED_SIZE_OF (A68_INT));
+  DECREMENT_STACK_POINTER (p, size + SIZE (MODE (INT)));
   PUSH_PRIMITIVE (p, (BOOL_T) (w != 0), A68_BOOL);
 }
 
-/*!
-\brief OP ELEM = (INT, LONG LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP ELEM = (INT, LONG LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_elem_longlong_bits (NODE_T * p)
@@ -4911,21 +4885,22 @@ void genie_elem_longlong_bits (NODE_T * p)
   A68_INT *i;
   MP_T *z;
   unsigned w;
-  int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = get_mp_size (MODE (LONGLONG_BITS));
+  int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = SIZE (MODE (LONGLONG_BITS));
   z = (MP_T *) STACK_OFFSET (-size);
-  i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
+  i = (A68_INT *) STACK_OFFSET (-(size + SIZE (MODE (INT))));
   PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = elem_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS));
-  DECREMENT_STACK_POINTER (p, size + ALIGNED_SIZE_OF (A68_INT));
+  DECREMENT_STACK_POINTER (p, size + SIZE (MODE (INT)));
   PUSH_PRIMITIVE (p, (BOOL_T) (w != 0), A68_BOOL);
 }
 
-/*!
-\brief set bit in LONG BITS
-\param p position in tree
-\param k bit index
-\param z mp number
-\param m mode associated with z
+/**
+@brief Set bit in LONG BITS.
+@param p Node in syntax tree.
+@param k Bit index.
+@param z Mp number.
+@param m Mode associated with z.
+@param bit Bit to set.
 **/
 
 static unsigned *set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, unsigned bit)
@@ -4944,9 +4919,9 @@ static unsigned *set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, unsigne
   return (words);
 }
 
-/*!
-\brief OP SET = (INT, LONG BITS) VOID
-\param p position in tree
+/**
+@brief OP SET = (INT, LONG BITS) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_set_long_bits (NODE_T * p)
@@ -4955,19 +4930,19 @@ void genie_set_long_bits (NODE_T * p)
   MP_T *z;
   unsigned *w;
   ADDR_T pop_sp = stack_pointer;
-  int bits = get_mp_bits_width (MODE (LONG_BITS)), size = get_mp_size (MODE (LONG_BITS));
+  int bits = get_mp_bits_width (MODE (LONG_BITS)), size = SIZE (MODE (LONG_BITS));
   z = (MP_T *) STACK_OFFSET (-size);
-  i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
+  i = (A68_INT *) STACK_OFFSET (-(size + SIZE (MODE (INT))));
   PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONG_BITS), 0x1);
-  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
+  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - SIZE (MODE (INT))), w, MODE (LONG_BITS));
   stack_pointer = pop_sp;
-  DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (INT)));
 }
 
-/*!
-\brief OP SET = (INT, LONG LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP SET = (INT, LONG LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_set_longlong_bits (NODE_T * p)
@@ -4976,19 +4951,19 @@ void genie_set_longlong_bits (NODE_T * p)
   MP_T *z;
   unsigned *w;
   ADDR_T pop_sp = stack_pointer;
-  int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = get_mp_size (MODE (LONGLONG_BITS));
+  int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = SIZE (MODE (LONGLONG_BITS));
   z = (MP_T *) STACK_OFFSET (-size);
-  i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
+  i = (A68_INT *) STACK_OFFSET (-(size + SIZE (MODE (INT))));
   PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS), 0x1);
-  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
+  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - SIZE (MODE (INT))), w, MODE (LONGLONG_BITS));
   stack_pointer = pop_sp;
-  DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (INT)));
 }
 
-/*!
-\brief OP CLEAR = (INT, LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP CLEAR = (INT, LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_clear_long_bits (NODE_T * p)
@@ -4997,19 +4972,19 @@ void genie_clear_long_bits (NODE_T * p)
   MP_T *z;
   unsigned *w;
   ADDR_T pop_sp = stack_pointer;
-  int bits = get_mp_bits_width (MODE (LONG_BITS)), size = get_mp_size (MODE (LONG_BITS));
+  int bits = get_mp_bits_width (MODE (LONG_BITS)), size = SIZE (MODE (LONG_BITS));
   z = (MP_T *) STACK_OFFSET (-size);
-  i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
+  i = (A68_INT *) STACK_OFFSET (-(size + SIZE (MODE (INT))));
   PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONG_BITS), 0x0);
-  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONG_BITS));
+  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - SIZE (MODE (INT))), w, MODE (LONG_BITS));
   stack_pointer = pop_sp;
-  DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (INT)));
 }
 
-/*!
-\brief OP CLEAR = (INT, LONG LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP CLEAR = (INT, LONG LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_clear_longlong_bits (NODE_T * p)
@@ -5018,19 +4993,19 @@ void genie_clear_longlong_bits (NODE_T * p)
   MP_T *z;
   unsigned *w;
   ADDR_T pop_sp = stack_pointer;
-  int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = get_mp_size (MODE (LONGLONG_BITS));
+  int bits = get_mp_bits_width (MODE (LONGLONG_BITS)), size = SIZE (MODE (LONGLONG_BITS));
   z = (MP_T *) STACK_OFFSET (-size);
-  i = (A68_INT *) STACK_OFFSET (-(size + ALIGNED_SIZE_OF (A68_INT)));
+  i = (A68_INT *) STACK_OFFSET (-(size + SIZE (MODE (INT))));
   PRELUDE_ERROR (VALUE (i) < 1 || VALUE (i) > bits, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   w = set_long_bits (p, VALUE (i), z, MODE (LONGLONG_BITS), 0x0);
-  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - ALIGNED_SIZE_OF (A68_INT)), w, MODE (LONGLONG_BITS));
+  (void) pack_mp_bits (p, (MP_T *) STACK_ADDRESS (pop_sp - size - SIZE (MODE (INT))), w, MODE (LONGLONG_BITS));
   stack_pointer = pop_sp;
-  DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (INT)));
 }
 
-/*!
-\brief PROC bits pack = ([] BOOL) BITS
-\param p position in tree
+/**
+@brief PROC bits pack = ([] BOOL) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_bits_pack (NODE_T * p)
@@ -5065,9 +5040,9 @@ void genie_bits_pack (NODE_T * p)
   PUSH_OBJECT (p, b, A68_BITS);
 }
 
-/*!
-\brief PROC long bits pack = ([] BOOL) LONG BITS
-\param p position in tree
+/**
+@brief PROC long bits pack = ([] BOOL) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_long_bits_pack (NODE_T * p)
@@ -5085,7 +5060,7 @@ void genie_long_bits_pack (NODE_T * p)
   GET_DESCRIPTOR (arr, tup, &z);
   size = ROW_SIZE (tup);
   bits = get_mp_bits_width (mode);
-  digits = get_mp_digits (mode);
+  digits = DIGITS (mode);
   PRELUDE_ERROR (size < 0 || size > bits, p, ERROR_OUT_OF_BOUNDS, MODE (ROW_BOOL));
 /* Convert so that LWB goes to MSB, so ELEM gives same order as [] BOOL */
   STACK_MP (sum, p, digits);
@@ -5109,15 +5084,15 @@ void genie_long_bits_pack (NODE_T * p)
   MP_STATUS (sum) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP SHL = (LONG BITS, INT) LONG BITS
-\param p position in tree
+/**
+@brief OP SHL = (LONG BITS, INT) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_shl_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int i, k, size = get_mp_size (mode), words = get_mp_bits_words (mode);
+  int i, k, size = SIZE (mode), words = get_mp_bits_words (mode);
   MP_T *u;
   unsigned *row_u;
   ADDR_T pop_sp;
@@ -5155,9 +5130,9 @@ void genie_shl_long_mp (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief OP SHR = (LONG BITS, INT) LONG BITS
-\param p position in tree
+/**
+@brief OP SHR = (LONG BITS, INT) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_shr_long_mp (NODE_T * p)
@@ -5168,15 +5143,15 @@ void genie_shr_long_mp (NODE_T * p)
   (void) genie_shl_long_mp (p);        /* Conform RR */
 }
 
-/*!
-\brief OP <= = (LONG BITS, LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP <= = (LONG BITS, LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_le_long_bits (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int k, size = get_mp_size (mode), words = get_mp_bits_words (mode);
+  int k, size = SIZE (mode), words = get_mp_bits_words (mode);
   ADDR_T pop_sp = stack_pointer;
   BOOL_T result = A68_TRUE;
   MP_T *u = (MP_T *) STACK_OFFSET (-2 * size), *v = (MP_T *) STACK_OFFSET (-size);
@@ -5189,15 +5164,15 @@ void genie_le_long_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) (result ? A68_TRUE : A68_FALSE), A68_BOOL);
 }
 
-/*!
-\brief OP >= = (LONG BITS, LONG BITS) BOOL
-\param p position in tree
+/**
+@brief OP >= = (LONG BITS, LONG BITS) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_ge_long_bits (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int k, size = get_mp_size (mode), words = get_mp_bits_words (mode);
+  int k, size = SIZE (mode), words = get_mp_bits_words (mode);
   ADDR_T pop_sp = stack_pointer;
   BOOL_T result = A68_TRUE;
   MP_T *u = (MP_T *) STACK_OFFSET (-2 * size), *v = (MP_T *) STACK_OFFSET (-size);
@@ -5210,15 +5185,15 @@ void genie_ge_long_bits (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) (result ? A68_TRUE : A68_FALSE), A68_BOOL);
 }
 
-/*!
-\brief OP AND = (LONG BITS, LONG BITS) LONG BITS
-\param p position in tree
+/**
+@brief OP AND = (LONG BITS, LONG BITS) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_and_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int k, size = get_mp_size (mode), words = get_mp_bits_words (mode);
+  int k, size = SIZE (mode), words = get_mp_bits_words (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *u = (MP_T *) STACK_OFFSET (-2 * size), *v = (MP_T *) STACK_OFFSET (-size);
   unsigned *row_u = stack_mp_bits (p, u, mode), *row_v = stack_mp_bits (p, v, mode);
@@ -5230,15 +5205,15 @@ void genie_and_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP OR = (LONG BITS, LONG BITS) LONG BITS
-\param p position in tree
+/**
+@brief OP OR = (LONG BITS, LONG BITS) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_or_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int k, size = get_mp_size (mode), words = get_mp_bits_words (mode);
+  int k, size = SIZE (mode), words = get_mp_bits_words (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *u = (MP_T *) STACK_OFFSET (-2 * size), *v = (MP_T *) STACK_OFFSET (-size);
   unsigned *row_u = stack_mp_bits (p, u, mode), *row_v = stack_mp_bits (p, v, mode);
@@ -5250,15 +5225,15 @@ void genie_or_long_mp (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP XOR = (LONG BITS, LONG BITS) LONG BITS
-\param p position in tree
+/**
+@brief OP XOR = (LONG BITS, LONG BITS) LONG BITS
+@param p Node in syntax tree.
 **/
 
 void genie_xor_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  int k, size = get_mp_size (mode), words = get_mp_bits_words (mode);
+  int k, size = SIZE (mode), words = get_mp_bits_words (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *u = (MP_T *) STACK_OFFSET (-2 * size), *v = (MP_T *) STACK_OFFSET (-size);
   unsigned *row_u = stack_mp_bits (p, u, mode), *row_v = stack_mp_bits (p, v, mode);
@@ -5509,8 +5484,8 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
 #define GSL_COMPLEX_FUNCTION(f)\
   gsl_complex x, z;\
   A68_REAL *rex, *imx;\
-  imx = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));\
-  rex = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));\
+  imx = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));\
+  rex = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));\
   GSL_SET_COMPLEX (&x, VALUE (rex), VALUE (imx));\
   (void) gsl_set_error_handler_off ();\
   RESET_ERRNO;\
@@ -5603,10 +5578,10 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
 
-/*!
-\brief the cube root of x
-\param x x
-\return same
+/**
+@brief The cube root of x.
+@param x X.
+@return See brief description.
 **/
 
      double curt (double x)
@@ -5668,10 +5643,10 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   return (sign >= 0 ? x : -x);
 }
 
-/*!
-\brief inverse complementary error function
-\param y y
-\return same
+/**
+@brief Inverse complementary error function.
+@param y Y.
+@return See brief description.
 **/
 
 double inverfc (double y)
@@ -5709,10 +5684,10 @@ double inverfc (double y)
   }
 }
 
-/*!
-\brief inverse error function
-\param y y
-\return same
+/**
+@brief Inverse error function.
+@param y Y.
+@return See brief description.
 **/
 
 double inverf (double y)
@@ -5720,9 +5695,9 @@ double inverf (double y)
   return (inverfc (1 - y));
 }
 
-/*!
-\brief PROC sqrt = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC sqrt = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sqrt_real (NODE_T * p)
@@ -5730,9 +5705,9 @@ void genie_sqrt_real (NODE_T * p)
   C_FUNCTION (p, sqrt);
 }
 
-/*!
-\brief PROC curt = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC curt = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_curt_real (NODE_T * p)
@@ -5740,9 +5715,9 @@ void genie_curt_real (NODE_T * p)
   C_FUNCTION (p, curt);
 }
 
-/*!
-\brief PROC exp = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC exp = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_exp_real (NODE_T * p)
@@ -5750,9 +5725,9 @@ void genie_exp_real (NODE_T * p)
   C_FUNCTION (p, a68g_exp);
 }
 
-/*!
-\brief PROC ln = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC ln = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_ln_real (NODE_T * p)
@@ -5760,9 +5735,9 @@ void genie_ln_real (NODE_T * p)
   C_FUNCTION (p, log);
 }
 
-/*!
-\brief PROC log = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC log = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_log_real (NODE_T * p)
@@ -5770,9 +5745,9 @@ void genie_log_real (NODE_T * p)
   C_FUNCTION (p, log10);
 }
 
-/*!
-\brief PROC sin = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC sin = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sin_real (NODE_T * p)
@@ -5780,9 +5755,9 @@ void genie_sin_real (NODE_T * p)
   C_FUNCTION (p, sin);
 }
 
-/*!
-\brief PROC arcsin = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arcsin = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arcsin_real (NODE_T * p)
@@ -5790,9 +5765,9 @@ void genie_arcsin_real (NODE_T * p)
   C_FUNCTION (p, asin);
 }
 
-/*!
-\brief PROC cos = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC cos = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_cos_real (NODE_T * p)
@@ -5800,9 +5775,9 @@ void genie_cos_real (NODE_T * p)
   C_FUNCTION (p, cos);
 }
 
-/*!
-\brief PROC arccos = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arccos = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arccos_real (NODE_T * p)
@@ -5810,9 +5785,9 @@ void genie_arccos_real (NODE_T * p)
   C_FUNCTION (p, acos);
 }
 
-/*!
-\brief PROC tan = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC tan = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_tan_real (NODE_T * p)
@@ -5820,9 +5795,9 @@ void genie_tan_real (NODE_T * p)
   C_FUNCTION (p, tan);
 }
 
-/*!
-\brief PROC arctan = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arctan = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arctan_real (NODE_T * p)
@@ -5830,9 +5805,9 @@ void genie_arctan_real (NODE_T * p)
   C_FUNCTION (p, atan);
 }
 
-/*!
-\brief PROC arctan2 = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arctan2 = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_atan2_real (NODE_T * p)
@@ -5845,9 +5820,9 @@ void genie_atan2_real (NODE_T * p)
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
 
-/*!
-\brief PROC sinh = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC sinh = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_sinh_real (NODE_T * p)
@@ -5855,9 +5830,9 @@ void genie_sinh_real (NODE_T * p)
   C_FUNCTION (p, sinh);
 }
 
-/*!
-\brief PROC cosh = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC cosh = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_cosh_real (NODE_T * p)
@@ -5865,9 +5840,9 @@ void genie_cosh_real (NODE_T * p)
   C_FUNCTION (p, cosh);
 }
 
-/*!
-\brief PROC tanh = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC tanh = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_tanh_real (NODE_T * p)
@@ -5875,9 +5850,9 @@ void genie_tanh_real (NODE_T * p)
   C_FUNCTION (p, tanh);
 }
 
-/*!
-\brief PROC arcsinh = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arcsinh = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arcsinh_real (NODE_T * p)
@@ -5885,9 +5860,9 @@ void genie_arcsinh_real (NODE_T * p)
   C_FUNCTION (p, a68g_asinh);
 }
 
-/*!
-\brief PROC arccosh = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arccosh = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arccosh_real (NODE_T * p)
@@ -5895,9 +5870,9 @@ void genie_arccosh_real (NODE_T * p)
   C_FUNCTION (p, a68g_acosh);
 }
 
-/*!
-\brief PROC arctanh = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC arctanh = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arctanh_real (NODE_T * p)
@@ -5905,9 +5880,9 @@ void genie_arctanh_real (NODE_T * p)
   C_FUNCTION (p, a68g_atanh);
 }
 
-/*!
-\brief PROC inverse erf = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC inverse erf = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_inverf_real (NODE_T * p)
@@ -5915,9 +5890,9 @@ void genie_inverf_real (NODE_T * p)
   C_FUNCTION (p, inverf);
 }
 
-/*!
-\brief PROC inverse erfc = (REAL) REAL 
-\param p position in tree
+/**
+@brief PROC inverse erfc = (REAL) REAL 
+@param p Node in syntax tree.
 **/
 
 void genie_inverfc_real (NODE_T * p)
@@ -5925,9 +5900,9 @@ void genie_inverfc_real (NODE_T * p)
   C_FUNCTION (p, inverfc);
 }
 
-/*!
-\brief PROC lj e 12 6 = (REAL, REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC lj e 12 6 = (REAL, REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_lj_e_12_6 (NODE_T * p)
@@ -5941,9 +5916,9 @@ void genie_lj_e_12_6 (NODE_T * p)
   VALUE (e) = 4.0 * VALUE (e) * u6 * (u6 - 1.0);
 }
 
-/*!
-\brief PROC lj f 12 6 = (REAL, REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC lj f 12 6 = (REAL, REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_lj_f_12_6 (NODE_T * p)
@@ -5961,9 +5936,9 @@ void genie_lj_f_12_6 (NODE_T * p)
 
 /* "Special" functions - but what is so "special" about them? */
 
-/*!
-\brief PROC erf = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC erf = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_erf_real (NODE_T * p)
@@ -5971,9 +5946,9 @@ void genie_erf_real (NODE_T * p)
   GSL_1_FUNCTION (p, gsl_sf_erf_e);
 }
 
-/*!
-\brief PROC erfc = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC erfc = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_erfc_real (NODE_T * p)
@@ -5981,9 +5956,9 @@ void genie_erfc_real (NODE_T * p)
   GSL_1_FUNCTION (p, gsl_sf_erfc_e);
 }
 
-/*!
-\brief PROC gamma = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC gamma = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_gamma_real (NODE_T * p)
@@ -5991,9 +5966,9 @@ void genie_gamma_real (NODE_T * p)
   GSL_1_FUNCTION (p, gsl_sf_gamma_e);
 }
 
-/*!
-\brief PROC gamma incomplete = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC gamma incomplete = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_gamma_inc_real (NODE_T * p)
@@ -6001,9 +5976,9 @@ void genie_gamma_inc_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_gamma_inc_P_e);
 }
 
-/*!
-\brief PROC lngamma = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC lngamma = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_lngamma_real (NODE_T * p)
@@ -6011,24 +5986,24 @@ void genie_lngamma_real (NODE_T * p)
   GSL_1_FUNCTION (p, gsl_sf_lngamma_e);
 }
 
-/*!
-\brief PROC factorial = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC factorial = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_factorial_real (NODE_T * p)
 {
 /* gsl_sf_fact reduces argument to int, hence we do gamma (x + 1) */
-  A68_REAL *z = (A68_REAL *) STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL));
+  A68_REAL *z = (A68_REAL *) STACK_OFFSET (-SIZE (MODE (REAL)));
   VALUE (z) += 1.0;
   {
     GSL_1_FUNCTION (p, gsl_sf_gamma_e);
   }
 }
 
-/*!
-\brief PROC beta = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC beta = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_beta_real (NODE_T * p)
@@ -6036,9 +6011,9 @@ void genie_beta_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_beta_e);
 }
 
-/*!
-\brief PROC beta incomplete = (REAL, REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC beta incomplete = (REAL, REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_beta_inc_real (NODE_T * p)
@@ -6046,9 +6021,9 @@ void genie_beta_inc_real (NODE_T * p)
   GSL_3_FUNCTION (p, gsl_sf_beta_inc_e);
 }
 
-/*!
-\brief PROC airy ai = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC airy ai = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_airy_ai_real (NODE_T * p)
@@ -6056,9 +6031,9 @@ void genie_airy_ai_real (NODE_T * p)
   GSL_1D_FUNCTION (p, gsl_sf_airy_Ai_e);
 }
 
-/*!
-\brief PROC airy bi = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC airy bi = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_airy_bi_real (NODE_T * p)
@@ -6066,9 +6041,9 @@ void genie_airy_bi_real (NODE_T * p)
   GSL_1D_FUNCTION (p, gsl_sf_airy_Bi_e);
 }
 
-/*!
-\brief PROC airy ai derivative = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC airy ai derivative = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_airy_ai_deriv_real (NODE_T * p)
@@ -6076,9 +6051,9 @@ void genie_airy_ai_deriv_real (NODE_T * p)
   GSL_1D_FUNCTION (p, gsl_sf_airy_Ai_deriv_e);
 }
 
-/*!
-\brief PROC airy bi derivative = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC airy bi derivative = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_airy_bi_deriv_real (NODE_T * p)
@@ -6086,9 +6061,9 @@ void genie_airy_bi_deriv_real (NODE_T * p)
   GSL_1D_FUNCTION (p, gsl_sf_airy_Bi_deriv_e);
 }
 
-/*!
-\brief PROC bessel jn = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel jn = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_jn_real (NODE_T * p)
@@ -6096,9 +6071,9 @@ void genie_bessel_jn_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Jn_e);
 }
 
-/*!
-\brief PROC bessel yn = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel yn = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_yn_real (NODE_T * p)
@@ -6106,9 +6081,9 @@ void genie_bessel_yn_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Yn_e);
 }
 
-/*!
-\brief PROC bessel in = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel in = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_in_real (NODE_T * p)
@@ -6116,9 +6091,9 @@ void genie_bessel_in_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_In_e);
 }
 
-/*!
-\brief PROC bessel exp in = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel exp in = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_exp_in_real (NODE_T * p)
@@ -6126,9 +6101,9 @@ void genie_bessel_exp_in_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_In_scaled_e);
 }
 
-/*!
-\brief PROC bessel kn = (REAL, REAL) REAL 
-\param p position in tree
+/**
+@brief PROC bessel kn = (REAL, REAL) REAL 
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_kn_real (NODE_T * p)
@@ -6136,9 +6111,9 @@ void genie_bessel_kn_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Kn_e);
 }
 
-/*!
-\brief PROC bessel exp kn = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel exp kn = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_exp_kn_real (NODE_T * p)
@@ -6146,9 +6121,9 @@ void genie_bessel_exp_kn_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Kn_scaled_e);
 }
 
-/*!
-\brief PROC bessel jl = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel jl = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_jl_real (NODE_T * p)
@@ -6156,9 +6131,9 @@ void genie_bessel_jl_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_jl_e);
 }
 
-/*!
-\brief PROC bessel yl = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel yl = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_yl_real (NODE_T * p)
@@ -6166,9 +6141,9 @@ void genie_bessel_yl_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_yl_e);
 }
 
-/*!
-\brief PROC bessel exp il = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel exp il = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_exp_il_real (NODE_T * p)
@@ -6176,9 +6151,9 @@ void genie_bessel_exp_il_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_il_scaled_e);
 }
 
-/*!
-\brief PROC bessel exp kl = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel exp kl = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_exp_kl_real (NODE_T * p)
@@ -6186,9 +6161,9 @@ void genie_bessel_exp_kl_real (NODE_T * p)
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_kl_scaled_e);
 }
 
-/*!
-\brief PROC bessel jnu = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel jnu = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_jnu_real (NODE_T * p)
@@ -6196,9 +6171,9 @@ void genie_bessel_jnu_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_bessel_Jnu_e);
 }
 
-/*!
-\brief PROC bessel ynu = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel ynu = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_ynu_real (NODE_T * p)
@@ -6206,9 +6181,9 @@ void genie_bessel_ynu_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_bessel_Ynu_e);
 }
 
-/*!
-\brief PROC bessel inu = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel inu = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_inu_real (NODE_T * p)
@@ -6216,9 +6191,9 @@ void genie_bessel_inu_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_bessel_Inu_e);
 }
 
-/*!
-\brief PROC bessel exp inu = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel exp inu = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_exp_inu_real (NODE_T * p)
@@ -6226,9 +6201,9 @@ void genie_bessel_exp_inu_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_bessel_Inu_scaled_e);
 }
 
-/*!
-\brief PROC bessel knu = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel knu = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_knu_real (NODE_T * p)
@@ -6236,9 +6211,9 @@ void genie_bessel_knu_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_bessel_Knu_e);
 }
 
-/*!
-\brief PROC bessel exp knu = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC bessel exp knu = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_bessel_exp_knu_real (NODE_T * p)
@@ -6246,9 +6221,9 @@ void genie_bessel_exp_knu_real (NODE_T * p)
   GSL_2_FUNCTION (p, gsl_sf_bessel_Knu_scaled_e);
 }
 
-/*!
-\brief PROC elliptic integral k = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC elliptic integral k = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_elliptic_integral_k_real (NODE_T * p)
@@ -6256,9 +6231,9 @@ void genie_elliptic_integral_k_real (NODE_T * p)
   GSL_1D_FUNCTION (p, gsl_sf_ellint_Kcomp_e);
 }
 
-/*!
-\brief PROC elliptic integral e = (REAL) REAL
-\param p position in tree
+/**
+@brief PROC elliptic integral e = (REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_elliptic_integral_e_real (NODE_T * p)
@@ -6266,9 +6241,9 @@ void genie_elliptic_integral_e_real (NODE_T * p)
   GSL_1D_FUNCTION (p, gsl_sf_ellint_Ecomp_e);
 }
 
-/*!
-\brief PROC elliptic integral rf = (REAL, REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC elliptic integral rf = (REAL, REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_elliptic_integral_rf_real (NODE_T * p)
@@ -6276,9 +6251,9 @@ void genie_elliptic_integral_rf_real (NODE_T * p)
   GSL_3D_FUNCTION (p, gsl_sf_ellint_RF_e);
 }
 
-/*!
-\brief PROC elliptic integral rd = (REAL, REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC elliptic integral rd = (REAL, REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_elliptic_integral_rd_real (NODE_T * p)
@@ -6286,9 +6261,9 @@ void genie_elliptic_integral_rd_real (NODE_T * p)
   GSL_3D_FUNCTION (p, gsl_sf_ellint_RD_e);
 }
 
-/*!
-\brief PROC elliptic integral rj = (REAL, REAL, REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC elliptic integral rj = (REAL, REAL, REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_elliptic_integral_rj_real (NODE_T * p)
@@ -6296,9 +6271,9 @@ void genie_elliptic_integral_rj_real (NODE_T * p)
   GSL_4D_FUNCTION (p, gsl_sf_ellint_RJ_e);
 }
 
-/*!
-\brief PROC elliptic integral rc = (REAL, REAL) REAL
-\param p position in tree
+/**
+@brief PROC elliptic integral rc = (REAL, REAL) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_elliptic_integral_rc_real (NODE_T * p)
@@ -6372,10 +6347,10 @@ static taus113_state_t rng_state;
 static unsigned long int taus113_get (taus113_state_t * state);
 static void taus113_set (taus113_state_t * state, unsigned long int s);
 
-/*!
-\brief taus113_get
-\param state state
-\return same
+/**
+@brief Taus113_get.
+@param state State.
+@return See brief description.
 **/
 
 static unsigned long taus113_get (taus113_state_t * state)
@@ -6392,10 +6367,10 @@ static unsigned long taus113_get (taus113_state_t * state)
   return (Z1 (state) ^ Z2 (state) ^ Z3 (state) ^ Z4 (state));
 }
 
-/*!
-\brief taus113_set
-\param state state
-\param s s
+/**
+@brief Taus113_set.
+@param state State.
+@param s S.
 **/
 
 static void taus113_set (taus113_state_t * state, unsigned long int s)
@@ -6433,9 +6408,9 @@ static void taus113_set (taus113_state_t * state, unsigned long int s)
   (void) taus113_get (state);
 }
 
-/*!
-\brief initialise rng
-\param u initialiser
+/**
+@brief Initialise rng.
+@param u Initialiser.
 **/
 
 void init_rng (unsigned long u)
@@ -6443,9 +6418,9 @@ void init_rng (unsigned long u)
   taus113_set (&rng_state, u);
 }
 
-/*!
-\brief rng 53 bit
-\return same
+/**
+@brief Rng 53 bit.
+@return See brief description.
 **/
 
 double rng_53_bit (void)
@@ -6488,8 +6463,8 @@ Some routines are based on
 #define GSL_COMPLEX_FUNCTION(f)\
   gsl_complex x, z;\
   A68_REAL *rex, *imx;\
-  imx = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));\
-  rex = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));\
+  imx = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));\
+  rex = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));\
   GSL_SET_COMPLEX (&x, VALUE (rex), VALUE (imx));\
   (void) gsl_set_error_handler_off ();\
   RESET_ERRNO;\
@@ -6500,9 +6475,9 @@ Some routines are based on
 
 #endif
 
-/*!
-\brief OP +* = (REAL, REAL) COMPLEX
-\param p position in tree
+/**
+@brief OP +* = (REAL, REAL) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_icomplex (NODE_T * p)
@@ -6510,9 +6485,9 @@ void genie_icomplex (NODE_T * p)
   (void) p;
 }
 
-/*!
-\brief OP +* = (INT, INT) COMPLEX
-\param p position in tree
+/**
+@brief OP +* = (INT, INT) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_iint_complex (NODE_T * p)
@@ -6524,46 +6499,46 @@ void genie_iint_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, (double) VALUE (&im), A68_REAL);
 }
 
-/*!
-\brief OP RE = (COMPLEX) REAL
-\param p position in tree
+/**
+@brief OP RE = (COMPLEX) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_re_complex (NODE_T * p)
 {
-  DECREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_REAL));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (REAL)));
 }
 
-/*!
-\brief OP IM = (COMPLEX) REAL
-\param p position in tree
+/**
+@brief OP IM = (COMPLEX) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_im_complex (NODE_T * p)
 {
   A68_REAL im;
   POP_OBJECT (p, &im, A68_REAL);
-  *(A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL))) = im;
+  *(A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL)))) = im;
 }
 
-/*!
-\brief OP - = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP - = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_minus_complex (NODE_T * p)
 {
   A68_REAL *re_x, *im_x;
-  im_x = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re_x = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im_x = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re_x = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   VALUE (im_x) = -VALUE (im_x);
   VALUE (re_x) = -VALUE (re_x);
   (void) p;
 }
 
-/*!
-\brief ABS = (COMPLEX) REAL
-\param p position in tree
+/**
+@brief ABS = (COMPLEX) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_abs_complex (NODE_T * p)
@@ -6573,9 +6548,9 @@ void genie_abs_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, a68g_hypot (VALUE (&re_x), VALUE (&im_x)), A68_REAL);
 }
 
-/*!
-\brief OP ARG = (COMPLEX) REAL
-\param p position in tree
+/**
+@brief OP ARG = (COMPLEX) REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arg_complex (NODE_T * p)
@@ -6586,9 +6561,9 @@ void genie_arg_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, atan2 (VALUE (&im_x), VALUE (&re_x)), A68_REAL);
 }
 
-/*!
-\brief OP CONJ = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP CONJ = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_conj_complex (NODE_T * p)
@@ -6598,41 +6573,41 @@ void genie_conj_complex (NODE_T * p)
   VALUE (im) = -VALUE (im);
 }
 
-/*!
-\brief OP + = (COMPLEX, COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP + = (COMPLEX, COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_add_complex (NODE_T * p)
 {
   A68_REAL *re_x, *im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
-  im_x = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re_x = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im_x = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re_x = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   VALUE (im_x) += VALUE (&im_y);
   VALUE (re_x) += VALUE (&re_y);
   CHECK_COMPLEX_REPRESENTATION (p, VALUE (re_x), VALUE (im_x));
 }
 
-/*!
-\brief OP - = (COMPLEX, COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP - = (COMPLEX, COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sub_complex (NODE_T * p)
 {
   A68_REAL *re_x, *im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
-  im_x = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re_x = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im_x = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re_x = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   VALUE (im_x) -= VALUE (&im_y);
   VALUE (re_x) -= VALUE (&re_y);
   CHECK_COMPLEX_REPRESENTATION (p, VALUE (re_x), VALUE (im_x));
 }
 
-/*!
-\brief OP * = (COMPLEX, COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP * = (COMPLEX, COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_mul_complex (NODE_T * p)
@@ -6647,9 +6622,9 @@ void genie_mul_complex (NODE_T * p)
   PUSH_COMPLEX (p, re, im);
 }
 
-/*!
-\brief OP / = (COMPLEX, COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP / = (COMPLEX, COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_div_complex (NODE_T * p)
@@ -6674,9 +6649,9 @@ void genie_div_complex (NODE_T * p)
   PUSH_COMPLEX (p, re, im);
 }
 
-/*!
-\brief OP ** = (COMPLEX, INT) COMPLEX
-\param p position in tree
+/**
+@brief OP ** = (COMPLEX, INT) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_pow_complex_int (NODE_T * p)
@@ -6721,9 +6696,9 @@ void genie_pow_complex_int (NODE_T * p)
   }
 }
 
-/*!
-\brief OP = = (COMPLEX, COMPLEX) BOOL
-\param p position in tree
+/**
+@brief OP = = (COMPLEX, COMPLEX) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_eq_complex (NODE_T * p)
@@ -6734,9 +6709,9 @@ void genie_eq_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) ((VALUE (&re_x) == VALUE (&re_y)) && (VALUE (&im_x) == VALUE (&im_y))), A68_BOOL);
 }
 
-/*!
-\brief OP /= = (COMPLEX, COMPLEX) BOOL
-\param p position in tree
+/**
+@brief OP /= = (COMPLEX, COMPLEX) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_ne_complex (NODE_T * p)
@@ -6747,9 +6722,9 @@ void genie_ne_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) ! ((VALUE (&re_x) == VALUE (&re_y)) && (VALUE (&im_x) == VALUE (&im_y))), A68_BOOL);
 }
 
-/*!
-\brief OP +:= = (REF COMPLEX, COMPLEX) REF COMPLEX
-\param p position in tree
+/**
+@brief OP +:= = (REF COMPLEX, COMPLEX) REF COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_complex (NODE_T * p)
@@ -6757,9 +6732,9 @@ void genie_plusab_complex (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_add_complex);
 }
 
-/*!
-\brief OP -:= = (REF COMPLEX, COMPLEX) REF COMPLEX
-\param p position in tree
+/**
+@brief OP -:= = (REF COMPLEX, COMPLEX) REF COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_minusab_complex (NODE_T * p)
@@ -6767,9 +6742,9 @@ void genie_minusab_complex (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_sub_complex);
 }
 
-/*!
-\brief OP *:= = (REF COMPLEX, COMPLEX) REF COMPLEX
-\param p position in tree
+/**
+@brief OP *:= = (REF COMPLEX, COMPLEX) REF COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_complex (NODE_T * p)
@@ -6777,9 +6752,9 @@ void genie_timesab_complex (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_mul_complex);
 }
 
-/*!
-\brief OP /:= = (REF COMPLEX, COMPLEX) REF COMPLEX
-\param p position in tree
+/**
+@brief OP /:= = (REF COMPLEX, COMPLEX) REF COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_divab_complex (NODE_T * p)
@@ -6787,14 +6762,14 @@ void genie_divab_complex (NODE_T * p)
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_div_complex);
 }
 
-/*!
-\brief OP LENG = (COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP LENG = (COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_lengthen_complex_to_long_complex (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_REAL));
+  int digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   A68_REAL a, b;
   POP_OBJECT (p, &b, A68_REAL);
@@ -6807,14 +6782,14 @@ void genie_lengthen_complex_to_long_complex (NODE_T * p)
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP SHORTEN = (LONG COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_long_complex_to_complex (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_REAL)), size = get_mp_size (MODE (LONG_REAL));
+  int digits = DIGITS (MODE (LONG_REAL)), size = SIZE (MODE (LONG_REAL));
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   DECREMENT_STACK_POINTER (p, 2 * size);
@@ -6822,15 +6797,15 @@ void genie_shorten_long_complex_to_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, mp_to_real (p, b, digits), A68_REAL);
 }
 
-/*!
-\brief OP LENG = (LONG COMPLEX) LONG LONG COMPLEX
-\param p position in tree
+/**
+@brief OP LENG = (LONG COMPLEX) LONG LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_lengthen_long_complex_to_longlong_complex (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_REAL)), size = get_mp_size (MODE (LONG_REAL));
-  int digs_long = get_mp_digits (MODE (LONGLONG_REAL)), size_long = get_mp_size (MODE (LONGLONG_REAL));
+  int digits = DIGITS (MODE (LONG_REAL)), size = SIZE (MODE (LONG_REAL));
+  int digs_long = DIGITS (MODE (LONGLONG_REAL)), size_long = SIZE (MODE (LONGLONG_REAL));
   ADDR_T pop_sp = stack_pointer;
   MP_T *a, *b, *c, *d;
   b = (MP_T *) STACK_OFFSET (-size);
@@ -6847,15 +6822,15 @@ void genie_lengthen_long_complex_to_longlong_complex (NODE_T * p)
   INCREMENT_STACK_POINTER (p, 2 * (size_long - size));
 }
 
-/*!
-\brief OP SHORTEN = (LONG LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP SHORTEN = (LONG LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_shorten_longlong_complex_to_long_complex (NODE_T * p)
 {
-  int digits = get_mp_digits (MODE (LONG_REAL)), size = get_mp_size (MODE (LONG_REAL));
-  int digs_long = get_mp_digits (MODE (LONGLONG_REAL)), size_long = get_mp_size (MODE (LONGLONG_REAL));
+  int digits = DIGITS (MODE (LONG_REAL)), size = SIZE (MODE (LONG_REAL));
+  int digs_long = DIGITS (MODE (LONGLONG_REAL)), size_long = SIZE (MODE (LONGLONG_REAL));
   ADDR_T pop_sp = stack_pointer;
   MP_T *a, *b;
   b = (MP_T *) STACK_OFFSET (-size_long);
@@ -6868,42 +6843,43 @@ void genie_shorten_longlong_complex_to_long_complex (NODE_T * p)
   DECREMENT_STACK_POINTER (p, 2 * (size_long - size));
 }
 
-/*!
-\brief OP RE = (LONG COMPLEX) LONG REAL
-\param p position in tree
+/**
+@brief OP RE = (LONG COMPLEX) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_re_long_complex (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZE (SUB_MOID (p));
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   MP_STATUS (a) = (MP_T) INIT_MASK;
   DECREMENT_STACK_POINTER (p, (int) size_long_mp ());
 }
 
-/*!
-\brief OP IM = (LONG COMPLEX) LONG REAL
-\param p position in tree
+/**
+@brief OP IM = (LONG COMPLEX) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_im_long_complex (NODE_T * p)
 {
-  int digits = get_mp_digits (LHS_MODE (p)), size = get_mp_size (MOID (PACK (MOID (p))));
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   MOVE_MP (a, b, digits);
   MP_STATUS (a) = (MP_T) INIT_MASK;
-  DECREMENT_STACK_POINTER (p, (int) size_long_mp ());
+  DECREMENT_STACK_POINTER (p, size);
 }
 
-/*!
-\brief OP - = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP - = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_minus_long_complex (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZEC (SUB_MOID (p));
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT (a, 1) = -MP_DIGIT (a, 1);
@@ -6912,14 +6888,14 @@ void genie_minus_long_complex (NODE_T * p)
   MP_STATUS (b) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP CONJ = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP CONJ = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_conj_long_complex (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZEC (SUB_MOID (p));
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   MP_DIGIT (b, 1) = -MP_DIGIT (b, 1);
@@ -6927,15 +6903,15 @@ void genie_conj_long_complex (NODE_T * p)
   MP_STATUS (b) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP ABS = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP ABS = (LONG COMPLEX) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_abs_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITS (mode), size = SIZE (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
@@ -6949,15 +6925,15 @@ void genie_abs_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief OP ARG = (LONG COMPLEX) LONG REAL
-\param p position in tree
+/**
+@brief OP ARG = (LONG COMPLEX) LONG REAL
+@param p Node in syntax tree.
 **/
 
 void genie_arg_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITS (mode), size = SIZE (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
@@ -6971,15 +6947,15 @@ void genie_arg_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief OP + = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP + = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_add_long_complex (NODE_T * p)
 {
-  MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *d = (MP_T *) STACK_OFFSET (-size);
   MP_T *c = (MP_T *) STACK_OFFSET (-2 * size);
@@ -6993,15 +6969,15 @@ void genie_add_long_complex (NODE_T * p)
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
 
-/*!
-\brief OP - = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP - = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sub_long_complex (NODE_T * p)
 {
-  MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *d = (MP_T *) STACK_OFFSET (-size);
   MP_T *c = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7015,15 +6991,15 @@ void genie_sub_long_complex (NODE_T * p)
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
 
-/*!
-\brief OP * = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP * = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_mul_long_complex (NODE_T * p)
 {
-  MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *d = (MP_T *) STACK_OFFSET (-size);
   MP_T *c = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7036,15 +7012,15 @@ void genie_mul_long_complex (NODE_T * p)
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
 
-/*!
-\brief OP / = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP / = (LONG COMPLEX, LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_div_long_complex (NODE_T * p)
 {
-  MOID_T *mode = RHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *d = (MP_T *) STACK_OFFSET (-size);
   MP_T *c = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7057,15 +7033,15 @@ void genie_div_long_complex (NODE_T * p)
   DECREMENT_STACK_POINTER (p, 2 * size);
 }
 
-/*!
-\brief OP ** = (LONG COMPLEX, INT) LONG COMPLEX
-\param p position in tree
+/**
+@brief OP ** = (LONG COMPLEX, INT) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_pow_long_complex_int (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = SUB_MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp;
   MP_T *re_x, *im_x, *re_y, *im_y, *re_z, *im_z, *rea, *acc;
   A68_INT j;
@@ -7123,14 +7099,14 @@ void genie_pow_long_complex_int (NODE_T * p)
   MP_STATUS (im_x) = (MP_T) INIT_MASK;
 }
 
-/*!
-\brief OP = = (LONG COMPLEX, LONG COMPLEX) BOOL
-\param p position in tree
+/**
+@brief OP = = (LONG COMPLEX, LONG COMPLEX) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_eq_long_complex (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZEC (LHS_MODE (p));
   MP_T *b = (MP_T *) STACK_OFFSET (-3 * size);
   MP_T *a = (MP_T *) STACK_OFFSET (-4 * size);
   genie_sub_long_complex (p);
@@ -7138,14 +7114,14 @@ void genie_eq_long_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (a, 1) == 0 && MP_DIGIT (b, 1) == 0), A68_BOOL);
 }
 
-/*!
-\brief OP /= = (LONG COMPLEX, LONG COMPLEX) BOOL
-\param p position in tree
+/**
+@brief OP /= = (LONG COMPLEX, LONG COMPLEX) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_ne_long_complex (NODE_T * p)
 {
-  int size = get_mp_size (LHS_MODE (p));
+  int size = SIZEC (LHS_MODE (p));
   MP_T *b = (MP_T *) STACK_OFFSET (-3 * size);
   MP_T *a = (MP_T *) STACK_OFFSET (-4 * size);
   genie_sub_long_complex (p);
@@ -7153,9 +7129,9 @@ void genie_ne_long_complex (NODE_T * p)
   PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (a, 1) != 0 || MP_DIGIT (b, 1) != 0), A68_BOOL);
 }
 
-/*!
-\brief OP +:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
-\param p position in tree
+/**
+@brief OP +:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_plusab_long_complex (NODE_T * p)
@@ -7164,9 +7140,9 @@ void genie_plusab_long_complex (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_add_long_complex);
 }
 
-/*!
-\brief OP -:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
-\param p position in tree
+/**
+@brief OP -:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_minusab_long_complex (NODE_T * p)
@@ -7175,9 +7151,9 @@ void genie_minusab_long_complex (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_sub_long_complex);
 }
 
-/*!
-\brief OP *:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
-\param p position in tree
+/**
+@brief OP *:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_timesab_long_complex (NODE_T * p)
@@ -7186,9 +7162,9 @@ void genie_timesab_long_complex (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_mul_long_complex);
 }
 
-/*!
-\brief OP /:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
-\param p position in tree
+/**
+@brief OP /:= = (REF LONG COMPLEX, LONG COMPLEX) REF LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_divab_long_complex (NODE_T * p)
@@ -7197,16 +7173,16 @@ void genie_divab_long_complex (NODE_T * p)
   genie_f_and_becomes (p, mode, genie_div_long_complex);
 }
 
-/*!
-\brief PROC csqrt = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC csqrt = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sqrt_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
-  im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   RESET_ERRNO;
   if (VALUE (re) == 0.0 && VALUE (im) == 0.0) {
     VALUE (re) = 0.0;
@@ -7233,15 +7209,15 @@ void genie_sqrt_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (COMPLEX), NO_TEXT);
 }
 
-/*!
-\brief PROC long csqrt = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long csqrt = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sqrt_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7253,17 +7229,17 @@ void genie_sqrt_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC cexp = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC cexp = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_exp_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
   double r;
-  im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   RESET_ERRNO;
   r = exp (VALUE (re));
   VALUE (re) = r * cos (VALUE (im));
@@ -7271,15 +7247,15 @@ void genie_exp_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (COMPLEX), NO_TEXT);
 }
 
-/*!
-\brief PROC long cexp = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long cexp = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_exp_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7290,16 +7266,16 @@ void genie_exp_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC cln = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC cln = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_ln_complex (NODE_T * p)
 {
   A68_REAL *re, *im, r, th;
-  im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   RESET_ERRNO;
   PUSH_COMPLEX (p, VALUE (re), VALUE (im));
   genie_abs_complex (p);
@@ -7312,15 +7288,15 @@ void genie_ln_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (COMPLEX), NO_TEXT);
 }
 
-/*!
-\brief PROC long cln = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long cln = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_ln_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7331,16 +7307,16 @@ void genie_ln_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC csin = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC csin = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sin_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
-  im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   RESET_ERRNO;
   if (VALUE (im) == 0.0) {
     VALUE (re) = sin (VALUE (re));
@@ -7353,15 +7329,15 @@ void genie_sin_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
 }
 
-/*!
-\brief PROC long csin = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long csin = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sin_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7372,16 +7348,16 @@ void genie_sin_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC ccos = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC ccos = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_cos_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
-  im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   RESET_ERRNO;
   if (VALUE (im) == 0.0) {
     VALUE (re) = cos (VALUE (re));
@@ -7394,15 +7370,15 @@ void genie_cos_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
 }
 
-/*!
-\brief PROC long ccos = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long ccos = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_cos_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
@@ -7413,15 +7389,15 @@ void genie_cos_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC ctan = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC ctan = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_tan_complex (NODE_T * p)
 {
-  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
-  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
+  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
+  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   double r, i;
   A68_REAL u, v;
   RESET_ERRNO;
@@ -7441,15 +7417,15 @@ void genie_tan_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
 }
 
-/*!
-\brief PROC long ctan = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long ctan = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_tan_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
@@ -7460,15 +7436,15 @@ void genie_tan_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC carcsin= (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC carcsin= (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_arcsin_complex (NODE_T * p)
 {
-  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
-  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
+  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
+  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
   RESET_ERRNO;
   if (im == 0) {
     VALUE (re) = asin (VALUE (re));
@@ -7482,15 +7458,15 @@ void genie_arcsin_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
 }
 
-/*!
-\brief PROC long arcsin = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long arcsin = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_asin_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
@@ -7502,15 +7478,15 @@ void genie_asin_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC carccos = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC carccos = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_arccos_complex (NODE_T * p)
 {
-  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
-  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
+  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
+  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
   RESET_ERRNO;
   if (im == 0) {
     VALUE (re) = acos (VALUE (re));
@@ -7524,15 +7500,15 @@ void genie_arccos_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
 }
 
-/*!
-\brief PROC long carccos = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long carccos = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_acos_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
@@ -7544,15 +7520,15 @@ void genie_acos_long_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, mode, NO_TEXT);
 }
 
-/*!
-\brief PROC carctan = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC carctan = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_arctan_complex (NODE_T * p)
 {
-  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * ALIGNED_SIZE_OF (A68_REAL)));
-  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-ALIGNED_SIZE_OF (A68_REAL)));
+  A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
+  A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
   RESET_ERRNO;
   if (im == 0) {
     VALUE (re) = atan (VALUE (re));
@@ -7565,15 +7541,15 @@ void genie_arctan_complex (NODE_T * p)
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
 }
 
-/*!
-\brief PROC long catan = (LONG COMPLEX) LONG COMPLEX
-\param p position in tree
+/**
+@brief PROC long catan = (LONG COMPLEX) LONG COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_atan_long_complex (NODE_T * p)
 {
-  MOID_T *mode = LHS_MODE (p);
-  int digits = get_mp_digits (mode), size = get_mp_size (mode);
+  MOID_T *mode = MOID (p);
+  int digits = DIGITSC (mode), size = SIZEC (mode);
   ADDR_T pop_sp = stack_pointer;
   MP_T *re = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *im = (MP_T *) STACK_OFFSET (-size);
@@ -7587,9 +7563,9 @@ void genie_atan_long_complex (NODE_T * p)
 
 #if defined HAVE_GNU_GSL
 
-/*!
-\brief PROC csinh = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC csinh = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_sinh_complex (NODE_T * p)
@@ -7597,9 +7573,9 @@ void genie_sinh_complex (NODE_T * p)
   GSL_COMPLEX_FUNCTION (gsl_complex_sinh);
 }
 
-/*!
-\brief PROC ccosh = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC ccosh = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_cosh_complex (NODE_T * p)
@@ -7607,9 +7583,9 @@ void genie_cosh_complex (NODE_T * p)
   GSL_COMPLEX_FUNCTION (gsl_complex_cosh);
 }
 
-/*!
-\brief PROC ctanh = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC ctanh = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_tanh_complex (NODE_T * p)
@@ -7617,9 +7593,9 @@ void genie_tanh_complex (NODE_T * p)
   GSL_COMPLEX_FUNCTION (gsl_complex_tanh);
 }
 
-/*!
-\brief PROC carcsinh = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC carcsinh = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_arcsinh_complex (NODE_T * p)
@@ -7627,9 +7603,9 @@ void genie_arcsinh_complex (NODE_T * p)
   GSL_COMPLEX_FUNCTION (gsl_complex_arcsinh);
 }
 
-/*!
-\brief PROC carccosh = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC carccosh = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_arccosh_complex (NODE_T * p)
@@ -7637,9 +7613,9 @@ void genie_arccosh_complex (NODE_T * p)
   GSL_COMPLEX_FUNCTION (gsl_complex_arccosh);
 }
 
-/*!
-\brief PROC carctanh = (COMPLEX) COMPLEX
-\param p position in tree
+/**
+@brief PROC carctanh = (COMPLEX) COMPLEX
+@param p Node in syntax tree.
 **/
 
 void genie_arctanh_complex (NODE_T * p)
@@ -7681,8 +7657,9 @@ struct FILE_ENTRY {
 
 FILE_ENTRY file_entries[MAX_OPEN_FILES];
 
-/*
-\brief init an entry
+/**
+@brief Init a file entry.
+@param k  Entry to initialise.
 **/
 
 void init_file_entry (int k)
@@ -7697,8 +7674,8 @@ void init_file_entry (int k)
   }
 }
 
-/*
-\brief initialise file entry table
+/**
+@brief Initialise file entry table.
 **/
 
 void init_file_entries (void)
@@ -7709,13 +7686,13 @@ void init_file_entries (void)
   }
 }
 
-/*
-\brief store file for later closing when not explicitly closed
-\param p entry in syntax tree
-\param fd file descriptor
-\param idf file name
-\param is_tmp whether file is a temp file
-\return entry in table
+/**
+@brief Store file for later closing when not explicitly closed.
+@param p Entry in syntax tree.
+@param fd File descriptor.
+@param idf File name.
+@param is_tmp Whether file is a temp file.
+@return Entry in table.
 **/
 
 int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
@@ -7741,9 +7718,10 @@ int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
   return (-1); /* Fool them */
 }
 
-/*
-\brief close file and delete temp file
-\param k entry in table
+/**
+@brief Close file and delete temp file.
+@param p Entry in syntax tree.
+@param k Entry in table.
 **/
 
 static void close_file_entry (NODE_T *p, int k)
@@ -7762,9 +7740,10 @@ static void close_file_entry (NODE_T *p, int k)
   }
 }
 
-/*
-\brief close file and delete temp file
-\param k entry in table
+/**
+@brief Close file and delete temp file.
+@param p Entry in syntax tree.
+@param k Entry in table.
 **/
 
 static void free_file_entry (NODE_T *p, int k)
@@ -7793,8 +7772,8 @@ static void free_file_entry (NODE_T *p, int k)
   }
 }
 
-/*
-\brief close all files and delete all temp files
+/**
+@brief Close all files and delete all temp files.
 **/
 
 void free_file_entries (void)
@@ -7806,9 +7785,9 @@ void free_file_entries (void)
 }
 
 
-/*!
-\brief PROC char in string = (CHAR, REF INT, STRING) BOOL
-\param p position in tree
+/**
+@brief PROC char in string = (CHAR, REF INT, STRING) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_char_in_string (NODE_T * p)
@@ -7843,9 +7822,9 @@ void genie_char_in_string (NODE_T * p)
   PUSH_PRIMITIVE (p, A68_FALSE, A68_BOOL);
 }
 
-/*!
-\brief PROC last char in string = (CHAR, REF INT, STRING) BOOL
-\param p position in tree
+/**
+@brief PROC last char in string = (CHAR, REF INT, STRING) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_last_char_in_string (NODE_T * p)
@@ -7880,9 +7859,9 @@ void genie_last_char_in_string (NODE_T * p)
   PUSH_PRIMITIVE (p, A68_FALSE, A68_BOOL);
 }
 
-/*!
-\brief PROC string in string = (STRING, REF INT, STRING) BOOL
-\param p position in tree
+/**
+@brief PROC string in string = (STRING, REF INT, STRING) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_string_in_string (NODE_T * p)
@@ -7925,10 +7904,10 @@ it and make a larger one.
 
 static A68_REF ref_transput_buffer[MAX_TRANSPUT_BUFFER];
 
-/*!
-\brief set max number of chars in a transput buffer
-\param n transput buffer number
-\param size max number of chars
+/**
+@brief Set max number of chars in a transput buffer.
+@param n Transput buffer number.
+@param size Max number of chars.
 **/
 
 void set_transput_buffer_size (int n, int size)
@@ -7938,23 +7917,23 @@ void set_transput_buffer_size (int n, int size)
   VALUE (k) = size;
 }
 
-/*!
-\brief set char index for transput buffer
-\param n transput buffer number
-\param cindex char index
+/**
+@brief Set char index for transput buffer.
+@param n Transput buffer number.
+@param cindex Char index.
 **/
 
 void set_transput_buffer_index (int n, int cindex)
 {
-  A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]) + ALIGNED_SIZE_OF (A68_INT));
+  A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]) + SIZE (MODE (INT)));
   STATUS (k) = INIT_MASK;
   VALUE (k) = cindex;
 }
 
-/*!
-\brief get max number of chars in a transput buffer
-\param n transput buffer number
-\return same
+/**
+@brief Get max number of chars in a transput buffer.
+@param n Transput buffer number.
+@return See brief description.
 **/
 
 int get_transput_buffer_size (int n)
@@ -7963,32 +7942,32 @@ int get_transput_buffer_size (int n)
   return (VALUE (k));
 }
 
-/*!
-\brief get char index for transput buffer
-\param n transput buffer number
-\return same
+/**
+@brief Get char index for transput buffer.
+@param n Transput buffer number.
+@return See brief description.
 **/
 
 int get_transput_buffer_index (int n)
 {
-  A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]) + ALIGNED_SIZE_OF (A68_INT));
+  A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]) + SIZE (MODE (INT)));
   return (VALUE (k));
 }
 
-/*!
-\brief get char[] from transput buffer
-\param n transput buffer number
-\return same
+/**
+@brief Get char[] from transput buffer.
+@param n Transput buffer number.
+@return See brief description.
 **/
 
 char *get_transput_buffer (int n)
 {
-  return ((char *) (ADDRESS (&ref_transput_buffer[n]) + 2 * ALIGNED_SIZE_OF (A68_INT)));
+  return ((char *) (ADDRESS (&ref_transput_buffer[n]) + 2 * SIZE (MODE (INT))));
 }
 
-/*!
-\brief mark transput buffer as no longer in use
-\param n transput buffer number
+/**
+@brief Mark transput buffer as no longer in use.
+@param n Transput buffer number.
 **/
 
 void unblock_transput_buffer (int n)
@@ -7996,10 +7975,10 @@ void unblock_transput_buffer (int n)
   set_transput_buffer_index (n, -1);
 }
 
-/*!
-\brief find first unused transput buffer (for opening a file)
-\param p position in tree position in syntax tree
-\return same
+/**
+@brief Find first unused transput buffer (for opening a file).
+@param p Node in syntax tree position in syntax tree.
+@return See brief description.
 **/
 
 int get_unblocked_transput_buffer (NODE_T * p)
@@ -8016,9 +7995,9 @@ int get_unblocked_transput_buffer (NODE_T * p)
   return (-1);
 }
 
-/*!
-\brief empty contents of transput buffer
-\param n transput buffer number
+/**
+@brief Empty contents of transput buffer.
+@param n Transput buffer number.
 **/
 
 void reset_transput_buffer (int n)
@@ -8027,16 +8006,16 @@ void reset_transput_buffer (int n)
   (get_transput_buffer (n))[0] = NULL_CHAR;
 }
 
-/*!
-\brief initialise transput buffers before use
-\param p position in tree position in syntax tree
+/**
+@brief Initialise transput buffers before use.
+@param p Node in syntax tree position in syntax tree.
 **/
 
 void init_transput_buffers (NODE_T * p)
 {
   int k;
   for (k = 0; k < MAX_TRANSPUT_BUFFER; k++) {
-    ref_transput_buffer[k] = heap_generator (p, MODE (ROWS), 2 * ALIGNED_SIZE_OF (A68_INT) + TRANSPUT_BUFFER_SIZE);
+    ref_transput_buffer[k] = heap_generator (p, MODE (ROWS), 2 * SIZE (MODE (INT)) + TRANSPUT_BUFFER_SIZE);
     BLOCK_GC_HANDLE (&ref_transput_buffer[k]);
     set_transput_buffer_size (k, TRANSPUT_BUFFER_SIZE);
     reset_transput_buffer (k);
@@ -8047,11 +8026,11 @@ void init_transput_buffers (NODE_T * p)
   }
 }
 
-/*!
-\brief make a transput buffer larger
-\param p position in tree
-\param k transput buffer number
-\param size new size in characters
+/**
+@brief Make a transput buffer larger.
+@param p Node in syntax tree.
+@param k Transput buffer number.
+@param size New size in characters.
 **/
 
 void enlarge_transput_buffer (NODE_T * p, int k, int size)
@@ -8059,7 +8038,7 @@ void enlarge_transput_buffer (NODE_T * p, int k, int size)
   int tbindex = get_transput_buffer_index (k);
   char *sb_1 = get_transput_buffer (k), *sb_2;
   UNBLOCK_GC_HANDLE (&ref_transput_buffer[k]);
-  ref_transput_buffer[k] = heap_generator (p, MODE (ROWS), 2 * ALIGNED_SIZE_OF (A68_INT) + size);
+  ref_transput_buffer[k] = heap_generator (p, MODE (ROWS), 2 * SIZE (MODE (INT)) + size);
   BLOCK_GC_HANDLE (&ref_transput_buffer[k]);
   set_transput_buffer_size (k, size);
   set_transput_buffer_index (k, tbindex);
@@ -8067,11 +8046,11 @@ void enlarge_transput_buffer (NODE_T * p, int k, int size)
   bufcpy (sb_2, sb_1, size);
 }
 
-/*!
-\brief add char to transput buffer; if the buffer is full, make it larger
-\param p position in tree
-\param k transput buffer number
-\param ch char to add
+/**
+@brief Add char to transput buffer; if the buffer is full, make it larger.
+@param p Node in syntax tree.
+@param k Transput buffer number.
+@param ch Char to add.
 **/
 
 void add_char_transput_buffer (NODE_T * p, int k, char ch)
@@ -8089,11 +8068,11 @@ void add_char_transput_buffer (NODE_T * p, int k, char ch)
   }
 }
 
-/*!
-\brief add char[] to transput buffer
-\param p position in tree
-\param k transput buffer number
-\param ch string to add
+/**
+@brief Add char[] to transput buffer.
+@param p Node in syntax tree.
+@param k Transput buffer number.
+@param ch String to add.
 **/
 
 void add_string_transput_buffer (NODE_T * p, int k, char *ch)
@@ -8103,11 +8082,11 @@ void add_string_transput_buffer (NODE_T * p, int k, char *ch)
   }
 }
 
-/*!
-\brief add A68 string to transput buffer
-\param p position in tree
-\param k transput buffer number
-\param ref fat pointer to A68 string
+/**
+@brief Add A68 string to transput buffer.
+@param p Node in syntax tree.
+@param k Transput buffer number.
+@param ref Fat pointer to A68 string.
 **/
 
 void add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
@@ -8129,10 +8108,10 @@ void add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
   }
 }
 
-/*!
-\brief pop A68 string and add to buffer
-\param p position in tree
-\param k transput buffer number
+/**
+@brief Pop A68 string and add to buffer.
+@param p Node in syntax tree.
+@param k Transput buffer number.
 **/
 
 void add_string_from_stack_transput_buffer (NODE_T * p, int k)
@@ -8141,10 +8120,10 @@ void add_string_from_stack_transput_buffer (NODE_T * p, int k)
   add_a_string_transput_buffer (p, k, STACK_TOP);
 }
 
-/*!
-\brief pop first character from transput buffer
-\param k transput buffer number
-\return same
+/**
+@brief Pop first character from transput buffer.
+@param k Transput buffer number.
+@return See brief description.
 **/
 
 char pop_char_transput_buffer (int k)
@@ -8161,11 +8140,11 @@ char pop_char_transput_buffer (int k)
   }
 }
 
-/*!
-\brief add C string to A68 string
-\param p position in tree
-\param ref_str fat pointer to A68 string
-\param str pointer to C string
+/**
+@brief Add C string to A68 string.
+@param p Node in syntax tree.
+@param ref_str Fat pointer to A68 string.
+@param str Pointer to C string.
 **/
 
 static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
@@ -8183,15 +8162,15 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   GET_DESCRIPTOR (a_1, t_1, &a);
   l_1 = ROW_SIZE (t_1);
 /* Sum string */
-  c = heap_generator (p, MODE (STRING), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-  d = heap_generator (p, MODE (STRING), (l_1 + l_2) * ALIGNED_SIZE_OF (A68_CHAR));
+  c = heap_generator (p, MODE (STRING), SIZE_AL (A68_ARRAY) + SIZE_AL (A68_TUPLE));
+  d = heap_generator (p, MODE (STRING), (l_1 + l_2) * SIZE (MODE (CHAR)));
 /* Calculate again since garbage collector might have moved data */
   GET_DESCRIPTOR (a_1, t_1, &a);
 /* Make descriptor of new string */
   GET_DESCRIPTOR (a_3, t_3, &c);
   DIM (a_3) = 1;
   MOID (a_3) = MODE (CHAR);
-  ELEM_SIZE (a_3) = ALIGNED_SIZE_OF (A68_CHAR);
+  ELEM_SIZE (a_3) = SIZE (MODE (CHAR));
   SLICE_OFFSET (a_3) = 0;
   FIELD_OFFSET (a_3) = 0;
   ARRAY (a_3) = d;
@@ -8204,24 +8183,24 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   b_3 = DEREF (BYTE_T, &ARRAY (a_3));
   u = 0;
   for (v = LWB (t_1); v <= UPB (t_1); v++) {
-    MOVE ((BYTE_T *) & b_3[u], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, v)], ALIGNED_SIZE_OF (A68_CHAR));
-    u += ALIGNED_SIZE_OF (A68_CHAR);
+    MOVE ((BYTE_T *) & b_3[u], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, v)], SIZE (MODE (CHAR)));
+    u += SIZE (MODE (CHAR));
   }
   for (v = 0; v < l_2; v++) {
     A68_CHAR ch;
     STATUS (&ch) = INIT_MASK;
     VALUE (&ch) = str[v];
-    MOVE ((BYTE_T *) & b_3[u], (BYTE_T *) & ch, ALIGNED_SIZE_OF (A68_CHAR));
-    u += ALIGNED_SIZE_OF (A68_CHAR);
+    MOVE ((BYTE_T *) & b_3[u], (BYTE_T *) & ch, SIZE (MODE (CHAR)));
+    u += SIZE (MODE (CHAR));
   }
   * DEREF (A68_REF, &ref_str) = c;
 }
 
-/*!
-\brief purge buffer for file
-\param p position in tree
-\param ref_file
-\param k transput buffer number for file
+/**
+@brief Purge buffer for file.
+@param p Node in syntax tree.
+@param ref_file
+@param k Transput buffer number for file.
 **/
 
 void write_purge_buffer (NODE_T * p, A68_REF ref_file, int k)
@@ -8239,11 +8218,11 @@ void write_purge_buffer (NODE_T * p, A68_REF ref_file, int k)
 
 /* Routines that involve the A68 expression stack */
 
-/*!
-\brief allocate a temporary string on the stack
-\param p position in tree
-\param size size in characters
-\return same
+/**
+@brief Allocate a temporary string on the stack.
+@param p Node in syntax tree.
+@param size Size in characters.
+@return See brief description.
 **/
 
 char *stack_string (NODE_T * p, int size)
@@ -8260,9 +8239,9 @@ char *stack_string (NODE_T * p, int size)
 
 /* Transput basic RTS routines */
 
-/*!
-\brief REF FILE standin
-\param p position in tree
+/**
+@brief REF FILE standin
+@param p Node in syntax tree.
 **/
 
 void genie_stand_in (NODE_T * p)
@@ -8270,9 +8249,9 @@ void genie_stand_in (NODE_T * p)
   PUSH_REF (p, stand_in);
 }
 
-/*!
-\brief REF FILE standout
-\param p position in tree
+/**
+@brief REF FILE standout
+@param p Node in syntax tree.
 **/
 
 void genie_stand_out (NODE_T * p)
@@ -8280,9 +8259,9 @@ void genie_stand_out (NODE_T * p)
   PUSH_REF (p, stand_out);
 }
 
-/*!
-\brief REF FILE standback
-\param p position in tree
+/**
+@brief REF FILE standback
+@param p Node in syntax tree.
 **/
 
 void genie_stand_back (NODE_T * p)
@@ -8290,9 +8269,9 @@ void genie_stand_back (NODE_T * p)
   PUSH_REF (p, stand_back);
 }
 
-/*!
-\brief REF FILE standerror
-\param p position in tree
+/**
+@brief REF FILE standerror
+@param p Node in syntax tree.
 **/
 
 void genie_stand_error (NODE_T * p)
@@ -8300,9 +8279,9 @@ void genie_stand_error (NODE_T * p)
   PUSH_REF (p, stand_error);
 }
 
-/*!
-\brief CHAR error char
-\param p position in tree
+/**
+@brief CHAR error char
+@param p Node in syntax tree.
 **/
 
 void genie_error_char (NODE_T * p)
@@ -8310,9 +8289,9 @@ void genie_error_char (NODE_T * p)
   PUSH_PRIMITIVE (p, ERROR_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR exp char
-\param p position in tree
+/**
+@brief CHAR exp char
+@param p Node in syntax tree.
 **/
 
 void genie_exp_char (NODE_T * p)
@@ -8320,9 +8299,9 @@ void genie_exp_char (NODE_T * p)
   PUSH_PRIMITIVE (p, EXPONENT_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR flip char
-\param p position in tree
+/**
+@brief CHAR flip char
+@param p Node in syntax tree.
 **/
 
 void genie_flip_char (NODE_T * p)
@@ -8330,9 +8309,9 @@ void genie_flip_char (NODE_T * p)
   PUSH_PRIMITIVE (p, FLIP_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR flop char
-\param p position in tree
+/**
+@brief CHAR flop char
+@param p Node in syntax tree.
 **/
 
 void genie_flop_char (NODE_T * p)
@@ -8340,9 +8319,9 @@ void genie_flop_char (NODE_T * p)
   PUSH_PRIMITIVE (p, FLOP_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR null char
-\param p position in tree
+/**
+@brief CHAR null char
+@param p Node in syntax tree.
 **/
 
 void genie_null_char (NODE_T * p)
@@ -8350,9 +8329,9 @@ void genie_null_char (NODE_T * p)
   PUSH_PRIMITIVE (p, NULL_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR blank
-\param p position in tree
+/**
+@brief CHAR blank
+@param p Node in syntax tree.
 **/
 
 void genie_blank_char (NODE_T * p)
@@ -8360,9 +8339,9 @@ void genie_blank_char (NODE_T * p)
   PUSH_PRIMITIVE (p, BLANK_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR newline char
-\param p position in tree
+/**
+@brief CHAR newline char
+@param p Node in syntax tree.
 **/
 
 void genie_newline_char (NODE_T * p)
@@ -8370,9 +8349,9 @@ void genie_newline_char (NODE_T * p)
   PUSH_PRIMITIVE (p, NEWLINE_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR formfeed char
-\param p position in tree
+/**
+@brief CHAR formfeed char
+@param p Node in syntax tree.
 **/
 
 void genie_formfeed_char (NODE_T * p)
@@ -8380,9 +8359,9 @@ void genie_formfeed_char (NODE_T * p)
   PUSH_PRIMITIVE (p, FORMFEED_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHAR tab char
-\param p position in tree
+/**
+@brief CHAR tab char
+@param p Node in syntax tree.
 **/
 
 void genie_tab_char (NODE_T * p)
@@ -8390,9 +8369,9 @@ void genie_tab_char (NODE_T * p)
   PUSH_PRIMITIVE (p, TAB_CHAR, A68_CHAR);
 }
 
-/*!
-\brief CHANNEL standin channel
-\param p position in tree
+/**
+@brief CHANNEL standin channel
+@param p Node in syntax tree.
 **/
 
 void genie_stand_in_channel (NODE_T * p)
@@ -8400,9 +8379,9 @@ void genie_stand_in_channel (NODE_T * p)
   PUSH_OBJECT (p, stand_in_channel, A68_CHANNEL);
 }
 
-/*!
-\brief CHANNEL standout channel
-\param p position in tree
+/**
+@brief CHANNEL standout channel
+@param p Node in syntax tree.
 **/
 
 void genie_stand_out_channel (NODE_T * p)
@@ -8410,9 +8389,9 @@ void genie_stand_out_channel (NODE_T * p)
   PUSH_OBJECT (p, stand_out_channel, A68_CHANNEL);
 }
 
-/*!
-\brief CHANNEL stand draw channel
-\param p position in tree
+/**
+@brief CHANNEL stand draw channel
+@param p Node in syntax tree.
 **/
 
 void genie_stand_draw_channel (NODE_T * p)
@@ -8420,9 +8399,9 @@ void genie_stand_draw_channel (NODE_T * p)
   PUSH_OBJECT (p, stand_draw_channel, A68_CHANNEL);
 }
 
-/*!
-\brief CHANNEL standback channel
-\param p position in tree
+/**
+@brief CHANNEL standback channel
+@param p Node in syntax tree.
 **/
 
 void genie_stand_back_channel (NODE_T * p)
@@ -8430,9 +8409,9 @@ void genie_stand_back_channel (NODE_T * p)
   PUSH_OBJECT (p, stand_back_channel, A68_CHANNEL);
 }
 
-/*!
-\brief CHANNEL standerror channel
-\param p position in tree
+/**
+@brief CHANNEL standerror channel
+@param p Node in syntax tree.
 **/
 
 void genie_stand_error_channel (NODE_T * p)
@@ -8440,9 +8419,9 @@ void genie_stand_error_channel (NODE_T * p)
   PUSH_OBJECT (p, stand_error_channel, A68_CHANNEL);
 }
 
-/*!
-\brief PROC STRING program idf
-\param p position in tree
+/**
+@brief PROC STRING program idf
+@param p Node in syntax tree.
 **/
 
 void genie_program_idf (NODE_T * p)
@@ -8452,9 +8431,9 @@ void genie_program_idf (NODE_T * p)
 
 /* FILE and CHANNEL initialisations */
 
-/*!
-\brief set_default_event_procedure
-\param z
+/**
+@brief Set_default_event_procedure.
+@param z
 **/
 
 void set_default_event_procedure (A68_PROCEDURE * z)
@@ -8464,15 +8443,15 @@ void set_default_event_procedure (A68_PROCEDURE * z)
   ENVIRON (z) = 0;
 }
 
-/*!
-\brief initialise channel
-\param chan channel
-\param r reset possible
-\param s set possible
-\param g get possible
-\param p put possible
-\param b bin possible
-\param d draw possible
+/**
+@brief Initialise channel.
+@param chan Channel.
+@param r Reset possible.
+@param s Set possible.
+@param g Get possible.
+@param p Put possible.
+@param b Bin possible.
+@param d Draw possible.
 **/
 
 static void init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL_T p, BOOL_T b, BOOL_T d)
@@ -8487,9 +8466,9 @@ static void init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL
   COMPRESS (chan) = A68_TRUE;
 }
 
-/*!
-\brief set default event handlers
-\param f file
+/**
+@brief Set default event handlers.
+@param f File.
 **/
 
 void set_default_event_procedures (A68_FILE * f)
@@ -8504,22 +8483,23 @@ void set_default_event_procedures (A68_FILE * f)
   set_default_event_procedure (&(FORMAT_ERROR_MENDED (f)));
 }
 
-/*!
-\brief set up a REF FILE object
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param c channel
-\param s file number
-\param rm read mood
-\param wm write mood
-\param cm char mood
+/**
+@brief Set up a REF FILE object.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param c Channel.
+@param s File number.
+@param rm Read mood.
+@param wm Write mood.
+@param cm Char mood.
+@param env Unix ENVIRONMENT variable.
 **/
 
 static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, BOOL_T rm, BOOL_T wm, BOOL_T cm, char *env)
 {
   A68_FILE *f;
   char *filename = (env == NO_TEXT ? NO_TEXT : getenv (env));
-  *ref_file = heap_generator (p, MODE (REF_FILE), ALIGNED_SIZE_OF (A68_FILE));
+  *ref_file = heap_generator (p, MODE (REF_FILE), SIZE (MODE (FILE)));
   BLOCK_GC_HANDLE (ref_file);
   f = FILE_DEREF (ref_file);
   STATUS (f) = INIT_MASK;
@@ -8556,9 +8536,9 @@ static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, 
   set_default_event_procedures (f);
 }
 
-/*!
-\brief initialise the transput RTL
-\param p position in tree
+/**
+@brief Initialise the transput RTL.
+@param p Node in syntax tree.
 **/
 
 void genie_init_transput (NODE_T * p)
@@ -8584,9 +8564,9 @@ void genie_init_transput (NODE_T * p)
   init_file (p, &skip_file, skip_channel, A68_NO_FILENO, A68_FALSE, A68_FALSE, A68_FALSE, NO_TEXT);
 }
 
-/*!
-\brief PROC (REF FILE) STRING idf
-\param p position in tree
+/**
+@brief PROC (REF FILE) STRING idf
+@param p Node in syntax tree.
 **/
 
 void genie_idf (NODE_T * p)
@@ -8602,9 +8582,9 @@ void genie_idf (NODE_T * p)
   PUSH_REF (p, c_to_a_string (p, filename, DEFAULT_WIDTH));
 }
 
-/*!
-\brief PROC (REF FILE) STRING term
-\param p position in tree
+/**
+@brief PROC (REF FILE) STRING term
+@param p Node in syntax tree.
 **/
 
 void genie_term (NODE_T * p)
@@ -8620,9 +8600,9 @@ void genie_term (NODE_T * p)
   PUSH_REF (p, c_to_a_string (p, term, DEFAULT_WIDTH));
 }
 
-/*!
-\brief PROC (REF FILE, STRING) VOID make term
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING) VOID make term
+@param p Node in syntax tree.
 **/
 
 void genie_make_term (NODE_T * p)
@@ -8646,9 +8626,9 @@ void genie_make_term (NODE_T * p)
   ASSERT (a_to_c_string (p, DEREF (char, &TERMINATOR (file)), str) != NO_TEXT);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL put possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL put possible
+@param p Node in syntax tree.
 **/
 
 void genie_put_possible (NODE_T * p)
@@ -8662,9 +8642,9 @@ void genie_put_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, PUT (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL get possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL get possible
+@param p Node in syntax tree.
 **/
 
 void genie_get_possible (NODE_T * p)
@@ -8678,9 +8658,9 @@ void genie_get_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, GET (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL bin possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL bin possible
+@param p Node in syntax tree.
 **/
 
 void genie_bin_possible (NODE_T * p)
@@ -8694,9 +8674,9 @@ void genie_bin_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, BIN (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL set possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL set possible
+@param p Node in syntax tree.
 **/
 
 void genie_set_possible (NODE_T * p)
@@ -8710,9 +8690,9 @@ void genie_set_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, SET (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL reidf possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL reidf possible
+@param p Node in syntax tree.
 **/
 
 void genie_reidf_possible (NODE_T * p)
@@ -8726,9 +8706,9 @@ void genie_reidf_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, A68_FALSE, A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL reset possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL reset possible
+@param p Node in syntax tree.
 **/
 
 void genie_reset_possible (NODE_T * p)
@@ -8742,9 +8722,9 @@ void genie_reset_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, RESET (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL compressible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL compressible
+@param p Node in syntax tree.
 **/
 
 void genie_compressible (NODE_T * p)
@@ -8758,9 +8738,9 @@ void genie_compressible (NODE_T * p)
   PUSH_PRIMITIVE (p, COMPRESS (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL draw possible
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL draw possible
+@param p Node in syntax tree.
 **/
 
 void genie_draw_possible (NODE_T * p)
@@ -8774,9 +8754,9 @@ void genie_draw_possible (NODE_T * p)
   PUSH_PRIMITIVE (p, DRAW (&CHANNEL (file)), A68_BOOL);
 }
 
-/*!
-\brief PROC (REF FILE, STRING, CHANNEL) INT open
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING, CHANNEL) INT open
+@param p Node in syntax tree.
 **/
 
 void genie_open (NODE_T * p)
@@ -8830,9 +8810,9 @@ void genie_open (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (REF FILE, STRING, CHANNEL) INT establish
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING, CHANNEL) INT establish
+@param p Node in syntax tree.
 **/
 
 void genie_establish (NODE_T * p)
@@ -8882,9 +8862,9 @@ void genie_establish (NODE_T * p)
   PUSH_PRIMITIVE (p, 0, A68_INT);
 }
 
-/*!
-\brief PROC (REF FILE, CHANNEL) INT create
-\param p position in tree
+/**
+@brief PROC (REF FILE, CHANNEL) INT create
+@param p Node in syntax tree.
 **/
 
 void genie_create (NODE_T * p)
@@ -8924,9 +8904,9 @@ void genie_create (NODE_T * p)
   PUSH_PRIMITIVE (p, 0, A68_INT);
 }
 
-/*!
-\brief PROC (REF FILE, REF STRING) VOID associate
-\param p position in tree
+/**
+@brief PROC (REF FILE, REF STRING) VOID associate
+@param p Node in syntax tree.
 **/
 
 void genie_associate (NODE_T * p)
@@ -8975,9 +8955,9 @@ void genie_associate (NODE_T * p)
   set_default_event_procedures (file);
 }
 
-/*!
-\brief PROC (REF FILE) VOID close
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID close
+@param p Node in syntax tree.
 **/
 
 void genie_close (NODE_T * p)
@@ -9006,9 +8986,9 @@ void genie_close (NODE_T * p)
   free_file_entry (p, FILE_ENTRY (file));
 }
 
-/*!
-\brief PROC (REF FILE) VOID lock
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID lock
+@param p Node in syntax tree.
 **/
 
 void genie_lock (NODE_T * p)
@@ -9046,9 +9026,9 @@ void genie_lock (NODE_T * p)
   free_file_entry (p, FILE_ENTRY (file));
 }
 
-/*!
-\brief PROC (REF FILE) VOID erase
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID erase
+@param p Node in syntax tree.
 **/
 
 void genie_erase (NODE_T * p)
@@ -9092,9 +9072,9 @@ void genie_erase (NODE_T * p)
   init_file_entry (FILE_ENTRY (file));
 }
 
-/*!
-\brief PROC (REF FILE) VOID backspace
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID backspace
+@param p Node in syntax tree.
 **/
 
 void genie_backspace (NODE_T * p)
@@ -9105,9 +9085,9 @@ void genie_backspace (NODE_T * p)
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief PROC (REF FILE, INT) INT set
-\param p position in tree
+/**
+@brief PROC (REF FILE, INT) INT set
+@param p Node in syntax tree.
 **/
 
 void genie_set (NODE_T * p)
@@ -9186,9 +9166,9 @@ void genie_set (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (REF FILE) VOID reset
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID reset
+@param p Node in syntax tree.
 **/
 
 void genie_reset (NODE_T * p)
@@ -9220,9 +9200,9 @@ void genie_reset (NODE_T * p)
 /*  set_default_event_procedures (file); */
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on file end
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on file end
+@param p Node in syntax tree.
 **/
 
 void genie_on_file_end (NODE_T * p)
@@ -9238,9 +9218,9 @@ void genie_on_file_end (NODE_T * p)
   FILE_END_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on page end
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on page end
+@param p Node in syntax tree.
 **/
 
 void genie_on_page_end (NODE_T * p)
@@ -9256,9 +9236,9 @@ void genie_on_page_end (NODE_T * p)
   PAGE_END_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on line end
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on line end
+@param p Node in syntax tree.
 **/
 
 void genie_on_line_end (NODE_T * p)
@@ -9274,9 +9254,9 @@ void genie_on_line_end (NODE_T * p)
   LINE_END_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on format end
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on format end
+@param p Node in syntax tree.
 **/
 
 void genie_on_format_end (NODE_T * p)
@@ -9292,9 +9272,9 @@ void genie_on_format_end (NODE_T * p)
   FORMAT_END_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on format error
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on format error
+@param p Node in syntax tree.
 **/
 
 void genie_on_format_error (NODE_T * p)
@@ -9310,9 +9290,9 @@ void genie_on_format_error (NODE_T * p)
   FORMAT_ERROR_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on value error
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on value error
+@param p Node in syntax tree.
 **/
 
 void genie_on_value_error (NODE_T * p)
@@ -9328,9 +9308,9 @@ void genie_on_value_error (NODE_T * p)
   VALUE_ERROR_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on open error
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on open error
+@param p Node in syntax tree.
 **/
 
 void genie_on_open_error (NODE_T * p)
@@ -9346,9 +9326,9 @@ void genie_on_open_error (NODE_T * p)
   OPEN_ERROR_MENDED (file) = z;
 }
 
-/*!
-\brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on transput error
-\param p position in tree
+/**
+@brief PROC (REF FILE, PROC (REF FILE) BOOL) VOID on transput error
+@param p Node in syntax tree.
 **/
 
 void genie_on_transput_error (NODE_T * p)
@@ -9364,11 +9344,11 @@ void genie_on_transput_error (NODE_T * p)
   TRANSPUT_ERROR_MENDED (file) = z;
 }
 
-/*!
-\brief invoke event routine
-\param p position in tree
-\param z routine to invoke
-\param ref_file fat pointer to A68 file
+/**
+@brief Invoke event routine.
+@param p Node in syntax tree.
+@param z Routine to invoke.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void on_event_handler (NODE_T * p, A68_PROCEDURE z, A68_REF ref_file)
@@ -9383,10 +9363,10 @@ void on_event_handler (NODE_T * p, A68_PROCEDURE z, A68_REF ref_file)
   }
 }
 
-/*!
-\brief handle end-of-file event
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Handle end-of-file event.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void end_of_file_error (NODE_T * p, A68_REF ref_file)
@@ -9400,11 +9380,11 @@ void end_of_file_error (NODE_T * p, A68_REF ref_file)
   }
 }
 
-/*!
-\brief handle file-open-error event
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param mode mode for opening
+/**
+@brief Handle file-open-error event.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param mode Mode for opening.
 **/
 
 void open_error (NODE_T * p, A68_REF ref_file, char *mode)
@@ -9428,11 +9408,11 @@ void open_error (NODE_T * p, A68_REF ref_file, char *mode)
   }
 }
 
-/*!
-\brief handle value error event
-\param p position in tree
-\param m mode of object read or written
-\param ref_file fat pointer to A68 file
+/**
+@brief Handle value error event.
+@param p Node in syntax tree.
+@param m Mode of object read or written.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void value_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
@@ -9451,11 +9431,11 @@ void value_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
   }
 }
 
-/*!
-\brief handle value_error event
-\param p position in tree
-\param m mode of object read or written
-\param ref_file fat pointer to A68 file
+/**
+@brief Handle value_error event.
+@param p Node in syntax tree.
+@param m Mode of object read or written.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void value_sign_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
@@ -9474,11 +9454,11 @@ void value_sign_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
   }
 }
 
-/*!
-\brief handle transput-error event
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param m mode of object read or written
+/**
+@brief Handle transput-error event.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param m Mode of object read or written.
 **/
 
 void transput_error (NODE_T * p, A68_REF ref_file, MOID_T * m)
@@ -9494,10 +9474,10 @@ void transput_error (NODE_T * p, A68_REF ref_file, MOID_T * m)
 
 /* Implementation of put and get */
 
-/*!
-\brief get next char from file
-\param f file
-\return same
+/**
+@brief Get next char from file.
+@param f File.
+@return See brief description.
 **/
 
 int char_scanner (A68_FILE * f)
@@ -9541,11 +9521,11 @@ When we're outside the STRING give EOF_CHAR.
   }
 }
 
-/*!
-\brief push back look-ahead character to file
-\param p position in tree
-\param f file
-\param ch character to push
+/**
+@brief Push back look-ahead character to file.
+@param p Node in syntax tree.
+@param f File.
+@param ch Character to push.
 **/
 
 void unchar_scanner (NODE_T * p, A68_FILE * f, char ch)
@@ -9554,9 +9534,9 @@ void unchar_scanner (NODE_T * p, A68_FILE * f, char ch)
   add_char_transput_buffer (p, TRANSPUT_BUFFER (f), ch);
 }
 
-/*!
-\brief PROC (REF FILE) BOOL eof
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL eof
+@param p Node in syntax tree.
 **/
 
 void genie_eof (NODE_T * p)
@@ -9588,9 +9568,9 @@ void genie_eof (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (REF FILE) BOOL eoln
-\param p position in tree
+/**
+@brief PROC (REF FILE) BOOL eoln
+@param p Node in syntax tree.
 **/
 
 void genie_eoln (NODE_T * p)
@@ -9625,9 +9605,9 @@ void genie_eoln (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (REF FILE) VOID new line
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID new line
+@param p Node in syntax tree.
 **/
 
 void genie_new_line (NODE_T * p)
@@ -9668,9 +9648,9 @@ void genie_new_line (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (REF FILE) VOID new page
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID new page
+@param p Node in syntax tree.
 **/
 
 void genie_new_page (NODE_T * p)
@@ -9711,9 +9691,9 @@ void genie_new_page (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (REF FILE) VOID space
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID space
+@param p Node in syntax tree.
 **/
 
 void genie_space (NODE_T * p)
@@ -9746,11 +9726,11 @@ void genie_space (NODE_T * p)
 
 #define IS_NL_FF(ch) ((ch) == NEWLINE_CHAR || (ch) == FORMFEED_CHAR)
 
-/*!
-\brief skip new-lines and form-feeds
-\param p position in tree
-\param ch pointer to scanned character
-\param ref_file fat pointer to A68 file
+/**
+@brief Skip new-lines and form-feeds.
+@param p Node in syntax tree.
+@param ch Pointer to scanned character.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void skip_nl_ff (NODE_T * p, int *ch, A68_REF ref_file)
@@ -9779,10 +9759,10 @@ void skip_nl_ff (NODE_T * p, int *ch, A68_REF ref_file)
   }
 }
 
-/*!
-\brief scan an int from file
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Scan an int from file.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void scan_integer (NODE_T * p, A68_REF ref_file)
@@ -9811,10 +9791,10 @@ void scan_integer (NODE_T * p, A68_REF ref_file)
   }
 }
 
-/*!
-\brief scan a real from file
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Scan a real from file.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void scan_real (NODE_T * p, A68_REF ref_file)
@@ -9873,10 +9853,10 @@ salida:if (ch != EOF_CHAR) {
   }
 }
 
-/*!
-\brief scan a bits from file
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Scan a bits from file.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void scan_bits (NODE_T * p, A68_REF ref_file)
@@ -9901,10 +9881,10 @@ void scan_bits (NODE_T * p, A68_REF ref_file)
   }
 }
 
-/*!
-\brief scan a char from file
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Scan a char from file.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void scan_char (NODE_T * p, A68_REF ref_file)
@@ -9919,11 +9899,11 @@ void scan_char (NODE_T * p, A68_REF ref_file)
   }
 }
 
-/*!
-\brief scan a string from file
-\param p position in tree
-\param term string with terminators
-\param ref_file fat pointer to A68 file
+/**
+@brief Scan a string from file.
+@param p Node in syntax tree.
+@param term String with terminators.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void scan_string (NODE_T * p, char *term, A68_REF ref_file)
@@ -9964,11 +9944,12 @@ void scan_string (NODE_T * p, char *term, A68_REF ref_file)
   }
 }
 
-/*!
-\brief make temp file name
-\param fn pointer to string to hold filename
-\param permissions permissions to open file with
-\return whether file is good for use
+/**
+@brief Make temp file name.
+@param fn Pointer to string to hold filename.
+@param flags Mode to open file with.
+@param permissions Permissions to open file with.
+@return Whether file is good for use.
 **/
 
 BOOL_T a68g_mkstemp (char *fn, int flags, mode_t permissions)
@@ -10022,13 +10003,13 @@ First we try /tmp, and if that won't go, the current dir.
 #undef TRIALS
 }
 
-/*!
-\brief open a file, or establish it
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param flags required access mode
-\param permissions optional permissions
-\return file number
+/**
+@brief Open a file, or establish it.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param flags Required access mode.
+@param permissions Optional permissions.
+@return File number.
 **/
 
 FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permissions)
@@ -10093,11 +10074,11 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
   }
 }
 
-/*!
-\brief call PROC (REF FILE) VOID during transput
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param z A68 routine to call
+/**
+@brief Call PROC (REF FILE) VOID during transput.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param z A68 routine to call
 **/
 
 void genie_call_proc_ref_file_void (NODE_T * p, A68_REF ref_file, A68_PROCEDURE z)
@@ -10111,10 +10092,10 @@ void genie_call_proc_ref_file_void (NODE_T * p, A68_REF ref_file, A68_PROCEDURE 
 
 /* Unformatted transput */
 
-/*!
-\brief hexadecimal value of digit
-\param ch digit
-\return same
+/**
+@brief Hexadecimal value of digit.
+@param ch Digit.
+@return See brief description.
 **/
 
 static int char_value (int ch)
@@ -10197,12 +10178,12 @@ static int char_value (int ch)
   }
 }
 
-/*!
-\brief own strtoul; some systems have no strtoul
-\param str string representing an unsigned int denotation
-\param end points to first character after denotation
-\param base exponent base
-\return value of denotation in str
+/**
+@brief Own strtoul; some systems have no strtoul.
+@param str String representing an unsigned int denotation.
+@param end Points to first character after denotation.
+@param base Exponent base.
+@return Value of denotation in str.
 **/
 
 unsigned a68g_strtoul (char *str, char **end, int base)
@@ -10254,11 +10235,11 @@ unsigned a68g_strtoul (char *str, char **end, int base)
   }
 }
 
-/*!
-\brief INT value of BITS denotation
-\param p position in tree
-\param str string with BITS denotation
-\return same
+/**
+@brief INT value of BITS denotation
+@param p Node in syntax tree.
+@param str String with BITS denotation.
+@return See brief description.
 **/
 
 static unsigned bits_to_int (NODE_T * p, char *str)
@@ -10283,12 +10264,12 @@ static unsigned bits_to_int (NODE_T * p, char *str)
   return (0);
 }
 
-/*!
-\brief LONG BITS value of LONG BITS denotation
-\param p position in tree
-\param z multi-precision number
-\param str string with LONG BITS denotation 
-\param m mode of 'z'
+/**
+@brief LONG BITS value of LONG BITS denotation
+@param p Node in syntax tree.
+@param z Multi-precision number.
+@param str String with LONG BITS denotation .
+@param m Mode of 'z'.
 **/
 
 static void long_bits_to_long_int (NODE_T * p, MP_T * z, char *str, MOID_T * m)
@@ -10298,7 +10279,7 @@ static void long_bits_to_long_int (NODE_T * p, MP_T * z, char *str, MOID_T * m)
   RESET_ERRNO;
   base = (int) a68g_strtoul (str, &radix, 10);
   if (radix != NO_TEXT && TO_UPPER (radix[0]) == TO_UPPER (RADIX_CHAR) && errno == 0) {
-    int digits = get_mp_digits (m);
+    int digits = DIGITS (m);
     ADDR_T pop_sp = stack_pointer;
     MP_T *v;
     MP_T *w;
@@ -10333,13 +10314,13 @@ static void long_bits_to_long_int (NODE_T * p, MP_T * z, char *str, MOID_T * m)
   }
 }
 
-/*!
-\brief convert string to required mode and store
-\param p position in tree
-\param m mode to convert to
-\param a string to convert
-\param item where to store result
-\return whether conversion is successful
+/**
+@brief Convert string to required mode and store.
+@param p Node in syntax tree.
+@param m Mode to convert to.
+@param a String to convert.
+@param item Where to store result.
+@return Whether conversion is successful.
 **/
 
 BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T * item)
@@ -10370,7 +10351,7 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
       return (A68_FALSE);
     }
   } else if (m == MODE (LONG_INT) || m == MODE (LONGLONG_INT)) {
-    int digits = get_mp_digits (m);
+    int digits = DIGITS (m);
     MP_T *z = (MP_T *) item;
     if (string_to_mp (p, z, a, digits) == NO_MP) {
       return (A68_FALSE);
@@ -10382,7 +10363,7 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
     MP_STATUS (z) = (MP_T) INIT_MASK;
     return (A68_TRUE);
   } else if (m == MODE (LONG_REAL) || m == MODE (LONGLONG_REAL)) {
-    int digits = get_mp_digits (m);
+    int digits = DIGITS (m);
     MP_T *z = (MP_T *) item;
     if (string_to_mp (p, z, a, digits) == NO_MP) {
       return (A68_FALSE);
@@ -10430,7 +10411,7 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
     STATUS (z) = INIT_MASK;
     return (A68_TRUE);
   } else if (m == MODE (LONG_BITS) || m == MODE (LONGLONG_BITS)) {
-    int digits = get_mp_digits (m);
+    int digits = DIGITS (m);
     int status = A68_TRUE;
     ADDR_T pop_sp = stack_pointer;
     MP_T *z = (MP_T *) item;
@@ -10468,12 +10449,12 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
   return (A68_FALSE);
 }
 
-/*!
-\brief convert string in input buffer to value of required mode
-\param p position in tree
-\param mode mode to convert to
-\param item where to store result
-\param ref_file fat pointer to A68 file
+/**
+@brief Convert string in input buffer to value of required mode.
+@param p Node in syntax tree.
+@param mode Mode to convert to.
+@param item Where to store result.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void genie_string_to_value (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -10536,12 +10517,12 @@ void genie_string_to_value (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
   }
 }
 
-/*!
-\brief read object from file
-\param p position in tree
-\param mode mode to read
-\param item where to store result
-\param ref_file fat pointer to A68 file
+/**
+@brief Read object from file.
+@param p Node in syntax tree.
+@param mode Mode to read.
+@param item Where to store result.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -10602,9 +10583,9 @@ void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_
   }
 }
 
-/*!
-\brief PROC ([] SIMPLIN) VOID read
-\param p position in tree
+/**
+@brief PROC ([] SIMPLIN) VOID read
+@param p Node in syntax tree.
 **/
 
 void genie_read (NODE_T * p)
@@ -10616,9 +10597,10 @@ void genie_read (NODE_T * p)
   genie_read_file (p);
 }
 
-/*!
-\brief open for reading
-\param p position in tree
+/**
+@brief Open for reading.
+@param p Node in syntax tree.
+@param ref_file File to open.
 **/
 
 void open_for_reading (NODE_T * p, A68_REF ref_file)
@@ -10659,9 +10641,9 @@ void open_for_reading (NODE_T * p, A68_REF ref_file)
   }
 }
 
-/*!
-\brief PROC (REF FILE, [] SIMPLIN) VOID get
-\param p position in tree
+/**
+@brief PROC (REF FILE, [] SIMPLIN) VOID get
+@param p Node in syntax tree.
 **/
 
 void genie_read_file (NODE_T * p)
@@ -10706,16 +10688,16 @@ void genie_read_file (NODE_T * p)
       CHECK_REF (p, *(A68_REF *) item, mode);
       genie_read_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
     }
-    elem_index += MOID_SIZE (MODE (SIMPLIN));
+    elem_index += SIZE (MODE (SIMPLIN));
   }
 }
 
-/*!
-\brief convert value to string
-\param p position in tree
-\param moid mode to convert to
-\param item pointer to value
-\param mod format modifier
+/**
+@brief Convert value to string.
+@param p Node in syntax tree.
+@param moid Mode to convert to.
+@param item Pointer to value.
+@param mod Format modifier.
 **/
 
 void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
@@ -10724,7 +10706,7 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
     A68_INT *z = (A68_INT *) item;
     PUSH_UNION (p, MODE (INT));
     PUSH_PRIMITIVE (p, VALUE (z), A68_INT);
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_INT)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (INT))));
     if (mod == FORMAT_ITEM_G) {
       PUSH_PRIMITIVE (p, INT_WIDTH + 1, A68_INT);
       genie_whole (p);
@@ -10738,8 +10720,8 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
   } else if (moid == MODE (LONG_INT)) {
     MP_T *z = (MP_T *) item;
     PUSH_UNION (p, MODE (LONG_INT));
-    PUSH (p, z, get_mp_size (MODE (LONG_INT)));
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + get_mp_size (MODE (LONG_INT))));
+    PUSH (p, z, SIZE (MODE (LONG_INT)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (LONG_INT))));
     if (mod == FORMAT_ITEM_G) {
       PUSH_PRIMITIVE (p, LONG_WIDTH + 1, A68_INT);
       genie_whole (p);
@@ -10753,8 +10735,8 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
   } else if (moid == MODE (LONGLONG_INT)) {
     MP_T *z = (MP_T *) item;
     PUSH_UNION (p, MODE (LONGLONG_INT));
-    PUSH (p, z, get_mp_size (MODE (LONGLONG_INT)));
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + get_mp_size (MODE (LONGLONG_INT))));
+    PUSH (p, z, SIZE (MODE (LONGLONG_INT)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (LONGLONG_INT))));
     if (mod == FORMAT_ITEM_G) {
       PUSH_PRIMITIVE (p, LONGLONG_WIDTH + 1, A68_INT);
       genie_whole (p);
@@ -10769,7 +10751,7 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
     A68_REAL *z = (A68_REAL *) item;
     PUSH_UNION (p, MODE (REAL));
     PUSH_PRIMITIVE (p, VALUE (z), A68_REAL);
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_REAL)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (REAL))));
     PUSH_PRIMITIVE (p, REAL_WIDTH + EXP_WIDTH + 4, A68_INT);
     PUSH_PRIMITIVE (p, REAL_WIDTH - 1, A68_INT);
     PUSH_PRIMITIVE (p, EXP_WIDTH + 1, A68_INT);
@@ -10782,8 +10764,8 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
   } else if (moid == MODE (LONG_REAL)) {
     MP_T *z = (MP_T *) item;
     PUSH_UNION (p, MODE (LONG_REAL));
-    PUSH (p, z, (int) get_mp_size (MODE (LONG_REAL)));
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + get_mp_size (MODE (LONG_REAL))));
+    PUSH (p, z, (int) SIZE (MODE (LONG_REAL)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (LONG_REAL))));
     PUSH_PRIMITIVE (p, LONG_REAL_WIDTH + LONG_EXP_WIDTH + 4, A68_INT);
     PUSH_PRIMITIVE (p, LONG_REAL_WIDTH - 1, A68_INT);
     PUSH_PRIMITIVE (p, LONG_EXP_WIDTH + 1, A68_INT);
@@ -10796,8 +10778,8 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
   } else if (moid == MODE (LONGLONG_REAL)) {
     MP_T *z = (MP_T *) item;
     PUSH_UNION (p, MODE (LONGLONG_REAL));
-    PUSH (p, z, (int) get_mp_size (MODE (LONGLONG_REAL)));
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + get_mp_size (MODE (LONGLONG_REAL))));
+    PUSH (p, z, (int) SIZE (MODE (LONGLONG_REAL)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (LONGLONG_REAL))));
     PUSH_PRIMITIVE (p, LONGLONG_REAL_WIDTH + LONGLONG_EXP_WIDTH + 4, A68_INT);
     PUSH_PRIMITIVE (p, LONGLONG_REAL_WIDTH - 1, A68_INT);
     PUSH_PRIMITIVE (p, LONGLONG_EXP_WIDTH + 1, A68_INT);
@@ -10840,12 +10822,12 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
   }
 }
 
-/*!
-\brief print object to file
-\param p position in tree
-\param mode mode of object to print
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Print object to file.
+@param p Node in syntax tree.
+@param mode Mode of object to print.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -10907,9 +10889,9 @@ void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref
   }
 }
 
-/*!
-\brief PROC ([] SIMPLOUT) VOID print, write
-\param p position in tree
+/**
+@brief PROC ([] SIMPLOUT) VOID print, write
+@param p Node in syntax tree.
 **/
 
 void genie_write (NODE_T * p)
@@ -10921,9 +10903,10 @@ void genie_write (NODE_T * p)
   genie_write_file (p);
 }
 
-/*!
-\brief open for reading
-\param p position in tree
+/**
+@brief Open for writing.
+@param p Node in syntax tree.
+@param ref_file File to open.
 **/
 
 void open_for_writing (NODE_T * p, A68_REF ref_file)
@@ -10964,9 +10947,9 @@ void open_for_writing (NODE_T * p, A68_REF ref_file)
   }
 }
 
-/*!
-\brief PROC (REF FILE, [] SIMPLOUT) VOID put
-\param p position in tree
+/**
+@brief PROC (REF FILE, [] SIMPLOUT) VOID put
+@param p Node in syntax tree.
 **/
 
 void genie_write_file (NODE_T * p)
@@ -11009,16 +10992,16 @@ void genie_write_file (NODE_T * p)
       genie_write_standard (p, mode, item, ref_file);
       write_purge_buffer (p, ref_file, UNFORMATTED_BUFFER);
     }
-    elem_index += MOID_SIZE (MODE (SIMPLOUT));
+    elem_index += SIZE (MODE (SIMPLOUT));
   }
 }
 
-/*!
-\brief read object binary from file
-\param p position in tree
-\param mode mode to read
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read object binary from file.
+@param p Node in syntax tree.
+@param mode Mode to read.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -11031,7 +11014,7 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
     STATUS (z) = INIT_MASK;
   } else if (mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
     MP_T *z = (MP_T *) item;
-    ASSERT (io_read (FD (f), z, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_read (FD (f), z, (size_t) SIZE (mode)) != -1);
     MP_STATUS (z) = (MP_T) INIT_MASK;
   } else if (mode == MODE (REAL)) {
     A68_REAL *z = (A68_REAL *) item;
@@ -11039,7 +11022,7 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
     STATUS (z) = INIT_MASK;
   } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
     MP_T *z = (MP_T *) item;
-    ASSERT (io_read (FD (f), z, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_read (FD (f), z, (size_t) SIZE (mode)) != -1);
     MP_STATUS (z) = (MP_T) INIT_MASK;
   } else if (mode == MODE (BOOL)) {
     A68_BOOL *z = (A68_BOOL *) item;
@@ -11055,7 +11038,7 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
     STATUS (z) = INIT_MASK;
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
     MP_T *z = (MP_T *) item;
-    ASSERT (io_read (FD (f), z, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_read (FD (f), z, (size_t) SIZE (mode)) != -1);
     MP_STATUS (z) = (MP_T) INIT_MASK;
   } else if (mode == MODE (ROW_CHAR) || mode == MODE (STRING)) {
     int len, k;
@@ -11102,9 +11085,9 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
   }
 }
 
-/*!
-\brief PROC ([] SIMPLIN) VOID read bin
-\param p position in tree
+/**
+@brief PROC ([] SIMPLIN) VOID read bin
+@param p Node in syntax tree.
 **/
 
 void genie_read_bin (NODE_T * p)
@@ -11116,9 +11099,9 @@ void genie_read_bin (NODE_T * p)
   genie_read_bin_file (p);
 }
 
-/*!
-\brief PROC (REF FILE, [] SIMPLIN) VOID get bin
-\param p position in tree
+/**
+@brief PROC (REF FILE, [] SIMPLIN) VOID get bin
+@param p Node in syntax tree.
 **/
 
 void genie_read_bin_file (NODE_T * p)
@@ -11196,16 +11179,16 @@ void genie_read_bin_file (NODE_T * p)
       CHECK_REF (p, *(A68_REF *) item, mode);
       genie_read_bin_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
     }
-    elem_index += MOID_SIZE (MODE (SIMPLIN));
+    elem_index += SIZE (MODE (SIMPLIN));
   }
 }
 
-/*!
-\brief write object binary to file
-\param p position in tree
-\param mode mode to write
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write object binary to file.
+@param p Node in syntax tree.
+@param mode Mode to write.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -11215,11 +11198,11 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
   if (mode == MODE (INT)) {
     ASSERT (io_write (FD (f), &(VALUE ((A68_INT *) item)), sizeof (VALUE ((A68_INT *) item))) != -1);
   } else if (mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
-    ASSERT (io_write (FD (f), (MP_T *) item, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_write (FD (f), (MP_T *) item, (size_t) SIZE (mode)) != -1);
   } else if (mode == MODE (REAL)) {
     ASSERT (io_write (FD (f), &(VALUE ((A68_REAL *) item)), sizeof (VALUE ((A68_REAL *) item))) != -1);
   } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
-    ASSERT (io_write (FD (f), (MP_T *) item, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_write (FD (f), (MP_T *) item, (size_t) SIZE (mode)) != -1);
   } else if (mode == MODE (BOOL)) {
     ASSERT (io_write (FD (f), &(VALUE ((A68_BOOL *) item)), sizeof (VALUE ((A68_BOOL *) item))) != -1);
   } else if (mode == MODE (CHAR)) {
@@ -11227,7 +11210,7 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
   } else if (mode == MODE (BITS)) {
     ASSERT (io_write (FD (f), &(VALUE ((A68_BITS *) item)), sizeof (VALUE ((A68_BITS *) item))) != -1);
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
-    ASSERT (io_write (FD (f), (MP_T *) item, (size_t) get_mp_size (mode)) != -1);
+    ASSERT (io_write (FD (f), (MP_T *) item, (size_t) SIZE (mode)) != -1);
   } else if (mode == MODE (ROW_CHAR) || mode == MODE (STRING)) {
     int len;
     reset_transput_buffer (UNFORMATTED_BUFFER);
@@ -11270,9 +11253,9 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
   }
 }
 
-/*!
-\brief PROC ([] SIMPLOUT) VOID write bin, print bin
-\param p position in tree
+/**
+@brief PROC ([] SIMPLOUT) VOID write bin, print bin
+@param p Node in syntax tree.
 **/
 
 void genie_write_bin (NODE_T * p)
@@ -11284,9 +11267,9 @@ void genie_write_bin (NODE_T * p)
   genie_write_bin_file (p);
 }
 
-/*!
-\brief PROC (REF FILE, [] SIMPLOUT) VOID put bin
-\param p position in tree
+/**
+@brief PROC (REF FILE, [] SIMPLOUT) VOID put bin
+@param p Node in syntax tree.
 **/
 
 void genie_write_bin_file (NODE_T * p)
@@ -11358,7 +11341,7 @@ void genie_write_bin_file (NODE_T * p)
     } else {
       genie_write_bin_standard (p, mode, item, ref_file);
     }
-    elem_index += MOID_SIZE (MODE (SIMPLOUT));
+    elem_index += SIZE (MODE (SIMPLOUT));
   }
 }
 
@@ -11372,11 +11355,11 @@ or "genie_float" since internal routines like "sub_fixed" may leave the
 stack corrupted when called directly.
 */
 
-/*!
-\brief generate a string of error chars
-\param s string to store error chars
-\param n number of error chars
-\return same
+/**
+@brief Generate a string of error chars.
+@param s String to store error chars.
+@param n Number of error chars.
+@return See brief description.
 **/
 
 char *error_chars (char *s, int n)
@@ -11389,11 +11372,11 @@ char *error_chars (char *s, int n)
   return (s);
 }
 
-/*!
-\brief convert temporary C string to A68 string
-\param p position in tree
-\param temp_string temporary C string
-\return same
+/**
+@brief Convert temporary C string to A68 string.
+@param p Node in syntax tree.
+@param temp_string Temporary C string.
+@return See brief description.
 **/
 
 A68_REF tmp_to_a68_string (NODE_T * p, char *temp_string)
@@ -11404,11 +11387,11 @@ A68_REF tmp_to_a68_string (NODE_T * p, char *temp_string)
   return (z);
 }
 
-/*!
-\brief add c to str, assuming that "str" is large enough
-\param c char to add before string
-\param str string to add in front of
-\return string
+/**
+@brief Add c to str, assuming that "str" is large enough.
+@param c Char to add before string.
+@param str String to add in front of.
+@return String.
 **/
 
 static char *plusto (char c, char *str)
@@ -11418,12 +11401,12 @@ static char *plusto (char c, char *str)
   return (str);
 }
 
-/*!
-\brief add c to str, assuming that "str" is large enough
-\param str string to add to
-\param c char to add
-\param strwid width of 'str'
-\return string
+/**
+@brief Add c to str, assuming that "str" is large enough.
+@param str String to add to.
+@param c Char to add.
+@param strwid Width of 'str'.
+@return String.
 **/
 
 char *string_plusab_char (char *str, char c, int strwid)
@@ -11435,11 +11418,11 @@ char *string_plusab_char (char *str, char c, int strwid)
   return (str);
 }
 
-/*!
-\brief add leading spaces to str until length is width
-\param str string to add in front of
-\param width required width of 'str'
-\return string
+/**
+@brief Add leading spaces to str until length is width.
+@param str String to add in front of.
+@param width Required width of 'str'.
+@return String.
 **/
 
 static char *leading_spaces (char *str, int width)
@@ -11451,10 +11434,10 @@ static char *leading_spaces (char *str, int width)
   return (str);
 }
 
-/*!
-\brief convert int to char using a table
-\param k int to convert
-\return character
+/**
+@brief Convert int to char using a table.
+@param k Int to convert.
+@return Character.
 **/
 
 static char digchar (int k)
@@ -11467,13 +11450,13 @@ static char digchar (int k)
   }
 }
 
-/*!
-\brief standard string for LONG INT
-\param p position in tree
-\param m mp number
-\param digits digits
-\param width width
-\return same
+/**
+@brief Standard string for LONG INT.
+@param p Node in syntax tree.
+@param m Mp number.
+@param digits Digits.
+@param width Width.
+@return See brief description.
 **/
 
 char *long_sub_whole (NODE_T * p, MP_T * m, int digits, int width)
@@ -11503,12 +11486,12 @@ char *long_sub_whole (NODE_T * p, MP_T * m, int digits, int width)
   return (s);
 }
 
-/*!
-\brief standard string for INT
-\param p position in tree
-\param n value
-\param width width
-\return same
+/**
+@brief Standard string for INT.
+@param p Node in syntax tree.
+@param n Value.
+@param width Width.
+@return See brief description.
 **/
 
 char *sub_whole (NODE_T * p, int n, int width)
@@ -11529,10 +11512,10 @@ char *sub_whole (NODE_T * p, int n, int width)
   return (s);
 }
 
-/*!
-\brief formatted string for NUMBER
-\param p position in tree
-\return string
+/**
+@brief Formatted string for NUMBER.
+@param p Node in syntax tree.
+@return String.
 **/
 
 char *whole (NODE_T * p)
@@ -11542,7 +11525,7 @@ char *whole (NODE_T * p)
   MOID_T *mode;
   POP_OBJECT (p, &width, A68_INT);
   arg_sp = stack_pointer;
-  DECREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
   pop_sp = stack_pointer;
   mode = (MOID_T *) (VALUE ((A68_UNION *) STACK_TOP));
   if (mode == MODE (INT)) {
@@ -11576,7 +11559,7 @@ char *whole (NODE_T * p)
     }
     return (s);
   } else if (mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
-    int digits = get_mp_digits (mode);
+    int digits = DIGITS (mode);
     int length, size;
     char *s;
     MP_T *n = (MP_T *) (STACK_OFFSET (A68_UNION_SIZE));
@@ -11620,7 +11603,7 @@ char *whole (NODE_T * p)
     }
     return (s);
   } else if (mode == MODE (REAL) || mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
     PUSH_PRIMITIVE (p, VALUE (&width), A68_INT);
     PUSH_PRIMITIVE (p, 0, A68_INT);
     return (fixed (p));
@@ -11628,12 +11611,12 @@ char *whole (NODE_T * p)
   return (NO_TEXT);
 }
 
-/*!
-\brief fetch next digit from LONG
-\param p position in tree
-\param y mp number
-\param digits digits
-\return next digit
+/**
+@brief Fetch next digit from LONG.
+@param p Node in syntax tree.
+@param y Mp number.
+@param digits Digits.
+@return Next digit.
 **/
 
 static char long_choose_dig (NODE_T * p, MP_T * y, int digits)
@@ -11654,14 +11637,14 @@ static char long_choose_dig (NODE_T * p, MP_T * y, int digits)
   return (digchar (c));
 }
 
-/*!
-\brief standard string for LONG
-\param p position in tree
-\param x mp digit
-\param digits digits
-\param width width
-\param after after
-\return same
+/**
+@brief Standard string for LONG.
+@param p Node in syntax tree.
+@param x Mp digit.
+@param digits Digits.
+@param width Width.
+@param after After.
+@return See brief description.
 **/
 
 char *long_sub_fixed (NODE_T * p, MP_T * x, int digits, int width, int after)
@@ -11711,10 +11694,10 @@ char *long_sub_fixed (NODE_T * p, MP_T * x, int digits, int width, int after)
   return (str);
 }
 
-/*!
-\brief fetch next digit from REAL
-\param y value
-\return next digit
+/**
+@brief Fetch next digit from REAL.
+@param y Value.
+@return Next digit.
 **/
 
 static char choose_dig (double *y)
@@ -11728,13 +11711,13 @@ static char choose_dig (double *y)
   return (digchar (c));
 }
 
-/*!
-\brief standard string for REAL
-\param p position in tree
-\param x value
-\param width width
-\param after after
-\return string
+/**
+@brief Standard string for REAL.
+@param p Node in syntax tree.
+@param x Value.
+@param width Width.
+@param after After.
+@return String.
 **/
 
 char *sub_fixed (NODE_T * p, double x, int width, int after)
@@ -11785,10 +11768,10 @@ char *sub_fixed (NODE_T * p, double x, int width, int after)
   return (str);
 }
 
-/*!
-\brief formatted string for NUMBER
-\param p position in tree
-\return string
+/**
+@brief Formatted string for NUMBER.
+@param p Node in syntax tree.
+@return String.
 **/
 
 char *fixed (NODE_T * p)
@@ -11799,7 +11782,7 @@ char *fixed (NODE_T * p)
   POP_OBJECT (p, &after, A68_INT);
   POP_OBJECT (p, &width, A68_INT);
   arg_sp = stack_pointer;
-  DECREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
   mode = (MOID_T *) (VALUE ((A68_UNION *) STACK_TOP));
   pop_sp = stack_pointer;
   if (mode == MODE (REAL)) {
@@ -11848,7 +11831,7 @@ char *fixed (NODE_T * p)
       return (error_chars (s, VALUE (&width)));
     }
   } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
-    int digits = get_mp_digits (mode);
+    int digits = DIGITS (mode);
     int length;
     BOOL_T ltz;
     char *s;
@@ -11908,7 +11891,7 @@ char *fixed (NODE_T * p)
     int x = VALUE ((A68_INT *) (STACK_OFFSET (A68_UNION_SIZE)));
     PUSH_UNION (p, MODE (REAL));
     PUSH_PRIMITIVE (p, (double) x, A68_REAL);
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_REAL)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (REAL))));
     PUSH_PRIMITIVE (p, VALUE (&width), A68_INT);
     PUSH_PRIMITIVE (p, VALUE (&after), A68_INT);
     return (fixed (p));
@@ -11918,7 +11901,7 @@ char *fixed (NODE_T * p)
       VALUE ((A68_UNION *) STACK_TOP) = (void *) MODE (LONG_REAL);
     } else {
       VALUE ((A68_UNION *) STACK_TOP) = (void *) MODE (LONGLONG_REAL);
-    } INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)));
+    } INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
     PUSH_PRIMITIVE (p, VALUE (&width), A68_INT);
     PUSH_PRIMITIVE (p, VALUE (&after), A68_INT);
     return (fixed (p));
@@ -11926,14 +11909,14 @@ char *fixed (NODE_T * p)
   return (NO_TEXT);
 }
 
-/*!
-\brief scale LONG for formatting
-\param p position in tree
-\param y mp number
-\param digits digits
-\param before before
-\param after after
-\param q int multiplier
+/**
+@brief Scale LONG for formatting.
+@param p Node in syntax tree.
+@param y Mp number.
+@param digits Digits.
+@param before Before.
+@param after After.
+@param q Int multiplier.
 **/
 
 void long_standardise (NODE_T * p, MP_T * y, int digits, int before, int after, int *q)
@@ -11986,12 +11969,12 @@ void long_standardise (NODE_T * p, MP_T * y, int digits, int before, int after, 
   stack_pointer = pop_sp;
 }
 
-/*!
-\brief scale REAL for formatting
-\param y value
-\param before before
-\param after after
-\param p int multiplier
+/**
+@brief Scale REAL for formatting.
+@param y Value.
+@param before Before.
+@param after After.
+@param p Int multiplier.
 **/
 
 void standardise (double *y, int before, int after, int *p)
@@ -12022,10 +12005,10 @@ void standardise (double *y, int before, int after, int *p)
   }
 }
 
-/*!
-\brief formatted string for NUMBER
-\param p position in tree
-\return string
+/**
+@brief Formatted string for NUMBER.
+@param p Node in syntax tree.
+@return String.
 **/
 
 char *real (NODE_T * p)
@@ -12039,7 +12022,7 @@ char *real (NODE_T * p)
   POP_OBJECT (p, &after, A68_INT);
   POP_OBJECT (p, &width, A68_INT);
   arg_sp = stack_pointer;
-  DECREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)));
+  DECREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
   mode = (MOID_T *) (VALUE ((A68_UNION *) STACK_TOP));
   pop_sp = stack_pointer;
   if (mode == MODE (REAL)) {
@@ -12086,13 +12069,13 @@ char *real (NODE_T * p)
       }
       PUSH_UNION (p, MODE (REAL));
       PUSH_PRIMITIVE (p, SIGN (x) * y, A68_REAL);
-      INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_REAL)));
+      INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (REAL))));
       PUSH_PRIMITIVE (p, SIGN (VALUE (&width)) * (ABS (VALUE (&width)) - ABS (VALUE (&expo)) - 1), A68_INT);
       PUSH_PRIMITIVE (p, VALUE (&after), A68_INT);
       t1 = fixed (p);
       PUSH_UNION (p, MODE (INT));
       PUSH_PRIMITIVE (p, q, A68_INT);
-      INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_INT)));
+      INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (INT))));
       PUSH_PRIMITIVE (p, VALUE (&expo), A68_INT);
       t2 = whole (p);
       strwid = 8 + (int) strlen (t1) + 1 + (int) strlen (t2);
@@ -12115,7 +12098,7 @@ char *real (NODE_T * p)
       return (error_chars (s, VALUE (&width)));
     }
   } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
-    int digits = get_mp_digits (mode);
+    int digits = DIGITS (mode);
     int before;
     MP_T *x = (MP_T *) (STACK_OFFSET (A68_UNION_SIZE));
     BOOL_T ltz = (BOOL_T) (MP_DIGIT (x, 1) < 0);
@@ -12168,13 +12151,13 @@ char *real (NODE_T * p)
       PUSH_UNION (p, mode);
       MP_DIGIT (z, 1) = (ltz ? -MP_DIGIT (z, 1) : MP_DIGIT (z, 1));
       PUSH (p, z, SIZE_MP (digits));
-      INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE_MP (digits)));
+      INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE_MP (digits)));
       PUSH_PRIMITIVE (p, SIGN (VALUE (&width)) * (ABS (VALUE (&width)) - ABS (VALUE (&expo)) - 1), A68_INT);
       PUSH_PRIMITIVE (p, VALUE (&after), A68_INT);
       t1 = fixed (p);
       PUSH_UNION (p, MODE (INT));
       PUSH_PRIMITIVE (p, q, A68_INT);
-      INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_INT)));
+      INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (INT))));
       PUSH_PRIMITIVE (p, VALUE (&expo), A68_INT);
       t2 = whole (p);
       strwid = 8 + (int) strlen (t1) + 1 + (int) strlen (t2);
@@ -12200,7 +12183,7 @@ char *real (NODE_T * p)
     int x = VALUE ((A68_INT *) (STACK_OFFSET (A68_UNION_SIZE)));
     PUSH_UNION (p, MODE (REAL));
     PUSH_PRIMITIVE (p, (double) x, A68_REAL);
-    INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + ALIGNED_SIZE_OF (A68_REAL)));
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)) - (A68_UNION_SIZE + SIZE (MODE (REAL))));
     PUSH_PRIMITIVE (p, VALUE (&width), A68_INT);
     PUSH_PRIMITIVE (p, VALUE (&after), A68_INT);
     PUSH_PRIMITIVE (p, VALUE (&expo), A68_INT);
@@ -12212,7 +12195,7 @@ char *real (NODE_T * p)
       VALUE ((A68_UNION *) STACK_TOP) = (void *) MODE (LONG_REAL);
     } else {
       VALUE ((A68_UNION *) STACK_TOP) = (void *) MODE (LONGLONG_REAL);
-    } INCREMENT_STACK_POINTER (p, MOID_SIZE (MODE (NUMBER)));
+    } INCREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
     PUSH_PRIMITIVE (p, VALUE (&width), A68_INT);
     PUSH_PRIMITIVE (p, VALUE (&after), A68_INT);
     PUSH_PRIMITIVE (p, VALUE (&expo), A68_INT);
@@ -12222,9 +12205,9 @@ char *real (NODE_T * p)
   return (NO_TEXT);
 }
 
-/*!
-\brief PROC (NUMBER, INT) STRING whole
-\param p position in tree
+/**
+@brief PROC (NUMBER, INT) STRING whole
+@param p Node in syntax tree.
 **/
 
 void genie_whole (NODE_T * p)
@@ -12232,14 +12215,14 @@ void genie_whole (NODE_T * p)
   int pop_sp = stack_pointer;
   A68_REF ref;
   char *str = whole (p);
-  stack_pointer = pop_sp - ALIGNED_SIZE_OF (A68_INT) - MOID_SIZE (MODE (NUMBER));
+  stack_pointer = pop_sp - SIZE (MODE (INT)) - SIZE (MODE (NUMBER));
   ref = tmp_to_a68_string (p, str);
   PUSH_REF (p, ref);
 }
 
-/*!
-\brief PROC (NUMBER, INT, INT) STRING fixed
-\param p position in tree
+/**
+@brief PROC (NUMBER, INT, INT) STRING fixed
+@param p Node in syntax tree.
 **/
 
 void genie_fixed (NODE_T * p)
@@ -12247,14 +12230,14 @@ void genie_fixed (NODE_T * p)
   int pop_sp = stack_pointer;
   A68_REF ref;
   char *str = fixed (p);
-  stack_pointer = pop_sp - 2 * ALIGNED_SIZE_OF (A68_INT) - MOID_SIZE (MODE (NUMBER));
+  stack_pointer = pop_sp - 2 * SIZE (MODE (INT)) - SIZE (MODE (NUMBER));
   ref = tmp_to_a68_string (p, str);
   PUSH_REF (p, ref);
 }
 
-/*!
-\brief PROC (NUMBER, INT, INT, INT) STRING eng
-\param p position in tree
+/**
+@brief PROC (NUMBER, INT, INT, INT) STRING eng
+@param p Node in syntax tree.
 **/
 
 void genie_real (NODE_T * p)
@@ -12262,14 +12245,14 @@ void genie_real (NODE_T * p)
   int pop_sp = stack_pointer;
   A68_REF ref;
   char *str = real (p);
-  stack_pointer = pop_sp - 4 * ALIGNED_SIZE_OF (A68_INT) - MOID_SIZE (MODE (NUMBER));
+  stack_pointer = pop_sp - 4 * SIZE (MODE (INT)) - SIZE (MODE (NUMBER));
   ref = tmp_to_a68_string (p, str);
   PUSH_REF (p, ref);
 }
 
-/*!
-\brief PROC (NUMBER, INT, INT, INT) STRING float
-\param p position in tree
+/**
+@brief PROC (NUMBER, INT, INT, INT) STRING float
+@param p Node in syntax tree.
 **/
 
 void genie_float (NODE_T * p)
@@ -12280,191 +12263,102 @@ void genie_float (NODE_T * p)
 
 /* ALGOL68C routines */
 
-/*!
-\brief PROC INT read int
-\param p position in tree
+/**
+@def A68C_TRANSPUT
+@brief Generate Algol68C routines readint, getint, etcetera.
 **/
 
-void genie_read_int (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (INT), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_INT));
-}
+#define A68C_TRANSPUT(n, m)\
+ void genie_get_##n (NODE_T * p) {\
+    A68_REF ref_file;\
+    ADDR_T pop_sp;\
+    BYTE_T *z;\
+    POP_REF (p, &ref_file);\
+    CHECK_REF (p, ref_file, MODE (REF_FILE));\
+    z = STACK_TOP;\
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (m)));\
+    pop_sp = stack_pointer;\
+    open_for_reading (p, ref_file);\
+    genie_read_standard (p, MODE (m), z, ref_file);\
+    stack_pointer = pop_sp;}\
+  void genie_put_##n (NODE_T * p) {\
+    int size = SIZE (MODE (m)), sizf = SIZE (MODE (REF_FILE));\
+    A68_REF ref_file = * (A68_REF *) STACK_OFFSET (- (size + sizf));\
+    CHECK_REF (p, ref_file, MODE (REF_FILE));\
+    reset_transput_buffer (UNFORMATTED_BUFFER);\
+    open_for_writing (p, ref_file);\
+    genie_write_standard (p, MODE (m), STACK_OFFSET (-size), ref_file);\
+    write_purge_buffer (p, ref_file, UNFORMATTED_BUFFER);\
+    DECREMENT_STACK_POINTER (p, size + sizf);}\
+  void genie_read_##n (NODE_T * p) {\
+    ADDR_T pop_sp;\
+    BYTE_T *z = STACK_TOP;\
+    INCREMENT_STACK_POINTER (p, SIZE (MODE (m)));\
+    pop_sp = stack_pointer;\
+    open_for_reading (p, stand_in);\
+    genie_read_standard (p, MODE (m), z, stand_in);\
+    stack_pointer = pop_sp;}\
+  void genie_print_##n (NODE_T * p) {\
+    int size = SIZE (MODE (m));\
+    reset_transput_buffer (UNFORMATTED_BUFFER);\
+    open_for_writing (p, stand_out);\
+    genie_write_standard (p, MODE (m), STACK_OFFSET (-size), stand_out);\
+    write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);\
+    DECREMENT_STACK_POINTER (p, size);}
 
-/*!
-\brief PROC LONG INT read long int
-\param p position in tree
-**/
+A68C_TRANSPUT (int, INT)
+A68C_TRANSPUT (long_int, LONG_INT)
+A68C_TRANSPUT (longlong_int, LONGLONG_INT)
+A68C_TRANSPUT (real, REAL)
+A68C_TRANSPUT (long_real, LONG_REAL)
+A68C_TRANSPUT (longlong_real, LONGLONG_REAL)
+A68C_TRANSPUT (bits, BITS)
+A68C_TRANSPUT (long_bits, LONG_BITS)
+A68C_TRANSPUT (longlong_bits, LONGLONG_BITS)
+A68C_TRANSPUT (bool, BOOL)
+A68C_TRANSPUT (char, CHAR)
+A68C_TRANSPUT (string, STRING)
 
-void genie_read_long_int (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (LONG_INT), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, get_mp_size (MODE (LONG_INT)));
-}
+#undef A68C_TRANSPUT
 
-/*!
-\brief PROC LONG LONG INT read long long int
-\param p position in tree
-**/
+#define A68C_TRANSPUT(n, s, m)\
+ void genie_get_##n (NODE_T * p) {\
+    A68_REF ref_file;\
+    POP_REF (p, &ref_file);\
+    CHECK_REF (p, ref_file, MODE (REF_FILE));\
+    PUSH_REF (p, ref_file);\
+    genie_get_##s (p);\
+    PUSH_REF (p, ref_file);\
+    genie_get_##s (p);}\
+  void genie_put_##n (NODE_T * p) {\
+    int size = SIZE (MODE (m)), sizf = SIZE (MODE (REF_FILE));\
+    A68_REF ref_file = * (A68_REF *) STACK_OFFSET (- (size + sizf));\
+    CHECK_REF (p, ref_file, MODE (REF_FILE));\
+    reset_transput_buffer (UNFORMATTED_BUFFER);\
+    open_for_writing (p, ref_file);\
+    genie_write_standard (p, MODE (m), STACK_OFFSET (-size), ref_file);\
+    write_purge_buffer (p, ref_file, UNFORMATTED_BUFFER);\
+    DECREMENT_STACK_POINTER (p, size + sizf);}\
+  void genie_read_##n (NODE_T * p) {\
+    genie_read_##s (p);\
+    genie_read_##s (p);}\
+  void genie_print_##n (NODE_T * p) {\
+    int size = SIZE (MODE (m));\
+    reset_transput_buffer (UNFORMATTED_BUFFER);\
+    open_for_writing (p, stand_out);\
+    genie_write_standard (p, MODE (m), STACK_OFFSET (-size), stand_out);\
+    write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);\
+    DECREMENT_STACK_POINTER (p, size);}
 
-void genie_read_longlong_int (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (LONGLONG_INT), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, get_mp_size (MODE (LONGLONG_INT)));
-}
+A68C_TRANSPUT(complex, real, COMPLEX)
+A68C_TRANSPUT(long_complex, long_real, LONG_COMPLEX)
+A68C_TRANSPUT(longlong_complex, longlong_real, LONGLONG_COMPLEX)
 
-/*!
-\brief PROC REAL read real
-\param p position in tree
-**/
+#undef A68C_TRANSPUT
 
-void genie_read_real (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (REAL), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_REAL));
-}
-
-/*!
-\brief PROC LONG REAL read long real
-\param p position in tree
-**/
-
-void genie_read_long_real (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (LONG_REAL), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, get_mp_size (MODE (LONG_REAL)));
-}
-
-/*!
-\brief PROC LONG LONG REAL read long long real
-\param p position in tree
-**/
-
-void genie_read_longlong_real (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (LONGLONG_REAL), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, get_mp_size (MODE (LONGLONG_REAL)));
-}
-
-/*!
-\brief PROC COMPLEX read complex
-\param p position in tree
-**/
-
-void genie_read_complex (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_real (p);
-  genie_read_real (p);
-}
-
-/*!
-\brief PROC LONG COMPLEX read long complex
-\param p position in tree
-**/
-
-void genie_read_long_complex (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_long_real (p);
-  genie_read_long_real (p);
-}
-
-/*!
-\brief PROC LONG LONG COMPLEX read long long complex
-\param p position in tree
-**/
-
-void genie_read_longlong_complex (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_longlong_real (p);
-  genie_read_longlong_real (p);
-}
-
-/*!
-\brief PROC BOOL read bool
-\param p position in tree
-**/
-
-void genie_read_bool (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (BOOL), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_BOOL));
-}
-
-/*!
-\brief PROC BITS read bits
-\param p position in tree
-**/
-
-void genie_read_bits (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (BITS), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_BITS));
-}
-
-/*!
-\brief PROC LONG BITS read long bits
-\param p position in tree
-**/
-
-void genie_read_long_bits (NODE_T * p)
-{
-  MP_T *z;
-  STACK_MP (z, p, get_mp_digits (MODE (LONG_BITS)));
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (LONG_BITS), (BYTE_T *) z, stand_in);
-}
-
-/*!
-\brief PROC LONG LONG BITS read long long bits
-\param p position in tree
-**/
-
-void genie_read_longlong_bits (NODE_T * p)
-{
-  MP_T *z;
-  STACK_MP (z, p, get_mp_digits (MODE (LONGLONG_BITS)));
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (LONGLONG_BITS), (BYTE_T *) z, stand_in);
-}
-
-/*!
-\brief PROC CHAR read char
-\param p position in tree
-**/
-
-void genie_read_char (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (CHAR), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (A68_CHAR));
-}
-
-/*!
-\brief PROC STRING read string
-\param p position in tree
-**/
-
-void genie_read_string (NODE_T * p)
-{
-  open_for_reading (p, stand_in);
-  genie_read_standard (p, MODE (STRING), STACK_TOP, stand_in);
-  INCREMENT_STACK_POINTER (p, A68_REF_SIZE);
-}
-
-/*!
-\brief PROC STRING read line
-\param p position in tree
+/**
+@brief PROC STRING read line
+@param p Node in syntax tree.
 **/
 
 void genie_read_line (NODE_T * p)
@@ -12483,229 +12377,6 @@ void genie_read_line (NODE_T * p)
 #endif
 }
 
-/*!
-\brief PROC (INT) VOID print int
-\param p position in tree
-**/
-
-void genie_print_int (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (INT));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (INT), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG INT) VOID print long int
-\param p position in tree
-**/
-
-void genie_print_long_int (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONG_INT));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONG_INT), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG LONG INT) VOID print long long int
-\param p position in tree
-**/
-
-void genie_print_longlong_int (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONGLONG_INT));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONGLONG_INT), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (REAL) VOID print real
-\param p position in tree
-**/
-
-void genie_print_real (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (REAL));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (REAL), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG REAL) VOID print long real
-\param p position in tree
-**/
-
-void genie_print_long_real (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONG_REAL));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONG_REAL), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG LONG REAL) VOID print long long real
-\param p position in tree
-**/
-
-void genie_print_longlong_real (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONGLONG_REAL));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONGLONG_REAL), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (COMPLEX) VOID print complex
-\param p position in tree
-**/
-
-void genie_print_complex (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (COMPLEX));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (COMPLEX), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG COMPLEX) VOID print long complex
-\param p position in tree
-**/
-
-void genie_print_long_complex (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONG_COMPLEX));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONG_COMPLEX), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG LONG COMPLEX) VOID print long long complex
-\param p position in tree
-**/
-
-void genie_print_longlong_complex (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONGLONG_COMPLEX));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONGLONG_COMPLEX), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (CHAR) VOID print char
-\param p position in tree
-**/
-
-void genie_print_char (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (CHAR));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (CHAR), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (BITS) VOID print bits
-\param p position in tree
-**/
-
-void genie_print_bits (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (BITS));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (BITS), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG BITS) VOID print long bits
-\param p position in tree
-**/
-
-void genie_print_long_bits (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONG_BITS));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONG_BITS), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (LONG LONG BITS) VOID print long long bits
-\param p position in tree
-**/
-
-void genie_print_longlong_bits (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (LONGLONG_BITS));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (LONGLONG_BITS), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (BOOL) VOID print bool
-\param p position in tree
-**/
-
-void genie_print_bool (NODE_T * p)
-{
-  int size = MOID_SIZE (MODE (BOOL));
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  genie_write_standard (p, MODE (BOOL), STACK_OFFSET (-size), stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-  DECREMENT_STACK_POINTER (p, size);
-}
-
-/*!
-\brief PROC (STRING) VOID print string
-\param p position in tree
-**/
-
-void genie_print_string (NODE_T * p)
-{
-  reset_transput_buffer (UNFORMATTED_BUFFER);
-  add_string_from_stack_transput_buffer (p, UNFORMATTED_BUFFER);
-  open_for_writing (p, stand_out);
-  write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);
-}
-
 /*
 Transput library - Formatted transput
 In Algol68G, a value of mode FORMAT looks like a routine text. The value
@@ -12719,10 +12390,11 @@ format text is at in the syntax tree.
 #define BITS_DIGITS_BLANK " 0123456789abcdefABCDEF"
 #define SIGN_DIGITS " +-"
 
-/*!
-\brief handle format error event
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Handle format error event.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param diag Diagnostic text.
 **/
 
 void format_error (NODE_T * p, A68_REF ref_file, char *diag)
@@ -12737,9 +12409,9 @@ void format_error (NODE_T * p, A68_REF ref_file, char *diag)
   }
 }
 
-/*!
-\brief initialise processing of pictures
-\param p position in tree
+/**
+@brief Initialise processing of pictures.
+@param p Node in syntax tree.
 **/
 
 static void initialise_collitems (NODE_T * p)
@@ -12763,12 +12435,13 @@ of times it can still be used.
   }
 }
 
-/*!
-\brief initialise processing of format text
-\param file file
-\param fmt format
-\param embedded whether embedded format
-\param init whether to initialise collitems
+/**
+@brief Initialise processing of format text.
+@param p Node in syntax tree.
+@param ref_file File.
+@param fmt Format.
+@param embedded Whether embedded format.
+@param init Whether to initialise collitems.
 **/
 
 static void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, BOOL_T embedded, BOOL_T init)
@@ -12795,11 +12468,11 @@ static void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, B
   }
 }
 
-/*!
-\brief handle end-of-format event
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\return whether format is embedded
+/**
+@brief Handle end-of-format event.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@return Whether format is embedded.
 **/
 
 int end_of_format (NODE_T * p, A68_REF ref_file)
@@ -12831,10 +12504,11 @@ format text calls "on format end".
   }
 }
 
-/*!
-\brief return integral value of replicator
-\param p position in tree
-\return same
+/**
+@brief Return integral value of replicator.
+@param p Node in syntax tree.
+@param check Whether to check value of replicator.
+@return See brief description.
 **/
 
 int get_replicator_value (NODE_T * p, BOOL_T check)
@@ -12862,11 +12536,11 @@ int get_replicator_value (NODE_T * p, BOOL_T check)
   return (z);
 }
 
-/*!
-\brief return first available pattern
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\return same
+/**
+@brief Return first available pattern.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@return See brief description.
 **/
 
 static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
@@ -12947,12 +12621,12 @@ static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
   return (NO_NODE);
 }
 
-/*!
-\brief return first available pattern
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param mood mode of operation
-\return same
+/**
+@brief Return first available pattern.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param mood Mode of operation.
+@return See brief description.
 **/
 
 NODE_T *get_next_format_pattern (NODE_T * p, A68_REF ref_file, BOOL_T mood)
@@ -12985,11 +12659,11 @@ if needed or SKIP_PATTERN: just emptying current pattern/collection/format.
   }
 }
 
-/*!
-\brief diagnostic_node in case mode does not match picture
-\param p position in tree
-\param mode mode of object read or written
-\param att attribute
+/**
+@brief Diagnostic_node in case mode does not match picture.
+@param p Node in syntax tree.
+@param mode Mode of object read or written.
+@param att Attribute.
 **/
 
 void pattern_error (NODE_T * p, MOID_T * mode, int att)
@@ -12998,26 +12672,26 @@ void pattern_error (NODE_T * p, MOID_T * mode, int att)
   exit_genie (p, A68_RUNTIME_ERROR);
 }
 
-/*!
-\brief unite value at top of stack to NUMBER
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
+/**
+@brief Unite value at top of stack to NUMBER.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
 **/
 
 static void unite_to_number (NODE_T * p, MOID_T * mode, BYTE_T * item)
 {
   ADDR_T sp = stack_pointer;
   PUSH_UNION (p, mode);
-  PUSH (p, item, (int) MOID_SIZE (mode));
-  stack_pointer = sp + MOID_SIZE (MODE (NUMBER));
+  PUSH (p, item, (int) SIZE (mode));
+  stack_pointer = sp + SIZE (MODE (NUMBER));
 }
 
-/*!
-\brief write a group of insertions
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param mood mode of operation in case of error
+/**
+@brief Write a group of insertions.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param mood Mode of operation in case of error.
 **/
 
 void write_insertion (NODE_T * p, A68_REF ref_file, unsigned mood)
@@ -13062,13 +12736,13 @@ void write_insertion (NODE_T * p, A68_REF ref_file, unsigned mood)
   }
 }
 
-/*!
-\brief convert to other radix, binary up to hexadecimal
-\param p position in tree
-\param z value to convert
-\param radix radix
-\param width width of converted number
-\return whether conversion is successful
+/**
+@brief Convert to other radix, binary up to hexadecimal.
+@param p Node in syntax tree.
+@param z Value to convert.
+@param radix Radix.
+@param width Width of converted number.
+@return Whether conversion is successful.
 **/
 
 static BOOL_T convert_radix (NODE_T * p, unsigned z, int radix, int width)
@@ -13084,23 +12758,23 @@ static BOOL_T convert_radix (NODE_T * p, unsigned z, int radix, int width)
   }
 }
 
-/*!
-\brief convert to other radix, binary up to hexadecimal
-\param p position in tree
-\param u mp number
-\param radix radix
-\param width width of converted number
-\param m mode of 'u'
-\param v work mp number
-\param w work mp number
-\return whether conversion is successful
+/**
+@brief Convert to other radix, binary up to hexadecimal.
+@param p Node in syntax tree.
+@param u Mp number.
+@param radix Radix.
+@param width Width of converted number.
+@param m Mode of 'u'.
+@param v Work mp number.
+@param w Work mp number.
+@return Whether conversion is successful.
 **/
 
 static BOOL_T convert_radix_mp (NODE_T * p, MP_T * u, int radix, int width, MOID_T * m, MP_T * v, MP_T * w)
 {
   static char *images = "0123456789abcdef";
   if (width > 0 && (radix >= 2 && radix <= 16)) {
-    int digit, digits = get_mp_digits (m);
+    int digit, digits = DIGITS (m);
     BOOL_T success;
     MOVE_MP (w, u, digits);
     (void) over_mp_digit (p, u, u, (MP_T) radix, digits);
@@ -13115,12 +12789,12 @@ static BOOL_T convert_radix_mp (NODE_T * p, MP_T * u, int radix, int width, MOID
   }
 }
 
-/*!
-\brief write string to file following current format
-\param p position in tree
-\param mode mode of value
-\param ref_file fat pointer to A68 file
-\param str string to write
+/**
+@brief Write string to file following current format.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param ref_file Fat pointer to A68 file.
+@param str String to write.
 **/
 
 static void write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, char **str)
@@ -13154,10 +12828,14 @@ static void write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, c
   }
 }
 
-/*!
-\brief scan c_pattern
-\param p position in tree
-\param str string to write
+/**
+@brief Scan c_pattern.
+@param p Node in syntax tree.
+@param right_align Conform C place holder.
+@param sign Conform C place holder.
+@param width Conform C place holder.
+@param after Conform C place holder.
+@param letter Conform C place holder.
 **/
 
 void scan_c_pattern (NODE_T * p, BOOL_T * right_align, BOOL_T * sign, int *width, int *after, int *letter)
@@ -13191,11 +12869,11 @@ void scan_c_pattern (NODE_T * p, BOOL_T * right_align, BOOL_T * sign, int *width
   *letter = ATTRIBUTE (p);
 }
 
-/*!
-\brief write appropriate insertion from a choice pattern
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param count count to reach
+/**
+@brief Write appropriate insertion from a choice pattern.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param count Count to reach.
 **/
 
 static void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
@@ -13211,11 +12889,11 @@ static void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
   }
 }
 
-/*!
-\brief write appropriate insertion from a boolean pattern
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param z BOOL value
+/**
+@brief Write appropriate insertion from a boolean pattern.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param z BOOL value
 **/
 
 static void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
@@ -13224,12 +12902,12 @@ static void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
   write_choice_pattern (p, ref_file, &k);
 }
 
-/*!
-\brief write value according to a general pattern
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param mod format modifier
+/**
+@brief Write value according to a general pattern.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param mod Format modifier.
 **/
 
 static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int mod)
@@ -13352,12 +13030,12 @@ static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int 
   add_string_from_stack_transput_buffer (p, FORMATTED_BUFFER);
 }
 
-/*!
-\brief write %[-][+][w][.][d]s/d/i/f/e/b/o/x formats
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write %[-][+][w][.][d]s/d/i/f/e/b/o/x formats.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -13475,7 +13153,7 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
       }
       str = get_transput_buffer (EDIT_BUFFER);
     } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
-      int digits = get_mp_digits (mode);
+      int digits = DIGITS (mode);
       MP_T *u = (MP_T *) item;
       MP_T *v;
       MP_T *w;
@@ -13529,11 +13207,11 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
   }
 }
 
-/*!
-\brief read one char from file
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\return same
+/**
+@brief Read one char from file.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@return See brief description.
 **/
 
 static char read_single_char (NODE_T * p, A68_REF ref_file)
@@ -13546,12 +13224,12 @@ static char read_single_char (NODE_T * p, A68_REF ref_file)
   return ((char) ch);
 }
 
-/*!
-\brief scan n chars from file to input buffer
-\param p position in tree
-\param n chars to scan
-\param m mode being scanned
-\param ref_file fat pointer to A68 file
+/**
+@brief Scan n chars from file to input buffer.
+@param p Node in syntax tree.
+@param n Chars to scan.
+@param m Mode being scanned.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
@@ -13564,12 +13242,12 @@ static void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
   }
 }
 
-/*!
-\brief read %[-][+][w][.][d]s/d/i/f/e/b/o/x formats
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read %[-][+][w][.][d]s/d/i/f/e/b/o/x formats.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -13674,10 +13352,10 @@ static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
 
 /* INTEGRAL, REAL, COMPLEX and BITS patterns */
 
-/*!
-\brief count Z and D frames in a mould
-\param p position in tree
-\param z counting integer
+/**
+@brief Count Z and D frames in a mould.
+@param p Node in syntax tree.
+@param z Counting integer.
 **/
 
 static void count_zd_frames (NODE_T * p, int *z)
@@ -13697,10 +13375,10 @@ static void count_zd_frames (NODE_T * p, int *z)
   }
 }
 
-/*!
-\brief get sign from sign mould
-\param p position in tree
-\return position of sign in tree or NULL
+/**
+@brief Get sign from sign mould.
+@param p Node in syntax tree.
+@return Position of sign in tree or NULL.
 **/
 
 static NODE_T *get_sign (NODE_T * p)
@@ -13716,10 +13394,10 @@ static NODE_T *get_sign (NODE_T * p)
   return (NO_NODE);
 }
 
-/*!
-\brief shift sign through Z frames until non-zero digit or D frame
-\param p position in tree
-\param q string to propagate sign through
+/**
+@brief Shift sign through Z frames until non-zero digit or D frame.
+@param p Node in syntax tree.
+@param q String to propagate sign through.
 **/
 
 static void shift_sign (NODE_T * p, char **q)
@@ -13745,10 +13423,10 @@ static void shift_sign (NODE_T * p, char **q)
   }
 }
 
-/*!
-\brief pad trailing blanks to integral until desired width
-\param p position in tree
-\param n number of zeroes to pad
+/**
+@brief Pad trailing blanks to integral until desired width.
+@param p Node in syntax tree.
+@param n Number of zeroes to pad.
 **/
 
 static void put_zeroes_to_integral (NODE_T * p, int n)
@@ -13758,10 +13436,10 @@ static void put_zeroes_to_integral (NODE_T * p, int n)
   }
 }
 
-/*!
-\brief pad a sign to integral representation
-\param p position in tree
-\param sign sign
+/**
+@brief Pad a sign to integral representation.
+@param p Node in syntax tree.
+@param sign Sign.
 **/
 
 static void put_sign_to_integral (NODE_T * p, int sign)
@@ -13774,12 +13452,12 @@ static void put_sign_to_integral (NODE_T * p, int sign)
   }
 }
 
-/*!
-\brief write point, exponent or plus-i-times symbol
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param att attribute
-\param sym symbol to print when matched
+/**
+@brief Write point, exponent or plus-i-times symbol.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@param att Attribute.
+@param sym Symbol to print when matched.
 **/
 
 static void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
@@ -13798,10 +13476,10 @@ static void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
   }
 }
 
-/*!
-\brief write sign when appropriate
-\param p position in tree
-\param q string to write
+/**
+@brief Write sign when appropriate.
+@param p Node in syntax tree.
+@param q String to write.
 **/
 
 static void write_mould_put_sign (NODE_T * p, char **q)
@@ -13812,13 +13490,11 @@ static void write_mould_put_sign (NODE_T * p, char **q)
   }
 }
 
-/*!
-\brief write string according to a mould
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\param type pattern type
-\param q string to write
-\param mood mode of operation
+/**
+@brief Write character according to a mould.
+@param p Node in syntax tree.
+@param ch Character to write.
+@param q Pointer in mould.
 **/
 
 static void add_char_mould (NODE_T *p, char ch, char **q)
@@ -13828,6 +13504,15 @@ static void add_char_mould (NODE_T *p, char ch, char **q)
     (*q)++;
   }
 }
+
+/**
+@brief Write string according to a mould.
+@param p Node in syntax tree.
+@param ref_file File descriptor.
+@param type Type of mould.
+@param q Pointer in mould.
+@param mood Mode of operation.
+**/
 
 static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsigned *mood)
 {
@@ -13883,12 +13568,13 @@ static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsig
   }
 }
 
-/*!
-\brief write INT value using int pattern
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write INT value using int pattern.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param root Root mode.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
@@ -13917,7 +13603,7 @@ static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BY
       MP_T *z = (MP_T *) item;
       sign = SIGN (z[2]);
       z[2] = ABS (z[2]);
-      str = long_sub_whole (p, z, get_mp_digits (mode), width);
+      str = long_sub_whole (p, z, DIGITS (mode), width);
     }
 /* Edit string and output */
     if (a68g_strchr (str, ERROR_CHAR) != NO_TEXT) {
@@ -13947,12 +13633,13 @@ static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BY
   }
 }
 
-/*!
-\brief write REAL value using real pattern
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write REAL value using real pattern.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param root Root mode.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
@@ -14036,7 +13723,7 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
       str = sub_fixed (p, x, mant_length, frac_digits);
     } else if (mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
       ADDR_T old_stack_pointer2 = stack_pointer;
-      int digits = get_mp_digits (mode);
+      int digits = DIGITS (mode);
       MP_T *x;
       STACK_MP (x, p, digits);
       MOVE_MP (x, (MP_T *) item, digits);
@@ -14047,9 +13734,9 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
       }
       x[2] = ABS (x[2]);
       if (expo_mould != NO_NODE) {
-        long_standardise (p, x, get_mp_digits (mode), stag_digits, frac_digits, &exp_value);
+        long_standardise (p, x, DIGITS (mode), stag_digits, frac_digits, &exp_value);
       }
-      str = long_sub_fixed (p, x, get_mp_digits (mode), mant_length, frac_digits);
+      str = long_sub_fixed (p, x, DIGITS (mode), mant_length, frac_digits);
       stack_pointer = old_stack_pointer2;
     }
 /* Edit and output the string */
@@ -14116,13 +13803,14 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
   }
 }
 
-/*!
-\brief write COMPLEX value using complex pattern
-\param p position in tree
-\param comp mode of complex number
-\param re pointer to real part
-\param im pointer to imaginary part
-\param ref_file fat pointer to A68 file
+/**
+@brief Write COMPLEX value using complex pattern.
+@param p Node in syntax tree.
+@param comp Mode of complex number.
+@param root Root mode.
+@param re Pointer to real part.
+@param im Pointer to imaginary part.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
@@ -14139,12 +13827,12 @@ static void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYT
   write_real_pattern (imag, comp, root, im, ref_file);
 }
 
-/*!
-\brief write BITS value using bits pattern
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write BITS value using bits pattern.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -14173,7 +13861,7 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
     write_mould (NEXT_SUB (p), ref_file, INTEGRAL_MOULD, &str, &mood);
   } else if (mode == MODE (LONG_BITS) || mode == MODE (LONGLONG_BITS)) {
     ADDR_T pop_sp = stack_pointer;
-    int width = 0, radix, digits = get_mp_digits (mode);
+    int width = 0, radix, digits = DIGITS (mode);
     unsigned mood;
     MP_T *u = (MP_T *) item;
     MP_T *v;
@@ -14202,11 +13890,11 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
   }
 }
 
-/*!
-\brief write value to file
-\param p position in tree
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write value to file.
+@param p Node in syntax tree.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
@@ -14230,11 +13918,11 @@ static void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file
   }
 }
 
-/*!
-\brief write value to file
-\param p position in tree
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write value to file.
+@param p Node in syntax tree.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
@@ -14251,8 +13939,8 @@ static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref
   } else if (IS (p, COMPLEX_PATTERN)) {
     ADDR_T old_stack_pointer = stack_pointer;
     MP_T *z;
-    STACK_MP (z, p, get_mp_digits (MODE (LONG_REAL)));
-    SET_MP_ZERO (z, get_mp_digits (MODE (LONG_REAL)));
+    STACK_MP (z, p, DIGITS (MODE (LONG_REAL)));
+    SET_MP_ZERO (z, DIGITS (MODE (LONG_REAL)));
     z[0] = (MP_T) INIT_MASK;
     write_complex_pattern (p, MODE (LONG_REAL), MODE (LONG_COMPLEX), item, (BYTE_T *) z, ref_file);
     stack_pointer = old_stack_pointer;
@@ -14261,11 +13949,11 @@ static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref
   }
 }
 
-/*!
-\brief write value to file
-\param p position in tree
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write value to file.
+@param p Node in syntax tree.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
@@ -14282,8 +13970,8 @@ static void genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF
   } else if (IS (p, COMPLEX_PATTERN)) {
     ADDR_T old_stack_pointer = stack_pointer;
     MP_T *z;
-    STACK_MP (z, p, get_mp_digits (MODE (LONGLONG_REAL)));
-    SET_MP_ZERO (z, get_mp_digits (MODE (LONGLONG_REAL)));
+    STACK_MP (z, p, DIGITS (MODE (LONGLONG_REAL)));
+    SET_MP_ZERO (z, DIGITS (MODE (LONGLONG_REAL)));
     z[0] = (MP_T) INIT_MASK;
     write_complex_pattern (p, MODE (LONGLONG_REAL), MODE (LONGLONG_COMPLEX), item, (BYTE_T *) z, ref_file);
     stack_pointer = old_stack_pointer;
@@ -14292,12 +13980,12 @@ static void genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF
   }
 }
 
-/*!
-\brief write value to file
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Write value to file.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -14345,13 +14033,13 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     } else if (IS (pat, COMPLEX_PATTERN)) {
       ADDR_T old_stack_pointer = stack_pointer;
       MP_T *z;
-      STACK_MP (z, p, get_mp_digits (mode));
-      SET_MP_ZERO (z, get_mp_digits (mode));
+      STACK_MP (z, p, DIGITS (mode));
+      SET_MP_ZERO (z, DIGITS (mode));
       z[0] = (MP_T) INIT_MASK;
       write_complex_pattern (pat, MODE (LONG_REAL), MODE (LONG_COMPLEX), item, (BYTE_T *) z, ref_file);
       stack_pointer = old_stack_pointer;
     } else if (IS (pat, CHOICE_PATTERN)) {
-      int k = mp_to_int (p, (MP_T *) item, get_mp_digits (mode));
+      int k = mp_to_int (p, (MP_T *) item, DIGITS (mode));
       write_choice_pattern (NEXT_SUB (pat), ref_file, &k);
     } else {
       pattern_error (p, mode, ATTRIBUTE (pat));
@@ -14374,13 +14062,13 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     } else if (IS (pat, COMPLEX_PATTERN)) {
       ADDR_T old_stack_pointer = stack_pointer;
       MP_T *z;
-      STACK_MP (z, p, get_mp_digits (MODE (LONGLONG_REAL)));
-      SET_MP_ZERO (z, get_mp_digits (mode));
+      STACK_MP (z, p, DIGITS (MODE (LONGLONG_REAL)));
+      SET_MP_ZERO (z, DIGITS (mode));
       z[0] = (MP_T) INIT_MASK;
       write_complex_pattern (pat, MODE (LONGLONG_REAL), MODE (LONGLONG_COMPLEX), item, (BYTE_T *) z, ref_file);
       stack_pointer = old_stack_pointer;
     } else if (IS (pat, CHOICE_PATTERN)) {
-      int k = mp_to_int (p, (MP_T *) item, get_mp_digits (mode));
+      int k = mp_to_int (p, (MP_T *) item, DIGITS (mode));
       write_choice_pattern (NEXT_SUB (pat), ref_file, &k);
     } else {
       pattern_error (p, mode, ATTRIBUTE (pat));
@@ -14397,29 +14085,29 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
   } else if (mode == MODE (COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, COMPLEX_PATTERN)) {
-      write_complex_pattern (pat, MODE (REAL), MODE (COMPLEX), &item[0], &item[MOID_SIZE (MODE (REAL))], ref_file);
+      write_complex_pattern (pat, MODE (REAL), MODE (COMPLEX), &item[0], &item[SIZE (MODE (REAL))], ref_file);
     } else {
 /* Try writing as two REAL values */
       genie_write_real_format (pat, item, ref_file);
-      genie_write_standard_format (p, MODE (REAL), &item[MOID_SIZE (MODE (REAL))], ref_file);
+      genie_write_standard_format (p, MODE (REAL), &item[SIZE (MODE (REAL))], ref_file);
     }
   } else if (mode == MODE (LONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, COMPLEX_PATTERN)) {
-      write_complex_pattern (pat, MODE (LONG_REAL), MODE (LONG_COMPLEX), &item[0], &item[MOID_SIZE (MODE (LONG_REAL))], ref_file);
+      write_complex_pattern (pat, MODE (LONG_REAL), MODE (LONG_COMPLEX), &item[0], &item[SIZE (MODE (LONG_REAL))], ref_file);
     } else {
 /* Try writing as two LONG REAL values */
       genie_write_long_real_format (pat, item, ref_file);
-      genie_write_standard_format (p, MODE (LONG_REAL), &item[MOID_SIZE (MODE (LONG_REAL))], ref_file);
+      genie_write_standard_format (p, MODE (LONG_REAL), &item[SIZE (MODE (LONG_REAL))], ref_file);
     }
   } else if (mode == MODE (LONGLONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, COMPLEX_PATTERN)) {
-      write_complex_pattern (pat, MODE (LONGLONG_REAL), MODE (LONGLONG_COMPLEX), &item[0], &item[MOID_SIZE (MODE (LONGLONG_REAL))], ref_file);
+      write_complex_pattern (pat, MODE (LONGLONG_REAL), MODE (LONGLONG_COMPLEX), &item[0], &item[SIZE (MODE (LONGLONG_REAL))], ref_file);
     } else {
 /* Try writing as two LONG LONG REAL values */
       genie_write_longlong_real_format (pat, item, ref_file);
-      genie_write_standard_format (p, MODE (LONGLONG_REAL), &item[MOID_SIZE (MODE (LONGLONG_REAL))], ref_file);
+      genie_write_standard_format (p, MODE (LONGLONG_REAL), &item[SIZE (MODE (LONGLONG_REAL))], ref_file);
     }
   } else if (mode == MODE (BOOL)) {
     A68_BOOL *z = (A68_BOOL *) item;
@@ -14541,10 +14229,10 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
   }
 }
 
-/*!
-\brief at end of write purge all insertions
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief At end of write purge all insertions.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void purge_format_write (NODE_T * p, A68_REF ref_file)
@@ -14569,9 +14257,9 @@ static void purge_format_write (NODE_T * p, A68_REF ref_file)
   } while (go_on);
 }
 
-/*!
-\brief PROC ([] SIMPLOUT) VOID print f, write f
-\param p position in tree
+/**
+@brief PROC ([] SIMPLOUT) VOID print f, write f
+@param p Node in syntax tree.
 **/
 
 void genie_write_format (NODE_T * p)
@@ -14583,9 +14271,9 @@ void genie_write_format (NODE_T * p)
   genie_write_file_format (p);
 }
 
-/*!
-\brief PROC (REF FILE, [] SIMPLOUT) VOID put f
-\param p position in tree
+/**
+@brief PROC (REF FILE, [] SIMPLOUT) VOID put f
+@param p Node in syntax tree.
 **/
 
 void genie_write_file_format (NODE_T * p)
@@ -14676,7 +14364,7 @@ void genie_write_file_format (NODE_T * p)
     } else {
       genie_write_standard_format (p, mode, item, ref_file);
     }
-    elem_index += MOID_SIZE (MODE (SIMPLOUT));
+    elem_index += SIZE (MODE (SIMPLOUT));
   }
 /* Empty the format to purge insertions */
   purge_format_write (p, ref_file);
@@ -14690,14 +14378,14 @@ void genie_write_file_format (NODE_T * p)
   STACK_POINTER (file) = save_stack_pointer;
 }
 
-/*!
-\brief give a value error in case a character is not among expected ones
-\param p position in tree
-\param m mode of value read or written
-\param ref_file fat pointer to A68 file
-\param items expected characters
-\param ch actual character
-\return whether character is expected
+/**
+@brief Give a value error in case a character is not among expected ones.
+@param p Node in syntax tree.
+@param m Mode of value read or written.
+@param ref_file Fat pointer to A68 file.
+@param items Expected characters.
+@param ch Actual character.
+@return Whether character is expected.
 **/
 
 static BOOL_T expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *items, char ch)
@@ -14710,10 +14398,10 @@ static BOOL_T expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *item
   }
 }
 
-/*!
-\brief read a group of insertions
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief Read a group of insertions.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 void read_insertion (NODE_T * p, A68_REF ref_file)
@@ -14773,11 +14461,11 @@ put, which is non-standard Algol68, but convenient.
   }
 }
 
-/*!
-\brief read string from file according current format
-\param p position in tree
-\param m mode being read
-\param ref_file fat pointer to A68 file
+/**
+@brief Read string from file according current format.
+@param p Node in syntax tree.
+@param m Mode being read.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
@@ -14802,15 +14490,15 @@ static void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
   }
 }
 
-/*!
-\brief traverse choice pattern
-\param p position in tree
-\param str string to match
-\param len length to match
-\param count counts literals
-\param matches matching literals
-\param first_match first matching literal
-\param full_match whether match is complete (beyond 'len')
+/**
+@brief Traverse choice pattern.
+@param p Node in syntax tree.
+@param str String to match.
+@param len Length to match.
+@param count Counts literals.
+@param matches Matching literals.
+@param first_match First matching literal.
+@param full_match Whether match is complete (beyond 'len').
 **/
 
 static void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count, int *matches, int *first_match, BOOL_T * full_match)
@@ -14830,11 +14518,11 @@ static void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count,
   }
 }
 
-/*!
-\brief read appropriate insertion from a choice pattern
-\param p position in tree
-\param ref_file fat pointer to A68 file
-\return length of longest match
+/**
+@brief Read appropriate insertion from a choice pattern.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+@return Length of longest match.
 **/
 
 static int read_choice_pattern (NODE_T * p, A68_REF ref_file)
@@ -14882,12 +14570,12 @@ matching literal must be first, in case of non-unique first chars.
   }
 }
 
-/*!
-\brief read value according to a general-pattern
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read value according to a general-pattern.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -14901,12 +14589,12 @@ static void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_R
 
 /* INTEGRAL, REAL, COMPLEX and BITS patterns */
 
-/*!
-\brief read sign-mould according current format
-\param p position in tree
-\param m mode of value
-\param ref_file fat pointer to A68 file
-\param sign value of sign (-1, 0, 1)
+/**
+@brief Read sign-mould according current format.
+@param p Node in syntax tree.
+@param m Mode of value.
+@param ref_file Fat pointer to A68 file.
+@param sign Value of sign (-1, 0, 1).
 **/
 
 static void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign)
@@ -14967,11 +14655,11 @@ static void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign
   }
 }
 
-/*!
-\brief read mould according current format
-\param p position in tree
-\param m mode of value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read mould according current format.
+@param p Node in syntax tree.
+@param m Mode of value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
@@ -15009,12 +14697,12 @@ static void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
   }
 }
 
-/*!
-\brief read mould according current format
-\param p position in tree
-\param m mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read mould according current format.
+@param p Node in syntax tree.
+@param m Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
@@ -15035,14 +14723,14 @@ static void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_RE
   genie_string_to_value (p, m, item, ref_file);
 }
 
-/*!
-\brief read point, exponent or i-frame
-\param p position in tree
-\param m mode of value
-\param ref_file fat pointer to A68 file
-\param att frame attribute
-\param item format item
-\param ch representation of 'item'
+/**
+@brief Read point, exponent or i-frame.
+@param p Node in syntax tree.
+@param m Mode of value.
+@param ref_file Fat pointer to A68 file.
+@param att Frame attribute.
+@param item Format item.
+@param ch Representation of 'item'.
 **/
 
 static void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, int item, char ch)
@@ -15073,12 +14761,12 @@ static void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, i
   }
 }
 
-/*!
-\brief read REAL value using real pattern
-\param p position in tree
-\param m mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read REAL value using real pattern.
+@param p Node in syntax tree.
+@param m Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
@@ -15128,14 +14816,14 @@ static void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
   genie_string_to_value (p, m, item, ref_file);
 }
 
-/*!
-\brief read COMPLEX value using complex pattern
-\param p position in tree
-\param comp mode of complex value
-\param m mode of value fields
-\param re pointer to real part
-\param im pointer to imaginary part
-\param ref_file fat pointer to A68 file
+/**
+@brief Read COMPLEX value using complex pattern.
+@param p Node in syntax tree.
+@param comp Mode of complex value.
+@param m Mode of value fields.
+@param re Pointer to real part.
+@param im Pointer to imaginary part.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
@@ -15153,12 +14841,12 @@ static void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T 
   read_real_pattern (imag, m, im, ref_file);
 }
 
-/*!
-\brief read BITS value according pattern
-\param p position in tree
-\param m mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read BITS value according pattern.
+@param p Node in syntax tree.
+@param m Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
@@ -15177,12 +14865,12 @@ static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
   genie_string_to_value (p, m, item, ref_file);
 }
 
-/*!
-\brief read object with from file and store
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read object with from file and store.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -15200,12 +14888,12 @@ static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A6
   }
 }
 
-/*!
-\brief read object with from file and store
-\param p position in tree
-\param mode mode of value
-\param item pointer to value
-\param ref_file fat pointer to A68 file
+/**
+@brief Read object with from file and store.
+@param p Node in syntax tree.
+@param mode Mode of value.
+@param item Pointer to value.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
@@ -15231,7 +14919,7 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
       } else {
         MP_T *z = (MP_T *) item;
         if (k > 0) {
-          (void) int_to_mp (p, z, k, get_mp_digits (mode));
+          (void) int_to_mp (p, z, k, DIGITS (mode));
           z[0] = (MP_T) INIT_MASK;
         } else {
           z[0] = (MP_T) NULL_MASK;
@@ -15246,29 +14934,29 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
   } else if (mode == MODE (COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, COMPLEX_PATTERN)) {
-      read_complex_pattern (pat, mode, MODE (REAL), item, &item[MOID_SIZE (MODE (REAL))], ref_file);
+      read_complex_pattern (pat, mode, MODE (REAL), item, &item[SIZE (MODE (REAL))], ref_file);
     } else {
 /* Try reading as two REAL values */
       genie_read_real_format (pat, MODE (REAL), item, ref_file);
-      genie_read_standard_format (p, MODE (REAL), &item[MOID_SIZE (MODE (REAL))], ref_file);
+      genie_read_standard_format (p, MODE (REAL), &item[SIZE (MODE (REAL))], ref_file);
     }
   } else if (mode == MODE (LONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, COMPLEX_PATTERN)) {
-      read_complex_pattern (pat, mode, MODE (LONG_REAL), item, &item[MOID_SIZE (MODE (LONG_REAL))], ref_file);
+      read_complex_pattern (pat, mode, MODE (LONG_REAL), item, &item[SIZE (MODE (LONG_REAL))], ref_file);
     } else {
 /* Try reading as two LONG REAL values */
       genie_read_real_format (pat, MODE (LONG_REAL), item, ref_file);
-      genie_read_standard_format (p, MODE (LONG_REAL), &item[MOID_SIZE (MODE (LONG_REAL))], ref_file);
+      genie_read_standard_format (p, MODE (LONG_REAL), &item[SIZE (MODE (LONG_REAL))], ref_file);
     }
   } else if (mode == MODE (LONGLONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, COMPLEX_PATTERN)) {
-      read_complex_pattern (pat, mode, MODE (LONGLONG_REAL), item, &item[MOID_SIZE (MODE (LONGLONG_REAL))], ref_file);
+      read_complex_pattern (pat, mode, MODE (LONGLONG_REAL), item, &item[SIZE (MODE (LONGLONG_REAL))], ref_file);
     } else {
 /* Try reading as two LONG LONG REAL values */
       genie_read_real_format (pat, MODE (LONGLONG_REAL), item, ref_file);
-      genie_read_standard_format (p, MODE (LONGLONG_REAL), &item[MOID_SIZE (MODE (LONGLONG_REAL))], ref_file);
+      genie_read_standard_format (p, MODE (LONGLONG_REAL), &item[SIZE (MODE (LONGLONG_REAL))], ref_file);
     }
   } else if (mode == MODE (BOOL)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
@@ -15359,10 +15047,10 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
   }
 }
 
-/*!
-\brief at end of read purge all insertions
-\param p position in tree
-\param ref_file fat pointer to A68 file
+/**
+@brief At end of read purge all insertions.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
 **/
 
 static void purge_format_read (NODE_T * p, A68_REF ref_file)
@@ -15391,9 +15079,9 @@ static void purge_format_read (NODE_T * p, A68_REF ref_file)
   } while (go_on);
 }
 
-/*!
-\brief PROC ([] SIMPLIN) VOID read f
-\param p position in tree
+/**
+@brief PROC ([] SIMPLIN) VOID read f
+@param p Node in syntax tree.
 **/
 
 void genie_read_format (NODE_T * p)
@@ -15405,9 +15093,9 @@ void genie_read_format (NODE_T * p)
   genie_read_file_format (p);
 }
 
-/*!
-\brief PROC (REF FILE, [] SIMPLIN) VOID get f
-\param p position in tree
+/**
+@brief PROC (REF FILE, [] SIMPLIN) VOID get f
+@param p Node in syntax tree.
 **/
 
 void genie_read_file_format (NODE_T * p)
@@ -15499,7 +15187,7 @@ void genie_read_file_format (NODE_T * p)
       CHECK_REF (p, *(A68_REF *) item, mode);
       genie_read_standard_format (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
     }
-    elem_index += MOID_SIZE (MODE (SIMPLIN));
+    elem_index += SIZE (MODE (SIMPLIN));
   }
 /* Empty the format to purge insertions */
   purge_format_read (p, ref_file);
@@ -15521,11 +15209,11 @@ often are optimised to work with values pushed on the stack, and that
 perform runtime checks. These functions are not mangled to fit below routines.
 */
 
-/*!
-\brief sqrt (x^2 + y^2) that does not needlessly overflow
-\param x x
-\param y y
-\return same
+/**
+@brief Sqrt (x^2 + y^2) that does not needlessly overflow.
+@param x X.
+@param y Y.
+@return See brief description.
 **/
 
 double a68g_hypot (double x, double y)
@@ -15547,10 +15235,10 @@ double a68g_hypot (double x, double y)
   }
 }
 
-/*!
-\brief log (1 + x) with anti-cancellation for IEEE 754
-\param x x
-\return same
+/**
+@brief Log (1 + x) with anti-cancellation for IEEE 754.
+@param x X.
+@return See brief description.
 **/
 
 double a68g_log1p (double x)
@@ -15560,8 +15248,8 @@ double a68g_log1p (double x)
   return log (y) - ((y - 1) - x) / y;   /* cancel errors with IEEE arithmetic */
 }
 
-/*!
-\brief OP ROUND = (REAL) INT
+/**
+@brief OP ROUND = (REAL) INT
 **/
 
 int a68g_round (double x)
@@ -15573,7 +15261,7 @@ int a68g_round (double x)
   }
 }
 
-/*!
+/**
 PROC exp = (REAL) REAL
 **/
 
@@ -15586,8 +15274,8 @@ double a68g_exp (double x)
   }
 }
 
-/*!
-\brief PROC atan2 (REAL, REAL) REAL
+/**
+@brief PROC atan2 (REAL, REAL) REAL
 **/
 
 double a68g_atan2 (double x, double y)
@@ -15616,8 +15304,8 @@ double a68g_atan2 (double x, double y)
   }
 }
 
-/*!
-\brief PROC asinh = (REAL) REAL
+/**
+@brief PROC asinh = (REAL) REAL
 **/
 
 double a68g_asinh (double x)
@@ -15635,8 +15323,8 @@ double a68g_asinh (double x)
   }
 }
 
-/*!
-\brief PROC acosh = (REAL) REAL
+/**
+@brief PROC acosh = (REAL) REAL
 **/
 
 double a68g_acosh (double x)
@@ -15656,8 +15344,8 @@ double a68g_acosh (double x)
   }
 }
 
-/*!
-\brief PROC atanh = (REAL) REAL
+/**
+@brief PROC atanh = (REAL) REAL
 **/
 
 double a68g_atanh (double x)
@@ -15676,8 +15364,8 @@ double a68g_atanh (double x)
   }
 }
 
-/*!
-\brief OP ** = (REAL, REAL) REAL
+/**
+@brief OP ** = (REAL, REAL) REAL
 **/
 
 double a68g_pow_real (double x, double y)
@@ -15685,8 +15373,8 @@ double a68g_pow_real (double x, double y)
   return (exp (y * log (x)));
 }
 
-/*! 
-\brief OP ** = (REAL, INT) REAL 
+/** 
+@brief OP ** = (REAL, INT) REAL 
 **/
 
 double a68g_pow_real_int (double x, int n)
@@ -15716,8 +15404,8 @@ double a68g_pow_real_int (double x, int n)
   }
 }
 
-/*!
-\brief OP / = (COMPLEX, COMPLEX) COMPLEX
+/**
+@brief OP / = (COMPLEX, COMPLEX) COMPLEX
 **/
 
 void a68g_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
@@ -15741,8 +15429,8 @@ void a68g_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
   }
 }
 
-/*!
-\brief PROC csqrt = (COMPLEX) COMPLEX
+/**
+@brief PROC csqrt = (COMPLEX) COMPLEX
 **/
 
 void a68g_sqrt_complex (A68_REAL * z, A68_REAL * x)
@@ -15773,8 +15461,8 @@ void a68g_sqrt_complex (A68_REAL * z, A68_REAL * x)
   }
 }
 
-/*!
-\brief PROC cexp = (COMPLEX) COMPLEX
+/**
+@brief PROC cexp = (COMPLEX) COMPLEX
 **/
 
 void a68g_exp_complex (A68_REAL * z, A68_REAL * x)
@@ -15786,8 +15474,8 @@ void a68g_exp_complex (A68_REAL * z, A68_REAL * x)
   IM (z) = r * sin (IM (x));
 }
 
-/*!
-\brief PROC cln = (COMPLEX) COMPLEX
+/**
+@brief PROC cln = (COMPLEX) COMPLEX
 **/
 
 void a68g_ln_complex (A68_REAL * z, A68_REAL * x)
@@ -15799,8 +15487,8 @@ void a68g_ln_complex (A68_REAL * z, A68_REAL * x)
 }
 
 
-/*!
-\brief PROC csin = (COMPLEX) COMPLEX
+/**
+@brief PROC csin = (COMPLEX) COMPLEX
 **/
 
 void a68g_sin_complex (A68_REAL * z, A68_REAL * x)
@@ -15816,8 +15504,8 @@ void a68g_sin_complex (A68_REAL * z, A68_REAL * x)
   }
 }
 
-/*!
-\brief PROC ccos = (COMPLEX) COMPLEX
+/**
+@brief PROC ccos = (COMPLEX) COMPLEX
 **/
 
 void a68g_cos_complex (A68_REAL * z, A68_REAL * x)
@@ -15833,8 +15521,8 @@ void a68g_cos_complex (A68_REAL * z, A68_REAL * x)
   }
 }
 
-/*!
-\brief PROC ctan = (COMPLEX) COMPLEX
+/**
+@brief PROC ctan = (COMPLEX) COMPLEX
 **/
 
 void a68g_tan_complex (A68_REAL * z, A68_REAL * x)
@@ -15858,8 +15546,8 @@ void a68g_tan_complex (A68_REAL * z, A68_REAL * x)
   a68g_div_complex (z, u, v);
 }
 
-/*!
-\brief PROC casin = (COMPLEX) COMPLEX
+/**
+@brief PROC casin = (COMPLEX) COMPLEX
 **/
 
 void a68g_arcsin_complex (A68_REAL * z, A68_REAL * x)
@@ -15877,8 +15565,8 @@ void a68g_arcsin_complex (A68_REAL * z, A68_REAL * x)
 
 }
 
-/*!
-\brief PROC cacos = (COMPLEX) COMPLEX
+/**
+@brief PROC cacos = (COMPLEX) COMPLEX
 **/
 
 void a68g_arccos_complex (A68_REAL * z, A68_REAL * x)
@@ -15896,8 +15584,8 @@ void a68g_arccos_complex (A68_REAL * z, A68_REAL * x)
 
 }
 
-/*!
-\brief PROC catan = (COMPLEX) COMPLEX
+/**
+@brief PROC catan = (COMPLEX) COMPLEX
 **/
 
 void a68g_arctan_complex (A68_REAL * z, A68_REAL * x)
@@ -15915,9 +15603,9 @@ void a68g_arctan_complex (A68_REAL * z, A68_REAL * x)
 
 /* Operators for ROWS */
 
-/*!
-\brief OP ELEMS = (ROWS) INT
-\param p position in syntax tree
+/**
+@brief OP ELEMS = (ROWS) INT
+@param p Position in syntax tree.
 **/
 
 void genie_monad_elems (NODE_T * p)
@@ -15933,9 +15621,9 @@ void genie_monad_elems (NODE_T * p)
   PUSH_PRIMITIVE (p, get_row_size (t, DIM (x)), A68_INT);
 }
 
-/*!
-\brief OP LWB = (ROWS) INT
-\param p position in syntax tree
+/**
+@brief OP LWB = (ROWS) INT
+@param p Position in syntax tree.
 **/
 
 void genie_monad_lwb (NODE_T * p)
@@ -15951,9 +15639,9 @@ void genie_monad_lwb (NODE_T * p)
   PUSH_PRIMITIVE (p, LWB (t), A68_INT);
 }
 
-/*!
-\brief OP UPB = (ROWS) INT
-\param p position in syntax tree
+/**
+@brief OP UPB = (ROWS) INT
+@param p Position in syntax tree.
 **/
 
 void genie_monad_upb (NODE_T * p)
@@ -15969,9 +15657,9 @@ void genie_monad_upb (NODE_T * p)
   PUSH_PRIMITIVE (p, UPB (t), A68_INT);
 }
 
-/*!
-\brief OP ELEMS = (INT, ROWS) INT
-\param p position in syntax tree
+/**
+@brief OP ELEMS = (INT, ROWS) INT
+@param p Position in syntax tree.
 **/
 
 void genie_dyad_elems (NODE_T * p)
@@ -15994,9 +15682,9 @@ void genie_dyad_elems (NODE_T * p)
   PUSH_PRIMITIVE (p, ROW_SIZE (u), A68_INT);
 }
 
-/*!
-\brief OP LWB = (INT, ROWS) INT
-\param p position in syntax tree
+/**
+@brief OP LWB = (INT, ROWS) INT
+@param p Position in syntax tree.
 **/
 
 void genie_dyad_lwb (NODE_T * p)
@@ -16018,9 +15706,9 @@ void genie_dyad_lwb (NODE_T * p)
   PUSH_PRIMITIVE (p, LWB (&(t[VALUE (&k) - 1])), A68_INT);
 }
 
-/*!
-\brief OP UPB = (INT, ROWS) INT
-\param p position in syntax tree
+/**
+@brief OP UPB = (INT, ROWS) INT
+@param p Position in syntax tree.
 **/
 
 void genie_dyad_upb (NODE_T * p)
@@ -16103,10 +15791,10 @@ Implements SOUND values.
 
 static unsigned pow256[] = { 1, 256, 65536, 16777216 };
 
-/*!
-\brief test bits per sample
-\param p position in tree
-\param bps bits per second
+/**
+@brief Test bits per sample.
+@param p Node in syntax tree.
+@param bps Bits per second.
 **/
 
 static void test_bits_per_sample (NODE_T * p, unsigned bps)
@@ -16117,11 +15805,11 @@ static void test_bits_per_sample (NODE_T * p, unsigned bps)
   }
 }
 
-/*!
-\brief code string into big-endian unsigned
-\param p position in tree
-\param s string to code
-\param n chars to code
+/**
+@brief Code string into big-endian unsigned.
+@param p Node in syntax tree.
+@param s String to code.
+@param n Chars to code.
 **/
 
 static unsigned code_string (NODE_T * p, char *s, int n)
@@ -16137,10 +15825,10 @@ static unsigned code_string (NODE_T * p, char *s, int n)
   } return (v);
 }
 
-/*!
-\brief code unsigned into string
-\param p position in tree
-\param n value to code
+/**
+@brief Code unsigned into string.
+@param p Node in syntax tree.
+@param n Value to code.
 **/
 
 static char *code_unsigned (NODE_T * p, unsigned n)
@@ -16162,9 +15850,9 @@ static char *code_unsigned (NODE_T * p, unsigned n)
   return (text);
 }
 
-/*!
-\brief WAVE format category
-\param n category number
+/**
+@brief WAVE format category
+@param n Category number.
 **/
 
 static char *format_category (unsigned n)
@@ -16369,12 +16057,12 @@ static char *format_category (unsigned n)
   }
 }
 
-/*!
-\brief read RIFF item
-\param p position in tree
-\param fd file number
-\param n word length
-\param little whether little-endian
+/**
+@brief Read RIFF item.
+@param p Node in syntax tree.
+@param fd File number.
+@param n Word length.
+@param little Whether little-endian.
 **/
 
 static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
@@ -16409,11 +16097,11 @@ static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
   return (v);
 }
 
-/*!
-\brief read sound from file
-\param p position in tree
-\param ref_file pointer to file
-\param w sound object
+/**
+@brief Read sound from file.
+@param p Node in syntax tree.
+@param ref_file Pointer to file.
+@param w Sound object.
 **/
 
 void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
@@ -16497,13 +16185,13 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
   STATUS (w) = INIT_MASK;
 }
 
-/*!
-\brief write RIFF item
-\param p position in tree
-\param fd file number
-\param z item
-\param n number of chars
-\param little whether little endian
+/**
+@brief Write RIFF item.
+@param p Node in syntax tree.
+@param fd File number.
+@param z Item.
+@param n Number of chars.
+@param little Whether little endian.
 **/
 
 void write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
@@ -16533,11 +16221,11 @@ void write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
   }
 }
 
-/*!
-\brief write sound to file
-\param p position in tree
-\param ref_file pointer to file
-\param w sound object
+/**
+@brief Write sound to file.
+@param p Node in syntax tree.
+@param ref_file Pointer to file.
+@param w Sound object.
 **/
 
 void write_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
@@ -16572,9 +16260,9 @@ void write_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
   }
 }
 
-/*!
-\brief PROC new sound = (INT bits, INT sample rate, INT channels, INT samples) SOUND
-\param p position in tree
+/**
+@brief PROC new sound = (INT bits, INT sample rate, INT channels, INT samples) SOUND
+@param p Node in syntax tree.
 **/
 
 void genie_new_sound (NODE_T * p)
@@ -16596,9 +16284,9 @@ void genie_new_sound (NODE_T * p)
   PUSH_OBJECT (p, w, A68_SOUND);
 }
 
-/*!
-\brief PROC get sound = (SOUND w, INT channel, sample) INT
-\param p position in tree
+/**
+@brief PROC get sound = (SOUND w, INT channel, sample) INT
+@param p Node in syntax tree.
 **/
 
 void genie_get_sound (NODE_T * p)
@@ -16634,9 +16322,9 @@ void genie_get_sound (NODE_T * p)
   PUSH_PRIMITIVE (p, (d[m] & 0x80 ? (n == 4 ? z : z - (int) pow256[m + 1]) : z), A68_INT);
 }
 
-/*!
-\brief PROC set sound = (SOUND w, INT channel, sample, value) VOID
-\param p position in tree
+/**
+@brief PROC set sound = (SOUND w, INT channel, sample, value) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_set_sound (NODE_T * p)
@@ -16672,9 +16360,9 @@ void genie_set_sound (NODE_T * p)
   }
 }
 
-/*!
-\brief OP SOUND = (SOUND) INT
-\param p position in tree
+/**
+@brief OP SOUND = (SOUND) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sound_samples (NODE_T * p)
@@ -16684,9 +16372,9 @@ void genie_sound_samples (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) (NUM_SAMPLES (&w)), A68_INT);
 }
 
-/*!
-\brief OP RATE = (SOUND) INT
-\param p position in tree
+/**
+@brief OP RATE = (SOUND) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sound_rate (NODE_T * p)
@@ -16696,9 +16384,9 @@ void genie_sound_rate (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) (SAMPLE_RATE (&w)), A68_INT);
 }
 
-/*!
-\brief OP CHANNELS = (SOUND) INT
-\param p position in tree
+/**
+@brief OP CHANNELS = (SOUND) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sound_channels (NODE_T * p)
@@ -16708,9 +16396,9 @@ void genie_sound_channels (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) (NUM_CHANNELS (&w)), A68_INT);
 }
 
-/*!
-\brief OP RESOLUTION = (SOUND) INT
-\param p position in tree
+/**
+@brief OP RESOLUTION = (SOUND) INT
+@param p Node in syntax tree.
 **/
 
 void genie_sound_resolution (NODE_T * p)
@@ -16720,7 +16408,7 @@ void genie_sound_resolution (NODE_T * p)
   PUSH_PRIMITIVE (p, (int) (BITS_PER_SAMPLE (&w)), A68_INT);
 }
 
-/*!
+/**
 Unix extensions to A68G
 */
 
@@ -16731,8 +16419,8 @@ static int chars_in_tty_line;
 
 char output_line[BUFFER_SIZE], edit_line[BUFFER_SIZE], input_line[BUFFER_SIZE];
 
-/*!
-\brief initialise output to STDOUT
+/**
+@brief Initialise output to STDOUT.
 **/
 
 void init_tty (void)
@@ -16742,8 +16430,8 @@ void init_tty (void)
   change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
 }
 
-/*!
-\brief terminate current line on STDOUT
+/**
+@brief Terminate current line on STDOUT.
 **/
 
 void io_close_tty_line (void)
@@ -16753,9 +16441,9 @@ void io_close_tty_line (void)
   }
 }
 
-/*!
-\brief get a char from STDIN
-\return same
+/**
+@brief Get a char from STDIN.
+@return See brief description.
 **/
 
 char get_stdin_char (void)
@@ -16768,10 +16456,10 @@ char get_stdin_char (void)
   return ((char) (j == 1 ? ch[0] : EOF_CHAR));
 }
 
-/*!
-\brief read string from STDIN, until NEWLINE_STRING
-\param prompt prompt string
-\return input line buffer
+/**
+@brief Read string from STDIN, until NEWLINE_STRING.
+@param prompt Prompt string.
+@return Input line buffer.
 **/
 
 char *read_string_from_tty (char *prompt)
@@ -16811,10 +16499,10 @@ char *read_string_from_tty (char *prompt)
 #endif
 }
 
-/*!
-\brief write string to file
-\param f file number
-\param z string to write
+/**
+@brief Write string to file.
+@param f File number.
+@param z String to write.
 **/
 
 void io_write_string (FILE_T f, const char *z)
@@ -16855,12 +16543,12 @@ void io_write_string (FILE_T f, const char *z)
   }
 }
 
-/*!
-\brief read bytes from file into buffer
-\param fd file descriptor, must be open
-\param buf character buffer, size must be >= n
-\param n maximum number of bytes to read
-\return number of bytes read or -1 in case of error
+/**
+@brief Read bytes from file into buffer.
+@param fd File descriptor, must be open.
+@param buf Character buffer, size must be >= n.
+@param n Maximum number of bytes to read.
+@return Number of bytes read or -1 in case of error.
 **/
 
 ssize_t io_read (FILE_T fd, void *buf, size_t n)
@@ -16896,12 +16584,12 @@ ssize_t io_read (FILE_T fd, void *buf, size_t n)
   return ((ssize_t) n - (ssize_t) to_do);       /* return >= 0 */
 }
 
-/*!
-\brief writes n bytes from buffer to file
-\param fd file descriptor, must be open
-\param buf character buffer, size must be >= n
-\param n maximum number of bytes to write
-\return n or -1 in case of error
+/**
+@brief Writes n bytes from buffer to file.
+@param fd File descriptor, must be open.
+@param buf Character buffer, size must be >= n.
+@param n Maximum number of bytes to write.
+@return N or -1 in case of error.
 **/
 
 ssize_t io_write (FILE_T fd, const void *buf, size_t n)
@@ -16931,12 +16619,12 @@ ssize_t io_write (FILE_T fd, const void *buf, size_t n)
   return ((ssize_t) n);
 }
 
-/*!
-\brief read bytes from file into buffer
-\param fd file descriptor, must be open
-\param buf character buffer, size must be >= n
-\param n maximum number of bytes to read
-\return number of bytes read or -1 in case of error
+/**
+@brief Read bytes from file into buffer.
+@param fd File descriptor, must be open.
+@param buf Character buffer, size must be >= n.
+@param n Maximum number of bytes to read.
+@return Number of bytes read or -1 in case of error.
 **/
 
 ssize_t io_read_conv (FILE_T fd, void *buf, size_t n)
@@ -16972,12 +16660,12 @@ ssize_t io_read_conv (FILE_T fd, void *buf, size_t n)
   return ((ssize_t) n - (ssize_t) to_do);
 }
 
-/*!
-\brief writes n bytes from buffer to file
-\param fd file descriptor, must be open
-\param buf character buffer, size must be >= n
-\param n maximum number of bytes to write
-\return n or -1 in case of error
+/**
+@brief Writes n bytes from buffer to file.
+@param fd File descriptor, must be open.
+@param buf Character buffer, size must be >= n.
+@param n Maximum number of bytes to write.
+@return N or -1 in case of error.
 **/
 
 ssize_t io_write_conv (FILE_T fd, const void *buf, size_t n)
@@ -17022,9 +16710,9 @@ extern A68_CHANNEL stand_in_channel, stand_out_channel, stand_draw_channel, stan
 
 #if defined HAVE_DIRENT_H
 
-/*!
-\brief PROC (STRING) [] STRING directory
-\param p position in tree
+/**
+@brief PROC (STRING) [] STRING directory
+@param p Node in syntax tree.
 **/
 
 void genie_directory (NODE_T * p)
@@ -17068,11 +16756,11 @@ void genie_directory (NODE_T * p)
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FILE_ACCESS);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-    z = heap_generator (p, MODE (ROW_STRING), ALIGNED_SIZE_OF (A68_ARRAY) + ALIGNED_SIZE_OF (A68_TUPLE));
-    row = heap_generator (p, MODE (ROW_STRING), n * MOID_SIZE (MODE (STRING)));
+    z = heap_generator (p, MODE (ROW_STRING), SIZE_AL (A68_ARRAY) + SIZE_AL (A68_TUPLE));
+    row = heap_generator (p, MODE (ROW_STRING), n * SIZE (MODE (STRING)));
     DIM (&arr) = 1;
     MOID (&arr) = MODE (STRING);
-    ELEM_SIZE (&arr) = MOID_SIZE (MODE (STRING));
+    ELEM_SIZE (&arr) = SIZE (MODE (STRING));
     SLICE_OFFSET (&arr) = 0;
     FIELD_OFFSET (&arr) = 0;
     ARRAY (&arr) = row;
@@ -17102,9 +16790,9 @@ void genie_directory (NODE_T * p)
 
 #endif
 
-/*!
-\brief PROC [] INT utc time
-\param p position in tree
+/**
+@brief PROC [] INT utc time
+@param p Node in syntax tree.
 **/
 
 void genie_utctime (NODE_T * p)
@@ -17130,9 +16818,9 @@ void genie_utctime (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC [] INT local time
-\param p position in tree
+/**
+@brief PROC [] INT local time
+@param p Node in syntax tree.
 **/
 
 void genie_localtime (NODE_T * p)
@@ -17158,9 +16846,9 @@ void genie_localtime (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC INT rows
-\param p position in tree
+/**
+@brief PROC INT rows
+@param p Node in syntax tree.
 **/
 
 void genie_rows (NODE_T * p)
@@ -17169,9 +16857,9 @@ void genie_rows (NODE_T * p)
   PUSH_PRIMITIVE (p, term_heigth, A68_INT);
 }
 
-/*!
-\brief PROC INT columns
-\param p position in tree
+/**
+@brief PROC INT columns
+@param p Node in syntax tree.
 **/
 
 void genie_columns (NODE_T * p)
@@ -17180,9 +16868,9 @@ void genie_columns (NODE_T * p)
   PUSH_PRIMITIVE (p, term_width, A68_INT);
 }
 
-/*!
-\brief PROC INT argc
-\param p position in tree
+/**
+@brief PROC INT argc
+@param p Node in syntax tree.
 **/
 
 void genie_argc (NODE_T * p)
@@ -17191,9 +16879,9 @@ void genie_argc (NODE_T * p)
   PUSH_PRIMITIVE (p, global_argc, A68_INT);
 }
 
-/*!
-\brief PROC (INT) STRING argv
-\param p position in tree
+/**
+@brief PROC (INT) STRING argv
+@param p Node in syntax tree.
 **/
 
 void genie_argv (NODE_T * p)
@@ -17214,9 +16902,9 @@ void genie_argv (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC STRING pwd
-\param p position in tree
+/**
+@brief PROC STRING pwd
+@param p Node in syntax tree.
 **/
 
 void genie_pwd (NODE_T * p)
@@ -17247,9 +16935,9 @@ void genie_pwd (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (STRING) INT cd
-\param p position in tree
+/**
+@brief PROC (STRING) INT cd
+@param p Node in syntax tree.
 **/
 
 void genie_cd (NODE_T * p)
@@ -17275,9 +16963,9 @@ void genie_cd (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (STRING) BITS
-\param p position in tree
+/**
+@brief PROC (STRING) BITS
+@param p Node in syntax tree.
 **/
 
 void genie_file_mode (NODE_T * p)
@@ -17302,9 +16990,9 @@ void genie_file_mode (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (STRING) BOOL file is block device
-\param p position in tree
+/**
+@brief PROC (STRING) BOOL file is block device
+@param p Node in syntax tree.
 **/
 
 void genie_file_is_block_device (NODE_T * p)
@@ -17329,9 +17017,9 @@ void genie_file_is_block_device (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (STRING) BOOL file is char device
-\param p position in tree
+/**
+@brief PROC (STRING) BOOL file is char device
+@param p Node in syntax tree.
 **/
 
 void genie_file_is_char_device (NODE_T * p)
@@ -17356,9 +17044,9 @@ void genie_file_is_char_device (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (STRING) BOOL file is directory
-\param p position in tree
+/**
+@brief PROC (STRING) BOOL file is directory
+@param p Node in syntax tree.
 **/
 
 void genie_file_is_directory (NODE_T * p)
@@ -17383,9 +17071,9 @@ void genie_file_is_directory (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC (STRING) BOOL file is regular
-\param p position in tree
+/**
+@brief PROC (STRING) BOOL file is regular
+@param p Node in syntax tree.
 **/
 
 void genie_file_is_regular (NODE_T * p)
@@ -17412,9 +17100,9 @@ void genie_file_is_regular (NODE_T * p)
 
 #if defined __S_IFIFO
 
-/*!
-\brief PROC (STRING) BOOL file is fifo
-\param p position in tree
+/**
+@brief PROC (STRING) BOOL file is fifo
+@param p Node in syntax tree.
 **/
 
 void genie_file_is_fifo (NODE_T * p)
@@ -17443,9 +17131,9 @@ void genie_file_is_fifo (NODE_T * p)
 
 #if defined S_ISLNK
 
-/*!
-\brief PROC (STRING) BOOL file is link
-\param p position in tree
+/**
+@brief PROC (STRING) BOOL file is link
+@param p Node in syntax tree.
 **/
 
 void genie_file_is_link (NODE_T * p)
@@ -17472,18 +17160,18 @@ void genie_file_is_link (NODE_T * p)
 
 #endif
 
-/*!
-\brief convert [] STRING row to char *vec[]
-\param p position in tree
-\param vec string vector
-\param row [] STRING
+/**
+@brief Convert [] STRING row to char *vec[].
+@param p Node in syntax tree.
+@param vec String vector.
+@param row [] STRING
 **/
 
 static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
 {
   BYTE_T *z = ADDRESS (&row);
   A68_ARRAY *arr = (A68_ARRAY *) & z[0];
-  A68_TUPLE *tup = (A68_TUPLE *) & z[ALIGNED_SIZE_OF (A68_ARRAY)];
+  A68_TUPLE *tup = (A68_TUPLE *) & z[SIZE_AL (A68_ARRAY)];
   int k = 0;
   if (get_row_size (tup, DIM (arr)) > 0) {
     BYTE_T *base_addr = DEREF (BYTE_T, &ARRAY (arr));
@@ -17510,9 +17198,9 @@ static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
   vec[k] = NO_TEXT;
 }
 
-/*!
-\brief free char *vec[]
-\param vec string vector
+/**
+@brief Free char *vec[].
+@param vec String vector.
 **/
 
 static void free_vector (char *vec[])
@@ -17524,9 +17212,9 @@ static void free_vector (char *vec[])
   }
 }
 
-/*!
-\brief reset error number
-\param p position in tree
+/**
+@brief Reset error number.
+@param p Node in syntax tree.
 **/
 
 void genie_reset_errno (NODE_T * p)
@@ -17535,9 +17223,9 @@ void genie_reset_errno (NODE_T * p)
   RESET_ERRNO;
 }
 
-/*!
-\brief error number
-\param p position in tree
+/**
+@brief Error number.
+@param p Node in syntax tree.
 **/
 
 void genie_errno (NODE_T * p)
@@ -17545,9 +17233,9 @@ void genie_errno (NODE_T * p)
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }
 
-/*!
-\brief PROC strerror = (INT) STRING
-\param p position in tree
+/**
+@brief PROC strerror = (INT) STRING
+@param p Node in syntax tree.
 **/
 
 void genie_strerror (NODE_T * p)
@@ -17557,21 +17245,21 @@ void genie_strerror (NODE_T * p)
   PUSH_REF (p, c_to_a_string (p, strerror (VALUE (&i)), DEFAULT_WIDTH));
 }
 
-/*!
-\brief set up file for usage in pipe
-\param p position in tree
-\param z pointer to file
-\param fd file number
-\param chan channel
-\param r_mood read mood
-\param w_mood write mood
-\param pid pid
+/**
+@brief Set up file for usage in pipe.
+@param p Node in syntax tree.
+@param z Pointer to file.
+@param fd File number.
+@param chan Channel.
+@param r_mood Read mood.
+@param w_mood Write mood.
+@param pid Pid.
 **/
 
 static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL_T r_mood, BOOL_T w_mood, int pid)
 {
   A68_FILE *f;
-  *z = heap_generator (p, MODE (REF_FILE), ALIGNED_SIZE_OF (A68_FILE));
+  *z = heap_generator (p, MODE (REF_FILE), SIZE (MODE (FILE)));
   f = FILE_DEREF (z);
   STATUS (f) = (STATUS_MASK) ((pid < 0) ? 0 : INIT_MASK);
   IDENTIFICATION (f) = nil_ref;
@@ -17592,12 +17280,12 @@ static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL
   set_default_event_procedures (f);
 }
 
-/*!
-\brief create and push a pipe
-\param p position in tree
-\param fd_r read file number
-\param fd_w write file number
-\param pid pid
+/**
+@brief Create and push a pipe.
+@param p Node in syntax tree.
+@param fd_r Read file number.
+@param fd_w Write file number.
+@param pid Pid.
 **/
 
 static void genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
@@ -17613,9 +17301,9 @@ static void genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
   PUSH_PRIMITIVE (p, pid, A68_INT);
 }
 
-/*!
-\brief push an environment string
-\param p position in tree
+/**
+@brief Push an environment string.
+@param p Node in syntax tree.
 **/
 
 void genie_getenv (NODE_T * p)
@@ -17636,9 +17324,9 @@ void genie_getenv (NODE_T * p)
   PUSH_REF (p, a_env);
 }
 
-/*!
-\brief PROC fork = INT
-\param p position in tree
+/**
+@brief PROC fork = INT
+@param p Node in syntax tree.
 **/
 
 void genie_fork (NODE_T * p)
@@ -17653,9 +17341,9 @@ void genie_fork (NODE_T * p)
 #endif
 }
 
-/*!
-\brief PROC execve = (STRING, [] STRING, [] STRING) INT 
-\param p position in tree
+/**
+@brief PROC execve = (STRING, [] STRING, [] STRING) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_execve (NODE_T * p)
@@ -17689,9 +17377,9 @@ void genie_execve (NODE_T * p)
   PUSH_PRIMITIVE (p, ret, A68_INT);
 }
 
-/*!
-\brief PROC execve child = (STRING, [] STRING, [] STRING) INT
-\param p position in tree
+/**
+@brief PROC execve child = (STRING, [] STRING, [] STRING) INT
+@param p Node in syntax tree.
 **/
 
 void genie_execve_child (NODE_T * p)
@@ -17735,9 +17423,9 @@ void genie_execve_child (NODE_T * p)
 #endif /* defined HAVE_WIN32 */
 }
 
-/*!
-\brief PROC execve child pipe = (STRING, [] STRING, [] STRING) PIPE
-\param p position in tree
+/**
+@brief PROC execve child pipe = (STRING, [] STRING, [] STRING) PIPE
+@param p Node in syntax tree.
 **/
 
 void genie_execve_child_pipe (NODE_T * p)
@@ -17810,9 +17498,9 @@ Return a PIPE that contains the descriptors for the parent.
 #endif /* defined HAVE_WIN32 */
 }
 
-/*!
-\brief PROC execve_output = (STRING, [] STRING, [] STRING, REF_STRING) INT
-\param p position in tree
+/**
+@brief PROC execve_output = (STRING, [] STRING, [] STRING, REF_STRING) INT
+@param p Node in syntax tree.
 **/
 
 void genie_execve_output (NODE_T * p)
@@ -17905,9 +17593,9 @@ Child redirects STDIN and STDOUT.
 #endif /* defined HAVE_WIN32 */
 }
 
-/*!
-\brief PROC create pipe = PIPE
-\param p position in tree
+/**
+@brief PROC create pipe = PIPE
+@param p Node in syntax tree.
 **/
 
 void genie_create_pipe (NODE_T * p)
@@ -17918,9 +17606,9 @@ void genie_create_pipe (NODE_T * p)
   PUSH_PRIMITIVE (p, -1, A68_INT);
 }
 
-/*!
-\brief PROC wait pid = (INT) VOID
-\param p position in tree
+/**
+@brief PROC wait pid = (INT) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_waitpid (NODE_T * p)
@@ -17949,8 +17637,8 @@ Be sure to know what you are doing when you use this, but on the other hand,
 
 BOOL_T a68g_curses_mode = A68_FALSE;
 
-/*!
-\brief clean_curses
+/**
+@brief Clean_curses.
 **/
 
 void clean_curses (void)
@@ -17962,8 +17650,8 @@ void clean_curses (void)
   }
 }
 
-/*!
-\brief init_curses
+/**
+@brief Init_curses.
 **/
 
 void init_curses (void)
@@ -17978,9 +17666,9 @@ void init_curses (void)
   }
 }
 
-/*!
-\brief watch stdin for input, do not wait very long
-\return character read
+/**
+@brief Watch stdin for input, do not wait very long.
+@return Character read.
 **/
 
 int rgetchar (void)
@@ -18009,9 +17697,9 @@ int rgetchar (void)
 #endif
 }
 
-/*!
-\brief PROC curses start = VOID
-\param p position in tree
+/**
+@brief PROC curses start = VOID
+@param p Node in syntax tree.
 **/
 
 void genie_curses_start (NODE_T * p)
@@ -18025,9 +17713,9 @@ void genie_curses_start (NODE_T * p)
   a68g_curses_mode = A68_TRUE;
 }
 
-/*!
-\brief PROC curses end = VOID
-\param p position in tree
+/**
+@brief PROC curses end = VOID
+@param p Node in syntax tree.
 **/
 
 void genie_curses_end (NODE_T * p)
@@ -18036,9 +17724,9 @@ void genie_curses_end (NODE_T * p)
   clean_curses ();
 }
 
-/*!
-\brief PROC curses clear = VOID
-\param p position in tree
+/**
+@brief PROC curses clear = VOID
+@param p Node in syntax tree.
 **/
 
 void genie_curses_clear (NODE_T * p)
@@ -18049,9 +17737,9 @@ void genie_curses_clear (NODE_T * p)
   CHECK_CURSES_RETVAL (clear () != ERR);
 }
 
-/*!
-\brief PROC curses refresh = VOID
-\param p position in tree
+/**
+@brief PROC curses refresh = VOID
+@param p Node in syntax tree.
 **/
 
 void genie_curses_refresh (NODE_T * p)
@@ -18062,9 +17750,9 @@ void genie_curses_refresh (NODE_T * p)
   CHECK_CURSES_RETVAL (refresh () != ERR);
 }
 
-/*!
-\brief PROC curses lines = INT
-\param p position in tree
+/**
+@brief PROC curses lines = INT
+@param p Node in syntax tree.
 **/
 
 void genie_curses_lines (NODE_T * p)
@@ -18075,9 +17763,9 @@ void genie_curses_lines (NODE_T * p)
   PUSH_PRIMITIVE (p, LINES, A68_INT);
 }
 
-/*!
-\brief PROC curses columns = INT
-\param p position in tree
+/**
+@brief PROC curses columns = INT
+@param p Node in syntax tree.
 **/
 
 void genie_curses_columns (NODE_T * p)
@@ -18088,9 +17776,9 @@ void genie_curses_columns (NODE_T * p)
   PUSH_PRIMITIVE (p, COLS, A68_INT);
 }
 
-/*!
-\brief PROC curses getchar = CHAR
-\param p position in tree
+/**
+@brief PROC curses getchar = CHAR
+@param p Node in syntax tree.
 **/
 
 void genie_curses_getchar (NODE_T * p)
@@ -18102,10 +17790,10 @@ void genie_curses_getchar (NODE_T * p)
 }
 
 
-/*!
-\brief PROC curses colour = VOID
-\param p position in tree
-**/
+/*
+@brief PROC curses colour = VOID
+@param p Node in syntax tree.
+*/
 
 #define GENIE_COLOUR(f, n, fg, bg)\
 void f (NODE_T *p) {\
@@ -18131,9 +17819,9 @@ GENIE_COLOUR (genie_curses_red, 5, COLOR_RED, COLOR_BLACK)
 GENIE_COLOUR (genie_curses_white, 6, COLOR_WHITE, COLOR_BLACK)
 GENIE_COLOUR (genie_curses_yellow, 7, COLOR_YELLOW, COLOR_BLACK)
 
-/*!
-\brief PROC curses delchar = (CHAR) BOOL
-\param p position in tree
+/**
+@brief PROC curses delchar = (CHAR) BOOL
+@param p Node in syntax tree.
 **/
 
 void genie_curses_del_char (NODE_T * p) {
@@ -18145,9 +17833,9 @@ void genie_curses_del_char (NODE_T * p) {
     (BOOL_T) (v == 8 || v == 127 || v == KEY_BACKSPACE), A68_BOOL);
   }
 
-/*!
-\brief PROC curses putchar = (CHAR) VOID
-\param p position in tree
+/**
+@brief PROC curses putchar = (CHAR) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_curses_putchar (NODE_T * p)
@@ -18166,9 +17854,9 @@ void genie_curses_putchar (NODE_T * p)
 */
 }
 
-/*!
-\brief PROC curses move = (INT, INT) VOID
-\param p position in tree
+/**
+@brief PROC curses move = (INT, INT) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_curses_move (NODE_T * p)
@@ -18193,10 +17881,11 @@ void genie_curses_move (NODE_T * p)
 #endif /* HAVE_CURSES */
 
 #if defined HAVE_REGEX_H
-/*!
-\brief return code for regex interface
-\param rc return code from regex routine
-\return 0: match, 1: no match, 2: no core, 3: other error
+/**
+@brief Return code for regex interface.
+@param p Position in syntax tree.
+@param rc Return code from regex routine.
+@return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
 void push_grep_rc (NODE_T * p, int rc)
@@ -18225,10 +17914,10 @@ void push_grep_rc (NODE_T * p, int rc)
   }
 }
 
-/*!
-\brief PROC grep in string = (STRING, STRING, REF INT, REF INT) INT
-\param p position in tree
-\return 0: match, 1: no match, 2: no core, 3: other error
+/**
+@brief PROC grep in string = (STRING, STRING, REF INT, REF INT) INT
+@param p Node in syntax tree.
+@return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
 void genie_grep_in_string (NODE_T * p)
@@ -18260,7 +17949,7 @@ void genie_grep_in_string (NODE_T * p)
   if (nmatch == 0) {
     nmatch = 1;
   }
-  matches = malloc ((size_t) (nmatch * ALIGNED_SIZE_OF (regmatch_t)));
+  matches = malloc ((size_t) (nmatch * SIZE_AL (regmatch_t)));
   if (nmatch > 0 && matches == NULL) {
     rc = 2;
     PUSH_PRIMITIVE (p, rc, A68_INT);
@@ -18297,10 +17986,10 @@ void genie_grep_in_string (NODE_T * p)
   push_grep_rc (p, 0);
 }
 
-/*!
-\brief PROC grep in substring = (STRING, STRING, REF INT, REF INT) INT
-\param p position in tree
-\return 0: match, 1: no match, 2: no core, 3: other error
+/**
+@brief PROC grep in substring = (STRING, STRING, REF INT, REF INT) INT
+@param p Node in syntax tree.
+@return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
 void genie_grep_in_substring (NODE_T * p)
@@ -18332,7 +18021,7 @@ void genie_grep_in_substring (NODE_T * p)
   if (nmatch == 0) {
     nmatch = 1;
   }
-  matches = malloc ((size_t) (nmatch * ALIGNED_SIZE_OF (regmatch_t)));
+  matches = malloc ((size_t) (nmatch * SIZE_AL (regmatch_t)));
   if (nmatch > 0 && matches == NULL) {
     rc = 2;
     PUSH_PRIMITIVE (p, rc, A68_INT);
@@ -18369,10 +18058,10 @@ void genie_grep_in_substring (NODE_T * p)
   push_grep_rc (p, 0);
 }
 
-/*!
-\brief PROC sub in string = (STRING, STRING, REF STRING) INT
-\param p position in tree
-\return 0: match, 1: no match, 2: no core, 3: other error
+/**
+@brief PROC sub in string = (STRING, STRING, REF STRING) INT
+@param p Node in syntax tree.
+@return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
 void genie_sub_in_string (NODE_T * p)
@@ -18404,7 +18093,7 @@ void genie_sub_in_string (NODE_T * p)
   if (nmatch == 0) {
     nmatch = 1;
   }
-  matches = malloc ((size_t) (nmatch * ALIGNED_SIZE_OF (regmatch_t)));
+  matches = malloc ((size_t) (nmatch * SIZE_AL (regmatch_t)));
   if (nmatch > 0 && matches == NULL) {
     PUSH_PRIMITIVE (p, rc, A68_INT);
     regfree (&compiled);

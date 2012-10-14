@@ -1,0 +1,61 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#appl17#
+BEGIN # All-parser, Dick Grune, 20-11-74.
+              The following is an example of a technique that will give a
+              parser for any non-left-recursive context-free grammar.
+              The parser gives all possible parsings.
+            #
+      MODE ACT = VOID,
+            TAIL = PROC ACT,
+            RULE = PROC (TAIL) ACT;
+      
+      #         R u l e                            G r a m m a r #
+      RULE t = (TAIL q) ACT:
+      s (ACT: b (q));
+      
+      # t: s, b.     # RULE s = (TAIL q) ACT:
+      # s:           #
+      (a (ACT:
+          s (ACT: s (q)));
+       #    a, s, s;  # a (q)
+      #    a.        #
+      );
+      
+      RULE a = (TAIL q) ACT:
+      (n +:= 1;
+       IF inp[n] = "a"
+       THEN q
+       FI;
+       # a: "a".      # n -:= 1);
+      
+      RULE b = (TAIL q) ACT:
+      (n +:= 1;
+       IF inp[n] = "b"
+       THEN q
+       FI;
+       # b: "b".      # n -:= 1);
+      
+      STRING inp,
+      INT n := 0;
+      
+      INT max = 10;
+      
+      FOR i FROM 0 TO max 
+      DO inp := i * "a" + "b";
+         INT count := 0;
+         
+         t (ACT: count +:= 1);
+         print (("The sentence """, inp, """ has", count, " parsings", newline))
+      OD
+END

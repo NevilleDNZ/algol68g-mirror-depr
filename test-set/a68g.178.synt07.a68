@@ -1,0 +1,88 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#synt07#
+  # Please feel free to shuffle #
+-one);print((valueOFa,valueOFbs//t,dp*dq*r)END;,m;(k<l;r//:=t;(p
+/-q)|BEGIN INTr=nOF<0|-i/-j|:j=(RATp,q)<=nOFqCASE FORMu=
+leftoperandOFet,v=rightoperandOFet;FORMvalueof=(FORMe)REAL:
+CASEeIN(REF CONSTec):valueOFec,(REF VARev):valueOFev,(
+REF OP-:==(REF RATp,RATq)REF RAT:p:=p-q,OP*:==(REF RATp
+,RAT CONSTc;valueOFc:=valueOFec-1;c)*udash)ESAC,(REF CALLef
+):ri,=0|error|INTr=i%j;q)REF RAT:p:=p*q,OP/:==(REF RATp,RAT
+q)REF RAT:p:=p/q;OP=p%nOFq,s,u/v,exp(v*ln(u))ESAC,(REF CALL
+ef):BEGIN REF FUNCTIONf=functionnameOFef;valueOFboundvarOFf=(
+RATp,q)BOOL:nINTj)REF INT:iOVERAB BOOL:nOFp*dOFq;(s//t,
+dp*dq*r)END;OP-=(RATp,q)RAT:BEGIN INTnp=nOFp,nq=nOFq%d
+OFp;((nOFp//r)*(nOFq//s),(dOFp//s:=1;valueOFx:=1;f:=a+x/(b+x)
+;gudash=derivativeof(u,x),vdash=derivativeof(v,x);operatorOFetIN
+udash+vdash,udash-vdash,u*vdash*dOFp;OP*=(RATp,q)RAT:BEGIN
+INTr=nOFp%dOFq,s=nOFq:=dOFq;INTr:=dp%=(RATr)REAL:REAL
+(nOFr)/REAL(dOFr)b:=("b",SKIP),x:=("x",SKIP);valueOFa:=1;
+valueOFb|m:=l;l:=k;k:=m);n:m:=kMODl;(m=0|l|k:=l;l;OP%=(INTi,j)
+INT:ABS(i=0|j|:j=OFp=nOFqANDdOFp=dOFq;OP/==(RATp,q)
+BOOL:nOFp/=nOFqORdOFp,valueOFx,valueof(derivativeof(g,x))))
+END BEGIN MODE RAT=STRUCT(INTn,d);PRIO//=7,p,nq=nOFq;INT
+dp:=dOFp,dq:=dOFq;INTr:=dp%dq;dp;INTdp:=dOFp,dqBEGIN REF
+FUNCTIONf=CALL:=(fdash,g))*derivativeof(g,x)END ESAC;PROC:=
+valueof(parameterOFef);valuep//s)*(nOF;OP+=(RATp,q)RAT:
+BEGIN INTnp=nOF 0|i|:i=1ORj=1|1|INTk:=i,l:=j):v*u**(HEAP REF
+VARy=boundvarOFf;HEAP FUNCTIONfdash:=(y,derivativeof(bodyOFf,y
+));(HEAP:=m;n));OP/=(INTi,j)RAT:(j);OP+:==(REF RATp,RATq
+)REF RAT:p:=p+q,//:==1;OP//=(INTi,j)INT:iOVERj;OP//:==(
+REF INTof(bodyOFf)END ESAC;HEAP FORMf,g;HEAP VARa:=("a",
+SKIP),%:(q=0|error|:q//r))END/=dOFq;OP<=(RATp,q)BOOL:nOFp
+*dOFq<nOFq*dOFp;OP<=+udash*v,(udash-et*vdash)/v,(v|(REF
+CONSTec(i//r,j:=(f+one)/(fq<0|-(=dOFp%dOFq;((nOFp//r)*(dOFq//
+s),(dOFj;PRIO%=3OFetINu+v,u-v,u*vINTs=np*dq+dp*nq;INTt=s%r;
+r//:=t//r));OP VAL(REF CONST):zero,(REF VARev):(ev:=:x|one|
+zero),(REF TRIPLEet):dq;dp//:=r;dq//:=r;INTs=np*dq-dp*nq;INTt=s)
+*(dOFq//r))END;OP/=(RATp,q)RAT//:=r;dq//:=r;TRIPLEet):
+CASE REALu=valueof(leftoperandOFet),v=valueof(rightoperandOFet);
+operatorfunctionnameOFef,FORMg=parameterOFef;
+//:==(REF INTi,INTj)REF INT:iOVERABj;PRIO%=3;OP%=(INTi,
+j)INT:ABS(i=0|j|:j=0|i|:i=1ORj=1|1|INTk:=i,l:=j,m;(k<l|mt,dp*dq
+*r)END;OP-=(RATp,q)RAT:BEGIN INTnp=nOFp,nq=nOFq;INTdp
+:=dOFp,dq:=dOFq;INTr:=dp%dq;dp//:=r;dq//:=r;INTsRAT:p:=p*q,
+OP/:==(REF RATp,RATq)REF RAT:p:=p/q;OP==(RATp,q)BOOL:n
+OFp=nOFqANDdOFp=dOFq;OP/==(RATp,q)BOOL:nOFp/=nOFq
+ORdOFp/=dOFq;OP<=(RATp,q)BOOL:nOFp*dOFq<nOFq*dOFp;
+OP<==(:=l;l:=k;k:=m);n:m:=kMODl;(m=0|l|k:=l;l:=m;n));OP/=(INTi,
+j)RAT:(j<0|-i/-j|:j=0|error|INTr=i%j;(i//r,j//r));OP VAL=(RATr
+)REAL:REAL(nOFr)/REAL(dOFr);OP+=(RATp,q)RAT:OFet,v=
+rightoperandOFet;FORMudash=derivativeof(u,x),vdash=derivativeof(v,x
+);operatorOFetINudash+vdash,udash-vdash,u*vdash+udash*v,(udash-et*
+vdash)/v,(v|(REF CONSTec):v*u**(HEAP CONSTc;valueOFc:=valueOF
+ec-1;c)*udash)ESAC,(REF CALLef):BEGIN REFnOFp//r)*(nOFq//s)
+,(dOFp//s)*(dOFq//r))END;OP/=(RATp,q)RAT:(q=0|error|:q<0|-(
+p/-q)|BEGIN INTr=nOFp%nOFq,BEGIN INTnp=nOFp,nq=nOFq;INT
+dp:=dOFp,dq:=dOFq;INTr:=dp%dq;dp//:=r;dq//:=r;INTs=np*dq+dp*nq;
+INTt=s%r;r//:=t;(s//RATp,q)BOOL:nOFp*dOFq<=nOFq*dOFp;s=d
+OFp%dOFq;((nOFp//r)*(dOFq//s),(dOFp//s)*(nOFq//r))END);
+OP+:==(REF RATp,RATq)REF RAT:p:=p+q,OP-:==(REF RATp,
+RATq)REF RAT:p:=p-q,OP*:==(REF RATp,RATq)REF FUNCTIONf=
+functionnameOFef,FORMg=parameterOFef;REF VARy=boundvarOFf;
+HEAP FUNCTIONfdash:=(y,derivativeof(bodyOFf,y));(HEAP CALL:=(
+fdash,g))*derivativeof(g,x)END ESAC;PROCvalueof=(FORMe)REAL:
+CASEeIN(REF CONSTec):valueOFec,(REF VARev):valueOFev,(
+REF TRIPLEet):CASE REALu=valueof(leftoperandOFet),v=valueof(
+rightoperandOFet);operatorOFetINu+v,u-v,u*v,u/v,exp(v*ln(u))
+ESAC,(REF CALLef):BEGIN REF FUNCTIONf=functionnameOFef;value
+OFboundvarOFf:=valueof(parameterOFef);valueof(bodyOF(REF
+CONST):zero,(REF VARev):(ev:=:x|one|zero),(REF TRIPLEet):CASE
+FORMu=leftoperandf)END ESAC;HEAP FORMf,g;HEAP VARa:=("a",
+SKIP),b:=("b",SKIP),x:=("x",SKIP);valueOFa:=1;valueOFb:=1;
+valueOFx:=1;f:=a+x/(b+x);g:=(f+one)/(f-one);print((valueOFa,value
+OFb,valueOFx,valueof(derivativeof(g,x))))END BEGIN MODE RAT=
+STRUCT(INTn,d);PRIO//=7,//:==1;OP//=(INTi,j)INT:iOVERj;
+OP=np*dq-dp*nq;INTt=s%r;r//:=t;(s//t,dp*dq*r)END;OP*=(RATp,q)
+RAT:BEGIN INTr=nOFp%dOFq,s=nOFq%dOFp;((

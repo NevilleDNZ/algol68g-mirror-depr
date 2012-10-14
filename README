@@ -12,6 +12,48 @@ using it or for whether it serves any particular purpose or works at all. See
 the GNU General Public License for more details. The GNU General Public License
 does not permit this software to be redistributed in proprietary programs.
 
+
+THE ALGOL 68 GENIE PROJECT
+
+The development of Algol played an important role in establishing computer 
+science as an academic discipline. The Algol 68 Genie project preserves and 
+promotes Algol 68 out of educational as well as scientific-historical interest,
+by making available a recent checkout compiler-interpreter written from scratch
+by Marcel van der Veer.
+
+Algol 68 Genie is a fast compiler-interpreter which ranks among the most
+complete implementations of the language; it supports for instance 
+
+* partial parametrisation,
+* parallel processing,  
+* formatted transput and a
+* refinement preprocessor.
+
+A detailed description of Algol 68 is in the book 
+
+        Learning Algol 68 Genie
+
+which contains an informal introduction to the language, a manual for 
+Algol 68 Genie, and the Revised Report on Algol 68.
+
+Algol 68 is a secure, expression-oriented programming language with which you 
+elegantly code algorithms without having to bother too much about irrelevant 
+technical details and limitations inherent to many other languages.
+
+Algol 68 Genie offers for example:
+
+* many runtime checks facilitating debugging and improving the 
+  reliability of your programs,
+* native support for arbitrary precision arithmetic including 
+  complex numbers, 
+* syntactic constructions to support linear algebra,
+* a gdb-style debugger and a pretty-printer to 
+  beautify source code,
+* optional linkage to GNU plotutils, the GNU scientific library or 
+  PostgreSQL, 
+* extensions as UNIX pipes, regular expression matching, and 
+  web page content fetching.
+
 Author of Algol68G is Marcel van der Veer <algol68g@xs4all.nl>.
 Web pages for Algol68G are at <http://jmvdveer.home.xs4all.nl/>.
 Documentation is available from the web pages for Algol68G.
@@ -23,7 +65,6 @@ INSTALLATION
 
 Unpack the distribution and start command shell cmd.exe. 
 From this shell, enter algol68g-VERSION's directory and start a68g.exe. 
-
 
 2) LINUX, UNIX, BSD, MACOS X
 
@@ -38,3 +79,30 @@ make
 make check
 [su]
 make install
+
+
+TEST SET
+
+The command 'make check' executes programs from the 'test-set' directory
+which contains programs from the 
+
+	Revised Mathematisch Centrum Algol 68 Test Set. 
+
+These programs are distributed with Algol 68 Genie with kind permission of
+the author of this test set, Dick Grune.
+
+Some programs have minor modifications to make them run as batch jobs.
+
+Note that circa one-third of the programs in this test set will fail; 
+most due to intentional errors and a few due to differences between 
+Algol 68 Genie and revised Algol 68. 
+
+This test set is available from:
+
+        www.dickgrune.com/CS/Algol68
+
+or from the Vrije Universiteit Amsterdam:
+
+        ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+The complete test set for Algol 68 Genie comprises almost 1600 programs.

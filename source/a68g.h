@@ -1,11 +1,13 @@
-/*!
-\file algol68g.h
-\brief general definitions for Algol 68 Genie
-**/
+/**
+@file a68g.h
+@author J. Marcel van der Veer
+@brief General definitions for Algol 68 Genie.
+@section Copyright
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
+Copyright 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,7 +20,15 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+
+@section Description
+
+Top level include file.
+**/
+
+/**
+@mainpage Introduction to Algol 68 Genie
+**/
 
 #if ! defined A68G_ALGOL68G_H
 #define A68G_ALGOL68G_H
@@ -52,12 +62,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #if (defined HAVE_LINUX || defined HAVE_MAC_OS_X || defined HAVE_FREEBSD || defined HAVE_NETBSD)
 #define HAVE_HTTP
 #endif
-#endif
-
-/* Do we have an editor? */
-
-#if (defined HAVE_CURSES && defined HAVE_REGEX_H)
-#define HAVE_EDITOR
 #endif
 
 /************/
@@ -403,6 +407,21 @@ extern int a68g_snprintf (char *, size_t, char *, ...);
 #define TAB_CHAR '\t'
 #define TRANSPUT_BUFFER_SIZE BUFFER_SIZE
 #define WANT_PATTERN A68_TRUE
+
+/* Error codes */
+
+#define A68_NO_DIAGNOSTICS ((STATUS_MASK) 0x0)
+#define A68_ERROR ((STATUS_MASK) 0x1)
+#define A68_SYNTAX_ERROR ((STATUS_MASK) 0x2)
+#define A68_MATH_ERROR ((STATUS_MASK) 0x4)
+#define A68_WARNING ((STATUS_MASK) 0x8)
+#define A68_RUNTIME_ERROR ((STATUS_MASK) 0x10)
+#define A68_SUPPRESS_SEVERITY ((STATUS_MASK) 0x20)
+#define A68_ALL_DIAGNOSTICS ((STATUS_MASK) 0x40)
+#define A68_RERUN ((STATUS_MASK) 0x80)
+#define A68_FORCE_DIAGNOSTICS ((STATUS_MASK) 0x100)
+#define A68_FORCE_QUIT ((STATUS_MASK) 0x200)
+#define A68_NO_SYNTHESIS ((STATUS_MASK) 0x400)
 
 /* Various forms of NIL */
 
@@ -864,13 +883,6 @@ enum
 };
 
 enum 
-{
-  A68_NO_DIAGNOSTICS = 0, A68_ERROR, A68_SYNTAX_ERROR, A68_MATH_ERROR,
-  A68_WARNING, A68_RUNTIME_ERROR, A68_SUPPRESS_SEVERITY, A68_ALL_DIAGNOSTICS,
-  A68_RERUN, A68_FORCE_DIAGNOSTICS = 128, A68_FORCE_QUIT = 256
-};
-
-enum 
 { 
   NO_DEFLEXING = 1, SAFE_DEFLEXING, ALIAS_DEFLEXING, FORCE_DEFLEXING, 
   SKIP_DEFLEXING 
@@ -1005,7 +1017,7 @@ struct MODES_T
 struct OPTIONS_T
 {
   OPTION_LIST_T *list;
-  BOOL_T backtrace, brackets, check_only, clock, cross_reference, debug, compile, keep, fold, local, moid_listing, object_listing, optimise, portcheck, pragmat_sema, pretty, reductions, regression_test, run, rerun, run_script, source_listing, standard_prelude_listing, statistics_listing, strict, stropping, trace, tree_listing, unused, verbose, version, edit, no_warnings, quiet; 
+  BOOL_T backtrace, brackets, check_only, clock, cross_reference, debug, compile, keep, fold, local, moid_listing, object_listing, optimise, portcheck, pragmat_sema, pretty, reductions, regression_test, run, rerun, run_script, source_listing, standard_prelude_listing, statistics_listing, strict, stropping, trace, tree_listing, unused, verbose, version, no_warnings, quiet; 
   int time_limit, opt_level, indent;
   char *target; 
   STATUS_MASK nodemask;
@@ -1031,7 +1043,7 @@ struct MODULE_T
 
 struct MOID_T
 {
-  int attribute, dim, number, short_id, size;
+  int attribute, dim, number, short_id, size, digits, sizec, digitsc;
   BOOL_T has_rows, use, portable, derivate;
   NODE_T *node;
   PACK_T *pack;
@@ -1151,6 +1163,15 @@ struct TOKEN_T
   TOKEN_T *less, *more;
 };
 
+/**
+@struct A68_HANDLE
+@brief Handle for REF into the HEAP.
+@details
+A REF into the HEAP points at a HANDLE.
+The HANDLE points at the actual object in the HEAP.
+Garbage collection modifies HANDLEs, but not REFs.
+**/
+
 struct A68_HANDLE
 {
   STATUS_MASK status;
@@ -1160,12 +1181,38 @@ struct A68_HANDLE
   A68_HANDLE *next, *previous;
 };
 
+/**
+@struct A68_REF
+@brief Fat A68 pointer.
+**/
+
 struct A68_REF
 {
   STATUS_MASK status;
-  ADDR_T offset, scope;
+  ADDR_T offset;
+  ADDR_T scope; /**< Dynamic scope. **/
   A68_HANDLE *handle; 
 };
+
+/**
+@struct A68_ARRAY
+@brief A68 array descriptor. 
+@details
+A row is an A68_REF to an A68_ARRAY.
+
+An A68_ARRAY is followed by one A68_TUPLE per dimension.
+
+@verbatim
+A68_REF row -> A68_ARRAY ----+   ARRAY: Description of row, ref to elements
+               A68_TUPLE 1   |   TUPLE: Bounds, one for every dimension
+               ...           |
+               A68_TUPLE dim |
+               ...           |
+               ...           |
+               Element 1 <---+   Element: Sequential row elements, in the heap
+               ...                        Not always contiguous - trims!
+@endverbatim
+**/
 
 struct A68_ARRAY
 {
@@ -1217,11 +1264,18 @@ struct A68_INT
   int value;
 };
 
+/**
+@struct A68_FORMAT
+@brief A68 format descriptor.
+@details
+A format behaves very much like a procedure.
+**/
+
 struct A68_FORMAT
 {
   STATUS_MASK status;
-  NODE_T *body;
-  ADDR_T environ;
+  NODE_T *body; /**< Entry point in syntax tree. **/
+  ADDR_T environ; /**< Frame pointer to environ. **/
 };
 
 struct A68_LONG_BYTES
@@ -1230,13 +1284,19 @@ struct A68_LONG_BYTES
   char value[LONG_BYTES_WIDTH + 1];
 };
 
+/**
+@struct A68_PROCEDURE
+@brief A68 procedure descriptor.
+**/
+
 struct A68_PROCEDURE
 {
   STATUS_MASK status;
   union {NODE_T *node; GPROC *procedure;} body;
-  A68_HANDLE *locale;
+  /**< Entry point in syntax tree or precompiled C procedure. **/
+  A68_HANDLE *locale; /**< Locale for partial parametrisation. **/
   MOID_T *type;
-  ADDR_T environ;
+  ADDR_T environ; /**< Frame pointer to environ. **/
 };
 
 struct A68_REAL
@@ -1246,6 +1306,11 @@ struct A68_REAL
 };
 
 typedef A68_REAL A68_COMPLEX[2];
+
+/**
+@struct A68_TUPLE
+@brief A tuple containing bounds etcetera for one dimension.
+**/
 
 struct A68_TUPLE
 {
@@ -1387,8 +1452,9 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 /* Miscellaneous macros */
 
-#define A68_REF_SIZE (ALIGNED_SIZE_OF (A68_REF))
-#define A68_UNION_SIZE (ALIGNED_SIZE_OF (A68_UNION))
+#define SIZE_AL(p) ((int) A68_ALIGN (sizeof (p)))
+#define A68_REF_SIZE (SIZE_AL (A68_REF))
+#define A68_UNION_SIZE (SIZE_AL (A68_UNION))
 
 #define A68_ALIGN(s) ((int) ((s) % A68_ALIGNMENT) == 0 ? (s) : ((s) - (s) % A68_ALIGNMENT + A68_ALIGNMENT))
 #define A68_ALIGNMENT ((int) (sizeof (A68_ALIGN_T)))
@@ -1396,7 +1462,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define A68_SOUND_BYTES(s) ((int) (BITS_PER_SAMPLE (s)) / 8 + (int) (BITS_PER_SAMPLE (s) % 8 == 0 ? 0 : 1))
 #define A68_SOUND_DATA_SIZE(s) ((int) (NUM_SAMPLES (s)) * (int) (NUM_CHANNELS (s)) * (int) (A68_SOUND_BYTES (s)))
 #define ABS(n) ((n) >= 0 ? (n) : -(n))
-#define ALIGNED_SIZE_OF(p) ((int) A68_ALIGN (sizeof (p)))
 #define BACKWARD(p) (p = PREVIOUS (p))
 #define BITS_WIDTH ((int) (1 + ceil (log ((double) A68_MAX_INT) / log((double) 2))))
 #define DEFLEX(p) (DEFLEXED (p) != NO_MOID ? DEFLEXED(p) : (p))
@@ -1427,7 +1492,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define ACTION(p) ((p)->action)
 #define ACTIVE(p) ((p)->active)
 #define ADDR(p) ((p)->addr)
-#define ALTS(p) ((p)->alts)
 #define ANNOTATION(p) ((p)->annotation)
 #define ANONYMOUS(p) ((p)->anonymous)
 #define APPLICATIONS(p) ((p)->applications)
@@ -1440,12 +1504,9 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define BIN(p) ((p)->bin)
 #define BITS_PER_SAMPLE(p) ((p)->bits_per_sample)
 #define BLUE(p) ((p)->blue)
-#define BL_END(p) ((p)->bl_end)
-#define BL_START(p) ((p)->bl_start)
 #define BODY(p) ((p)->body)
 #define BSTATE(p) ((p)->bstate)
 #define BYTES(p) ((p)->bytes)
-#define C(p) ((p)->c)
 #define CAST(p) ((p)->cast)
 #define CAT(p) ((p)->cat)
 #define CHANNEL(p) ((p)->channel)
@@ -1455,8 +1516,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define CMD_ROW(p) ((p)->cmd_row)
 #define CODE(p) ((p)->code)
 #define CODEX(p) ((p)->codex)
-#define COL(p) ((p)->col)
-#define COL0(p) ((p)->col0)
 #define COLLECT(p) ((p)->collect)
 #define COMPILED(p) ((p)->compiled)
 #define COMPILE_NAME(p) ((p)->compile_name)
@@ -1466,8 +1525,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define CONSTANT(p) ((p)->constant)
 #define COUNT(p) ((p)->count)
 #define CROSS_REFERENCE_SAFE(p) ((p)->cross_reference_safe)
-#define CURR(p) ((p)->curr)
-#define CURS(p) ((p)->curs)
 #define CUR_PTR(p) ((p)->cur_ptr)
 #define DATA(p) ((p)->data)
 #define DATA_SIZE(p) ((p)->data_size)
@@ -1480,17 +1537,16 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define DEVICE_MADE(p) ((p)->device_made)
 #define DEVICE_OPENED(p) ((p)->device_opened)
 #define DIAGNOSTICS(p) ((p)->diagnostics)
+#define DIGITS(p) ((p)->digits)
+#define DIGITSC(p) ((p)->digitsc)
 #define DIM(p) ((p)->dim)
 #define DISPLAY(p) ((p)->display)
-#define DL(p) ((p)->dl)
-#define DL0(p) ((p)->dl0)
 #define DRAW(p) ((p)->draw)
 #define DRAW_MOOD(p) ((p)->draw_mood)
 #define DUMP(p) ((p)->dump)
 #define DYNAMIC_LINK(p) ((p)->dynamic_link)
 #define DYNAMIC_SCOPE(p) ((p)->dynamic_scope)
 #define D_NAME(p) ((p)->d_name)
-#define EDIT_EXIT_LABEL(p) ((p)->edit_exit_label)
 #define ELEM_SIZE(p) ((p)->elem_size)
 #define END(p) ((p)->end)
 #define END_OF_FILE(p) ((p)->end_of_file)
@@ -1609,7 +1665,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define MODE(p) (a68_modes.p)
 #define MODIFIED(p) ((p)->modified)
 #define MOID(p) ((p)->type)
-#define MOID_SIZE(p) A68_ALIGN ((p)->size)
 #define MORE(p) ((p)->more)
 #define MSGS(p) ((p)->msgs)
 #define MULTIPLE(p) ((p)->multiple_mode)
@@ -1654,7 +1709,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define OPTION_COMPILE(p) (OPTIONS (p).compile)
 #define OPTION_CROSS_REFERENCE(p) (OPTIONS (p).cross_reference)
 #define OPTION_DEBUG(p) (OPTIONS (p).debug)
-#define OPTION_EDIT(p) (OPTIONS (p).edit)
 #define OPTION_FOLD(p) (OPTIONS (p).fold)
 #define OPTION_INDENT(p) (OPTIONS (p).indent)
 #define OPTION_KEEP(p) (OPTIONS (p).keep)
@@ -1740,8 +1794,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define RLIM_MAX(p) ((p)->rlim_max)
 #define RM_EO(p) ((p)->rm_eo)
 #define RM_SO(p) ((p)->rm_so)
-#define ROW(p) ((p)->row)
-#define ROW0(p) ((p)->row0)
 #define ROWED(p) ((p)->rowed)
 #define S(p) ((p)->s)
 #define SAMPLE_RATE(p) ((p)->sample_rate)
@@ -1765,6 +1817,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define SIZE(p) ((p)->size)
 #define SIZE1(p) ((p)->size1)
 #define SIZE2(p) ((p)->size2)
+#define SIZEC(p) ((p)->sizec)
 #define SLICE(p) ((p)->slice)
 #define SLICE_OFFSET(p) ((p)->slice_offset)
 #define SO(p) ((p)->so)
@@ -1802,9 +1855,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define TABS(p) ((p)->tabs)
 #define TAG_LEX_LEVEL(p) (LEVEL (TAG_TABLE (p)))
 #define TAG_TABLE(p) ((p)->symbol_table)
-#define TARG(p) ((p)->targ)
-#define TARG1(p) ((p)->targ1)
-#define TARG2(p) ((p)->targ2)
 #define TAX(p) ((p)->tag)
 #define TERM(p) ((p)->term)
 #define TERMINATOR(p) ((p)->terminator)
@@ -1837,7 +1887,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define TV_USEC(p) ((p)->tv_usec)
 #define UNDO(p) ((p)->undo)
 #define UNDO_LINE(p) ((p)->undo_line)
-#define UNION_OFFSET (ALIGNED_SIZE_OF (A68_UNION))
+#define UNION_OFFSET (SIZE_AL (A68_UNION))
 #define UNIT(p) ((p)->unit)
 #define UPB(p) ((p)->upper_bound)
 #define UPPER_BOUND(p) ((p)->upper_bound)
@@ -1896,24 +1946,24 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 #define GET_DESCRIPTOR(a, t, p)\
   a = (A68_ARRAY *) ARRAY_ADDRESS (p);\
-  t = (A68_TUPLE *) & (((BYTE_T *) (a)) [ALIGNED_SIZE_OF (A68_ARRAY)]);
+  t = (A68_TUPLE *) & (((BYTE_T *) (a)) [SIZE_AL (A68_ARRAY)]);
 
 #define GET_DESCRIPTOR2(a, t1, t2, p)\
   a = (A68_ARRAY *) ARRAY_ADDRESS (p);\
-  t1 = (A68_TUPLE *) & (((BYTE_T *) (a)) [ALIGNED_SIZE_OF (A68_ARRAY)]);\
-  t2 = (A68_TUPLE *) & (((BYTE_T *) (a)) [ALIGNED_SIZE_OF (A68_ARRAY) + sizeof (A68_TUPLE)]);
+  t1 = (A68_TUPLE *) & (((BYTE_T *) (a)) [SIZE_AL (A68_ARRAY)]);\
+  t2 = (A68_TUPLE *) & (((BYTE_T *) (a)) [SIZE_AL (A68_ARRAY) + sizeof (A68_TUPLE)]);
 
 #define PUT_DESCRIPTOR(a, t1, p) {\
   BYTE_T *a_p = ARRAY_ADDRESS (p);\
   *(A68_ARRAY *) a_p = (a);\
-  *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [ALIGNED_SIZE_OF (A68_ARRAY)]) = (t1);\
+  *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [SIZE_AL (A68_ARRAY)]) = (t1);\
   }
 
 #define PUT_DESCRIPTOR2(a, t1, t2, p) {\
   BYTE_T *a_p = ARRAY_ADDRESS (p);\
   *(A68_ARRAY *) a_p = (a);\
-  *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [ALIGNED_SIZE_OF (A68_ARRAY)]) = (t1);\
-  *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [ALIGNED_SIZE_OF (A68_ARRAY) + sizeof (A68_TUPLE)]) = (t2);\
+  *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [SIZE_AL (A68_ARRAY)]) = (t1);\
+  *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [SIZE_AL (A68_ARRAY) + sizeof (A68_TUPLE)]) = (t2);\
   }
 
 #define ROW_SIZE(t) ((UPB (t) >= LWB (t)) ? (UPB (t) - LWB (t) + 1) : 0)
@@ -2179,6 +2229,11 @@ returns: static link for stack frame at 'new_lex_lvl'.
   }
 #endif
 
+/**
+@def OPEN_PROC_FRAME
+@brief Open a stack frame for a procedure.
+**/
+
 #if defined HAVE_PARALLEL_CLAUSE
 #define OPEN_PROC_FRAME(p, environ) {\
   ADDR_T dynamic_link = frame_pointer, static_link;\
@@ -2268,7 +2323,7 @@ qualifier to a pointer. This is safe here.
 #define STACK_DNS(p, m, limit)\
   if (p != NO_NODE && GINFO (p) != NO_GINFO) {\
     CHECK_DNS ((NODE_T *)(void *)(p), (m),\
-               (STACK_OFFSET (-MOID_SIZE (m))), (limit));\
+               (STACK_OFFSET (-SIZE (m))), (limit));\
   }
 
 /***********************************/
@@ -2298,38 +2353,38 @@ qualifier to a pointer. This is safe here.
   }
 
 #define POP_ADDRESS(p, addr, type) {\
-  DECREMENT_STACK_POINTER((p), (int) ALIGNED_SIZE_OF (type));\
+  DECREMENT_STACK_POINTER((p), (int) SIZE_AL (type));\
   (addr) = (type *) STACK_TOP;\
   }
 
 #define POP_OPERAND_ADDRESS(p, i, type) {\
   (void) (p);\
-  (i) = (type *) (STACK_OFFSET (-ALIGNED_SIZE_OF (type)));\
+  (i) = (type *) (STACK_OFFSET (-SIZE_AL (type)));\
   }
 
 #define POP_OPERAND_ADDRESSES(p, i, j, type) {\
-  DECREMENT_STACK_POINTER ((p), (int) ALIGNED_SIZE_OF (type));\
+  DECREMENT_STACK_POINTER ((p), (int) SIZE_AL (type));\
   (j) = (type *) STACK_TOP;\
-  (i) = (type *) (STACK_OFFSET (-ALIGNED_SIZE_OF (type)));\
+  (i) = (type *) (STACK_OFFSET (-SIZE_AL (type)));\
   }
 
 #define POP_3_OPERAND_ADDRESSES(p, i, j, k, type) {\
-  DECREMENT_STACK_POINTER ((p), (int) (2 * ALIGNED_SIZE_OF (type)));\
-  (k) = (type *) (STACK_OFFSET (ALIGNED_SIZE_OF (type)));\
+  DECREMENT_STACK_POINTER ((p), (int) (2 * SIZE_AL (type)));\
+  (k) = (type *) (STACK_OFFSET (SIZE_AL (type)));\
   (j) = (type *) STACK_TOP;\
-  (i) = (type *) (STACK_OFFSET (-ALIGNED_SIZE_OF (type)));\
+  (i) = (type *) (STACK_OFFSET (-SIZE_AL (type)));\
   }
 
 #define PUSH_PRIMITIVE(p, z, mode) {\
   mode *_x_ = (mode *) STACK_TOP;\
   STATUS (_x_) = INIT_MASK;\
   VALUE (_x_) = (z);\
-  INCREMENT_STACK_POINTER ((p), ALIGNED_SIZE_OF (mode));\
+  INCREMENT_STACK_POINTER ((p), SIZE_AL (mode));\
   }
 
 #define PUSH_PRIMAL(p, z, m) {\
   A68_##m *_x_ = (A68_##m *) STACK_TOP;\
-  int _size_ = ALIGNED_SIZE_OF (A68_##m);\
+  int _size_ = SIZE_AL (A68_##m);\
   STATUS (_x_) = INIT_MASK;\
   VALUE (_x_) = (z);\
   INCREMENT_STACK_POINTER ((p), _size_);\
@@ -2337,11 +2392,11 @@ qualifier to a pointer. This is safe here.
 
 #define PUSH_OBJECT(p, z, mode) {\
   *(mode *) STACK_TOP = (z);\
-  INCREMENT_STACK_POINTER (p, ALIGNED_SIZE_OF (mode));\
+  INCREMENT_STACK_POINTER (p, SIZE_AL (mode));\
   }
 
 #define POP_OBJECT(p, z, mode) {\
-  DECREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (mode));\
+  DECREMENT_STACK_POINTER((p), SIZE_AL (mode));\
   (*(z)) = *((mode *) STACK_TOP);\
   }
 
@@ -2359,14 +2414,14 @@ qualifier to a pointer. This is safe here.
   A68_BYTES *_z_ = (A68_BYTES *) STACK_TOP;\
   STATUS (_z_) = INIT_MASK;\
   strncpy (VALUE (_z_), k, BYTES_WIDTH);\
-  INCREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (A68_BYTES));\
+  INCREMENT_STACK_POINTER((p), SIZE_AL (A68_BYTES));\
   }
 
 #define PUSH_LONG_BYTES(p, k) {\
   A68_LONG_BYTES *_z_ = (A68_LONG_BYTES *) STACK_TOP;\
   STATUS (_z_) = INIT_MASK;\
   strncpy (VALUE (_z_), k, LONG_BYTES_WIDTH);\
-  INCREMENT_STACK_POINTER((p), ALIGNED_SIZE_OF (A68_LONG_BYTES));\
+  INCREMENT_STACK_POINTER((p), SIZE_AL (A68_LONG_BYTES));\
   }
 
 #define PUSH_REF(p, z) PUSH_OBJECT (p, z, A68_REF)
@@ -2380,7 +2435,7 @@ qualifier to a pointer. This is safe here.
   A68_UNION *_x_ = (A68_UNION *) STACK_TOP;\
   STATUS (_x_) = INIT_MASK;\
   VALUE (_x_) = (z);\
-  INCREMENT_STACK_POINTER ((p), ALIGNED_SIZE_OF (A68_UNION));\
+  INCREMENT_STACK_POINTER ((p), SIZE_AL (A68_UNION));\
   }
 
 
@@ -2404,7 +2459,7 @@ qualifier to a pointer. This is safe here.
 #define MP_STATUS(z) ((z)[0])
 #define MP_EXPONENT(z) ((z)[1])
 #define MP_DIGIT(z, n) ((z)[(n) + 1])
-#define SIZE_MP(digits) ((2 + digits) * ALIGNED_SIZE_OF (MP_T))
+#define SIZE_MP(digits) ((2 + digits) * SIZE_AL (MP_T))
 #define IS_ZERO_MP(z) (MP_DIGIT (z, 1) == (MP_T) 0)
 
 #define MOVE_MP(z, x, digits) {\
@@ -2853,8 +2908,7 @@ extern int get_transput_buffer_size (int);
 extern int get_unblocked_transput_buffer (NODE_T *);
 extern int grep_in_string (char *, char *, int *, int *);
 extern int heap_available (void);
-extern int iabs (int);
-extern int isign (int);
+extern int moid_digits (MOID_T *);
 extern int moid_size (MOID_T *);
 extern int store_file_entry (NODE_T *, FILE_T, char *, BOOL_T);
 extern int is_identifier_or_label_global (TABLE_T *, char *);
@@ -2872,7 +2926,6 @@ extern void a68g_ln_complex (A68_REAL *, A68_REAL *);
 extern void a68g_sin_complex (A68_REAL *, A68_REAL *);
 extern void a68g_sqrt_complex (A68_REAL *, A68_REAL *);
 extern void abend (char *, char *, char *, int);
-extern void acronym (char *, char *);
 extern void add_a_string_transput_buffer (NODE_T *, int, BYTE_T *);
 extern void add_char_transput_buffer (NODE_T *, int, char);
 extern void add_mode_to_pack (PACK_T **, MOID_T *, char *, NODE_T *);
@@ -2897,8 +2950,8 @@ extern void coercion_inserter (NODE_T *);
 extern void collect_taxes (NODE_T *);
 extern void compiler (FILE_T);
 extern void default_options (MODULE_T *);
-extern void diagnostic_line (int, LINE_T *, char *, char *, ...);
-extern void diagnostic_node (int, NODE_T *, char *, ...);
+extern void diagnostic_line (STATUS_MASK, LINE_T *, char *, char *, ...);
+extern void diagnostic_node (STATUS_MASK, NODE_T *, char *, ...);
 extern void diagnostics_to_terminal (LINE_T *, int);
 extern void discard_heap (void);
 extern void end_of_file_error (NODE_T * p, A68_REF ref_file);
@@ -2997,7 +3050,6 @@ extern void print_bytes (BYTE_T *, int);
 extern void print_internal_index (FILE_T, A68_TUPLE *, int);
 extern void print_item (NODE_T *, FILE_T, BYTE_T *, MOID_T *);
 extern void print_mode_flat (FILE_T, MOID_T *);
-extern void protect_from_gc (NODE_T *);
 extern void prune_echoes (OPTION_LIST_T *);
 extern void put_refinements (void);
 extern void read_env_options (void);
@@ -3049,7 +3101,6 @@ extern void write_source_listing (void);
 extern void write_tree_listing (void);
 
 #if defined HAVE_CURSES
-extern void edit (char *);
 #endif
 
 #if defined HAVE_PARALLEL_CLAUSE
@@ -3130,8 +3181,6 @@ extern char *long_sub_whole (NODE_T *, MP_T *, int, int);
 extern double mp_to_real (NODE_T *, MP_T *, int);
 extern int get_mp_bits_width (MOID_T *);
 extern int get_mp_bits_words (MOID_T *);
-extern int get_mp_digits (MOID_T *);
-extern int get_mp_size (MOID_T *);
 extern int int_to_mp_digits (int);
 extern int long_mp_digits (void);
 extern int longlong_mp_digits (void);
@@ -3148,6 +3197,7 @@ extern void trunc_mp (NODE_T *, MP_T *, MP_T *, int);
 
 /* Standard prelude RTS */
 
+extern GPROC genie_abend;
 extern GPROC genie_abs_bits;
 extern GPROC genie_abs_bool;
 extern GPROC genie_abs_char;
@@ -3501,6 +3551,22 @@ extern GPROC genie_print_longlong_int;
 extern GPROC genie_print_longlong_real;
 extern GPROC genie_print_real;
 extern GPROC genie_print_string;
+extern GPROC genie_put_bits;
+extern GPROC genie_put_bool;
+extern GPROC genie_put_char;
+extern GPROC genie_put_complex;
+extern GPROC genie_put_int;
+extern GPROC genie_put_string;
+extern GPROC genie_put_long_bits;
+extern GPROC genie_put_long_complex;
+extern GPROC genie_put_long_int;
+extern GPROC genie_put_long_real;
+extern GPROC genie_put_longlong_bits;
+extern GPROC genie_put_longlong_complex;
+extern GPROC genie_put_longlong_int;
+extern GPROC genie_put_longlong_real;
+extern GPROC genie_put_real;
+extern GPROC genie_print_string;
 extern GPROC genie_program_idf;
 extern GPROC genie_put_possible;
 extern GPROC genie_pwd;
@@ -3527,6 +3593,21 @@ extern GPROC genie_read_longlong_int;
 extern GPROC genie_read_longlong_real;
 extern GPROC genie_read_real;
 extern GPROC genie_read_string;
+extern GPROC genie_get_bits;
+extern GPROC genie_get_bool;
+extern GPROC genie_get_char;
+extern GPROC genie_get_complex;
+extern GPROC genie_get_int;
+extern GPROC genie_get_long_bits;
+extern GPROC genie_get_long_complex;
+extern GPROC genie_get_long_int;
+extern GPROC genie_get_long_real;
+extern GPROC genie_get_longlong_bits;
+extern GPROC genie_get_longlong_complex;
+extern GPROC genie_get_longlong_int;
+extern GPROC genie_get_longlong_real;
+extern GPROC genie_get_real;
+extern GPROC genie_get_string;
 extern GPROC genie_read_line;
 extern GPROC genie_real;
 extern GPROC genie_real_lengths;
@@ -3544,6 +3625,7 @@ extern GPROC genie_set_long_bits;
 extern GPROC genie_set_longlong_bits;
 extern GPROC genie_set_possible;
 extern GPROC genie_set_sound;
+extern GPROC genie_set_return_code;
 extern GPROC genie_shl_bits;
 extern GPROC genie_shl_long_mp;
 extern GPROC genie_shorten_bytes;

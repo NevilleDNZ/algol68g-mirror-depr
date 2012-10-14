@@ -1,0 +1,411 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#appl08# rat:
+# Dik Winter, 141075#
+BEGIN #Handling of rationals#
+      MODE RAT = STRUCT (INT n, d);
+      
+      #Preliminary routines#
+      OP GCD = (INT i, j) INT:
+         IF i = 0
+         THEN ABS j
+         ELIF j = 0
+         THEN ABS i
+         ELSE INT ii := ABS i, jj := ABS j, k;
+              
+              ll: k := ii - ii % jj * jj;
+              ii := jj;
+              jj := k;
+              IF jj = 0
+              THEN ii
+              ELSE ll
+              FI
+         FI;
+      
+      PRIO GCD = 8;
+      
+      OP / = (INT i, j) RAT:
+         BEGIN INT k = i GCD j;
+               
+               IF j >= 0
+               THEN (i % k, j % k)
+               ELSE (-i % k, -j % k)
+               FI
+         END;
+      
+      OP INV = (INT i) RAT:
+         IF i >= 0
+         THEN (1, i)
+         ELSE (-1, -i)
+         FI;
+      
+      #Basic operators#
+      OP INV = (RAT q) RAT:
+         IF n OF q >= 0
+         THEN (d OF q, n OF q)
+         ELSE (-d OF q, -n OF q)
+         FI;
+      
+      OP + = (RAT q) RAT: q;
+      
+      OP - = (RAT q) RAT:
+         (-n OF q, d OF q);
+      
+      OP ABS = (RAT q) RAT:
+         (ABS n OF q, d OF q);
+      
+      OP + = (RAT q, p) RAT:
+         BEGIN INT k = d OF q GCD d OF p;
+               
+               INT dq = d OF q % k, dp = d OF p % k;
+               
+               INT n = n OF q * dp + n OF p * dq;
+               
+               INT l = n GCD k, d = dp * dq;
+               
+               (n % l, k % l * d)
+         END;
+      
+      OP - = (RAT q, p) RAT:
+         BEGIN INT k = d OF q GCD d OF p;
+               
+               INT dq = d OF q % k, dp = d OF p % k;
+               
+               INT n = n OF q * dp - n OF p * dq;
+               
+               INT l = n GCD k, d = dp * dq;
+               
+               (n % l, k % l * d)
+         END;
+      
+      OP * = (RAT q, p) RAT:
+         BEGIN INT nq = n OF q, np = n OF p;
+               
+               INT dq = d OF q, dp = d OF p;
+               
+               INT i = nq GCD dp, j = np GCD dq;
+               
+               ((nq % i) * (np % j), (dq % j) * (dp % i))
+         END;
+      
+      OP / = (RAT q, p) RAT:
+         BEGIN INT nq = n OF q, np = n OF p;
+               
+               INT dq = d OF q, dp = d OF p;
+               
+               INT i = nq GCD np, j = dp GCD dq;
+               
+               IF np >= 0
+               THEN ((nq % i) * (dp % j), (dq % j) * (np % i))
+               ELSE (-(nq % i) * (dp % j), -(dq % j) * (np % i))
+               FI
+         END;
+      
+      OP +:= = (REF RAT q, RAT p) REF RAT:
+         BEGIN INT k = d OF q GCD d OF p;
+               
+               INT dq = d OF q % k, dp = d OF p % k;
+               
+               INT n = n OF q * dp + n OF p * dq;
+               
+               INT l = n GCD k, d = dp * dq;
+               
+               q := (n % l, k % l * d)
+         END;
+      
+      OP -:= = (REF RAT q, RAT p) REF RAT:
+         BEGIN INT k = d OF q GCD d OF p;
+               
+               INT dq = d OF q % k, dp = d OF p % k;
+               
+               INT n = n OF q * dp - n OF p * dq;
+               
+               INT l = n GCD k, d = dp * dq;
+               
+               q := (n % l, k % l * d)
+         END;
+      
+      OP *:= = (REF RAT q, RAT p) REF RAT:
+         BEGIN INT nq = n OF q, np = n OF p;
+               
+               INT dq = d OF q, dp = d OF p;
+               
+               INT i = nq GCD dp, j = np GCD dq;
+               
+               q := ((nq % i) * (np % j), (dq % j) * (dp % i))
+         END;
+      
+      OP /:= = (REF RAT q, RAT p) REF RAT:
+         BEGIN INT nq = n OF q, np = n OF p;
+               
+               INT dq = d OF q, dp = d OF p;
+               
+               INT i = nq GCD np, j = dp GCD dq;
+               
+               q := IF np >= 0
+               THEN ((nq % i) * (dp % j), (dq % j) * (np % i))
+               ELSE (-(nq % i) * (dp % j), -(dq % j) * (np % i))
+               FI
+         END;
+      
+      #Rationals mixed with integers#
+      OP + = (RAT q, INT i) RAT:
+         (n OF q + d OF q * i, d OF q);
+      
+      OP - = (RAT q, INT i) RAT:
+         (n OF q - d OF q * i, d OF q);
+      
+      OP * = (RAT q, INT i) RAT:
+         BEGIN INT dq = d OF q;
+               
+               INT k = dq GCD i;
+               
+               (i % k * n OF q, dq % k)
+         END;
+      
+      OP / = (RAT q, INT i) RAT:
+         BEGIN INT nq = n OF q;
+               
+               INT k = nq GCD i;
+               
+               IF i >= 0
+               THEN (nq % k, i % k * d OF q)
+               ELSE (-nq % k, -i % k * d OF q)
+               FI
+         END;
+      
+      OP +:= = (REF RAT q, INT i) REF RAT:
+         q := (n OF q + d OF q * i, d OF q);
+      
+      OP -:= = (REF RAT q, INT i) REF RAT:
+         q := (n OF q - d OF q * i, d OF q);
+      
+      OP *:= = (REF RAT q, INT i) REF RAT:
+         BEGIN INT dq = d OF q;
+               
+               INT k = dq GCD i;
+               
+               q := (i % k * n OF q, dq % k)
+         END;
+      
+      OP /:= = (REF RAT q, INT i) REF RAT:
+         BEGIN INT nq = n OF q;
+               
+               INT k = nq GCD i;
+               
+               q := IF i >= 0
+               THEN (nq % k, i % k * d OF q)
+               ELSE (-nq % k, -i % k * d OF q)
+               FI
+         END;
+      
+      OP + = (INT i, RAT q) RAT:
+         (i * d OF q + n OF q, d OF q);
+      
+      OP - = (INT i, RAT q) RAT:
+         (i * d OF q - n OF q, d OF q);
+      
+      OP * = (INT i, RAT q) RAT:
+         BEGIN INT dq = d OF q;
+               
+               INT k = dq GCD i;
+               
+               (i % k * n OF q, dq % k)
+         END;
+      
+      OP / = (INT i, RAT q) RAT:
+         BEGIN INT nq = n OF q;
+               
+               INT k = nq GCD i;
+               
+               IF nq >= 0
+               THEN (i % k * d OF q, nq % k)
+               ELSE (-i % k * d OF q, -nq % k)
+               FI
+         END;
+      
+      #Rationals mixed with reals#
+      OP VAL = (RAT q) REAL:
+         REAL (n OF q) / REAL (d OF q);
+      
+      OP + = (REAL r, RAT q) REAL: r + VAL q;
+      
+      OP - = (REAL r, RAT q) REAL: r - VAL q;
+      
+      OP * = (REAL r, RAT q) REAL: r * VAL q;
+      
+      OP / = (REAL r, RAT q) REAL: r / VAL q;
+      
+      OP +:= = (REF REAL r, RAT q) REF REAL: r +:= VAL q;
+      
+      OP -:= = (REF REAL r, RAT q) REF REAL: r -:= VAL q;
+      
+      OP *:= = (REF REAL r, RAT q) REF REAL: r *:= VAL q;
+      
+      OP /:= = (REF REAL r, RAT q) REF REAL: r /:= VAL q;
+      
+      OP + = (RAT q, REAL r) REAL: VAL q + r;
+      
+      OP - = (RAT q, REAL r) REAL: VAL q - r;
+      
+      OP * = (RAT q, REAL r) REAL: VAL q * r;
+      
+      OP / = (RAT q, REAL r) REAL: VAL q / r;
+      
+      #Comparing rationals#
+      OP = = (RAT q, p) BOOL: n OF q = n OF p AND d OF q = d OF p;
+      
+      OP /= = (RAT q, p) BOOL: n OF q /= n OF p OR d OF q /= d OF p;
+      
+      OP >= = (RAT q, p) BOOL: n OF q * d OF p >= n OF p * d OF q;
+      
+      OP > = (RAT q, p) BOOL: n OF q * d OF p > n OF p * d OF q;
+      
+      OP < = (RAT q, p) BOOL: n OF q * d OF p < n OF p * d OF q;
+      
+      OP <= = (RAT q, p) BOOL: n OF q * d OF p <= n OF p * d OF q;
+      
+      #Comparing rationals with integers#
+      OP = = (RAT q, INT i) BOOL: n OF q = i AND d OF q = 1;
+      
+      OP /= = (RAT q, INT i) BOOL: n OF q /= i OR d OF q /= 1;
+      
+      OP >= = (RAT q, INT i) BOOL: n OF q >= i * d OF q;
+      
+      OP > = (RAT q, INT i) BOOL: n OF q > i * d OF q;
+      
+      OP < = (RAT q, INT i) BOOL: n OF q < i * d OF q;
+      
+      OP <= = (RAT q, INT i) BOOL: n OF q <= i * d OF q;
+      
+      OP = = (INT i, RAT q) BOOL: i = n OF q AND d OF q = 1;
+      
+      OP /= = (INT i, RAT q) BOOL: i /= n OF q OR d OF q /= 1;
+      
+      OP >= = (INT i, RAT q) BOOL: i * d OF q >= n OF q;
+      
+      OP > = (INT i, RAT q) BOOL: i * d OF q > n OF q;
+      
+      OP < = (INT i, RAT q) BOOL: i * d OF q < n OF q;
+      
+      OP <= = (INT i, RAT q) BOOL: i * d OF q <= n OF q;
+      
+      #Comparing rationals with reals#
+      OP = = (REAL r, RAT q) BOOL: r = VAL q;
+      
+      OP /= = (REAL r, RAT q) BOOL: r /= VAL q;
+      
+      OP >= = (REAL r, RAT q) BOOL: r >= VAL q;
+      
+      OP > = (REAL r, RAT q) BOOL: r > VAL q;
+      
+      OP < = (REAL r, RAT q) BOOL: r < VAL q;
+      
+      OP <= = (REAL r, RAT q) BOOL: r <= VAL q;
+      
+      OP = = (RAT q, REAL r) BOOL: VAL q = r;
+      
+      OP /= = (RAT q, REAL r) BOOL: VAL q /= r;
+      
+      OP >= = (RAT q, REAL r) BOOL: VAL q >= r;
+      
+      OP > = (RAT q, REAL r) BOOL: VAL q > r;
+      
+      OP < = (RAT q, REAL r) BOOL: VAL q < r;
+      
+      OP <= = (RAT q, REAL r) BOOL: VAL q <= r;
+      
+      #Converting rationals to a number string#
+      PROC rat = (RAT q, INT width) STRING:
+           IF STRING s = (q < 0 | "-(" |: width > 0 | "+(" | "(") + whole (ABS n OF q, 0) + "/" + whole (d OF q, 0) + ")";
+              
+              width = 0
+           THEN s
+           ELSE IF INT us = UPB s, aw = ABS width;
+                   
+                   us > aw
+                THEN aw * (q < 0 | "-" | "+")
+                ELSE (aw - us) * " " + s
+                FI
+           FI;
+      
+      #Innerproduct of two arrays of rationals#
+      OP +* = (REF [] RAT a, b) RAT:
+         BEGIN RAT s := (0, 1);
+               
+               FOR i TO UPB a 
+               DO s +:= a[i] * b[i]
+               OD;
+               s
+         END;
+      
+      #LU-decomposition of a matrix of rationals#
+      PROC decrat = (REF [, ] RAT a, REF [] INT p) VOID:
+           BEGIN INT n = 1 UPB a;
+                 
+                 FOR k TO n 
+                 DO RAT piv := (0, 1),
+                    INT k1 := k - 1;
+                    
+                    REF INT pk = p[k];
+                    
+                    REF [] RAT aik = a[, k], aki = a[k, ];
+                    
+                    FOR i FROM k TO n 
+                    DO aik[i] -:= a[i, 1 : k1] +* aik[1 : k1];
+                       IF piv = 0 AND aik[i] /= 0
+                       THEN piv := aik[i];
+                            pk := i
+                       FI
+                    OD;
+                    IF piv = 0
+                    THEN print ((newline, newline, "Singular matrix"));
+                         stop
+                    FI;
+                    IF pk /= k
+                    THEN FOR i TO n 
+                         DO RAT r = aki[i];
+                            
+                            aki[i] := a[pk, i];
+                            a[pk, i] := -r
+                         OD
+                    FI;
+                    FOR i FROM k + 1 TO n 
+                    DO aki[i] -:= aki[1 : k1] +* a[1 : k1, i] /:= piv
+                    OD
+                 OD
+           END;
+      
+      #Calculation of the determinant of a decomposed matrix#
+      PROC determrat = (REF [, ] RAT a) RAT:
+           BEGIN RAT d := (1, 1);
+                 
+                 FOR i TO 1 UPB a 
+                 DO d *:= a[i, i]
+                 OD;
+                 d
+           END;
+      
+      FOR n TO 5 
+      DO [1 : n, 1 : n] RAT a;
+         
+         FOR i TO n 
+         DO a[i, i] := INV (i * 2 - 1);
+            FOR j FROM i + 1 TO n 
+            DO a[i, j] := a[j, i] := INV (i + j - 1)
+            OD
+         OD;
+         decrat (a, LOC [1 : n] INT);
+         print (("Order: ", whole (n, -1), "; determinant: ", rat (determrat (a), 0), newline))
+      OD
+END

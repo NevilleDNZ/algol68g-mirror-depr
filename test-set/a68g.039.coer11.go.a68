@@ -1,0 +1,39 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#coer11#
+BEGIN # Contains all possible two-member coercion sequences #
+      UNION (INT, BOOL) ib := 1;
+      
+      print (([] REAL (1), newline));
+      print (([] REAL (INT: 1), newline));
+      print (([] REAL (REAL: 1), newline));
+      print (([] [, ] COMPL (1), newline));
+      print (([] [, ] COMPL (LOC INT := 1), newline));
+      print (([] [, ] COMPL ([] COMPL (1, 2)), newline));
+      print (([, , ] [] BOOL (16 r f), newline));
+      print (([, , ] [] [, ] BOOL (16 r f), newline));
+      print (([, , ] [] BOOL (BITS: 16 r f), newline));
+      print (([, , ] [] [, ] BOOL (BITS: 16 r f), newline));
+      print (([, ] [] CHAR (bytes pack ("ab")), newline));
+      print (([, ] [] [, ] CHAR (bytes pack ("ab")), newline));
+      print (([, ] [] CHAR (LOC BYTES := bytes pack ("ab")), newline));
+      print (([, ] [] [, ] CHAR (LOC BYTES := bytes pack ("ab")), newline));
+      print ((REF [] INT (REF INT: HEAP INT := 1), newline));
+      print ((REF [, ] INT (REF [] INT: HEAP [1] INT := 1), newline));
+      print ((UNION (INT, REAL, BOOL) (ib), newline));
+      print (([] REF [] [, ] [] [] INT (LOC PROC REF INT := REF INT: HEAP INT := 1)[1], newline));
+      print (([] UNION (INT, REAL) (LOC INT := 1)[1], newline));
+      print (([] UNION (INT, REAL) (REAL: 1)[1], newline));
+      print (([] UNION (INT, REAL, BOOL) (ib)[1], newline));
+      SKIP
+END

@@ -1,11 +1,14 @@
-/*!
-\file postgresql.c
-\brief interface to libpq
-*/
+/**
+@file postgresql.c
+@author J. Marcel van der Veer.
+@brief Interface to libpq.
 
-/*
+@section Copyright
+
 This file is part of Algol68G - an Algol 68 interpreter.
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,9 +21,9 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-/*
+@section Description
+
 PostgreSQL libpq interface based on initial work by Jaap Boender. 
 Wraps "connection" and "result" objects in a FILE variable to support 
 multiple connections.
@@ -30,7 +33,7 @@ Error codes:
 -1	No connection
 -2	No result
 -3	Other error
-*/
+**/
 
 #if defined HAVE_CONFIG_H
 #include "a68g-config.h"
@@ -47,9 +50,9 @@ Error codes:
 #define NO_PGCONN ((PGconn *) NULL)
 #define NO_PGRESULT ((PGresult *) NULL)
 
-/*!
-\brief PROC pg connect db (REF FILE, STRING, REF STRING) INT
-\param p position in tree
+/**
+@brief PROC pg connect db (REF FILE, STRING, REF STRING) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_connectdb (NODE_T * p)
@@ -115,9 +118,9 @@ void genie_pq_connectdb (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq finish (REF FILE) VOID
-\param p position in tree
+/**
+@brief PROC pq finish (REF FILE) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_pq_finish (NODE_T * p)
@@ -141,9 +144,9 @@ void genie_pq_finish (NODE_T * p)
   PUSH_PRIMAL (p, 0, INT);
 }
 
-/*!
-\brief PROC pq reset (REF FILE) VOID
-\param p position in tree
+/**
+@brief PROC pq reset (REF FILE) VOID
+@param p Node in syntax tree.
 **/
 
 void genie_pq_reset (NODE_T * p)
@@ -165,9 +168,9 @@ void genie_pq_reset (NODE_T * p)
   PUSH_PRIMAL (p, 0, INT);
 }
 
-/*!
-\brief PROC pq exec = (REF FILE, STRING) INT
-\param p position in tree
+/**
+@brief PROC pq exec = (REF FILE, STRING) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_exec (NODE_T * p)
@@ -197,9 +200,9 @@ void genie_pq_exec (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq parameterstatus (REF FILE) INT
-\param p position in tree
+/**
+@brief PROC pq parameterstatus (REF FILE) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_parameterstatus (NODE_T * p)
@@ -225,9 +228,9 @@ void genie_pq_parameterstatus (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq cmdstatus (REF FILE) INT
-\param p position in tree
+/**
+@brief PROC pq cmdstatus (REF FILE) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_cmdstatus (NODE_T * p)
@@ -255,9 +258,9 @@ void genie_pq_cmdstatus (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq cmdtuples (REF FILE) INT
-\param p position in tree
+/**
+@brief PROC pq cmdtuples (REF FILE) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_cmdtuples (NODE_T * p)
@@ -285,9 +288,9 @@ void genie_pq_cmdtuples (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq ntuples (REF FILE) INT
-\param p position in tree
+/**
+@brief PROC pq ntuples (REF FILE) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_ntuples (NODE_T * p)
@@ -309,9 +312,9 @@ void genie_pq_ntuples (NODE_T * p)
   PUSH_PRIMAL (p, (PQresultStatus (RESULT (file))) == PGRES_TUPLES_OK ? PQntuples (RESULT (file)) : -3, INT);
 }
 
-/*!
-\brief PROC pq nfields (REF FILE) INT
-\param p position in tree
+/**
+@brief PROC pq nfields (REF FILE) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_nfields (NODE_T * p)
@@ -333,9 +336,9 @@ void genie_pq_nfields (NODE_T * p)
   PUSH_PRIMAL (p, (PQresultStatus (RESULT (file))) == PGRES_TUPLES_OK ? PQnfields (RESULT (file)) : -3, INT);
 }
 
-/*!
-\brief PROC pq fname (REF FILE, INT) INT
-\param p position in tree
+/**
+@brief PROC pq fname (REF FILE, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_fname (NODE_T * p)
@@ -370,9 +373,9 @@ void genie_pq_fname (NODE_T * p)
   PUSH_PRIMAL (p, 0, INT);
 }
 
-/*!
-\brief PROC pq fnumber = (REF FILE, STRING) INT
-\param p position in tree
+/**
+@brief PROC pq fnumber = (REF FILE, STRING) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_fnumber (NODE_T * p)
@@ -403,9 +406,9 @@ void genie_pq_fnumber (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq fformat (REF FILE, INT) INT
-\param p position in tree
+/**
+@brief PROC pq fformat (REF FILE, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_fformat (NODE_T * p)
@@ -436,9 +439,9 @@ void genie_pq_fformat (NODE_T * p)
   PUSH_PRIMAL (p, PQfformat (RESULT (file), VALUE (&a68g_index) - 1), INT);
 }
 
-/*!
-\brief PROC pq getvalue (REF FILE, INT, INT) INT
-\param p position in tree
+/**
+@brief PROC pq getvalue (REF FILE, INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_getvalue (NODE_T * p)
@@ -488,9 +491,9 @@ void genie_pq_getvalue (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq getisnull (REF FILE, INT, INT) INT
-\param p position in tree
+/**
+@brief PROC pq getisnull (REF FILE, INT, INT) INT
+@param p Node in syntax tree.
 **/
 
 void genie_pq_getisnull (NODE_T * p)
@@ -528,9 +531,9 @@ void genie_pq_getisnull (NODE_T * p)
   PUSH_PRIMAL (p, PQgetisnull (RESULT (file), VALUE (&row) - 1, VALUE (&column) - 1), INT);
 }
 
-/*!
-\brief edit error message sting from libpq
-\param p position in tree
+/**
+@brief Edit error message sting from libpq.
+@param p Node in syntax tree.
 **/
 
 static char *pq_edit (char *str)
@@ -583,9 +586,9 @@ static char *pq_edit (char *str)
   }
 }
 
-/*!
-\brief PROC pq errormessage (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq errormessage (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_errormessage (NODE_T * p)
@@ -620,9 +623,9 @@ void genie_pq_errormessage (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq resulterrormessage (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq resulterrormessage (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_resulterrormessage (NODE_T * p)
@@ -661,9 +664,9 @@ void genie_pq_resulterrormessage (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq db (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq db (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_db (NODE_T * p)
@@ -687,9 +690,9 @@ void genie_pq_db (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq user (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq user (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_user (NODE_T * p)
@@ -713,9 +716,9 @@ void genie_pq_user (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq pass (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq pass (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_pass (NODE_T * p)
@@ -739,9 +742,9 @@ void genie_pq_pass (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq host (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq host (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_host (NODE_T * p)
@@ -765,9 +768,9 @@ void genie_pq_host (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq port (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq port (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_port (NODE_T * p)
@@ -791,9 +794,9 @@ void genie_pq_port (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq tty (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq tty (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_tty (NODE_T * p)
@@ -817,9 +820,9 @@ void genie_pq_tty (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq options (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq options (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_options (NODE_T * p)
@@ -843,9 +846,9 @@ void genie_pq_options (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq protocol version (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq protocol version (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_protocolversion (NODE_T * p)
@@ -867,9 +870,9 @@ void genie_pq_protocolversion (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq server version (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq server version (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_serverversion (NODE_T * p)
@@ -891,9 +894,9 @@ void genie_pq_serverversion (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq socket (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq socket (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_socket (NODE_T * p)
@@ -915,9 +918,9 @@ void genie_pq_socket (NODE_T * p)
   }
 }
 
-/*!
-\brief PROC pq backend pid (REF FILE) INT 
-\param p position in tree
+/**
+@brief PROC pq backend pid (REF FILE) INT 
+@param p Node in syntax tree.
 **/
 
 void genie_pq_backendpid (NODE_T * p)

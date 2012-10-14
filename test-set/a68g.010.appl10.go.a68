@@ -1,0 +1,47 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#appl10#
+BEGIN # Conversion from Gregorian date to weekday #
+      PROC weekday = (INT year, month, day) STRING:
+           [] STRING ("Sun",
+                      "Mon",
+                      "Tues",
+                      "Wednes",
+                      "Thurs",
+                      "Fri",
+                      "Satur")[(INT y := year, m := month - 2;
+                                
+                                IF m < 1
+                                THEN m +:= 12;
+                                     y -:= 1
+                                FI;
+                                # since the year actually starts March 1st #
+                                365 * y 
+                                # number of days since year 0 #
+                                + y OVER 4  # plus leap days # - y OVER 100 
+                                # minus 1 for every century #
+                                + y OVER 400 
+                                # plus 1 for every 4 centuries #
+                                + [] INT (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337)[m] 
+                                # plus number of days in this year since March 1 #
+                                + day + 2) MOD 7 + 1] + "day";
+      
+      # Prints the week around 1968, Feb 29th, starting at Sunday #
+      print ((weekday (1968, 2, 25), newline));
+      print ((weekday (1968, 2, 26), newline));
+      print ((weekday (1968, 2, 27), newline));
+      print ((weekday (1968, 2, 28), newline));
+      print ((weekday (1968, 2, 29), newline));
+      print ((weekday (1968, 3, 1), newline));
+      print ((weekday (1968, 3, 2), newline))
+END

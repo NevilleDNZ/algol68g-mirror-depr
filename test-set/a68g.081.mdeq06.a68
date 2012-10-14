@@ -1,0 +1,29 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#mdeq06#
+BEGIN # Some equivalencing #
+  MODE A = STRUCT(REF A l, REF A r),
+         B = STRUCT(REF B l, REF B r),
+         C = STRUCT(REF D l, REF E r),
+         D = STRUCT(REF E l, REF C r),
+         E = STRUCT(REF C l, REF D r),
+         F = STRUCT(REF STRUCT(REF A l, REF B r) l,
+                        REF STRUCT
+                            (REF STRUCT(REF C l, REF D r) l,
+                             REF STRUCT(REF E l, REF F r) r
+                            ) r
+                       );
+  MODE M = UNION(A, B, C, D, E, F);
+  # error, all modes are the same #
+  SKIP
+END

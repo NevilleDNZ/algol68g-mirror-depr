@@ -1,0 +1,114 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#appl05#
+BEGIN # Collateral sorting #
+      PROC quicksort = (REF [] ITEM a) VOID:
+           # quicksort requires the operator < to be defined for two ITEM's #
+           IF INT m = LWB a, n = UPB a;
+              
+              m < n
+           THEN STRUCT (INT left, right) l = 
+                # 'l' is a border running from 'left' to 'right' such that:
+                          1. all elements left of the border are smaller than those
+                              right of the border,
+                          2. the border contains at least one element.
+                        #
+                BEGIN INT f =  # random # ENTIER ((n - m + 1) * random + m);
+                      
+                      ITEM x = a[f];
+                      
+                      PROC swap = (REF ITEM a, b) VOID:
+                           BEGIN ITEM h = a;
+                                 
+                                 a := b;
+                                 b := h
+                           END;
+                      
+                      INT i := m, j := n;
+                      
+                      # a[m-1] < a[f] < a[n+1] #
+                      split:
+                      FOR k FROM i BY 1 TO n 
+                      DO IF x < a[k]
+                         THEN i := k;
+                              end_left
+                         FI
+                      OD;
+                      i := n + 1;
+                      end_left:
+                      # a[f] < a[i] -> i /= f #
+                      FOR k FROM j BY -1 TO m 
+                      DO IF a[k] < x
+                         THEN j := k;
+                              end_right
+                         FI
+                      OD;
+                      j := m - 1;
+                      end_right:
+                      # a[j] < a[f] -> f /= j #
+                      
+                      # a[j] < a[i] -> i /= j #
+                      IF i < j
+                      THEN swap (a[i], a[j]);
+                           i +:= 1;
+                           j -:= 1;
+                           split
+                      # i => j, i /= j -> i > j -> i - j > 0 #
+                      ELIF i < f
+                      THEN swap (a[i], a[f]);
+                           i +:= 1
+                      # i - j > 1 #
+                      
+                      # i >= f, i /= f -> i > f #
+                      ELIF f < j
+                      THEN swap (a[f], a[j]);
+                           j -:= 1
+                      # i - j > 1 #
+                      
+                      # f >= j, f /= j -> f > j; i>f,j>f -> i>f>j -> #
+                      
+                      # i-j > f-j > 0 -> i-j > 0 #
+                      FI;
+                      (j, i)
+                # i - j > 1 #
+                END;
+                
+                (quicksort (a[ : left OF l]), quicksort (a[right OF l : ]))
+           FI;
+      
+      MODE ITEM = REAL;
+      
+      PROC test = (INT max) VOID:
+           BEGIN [1 : max] REAL a;
+                 
+                 FOR i TO max 
+                 DO a[i] := random
+                 OD;
+                 REAL time := clock;
+                 
+                 quicksort (a);
+                 time := clock - time;
+                 #   print(("Sorted", max, " numbers, time taken", time, " sec., i. e.,",
+                            time / (max * ln(max) / ln(2)), " per n ln n.", newline)); #
+                 print (("Sorted", max, " numbers.", newline));
+                 FOR i TO max - 1 
+                 DO IF a[i] > a[i + 1]
+                    THEN print ("Error ")
+                    FI
+                 OD
+           END # test # ;
+      
+      test (100);
+      test (1 000);
+      test (10 000)
+END

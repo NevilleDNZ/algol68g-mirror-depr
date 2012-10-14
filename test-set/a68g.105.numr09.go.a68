@@ -1,0 +1,154 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#numr09#
+BEGIN #Test exp#
+      
+      #N.B. This test should not be considered as certification of 'exp',
+               but only as an indication that 'exp' has the right properties#
+      PROC warn = (STRING s) VOID:
+           BEGIN print ((newline, "++++test error: ", s, newline, newline))
+           END;
+      
+      REAL minreal = 2 / (smallreal * maxreal * smallreal);
+      
+      # must be close to the smallest real value > 0 ;
+              this will probably work on most machines with normalized reals #
+      REAL e = exp (1);
+      
+      REAL y1,  #exp(x)# y2,  #exp(-x)# y3,  #exp(1/x)# y4;
+      
+      #exp(-1/x)# REAL max1 := 0, sum1 := 0, sumsq1 := 0,
+      INT c1 := 0,
+      REAL at1;
+      
+      PROC test1 = (REAL x, y1, y2) VOID:
+           # exp(x)*exp(-x)=1 #
+           IF y1 = 0
+           THEN print ((newline, newline, "x=", x, newline, "exp(x)=0"))
+           ELIF y2 = 0
+           THEN print ((newline, newline, "x=", -x, newline, "exp(x)=0"))
+           ELIF REAL d = ABS (y1 * y2 - 1) / smallreal;
+                
+                sum1 +:= d;
+                sumsq1 +:= d * d;
+                c1 +:= 1;
+                max1 < d
+           THEN max1 := d;
+                at1 := x
+           FI;
+      
+      REAL max2 := 0, sum2 := 0, sumsq2 := 0,
+      INT c2 := 0,
+      REAL at2;
+      
+      PROC test2 = (REAL x, y) VOID:
+           # exp(1+x)=e*exp(x) #
+           IF y /= 0 AND y < maxreal / 3
+           THEN IF REAL z = exp (1 + x);
+                   
+                   z <= 0
+                THEN print ((newline, newline, "x=", 1 + x, newline, "exp(x)=", z));
+                     warn ("exp(x)<=0")
+                ELIF REAL d = ABS ((z - e * y) / z) / smallreal;
+                     
+                     sum2 +:= d;
+                     sumsq2 +:= d * d;
+                     c2 +:= 1;
+                     max2 < d
+                THEN max2 := d;
+                     at2 := x
+                FI
+           FI;
+      
+      REAL max3 := 0, sum3 := 0, sumsq3 := 0,
+      INT c3 := 0,
+      REAL at3;
+      
+      PROC test3 = (REAL x, y) VOID:
+           # sqrt(exp(2x))=exp(x) #
+           IF y /= 0 AND y < sqrt (maxreal) AND y > sqrt (minreal)
+           THEN IF REAL z = sqrt (exp (x + x));
+                   
+                   z > 0
+                THEN REAL d = ABS ((z - y) / y) / smallreal;
+                     
+                     sum3 +:= d;
+                     sumsq3 +:= d * d;
+                     c3 +:= 1;
+                     (max3 < d | max3 := d; at3 := x)
+                FI
+           FI;
+      
+      PROC test4 = (REAL x, y) VOID:
+           # check 0<=x<1, 1+x<= exp(x) <= 1/(1-x) #
+           IF 0 <= x AND x < 1
+           THEN IF y < 1 + x
+                THEN print ((newline, newline, "x=", x, newline, "exp(x)= ", y, newline, "1+x   = ", 1 + x));
+                     warn ("exp(x) should exceed 1+x")
+                ELIF y > 1 / (1 - x)
+                THEN print ((newline, newline, "x=", x, newline, "exp(x)= ", y, newline, "1/(1-x)=", 1 / (1 - x)));
+                     warn ("exp(x) should be less than 1/(1-x)")
+                FI
+           FI;
+      
+      REAL x := 1;
+      
+      WHILE x +:= random;
+            REAL z = 1 / x;
+            
+            y1 := exp (x);
+            y2 := exp (-x);
+            y3 := exp (z);
+            y4 := exp (-z);
+            test1 (x, y1, y2);
+            test1 (z, y3, y4);
+            test2 (x, y1);
+            test2 (-x, y2);
+            test2 (z, y3);
+            test2 (-z, y4);
+            test3 (x, y1);
+            test3 (-x, y2);
+            test3 (z, y3);
+            test3 (-z, y4);
+            test4 (z, y3);
+            y1 < maxreal / 3 AND y2 > 3 * minreal
+      DO SKIP
+      OD;
+      PROC p = (STRING s, REAL sum, sumsq, n, max, at) VOID:
+           BEGIN print ((newline, newline, s));
+                 print ((newline, "Maximum relative error = smallreal*"));
+                 print (fixed (max, -(realwidth % 2 + 2), realwidth % 2));
+                 print ((newline, "Occurred at x = ", at));
+                 print ((newline, "Average relative error = smallreal*"));
+                 print (fixed (sum / n, -(realwidth % 2 + 2), realwidth % 2));
+                 print ((newline, "R.M.S. relative error  = smallreal*"));
+                 print (fixed (sqrt (sumsq / n), -(realwidth % 2 + 2), realwidth % 2))
+           END;
+      
+      p ("Checks on exp(x)*exp(-x)=1", sum1, sumsq1, c1, max1, at1);
+      p ("Checks on exp(1+x)=exp(1)*exp(x)", sum2, sumsq2, c2, max2, at2);
+      p ("Checks on sqrt(exp(2*x))=exp(x)", sum3, sumsq3, c3, max3, at3);
+      print (newline);
+      print ((newline, "e        = 2.7182818284590452353602874713526624977572+ (Knuth)"));
+      print ((newline, "exp(1)   = "));
+      print (fixed (exp (1), -(real width + 1), real width - 1));
+      print ((newline, "e**-1    = 0.3678794411714423215955237701614608674458+ (Knuth)"));
+      print ((newline, "exp(-1)  = "));
+      print (fixed (exp (-1), -(real width + 1), real width - 1));
+      print ((newline, "e**2     = 7.3890560989306502272304274605750078131803+ (Knuth)"));
+      print ((newline, "exp(2)   = "));
+      print (fixed (exp (2), -(real width + 1), real width - 1));
+      print ((newline, "smallreal= "));
+      print (fixed (small real, -2 * real width, 2 * (realwidth - 1)));
+      print ((newline, "         = ", small real))
+END

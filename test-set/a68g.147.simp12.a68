@@ -1,0 +1,29 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#simp12#
+
+# Towers of Hanoi, Report 11.13. #
+FOR k TO 8 
+DO FILE f := stand out;
+   
+   PROC p = (INT me, de, ma) VOID:
+        IF ma > 0
+        THEN p (me, 6 - me - de, ma - 1);
+             putf (f, (me, de, ma));
+             # move from peg 'me' to peg 'de' piece 'ma' #
+             p (6 - me - de, de, ma - 1)
+        FI;
+   
+   putf (f, ($l"k = "dl, n((2 ** k + 15) % 16)(2(2(4(3(d)x)x)x)l)$, k));
+   p (1, 2, k)
+OD

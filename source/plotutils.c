@@ -1,11 +1,15 @@
-/*!
-\file plotutils.c
-\brief interface to libplot
-*/
+/**
+@file plotutils.c
+@author J. Marcel van der Veer.
+@brief Interface to libplot.
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
+@section Copyright
+
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
+
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,18 +22,18 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-#include "a68g.h"
+@section Description
 
-#if defined HAVE_GNU_PLOTUTILS
-
-/*
 This file contains the Algol68G interface to libplot. Note that Algol68G is not
 a binding for libplot. When GNU plotutils are not installed then the routines in
 this file will give a runtime error when called. You can also choose to not
 define them in "prelude.c". 
-*/
+**/
+
+#include "a68g.h"
+
+#if defined HAVE_GNU_PLOTUTILS
 
 #define MAXIMUM(x, y) ((x) > (y) ? (x) : (y))
 
@@ -721,12 +725,12 @@ const colour_info A68_COLOURS[COLOUR_NAMES + 1] = {
   {NO_TEXT, 0, 0, 0}
 };
 
-/*!
-\brief searches colour in the list
-\param p position in tree
-\param name colour name
-\param iindex set to iindex in table
-\return whether colour name is found
+/**
+@brief Searches colour in the list.
+@param p Node in syntax tree.
+@param name Colour name.
+@param iindex Set to iindex in table.
+@return Whether colour name is found.
 **/
 
 static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
@@ -754,11 +758,11 @@ static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
   return (k);
 }
 
-/*!
-\brief scans string for an integer
-\param z text buffer
-\param k set to int value
-\return whether conversion is successful
+/**
+@brief Scans string for an integer.
+@param z Text buffer.
+@param k Set to int value.
+@return Whether conversion is successful.
 **/
 
 static BOOL_T scan_int (char **z, int *k)
@@ -775,9 +779,9 @@ static BOOL_T scan_int (char **z, int *k)
   }
 }
 
-/*!
-\brief PROC (REF FILE, STRING, STRING) make device
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING, STRING) make device
+@param p Node in syntax tree.
 **/
 
 void genie_make_device (NODE_T * p)
@@ -815,11 +819,11 @@ void genie_make_device (NODE_T * p)
   PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
 }
 
-/*!
-\brief closes the plotter
-\param p position in tree
-\param f pointer to file
-\return TRUE or exits
+/**
+@brief Closes the plotter.
+@param p Node in syntax tree.
+@param f Pointer to file.
+@return TRUE or exits
 **/
 
 BOOL_T close_device (NODE_T * p, A68_FILE * f)
@@ -857,11 +861,11 @@ BOOL_T close_device (NODE_T * p, A68_FILE * f)
   return (A68_TRUE);
 }
 
-/*!
-\brief sets up the plotter prior to using it
-\param p position in tree
-\param f pointer to file
-\return plotter of file
+/**
+@brief Sets up the plotter prior to using it.
+@param p Node in syntax tree.
+@param f Pointer to file.
+@return Plotter of file.
 **/
 
 static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
@@ -1137,9 +1141,9 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
   return (NULL);
 }
 
-/*!
-\brief PROC (REF FILE) VOID draw erase
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID draw erase
+@param p Node in syntax tree.
 **/
 
 void genie_draw_clear (NODE_T * p)
@@ -1155,9 +1159,9 @@ void genie_draw_clear (NODE_T * p)
   (void) pl_erase_r (plotter);
 }
 
-/*!
-\brief PROC (REF FILE) VOID draw show
-\param p position in tree
+/**
+@brief PROC (REF FILE) VOID draw show
+@param p Node in syntax tree.
 **/
 
 void genie_draw_show (NODE_T * p)
@@ -1172,9 +1176,9 @@ void genie_draw_show (NODE_T * p)
   (void) pl_flushpl_r (plotter);
 }
 
-/*!
-\brief PROC (REF FILE) REAL draw aspect
-\param p position in tree
+/**
+@brief PROC (REF FILE) REAL draw aspect
+@param p Node in syntax tree.
 **/
 
 void genie_draw_aspect (NODE_T * p)
@@ -1189,9 +1193,9 @@ void genie_draw_aspect (NODE_T * p)
   PUSH_PRIMITIVE (p, (double) WINDOW_Y_SIZE (&DEVICE (f)) / (double) WINDOW_X_SIZE (&DEVICE (f)), A68_REAL);
 }
 
-/*!
-\brief PROC (REF FILE, INT) VOID draw fillstyle
-\param p position in tree
+/**
+@brief PROC (REF FILE, INT) VOID draw fillstyle
+@param p Node in syntax tree.
 **/
 
 void genie_draw_fillstyle (NODE_T * p)
@@ -1208,9 +1212,9 @@ void genie_draw_fillstyle (NODE_T * p)
   (void) pl_filltype_r (plotter, (int) VALUE (&z));
 }
 
-/*!
-\brief PROC (INT) STRING draw get colour name
-\param p position in tree
+/**
+@brief PROC (INT) STRING draw get colour name
+@param p Node in syntax tree.
 **/
 
 void genie_draw_get_colour_name (NODE_T * p)
@@ -1224,9 +1228,9 @@ void genie_draw_get_colour_name (NODE_T * p)
   PUSH_REF (p, c_to_a_string (p, str, DEFAULT_WIDTH));
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL, REAL) VOID draw colour
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL, REAL) VOID draw colour
+@param p Node in syntax tree.
 **/
 
 void genie_draw_colour (NODE_T * p)
@@ -1250,9 +1254,9 @@ void genie_draw_colour (NODE_T * p)
   (void) pl_fillcolor_r (plotter, (int) (VALUE (&x) * COLOUR_MAX), (int) (VALUE (&y) * COLOUR_MAX), (int) (VALUE (&z) * COLOUR_MAX));
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL, REAL) VOID draw background colour
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL, REAL) VOID draw background colour
+@param p Node in syntax tree.
 **/
 
 void genie_draw_background_colour (NODE_T * p)
@@ -1271,9 +1275,9 @@ void genie_draw_background_colour (NODE_T * p)
   (void) pl_bgcolor_r (plotter, (int) (VALUE (&x) * COLOUR_MAX), (int) (VALUE (&y) * COLOUR_MAX), (int) (VALUE (&z) * COLOUR_MAX));
 }
 
-/*!
-\brief PROC (REF FILE, STRING) VOID draw colour name
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING) VOID draw colour name
+@param p Node in syntax tree.
 **/
 
 void genie_draw_colour_name (NODE_T * p)
@@ -1308,9 +1312,9 @@ void genie_draw_colour_name (NODE_T * p)
   (void) pl_fillcolor_r (plotter, (int) (x * COLOUR_MAX), (int) (y * COLOUR_MAX), (int) (z * COLOUR_MAX));
 }
 
-/*!
-\brief PROC (REF FILE, STRING) VOID draw background colour name
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING) VOID draw background colour name
+@param p Node in syntax tree.
 **/
 
 void genie_draw_background_colour_name (NODE_T * p)
@@ -1343,9 +1347,9 @@ void genie_draw_background_colour_name (NODE_T * p)
   (void) pl_bgcolor_r (plotter, (int) (x * COLOUR_MAX), (int) (y * COLOUR_MAX), (int) (z * COLOUR_MAX));
 }
 
-/*!
-\brief PROC (REF FILE, STRING) VOID draw linestyle
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING) VOID draw linestyle
+@param p Node in syntax tree.
 **/
 
 void genie_draw_linestyle (NODE_T * p)
@@ -1368,9 +1372,9 @@ void genie_draw_linestyle (NODE_T * p)
   (void) pl_linemod_r (plotter, z);
 }
 
-/*!
-\brief PROC (REF FILE, INT) VOID draw linewidth
-\param p position in tree
+/**
+@brief PROC (REF FILE, INT) VOID draw linewidth
+@param p Node in syntax tree.
 **/
 
 void genie_draw_linewidth (NODE_T * p)
@@ -1387,9 +1391,9 @@ void genie_draw_linewidth (NODE_T * p)
   (void) pl_linewidth_r (plotter, (int) (VALUE (&width) * (double) WINDOW_Y_SIZE (&DEVICE (f))));
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL) VOID draw move
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL) VOID draw move
+@param p Node in syntax tree.
 **/
 
 void genie_draw_move (NODE_T * p)
@@ -1409,9 +1413,9 @@ void genie_draw_move (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL) VOID draw line
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL) VOID draw line
+@param p Node in syntax tree.
 **/
 
 void genie_draw_line (NODE_T * p)
@@ -1431,9 +1435,9 @@ void genie_draw_line (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL) VOID draw point
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL) VOID draw point
+@param p Node in syntax tree.
 **/
 
 void genie_draw_point (NODE_T * p)
@@ -1453,9 +1457,9 @@ void genie_draw_point (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL) VOID draw rect
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL) VOID draw rect
+@param p Node in syntax tree.
 **/
 
 void genie_draw_rect (NODE_T * p)
@@ -1475,9 +1479,9 @@ void genie_draw_rect (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL, REAL) VOID draw circle
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL, REAL) VOID draw circle
+@param p Node in syntax tree.
 **/
 
 void genie_draw_circle (NODE_T * p)
@@ -1498,9 +1502,9 @@ void genie_draw_circle (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL, REAL) VOID draw atom
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL, REAL) VOID draw atom
+@param p Node in syntax tree.
 **/
 
 void genie_draw_atom (NODE_T * p)
@@ -1531,9 +1535,9 @@ void genie_draw_atom (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, REAL, REAL, REAL) VOID draw atom
-\param p position in tree
+/**
+@brief PROC (REF FILE, REAL, REAL, REAL) VOID draw atom
+@param p Node in syntax tree.
 **/
 
 void genie_draw_star (NODE_T * p)
@@ -1569,9 +1573,9 @@ void genie_draw_star (NODE_T * p)
   Y_COORD (&DEVICE (f)) = VALUE (&y);
 }
 
-/*!
-\brief PROC (REF FILE, CHAR, CHAR, STRING) VOID draw text
-\param p position in tree
+/**
+@brief PROC (REF FILE, CHAR, CHAR, STRING) VOID draw text
+@param p Node in syntax tree.
 **/
 
 void genie_draw_text (NODE_T * p)
@@ -1597,9 +1601,9 @@ void genie_draw_text (NODE_T * p)
   size = pl_alabel_r (plotter, VALUE (&just_h), VALUE (&just_v), z);
 }
 
-/*!
-\brief PROC (REF FILE, STRING) VOID draw fontname
-\param p position in tree
+/**
+@brief PROC (REF FILE, STRING) VOID draw fontname
+@param p Node in syntax tree.
 **/
 
 void genie_draw_fontname (NODE_T * p)
@@ -1622,9 +1626,9 @@ void genie_draw_fontname (NODE_T * p)
   (void) pl_fontname_r (plotter, z);
 }
 
-/*!
-\brief PROC (REF FILE, INT) VOID draw fontsize
-\param p position in tree
+/**
+@brief PROC (REF FILE, INT) VOID draw fontsize
+@param p Node in syntax tree.
 **/
 
 void genie_draw_fontsize (NODE_T * p)
@@ -1641,9 +1645,9 @@ void genie_draw_fontsize (NODE_T * p)
   (void) pl_fontsize_r (plotter, (int) VALUE (&size));
 }
 
-/*!
-\brief PROC (REF FILE, INT) VOID draw textangle
-\param p position in tree
+/**
+@brief PROC (REF FILE, INT) VOID draw textangle
+@param p Node in syntax tree.
 **/
 
 void genie_draw_textangle (NODE_T * p)

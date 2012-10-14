@@ -1,0 +1,20 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#scop03#
+BEGIN # No scope error #
+    PROC VOID pv= (l: VOID:
+        (MODE M1= [1:($n(( #l;# HEAP INT):= 3) "a" $; 1)] INT;
+        M1 x:= 1; SKIP ));
+    pv;
+    print("End of test")
+END

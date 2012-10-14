@@ -1,0 +1,182 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#numr11#
+BEGIN #Test trig functions 1#
+      
+      #N.B. This test should not be considered as certification of trig
+               functions, but only as an indication that trig functions have
+               the right properties#
+      
+      # Value checks #
+      REAL eps = 100.0 * smallreal;
+      
+      PROC warn = (STRING s) VOID:
+           BEGIN print ((newline, "++++test error: ", s, newline))
+           END;
+      
+      REAL zero = 0, half = 0.5, one = 1, two = 2, three = 3, four = 4, five = 5, six = 6, seven = 7, eight = 8, twelve = 12, sixteen = 16, thirtytwo = 32;
+      
+      [] REAL theta = [] REAL (zero, pi / two, pi, three * pi / two, pi + pi, five * pi / two, three * pi)[ :  AT 0], phi = [] REAL (zero, pi / six, pi / four, pi / three, pi / two)[ :  AT 0], sphi = [] REAL (zero, half, sqrt (half), sqrt (0.75), one)[ :  AT 0], tphi = [] REAL (zero, sqrt (one / three), one, sqrt (three), maxreal)[ :  AT 0],
+      [] STRING angle = [] STRING ("0",
+                                   "pi/6",
+                                   "pi/4",
+                                   "pi/3",
+                                   "pi/2")[ :  AT 0];
+      
+      INT upb = UPB phi;
+      
+      PROC test = (REAL a, INT i, j, REAL s, c, t) VOID:
+           BEGIN PROC printangle = VOID:
+                      BEGIN IF a < zero
+                            THEN print ("-(")
+                            FI;
+                            IF ODD j
+                            THEN IF j = 1
+                                 THEN print ("pi/2")
+                                 ELSE print (whole (j, 0));
+                                      print ("*pi/2")
+                                 FI
+                            ELSE IF j /= 0
+                                 THEN IF j = 1
+                                      THEN print ("pi")
+                                      ELSE print (whole (j % 2, 0));
+                                           print ("*pi")
+                                      FI
+                                 FI
+                            FI;
+                            IF i = 0
+                            THEN IF j = 0
+                                 THEN print ("0")
+                                 FI
+                            ELSE IF j /= 0
+                                 THEN print ("+")
+                                 FI;
+                                 print (angle[i])
+                            FI;
+                            IF a < 0
+                            THEN print (")")
+                            FI
+                      END;
+                 
+                 IF ABS (sin (a) - s) > eps
+                 THEN print ((newline, newline, "sin("));
+                      printangle;
+                      print ((") =", sin (a)));
+                      print ((newline, "expected =", s));
+                      warn ("probable error in ''sin''")
+                 FI;
+                 IF ABS (cos (a) - c) > eps
+                 THEN print ((newline, newline, "cos("));
+                      printangle;
+                      print ((") =", cos (a)));
+                      print ((newline, "expected =", c));
+                      warn ("probable error in ''cos''")
+                 FI;
+                 IF (ODD j | i /= 0 | i /= upb)
+                 THEN IF t = maxreal
+                      THEN SKIP
+                      ELIF ABS (tan (a) - t) > two * eps
+                      THEN print ((newline, newline, "tan("));
+                           printangle;
+                           print ((") =", tan (a)));
+                           print ((newline, "expected =", t));
+                           warn ("probable error in ''tan''")
+                      FI
+                 FI
+           END;
+      
+      FOR j FROM 0 TO UPB theta 
+      DO FOR i FROM 0 TO upb - 1 
+         DO REAL a = theta[j] + phi[i];
+            
+            REAL s1 = sphi[(ODD j | upb - i | i)], c1 = sphi[(ODD j | i | upb - i)], t = (ODD j | -tphi[upb - i] | tphi[i]);
+            
+            REAL s = (ODD (j % 2) | -s1 | s1), c = (ODD ((j + 1) % 2) | -c1 | c1);
+            
+            test (a, i, j, s, c, t);
+            test (-a, i, j, -s, c, -t)
+         OD
+      OD;
+      #Check identities:
+                sin(x) = 2*tan(x/2)/(1+tan(x/2)**2),
+                cos(x) = (1-tan(x/2)**2)/(1+tan(x/2)**2),
+                tan(x) = 2*tan(x/2)/(1-tan(x/2)**2).#
+      REAL sums := zero, sumc := zero, sumt := zero, sumsqs := zero, sumsqc := zero, sumsqt := zero, maxs := zero, maxc := zero, maxt := zero, ats, atc, att,
+      INT cs := 0, cc := 0, ct := 0;
+      
+      TO 200 
+      DO REAL a = random;
+         
+         REAL aby2 = a / 2;
+         
+         REAL tanaby2 = tan (aby2);
+         
+         REAL tanaby2sq = tanaby2 * tanaby2;
+         
+         REAL snum = tanaby2 + tanaby2, cnum = 1 - tanaby2sq, denom = 1 + tanaby2sq;
+         
+         REAL s = snum / denom, c = cnum / denom, t = (cnum < 2 / maxreal | -1 | snum / cnum);
+         
+         IF REAL sina = sin (a);
+            
+            REAL d1 = 2 * ABS (sina - s), d2 = ABS sina + ABS s;
+            
+            d2 /= zero
+         THEN REAL d = (d1 / d2) / smallreal;
+              
+              sums +:= d;
+              sumsqs +:= d * d;
+              cs +:= 1;
+              (d > maxs | maxs := d; ats := a)
+         FI;
+         IF REAL cosa = cos (a);
+            
+            REAL d1 = 2.0 * ABS (cosa - c), d2 = ABS cosa + ABS c;
+            
+            d2 /= zero
+         THEN REAL d = (d1 / d2) / smallreal;
+              
+              sumc +:= d;
+              sumsqc +:= d * d;
+              cc +:= 1;
+              (d > maxc | maxc := d; atc := a)
+         FI;
+         IF t >= zero
+         THEN REAL tana = tan (a);
+              
+              REAL d1 = 2 * ABS (tana - t), d2 = ABS tana + ABS t;
+              
+              IF d2 /= zero
+              THEN REAL d = (d1 / d2) / smallreal;
+                   
+                   sumt +:= d;
+                   sumsqt +:= d * d;
+                   ct +:= 1;
+                   (d > maxt | maxt := d; att := a)
+              FI
+         FI
+      OD;
+      PROC p = (STRING s, REAL max, at, sum, sumsq, INT c) VOID:
+           (print ((newline, newline, s));
+            print ((newline, "Max. relative error = smallreal*"));
+            print (fixed (max, -(realwidth % 2 + 1), realwidth % 2 - 1));
+            (max /= zero | print ((newline, "Occurred at x = ", at)));
+            print ((newline, "Average relative error = smallreal*"));
+            print (fixed (sum / c, -(realwidth % 2 + 1), realwidth % 2 - 1));
+            print ((newline, "R.M.S. relative error  = smallreal*"));
+            print (fixed (sqrt (sumsq / c), -(realwidth % 2 + 1), realwidth % 2 - 1)));
+      
+      p ("Checks on sin(a)=2*tan(a/2)/(1+tan(a/2)*2):", maxs, ats, sums, sumsqs, cs);
+      p ("Checks on cos(a)=(1-tan(a/2)*2)/(1+tan(a/2)*2):", maxc, atc, sumc, sumsqc, cc);
+      p ("Checks on tan(a)=2*tan(a/2)/(1-tan(a/2)*2):", maxt, att, sumt, sumsqt, ct)
+END

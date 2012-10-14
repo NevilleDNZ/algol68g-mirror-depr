@@ -1,8 +1,262 @@
+CYGWIN_RELEASE = 0
 bin_PROGRAMS =a68g
-a68g_SOURCES = source/a68g.c source/code.c source/environ.c source/genie.c source/gsl.c source/inet.c source/monitor.c source/mp.c source/plotutils.c source/postgresql.c source/pretty.c source/syntax.c source/edit.c
+a68g_SOURCES = source/a68g.c source/code.c source/environ.c source/genie.c source/gsl.c source/inet.c source/monitor.c source/mp.c source/plotutils.c source/postgresql.c source/pretty.c source/syntax.c
 a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 TESTS_ENVIRONMENT=./a68g
-TESTS=check/check-01.a68 check/check-02.a68 check/check-03.a68 check/check-04.a68 check/check-05.a68 check/check-06.a68 check/check-07.a68 check/check-08.a68 check/check-09.a68 check/check-10.a68
+XFAIL_TESTS=\	
+	test-set/a68g.008.appl08.a68\
+	test-set/a68g.011.appl11.a68\
+	test-set/a68g.015.appl15.a68\
+	test-set/a68g.018.appl18.a68\
+	test-set/a68g.019.appl19.a68\
+	test-set/a68g.021.clau02.a68\
+	test-set/a68g.022.clau03.a68\
+	test-set/a68g.023.clau04.a68\
+	test-set/a68g.025.clau06.a68\
+	test-set/a68g.030.coer02.a68\
+	test-set/a68g.032.coer04.a68\
+	test-set/a68g.033.coer05.a68\
+	test-set/a68g.034.coer06.a68\
+	test-set/a68g.042.decl01.a68\
+	test-set/a68g.043.decl02.a68\
+	test-set/a68g.047.decl06.a68\
+	test-set/a68g.048.decl07.a68\
+	test-set/a68g.049.flex01.a68\
+	test-set/a68g.050.flex02.a68\
+	test-set/a68g.051.flex03.a68\
+	test-set/a68g.052.flex04.a68\
+	test-set/a68g.061.idef05.a68\
+	test-set/a68g.066.idef10.a68\
+	test-set/a68g.068.idef12.a68\
+	test-set/a68g.070.idrl02.a68\
+	test-set/a68g.072.jump02.a68\
+	test-set/a68g.076.mdeq01.a68\
+	test-set/a68g.078.mdeq03.a68\
+	test-set/a68g.080.mdeq05.a68\
+	test-set/a68g.081.mdeq06.a68\
+	test-set/a68g.082.misc01.a68\
+	test-set/a68g.083.misc02.a68\
+	test-set/a68g.084.misc03.a68\
+	test-set/a68g.085.misc04.a68\
+	test-set/a68g.087.misc06.a68\
+	test-set/a68g.109.numr13.a68\
+	test-set/a68g.113.oper04.a68\
+	test-set/a68g.114.oper05.a68\
+	test-set/a68g.115.oper06.a68\
+	test-set/a68g.121.oper12.a68\
+	test-set/a68g.122.oper13.a68\
+	test-set/a68g.124.oper15.a68\
+	test-set/a68g.125.oper16.a68\
+	test-set/a68g.126.scop01.a68\
+	test-set/a68g.127.scop02.a68\
+	test-set/a68g.128.scop03.a68\
+	test-set/a68g.129.scop04.a68\
+	test-set/a68g.133.scop08.a68\
+	test-set/a68g.134.scop09.a68\
+	test-set/a68g.147.simp12.a68\
+	test-set/a68g.149.simp15.a68\
+	test-set/a68g.151.smio01.a68\
+	test-set/a68g.153.smio03.a68\
+	test-set/a68g.154.smio04.a68\
+	test-set/a68g.155.smio05.a68\
+	test-set/a68g.156.smio06.a68\
+	test-set/a68g.158.smio09.a68\
+	test-set/a68g.162.stan02.a68\
+	test-set/a68g.163.stan03.a68\
+	test-set/a68g.165.stow02.a68\
+	test-set/a68g.166.stow03.a68\
+	test-set/a68g.167.stow04.a68\
+	test-set/a68g.168.stow05.a68\
+	test-set/a68g.172.synt01.a68\
+	test-set/a68g.173.synt02.a68\
+	test-set/a68g.174.synt03.a68\
+	test-set/a68g.175.synt04.a68\
+	test-set/a68g.177.synt06.a68\
+	test-set/a68g.178.synt07.a68\
+	test-set/a68g.179.synt08.a68
+
+
+TESTS=\
+	test-set/a68g.001.appl01.go.a68\
+	test-set/a68g.002.appl02.go.a68\
+	test-set/a68g.003.appl03.go.a68\
+	test-set/a68g.004.appl04.go.a68\
+	test-set/a68g.005.appl05.go.a68\
+	test-set/a68g.006.appl06.go.a68\
+	test-set/a68g.007.appl07.go.a68\
+	test-set/a68g.008.appl08.a68\
+	test-set/a68g.009.appl09.go.a68\
+	test-set/a68g.010.appl10.go.a68\
+	test-set/a68g.011.appl11.a68\
+	test-set/a68g.012.appl12.go.a68\
+	test-set/a68g.013.appl13.go.a68\
+	test-set/a68g.014.appl14.go.a68\
+	test-set/a68g.015.appl15.a68\
+	test-set/a68g.016.appl16.go.a68\
+	test-set/a68g.017.appl17.go.a68\
+	test-set/a68g.018.appl18.a68\
+	test-set/a68g.019.appl19.a68\
+	test-set/a68g.020.clau01.go.a68\
+	test-set/a68g.021.clau02.a68\
+	test-set/a68g.022.clau03.a68\
+	test-set/a68g.023.clau04.a68\
+	test-set/a68g.024.clau05.go.a68\
+	test-set/a68g.025.clau06.a68\
+	test-set/a68g.026.clau07.go.a68\
+	test-set/a68g.027.clau08.go.a68\
+	test-set/a68g.028.clau09.go.a68\
+	test-set/a68g.029.coer01.go.a68\
+	test-set/a68g.030.coer02.a68\
+	test-set/a68g.031.coer03.go.a68\
+	test-set/a68g.032.coer04.a68\
+	test-set/a68g.033.coer05.a68\
+	test-set/a68g.034.coer06.a68\
+	test-set/a68g.035.coer07.go.a68\
+	test-set/a68g.036.coer08.go.a68\
+	test-set/a68g.037.coer09.go.a68\
+	test-set/a68g.038.coer10.go.a68\
+	test-set/a68g.039.coer11.go.a68\
+	test-set/a68g.040.coer13.go.a68\
+	test-set/a68g.041.coer14.go.a68\
+	test-set/a68g.042.decl01.a68\
+	test-set/a68g.043.decl02.a68\
+	test-set/a68g.044.decl03.go.a68\
+	test-set/a68g.045.decl04.go.a68\
+	test-set/a68g.046.decl05.go.a68\
+	test-set/a68g.047.decl06.a68\
+	test-set/a68g.048.decl07.a68\
+	test-set/a68g.049.flex01.a68\
+	test-set/a68g.050.flex02.a68\
+	test-set/a68g.051.flex03.a68\
+	test-set/a68g.052.flex04.a68\
+	test-set/a68g.053.garb01.go.a68\
+	test-set/a68g.054.garb02.go.a68\
+	test-set/a68g.055.garb03.go.a68\
+	test-set/a68g.056.garb04.go.a68\
+	test-set/a68g.057.idef01.go.a68\
+	test-set/a68g.058.idef02.go.a68\
+	test-set/a68g.059.idef03.go.a68\
+	test-set/a68g.060.idef04.go.a68\
+	test-set/a68g.061.idef05.a68\
+	test-set/a68g.062.idef06.go.a68\
+	test-set/a68g.063.idef07.go.a68\
+	test-set/a68g.064.idef08.go.a68\
+	test-set/a68g.065.idef09.go.a68\
+	test-set/a68g.066.idef10.a68\
+	test-set/a68g.067.idef11.go.a68\
+	test-set/a68g.068.idef12.a68\
+	test-set/a68g.069.idrl01.go.a68\
+	test-set/a68g.070.idrl02.a68\
+	test-set/a68g.071.jump01.go.a68\
+	test-set/a68g.072.jump02.a68\
+	test-set/a68g.073.jump03.go.a68\
+	test-set/a68g.074.jump04.go.a68\
+	test-set/a68g.075.jump05.go.a68\
+	test-set/a68g.076.mdeq01.a68\
+	test-set/a68g.077.mdeq02.go.a68\
+	test-set/a68g.078.mdeq03.a68\
+	test-set/a68g.079.mdeq04.go.a68\
+	test-set/a68g.080.mdeq05.a68\
+	test-set/a68g.081.mdeq06.a68\
+	test-set/a68g.082.misc01.a68\
+	test-set/a68g.083.misc02.a68\
+	test-set/a68g.084.misc03.a68\
+	test-set/a68g.085.misc04.a68\
+	test-set/a68g.086.misc05.go.a68\
+	test-set/a68g.087.misc06.a68\
+	test-set/a68g.088.misc07.go.a68\
+	test-set/a68g.089.null01.go.a68\
+	test-set/a68g.090.null02.go.a68\
+	test-set/a68g.091.null03.go.a68\
+	test-set/a68g.092.null04.go.a68\
+	test-set/a68g.093.null06.go.a68\
+	test-set/a68g.094.null07.go.a68\
+	test-set/a68g.095.null08.go.a68\
+	test-set/a68g.096.null09.go.a68\
+	test-set/a68g.097.numr01.go.a68\
+	test-set/a68g.098.numr02.go.a68\
+	test-set/a68g.099.numr03.go.a68\
+	test-set/a68g.100.numr04.go.a68\
+	test-set/a68g.101.numr05.go.a68\
+	test-set/a68g.102.numr06.go.a68\
+	test-set/a68g.103.numr07.go.a68\
+	test-set/a68g.104.numr08.go.a68\
+	test-set/a68g.105.numr09.go.a68\
+	test-set/a68g.106.numr10.go.a68\
+	test-set/a68g.107.numr11.go.a68\
+	test-set/a68g.108.numr12.go.a68\
+	test-set/a68g.109.numr13.a68\
+	test-set/a68g.110.oper01.go.a68\
+	test-set/a68g.111.oper02.go.a68\
+	test-set/a68g.112.oper03.go.a68\
+	test-set/a68g.113.oper04.a68\
+	test-set/a68g.114.oper05.a68\
+	test-set/a68g.115.oper06.a68\
+	test-set/a68g.116.oper07.go.a68\
+	test-set/a68g.117.oper08.go.a68\
+	test-set/a68g.118.oper09.go.a68\
+	test-set/a68g.119.oper10.go.a68\
+	test-set/a68g.120.oper11.go.a68\
+	test-set/a68g.121.oper12.a68\
+	test-set/a68g.122.oper13.a68\
+	test-set/a68g.123.oper14.go.a68\
+	test-set/a68g.124.oper15.a68\
+	test-set/a68g.125.oper16.a68\
+	test-set/a68g.126.scop01.a68\
+	test-set/a68g.127.scop02.a68\
+	test-set/a68g.128.scop03.a68\
+	test-set/a68g.129.scop04.a68\
+	test-set/a68g.130.scop05.go.a68\
+	test-set/a68g.131.scop06.go.a68\
+	test-set/a68g.132.scop07.go.a68\
+	test-set/a68g.133.scop08.a68\
+	test-set/a68g.134.scop09.a68\
+	test-set/a68g.135.scop10.go.a68\
+	test-set/a68g.136.simp01.go.a68\
+	test-set/a68g.137.simp02.go.a68\
+	test-set/a68g.138.simp03.go.a68\
+	test-set/a68g.139.simp04.go.a68\
+	test-set/a68g.140.simp05.go.a68\
+	test-set/a68g.141.simp06.go.a68\
+	test-set/a68g.142.simp07.go.a68\
+	test-set/a68g.143.simp08.go.a68\
+	test-set/a68g.144.simp09.go.a68\
+	test-set/a68g.145.simp10.go.a68\
+	test-set/a68g.146.simp11.go.a68\
+	test-set/a68g.147.simp12.a68\
+	test-set/a68g.148.simp13.go.a68\
+	test-set/a68g.149.simp15.a68\
+	test-set/a68g.150.simp16.go.a68\
+	test-set/a68g.151.smio01.a68\
+	test-set/a68g.152.smio02.go.a68\
+	test-set/a68g.153.smio03.a68\
+	test-set/a68g.154.smio04.a68\
+	test-set/a68g.155.smio05.a68\
+	test-set/a68g.156.smio06.a68\
+	test-set/a68g.157.smio08.go.a68\
+	test-set/a68g.158.smio09.a68\
+	test-set/a68g.159.smio10.go.a68\
+	test-set/a68g.160.smio11.go.a68\
+	test-set/a68g.161.smio12.go.a68\
+	test-set/a68g.162.stan02.a68\
+	test-set/a68g.163.stan03.a68\
+	test-set/a68g.164.stow01.go.a68\
+	test-set/a68g.165.stow02.a68\
+	test-set/a68g.166.stow03.a68\
+	test-set/a68g.167.stow04.a68\
+	test-set/a68g.168.stow05.a68\
+	test-set/a68g.169.stow06.go.a68\
+	test-set/a68g.170.stow07.go.a68\
+	test-set/a68g.171.stow08.go.a68\
+	test-set/a68g.172.synt01.a68\
+	test-set/a68g.173.synt02.a68\
+	test-set/a68g.174.synt03.a68\
+	test-set/a68g.175.synt04.a68\
+	test-set/a68g.176.synt05.go.a68\
+	test-set/a68g.177.synt06.a68\
+	test-set/a68g.178.synt07.a68\
+	test-set/a68g.179.synt08.a68
+
 
 if EXPORT_DYNAMIC
 a68g_LDFLAGS = -Wl,--export-dynamic
@@ -12,7 +266,17 @@ endif
 
 pkginclude_HEADERS = source/a68g.h source/a68g-config.h
 man_MANS = doc/a68g.1
-docdir = ${prefix}/doc/@PACKAGE@-@VERSION@
+docdir = @docdir@
 doc_DATA = AUTHORS COPYING NEWS README 
-EXTRA_DIST = $(man_MANS) source/a68g-config.win32.h check/check-01.a68 check/check-02.a68 check/check-03.a68 check/check-04.a68 check/check-05.a68 check/check-06.a68 check/check-07.a68 check/check-08.a68 check/check-09.a68 check/check-10.a68
+EXTRA_DIST = $(man_MANS)\
+	$(TESTS)
+
+cygwin:
+	rm -fvr release/cygwin
+	make install prefix=release/cygwin/usr
+	cd release/cygwin/usr; mv -v doc share/; rm -fvr include
+	cd release/cygwin/usr/share/doc; mv -v * $(PACKAGE_TARNAME)
+	cd release/cygwin; tar -cf $(PACKAGE_TARNAME)-$(PACKAGE_VERSION)-$(CYGWIN_RELEASE).tar usr
+	cd release/cygwin; bzip2 $(PACKAGE_TARNAME)-$(PACKAGE_VERSION)-$(CYGWIN_RELEASE).tar
+	gunzip -c ../$(PACKAGE_TARNAME)-$(PACKAGE_VERSION).tar.gz | bzip2 -c > release/cygwin/$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)-$(CYGWIN_RELEASE)-src.tar.bz2
 

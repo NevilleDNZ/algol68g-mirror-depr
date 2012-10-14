@@ -1,11 +1,14 @@
-/*
-\file monitor.c
-\brief low-level monitor for the interpreter
-*/
+/**
+@file monitor.c
+@author J. Marcel van der Veer.
+@brief Gdb-style monitor for the interpreter.
 
-/*
-This file is part of Algol68G - an Algol 68 interpreter.
+@section Copyright
+
+This file is part of Algol68G - an Algol 68 compiler-interpreter.
 Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
+@section License
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -18,16 +21,16 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 
-/*
+@section Description
+
 This is a basic monitor for Algol68G. It activates when the interpreter
 receives SIGINT (CTRL-C, for instance) or when PROC VOID break, debug or
 evaluate is called, or when a runtime error occurs and --debug is selected.
 
 The monitor allows single stepping (unit-wise through serial/enquiry
 clauses) and has basic means for inspecting call-frame stack and heap. 
-*/
+**/
 
 #if defined HAVE_CONFIG_H
 #include "a68g-config.h"
@@ -100,9 +103,9 @@ static void parse (FILE_T, NODE_T *, int);
   scan_sym((f), (p));\
   QUIT_ON_ERROR;
 
-/*!
-\brief confirm that we really want to quit
-\return same
+/**
+@brief Confirm that we really want to quit.
+@return See brief description.
 */
 
 static BOOL_T confirm_exit (void)
@@ -133,10 +136,10 @@ static BOOL_T confirm_exit (void)
   return (confirm_exit ());
 }
 
-/*!
-\brief give a monitor error message
-\param msg error message
-\param info extra information
+/**
+@brief Give a monitor error message.
+@param msg Error message.
+@param info Extra information.
 */
 
 void monitor_error (char *msg, char *info)
@@ -155,10 +158,10 @@ void monitor_error (char *msg, char *info)
   WRITE (STDOUT_FILENO, ".");
 }
 
-/*!
-\brief scan symbol from input
-\param f file number
-\param p position in tree
+/**
+@brief Scan symbol from input.
+@param f File number.
+@param p Node in syntax tree.
 */
 
 static void scan_sym (FILE_T f, NODE_T * p)
@@ -326,12 +329,12 @@ static void scan_sym (FILE_T f, NODE_T * p)
   }
 }
 
-/*!
-\brief find a tag, searching symbol tables towards the root
-\param table symbol table
-\param a attribute
-\param name name of token
-\return entry in symbol table
+/**
+@brief Find a tag, searching symbol tables towards the root.
+@param table Symbol table.
+@param a Attribute.
+@param name Name of token.
+@return Entry in symbol table.
 **/
 
 static TAG_T *find_tag (TABLE_T * table, int a, char *name)
@@ -362,11 +365,11 @@ static TAG_T *find_tag (TABLE_T * table, int a, char *name)
   }
 }
 
-/*!
-\brief priority for symbol at input
-\param f file number
-\param p position in tree
-\return same
+/**
+@brief Priority for symbol at input.
+@param f File number.
+@param p Node in syntax tree.
+@return See brief description.
 */
 
 static int prio (FILE_T f, NODE_T * p)
@@ -381,10 +384,10 @@ static int prio (FILE_T f, NODE_T * p)
   return (PRIO (s));
 }
 
-/*!
-\brief push a mode on the stack
-\param f file number
-\param m mode to push
+/**
+@brief Push a mode on the stack.
+@param f File number.
+@param m Mode to push.
 */
 
 static void push_mode (FILE_T f, MOID_T * m)
@@ -397,11 +400,11 @@ static void push_mode (FILE_T f, MOID_T * m)
   }
 }
 
-/*!
-\brief dereference, WEAK or otherwise
-\param k position in mode stack
-\param context context
-\return whether value can be dereferenced further
+/**
+@brief Dereference, WEAK or otherwise.
+@param k Position in mode stack.
+@param context Context.
+@return Whether value can be dereferenced further.
 */
 
 static BOOL_T deref_condition (int k, int context)
@@ -416,11 +419,11 @@ static BOOL_T deref_condition (int k, int context)
   }
 }
 
-/*!
-\brief weak dereferencing
-\param p position in tree
-\param k position in mode stack
-\int context context
+/**
+@brief Weak dereferencing.
+@param p Node in syntax tree.
+@param k Position in mode stack.
+@param context Context.
 */
 
 static void deref (NODE_T * p, int k, int context)
@@ -430,16 +433,16 @@ static void deref (NODE_T * p, int k, int context)
     POP_REF (p, &z);
     CHECK_MON_REF (p, z, _m_stack[k]);
     _m_stack[k] = SUB (_m_stack[k]);
-    PUSH (p, ADDRESS (&z), MOID_SIZE (_m_stack[k]));
+    PUSH (p, ADDRESS (&z), SIZE (_m_stack[k]));
   }
 }
 
-/*!
-\brief search moid that matches indicant
-\param refs whether we look for a REF indicant
-\param leng sizety of indicant
-\param indy indicant name
-\return moiD
+/**
+@brief Search moid that matches indicant.
+@param refs Whether we look for a REF indicant.
+@param leng Sizety of indicant.
+@param indy Indicant name.
+@return MoiD.
 **/
 
 static MOID_T *search_mode (int refs, int leng, char *indy)
@@ -475,12 +478,12 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
   return (NO_MOID);
 }
 
-/*!
-\brief search operator X SYM Y
-\param sym operator name
-\param x lhs mode
-\param y rhs mode
-\return entry in symbol table
+/**
+@brief Search operator X SYM Y.
+@param sym Operator name.
+@param x Lhs mode.
+@param y Rhs mode.
+@return Entry in symbol table.
 */
 
 static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
@@ -518,12 +521,12 @@ static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
   return (NO_TAG);
 }
 
-/*!
-\brief search identifier in frame stack and push value
-\param f file number
-\param p position in tree
-\param a68g_link current frame pointer
-\param sym identifier name
+/**
+@brief Search identifier in frame stack and push value.
+@param f File number.
+@param p Node in syntax tree.
+@param a68g_link current frame pointer
+@param sym Identifier name.
 */
 
 static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym)
@@ -539,7 +542,7 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
           if (strcmp (NSYMBOL (NODE (i)), sym) == 0) {
             ADDR_T posit = a68g_link + FRAME_INFO_SIZE + OFFSET (i);
             MOID_T *m = MOID (i);
-            PUSH (p, FRAME_ADDRESS (posit), MOID_SIZE (m));
+            PUSH (p, FRAME_ADDRESS (posit), SIZE (m));
             push_mode (f, m);
             return;
           }
@@ -571,10 +574,14 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68g_link, char *sym
   }
 }
 
-/*!
-\brief coerce arguments in a call
-\param f file number
-\param p position in tree
+/**
+@brief Coerce arguments in a call.
+@param f File number.
+@param p Node in syntax tree.
+@param proc MODE of procedure.
+@param bot Argument count.
+@param top Argument count.
+@param top_sp Value to restore stack pointer.
 */
 
 static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int top, int top_sp)
@@ -589,8 +596,8 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
   QUIT_ON_ERROR;
   for (k = bot, u = PACK (proc); k < top; k++, FORWARD (u)) {
     if (_m_stack[k] == MOID (u)) {
-      PUSH (p, STACK_ADDRESS (sp_2), MOID_SIZE (MOID (u)));
-      sp_2 += MOID_SIZE (MOID (u));
+      PUSH (p, STACK_ADDRESS (sp_2), SIZE (MOID (u)));
+      sp_2 += SIZE (MOID (u));
     } else if (IS (_m_stack[k], REF_SYMBOL)) {
       A68_REF *v = (A68_REF *) STACK_ADDRESS (sp_2);
       PUSH_REF (p, *v);
@@ -610,11 +617,11 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
   stack_pointer = top_sp + (stack_pointer - sp_2);
 }
 
-/*!
-\brief perform a selection
-\param f file number
-\param p position in tree
-\param field field name
+/**
+@brief Perform a selection.
+@param f File number.
+@param p Node in syntax tree.
+@param field Field name.
 */
 
 static void selection (FILE_T f, NODE_T * p, char *field)
@@ -651,9 +658,9 @@ static void selection (FILE_T f, NODE_T * p, char *field)
         CHECK_MON_REF (p, *z, moid);
         OFFSET (z) += OFFSET (v);
       } else {
-        DECREMENT_STACK_POINTER (p, MOID_SIZE (moid));
-        MOVE (STACK_TOP, STACK_OFFSET (OFFSET (v)), (unsigned) MOID_SIZE (MOID (u)));
-        INCREMENT_STACK_POINTER (p, MOID_SIZE (MOID (u)));
+        DECREMENT_STACK_POINTER (p, SIZE (moid));
+        MOVE (STACK_TOP, STACK_OFFSET (OFFSET (v)), (unsigned) SIZE (MOID (u)));
+        INCREMENT_STACK_POINTER (p, SIZE (MOID (u)));
       }
       push_mode (f, MOID (u));
       return;
@@ -662,11 +669,11 @@ static void selection (FILE_T f, NODE_T * p, char *field)
   monitor_error ("invalid field name", field);
 }
 
-/*!
-\brief perform a call
-\param f file number
-\param p position in tree
-\param depth recursion depth
+/**
+@brief Perform a call.
+@param f File number.
+@param p Node in syntax tree.
+@param depth Recursion depth.
 */
 
 static void call (FILE_T f, NODE_T * p, int depth)
@@ -711,11 +718,11 @@ static void call (FILE_T f, NODE_T * p, int depth)
   }
 }
 
-/*!
-\brief perform a slice
-\param f file number
-\param p position in tree
-\param depth recursion depth
+/**
+@brief Perform a slice.
+@param f File number.
+@param p Node in syntax tree.
+@param depth Recursion depth.
 */
 
 static void slice (FILE_T f, NODE_T * p, int depth)
@@ -792,16 +799,16 @@ static void slice (FILE_T f, NODE_T * p, int depth)
     REF_SCOPE (&z) = PRIMAL_SCOPE;
     PUSH_REF (p, z);
   } else {
-    PUSH (p, ADDRESS (&(ARRAY (arr))) + address, MOID_SIZE (res));
+    PUSH (p, ADDRESS (&(ARRAY (arr))) + address, SIZE (res));
   }
   push_mode (f, res);
 }
 
-/*!
-\brief perform a call or a slice
-\param f file number
-\param p position in tree
-\param depth recursion depth
+/**
+@brief Perform a call or a slice.
+@param f File number.
+@param p Node in syntax tree.
+@param depth Recursion depth.
 */
 
 static void call_or_slice (FILE_T f, NODE_T * p, int depth)
@@ -816,11 +823,11 @@ static void call_or_slice (FILE_T f, NODE_T * p, int depth)
   }
 }
 
-/*!
-\brief parse expression on input
-\param f file number
-\param p position in tree
-\param depth recursion depth
+/**
+@brief Parse expression on input.
+@param f File number.
+@param p Node in syntax tree.
+@param depth Recursion depth.
 */
 
 static void parse (FILE_T f, NODE_T * p, int depth)
@@ -870,7 +877,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
         char name[BUFFER_SIZE];
         bufcpy (name, symbol, BUFFER_SIZE);
         args = _m_sp - 1;
-        top_sp = stack_pointer - MOID_SIZE (_m_stack[args]);
+        top_sp = stack_pointer - SIZE (_m_stack[args]);
         SCAN_CHECK (f, p);
         PARSE_CHECK (f, p, depth + 1);
         opt = search_operator (name, _m_stack[_m_sp - 2], TOP_MODE);
@@ -935,7 +942,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       A68_REF z;
       POP_REF (p, &z);
       CHECK_MON_REF (p, z, TOP_MODE);
-      PUSH (p, ADDRESS (&z), MOID_SIZE (sub));
+      PUSH (p, ADDRESS (&z), SIZE (sub));
       TOP_MODE = sub;
     }
     if (TOP_MODE != m) {
@@ -980,7 +987,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       m = NO_MOID;
     }
     if (m != NO_MOID) {
-      int digits = get_mp_digits (m);
+      int digits = DIGITS (m);
       MP_T *z;
       STACK_MP (z, p, digits);
       if (genie_string_to_value_internal (p, m, symbol, (BYTE_T *) z) == A68_FALSE) {
@@ -1105,10 +1112,10 @@ static void parse (FILE_T f, NODE_T * p, int depth)
   }
 }
 
-/*!
-\brief perform assignment
-\param f file number
-\param p position in tree
+/**
+@brief Perform assignment.
+@param f File number.
+@param p Node in syntax tree.
 */
 
 static void assign (FILE_T f, NODE_T * p)
@@ -1132,24 +1139,24 @@ static void assign (FILE_T f, NODE_T * p)
       A68_REF y;
       POP_REF (p, &y);
       CHECK_MON_REF (p, y, TOP_MODE);
-      PUSH (p, ADDRESS (&y), MOID_SIZE (sub));
+      PUSH (p, ADDRESS (&y), SIZE (sub));
       TOP_MODE = sub;
     }
     if (TOP_MODE != SUB (m) && TOP_MODE != MODE (HIP)) {
       monitor_error ("invalid source mode", moid_to_string (TOP_MODE, MOID_WIDTH, NO_NODE));
     }
     QUIT_ON_ERROR;
-    POP (p, ADDRESS (&z), MOID_SIZE (TOP_MODE));
+    POP (p, ADDRESS (&z), SIZE (TOP_MODE));
     PUSH_REF (p, z);
     TOP_MODE = m;
   }
 }
 
-/*!
-\brief evaluate expression on input
-\param f file number
-\param p position in tree
-\param str expression string
+/**
+@brief Evaluate expression on input.
+@param f File number.
+@param p Node in syntax tree.
+@param str Expression string.
 */
 
 static void evaluate (FILE_T f, NODE_T * p, char *str)
@@ -1167,10 +1174,11 @@ static void evaluate (FILE_T f, NODE_T * p, char *str)
   }
 }
 
-/*!
-\brief convert string to int
-\param num number to convert
-\return int value or NOT_A_NUM if we cannot
+/**
+@brief Convert string to int.
+@param num Number to convert.
+@param rest Pointer to rest.
+@return Int value or NOT_A_NUM if we cannot.
 */
 
 static int get_num_arg (char *num, char **rest)
@@ -1204,13 +1212,13 @@ static int get_num_arg (char *num, char **rest)
   }
 }
 
-/*!
-\brief whether item at "w" of mode "q" is initialised
-\param p position in tree
-\param w pointer to object
-\param q moid of object
-\param result whether object is initialised
-\return whether mode of object is recognised
+/**
+@brief Whether item at "w" of mode "q" is initialised.
+@param p Node in syntax tree.
+@param w Pointer to object.
+@param q Moid of object.
+@param result Whether object is initialised.
+@return Whether mode of object is recognised.
 **/
 
 static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T * result)
@@ -1256,7 +1264,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_COMPLEX:
     {
       A68_REAL *r = (A68_REAL *) w;
-      A68_REAL *i = (A68_REAL *) (w + ALIGNED_SIZE_OF (A68_REAL));
+      A68_REAL *i = (A68_REAL *) (w + SIZE_AL (A68_REAL));
       initialised = (BOOL_T) (INITIALISED (r) && INITIALISED (i));
       recognised = A68_TRUE;
       break;
@@ -1366,12 +1374,12 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   return (recognised);
 }
 
-/*!
-\brief show value of object
-\param p position in tree
-\param f file number
-\param item pointer to object
-\param mode mode of object
+/**
+@brief Show value of object.
+@param p Node in syntax tree.
+@param f File number.
+@param item Pointer to object.
+@param mode Mode of object.
 **/
 
 void print_item (NODE_T * p, FILE_T f, BYTE_T * item, MOID_T * mode)
@@ -1396,9 +1404,9 @@ void print_item (NODE_T * p, FILE_T f, BYTE_T * item, MOID_T * mode)
   }
 }
 
-/*!
-\brief indented indent_crlf
-\param f file number
+/**
+@brief Indented indent_crlf.
+@param f File number.
 **/
 
 static void indent_crlf (FILE_T f)
@@ -1410,12 +1418,12 @@ static void indent_crlf (FILE_T f)
   }
 }
 
-/*!
-\brief show value of object
-\param p position in tree
-\param f file number
-\param item pointer to object
-\param mode mode of object
+/**
+@brief Show value of object.
+@param p Node in syntax tree.
+@param f File number.
+@param item Pointer to object.
+@param mode Mode of object.
 **/
 
 static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
@@ -1510,7 +1518,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
     A68_UNION *z = (A68_UNION *) item;
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NO_NODE)) >= 0);
     WRITE (STDOUT_FILENO, output_line);
-    show_item (f, p, &item[ALIGNED_SIZE_OF (A68_UNION)], (MOID_T *) (VALUE (z)));
+    show_item (f, p, &item[SIZE_AL (A68_UNION)], (MOID_T *) (VALUE (z)));
   } else if (mode == MODE (SIMPLIN)) {
     A68_UNION *z = (A68_UNION *) item;
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, " united-moid %s", moid_to_string ((MOID_T *) (VALUE (z)), MOID_WIDTH, NO_NODE)) >= 0);
@@ -1571,13 +1579,13 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
   }
 }
 
-/*!
-\brief overview of frame item
-\param f file number
-\param p position in tree
-\param a68g_link current frame pointer
-\param q tag
-\param modif output modifier
+/**
+@brief Overview of frame item.
+@param f File number.
+@param p Node in syntax tree.
+@param a68g_link current frame pointer
+@param q Tag.
+@param modif Output modifier.
 **/
 
 static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, int modif)
@@ -1609,13 +1617,13 @@ static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, 
   }
 }
 
-/*!
-\brief overview of frame items
-\param f file number
-\param p position in tree
-\param a68g_link current frame pointer
-\param q tag
-\param modif output modifier
+/**
+@brief Overview of frame items.
+@param f File number.
+@param p Node in syntax tree.
+@param a68g_link current frame pointer
+@param q Tag.
+@param modif Output modifier.
 **/
 
 static void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, int modif)
@@ -1626,12 +1634,12 @@ static void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q,
   }
 }
 
-/*!
-\brief introduce stack frame
-\param f file number
-\param p position in tree
-\param a68g_link current frame pointer
-\param printed printed item counter
+/**
+@brief Introduce stack frame.
+@param f File number.
+@param p Node in syntax tree.
+@param a68g_link current frame pointer
+@param printed Printed item counter.
 **/
 
 static void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *printed)
@@ -1646,12 +1654,12 @@ static void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *printed)
   WRITELN (f, output_line);
 }
 
-/*!
-\brief view contents of stack frame
-\param f file number
-\param p position in tree
-\param a68g_link current frame pointer
-\param printed printed item counter
+/**
+@brief View contents of stack frame.
+@param f File number.
+@param p Node in syntax tree.
+@param a68g_link current frame pointer
+@param printed Printed item counter.
 **/
 
 static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *printed)
@@ -1678,12 +1686,12 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68g_link, int *print
   }
 }
 
-/*!
-\brief shows lines around the line where 'p' is at
-\param f file number
-\param p position in tree
-\param n first line number
-\param m last line number
+/**
+@brief Shows lines around the line where 'p' is at.
+@param f File number.
+@param p Node in syntax tree.
+@param n First line number.
+@param m Last line number.
 **/
 
 static void list (FILE_T f, NODE_T * p, int n, int m)
@@ -1708,13 +1716,13 @@ static void list (FILE_T f, NODE_T * p, int n, int m)
   }
 }
 
-/*!
-\brief overview of the heap
-\param f file number
-\param p position in tree
-\param z handle where to start
-\param top maximum size
-\param n number of handles to print
+/**
+@brief Overview of the heap.
+@param f File number.
+@param p Node in syntax tree.
+@param z Handle where to start.
+@param top Maximum size.
+@param n Number of handles to print.
 **/
 
 void show_heap (FILE_T f, NODE_T * p, A68_HANDLE * z, int top, int n)
@@ -1736,10 +1744,10 @@ void show_heap (FILE_T f, NODE_T * p, A68_HANDLE * z, int top, int n)
   WRITELN (f, output_line);
 }
 
-/*!
-\brief search current frame and print it
-\param f file number
-\param a68g_link current frame pointer
+/**
+@brief Search current frame and print it.
+@param f File number.
+@param a68g_link current frame pointer
 **/
 
 void stack_dump_current (FILE_T f, ADDR_T a68g_link)
@@ -1758,12 +1766,12 @@ void stack_dump_current (FILE_T f, ADDR_T a68g_link)
   }
 }
 
-/*!
-\brief overview of the stack
-\param f file number
-\param a68g_link current frame pointer
-\param depth number of frames left to print
-\param printed counts items printed
+/**
+@brief Overview of the stack.
+@param f File number.
+@param a68g_link current frame pointer
+@param depth Number of frames left to print.
+@param printed Counts items printed.
 **/
 
 void stack_a68g_link_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
@@ -1777,12 +1785,12 @@ void stack_a68g_link_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
   }
 }
 
-/*!
-\brief overview of the stack
-\param f file number
-\param a68g_link current frame pointer
-\param depth number of frames left to print
-\param printed counts items printed
+/**
+@brief Overview of the stack.
+@param f File number.
+@param a68g_link current frame pointer
+@param depth Number of frames left to print.
+@param printed Counts items printed.
 **/
 
 void stack_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
@@ -1796,12 +1804,12 @@ void stack_dump (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
   }
 }
 
-/*!
-\brief overview of the stack
-\param f file number
-\param a68g_link current frame pointer
-\param depth number of frames left to print
-\param printed counts items printed
+/**
+@brief Overview of the stack.
+@param f File number.
+@param a68g_link current frame pointer
+@param depth Number of frames left to print.
+@param printed Counts items printed.
 **/
 
 void stack_trace (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
@@ -1818,13 +1826,14 @@ void stack_trace (FILE_T f, ADDR_T a68g_link, int depth, int *printed)
   }
 }
 
-/*!
-\brief examine tags
-\param f file number
-\param p position in tree
-\param a68g_link current frame pointer
-\param q tag
-\param sym symbol name
+/**
+@brief Examine tags.
+@param f File number.
+@param p Node in syntax tree.
+@param a68g_link Current frame pointer.
+@param q Tag.
+@param sym Symbol name.
+@param printed Counts items printed.
 **/
 
 void examine_tags (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, char *sym, int *printed)
@@ -1837,11 +1846,12 @@ void examine_tags (FILE_T f, NODE_T * p, ADDR_T a68g_link, TAG_T * q, char *sym,
   }
 }
 
-/*!
-\brief search symbol in stack
-\param f file number
-\param a68g_link current frame pointer
-\param sym symbol name
+/**
+@brief Search symbol in stack.
+@param f File number.
+@param a68g_link Current frame pointer.
+@param sym Symbol name.
+@param printed Counts items printed.
 **/
 
 void examine_stack (FILE_T f, ADDR_T a68g_link, char *sym, int *printed)
@@ -1858,12 +1868,13 @@ void examine_stack (FILE_T f, ADDR_T a68g_link, char *sym, int *printed)
   }
 }
 
-/*!
-\brief set or reset breakpoints
-\param p position in tree
-\param set mask indicating what to set
-\param is_set to check whether breakpoint is already set
-\param expr expression associated with breakpoint
+/**
+@brief Set or reset breakpoints.
+@param p Node in syntax tree.
+@param set Mask indicating what to set.
+@param num Line number.
+@param is_set To check whether breakpoint is already set.
+@param loc_expr Expression associated with breakpoint.
 **/
 
 void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * is_set, char *loc_expr)
@@ -1906,10 +1917,10 @@ void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * is_set, cha
   }
 }
 
-/*!
-\brief list breakpoints
-\param p position in tree
-\param listed counts listed items
+/**
+@brief List breakpoints.
+@param p Node in syntax tree.
+@param listed Counts listed items.
 **/
 
 static void list_breakpoints (NODE_T * p, int *listed)
@@ -1928,11 +1939,11 @@ static void list_breakpoints (NODE_T * p, int *listed)
   }
 }
 
-/*!
-\brief execute monitor command
-\param p position in tree
-\param cmd command text
-\return whether execution continues
+/**
+@brief Execute monitor command.
+@param p Node in syntax tree.
+@param cmd Command text.
+@return Whether execution continues.
 **/
 
 static BOOL_T single_stepper (NODE_T * p, char *cmd)
@@ -1991,7 +2002,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
             A68_REF z;
             POP_REF (p, &z);
             _m_stack[0] = SUB (_m_stack[0]);
-            PUSH (p, ADDRESS (&z), MOID_SIZE (_m_stack[0]));
+            PUSH (p, ADDRESS (&z), SIZE (_m_stack[0]));
           }
         }
       } else {
@@ -2283,10 +2294,10 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
   }
 }
 
-/*!
-\brief evaluate conditional breakpoint expression
-\param p position in tree
-\return whether expression evaluates to TRUE
+/**
+@brief Evaluate conditional breakpoint expression.
+@param p Node in syntax tree.
+@return Whether expression evaluates to TRUE.
 **/
 
 static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
@@ -2321,9 +2332,9 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
   return (res);
 }
 
-/*!
-\brief evaluate conditional watchpoint expression
-\return whether expression evaluates to TRUE
+/**
+@brief Evaluate conditional watchpoint expression.
+@return Whether expression evaluates to TRUE.
 **/
 
 static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
@@ -2359,9 +2370,10 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
   return (res);
 }
 
-/*!
-\brief execute monitor
-\param p position in tree
+/**
+@brief Execute monitor.
+@param p Node in syntax tree.
+@param mask Reason for single step.
 **/
 
 void single_step (NODE_T * p, unsigned mask)
@@ -2465,9 +2477,9 @@ void single_step (NODE_T * p, unsigned mask)
   }
 }
 
-/*!
-\brief PROC debug = VOID
-\param p position in tree
+/**
+@brief PROC debug = VOID
+@param p Node in syntax tree.
 **/
 
 void genie_debug (NODE_T * p)
@@ -2475,9 +2487,9 @@ void genie_debug (NODE_T * p)
   single_step (p, BREAKPOINT_INTERRUPT_MASK);
 }
 
-/*!
-\brief PROC break = VOID
-\param p position in tree
+/**
+@brief PROC break = VOID
+@param p Node in syntax tree.
 **/
 
 void genie_break (NODE_T * p)
@@ -2486,9 +2498,9 @@ void genie_break (NODE_T * p)
   change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
 }
 
-/*!
-\brief PROC evaluate = (STRING) STRING
-\param p position in tree
+/**
+@brief PROC evaluate = (STRING) STRING
+@param p Node in syntax tree.
 */
 
 void genie_evaluate (NODE_T * p)
@@ -2521,7 +2533,7 @@ void genie_evaluate (NODE_T * p)
         A68_REF w;
         POP_REF (p, &w);
         TOP_MODE = SUB (TOP_MODE);
-        PUSH (p, ADDRESS (&w), MOID_SIZE (TOP_MODE));
+        PUSH (p, ADDRESS (&w), SIZE (TOP_MODE));
       }
     }
     reset_transput_buffer (UNFORMATTED_BUFFER);
@@ -2530,4 +2542,19 @@ void genie_evaluate (NODE_T * p)
   }
   stack_pointer = top_sp;
   PUSH_REF (p, v);
+}
+
+/**
+@brief PROC abend = (STRING) VOID
+@param p Node in syntax tree.
+*/
+
+void genie_abend (NODE_T * p)
+{
+  A68_REF u;
+  POP_REF (p, (A68_REF *) & u);
+  reset_transput_buffer (UNFORMATTED_BUFFER);
+  add_a_string_transput_buffer (p, UNFORMATTED_BUFFER, (BYTE_T *) & u);
+  diagnostic_node (A68_RUNTIME_ERROR | A68_NO_SYNTHESIS, p, get_transput_buffer (UNFORMATTED_BUFFER), NO_TEXT);
+  exit_genie (p, A68_RUNTIME_ERROR);
 }

@@ -1,0 +1,49 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#misc03#
+(   # ALGOL 68 program
+      (test on readability of error messages)
+      10-7-'73, J. Admiraal #
+    PROC inprod = ( [] REAL a, b) REAL:
+    (   REAL s:= 0;
+        FOR k FROM LWB a TO UPB a DO
+        s +:= a[k] * b[k] OD; s ) # inprod # ;
+    PROC vecvec = (INT low, up, shift, []REAL a, b) REAL:
+    inprod(a[low:up], b[low+shift : up+shift])  # vecvec #;
+    PROC matvec = (INT low, up, i, [,] REAL a,
+                                           [] REAL b) REAL:
+    inprod( a[i,low:up], b[low:up]) # matvec #;
+    PROC tamvec = (INT low, up, i, [,] REAL a, [] REALb) REAL:
+    inprod( a[low:up, i], b[low:up]) # tamvec #;
+    PROC matmat = (INT low, up, i, j, [,] REAL a, b) REAL:
+    inprod( a[i, low:up], b[low:up, j]) # matmat #;
+    PROC tammat = (INT low, up, i, j, [,] REAL a, b) REAL:
+    inprod( a[low:up, i], b[low:up, j]) # tammat #;
+    PROC mattam = (INT low, up, i, j, [,] REAL a, b) REAL:
+    inprod( a[i, low:up], b[j, low:up]) # mattam #;
+# #
+    [1 : 10, 1 : 10] REAL ca, [1:10] REAL aa, BOOL bool:= TRUE;
+# Twelve bad calls #
+    vecvec (1, 10, bool, aa, aa);
+    vecvec (1, 10, ca, aa, aa, 1.0);
+    matvec (1, 10, bool, ca, aa);
+    tamvec (1, 10, aa, ca, aa);
+    matmat (1, 10, 5, 5, aa, bool);
+    tammat (1, 10, 5, 5, bool, ca);
+    mattam (1, 10, 5, 5, ca, ca, 1.0);
+    matmat (bool, 10, 5, 5, ca, ca);
+    mattam (aa, 10, 5, 5, ca, ca);
+    vecvec (1, 10, 0, aa);
+    matvec (bool);
+    matmat (1, 10, 5, 5, ca, ca, 1.0)
+)

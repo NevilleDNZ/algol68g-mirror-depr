@@ -1,0 +1,28 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#flex02#
+BEGIN # Transiency tests, all OK #
+  BOOL b = TRUE, y = FALSE;
+  print((
+   IF b THEN LOC CHAR ELSE (LOC STRING)[1] FI:= "a",
+        newline));
+  print((
+   IF b THEN LOC[1:3]CHAR ELSE (LOC STRING)[] FI:= "bcd",
+        newline));
+  print((
+   IF y THEN LOC STRING ELSE LOC[1:1,1:3]CHAR FI:= "efg",
+        newline))
+                      #  a
+                         bcd
+                         efg  #
+END

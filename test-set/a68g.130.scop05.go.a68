@@ -1,0 +1,39 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#scop05#
+
+# No scope error #
+([8] REF [] INT a;
+ 
+ FOR i TO UPB a 
+ # non-local #
+ WHILE PRIO + = 3;
+       
+       TRUE
+ # non-local #
+ DO # non-local #
+    CASE UNION (INT, REAL) (i)
+    # non-local #
+    IN (INT k): 
+       # non-local #
+       BEGIN l:  # non-local # a[k] := LOC [k] INT;
+             FOR i TO k 
+             DO a[k][i] := k + i
+             OD
+       END
+    ESAC
+ OD;
+ print (("A triangle of integers, ascending downwards and to the right", newline));
+ FOR i TO UPB a 
+ DO print ((a[i], newline))
+ OD)

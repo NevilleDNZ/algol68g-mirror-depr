@@ -1,0 +1,44 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#scop04#
+
+# Routine scope error #
+BEGIN print (("Need not run", newline));
+      MODE FUN = PROC (INT) INT;
+      
+      MODE OPERATOR = PROC (FUN) FUN;
+      
+      OPERATOR nabla = (FUN t) FUN:
+      (INT x) INT:
+      t (x) - t (x - 1);
+      
+      OP UP = (OPERATOR a, INT b) OPERATOR:
+         (FUN f) FUN:
+         (b = 0 | f | a ((a UP (b - 1)) (f)));
+      
+      PRIO MIN = 1;
+      
+      OP MIN = (INT a, b) INT:
+         (a <= b | a | b);
+      
+      FUN pol4 = (INT x) INT:
+      x * (x + 1) * (x + 2) * (x + 3);
+      
+      FOR n FROM 0 TO 20 
+      DO print (n);
+         FOR k FROM 0 TO (n - 1) MIN 5 
+         DO print ((nabla UP k) (pol4) (n))
+         OD;
+         print (newline)
+      OD
+END

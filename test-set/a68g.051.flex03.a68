@@ -1,0 +1,24 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#flex03#
+BEGIN # All erroneous #
+  MODE STRENG = FLEX [1:1] CHAR;
+  LOC REF CHAR:= (LOC STRENG)[1];
+    # nontrans #            # trans #
+  LOC REF CHAR := (TRUE | LOC CHAR | (LOC STRENG)[1]);
+    # nontrans #                  # nontrans #        # trans #
+  (TRUE | LOC[1:3]CHAR | LOC STRENG):= "abc";
+              # nonflex #          # flex #
+  (LOC STRENG)[] :=: (LOC STRENG)[]
+      # trans #              # trans #
+END

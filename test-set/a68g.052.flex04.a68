@@ -1,0 +1,22 @@
+# This program is part of the Revised Mathematisch Centrum Algol 68 Test Set
+  by Dick Grune [1979].
+ 
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+ 
+  The complete test set is an open-access publication, 
+  self-archived by Dick Grune and available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+ 
+#flex04#
+(print (("Ghost element test. Results should be:", newline, 3, "  3", newline, "followed by error in multiple assignation", newline, newline, "Results are:", newline));
+ FOR k FROM 3 TO 4 
+ DO FLEX [1 : 0] [1 : 3] CHAR flex fix;
+    
+    flex fix := "  34"[ : k];
+    print (k);
+    print (flex fix);
+    print (newline)
+ OD)
