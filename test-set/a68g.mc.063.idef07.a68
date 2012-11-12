@@ -1,0 +1,31 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#idef07#
+BEGIN # Redeclaring LWB #
+      OP LWB = ([] INT a) REAL:
+         a[1] + a[2];
+      
+      OP LWB = ([] REAL a) REAL:
+         a[1] - a[2];
+      
+      print (LWB (1 | (8, 2), 3, [] INT: SKIP));
+      # 10.0 # print (LWB (1 | (8, 2), 3, [] REAL: SKIP));
+      #  6.0 # SKIP
+END

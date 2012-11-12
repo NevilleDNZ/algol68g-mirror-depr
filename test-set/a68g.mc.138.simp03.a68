@@ -1,0 +1,37 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#simp03#
+BEGIN #Referencing and dereferencing#
+      INT i1 = 1;
+      
+      INT i2 = 2;
+      
+      INT i3 = 3;
+      
+      INT ii1 := i1;
+      
+      INT ii2 := i2;
+      
+      REF INT iii1 := ii1;
+      
+      print ((newline, "Value should be 1", iii1));
+      iii1 := ii2;
+      print ((newline, "Value should be 2", iii1))
+END

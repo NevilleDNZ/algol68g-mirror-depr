@@ -1,0 +1,1961 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+  PR quiet PR
+
+#appl19#
+#
+  +prpl>lftc   "input"   "tables"
+"forward"
+a: "x", "d";
+   b, "c";
+"e", "x", "c";
+   "e", b, "d";
+   "u", c.
+b: "x".
+c: c.
+d: c.
+a: a.
+.
+#
+# The above is input for this program #
+
+BEGIN
+   # For timing information see routine 'time', near line 100 #
+STRING progname = "Parser Generator for ALGOL 68 H -- Version 2.0.0";
+   # This is an intermediate version of a program being
+     written by Hendrik Boom. It should not be considered
+     to be a finished product; however, this present
+     version appears to work.
+   #
+   # <><><><>
+      Things to do:
+      Find out whether it is worth doing SLR1 when we have LALR.
+      Modify table production to handle LALR.
+      Should 'check look ahead' save LALR lookaheads.
+      Selectively avoid creating bit tables.
+   #
+# Temporary measures #                                     # PR page PR #
+                                                           # PR page PR #
+INT left margin := 1,
+INT place := 0;
+INT right margin = 130;
+[1 : right margin] CHAR print line;
+PROC indent = VOID : left margin +:= 3;
+PROC dedent = VOID :
+   IF left margin > 3
+   THEN left margin -:= 3 FI;
+PROC end line = VOID:
+   BEGIN
+   print((print line[1 : place], newline));
+   place :=
+      ( left margin > right margin % 2
+      | right margin % 2
+      | left margin ) - 1;
+   FOR i FROM 1 TO place DO print line[i] := " " OD
+   END,
+PROC my end line = VOID:
+   BEGIN
+   left margin +:= 6;
+   end line;
+   left margin -:= 6
+   END;
+OP -< = (CHAR c) VOID :
+   BEGIN
+   IF place >= right margin THEN end line FI;
+   print line[place +:= 1] := c
+   END # of 'print' characters # ;
+OP -< = (REF STRING s) VOID :
+   IF
+      IF place >= right margin THEN my end line FI;
+      INT ub = UPB s;
+      INT np = place + ub;
+      np <= right margin
+   THEN # normal case #
+      print line[place+1 : np] := s;
+      place := np
+   ELSE INT break = right margin - place;
+      -< s[1:break];
+      my end line;
+      -< s[break+1 : ]
+   FI # end of 'print' for string variables #;
+OP +< = (STRING s) VOID :
+   IF
+      IF place >= right margin THEN my end line FI;
+      INT ub = UPB s;
+      INT np = place + ub;
+      np <= right margin
+   THEN # normal case #
+      print line[place+1 : np] := s;
+      place := np
+   ELSE LOC FLEX [1 : ub] CHAR t;
+      t := s;
+      -< t
+   FI;
+OP -< = (INT i) VOID : +< whole(i, 0),
+OP -< = (BOOL b) VOID:
+      (b | +< "true" | +< "false");
+PROC time = (STRING s) VOID: # if applicable #
+   (
+   COMMENT No enquiries ---
+   dedent; end line; indent;
+   +< s; +< " after ";
+   +< fixed(clock, 0, 6); +< " seconds"; end line;
+   IF g opt THEN collect garbage FI;
+   -< available; +< "words of storage are available after ";
+   -< collections; +< " garbage collections ";
+   +< "which have collected a total of " ; -< garbage;
+   +< " words of garbage and have cost ";
+   +< fixed(collect seconds, 0, 6);
+   +< " seconds of CPU time. "; end line;
+   --- end of COMMENT
+   SKIP
+   );
+BOOL g opt := FALSE;
+# SLR(1) parser generator #                                # PR page PR #
+PROC generate parser =
+   (REF FILE input, output,
+      BOOL pr opt, pl opt, ple opt, f opt, s opt, t opt,
+             c opt, ll1 opt)
+   BOOL:
+#
+   pr opt:   print r matrix.
+   pl opt:   print l matrix.
+   gt opt:    print l nonempty matrix.
+   f:   print f matrix.
+   s opt:   try SLR(1) processing first.
+   t opt:   trace building of FSM.
+   c opt:   trace configurations of states.
+   ll1 opt:   perform ll1 check.
+#
+BEGIN
+# Global changes desired:
+   Replace "CONFLIST" everywhere by "PROMLIST"
+#
+# Other possible changes:
+   The lookaheads are not needed to compute the a matrix and the
+   margins, with a few exceptions: production transitions are not
+   placed in a, but only in the margins.
+   The 'm' matrix and entire FSM list structure can then be discarded,
+   except for representative back transitions for error messages,
+   releasing storage for the bit matrix computations.
+   The net effect would be to reduce the main storage required.
+#
++< progname; end line;
+time("Started");
++< "Options:"; indent; end line;
+   +< "pr opt "; -< pr opt; end line;
+   +< "pl opt "; -< pl opt; end line;
+  +< "ple opt "; -< ple opt; end line;
+   +< "LL1 opt "; -< ll1 opt; end line;
+   +< "f opt "; -< f opt; end line;
+   +< "s opt "; -< s opt; end line;
+   +< "t opt "; -< t opt; end line;
+   +< "c opt "; -< c opt; end line;
+   +< "g opt "; -< g opt; end line;
+   dedent; end line;
+   #Modes#                                                 # PR page PR #
+MODE
+   STATE = STRUCT(
+         REF TRANSITIONLIST out # all transitions leading out of
+            this state #,
+      REF TRANSITIONLIST in
+         # all transitions leading into this state;
+         repeatedly following the first 'in' transition of the 'in'
+         transitionlist of each state will eventually lead to
+         the start state #,
+         REF CONFLIST conf # the configurations of this state #,
+      BOOL is adequate # initially TRUE. 'is adequate' is assigned
+         FALSE only when the state is judged adequate; i.e.,
+         all its lookahead is resolved. #,
+         REF STATE next # in same hash bucket #,
+                       link # 'link' links new states together
+                         until they are fully processed #,
+         INT number),
+      TRANSITIONLIST = STRUCT(
+         REF TRANSITION this,
+         REF TRANSITIONLIST next),
+      TRANSITION = STRUCT(
+         REF STATE from,
+         MARKER symbol,
+         REF STATE to # production transitions lead nowhere;
+            therefore their 'to' fields are NIL #,
+         INT number,
+         INT scan # used to prevent endless recursion in
+            'lalr look ahead' #
+         ),
+      PRODUCTION = STRUCT(
+         SYMBOL left,
+         PROMOTION right,
+         INT number,
+         BOOL useful),
+      PRODUCTIONLIST = STRUCT(
+         PRODUCTION this,
+         REF PRODUCTIONLIST next),
+      PROD = PRODUCTION,
+      SYMBOL = REF SYM,
+      SYM = STRUCT(
+         STRING name,
+         INT number,
+         BOOL isterminal,
+         REF CONFLIST attachment,
+         REF STATE states # states are hashed according to
+            access symbol; STATES points to the hash bucket #,
+         BOOL useful, productive, empty,
+         REF PRODUCTIONLIST definitions),
+      SYMBOLLIST = STRUCT(
+         SYMBOL this,
+         REF SYMBOLLIST next),
+      CONFIGURATION = STRUCT(
+         SYMBOL sym,
+         PROMOTION promote),
+      CONF = CONFIGURATION,
+      CONFLIST = STRUCT(
+         PROMOTION this,
+         REF CONFLIST next),
+      PROMOTION = UNION(REF CONF, REF PROD),
+      MARKER = UNION(SYMBOL, REF PROD),
+      GRAMMAR = STRUCT(
+         REF [] REF PRODUCTION productions,
+         REF PRODUCTION start production,
+         REF [] SYMBOL symbols,
+                           terminals,
+                           nonterminals,
+         SYMBOL start,
+                  end of file
+         ),
+# PR page PR #
+PRIO ORAB = 1,
+       ANDAB = 1,
+       MIN = 1,
+       MAX = 1;
+OP ORAB = (REF BOOL a, BOOL b)REF BOOL : a:= a OR b,
+   ANDAB = (REF BOOL a, BOOL b) REF BOOL: a:= a AND b,
+   ORAB = (REF BITS a, BITS b)REF BITS : a:= a OR b,
+   ANDAB = (REF BITS a, BITS b)REF BITS : a:= a AND b,
+   MIN = (INT a,b)INT: (a > b| b| a),
+   MAX = (INT a,b)INT : (a > b| a| b);
+OP = = (UNION(MARKER, PROMOTION) a, b) BOOL :
+         NOT (a /= b),
+     /= = (UNION(MARKER, PROMOTION) a, b) BOOL :
+   CASE a
+   IN
+      (SYMBOL a): ( b | (SYMBOL b) : a :/=: b | TRUE ),
+      (REF PROD a): ( b | (REF PROD b): a :/=: b | TRUE ),
+      (REF CONF a): ( b | (REF CONF b): a :/=: b | TRUE )
+   OUT error("invalid parameter to /= - Parser generator error");
+      GOTO stop
+   ESAC;
+OP /= =(REF CONFLIST c,d) BOOL:
+         NOT (c = d),
+     = =(REF CONFLIST c,d) BOOL:
+      c <= d AND d <= c,
+     <= = (REF CONFLIST c,d) BOOL:
+         BEGIN
+         REF CONFLIST l,m;
+         l:= c;
+         WHILE IF l :/=: REF CONFLIST (NIL)
+            THEN # test that 'this' OF 'l' is in 'd'. #
+               m := d;
+               WHILE IF m :/=: REF CONFLIST (NIL)
+                  THEN
+                     this OF l /= this OF m
+                  ELSE FALSE
+                  FI
+               DO m:= next OF m
+               OD;
+               # assert 'm' :=: NIL iff this OF 'l' is not in d #
+               m :/=: REF CONFLIST (NIL)
+            ELSE FALSE
+            FI
+         DO l:= next OF l
+         OD;
+         # assert l :=: NIL iff c is contained in d #
+         l :=: REF CONFLIST ( NIL )
+         END # of <= #;
+OP SIZE = (REF CONFLIST c) INT :
+   BEGIN
+   INT i := 0;
+   LOC REF CONFLIST d := c;
+   WHILE d :/=: REF CONFLIST(NIL)
+   DO d := next OF d; i +:= 1
+   OD;
+   i
+   END # of 'size' #;
+PROC for right side =
+   (  REF PRODUCTION p,
+      PROC(REF SYMBOL)VOID x )
+   VOID:
+   BEGIN
+   PROMOTION prom := right OF p;
+   WHILE CASE prom
+      IN (REF PROD p) : FALSE,
+         (REF CONF c): (x(sym OF c);
+         prom := promote OF c;
+            TRUE)
+      ESAC
+   DO SKIP OD
+   END # of 'for right side' #;
+# Output #                                                 # PR page PR #
+MODE PRINTABLE = UNION( CHAR, STRING, INT, REF SYM,
+         PROC(REF FILE) VOID,
+         REF PROD, REF PRODUCTIONLIST, REF CONF,
+         REF [] REF PROD,
+         REF SYMBOLLIST,
+         REF TRANSITIONLIST,
+         REF STATE, REF TRANSITION, GRAMMAR);
+PROC error = ([]PRINTABLE message) VOID :
+   BEGIN
+   end line; +< "Error detected: ";
+   show(message);
+   end line
+   END #error#;
+PROC sys error = ([]PRINTABLE message) VOID :
+   BEGIN
+   end line; +< "System error detected: ";
+   show(message);
+   end line
+   END # of 'sys error' #;
+PROC([]PRINTABLE) VOID sys err = sys error;
+PROC show = ([] PRINTABLE x) VOID:
+   FOR i FROM LWB x TO UPB x
+   DO
+   CASE x[i]
+   IN
+      (PROC (REF FILE) VOID x) : (end line; x(stand out)),
+      (CHAR c): -< c,
+      (STRING s): +< s,
+      (INT i): -< i,
+      (REF SYM s): -< i,
+      (REF SYMBOLLIST s): -< s,
+      (REF PRODUCTION p): -< p,
+      (REF PRODUCTIONLIST p): -< p,
+      (REF [ ] REF PROD p): -< p,
+      (REF CONFIGURATION c): -< c,
+      (REF STATE s): -< s,
+      (REF TRANSITION t): -< t,
+      (REF TRANSITIONLIST t): -< t,
+      (GRAMMAR g): -< g
+   OUT +< "Unprintable stuff"
+   ESAC
+   OD # end of 'show' #;
+OP -< = (REF SYM s) VOID :
+                    IF s :/=: REF SYM(NIL)
+                     THEN -< name OF s
+                     ELSE +< "*ref sym nil*"
+                    FI,
+OP -< = (REF SYMBOLLIST s) VOID :
+                           IF s :=: REF SYMBOLLIST(NIL)
+                           THEN SKIP
+                           ELSE -< this OF s; +< ", ";
+                                   -< next OF s
+                           FI,
+OP -< = (REF PRODUCTIONLIST p) VOID:
+      (p :=: NIL | SKIP | -< this OF p; -< next OF p),
+OP -< = (REF [ ] REF PROD p) VOID:
+      IF p :=: REF [] REF PROD(NIL)
+      THEN SKIP
+      ELSE
+         FOR i FROM LWB p TO UPB p
+         DO -< p[i]; end line
+         OD
+      FI,
+OP -< = (PROMOTION prom) VOID:
+   CASE prom
+   IN
+   (REF CONFIGURATION c):
+      IF c :=: REF CONFIGURATION(NIL)
+      THEN +< "* ref conf nil *"
+      ELSE
+         PROMOTION p := c; PRODUCTION pr;
+         WHILE CASE p
+            IN
+            (REF CONF c): (p := promote OF c; TRUE),
+            (REF PROD p): (pr := p; FALSE)
+            ESAC
+         DO SKIP OD ;
+         show configuration(pr, c)
+      FI,
+   (REF PRODUCTION p):
+         show configuration(p, REF PROD(NIL))
+   OUT syserr("+< promotion fails")
+   ESAC,
+OP -< = (REF CONFLIST c) VOID:
+   IF c :=: REF CONFLIST(NIL)
+      THEN +< "* ref conflist nil *"
+   ELSE REF CONFLIST l := c;
+      WHILE l :/=: REF CONFLIST(NIL)
+      DO -< this OF l; end line;
+         l := next OF l
+      OD
+   FI,
+OP -< = (REF STATE s) VOID:
+      (+< "state number ", -< number OF s),
+OP -< = (REF TRANSITION t) VOID :
+      ( +< "transition from "; -< from OF t;
+         +< " to ";
+         IF to OF t :=: REF STATE(NIL)
+         THEN +< "nowhere"
+         ELSE -< to OF t
+         FI;
+         +< " under ";
+         CASE symbol OF t
+         IN
+            (SYMBOL s): -< s,
+            (REF PROD p): -< p
+         OUT +< "????"
+         ESAC
+      ),
+OP -< = (REF TRANSITIONLIST t) VOID:
+   IF t :/=: REF TRANSITIONLIST(NIL)
+   THEN -< this OF t; +< ", "; -< next OF t
+   FI,
+OP -< = (GRAMMAR g) VOID:
+   BEGIN print(newpage); -< productions OF g END,
+PROC show configuration = (REF PROD p, PROMOTION c) VOID:
+   BEGIN
+   -< number OF p; +< ": "; -< left OF p;
+   CHAR sep := ":";
+   PROMOTION pro := right OF p;
+   WHILE
+      IF c = pro THEN +< " ..." FI;
+      CASE pro
+      IN (REF PROD): FALSE,
+         (REF CONF c): ( -< sep; -< " "; -< sym OF c;
+                            pro := promote OF c;
+                            TRUE)
+      ESAC
+   DO sep := ","
+   OD;
+      IF sep = ":" THEN +< ": " FI;
+   +< ". "
+   END # of 'show configuration' #;
+OP +< = (REF STATE s) VOID :
+         IF s:/=: NIL
+         THEN IF in OF s :/=: REF TRANSITIONLIST (NIL)
+            THEN REF TRANSITION t = this OF in OF s;
+               IF t :/=: REF TRANSITION(NIL)
+               THEN +< from OF t;
+                  CASE symbol OF t
+                  IN (SYMBOL s): ( -< " "; -< name OF s)
+                  OUT syserr(("nonsymbol on transition ", t))
+                  ESAC
+               FI
+            FI
+         FI;
+#Reading grammars #                                        # PR page PR #
+#
+   Grammars are read in according to the following
+      grammar:
+   grammar: direction, productions, ".".
+   productions: production, ".";
+                productions, ".", production.
+   direction: empty, """forward""", """backward""".
+   production: non-terminal, ":", right sides.
+   right side: empty;
+               symbol;
+               symbol, ",", right side.
+   right sides: right side;
+                right side; ";"; right sides.
+   symbol: terminal; nonterminal.
+   nonterminal: TAG.
+   terminal: strict terminal; pseudo terminal.
+   x:: strict; pseudo.
+   x terminal: x mark, x images, x mark.
+   x images: CHARACTER;
+             x mark, xmark;
+             character, x images;
+             x mark, x mark, x images.
+   strict mark: """".
+   pseudo mark: "''".
+#
+PROC read grammar = (REF GRAMMAR g)BOOL:
+   BEGIN
+   BOOL input line ended := FALSE;
+   CHAR input state := " ";
+   PROC char in string=
+      (CHAR c, STRING s)BOOL:
+      BEGIN BOOL val:= FALSE;
+      FOR i FROM LWB s TO UPB s
+      WHILE NOT ( val := c = s[i])
+      DO SKIP OD;
+      val
+      END # char in string#;
+   PROC is letter = (CHAR c)BOOL:
+          c = "<" OR c = ">" OR
+         (c >= "a")AND (c <= "z"),
+      is letdig = (CHAR c)BOOL:
+          c = "<" OR c = ">" OR
+           c >= "a" AND c <= "z"
+      OR c >= "0" AND c <= "9";
+   CHAR char:= " ";
+   STRING line := "", INT linept := 1;
+   PROC next ch = BOOL:
+      BEGIN
+      input line ended := FALSE;
+      WHILE linept > UPB line
+      DO get(input, (newline, line));
+         print((input state, " ", line, newline));
+         linept := 1;
+         input line ended := TRUE
+      OD;
+      char := line[linept];
+      linept +:= 1;
+      TRUE
+      END;
+   PROC skip comments = VOID:
+         WHILE char = "#" OR char = "[" OR char = "+"
+         DO
+         IF char = "["
+         THEN input state := "]";
+            WHILE nextch; char /= "]"
+            DO SKIP OD;
+            input state := " ";
+            nextch
+         ELSE
+            CHAR ch = char;
+            WHILE nextch;
+               IF char = ch
+               THEN nextch; FALSE
+               ELIF input line ended
+               THEN error(("unfinished comment")); FALSE
+               ELSE TRUE
+               FI
+            DO SKIP OD
+         FI
+         OD # end of 'skip comments' # ;
+   PROC next char = BOOL:
+         BEGIN
+         next ch;
+         skip comments;
+         TRUE
+         END # of next char #;
+   PROC coast = VOID:
+      IF char = " "
+      THEN WHILE next char; char = " " DO SKIP OD
+      FI;
+   PROC verslind= (STRING stop)VOID:
+      BEGIN input state := "-";
+      WHILE NOT char in string(char, stop)
+      DO next char
+      OD;
+      input state := " "
+      END;
+   PROC look up terminal =
+      (STRING name) SYMBOL:
+         look up symbol (terminals, name, nmb terminals),
+   PROC look up nonterminal=
+      (STRING name) SYMBOL:
+         look up symbol(nonterminals, name, nmb nonterminals),
+   PROC look up symbol=
+      (REF REF SYMBOLLIST table,
+         STRING name,
+         REF INT counter) SYMBOL :
+         BEGIN
+         REF SYMBOLLIST t := table;
+         WHILE IF t :/=: REF SYMBOLLIST(NIL)
+                 THEN name OF this OF t /= name
+                 ELSE FALSE
+                 FI
+         DO t:= next OF t
+         OD;
+         IF t :=: REF SYMBOLLIST(NIL)
+         THEN t := table := HEAP SYMBOLLIST :=
+            (HEAP SYM :=
+               (name, counter +:= 1, SKIP, NIL, NIL,
+                  FALSE, FALSE, FALSE, NIL
+               ),
+            table
+            )
+         FI;
+         this OF t
+         END;
+   PROC read nonterminal = (REF STRING n) BOOL:
+      IF coast; isletter(char)
+      THEN
+         WHILE isletdig(char)
+         DO n +:= char;
+            next char;
+            IF char = " "
+            THEN coast;
+               IF isletdig(char)
+               THEN n +:= " "
+               FI
+            FI
+         OD;
+         TRUE
+      ELIF char = "/"
+      THEN n +:= "/"; nextchar;
+         IF read terminal(n)
+         THEN TRUE
+         ELSE read nonterminal(n)
+         FI
+      ELSE FALSE
+      FI # end of read nonterminal #;
+   PROC in nonterminal=(REF SYMBOL s) BOOL:
+      IF STRING n := ""; read nonterminal(n)
+      THEN s := look up nonterminal(n);
+         IF (n[1] = "/" OR n[1] = "<" OR n[1] = ">")
+            AND NOT empty OF s
+         THEN productionlist :=
+               HEAP PRODUCTIONLIST :=
+                  ((s, SKIP, nmb prod +:= 1, FALSE),
+                     productionlist);
+            right OF this OF productionlist := this OF
+                  productionlist;
+            empty OF s := TRUE
+         FI;
+         TRUE
+      ELSE FALSE
+      FI # end of 'in nonterminal' # ;
+   PROC read terminal = (REF STRING n) BOOL:
+      IF coast; char = "''" OR char = """"
+      THEN CHAR x = char; n +:= x;
+         input state := char;
+         WHILE
+            next ch;
+            IF char = x
+            THEN n +:= x; next ch; char = x
+            ELIF input line ended
+            THEN error(("unfinished terminal ", n)); FALSE
+            ELSE TRUE
+            FI
+         DO n +:= char
+         OD;
+         input state := " ";
+         skip comments;
+         TRUE
+      ELSE FALSE
+      FI # end of 'read terminal' # ;
+   PROC in terminal = (REF SYMBOL s) BOOL:
+      IF STRING n := ""; read terminal(n)
+      THEN
+         IF UPB n > 2
+         THEN s:= look up terminal(n); TRUE
+         ELSE error("empty terminal"); FALSE
+         FI
+      ELSE FALSE
+      FI # end of in terminal#;
+   PROC in symbol = (REF SYMBOL s) BOOL:
+      (in nonterminal(s) | TRUE| in terminal(s));
+   PROC in right tail = ( REF PROMOTION c,
+                          REF PRODUCTION p) BOOL:
+      IF SYMBOL s;
+         in symbol(s)
+      THEN
+      IF forward
+      THEN c := HEAP CONFIGURATION :=
+         (  s,
+            IF coast; char=","
+            THEN IF PROMOTION c;
+                  next char;
+                  in right tail(c,p)
+               THEN c
+               ELSE p
+               FI
+            ELIF char = "." OR char = ";"
+            THEN p # empty alternative #
+            ELSE error(
+                  ""","", ""."", or "";"" expected but not found");
+               p
+            FI
+         );
+      TRUE
+      ELSE c := HEAP CONFIGURATION := (s, p);
+            WHILE coast; char = ","
+            DO IF next char; in symbol(s)
+               THEN c := HEAP CONFIGURATION := (s, c)
+               ELSE error("missing or invalid symbol");
+                  verslind(",;:.")
+               FI
+            OD;
+            TRUE
+      FI
+      ELSE c := p; TRUE
+      FI # end of in right tail#;
+   PROC in right side = (REF PROD p) BOOL:
+            # yes, only one REF here #
+      IF
+         HEAP PROMOTION c;
+         in right tail (c, p)
+      THEN right OF p := c;
+         TRUE
+      ELSE FALSE
+      FI;
+   PROC in production = (REF REF PRODUCTIONLIST l) BOOL:
+      IF
+         SYMBOL left; in nonterminal(left)
+      THEN IF coast; char=":"
+         THEN
+            WHILE char = ":" OR char = ";"
+            DO
+               next char;
+               l := HEAP PRODUCTIONLIST :=
+                  ((left, SKIP, nmb prod +:= 1, FALSE), l);
+               IF in right side(this OF l)
+               THEN coast
+               ELSE error("invalid right side.")
+               FI
+            OD;
+            IF char /= "."
+            THEN error("invalid right side terminator");
+               verslind(".");
+               FALSE
+            ELSE TRUE
+            FI
+         ELSE error("no "":"""); verslind(":"); FALSE
+         FI
+      ELSE error("no nonterminal on left");
+         FALSE
+      FI # end of in production #;
+   PROC in grammar= BOOL:
+      BEGIN
+      (STRING s; get(input, s));
+      STRING direction := "";
+      forward :=
+         IF NOT read terminal(direction)
+         THEN TRUE
+         ELIF direction = """forward""" THEN TRUE
+         ELIF direction = """backward""" THEN FALSE
+         ELSE error(("invalid direction", direction,
+               ". ""forward"" is assumed. "));
+            TRUE
+         FI;
+      WHILE coast; char /= "."
+      DO IF in production (production list)
+         THEN IF program symbol :=: SYMBOL(NIL)
+            THEN program symbol:= left OF this OF production list
+            FI
+         ELSE error("invalid production");
+            verslind(".")
+         FI;
+         next char
+      OD;
+      TRUE
+      END # of in grammar # ;
+                                                           # PR page PR #
+   BOOL forward := TRUE;
+   INT nmb prod:= 0,
+      nmb terminals:= 0,
+      nmb nonterminals:= 0;
+   REF PRODUCTIONLIST productionlist := NIL;
+   REF SYMBOLLIST terminals := NIL,
+         nonterminals := NIL;
+   SYMBOL program symbol := NIL;
+   SYMBOL start symbol = look up nonterminal ("* start *"),
+         end of file = look up terminal ( "* end of file *" );
+   in grammar;
+   production list := HEAP PRODUCTIONLIST :=
+         (SKIP, production list);
+   REF PRODUCTION start production = this OF production list;
+   start production :=
+         (start symbol,
+            HEAP CONFIGURATION:= (
+               IF program symbol :=: SYMBOL(NIL)
+               THEN error("grammar has no productions"); start symbol
+               ELSE program symbol
+               FI,
+               HEAP CONFIGURATION:= (
+                  end of file,
+                  start production
+                  )
+               ),
+         nmb prod +:= 1,
+         FALSE
+         );
+   HEAP [ 1 : nmb prod] REF PRODUCTION productions;
+   HEAP [1: nmb terminals + nmb nonterminals]
+         SYMBOL symbols;
+   WHILE production list :/=: REF PRODUCTIONLIST ( NIL )
+   DO
+      REF PRODUCTIONLIST here = production list;
+      production list := next OF here;
+      productions[number OF this OF here] := this OF here;
+      next OF here := definitions OF left OF this OF here;
+      definitions OF left OF this OF here := here
+   OD;
+   WHILE terminals :/=: REF SYMBOLLIST(NIL)
+   DO
+      symbols[number OF this OF terminals] := this OF terminals;
+      is terminal OF this OF terminals:= TRUE;
+      terminals:= next OF terminals
+   OD;
+   WHILE nonterminals :/=: REF SYMBOLLIST (NIL)
+   DO
+      symbols[number OF this OF nonterminals +:= nmb terminals] :=
+            this OF nonterminals;
+      is terminal OF this OF nonterminals := FALSE;
+      nonterminals:= next OF nonterminals
+   OD;
+   g :=
+      (productions, start production,
+      symbols, symbols[1:nmb terminals],
+            symbols[nmb terminals +1: nmb terminals + nmb nonterminals
+                  @ nmb terminals + 1],
+      start symbol, end of file);
+   TRUE
+   END # of read grammar#;
+                                                           # PR page PR #
+GRAMMAR g;
+time("Read grammar");
+IF read grammar(g)
+THEN
+time("Grammar read");
+PROC extract production data = VOID:
+   BEGIN INT l; PROMOTION p;
+   FOR i FROM 1 TO nmb productions
+   DO target[i] := number OF left OF production[i];
+      production length[i] := (l := 0; p := right OF production [i];
+         FOR i FROM 0
+         WHILE CASE p
+            IN (REF PROD) : (l := i; FALSE),
+            (REF CONF c) : (p := promote OF c; TRUE)
+            ESAC
+         DO SKIP OD;
+         l
+         )
+   OD
+   END # of extract production data #;
+PROC find empty and useless nonterminals = VOID :
+   BEGIN
+   FOR i TO UPB symbol
+   DO empty OF symbol[i] := FALSE;
+      productive OF symbol[i] := FALSE;
+      useful OF symbol[i] := FALSE
+   OD;
+   FOR i FROM LWB terminal TO UPB terminal
+   DO productive OF symbol[i] := TRUE
+   OD;
+   WHILE
+      BEGIN
+      BOOL change := FALSE;
+      PRIO NEWT= 1;
+      OP NEWT=(REF BOOL d,BOOL s) VOID:
+         ( NOT d AND s
+         | d := TRUE; change := TRUE
+         );
+      FOR pn FROM 1 TO UPB production
+      DO REF PRODUCTION p= production [pn];
+         PROMOTION r := right OF p;
+         BOOL emptyright:= TRUE,
+            productive right:= TRUE;
+         WHILE
+            CASE r
+            IN (REF CONFIGURATION c):
+                  BEGIN
+                  emptyright ANDAB empty OF sym OF c;
+                  productiveright ANDAB productive OF sym OF c;
+                  r := promote OF c;
+                  TRUE
+               END
+            OUT FALSE
+            ESAC
+         DO SKIP OD;
+         SYMBOL left = left OF p;
+         empty OF left NEWT empty right;
+         productive OF left NEWT productiveright;
+         IF productive right
+            AND ( useful OF left
+               OR ( left :=: start symbol)
+               )
+            AND # for efficiency only#
+               NOT useful OF p
+         THEN useful OF p:= TRUE;
+            useful OF left := TRUE;
+            r:= right OF p;
+            WHILE
+               CASE r
+               IN (REF CONFIGURATION c):
+                  BEGIN
+                     useful OF sym OF c NEWT TRUE;
+                     r := promote OF c;
+                     TRUE
+                  END
+               OUT FALSE
+               ESAC
+            DO SKIP OD
+         FI
+      OD;
+      change
+      END
+   DO SKIP OD
+   END # of find empty...#;
+PROC print symbols= VOID:
+   BEGIN
+   PROC s = (SYMBOL s) VOID :
+      BEGIN
+      end line;
+      IF useful OF s THEN +< "     " ELSE +< ">>>>>" FI;
+      -< " ";
+      IF empty OF s THEN +< "empty" ELSE +< "     " FI;
+      -< " ";
+      IF NOT productive OF s THEN +< "not productive"
+            ELSE +< "              " FI;
+      IF NOT useful OF s THEN +< " not useful "
+            ELSE +< "            " FI;
+      -< name OF s
+      END;
+   end line; print(newpage); +< "Terminals";
+   FOR i FROM LWB terminal TO UPB terminal
+   DO s( terminal[i] )
+   OD;
+   end line; +< "Nonterminals";
+   FOR i FROM LWB nonterminal TO UPB nonterminal
+   DO s(nonterminal[i])
+   OD;
+   end line
+   END # of 'print symbols' #;
+# Bit matrices #                                           # PR page PR #
+PROC bit = (REF [,]BITS m, INT i, j) BOOL :
+   BEGIN
+   INT iw = i OVER bits width,
+         ib = i MOD bits width;
+   (ib + 1) ELEM m[iw, j]
+   END # of bit #;
+PROC setbit = (REF [,] BITS m, INT i, j) VOID:
+   BEGIN
+   INT iw = i OVER bits width,
+         ib = i MOD bits width;
+   REF BITS e = m[iw, j];
+   e := e OR 2 r 1 SHL (bits width - ib - 1)
+   END # of set bit # ;
+PROC print bit matrix =
+   (REF [,] BITS a,
+      INT l1, u1, l2, u2,
+      CHAR mark) VOID:
+   BEGIN
+   time("Print bit matrix");
+   FOR p FROM l1 BY 50 TO u1
+   DO INT q = u1 MIN p + 49;
+      FOR r FROM l2 BY 50 TO u2
+      DO INT s = u2 MIN r + 49;
+         end line; print(newpage);
+         # Heading of 8 characters per symbol #
+         FOR z FROM 1 TO 8
+         DO FOR u FROM r TO s
+            DO IF UPB name OF (symbol[u]) < z
+               THEN -< " " ELSE -< (name OF (symbol[u])) [z]
+               FI
+            OD;
+            end line
+         OD # end of heading #;
+         FOR t FROM p TO q
+         DO STRING background =
+                  ( t MOD 5 = 0 | "-+" | " !" ) [AT 0];
+            FOR u FROM r TO s
+            DO IF bit(a, t, u)
+               THEN -< mark
+               ELSE -< background[ABS(u MOD 5 = 0)]
+               FI
+            OD;
+            -< t; -< " "; -< name OF symbol[t]; end line
+         OD
+      OD
+   OD
+   END # of print matrix #;
+# Create bit arrays #                                      # PR page PR #
+PROC create bit arrays = (REF REF [,] BITS rpl) VOID :
+   BEGIN
+   [lownt32 : highnt32, 1 : nsymbols] BITS pr,
+   HEAP [lownt32 : highnt32, 1 : nsymbols] BITS pl,
+   [ 0 : nsymbols 32, 1 : nsymbols ] BITS adj, temp;
+   #  Compute 'pl', 'pr', and 'adj'  #
+      FOR i FROM 1 LWB pr TO 1 UPB pr
+      DO FOR j FROM 2 LWB pr TO 2 UPB pr
+         DO pr[i, j] := pl[i, j] := plnonempty[i, j] := 2 r 0
+         OD
+      OD;
+      FOR i FROM 1 LWB adj TO 1 UPB adj
+      DO FOR j FROM 2 LWB adj TO 2 UPB adj
+         DO adj[i, j] := temp[i, j] := f[i, j] := 2 r 0
+         OD
+      OD;
+      FOR pi TO UPB production
+      DO REF PROD p = production[pi];
+      IF NOT useful OF p
+      THEN error(("production ", p, " is not useful. "))
+      ELSE
+         SYMBOL l= left OF p;
+         PROMOTION r= right OF p;
+         CASE r
+         IN (REF PROD): SKIP,
+            (REF CONF r):
+               setbit(plnonempty, number OF l, number OF sym OF r)
+         ESAC;
+         PROMOTION tail:= r,
+               prev := p;
+         WHILE
+            BEGIN
+               PROMOTION tailtail := tail;
+               WHILE
+                  CASE tailtail
+                  IN
+                  (REF PROD tt):
+                     (CASE prev
+                       IN (REF PROD prev): SKIP,
+                           (REF CONF prev):
+                                    setbit(pr, number OF l,
+                                      number OF sym OF prev)
+                     ESAC;
+                     FALSE
+                     ),
+                     (REF CONF tt):
+                        (CASE prev
+                        IN (REF PROD prev):
+                           setbit(pl, number OF l,
+                              number OF sym OF tt),
+                           (REF CONF prev):
+                                   setbit(adj,
+                                      number OF sym OF prev,
+                                      number OF sym OF tt)
+                        ESAC;
+                        tailtail := promote OF tt;
+                        empty OF sym OF tt
+                        )
+                  ESAC
+               DO SKIP OD;
+               prev := tail;
+            CASE tail
+            IN (REF PROD): FALSE,
+            (REF CONF t):
+               BEGIN
+               tail:= promote OF t;
+               TRUE
+               END
+            ESAC
+            END
+         DO SKIP OD
+      FI
+      OD;
+COMMENT The following lines have been commented out.
+   They may nonetheless be useful for debugging changes later.
+   print bit matrix(pr, lownt, highnt, 1, nsymbols, "q");
+   print bit matrix(pl, lownt, highnt, 1, nsymbols, "k");
+   print bit matrix(pl nonempty, lownt, highnt, 1, nsymbols, ">");
+   print bit matrix(adj, 1, nsymbols, 1, nsymbols, "=");
+COMMENT
+   time("Compute closures");
+   # At this point,
+      pl[i, j] iff i => xxxj... and xxx =>* empty
+      pr[i, j] iff i => ...jxxx and xxx =>* empty
+      adj[i,j] iff x => ...ixxxj... and xxx =>* empty,
+      plnonempty[i, j] iff i => j...
+   Now compute the symmetric transitive closures of
+         pl,pr, and plnonempty;
+   #
+# Bit matrices: transitive closures #                      # PR page PR #
+   PROC close= (REF [,] BITS m) VOID:
+      # replace m by its transitive closure #
+      FOR j FROM lownt TO highnt
+      DO FOR k FROM 1 TO nsymbols
+         DO IF bit (m,j,k)
+            THEN FOR i FROM lownt 32 TO highnt 32
+               DO m[i,k] ORAB m[i,j]
+               OD
+            FI
+         OD
+      OD;
+   close (pl);
+   IF s opt OR pr opt THEN close(pr) FI;
+      # otherwise, 'pr' is not needed. #
+   close (plnonempty);
+   FOR i FROM lownt TO highnt
+   DO setbit (pr,i,i);
+      setbit (pl,i,i);
+      setbit (plnonempty,i,i)
+   OD;
+   # At this point,
+      pl[i, j] iff i =>* j...
+      pr[i, j] iff i =>* ...j
+      adj[i,j] iff x => ...ixxxj... and xxx =>* empty,
+      plnonempty[i, j] iff i => j... using no empty
+         productions
+   #
+# Bit matrices: the follows matrix #                       # PR page PR #
+   IF s opt OR f opt
+   THEN
+   time("Compute ''f''");
+   PRIO /* = 7;
+   OP /* = (REF [,] BITS a, b) REF [,] BITS :
+      # a transpose times b.
+         'b' contains only one part of the 'b' that is to be
+         multiplied. It diagonal is extended with ones, thus:
+           10000000  <-  1
+           01000000
+           00100000
+           bbbbbbbb  <-  lownt
+           bbbbbbbb
+           bbbbbbbb
+           bbbbbbbb
+           bbbbbbbb  <-  nsymbols = highnt
+      let 'u' be the [,]BOOL which is packed as [,]BITS
+      in 't'. 'at' is the transpose of 'a' .
+      then:
+      u[i, j] = OR[k] at[i, k] AND b[k, j]
+         = OR[k] (a[k, i] AND
+            IF k < lownt THEN k = j ELSE b[k, j] FI )
+         =      ( OR[k < lownt] a[k, i] AND (k = j) )
+            OR ( OR[k >= lownt] (a[k, i] AND b[k, j] ) )
+         =      IF j < lownt THEN a[j, i] ELSE FALSE FI
+           OR OR[k >= lownt] (a[k, i] AND b[k, j])
+      #
+      BEGIN HEAP [0 : n symbols 32, 1 : n symbols] BITS t;
+         BITS l;
+         FOR i FROM 1 LWB t TO 1 UPB t
+         DO FOR j FROM 2 LWB t TO 2 UPB t
+            DO t[i, j] := 2 r 0
+            OD
+         OD;
+         FOR i FROM 1 TO nsymbols
+         DO
+            FOR j FROM 1 TO n symbols
+            DO
+               IF
+                  IF
+                     (j < lownt | bit(a, j, i) | FALSE )
+                  THEN TRUE
+                  ELSE
+                     l := 2 r 0;
+                     FOR k FROM lownt 32 TO high nt 32
+                     DO l ORAB (a[k, i] AND b[k, j])
+                     OD;
+                     l /= 2 r 0
+                  FI
+               THEN setbit(t, i, j)
+               FI
+            OD
+         OD;
+         t
+      END;
+   f := (adj /* pr) /* pl
+      #   pr t * a * pl = (a t * pr) t * pl
+         notice that the diagonals of 'pr' and 'pl' must be
+         extended with ones.
+      #
+   FI # end of 'f' processing #;
+   IF pr opt
+   THEN print bit matrix(pr, low nt, high nt, 1, n symbols, "r")
+   FI;
+   IF pl opt
+   THEN print bit matrix(pl, low nt, high nt, 1, nsymbols, "l")
+   FI;
+   IF ple opt
+      OR TRUE
+   THEN print bit matrix(pl nonempty, low nt, high nt,
+            1, n symbols, ">")
+   FI;
+   IF f opt
+   THEN print bit matrix(f, 1, n symbols, 1, n symbols, "f")
+   FI;
+   rpl := pl
+   END # create bit matrices #;
+PROC destroy bit matrices = VOID :
+   BEGIN
+   f := NIL;
+   plnonempty := NIL
+   # ; collect garbage #
+   END # of destroy bit matrices# ;
+                                                           # PR page PR #
+# Elementary operations on states, configurations, and transitions #
+PROC makestate=
+      (REF CONFLIST c,
+         SYMBOL access) REF STATE:
+   BEGIN
+   # hashing on access #
+   REF STATE thesestates :=
+      IF access :=: NIL
+      THEN NIL # only the start state may have no access #
+      ELSE states OF access
+      FI;
+   # search for an equivalent state#
+   REF STATE s:= these states;
+   WHILE
+      IF s :/=: REF STATE (NIL)
+      THEN conf OF s /= c
+      ELSE FALSE
+      FI
+   DO s:= next OF s
+   OD;
+   IF s:=: REF STATE (NIL)
+   THEN # new state #
+      s := newstates := thesestates :=
+         HEAP STATE :=
+            (NIL, NIL, c,
+               FALSE, these states, new states, nmb states +:= 1);
+      IF t opt THEN +< "new "; -< s; end line FI;
+      IF c opt THEN indent; -< s; end line; -< conf OF s; dedent;
+            end line FI
+   FI;
+   IF access :=: SYMBOL(NIL)
+   THEN startstate:= thesestates
+   ELSE states OF access := thesestates
+   FI;
+   s
+   END # of makestate # ;
+#attach#
+PROC attach= (PROMOTION c, SYMBOL s) VOID:
+   # Attach the promotion 'p' to the symbol 's', unless it is there
+      already. #
+   BEGIN
+   REF CONFLIST cl:= attachment OF s;
+   WHILE IF cl :/=: REF CONFLIST( NIL )
+         THEN this OF cl /= c
+      ELSE FALSE
+      FI
+   DO cl:= next OF cl
+   OD;
+   IF REF CONFLIST (cl) :=: NIL
+   THEN attachment OF s:= HEAP CONFLIST:= (c,attachment OF s)
+   FI
+   END#attach#;
+PROC maketransition=
+   (REF STATE from,
+      MARKER s,
+      REF STATE to
+   )VOID:
+   # Make a transition from one state to another, unless it is there
+      already. 'to' may be NIL, but 'from' may not. #
+      BEGIN
+      REF TRANSITIONLIST t := out OF from;
+      WHILE IF t :/=: REF TRANSITIONLIST(NIL)
+         THEN (from OF this OF t :/=: from)
+            OR (symbol OF this OF t /= s)
+            OR (to OF this OF t :/=: to)
+         ELSE FALSE
+         FI
+      DO t := next OF t
+      OD;
+      IF t :=: REF TRANSITIONLIST(NIL)
+      THEN nmb transitions +:= 1;
+         REF TRANSITION new := HEAP TRANSITION
+               := (from, s, to, nmb transitions, 0);
+         IF t opt THEN +< "new "; -< new; end line FI;
+         out OF from := HEAP TRANSITIONLIST :=
+               (new, out OF from);
+         IF to :/=: REF STATE (NIL)
+         THEN
+            REF REF TRANSITIONLIST inplace =
+               IF in OF to :=: REF TRANSITIONLIST(NIL)
+               THEN in OF to
+               ELSE next OF in OF to
+               FI;
+            inplace := HEAP TRANSITIONLIST := (new, in place)
+         FI
+      FI
+      END # of make transition # ;
+# FSM states#
+PROC for all states = (PROC(REF STATE) VOID x) VOID:
+   BEGIN
+   IF startstate :/=: REF STATE(NIL)
+   THEN x(startstate)
+   FI;
+   FOR i TO UPB symbol
+   DO SYMBOL ac = symbol[i];
+      REF STATE st := states OF ac;
+      WHILE REF STATE (st):/=: NIL
+      DO x(st);
+         st:= next OF st
+      OD
+   OD
+   END # for all states #;
+# Finite state machine construction #                      # PR page PR #
+#grow fsm#
+PROC grow fsm = VOID :
+   BEGIN
+   nmb states := nmb transitions := 0;
+   newstates:= NIL;
+   REF STATE current state := start state :=
+      IF useful OF start production
+      THEN makestate(
+            HEAP CONFLIST:=(right OF startproduction, NIL),
+            NIL
+            )
+      ELSE NIL
+      FI;
+   newstates := currentstate;
+   WHILE newstates :/=: REF STATE(NIL)
+   DO # Process a new state : #
+      currentstate:= newstates;
+      newstates := link OF newstates;
+      # Process 'current state': #
+      REF CONFLIST cl:= conf OF currentstate;
+      WHILE cl :/=: REF CONFLIST (NIL)
+      DO # Process configuration 'c': #
+         PROMOTION c := this OF cl;
+         CASE c
+         IN
+         (REF PRODUCTION c):
+            maketransition(currentstate, c, NIL),
+         (REF CONFIGURATION c):
+               BEGIN # Promotion transitions are wanted, but
+                       we must sort them by symbol.
+                       The set of resulting new configurations for
+                       each symbol will later become a state.
+                       The promotion transitions under a symbol are
+                       hung on its 'attach' field.
+                    #
+               SYMBOL s = sym OF c;
+               INT sn = number OF s;
+               attach(promote OF c, s);
+               IF NOT is terminal OF s
+               THEN # A nonterminal: predict any new configurations,
+                     and promote them as well. #
+                  FOR tn TO UPB symbol
+                  DO SYMBOL t = symbol[tn];
+                     IF bit (plnonempty, sn, tn)
+                     THEN #assert  s =>* t without using empty
+                        productions #
+                        REF PRODUCTIONLIST pl := definitions OF t;
+                        WHILE pl :/=: REF PRODUCTIONLIST(NIL)
+                        DO REF PROD p = this OF pl;
+                           IF NOT useful OF p
+                           THEN SKIP
+                           ELSE
+                           CASE right OF p
+                           IN (REF PRODUCTION):
+                                 make transition (
+                                    currentstate, p, NIL),
+                             (REF CONF rp):
+                                     attach(promote OF rp,
+                                           sym OF rp)
+                           ESAC
+                           FI;
+                           pl := next OF pl
+                        OD
+                     FI
+                  OD
+               FI
+               END
+         ESAC;
+         cl := next OF cl
+      OD;
+      #Possible new states have been considered as sets of
+         configurations. Now make them into real states#
+      FOR sn TO UPB symbol
+      DO SYMBOL s = symbol[sn];
+         IF attachment OF s :/=: REF CONFLIST (NIL)
+         THEN REF STATE q = make state(attachment OF s, s);
+            maketransition(currentstate,s,q)
+         FI;
+         REF REF CONFLIST(attachment OF s) := NIL
+      OD
+   OD
+   END # growfsm#;
+# Check look ahead #                                       # PR page PR #
+PROC ll1 check = VOID:
+   for all states(
+      (REF STATE s) VOID:
+         IF SIZE(conf OF s) > 1
+         THEN +< "An LL(1) violation can be reached by reading";
+            indent; end line;
+            +< s; dedent; end line
+         FI
+      )
+   # end of ll1 check #;
+PROC check look ahead = (BOOL slr 1 processing) BOOL :
+   BEGIN
+   IF NOT slr1 processing
+   THEN syserr(("temporary bug: only SLR1 tables will be produced",
+         " even though we perform LALR lookahead checks."))
+   FI;
+   PROC inadequacy = (REF STATE s) VOID:
+      # complain about an inadequacy #
+      BEGIN
+      errors := TRUE;
+      end line; end line;
+      +< "An inadequate state can be reached by reading ";
+         indent; end line;
+      +< s;
+      dedent; end line;
+      +< "Possible actions are: ";
+      indent;
+      REF TRANSITIONLIST t := out OF s;
+      WHILE t :/=: REF TRANSITIONLIST(NIL)
+      DO CASE symbol OF this OF t
+         IN (SYMBOL s):
+               IF isterminal OF s
+               THEN end line; +< "Read "; -< name OF s
+               FI,
+            (REF PRODUCTION p):
+               BEGIN
+               end line; +< "Apply production "; -< number OF p;
+               +< " with lookaheads ";
+               INT l = number OF left OF p;
+               FOR i FROM LWB terminal TO UPB terminal
+               DO IF bit(f, l, i)
+                  THEN -< " "; -< name OF symbol[i]
+                  FI
+               OD
+               END
+         ESAC;
+         t := next OF t
+      OD;
+      dedent; end line
+      END # of inadequacy #;
+         #Check lookahead resumes#
+   [1 : UPB terminal] BOOL b, c;
+   BOOL errors := FALSE;
+   for all states ((REF STATE s) VOID:
+      BEGIN
+      FOR i TO UPB b DO b[i] := FALSE OD;
+      REF TRANSITIONLIST tl := out OF s;
+      WHILE # more list exists and no conflict yet found #
+         IF tl :/=: REF TRANSITIONLIST (NIL)
+         THEN
+            REF TRANSITION t = this OF tl;
+            CASE symbol OF t
+            IN (SYMBOL u):
+                  IF isterminal OF u
+                  THEN IF b[number OF u]
+                         THEN FALSE
+                     ELSE b[number OF u]:= TRUE;
+                            TRUE
+                     FI
+                  FI,
+               (REF PRODUCTION p):
+                IF slr1 processing
+                THEN BOOL conflict := FALSE;
+                  INT l = number OF left OF p;
+                  FOR i FROM LWB terminal TO UPB terminal
+                  DO REF BOOL bi = b[i];
+                     IF bi
+                     THEN ( bit(f, l, i) | conflict := TRUE )
+                     ELSE bi := bit(f, l, i)
+                     FI
+                  OD;
+                  NOT conflict
+                ELSE
+                  [LWB terminal : UPB terminal] BOOL look;
+                  FOR i FROM LWB look TO UPB look
+                  DO look[i]  := FALSE
+                  OD;
+                  lalr look ahead(t, look);
+                  BOOL conflict := FALSE;
+                  INT l = number OF left OF p;
+                  FOR i FROM LWB terminal TO UPB terminal
+                  DO REF BOOL bi = b[i];
+                     IF bi
+                     THEN (look[i] | conflict := TRUE )
+                     ELSE bi := look[i]
+                     FI
+                  OD;
+                  NOT conflict
+                FI
+            ESAC
+         ELSE FALSE
+         FI
+      DO tl := next OF tl
+      OD;
+      IF tl :/=: REF TRANSITIONLIST(NIL)
+      THEN inadequacy (s)
+      FI
+      END
+      ) # end of state loop #;
+   NOT errors
+   END # of check look ahead#;
+# LALR lookahead #                                         # PR page PR #
+PROC lalr look ahead = (REF TRANSITION t,
+                          REF[ #1 : nmb terminals # ]BOOL look
+                       ) VOID:
+   # OR the LALR(1) lookahead set for the reduction transition
+         't' into 'look' #
+   BEGIN
+   REF PRODUCTION p =
+      CASE symbol OF t
+      IN (REF PROD p): p
+      OUT syserror("not a reduction"); give up
+      ESAC;
+   # Notice that 'p' must be useful to have a transition #
+   REF SYMBOL left = left OF p;
+   PROC backward = (REF TRANSITION t,
+         REF SYMBOLLIST l) VOID:
+      IF t :=: REF TRANSITION(NIL)
+      THEN SKIP
+      ELIF REF STATE s = from OF t;
+         s :=: REF STATE(NIL)
+      THEN SKIP
+      ELIF l :=: REF SYMBOLLIST(NIL)
+      THEN REF TRANSITIONLIST t := out OF s;
+         WHILE t :/=: REF TRANSITIONLIST(NIL)
+         DO IF symbol OF this OF t = left
+            THEN forward(to OF this OF t)
+            ELSE SKIP
+            FI;
+         t := next OF t
+         OD
+      ELSE REF TRANSITIONLIST in := in OF s;
+         WHILE in :/=: REF TRANSITIONLIST(NIL)
+         DO IF symbol OF this OF in = this OF l
+            THEN backward(this OF in, next OF l)
+            FI;
+            in := next OF in
+         OD
+      FI # end of 'explore' #;
+   PROC forward = (REF STATE s) VOID:
+      BEGIN
+      REF TRANSITIONLIST out := out OF s;
+      WHILE out :/=: REF TRANSITIONLIST(NIL)
+      DO REF TRANSITION t = this OF out;
+         IF scan OF t >= 1 THEN SKIP
+         ELSE scan OF t := 1;
+            CASE symbol OF t
+            IN
+            (SYMBOL s):
+               IF is terminal OF s
+               THEN look[number OF s] := TRUE
+               ELSE
+                  FOR i FROM 1 TO nmb terminals
+                  DO look[i] ORAB bit(pl, number OF s, i)
+                  OD;
+                  IF empty OF s THEN forward(to OF t)
+                  FI
+               FI,
+            (REF PROD):
+               lalr look ahead(t, look)
+            ESAC;
+            scan OF t := 0
+         FI;
+         out := next OF out
+      OD
+      END # of 'forward' #;
+   REF SYMBOLLIST rb := NIL;
+   for right side(p,
+      (REF SYMBOL s) VOID: rb := HEAP SYMBOLLIST :=
+                                  (s, rb));
+   # 'rb' now contains the right side backwards #
+   backward(t, rb)
+EXIT give up: SKIP
+   END # of 'lalr look ahead' #;
+# Make tables #                                            # PR page PR #
+PROC make name table = VOID:
+   FOR sy TO UPB symbol
+   DO name[sy] := name OF symbol[sy]
+   OD;
+PROC destroy grammar = VOID :
+   BEGIN symbol := NIL; terminal := NIL;
+   nonterminal := NIL; production := NIL
+   END;
+PROC make transition table = VOID:
+   # fill in 'm'.
+      m[state number, symbol number], called 'x' below, indicates
+      the action to be performed from the state when the symbol is the
+      next input character.
+         'x' < 0: apply production  - x .
+         'x' = 0: error.
+         'x' > 0: accept the symbol and enter state 'x'.
+   #
+   BEGIN
+   FOR st TO nmb states
+   DO FOR sy TO nsymbols
+      DO m[st,sy]:= 0
+      OD
+   OD;
+   for all states(
+      (REF STATE st) VOID:
+      BEGIN
+      INT stn = number OF st;
+      REF TRANSITIONLIST tr := out OF st;
+      WHILE tr :/=: REF TRANSITIONLIST (NIL)
+      DO CASE symbol OF this OF tr
+         IN
+         (REF PRODUCTION pr):
+            BEGIN
+            INT pn = number OF pr,
+               l = number OF left OF pr;
+            productionlength [pn]:=
+               (INT len:= 0;
+               PROMOTION v := right OF pr;
+               WHILE
+                  CASE v
+                  IN (REF CONF vc):
+                       (len +:= 1;
+                       v:= promote OF vc;
+                       TRUE
+                       ),
+                  (REF PRODUCTION): FALSE
+                  ESAC
+               DO SKIP OD;
+               len
+               );
+            FOR i TO nsymbols
+            DO IF bit(f,l,i)
+               THEN m[stn,i]:= - pn
+               FI
+            OD
+            END,
+         (SYMBOL sy):
+            m[stn, number OF sy] := number OF to OF this OF tr
+         ESAC;
+         tr:= next OF tr
+      OD
+      END
+      ) # end of 'st' loop #
+   END # of make transition matrix #;
+PROC destroy trees = VOID:
+   BEGIN
+   FOR i TO nsymbols DO symbol[i] := NIL OD;
+   FOR i TO nmb productions DO production[i] := NIL OD;
+   startstate := NIL
+   END # of destroy trees #;
+# Squash matrix #                                          # PR page PR #
+PROC squash matrix = VOID:
+   BEGIN
+   PROC add margin =
+      (REF REF [,] INT margin,
+      INT row,
+      INT new value) INT:
+      BEGIN
+      PROC enlarge = VOID :
+         BEGIN
+         HEAP [ 1 : 1 UPB margin,
+                  1 : 1 + (2 UPB margin) ] INT nmr;
+         nmr[,1:2UPB margin]:= margin;
+         FOR i TO 1 UPB margin DO nmr[i,2 UPB nmr]:=0 OD;
+         margin:= nmr
+         END #of enlarge # ;
+      IF 2 UPB margin = 0 THEN enlarge FI;
+      REF[] INT slice= margin[row,];
+      INT ii := 0;
+      FOR i TO UPB slice
+      WHILE
+         ii := i;
+         INT si = slice[i];
+         si /= new value AND si /= 0
+      DO SKIP OD;
+      # assert slice[ii] = new value
+               or slice[ii] = 0
+               or ii = UPB slice
+      #
+      IF INT si = slice[ii];
+         si /= new value AND si /= 0
+      THEN enlarge; ii +:= 1
+      FI;
+      IF margin[row,ii]= 0
+      THEN margin[row, ii] := new value
+      FI;
+      ii
+      END # of add margin#;
+   apply margin := HEAP [ 1:nmb states, 1:0 ] INT;
+   read margin := HEAP [1 : nsymbols, 1 : 0] INT;
+   FOR st TO nmb states
+   DO FOR sy TO nsymbols
+      DO REF INT mx= m[st,sy];
+         IF mx > 0
+         THEN mx:= add margin(read margin,sy,mx)
+         ELSE mx := - add margin(apply margin, sy, -mx)
+         FI
+      OD
+   OD;
+   INT nmb diff elem = 2 UPB read margin + 2 UPB apply margin + 1;
+   element size :=
+      (INT twon:= 1, n:= 0;
+      WHILE twon < nmb diff elem
+      DO twon *:= 2; n +:= 1
+      OD;
+      n);
+   break := 2 UPB read margin;
+   # For a packed element 'i' of size 'element size' in the array 'a',
+      i = 0 will mean error,
+      i <= break will mean (read; go to new state), and
+      i > break will mean apply production i - break.
+   #
+   elements per word := bits width OVER element size;
+   first word := (1 * nsymbols + 1) OVER elements per word;
+   last word := (nmb states * nsymbols + nsymbols)
+         OVER elements per word;
+   HEAP [first word: last word] BITS a;
+   FOR i FROM LWB a TO UPB a DO a[i] := 2 r 0 OD;
+   FOR st TO nmb states
+   DO FOR sy TO nsymbols
+      DO INT i= st * nsymbols + sy;
+         INT word index = i OVER elements per word;
+         INT shift = (i MOD elements per word) * element size;
+         BITS element = BIN IF INT mx = m[st, sy]; mx < 0
+                  THEN break - mx
+                  ELSE mx
+                  FI;
+         a[word index] ORAB element SHL shift
+      OD
+   OD;
+   newm := a;  m := NIL
+   END # of squash matrix #;
+PROC write tables = VOID :
+   IF output :/=: REF FILE(NIL)
+   THEN
+   put bin(output, (nmb symbols, nmb terminals,
+      nmb productions, nmb states,
+      UPB newm,
+      2 UPB apply margin, 2 UPB read margin,
+      number OF start state,
+      number OF end of file symbol));
+   FOR i TO UPB name
+   DO put bin(output, UPB name[i]);
+      FOR j TO UPB name[i] DO put bin(output, name[i][j]) OD
+   OD;
+   put bin(output, (newm, apply margin, read margin));
+   put bin(output, (target, production length))
+   FI # end of 'write tables' # ;
+                                                           # PR page PR #
+on line end(stand out,
+   (REF FILE f)BOOL : (put(f, (newline, "         ")); TRUE)
+   );
+-< g;
+SYMBOL start symbol = start OF g,
+         end of file symbol = end of file OF g;
+REF PRODUCTION start production = start production OF g;
+REF [] SYMBOL symbol := symbols OF g,
+                  terminal := terminals OF g,
+                  nonterminal := nonterminals OF g;
+REF [] REF PRODUCTION production := productions OF g;
+INT nmb symbols = UPB symbol,
+   n symbols = UPB symbol,
+   nmb terminals = UPB terminal,
+   nmb nonterminals = UPB nonterminal - LWB nonterminal + 1,
+   nmb productions = UPB production,
+   low nt = LWB nonterminal,
+   high nt = UPB nonterminal;
+INT n symbols 32 = nmb symbols OVER bits width,
+   low nt 32 = lownt OVER bits width,
+   high nt 32 = highnt OVER bits width;
+-< nmb symbols; +< " symbols "; end line;
+-< nmb terminals; +< " terminals "; end line;
+-< nmb nonterminals; +< " nonterminals "; end line;
+-< nmb productions; +< " productions"; end line;
+[1 : n symbols] STRING name; make name table;
+time("Find empties");
+find empty and useless nonterminals;
+time("Print symbols");
+print symbols;
+time("Printed");
+time("Bit arrays");
+REF [,] BITS f:= HEAP [0:nsymbols 32, 1:nsymbols] BITS,
+         plnonempty:= HEAP[lownt 32 : highnt 32,
+                  1:nsymbols] BITS;
+REF [,] BITS pl;
+create bit arrays(pl);
+REF STATE startstate := NIL,
+   newstates := NIL;
+INT nmb states := 0,
+   nmb transitions := 0;
+time("FSM");
+growfsm;
+-< nmb states; +< " states "; end line;
+-< nmb transitions; +< " transitions"; end line;
+time("End FSM");
+IF ll1 opt THEN ll1 check FI;
+IF NOT
+   IF s opt
+   THEN IF time("First we try SLR(1) processing");
+         check look ahead(TRUE)
+      THEN TRUE
+      ELSE time("SLR(1) fails; try LALR(1)");
+         check look ahead(FALSE)
+      FI
+   ELSE time("LALR lookahead calculation");
+      check look ahead(FALSE)
+   FI
+THEN error("inadequate states cause suppression of parse tables");
+      GOTO fail
+FI;
+IF output :=: REF FILE(NIL)
+THEN GOTO done
+FI;
+[1:nmb productions] INT target,
+                          production length;
+   extract production data;
+REF[,] INT m:= HEAP[1:nmb states, 1:nmb symbols] INT;
+time("Transition table");
+make transition table;
+destroy grammar; # no longer needed #
+destroy bit matrices # no longer needed # ;
+# Output variables for 'squash matrix' #
+REF [] BITS newm;
+REF [,] INT apply margin, read margin;
+INT element size, elements per word, first word, last word, break;
+time("Compress");
+squash matrix;
+time("Output");
+write tables;
+done:
+   time("Finish");
+   TRUE
+ELSE error("invalid grammar");
+   time("Finish");
+   FALSE
+FI
+EXIT fail:
+   time("Finish");
+   FALSE
+END # of 'generate parser' # ;
+                                                           # PR page PR #
+BEGIN
+BOOL pr opt, pl opt, ple opt, f opt, s opt, t opt, c opt, ll1 opt;
+PROC rfn = (REF STRING s) BOOL:
+   # Read a string denotation from stand in.
+      Yield TRUE if a string denotation is found, and assign it
+         to 's';  otherwise yield FALSE and assign junk to 's';
+   #
+   BEGIN CHAR c := " ";
+   on logical file end(stand in, (REF FILE f) BOOL: GOTO x);
+   s := "";
+   WHILE c = " " DO read(c); print(c) OD;
+   IF c = "''" OR c = """"
+   THEN on logical file end( stand in,
+            (REF FILE f) BOOL: GOTO y
+         );
+      CHAR q = c; read(c); print(c);
+      WHILE IF c = q
+         THEN read(c); print(c); c = q
+         ELSE TRUE
+         FI
+      DO s +:= c; read(c); print(c)
+      OD;
+      TRUE
+   ELIF c = "."
+   THEN s := ""; FALSE
+   ELIF c = "+" OR c = "-"
+   THEN BOOL val := c = "+";
+      WHILE c /= " "
+      DO IF c = "p"
+         THEN read(c); print(c);
+            IF c = "r" THEN pr opt := val
+            ELIF c = "l" THEN pl opt := val
+            ELSE print("?")
+            FI
+         ELIF c = ">" THEN ple opt := val
+         ELIF c = "l" THEN ll1 opt := val
+         ELIF c = "f" THEN f opt := val
+         ELIF c = "g" THEN g opt := val
+         ELIF c = "s" THEN s opt := val
+         ELIF c = "t" THEN t opt := val # trace transitions #
+         ELIF c = "c" THEN c opt := val # trace configurations #
+         ELIF c = "+" THEN val := TRUE
+         ELIF c = "-" THEN val := FALSE
+         ELSE print("?")
+         FI;
+         read(c); print(c)
+      OD;
+      rfn(s)
+   ELSE print("Invalid first character for file name");
+      s := "";
+      FALSE
+   FI
+   EXIT x:
+      s := ""; FALSE
+   EXIT y:
+      print("Invalid or otherwise improper file name");
+      s := ""; FALSE
+   END # of 'rfn' #;
+PROC find file =
+      (REF FILE f,
+       STRING idf,
+       CHANNEL ch,
+       UNION(STRUCT(INT p, l, c), VOID) mood,
+       STRING channelname,
+       REF STRING filename) INT:
+   IF
+      INT x =
+         ( mood
+         |  (STRUCT(INTp, l, c) sz):
+               establish(f, idf, ch, p OFsz, l OFsz, c OFsz)
+         |  open(f, idf, ch)
+         ),
+      STRINGaction =
+         ( mood
+         |  (VOID): "open"
+         |  "establish"
+         );
+      x = 0
+   THEN write((newline, "File ", action, "ed with idf """, idf,
+            """ on channel """, channel name, """", newline));
+      file name := idf;
+      0
+   ELSE write(( newline,
+            action, " failed on output file with idf """,
+            idf,
+            """ on channel """, channelname, """ returning code ",
+            whole(x, 0), newline));
+      ( mood
+      | (STRUCT(INTp, l, c) sz):
+         write((
+            "p: ", whole(p OFsz, 0),  ", l: ", whole(l OFsz, 0),
+            ", c:", whole(c OFsz, 0), newline))
+      );
+      x
+   FI;
+FILE input, output;
+STRING in name := "", out name := "";
+WHILE
+   pr opt := pl opt := ple opt := f opt := ll1 opt := FALSE;
+      g opt := TRUE; s opt := TRUE;
+      t opt := c opt := FALSE;
+   IF char number(stand in) /= 1 THEN read(newline) FI;
+   IF STRING s; rfn(s)
+   THEN
+      IF s = "" THEN s := "input" FI;
+      IF s = in name
+      THEN SKIP
+      ELSE
+         IF in name = "" OR in name = "input"
+         THEN SKIP
+         ELSE
+            close(input);
+            write(("Input file with idf """, inname, """ closed.",
+               newline))
+         FI;
+         IF s = "input" THEN input := stand in; in name := ""
+         ELSE
+         find file(input, s, standin channel,
+            EMPTY,
+            "standin channel", in name)
+         FI
+      FI;
+      IF rfn(s)
+      THEN
+         IF s = out name THEN SKIP
+         ELSE
+            IF out name = "" THEN SKIP
+            ELSE
+               close(output);
+               write(("Output file closed with idf """, out name, """",
+                  newline))
+            FI;
+            find file(output, s, standback channel,
+               STRUCT(INTp, l, c) (1, 1, 10000),
+               "standback channel",
+               outname)
+         FI;
+         TRUE
+      ELSE print((newline, "No output file name"));
+         FALSE
+      FI
+   ELSE print((newline, "No input file name"));
+      FALSE
+   FI
+DO print((newline, "Input from """, in name, """, ",
+         "output to """, out name, """", newline, newline, newline));
+   generate parser(input, output,
+      pr opt, pl opt, ple opt, f opt, s opt, t opt, c opt, ll1 opt)
+OD;
+IF out name /= ""
+THEN close(output);
+   print(("Output file """, out name, """ closed. ", newline))
+FI;
+time("Processing ended");
+end line
+END
+END

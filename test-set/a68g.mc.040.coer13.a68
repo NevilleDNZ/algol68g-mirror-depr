@@ -1,0 +1,41 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#coer13#
+BEGIN # Soft balance with EXIT's #
+      INT i;
+      
+      [1 : 1] INT ri, rj;
+      
+      PROC pri = REF [] INT: rj;
+      
+      FOR c TO 3 
+      DO ([] PROC VOID switch = (lrri, li, lpri);
+          
+          switch[c];
+          SKIP # hip # EXIT
+          lrri: LOC REF [] INT := ri # deref # EXIT
+          li: i # row # EXIT
+          lpri: pri
+         # deproc #
+         ) := c
+      OD;
+      print ((ri, i, pri, newline))
+# 1 2 3 #
+END

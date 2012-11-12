@@ -2813,6 +2813,7 @@ extern A68_REF c_string_to_row_char (NODE_T *, char *, int);
 extern A68_REF c_to_a_string (NODE_T *, char *, int);
 extern A68_REF empty_row (NODE_T *, MOID_T *);
 extern A68_REF empty_string (NODE_T *);
+extern A68_REF genie_store (NODE_T *, MOID_T *, A68_REF *, A68_REF *);
 extern A68_REF heap_generator (NODE_T *, MOID_T *, int);
 extern ADDR_T calculate_internal_index (A68_TUPLE *, int);
 extern BOOL_T a68g_mkstemp(char *, int, mode_t);

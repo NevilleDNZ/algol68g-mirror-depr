@@ -1,0 +1,143 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#appl14#
+
+# JKok, 770822, 'n' queens on chess board
+       using prepared bit patterns for forbidden fields #
+FOR n FROM 3 TO 8 
+DO INT maxbord = n * n, nflds = (n * n - 1) OVER bits width;
+   
+   # Bit pattern prelude #
+   MODE BORD = [0 : nflds] BITS;
+   
+   # BORD = [0 : maxbord - 1] BOOL packed in [ ] BITS #
+   OP OR = (BORD a, b) BORD:
+      (BORD c;
+       
+       FOR i FROM 0 TO nflds 
+       DO c[i] := a[i] OR b[i]
+       OD;
+       c);
+   
+   OP ELEM = (INT i, BORD a) BOOL:
+      IF i < 0 OR i >= max bord
+      THEN FALSE
+      ELSE (i MOD bits width + 1) ELEM a[i OVER bits width]
+      FI;
+   
+   OP BTOB = (INT i) BORD:
+      # true -->> i-th bool of bord #
+      BEGIN BORD a;
+            
+            FOR k FROM 0 TO nflds 
+            DO a[k] := 2r0
+            OD;
+            IF i >= 0 AND i < max bord
+            THEN a[i OVER bits width] := 2r1 UP ((-i - 1) MOD bits width)
+            FI;
+            a
+      END
+   # of op bool to bits #
+   ;
+   
+   OP ORAB = (REF BORD a, INT i) REF BORD:
+      BEGIN IF i >= 0 AND i < max bord
+            THEN REF BITS ai = a[i OVER bits width];
+                 
+                 ai := (2r1 UP ((-i - 1) MOD bits width)) OR ai
+            FI;
+            a
+      END # of op or a b # ;
+   
+   PRIO ORAB = 1;
+   
+   # Initialize # INT aantal := 0,
+   [1 : n] INT shift,
+   [1 : n, 1 : n] BORD erase;
+   
+   FOR i TO n 
+   DO shift[i] := (i - 1) * n - 1
+   OD;
+   FOR r TO n 
+   DO FOR k TO n 
+      DO BORD ds := BTOB -1;
+         
+         FOR i TO n - r 
+         DO INT sh = shift[i + r] + k;
+            
+            ds ORAB sh;
+            IF k + i <= n
+            THEN ds ORAB sh + i
+            FI;
+            IF k > i
+            THEN ds ORAB sh - i
+            FI
+         OD;
+         erase[r, k] := ds
+      OD
+   OD;
+   # Find all solutions #
+   [1 : n] INT dame;
+   
+   PROC zet = (INT row, col, BORD stand) VOID:
+        IF dame[row] := col;
+           row = n
+        THEN out sol
+        ELSE INT r = row + 1, sh = shift[r], dame1 = dame[1];
+             
+             FOR k FROM (dame1 = 1 | 2 |: dame1 < r AND n - dame1 > r - 2 | 1 | 2) TO (dame1 <= r AND n - dame1 >= r | n | n - 1) 
+             DO IF NOT ((k + sh) ELEM stand)
+                THEN zet (r, k, erase[r, k] OR stand)
+                FI
+             OD
+        FI;
+   
+   PROC outsol = VOID:
+        BEGIN print ((newline, " "));
+              PROC line = VOID:
+                   FOR i TO 4 * n - 1 
+                   DO print ("-")
+                   OD;
+              
+              line;
+              FOR i TO n 
+              DO INT k = dame[i];
+                 
+                 print (newline);
+                 FOR j TO n 
+                 DO print (IF j = k
+                           THEN "| q "
+                           ELSE "|   "
+                           FI)
+                 OD;
+                 print (("|", newline, " "));
+                 line
+              OD;
+              print ((newline, " #", whole (aantal +:= 1, -4)));
+              TO 2 
+              DO print (newline)
+              OD
+        END # out solution # ;
+   
+   FOR i TO n OVER 2 
+   DO zet (1, i, erase[1, i])
+   OD;
+   print ((" Number of solutions is ", whole (aantal, -4), "  for n = ", whole (n, -3), newline, newline))
+OD

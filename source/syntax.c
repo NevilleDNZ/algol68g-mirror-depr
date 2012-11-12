@@ -858,10 +858,9 @@ been included will not be included a second time - it will be ignored.
         SCAN_ERROR (!skip_pragmat (&u, &v, pr_lim, A68_TRUE), start_l, start_c, ERROR_UNTERMINATED_PRAGMAT);
 /* Filename valid? */
         SCAN_ERROR (n == 0, start_l, start_c, ERROR_INCORRECT_FILENAME);
-        fnwid = (int) strlen (FILE_PATH (&program)) + (int) strlen (fnb) + 1;
+        fnwid = (int) strlen (fnb) + 1;
         fn = (char *) get_fixed_heap_space ((size_t) fnwid);
-        bufcpy (fn, FILE_PATH (&program), fnwid);
-        bufcat (fn, fnb, fnwid);
+        bufcpy (fn, fnb, fnwid);
 /* Recursive include? Then *ignore* the file */
         for (t = top; t != NO_LINE; t = NEXT (t)) {
           if (strcmp (FILENAME (t), fn) == 0) {
@@ -871,7 +870,8 @@ been included will not be included a second time - it will be ignored.
 /* Access the file */
         RESET_ERRNO;
         fd = open (fn, O_RDONLY | O_BINARY);
-        SCAN_ERROR (fd == -1, start_l, start_c, ERROR_SOURCE_FILE_OPEN);
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s \"%s\"", ERROR_SOURCE_FILE_OPEN, fn) >= 0);
+        SCAN_ERROR (fd == -1, start_l, start_c, edit_line);
 /* Access the file */
         RESET_ERRNO;
         fsize = (int) lseek (fd, 0, SEEK_END);
@@ -1830,10 +1830,15 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
     if (scan_buf[0] == STOP_CHAR) {
       stop_scanner = A68_TRUE;
     } else if (strlen (scan_buf) > 0 || att == ROW_CHAR_DENOTATION || att == LITERAL) {
-      KEYWORD_T *kw = find_keyword (top_keyword, scan_buf);
+      KEYWORD_T *kw;
       char *c = NO_TEXT;
       BOOL_T make_node = A68_TRUE;
       char *trailing = NO_TEXT;
+      if (att != IDENTIFIER) {
+        kw = find_keyword (top_keyword, scan_buf);
+      } else {
+        kw = NO_KEYWORD;
+      }
       if (!(kw != NO_KEYWORD && att != ROW_CHAR_DENOTATION)) {
         if (att == IDENTIFIER) {
           make_lower_case (scan_buf);

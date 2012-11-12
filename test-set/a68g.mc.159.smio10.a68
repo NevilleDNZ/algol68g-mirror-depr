@@ -1,0 +1,53 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#smio10#
+
+# Binary transput of structure #
+BEGIN STRING alphabet = "abcdefghijklmnopqrstuvwxyz";
+      
+      INT size = 1000;
+      
+      [0 : size] STRUCT (CHAR c, REAL r) str;
+      
+      FOR i FROM 0 TO UPB str 
+      DO str[i] := (alphabet[i MOD 26 + 1], 1 / (i + 1))
+      OD;
+      putbin (standback, str);
+      print (("File written", newline));
+      reset (standback);
+      print (("File rewound", newline));
+      getbin (standback, str);
+      print (("File read", newline));
+      BOOL bad := FALSE;
+      
+      FOR i FROM 0 TO UPB str 
+      DO bad := bad OR IF c OF str[i] /= alphabet[i MOD 26 + 1]
+         THEN print (("Char bad in struct ", whole (i, 0), ", char is ", c OF str[i], ", char must be ", alphabet[i MOD 26 + 1], newline));
+              TRUE
+         ELIF r OF str[i] /= 1 / (i + 1)
+         THEN print (("Real bad in struct ", whole (i, 0), ", real is ", r OF str[i], ", real must be ", 1 / (i + 1), newline));
+              TRUE
+         ELSE FALSE
+         FI
+      OD;
+      IF NOT bad
+      THEN print ("Contents of file correct")
+      FI
+END

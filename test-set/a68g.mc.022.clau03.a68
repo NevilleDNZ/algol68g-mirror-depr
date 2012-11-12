@@ -1,0 +1,47 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+  PR quiet PR
+
+#clau03#
+BEGIN # Wrong clauses #
+  INT i:= 1, BOOL b:= TRUE;
+  UNION (INT, BOOL, REAL) ibr = SKIP;
+  print(( i | 1, 2 |: i | 3, 4));                              #OK#
+  print(( i | 1  2 |: i | 3, 4));                              #KO#
+  print(( b | 1  2 |: i | 3, 4));                              #KO#
+  print(( b | 1  2 |: b | 3, 4));                              #KO#
+  print(( b | 1  2 |: b | 3  4));                              #OK#
+  print(( i | 1, 2 |: b | 3  4));                              #KO#
+  print(( i | 1, 2 |( b | 3  4)));                             #OK#
+  print(( ibr | (INT): 1, (BOOL): 2 |: ibr | (REAL): 3 | 4));  #OK#
+  print(( ibr | (INT): 1,         2 |: ibr | (REAL): 3 | 4));  #KO#
+  print(( ibr |        1, (BOOL): 2 |: ibr | (REAL): 3 | 4));  #KO#
+  print(( ibr | (INT): 1, (BOOL): 2 |: ibr |         3 | 4));  #KO#
+  print(( ibr | (INT): 1, (BOOL): 2 |:  b  |         3 | 4));  #KO#
+  print(( ibr | (INT): 1, (BOOL): 2 |(  b  |         3 | 4))); #OK#
+  print(CASE ibr IN (INT):1, (BOOL):2 OUT 3 ESAC);         #OK#
+  print(CASE  1  IN (INT):1, (BOOL):2 OUT 3 ESAC);         #KO#
+  print(CASE "a" IN (INT):1, (BOOL):2 OUT 3 ESAC);         #KO#
+  CASE CASE ibr IN (UNION (INT, BOOL) ib) : ib ESAC
+  IN (BOOL) : ibr
+  ESAC;                                                        #OK#
+  CASE CASE ibr IN (UNION (INT, REAL) ir) : ir ESAC
+  IN (BOOL) : ibr
+  ESAC;                                                        #KO#
+  SKIP
+END

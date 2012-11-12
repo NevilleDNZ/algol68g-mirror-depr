@@ -1,0 +1,60 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#appl02#
+BEGIN # ALGOL 68 program, TJD 730706.
+          Calculates all increasing sequences adding up
+          to a given integer from 1 to 10.
+          See ALGOL 68 program TJD 730705 #
+      MODE LIST = STRUCT (INT summand, REF LIST link);
+      
+      HEAP LIST zero := (0, NIL);
+      
+      PROC print solution = VOID:
+           print ((straighten (link OF zero), newline));
+      
+      PROC straighten = (REF LIST l) [] INT:
+           IF l :=: NIL
+           THEN (# empty #
+                 )
+           ELSE [] INT st = straighten (link OF l);
+                
+                [0 : UPB st] INT r;
+                
+                r[0] := summand OF l;
+                r[1 : UPB st] := st;
+                r[@1]
+           FI #straighten# ;
+      
+      PROC build = (REF LIST p, INT rest) VOID:
+           IF rest = 0
+           THEN print solution
+           ELSE FOR k FROM summand OF p + 1 TO rest 
+                DO (HEAP LIST q := (k, NIL);
+                    
+                    link OF p := q;
+                    build (q, rest - k))
+                OD
+           FI;
+      
+      FOR g TO 10 
+      DO print ((newline, g, " =", newline));
+         build (zero, g)
+      OD
+END

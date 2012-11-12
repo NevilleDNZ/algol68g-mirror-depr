@@ -1104,7 +1104,7 @@ static void build_script (void)
   int ret;
   FILE_T script, source;
   LINE_T *sl;
-  char cmd[BUFFER_SIZE];
+  char cmd[BUFFER_SIZE], *strop;
 #if ! defined HAVE_COMPILER
   return;
 #endif
@@ -1133,10 +1133,16 @@ static void build_script (void)
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&program)) >= 0);
   script = open (cmd, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
   ABEND (script == -1, "cannot compose script file", cmd);
-  if (OPTION_LOCAL (&program)) {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! ./a68g --run-script\n") >= 0);
+  strop = "";
+  if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
+    strop = "--run-quote-script";
   } else {
-    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! %s/a68g --run-script\n", BINDIR) >= 0);
+    strop = "--run-script";
+  }
+  if (OPTION_LOCAL (&program)) {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! ./a68g %s\n", strop) >= 0);
+  } else {
+    ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#! %s/a68g %s\n", BINDIR, strop) >= 0);
   }
   WRITE (script, output_line);
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s\n--verify \"%s\"\n", FILE_GENERIC_NAME (&program), PACKAGE_STRING) >= 0);
@@ -1794,6 +1800,30 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           skip = A68_TRUE;
           OPTION_RUN_SCRIPT (&program) = A68_TRUE;
+          OPTION_COMPILE (&program) = A68_FALSE;
+          OPTION_OPTIMISE (&program) = A68_TRUE;
+          OPTION_OPT_LEVEL (&program) = 2;
+#else
+          option_error (start_l, start_c, "linux-only");
+#endif
+        } 
+/* RUN-QUOTE-SCRIPT runs a comiled .sh script */
+        else if (eq (p, "RUN-QUOTE-SCRIPT")) {
+#if defined HAVE_LINUX
+          FORWARD (i);
+          if (i != NO_OPTION_LIST) {
+            if (!name_set) {
+              FILE_INITIAL_NAME (&program) = new_string (STR (i), NO_TEXT);
+              name_set = A68_TRUE;
+            } else {
+              option_error (start_l, start_c, "multiple source file names at");
+            }
+          } else {
+            option_error (start_l, start_c, "missing argument in");
+          }
+          skip = A68_TRUE;
+          OPTION_RUN_SCRIPT (&program) = A68_TRUE;
+          OPTION_STROPPING (&program) = QUOTE_STROPPING;
           OPTION_COMPILE (&program) = A68_FALSE;
           OPTION_OPTIMISE (&program) = A68_TRUE;
           OPTION_OPT_LEVEL (&program) = 2;
@@ -5442,7 +5472,6 @@ A non terminal
 B keyword
 C context
 D argument in decimal
-E string literal from errno
 H char argument
 K int argument as 'k', 'M' or 'G'
 L line number

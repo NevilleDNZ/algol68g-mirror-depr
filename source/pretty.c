@@ -142,7 +142,7 @@ static void pragment (NODE_T *p, BOOL_T keyw)
 /**
 @brief Write with typographic display features.
 @param p Node in syntax tree.
-@param keyw
+@param keyw Whether p is a keyword.
 **/
 
 static void put_sym (NODE_T *p, BOOL_T keyw)

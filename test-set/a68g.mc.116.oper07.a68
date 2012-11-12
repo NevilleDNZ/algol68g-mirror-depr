@@ -1,0 +1,34 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#oper07#
+(# Operator declarations #
+ OP SQ = (REAL x) REAL: x * x,
+     RD = (INT i) REAL: random,
+ OP (REAL) REAL SIN = (print ("Print ten times 1");
+                       sin),
+                 COS = cos;
+ 
+ print (newline);
+ TO 10 
+ DO print (BEGIN REAL x = RD 1;
+                 
+                 SQ SIN x + SQ COS x
+           END)
+ OD)

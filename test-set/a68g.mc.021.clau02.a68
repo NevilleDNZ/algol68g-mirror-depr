@@ -1,0 +1,32 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+  PR quiet PR
+
+#clau02#
+BEGIN # Case conformity #
+  MODE M = UNION ([]INT, BOOL, STRING);
+  PROC prpm = REF PROC M: HEAP PROC M:= M : "aap ";
+  FOR n TO 4 DO
+  CASE CASE n IN TRUE, IF FALSE THEN "aa" ELSE
+    "b " FI, prpm OUT LOC[1:1]INT:=1 ESAC
+      IN (UNION(STRING, BOOL) sb): print(("sb ", sb)),
+        ([]INT i): print(("i ", i))
+      OUT print("void")
+  ESAC OD
+        # sb TRUE sb b sb aap i 1 #
+END

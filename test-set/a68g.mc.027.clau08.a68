@@ -1,0 +1,275 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#clau08#
+BEGIN stop;
+      # no errors, but loops if not stopped here #
+      
+      # A:  Statements in the context of a BEGIN block #
+      BEGIN label: SKIP;
+            l1:
+            BEGIN SKIP;
+                  SKIP
+            END;
+            BEGIN GOTO label;
+                  GO TO label
+            END;
+            BEGIN INT a1, a2, a3;
+                  
+                  l4:
+                  FOR i FROM a1 BY a2 TO a3 
+                  DO SKIP
+                  OD;
+                  FOR i FROM a1 BY a2 TO a3 
+                  DO SKIP
+                  OD
+            END;
+            l2:
+            BEGIN BOOL a;
+                  
+                  IF a
+                  THEN SKIP
+                  FI;
+                  l5:
+                  IF a
+                  THEN SKIP
+                  FI
+            END;
+            BEGIN PROC VOID a;
+                  
+                  l6: a;
+                  a
+            END;
+            l3:
+            BEGIN PROC (INT) VOID a;
+                  
+                  INT b;
+                  
+                  a (b);
+                  l7: a (b)
+            END;
+            BEGIN REAL a;
+                  
+                  a := a;
+                  a := a
+            END;
+            BEGIN REF [] REAL a;
+                  
+                  INT i;
+                  
+                  l8: a[i] := i;
+                  a[i] := i
+            END;
+            BEGIN BEGIN SKIP END;
+                  BEGIN SKIP END
+            END
+      END;
+      # B:  Statements in the context of a ( block #
+      (label: SKIP;
+       l1:
+       (SKIP; SKIP);
+       (GOTO label; GO TO label);
+       (INT a1, a2, a3;
+        
+        l4:
+        FOR i FROM a1 BY a2 TO a3 
+        DO SKIP
+        OD;
+        FOR i FROM a1 BY a2 TO a3 
+        DO SKIP
+        OD);
+       l2:
+       (BOOL a;
+        
+        IF a
+        THEN SKIP
+        FI;
+        l5:
+        IF a
+        THEN SKIP
+        FI);
+       (PROC VOID a;
+        
+        l6: a;
+        a);
+       l3:
+       (PROC (INT) VOID a;
+        
+        INT b;
+        
+        a (b);
+        l7: a (b));
+       (REAL a;
+        
+        a := a;
+        a := a);
+       (REF [] REAL a;
+        
+        INT i;
+        
+        l8: a[i] := i;
+        a[i] := i);
+       ((SKIP);
+        (SKIP)));
+      # C:  Statements in the context of IF statement #
+      BEGIN BOOL true;
+            
+            IF true
+            THEN SKIP;
+                 SKIP
+            FI;
+            IF true
+            THEN SKIP
+            ELSE SKIP;
+                 SKIP
+            FI;
+            IF true
+            THEN IF true
+                 THEN SKIP
+                 FI
+            FI;
+            IF true
+            THEN IF true
+                 THEN SKIP
+                 FI
+            ELSE SKIP
+            FI;
+            IF true
+            THEN IF true
+                 THEN SKIP
+                 ELSE SKIP
+                 FI
+            FI;
+            IF true
+            THEN IF true
+                 THEN SKIP
+                 ELSE SKIP
+                 FI
+            ELSE SKIP
+            FI;
+            IF true
+            THEN SKIP
+            ELSE IF true
+                 THEN SKIP
+                 FI
+            FI;
+            IF true
+            THEN SKIP
+            ELSE IF true
+                 THEN SKIP
+                 ELSE SKIP
+                 FI;
+                 IF true
+                 THEN SKIP
+                 FI;
+                 SKIP
+            FI
+      END;
+      # D:  Statements in the context of a FOR statement #
+      BEGIN INT a1, a2, a3;
+            
+            BOOL true;
+            
+            PROC VOID proc1;
+            
+            PROC (INT) VOID proc2;
+            
+            REAL aa;
+            
+            REF [] REAL bb;
+            
+            FOR i FROM a1 BY a2 TO a3 
+            DO SKIP;
+               SKIP
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO GOTO stop;
+               GOTO stop
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO IF true
+               THEN SKIP
+               FI;
+               IF true
+               THEN SKIP
+               FI
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO FOR i FROM a1 BY a2 TO a3 
+               DO SKIP
+               OD;
+               FOR i FROM a1 BY a2 TO a3 
+               DO SKIP
+               OD
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO proc1;
+               proc1
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO proc2 (a1);
+               proc2 (a1)
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO aa := aa;
+               aa := aa
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO bb[i] := a1;
+               bb[i] := a1
+            OD;
+            FOR i FROM a1 BY a2 TO a3 
+            DO BEGIN SKIP END;
+               BEGIN SKIP END
+            OD
+      END;
+      # E:  Statements in the context of a routine declaration #
+      BEGIN BOOL true;
+            
+            INT a1, a2, a3;
+            
+            REF [] INT a4 = a1;
+            
+            REAL a5;
+            
+            PROC a = VOID: SKIP;
+            
+            PROC b = VOID:
+                 IF TRUE
+                 THEN SKIP
+                 FI;
+            
+            PROC c = VOID:
+                 FOR i FROM a1 BY a2 TO a3 
+                 DO SKIP
+                 OD;
+            
+            PROC d = VOID: d;
+            
+            PROC (INT) VOID e = (INT f) VOID: e (f);
+            
+            PROC f = VOID: a5 := a5;
+            
+            PROC g = VOID: a4[a1] := a1;
+            
+            PROC h = VOID: BEGIN SKIP END;
+            
+            SKIP
+      END
+END

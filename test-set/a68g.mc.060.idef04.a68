@@ -1,0 +1,38 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#idef04#
+BEGIN INT i = 1, j = -1;
+      
+      PROC a = VOID:
+           (INT i = 2, j = -2; b);
+      
+      PROC b = VOID:
+           (INT j = -3;
+            
+            PROC c = VOID: print (i + j);
+            
+            d (c));
+      
+      PROC d = (PROC VOID e) VOID:
+           (INT i = 4, j = -4; e);
+      
+      a
+# -2 #
+END

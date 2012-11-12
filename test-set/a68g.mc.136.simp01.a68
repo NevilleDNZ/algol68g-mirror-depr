@@ -1,0 +1,33 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#simp01#
+BEGIN #ALGOL68 test to see if the compiler exists#
+      INT i, j, k;
+      
+      INT s = 17;
+      
+      INT t := 3;
+      
+      i := 0;
+      FOR l FROM 0 BY 2 TO 13 
+      DO i +:= l
+      OD;
+      print (("Value should be 42", i, newline))
+END

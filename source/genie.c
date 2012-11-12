@@ -70,7 +70,6 @@ static A68_REF genie_make_rowrow (NODE_T *, MOID_T *, int, ADDR_T);
 static A68_REF genie_make_ref_row_of_row (NODE_T *, MOID_T *, MOID_T *, ADDR_T);
 static A68_REF genie_make_ref_row_row (NODE_T *, MOID_T *, MOID_T *, ADDR_T);
 static A68_REF genie_clone (NODE_T *, MOID_T *, A68_REF *, A68_REF *);
-static A68_REF genie_store (NODE_T *, MOID_T *, A68_REF *, A68_REF *);
 static void genie_clone_stack (NODE_T *, MOID_T *, A68_REF *, A68_REF *);
 
 static void genie_serial_units_no_label (NODE_T *, int, NODE_T **);
@@ -6086,12 +6085,10 @@ void genie_generator_stowed (NODE_T * p, BYTE_T * addr, NODE_T ** decl, ADDR_T *
     BYTE_T *faddr = addr;
     genie_generator_struct (SUB_NEXT (p), &faddr, cur_sp);
     return;
-  }
-/* Row c.s. */
-  if (IS (p, FLEX_SYMBOL)) {
-    FORWARD (p);
-  }
-  if (IS (p, BOUNDS)) {
+  } else if (IS (p, FLEX_SYMBOL)) {
+    genie_generator_stowed (NEXT (p), addr, decl, cur_sp);
+    return;
+  } else if (IS (p, BOUNDS)) {
     A68_REF desc;
     MOID_T *rmod = MOID (p), *smod = MOID (NEXT (p));
     A68_ARRAY *arr;

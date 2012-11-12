@@ -1,0 +1,42 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#stow06#
+BEGIN # Against over-optimization of string comparison #
+      STRING str = "string with step > 1";
+      
+      STRING ref str := str;
+      
+      [1 : UPB str] STRUCT (REAL flub, CHAR c) rst;
+      
+      print (("Result must be:", newline, str, ".", newline, str, ".", newline, "First test OK", newline, "Second test OK", newline, newline, "Result is:", newline));
+      FOR i TO UPB str 
+      DO c OF rst[i] := ref str[i]
+      OD;
+      print ((c OF rst, ".", newline, ref str, ".", newline));
+      IF c OF rst = str AND c OF rst = ref str
+      THEN print (("First test OK", newline))
+      ELSE print (("Erroneous string, is: ", c OF rst, " , must be: ", str, newline))
+      FI;
+      c OF rst := str;
+      IF c OF rst /= str OR c OF rst /= ref str
+      THEN print (("Erroneous string, is: ", c OF rst, " , must be: ", str, newline))
+      ELSE print (("Second test OK", newline))
+      FI
+END

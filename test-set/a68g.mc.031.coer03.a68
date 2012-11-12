@@ -1,0 +1,58 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#coer03#
+BEGIN # Morf versus comorf #
+      PROC right = VOID: print ("right"),
+            wrong = VOID: print ("wrong");
+      
+      PROC deproc = (STRING mcm) VOID:
+           print ((newline, mcm, "   deproc: ")),
+      PROC nodeproc = (STRING mcm) VOID:
+           print ((newline, mcm, " nodeproc: "));
+      
+      deproc ("selection   ");
+      proc OF STRUCT (PROC VOID proc, INT d) (right, SKIP);
+      deproc ("slice       ");
+      [] PROC VOID (right)[1];
+      deproc ("routine text");
+      PROC VOID: right;
+      deproc ("formula     ");
+      OP + = (INT i) PROC VOID: right;
+      
+      +1;
+      deproc ("call        ");
+      ((INT i) PROC VOID: right) (1);
+      deproc ("identifier  ");
+      right;
+      nodeproc ("assignation ");
+      LOC PROC VOID := wrong;
+      nodeproc ("cast        ");
+      PROC VOID (wrong);
+      nodeproc ("generator   ");
+      LOC PROC VOID;
+      FOR i TO 2 
+      DO IF i = 1
+         THEN deproc ("balance     ");
+              right
+         ELSE nodeproc ("balance     ");
+              PROC VOID (wrong)
+         FI
+      OD
+END

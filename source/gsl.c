@@ -486,24 +486,6 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
 }
 
 /**
-@brief Pop REF [...] M and derefence to [...] M.
-@param p Node in syntax tree.
-@param m Mode of REF [...] M.
-@param par_size Size of parameters in the stack.
-@return The undereferenced REF.
-**/
-
-static A68_REF dereference_ref_row (NODE_T * p, MOID_T * m, ADDR_T par_size)
-{
-  A68_REF *u, v;
-  u = (A68_REF *) STACK_OFFSET (-par_size);
-  v = *u;
-  CHECK_REF (p, v, m);
-  *u = *DEREF (A68_ROW, &v);
-  return (v);
-}
-
-/**
 @brief Generically perform operation and assign result (+:=, -:=, ...) .
 @param p Node in syntax tree.
 @param m Mode of REF [...] M.
@@ -513,14 +495,17 @@ static A68_REF dereference_ref_row (NODE_T * p, MOID_T * m, ADDR_T par_size)
 
 static void op_ab (NODE_T * p, MOID_T * m, MOID_T * n, GPROC * op)
 {
-  ADDR_T par_size = SIZE (m) + SIZE (n);
-  A68_REF u, *v;
+  ADDR_T parm_size = SIZE (m) + SIZE (n);
+  A68_REF dst, src, *save = (A68_REF *) STACK_OFFSET (-parm_size);
   error_node = p;
-  u = dereference_ref_row (p, m, par_size);
-  v = (A68_REF *) STACK_OFFSET (-par_size);
+  dst = *save;
+  CHECK_REF (p, dst, m);
+  *save = *DEREF (A68_ROW, &dst);
+  STATUS (&src) = (STATUS_MASK) (INIT_MASK | IN_STACK_MASK);
+  OFFSET (&src) = stack_pointer - parm_size;
   (*op) (p);
-  *DEREF (A68_ROW, &u) = *v;
-  *v = u;
+  genie_store (p, n, &dst, &src);
+  *save = dst;
 }
 
 /**

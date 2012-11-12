@@ -1,0 +1,26 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#scop08#
+BEGIN # Scope error #
+      BEGIN (REF REF INT p) VOID:
+            (p := LOC INT := 3;
+             print (p))
+      END (LOC REF INT)
+END

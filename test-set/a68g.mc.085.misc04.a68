@@ -1,0 +1,46 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#misc04#
+BEGIN # A primary #
+      MODE # M = PROC(INT)[]PROC P, #
+           P = REF [] PROC (CHAR) N,
+            N = [1 : 0] UNION (INT, CHAR);
+      
+      INT ii
+      # partial parameter #
+      ;
+      
+      FOR k TO 5 
+      DO FOR l TO 5 
+         DO FOR m TO 2 
+            DO print (CASE BEGIN (INT i) [] PROC P:
+                                 (ii := i;
+                                  P:
+                                  HEAP [1 : 2] PROC (CHAR) N := (SKIP, (CHAR c) N:
+                                                                 (ii, c)))
+                           END (k)[1][2] ("abcde"[l])[m]
+                      IN (CHAR c): c, (INT i): "12345"[i]
+                      ESAC)
+            OD
+         OD
+      OD
+# hit 'm hard, the output should be :
+    1a1b1c1d1e2a2b ...   5c5d5e #
+END

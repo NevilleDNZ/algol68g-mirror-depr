@@ -5158,16 +5158,14 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   char idf[NAME_SIZE], z[NAME_SIZE], pop[NAME_SIZE];
   NODE_T * q = SUB (p), * last = NO_NODE;
   int units, decs;
-  BOOL_T need_for = A68_FALSE, need_while = A68_FALSE, gc, need_reinit;
+  BOOL_T gc, need_reinit;
 /* FOR identifier */
   if (IS (q, FOR_PART)) {
-    need_for = A68_TRUE;
     for_part = NEXT_SUB (q);
     FORWARD (q);
   }
 /* FROM unit */
   if (IS (p, FROM_PART)) {
-    need_for = A68_TRUE;
     from_part = NEXT_SUB (q);
     if (! basic_unit (from_part)) {
       return (NO_TEXT);
@@ -5176,7 +5174,6 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
 /* BY unit */
   if (IS (q, BY_PART)) {
-    need_for = A68_TRUE;
     by_part = NEXT_SUB (q);
     if (! basic_unit (by_part)) {
       return (NO_TEXT);
@@ -5185,7 +5182,6 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
 /* TO unit, DOWNTO unit */
   if (IS (q, TO_PART)) {
-    need_for = A68_TRUE;
     if (IS (SUB (q), TO_SYMBOL)) {
       to_part = NEXT_SUB (q);
       if (! basic_unit (to_part)) {
@@ -5199,24 +5195,11 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     }
     FORWARD (q);
   }
+/* WHILE DO OD is not yet supported */
   if (IS (q, WHILE_PART)) {
-    BOOL_T pop_lma, good_unit;
-    if (need_for) {
-      return (NO_TEXT);
-    }
-    need_while = A68_TRUE;
-    pop_lma = long_mode_allowed;
-    long_mode_allowed = A68_FALSE;
-/* We only compile WHILE basic unit, so we save on opening frames */
-    good_unit = basic_serial (NEXT_SUB (q), 1);
-    long_mode_allowed = pop_lma;
-    if (! good_unit) {
-      return (NO_TEXT);
-    }
-    while_part = q;
-    FORWARD (q);
+    return (NO_TEXT);
   }
-/* We cannot yet compile DO UNTIL OD, only basic and classic A68 loops */
+/* DO UNTIL OD is not yet supported */
   if (IS (q, DO_PART) || IS (q, ALT_DO_PART)) {
     sc = q = NEXT_SUB (q);
     if (IS (q, SERIAL_CLAUSE)) {
@@ -5241,14 +5224,12 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     write_fun_prelude (p, out, fn);
   }
   root_idf = NO_DEC;
-  if (need_for) {
     (void) make_name (idf, "k", "", NUMBER (p));
     (void) add_declaration (&root_idf, "int", 0, idf);
     if (for_part != NO_NODE) {
       (void) make_name (z, "z", "", NUMBER (p));
       (void) add_declaration (&root_idf, "A68_INT", 1, z);
     }
-  }
   if (from_part != NO_NODE) {
     inline_unit (from_part, out, L_DECLARE);
   }
@@ -5289,13 +5270,6 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = (A68_INT *) (FRAME_OBJECT (OFFSET (TAX (_N_ (%d)))));\n", z, NUMBER (for_part)));
   }
 /* The loop in C */
-  if (!need_while && ! need_for) {
-    indent (out, "while (A68_TRUE) {\n");
-  } else if (need_while && ! need_for) {
-    indent (out, "while (");
-    inline_unit (SUB (NEXT_SUB (while_part)), out, L_YIELD);
-    undent (out, ") {\n");
-  } else {
 /* Initialisation */
     indentf (out, snprintf (line, SNPRINTF_SIZE, "for (%s = ", idf));
     if (from_part == NO_NODE) {
@@ -5339,7 +5313,6 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
       inline_unit (by_part, out, L_YIELD);
     }
     undent (out, ") {\n");
-  }
   indentation++;
   if (gc) {
     indent (out, "/* PREEMPTIVE_GC; */\n");

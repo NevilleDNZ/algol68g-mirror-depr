@@ -1,0 +1,30 @@
+# This program is part of the
+ 
+     Revised Mathematisch Centrum Algol 68 Test Set
+
+  by Dick Grune [1979].
+
+  This program is distributed with Algol 68 Genie with
+  kind permission of Dick Grune.
+
+  This test set is available from:
+
+     http://www.dickgrune.com/CS/Algol68
+
+  or from the Vrije Universiteit Amsterdam:
+
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+#coer09#
+BEGIN # Soft balance # print (CASE 2
+                              IN SKIP, NIL, IF BOOL (SKIP)
+                                 THEN GOTO stop
+                                 ELSE PROC REF [] INT (SKIP)
+                                 FI
+                              ESAC :=: CASE 3
+                              IN LOC REF REF [] INT, LOC INT, NIL
+                              ESAC)
+#TRUE, would you believe #
+END
