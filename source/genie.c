@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -1042,17 +1042,20 @@ static PROP_T genie_widening (NODE_T * p)
     make_constant_widening (p, MODE (LONGLONG_BITS), &self);
   }
 /* Miscellaneous widenings */
-  else if (COERCE_FROM_TO (p, MODE (BYTES), MODE (ROW_CHAR))) {
+  else if (COERCE_FROM_TO (p, MODE (BYTES), MODE (ROW_CHAR)) ||
+           COERCE_FROM_TO (p, MODE (BYTES), MODE (FLEX_ROW_CHAR))) {
     A68_BYTES z;
     EXECUTE_UNIT (SUB (p));
     POP_OBJECT (p, &z, A68_BYTES);
     PUSH_REF (p, c_string_to_row_char (p, VALUE (&z), BYTES_WIDTH));
-  } else if (COERCE_FROM_TO (p, MODE (LONG_BYTES), MODE (ROW_CHAR))) {
+  } else if (COERCE_FROM_TO (p, MODE (LONG_BYTES), MODE (ROW_CHAR)) ||
+             COERCE_FROM_TO (p, MODE (LONG_BYTES), MODE (FLEX_ROW_CHAR))) {
     A68_LONG_BYTES z;
     EXECUTE_UNIT (SUB (p));
     POP_OBJECT (p, &z, A68_LONG_BYTES);
     PUSH_REF (p, c_string_to_row_char (p, VALUE (&z), LONG_BYTES_WIDTH));
-  } else if (COERCE_FROM_TO (p, MODE (BITS), MODE (ROW_BOOL))) {
+  } else if (COERCE_FROM_TO (p, MODE (BITS), MODE (ROW_BOOL)) ||
+             COERCE_FROM_TO (p, MODE (BITS), MODE (FLEX_ROW_BOOL))) {
     A68_BITS x;
     A68_REF z, row;
     A68_ARRAY arr;
@@ -1083,7 +1086,10 @@ static PROP_T genie_widening (NODE_T * p)
       VALUE ((A68_BOOL *) base) = (BOOL_T) ((VALUE (&x) & bit) != 0 ? A68_TRUE : A68_FALSE);
     }
     PUSH_REF (p, z);
-  } else if (COERCE_FROM_TO (p, MODE (LONG_BITS), MODE (ROW_BOOL)) || COERCE_FROM_TO (p, MODE (LONGLONG_BITS), MODE (ROW_BOOL))) {
+  } else if (COERCE_FROM_TO (p, MODE (LONG_BITS), MODE (ROW_BOOL)) || 
+             COERCE_FROM_TO (p, MODE (LONGLONG_BITS), MODE (ROW_BOOL)) ||
+             COERCE_FROM_TO (p, MODE (LONG_BITS), MODE (FLEX_ROW_BOOL)) ||
+             COERCE_FROM_TO (p, MODE (LONGLONG_BITS), MODE (FLEX_ROW_BOOL))) {
     MOID_T *m = MOID (SUB (p));
     A68_REF z, row;
     A68_ARRAY arr;
@@ -2585,7 +2591,7 @@ static PROP_T genie_voiding_assignation (NODE_T * p)
 {
   NODE_T *dst = SUB (p);
   NODE_T *src = NEXT_NEXT (dst);
-  MOID_T *src_mode = SUB_MOID (p);
+  MOID_T *src_mode = SUB_MOID (dst);
   ADDR_T pop_sp = stack_pointer, pop_fp = FRAME_DNS (frame_pointer);
   A68_REF z;
   BOOL_T caution;
@@ -2644,7 +2650,7 @@ static PROP_T genie_assignation_quick (NODE_T * p)
   PROP_T self;
   NODE_T *dst = SUB (p);
   NODE_T *src = NEXT_NEXT (dst);
-  MOID_T *src_mode = SUB_MOID (p);
+  MOID_T *src_mode = SUB_MOID (dst);
   int size = SIZE (src_mode);
   ADDR_T pop_fp = FRAME_DNS (frame_pointer);
   A68_REF *z = (A68_REF *) STACK_TOP;
@@ -2676,7 +2682,7 @@ static PROP_T genie_assignation (NODE_T * p)
   PROP_T self, srp;
   NODE_T *dst = SUB (p);
   NODE_T *src = NEXT_NEXT (dst);
-  MOID_T *src_mode = SUB_MOID (p);
+  MOID_T *src_mode = SUB_MOID (dst);
   int size = SIZE (src_mode);
   ADDR_T pop_fp = FRAME_DNS (frame_pointer);
   A68_REF *z = (A68_REF *) STACK_TOP;

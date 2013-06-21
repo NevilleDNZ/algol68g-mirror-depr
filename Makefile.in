@@ -455,15 +455,35 @@ TESTS = \
 	test-set/a68g.mc.176.synt05.a68\
 	test-set/a68g.mc.177.synt06.a68\
 	test-set/a68g.mc.178.synt07.a68\
-	test-set/a68g.mc.179.synt08.a68
+	test-set/a68g.mc.179.synt08.a68\
+	test-set/a68g.ur.180.r31.a68\
+	test-set/a68g.ur.181.r33d.a68\
+	test-set/a68g.ur.182.r34a.a68\
+	test-set/a68g.ur.183.r541a.a68\
+	test-set/a68g.ur.184.r541b.a68\
+	test-set/a68g.ur.185.r541c.a68\
+	test-set/a68g.ur.186.r542a.a68\
+	test-set/a68g.ur.187.r542b.a68\
+	test-set/a68g.ur.188.r542c.a68\
+	test-set/a68g.ur.189.r6b.a68\
+	test-set/a68g.ur.190.r6d.a68\
+	test-set/a68g.ur.191.r6e.a68\
+	test-set/a68g.ur.192.r71a.a68\
+	test-set/a68g.ur.193.r71b.a68\
+	test-set/a68g.ur.194.r72a.a68\
+	test-set/a68g.ur.195.r8.a68\
+	test-set/a68g.ur.196.r811.a68\
+	test-set/a68g.ur.197.r812.a68\
+	test-set/a68g.ur.198.r9.a68
 
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
 @EXPORT_DYNAMIC_TRUE@a68g_LDFLAGS = -Wl,--export-dynamic
 pkginclude_HEADERS = source/a68g.h source/a68g-config.h
 man_MANS = doc/a68g.1
-doc_DATA = AUTHORS COPYING NEWS README 
+doc_DATA = AUTHORS COPYING NEWS README
 EXTRA_DIST = $(man_MANS)\
-	$(TESTS)
+	$(TESTS)\
+	./ISSUES
 
 all: all-am
 

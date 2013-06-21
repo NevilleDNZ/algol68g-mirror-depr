@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -696,7 +696,7 @@ unsigned *stack_mp_bits (NODE_T * p, MP_T * z, MOID_T * m)
 /* Argument check */
   if (MP_DIGIT (u, 1) < 0.0) {
     errno = EDOM;
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, (m == MODE (LONG_BITS) ? MODE (LONG_INT) : MODE (LONGLONG_INT)));
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, m);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
 /* Convert radix MP_BITS_RADIX number */

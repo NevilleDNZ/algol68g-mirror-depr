@@ -1,0 +1,954 @@
+# This program is part of the Rennes Test Set, 
+  automatically generated from the Algol 68 grammar 
+  using a formalism of B. Houssais (University of Rennes, 1975).
+ 
+  This test set is available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+# r542b #
+(print (("dyadic formulas", newline));
+ INT vf = 17 * (8 + 2) + 28 * (8 * 4 + 15 + 14);
+ 
+ INT ctrt := 0, ctr := 0, ctrloc;
+ 
+ PROC ctrl = (INT inc) VOID:
+      (ctr /= ctrloc + inc | print (("count er in test", ctrt, ctr, ctrloc + inc, newline)));
+ 
+ MODE R = INT;
+ 
+ PROC test = (INT a) VOID:
+      (a = 1 | ctr +:= 1 | print (("er", ctrt, ctr - ctrloc, newline)));
+ 
+ OP ?=:= = (INT x) INT:
+    (test (x);
+     x);
+ 
+ # servitudes pour secondaires #
+ INT b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10;
+ 
+ STRUCT (INT d2, d3, d4, d5, d6, d7, d8, d9, d0) str = (2, 3, 4, 5, 6, 7, 8, 9, 10);
+ 
+ [, ] INT t = ((0, b, c, d, e, f, g, h, i, j), (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+ PROC call = (INT a) INT:
+      (a = 0 | 10 | a),
+ OP & = (BOOL a, INT b) STRUCT (INT a, b):
+    (b, 0),
+     & = (CHAR a, STRUCT (INT a, b) b) INT: a OF b;
+ 
+ PRIO & = 3;
+ 
+ PRIO A = 1, B = 2, C = 3, D = 4, E = 5, F = 6, G = 7, H = 8, I = 9;
+ 
+ # contextes demandant un mode : ent #
+ (# definition des operateurs #
+  OP M = (INT a) INT:
+     (ctr +:= 1; a - 1);
+  
+  PROC dyad = (INT a, b) INT:
+       ((a = b | ctr +:= 1 | print (("er.prio", ctrt, ctr - ctrloc, a, b, newline)));
+        a - 1);
+  
+  OP (INT, INT) INT A = dyad,
+                     B = dyad,
+                     C = dyad,
+                     D = dyad,
+                     E = dyad,
+                     F = dyad,
+                     G = dyad,
+                     H = dyad,
+                     I = dyad;
+  
+  # nombre de operateurs : 4 #
+  (ctrt := 1;
+   ctrloc := ctr;
+   test (M 3 D M M 4);
+   FOR ident FROM M 3 D M M 4 BY M 3 D M M 4 TO M 3 D M M 4 
+   WHILE 1 = (M 3 D M M 4)
+   DO [M 3 D M M 4 : 4, -1 : M 3 D M M 4] R ent;
+      
+      ent[M 3 D M M 4, 0] := ent[1, M 3 D M M 4] := M 3 D M M 4;
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M 3 D M M 4;
+            REAL pi = 0.12345;
+            
+            M 3 D M M 4);
+   
+   test (par);
+   alfa := ?=:=(M 3 D M M 4);
+   R ident = M 3 D M M 4,
+   R loc := CASE M 3 D M M 4
+   IN M 3 D M M 4, SKIP
+   ESAC, tas := M 3 D M M 4;
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R: M 3 D M M 4,
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M 3 D M M 4, (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M 3 D M M 4, proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M 3 D M M 4);
+   
+   UNION (R, CHAR) union := pr (proc, M 3 D M M 4, proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M 3 D M M 4 END), ?=:=(union; 1 = (M 3 D M M 4) | M 3 D M M 4), M 3 D M M 4, test ((BOOL bool = FALSE; union | (R): M 3 D M M 4, (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 2;
+   ctrloc := ctr;
+   test (M c D M M d);
+   FOR ident FROM M c D M M d BY M c D M M d TO M c D M M d 
+   WHILE 1 = (M c D M M d)
+   DO [M c D M M d : 4, -1 : M c D M M d] R ent;
+      
+      ent[M c D M M d, 0] := ent[1, M c D M M d] := M c D M M d;
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M c D M M d;
+            REAL pi = 0.12345;
+            
+            M c D M M d);
+   
+   test (par);
+   alfa := ?=:=(M c D M M d);
+   R ident = M c D M M d,
+   R loc := CASE M c D M M d
+   IN M c D M M d, SKIP
+   ESAC, tas := M c D M M d;
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R: M c D M M d,
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M c D M M d, (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M c D M M d, proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M c D M M d);
+   
+   UNION (R, CHAR) union := pr (proc, M c D M M d, proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M c D M M d END), ?=:=(union; 1 = (M c D M M d) | M c D M M d), M c D M M d, test ((BOOL bool = FALSE; union | (R): M c D M M d, (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 3;
+   ctrloc := ctr;
+   test (M d3 OF str D M M d4 OF str);
+   FOR ident FROM M d3 OF str D M M d4 OF str BY M d3 OF str D M M d4 OF str TO M d3 OF str D M M d4 OF str 
+   WHILE 1 = (M d3 OF str D M M d4 OF str)
+   DO [M d3 OF str D M M d4 OF str : 4, -1 : M d3 OF str D M M d4 OF str] R ent;
+      
+      ent[M d3 OF str D M M d4 OF str, 0] := ent[1, M d3 OF str D M M d4 OF str] := M d3 OF str D M M d4 OF str;
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M d3 OF str D M M d4 OF str;
+            REAL pi = 0.12345;
+            
+            M d3 OF str D M M d4 OF str);
+   
+   test (par);
+   alfa := ?=:=(M d3 OF str D M M d4 OF str);
+   R ident = M d3 OF str D M M d4 OF str,
+   R loc := CASE M d3 OF str D M M d4 OF str
+   IN M d3 OF str D M M d4 OF str, SKIP
+   ESAC, tas := M d3 OF str D M M d4 OF str;
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R: M d3 OF str D M M d4 OF str,
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M d3 OF str D M M d4 OF str, (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M d3 OF str D M M d4 OF str, proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M d3 OF str D M M d4 OF str);
+   
+   UNION (R, CHAR) union := pr (proc, M d3 OF str D M M d4 OF str, proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M d3 OF str D M M d4 OF str END), ?=:=(union; 1 = (M d3 OF str D M M d4 OF str) | M d3 OF str D M M d4 OF str), M d3 OF str D M M d4 OF str, test ((BOOL bool = FALSE; union | (R): M d3 OF str D M M d4 OF str, (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 4;
+   ctrloc := ctr;
+   test (M t[, c][2] D M M t[, d][2]);
+   FOR ident FROM M t[, c][2] D M M t[, d][2] BY M t[, c][2] D M M t[, d][2] TO M t[, c][2] D M M t[, d][2] 
+   WHILE 1 = (M t[, c][2] D M M t[, d][2])
+   DO [M t[, c][2] D M M t[, d][2] : 4, -1 : M t[, c][2] D M M t[, d][2]] R ent;
+      
+      ent[M t[, c][2] D M M t[, d][2], 0] := ent[1, M t[, c][2] D M M t[, d][2]] := M t[, c][2] D M M t[, d][2];
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M t[, c][2] D M M t[, d][2];
+            REAL pi = 0.12345;
+            
+            M t[, c][2] D M M t[, d][2]);
+   
+   test (par);
+   alfa := ?=:=(M t[, c][2] D M M t[, d][2]);
+   R ident = M t[, c][2] D M M t[, d][2],
+   R loc := CASE M t[, c][2] D M M t[, d][2]
+   IN M t[, c][2] D M M t[, d][2], SKIP
+   ESAC, tas := M t[, c][2] D M M t[, d][2];
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        M t[, c][2] D M M t[, d][2],
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M t[, c][2] D M M t[, d][2], (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M t[, c][2] D M M t[, d][2], proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M t[, c][2] D M M t[, d][2]);
+   
+   UNION (R, CHAR) union := pr (proc, M t[, c][2] D M M t[, d][2], proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M t[, c][2] D M M t[, d][2]
+          END), ?=:=(union; 1 = (M t[, c][2] D M M t[, d][2]) | M t[, c][2] D M M t[, d][2]), M t[, c][2] D M M t[, d][2], test ((BOOL bool = FALSE; union | (R): M t[, c][2] D M M t[, d][2], (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 5;
+   ctrloc := ctr;
+   test (M call (3) D M M call (4));
+   FOR ident FROM M call (3) D M M call (4) BY M call (3) D M M call (4) TO M call (3) D M M call (4) 
+   WHILE 1 = (M call (3) D M M call (4))
+   DO [M call (3) D M M call (4) : 4, -1 : M call (3) D M M call (4)] R ent;
+      
+      ent[M call (3) D M M call (4), 0] := ent[1, M call (3) D M M call (4)] := M call (3) D M M call (4);
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M call (3) D M M call (4);
+            REAL pi = 0.12345;
+            
+            M call (3) D M M call (4));
+   
+   test (par);
+   alfa := ?=:=(M call (3) D M M call (4));
+   R ident = M call (3) D M M call (4),
+   R loc := CASE M call (3) D M M call (4)
+   IN M call (3) D M M call (4), SKIP
+   ESAC, tas := M call (3) D M M call (4);
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        M call (3) D M M call (4),
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M call (3) D M M call (4), (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M call (3) D M M call (4), proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M call (3) D M M call (4));
+   
+   UNION (R, CHAR) union := pr (proc, M call (3) D M M call (4), proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M call (3) D M M call (4)
+          END), ?=:=(union; 1 = (M call (3) D M M call (4)) | M call (3) D M M call (4)), M call (3) D M M call (4), test ((BOOL bool = FALSE; union | (R): M call (3) D M M call (4), (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 6;
+   ctrloc := ctr;
+   test (M PROC INT IF 3 = 0
+         THEN INT: 10
+         ELSE INT: 3
+         FI D M M PROC INT IF 4 = 0
+         THEN INT: 10
+         ELSE INT: 4
+         FI);
+   FOR ident FROM M PROC INT IF 3 = 0
+   THEN INT: 10
+   ELSE INT: 3
+   FI D M M PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI BY M PROC INT IF 3 = 0
+   THEN INT: 10
+   ELSE INT: 3
+   FI D M M PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI TO M PROC INT IF 3 = 0
+   THEN INT: 10
+   ELSE INT: 3
+   FI D M M PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI 
+   WHILE 1 = (M PROC INT IF 3 = 0
+              THEN INT: 10
+              ELSE INT: 3
+              FI D M M PROC INT IF 4 = 0
+              THEN INT: 10
+              ELSE INT: 4
+              FI)
+   DO [M PROC INT IF 3 = 0
+       THEN INT: 10
+       ELSE INT: 3
+       FI D M M PROC INT IF 4 = 0
+       THEN INT: 10
+       ELSE INT: 4
+       FI : 4, -1 : M PROC INT IF 3 = 0
+       THEN INT: 10
+       ELSE INT: 3
+       FI D M M PROC INT IF 4 = 0
+       THEN INT: 10
+       ELSE INT: 4
+       FI] R ent;
+      
+      ent[M PROC INT IF 3 = 0
+          THEN INT: 10
+          ELSE INT: 3
+          FI D M M PROC INT IF 4 = 0
+          THEN INT: 10
+          ELSE INT: 4
+          FI, 0] := ent[1, M PROC INT IF 3 = 0
+                        THEN INT: 10
+                        ELSE INT: 3
+                        FI D M M PROC INT IF 4 = 0
+                        THEN INT: 10
+                        ELSE INT: 4
+                        FI] := M PROC INT IF 3 = 0
+      THEN INT: 10
+      ELSE INT: 3
+      FI D M M PROC INT IF 4 = 0
+      THEN INT: 10
+      ELSE INT: 4
+      FI;
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M PROC INT IF 3 = 0
+            THEN INT: 10
+            ELSE INT: 3
+            FI D M M PROC INT IF 4 = 0
+            THEN INT: 10
+            ELSE INT: 4
+            FI;
+            REAL pi = 0.12345;
+            
+            M PROC INT IF 3 = 0
+            THEN INT: 10
+            ELSE INT: 3
+            FI D M M PROC INT IF 4 = 0
+            THEN INT: 10
+            ELSE INT: 4
+            FI);
+   
+   test (par);
+   alfa := ?=:=(M PROC INT IF 3 = 0
+                THEN INT: 10
+                ELSE INT: 3
+                FI D M M PROC INT IF 4 = 0
+                THEN INT: 10
+                ELSE INT: 4
+                FI);
+   R ident = M PROC INT IF 3 = 0
+   THEN INT: 10
+   ELSE INT: 3
+   FI D M M PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI,
+   R loc := CASE M PROC INT IF 3 = 0
+                 THEN INT: 10
+                 ELSE INT: 3
+                 FI D M M PROC INT IF 4 = 0
+                 THEN INT: 10
+                 ELSE INT: 4
+                 FI
+   IN M PROC INT IF 3 = 0
+      THEN INT: 10
+      ELSE INT: 3
+      FI D M M PROC INT IF 4 = 0
+      THEN INT: 10
+      ELSE INT: 4
+      FI, SKIP
+   ESAC, tas := M PROC INT IF 3 = 0
+   THEN INT: 10
+   ELSE INT: 3
+   FI D M M PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI;
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        M PROC INT IF 3 = 0
+        THEN INT: 10
+        ELSE INT: 3
+        FI D M M PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI,
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M PROC INT IF 3 = 0
+THEN INT: 10
+ELSE INT: 3
+FI D M M PROC INT IF 4 = 0
+THEN INT: 10
+ELSE INT: 4
+FI, (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M PROC INT IF 3 = 0
+               THEN INT: 10
+               ELSE INT: 3
+               FI D M M PROC INT IF 4 = 0
+               THEN INT: 10
+               ELSE INT: 4
+               FI, proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M PROC INT IF 3 = 0
+         THEN INT: 10
+         ELSE INT: 3
+         FI D M M PROC INT IF 4 = 0
+         THEN INT: 10
+         ELSE INT: 4
+         FI);
+   
+   UNION (R, CHAR) union := pr (proc, M PROC INT IF 3 = 0
+                                THEN INT: 10
+                                ELSE INT: 3
+                                FI D M M PROC INT IF 4 = 0
+                                THEN INT: 10
+                                ELSE INT: 4
+                                FI, proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M PROC INT IF 3 = 0
+                  THEN INT: 10
+                  ELSE INT: 3
+                  FI D M M PROC INT IF 4 = 0
+                  THEN INT: 10
+                  ELSE INT: 4
+                  FI
+          END), ?=:=(union; 1 = (M PROC INT IF 3 = 0
+                                 THEN INT: 10
+                                 ELSE INT: 3
+                                 FI D M M PROC INT IF 4 = 0
+                                 THEN INT: 10
+                                 ELSE INT: 4
+                                 FI) | M PROC INT IF 3 = 0
+    THEN INT: 10
+    ELSE INT: 3
+    FI D M M PROC INT IF 4 = 0
+    THEN INT: 10
+    ELSE INT: 4
+    FI), M PROC INT IF 3 = 0
+    THEN INT: 10
+    ELSE INT: 3
+    FI D M M PROC INT IF 4 = 0
+    THEN INT: 10
+    ELSE INT: 4
+    FI, test ((BOOL bool = FALSE; union | (R): M PROC INT IF 3 = 0
+              THEN INT: 10
+              ELSE INT: 3
+              FI D M M PROC INT IF 4 = 0
+              THEN INT: 10
+              ELSE INT: 4
+              FI, (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 7;
+   ctrloc := ctr;
+   test (M (INT x := c; x) D M M (INT x := d; x));
+   FOR ident FROM M (INT x := c; x) D M M (INT x := d; x) BY M (INT x := c; x) D M M (INT x := d; x) TO M (INT x := c; x) D M M (INT x := d; x) 
+   WHILE 1 = (M (INT x := c; x) D M M (INT x := d; x))
+   DO [M (INT x := c; x) D M M (INT x := d; x) : 4, -1 : M (INT x := c; x) D M M (INT x := d; x)] R ent;
+      
+      ent[M (INT x := c; x) D M M (INT x := d; x), 0] := ent[1, M (INT x := c; x) D M M (INT x := d; x)] := M (INT x := c; x) D M M (INT x := d; x);
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M (INT x := c; x) D M M (INT x := d; x);
+            REAL pi = 0.12345;
+            
+            M (INT x := c; x) D M M (INT x := d; x));
+   
+   test (par);
+   alfa := ?=:=(M (INT x := c; x) D M M (INT x := d; x));
+   R ident = M (INT x := c; x) D M M (INT x := d; x),
+   R loc := CASE M (INT x := c; x) D M M (INT x := d; x)
+   IN M (INT x := c; x) D M M (INT x := d; x), SKIP
+   ESAC, tas := M (INT x := c; x) D M M (INT x := d; x);
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        M (INT x := c; x) D M M (INT x := d; x),
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M (INT x := c; x) D M M (INT x := d; x), (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M (INT x := c; x) D M M (INT x := d; x), proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M (INT x := c; x) D M M (INT x := d; x));
+   
+   UNION (R, CHAR) union := pr (proc, M (INT x := c; x) D M M (INT x := d; x), proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M (INT x := c; x) D M M (INT x := d; x)
+          END), ?=:=(union; 1 = (M (INT x := c; x) D M M (INT x := d; x)) | M (INT x := c; x) D M M (INT x := d; x)), M (INT x := c; x) D M M (INT x := d; x), test ((BOOL bool = FALSE; union | (R): M (INT x := c; x) D M M (INT x := d; x), (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  (ctrt := 8;
+   ctrloc := ctr;
+   test (M ("#" & (TRUE & 3)) D M M ("#" & (TRUE & d)));
+   FOR ident FROM M ("#" & (TRUE & call (3))) D M M ("#" & (TRUE & t[, d][2])) BY M ("#" & (TRUE & t[, c][2])) D M M ("#" & (TRUE & d4 OF str)) TO M ("#" & (TRUE & 3)) D M M ("#" & (TRUE & ("#" & (TRUE & d)))) 
+   WHILE 1 = (M ("#" & (TRUE & (INT x := c; x))) D M M ("#" & (TRUE & 4)))
+   DO [M ("#" & (TRUE & PROC INT IF 3 = 0
+                 THEN INT: 10
+                 ELSE INT: 3
+                 FI)) D M M ("#" & (TRUE & d)) : 4, -1 : M ("#" & (TRUE & PROC INT IF 3 = 0
+                                                                   THEN INT: 10
+                                                                   ELSE INT: 3
+                                                                   FI)) D M M ("#" & (TRUE & d4 OF str))] R ent;
+      
+      ent[M ("#" & (TRUE & t[, c][2])) D M M ("#" & (TRUE & call (4))), 0] := ent[1, M ("#" & (TRUE & c)) D M M ("#" & (TRUE & (INT x := d; x)))] := M ("#" & (TRUE & (INT x := c; x))) D M M ("#" & (TRUE & PROC INT IF 4 = 0
+                                                      THEN INT: 10
+                                                      ELSE INT: 4
+                                                      FI));
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M ("#" & (TRUE & PROC INT IF 3 = 0
+                      THEN INT: 10
+                      ELSE INT: 3
+                      FI)) D M M ("#" & (TRUE & call (4)));
+            REAL pi = 0.12345;
+            
+            M ("#" & (TRUE & call (3))) D M M ("#" & (TRUE & call (4))));
+   
+   test (par);
+   alfa := ?=:=(M ("#" & (TRUE & d3 OF str)) D M M ("#" & (TRUE & d4 OF str)));
+   R ident = M ("#" & (TRUE & d3 OF str)) D M M ("#" & (TRUE & PROC INT IF 4 = 0
+                                                        THEN INT: 10
+                                                        ELSE INT: 4
+                                                        FI)),
+   R loc := CASE M ("#" & (TRUE & ("#" & (TRUE & d3 OF str)))) D M M ("#" & (TRUE & t[, d][2]))
+   IN M ("#" & (TRUE & PROC INT IF 3 = 0
+                THEN INT: 10
+                ELSE INT: 3
+                FI)) D M M ("#" & (TRUE & PROC INT IF 4 = 0
+                                   THEN INT: 10
+                                   ELSE INT: 4
+                                   FI)), SKIP
+   ESAC, tas := M ("#" & (TRUE & 3)) D M M ("#" & (TRUE & (INT x := d; x)));
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        M ("#" & (TRUE & (INT x := c; x))) D M M ("#" & (TRUE & t[, d][2])),
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M ("#" & (TRUE & call (3))) D M M ("#" & (TRUE & t[, d][2])), (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M ("#" & (TRUE & PROC INT IF 3 = 0
+                                          THEN INT: 10
+                                          ELSE INT: 3
+                                          FI)) D M M ("#" & (TRUE & t[, d][2])), proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M ("#" & (TRUE & c)) D M M ("#" & (TRUE & (INT x := d; x))));
+   
+   UNION (R, CHAR) union := pr (proc, M ("#" & (TRUE & (INT x := c; x))) D M M ("#" & (TRUE & (INT x := d; x))), proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M ("#" & (TRUE & (INT x := c; x))) D M M ("#" & (TRUE & d))
+          END), ?=:=(union; 1 = (M ("#" & (TRUE & call (3))) D M M ("#" & (TRUE & call (4)))) | M ("#" & (TRUE & call (3))) D M M ("#" & (TRUE & PROC INT IF 4 = 0
+                                                                  THEN INT: 10
+                                                                  ELSE INT: 4
+                                                                  FI))), M ("#" & (TRUE & t[, c][2])) D M M ("#" & (TRUE & t[, d][2])), test ((BOOL bool = FALSE; union | (R): M ("#" & (TRUE & c)) D M M ("#" & (TRUE & d)), (CHAR car): SKIP)));
+   ctrl (17 + 28 * 4));
+  # nombre de operateurs : 15 #
+  (ctrt := 9;
+   ctrloc := ctr;
+   test (t[, b][2] A M call (5) C t[, f][2] E M M ("#" & (TRUE & t[, j][2])) G d0 OF str I call (0) H i F M M i D PROC INT IF 5 = 0
+         THEN INT: 10
+         ELSE INT: 5
+         FI B M t[, d][2]);
+   FOR ident FROM t[, b][2] A M 5 C (INT x := f; x) E M M d0 OF str G j I d0 OF str H d9 OF str F M M t[, i][2] D d5 OF str B M PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI BY ("#" & (TRUE & (INT x := b; x))) A M PROC INT IF 5 = 0
+   THEN INT: 10
+   ELSE INT: 5
+   FI C t[, f][2] E M M j G j I 10 H 9 F M M d9 OF str D e B M 4 TO d2 OF str A M (INT x := e; x) C call (6) E M M d0 OF str G PROC INT IF 0 = 0
+   THEN INT: 10
+   ELSE INT: 0
+   FI I j H (INT x := i; x) F M M d9 OF str D call (5) B M 4 
+   WHILE 1 = (d2 OF str A M t[, e][2] C call (6) E M M ("#" & (TRUE & t[, j][2])) G call (0) I PROC INT IF 0 = 0
+              THEN INT: 10
+              ELSE INT: 0
+              FI H 9 F M M d9 OF str D ("#" & (TRUE & e)) B M t[, d][2])
+   DO [("#" & (TRUE & b)) A M (INT x := e; x) C ("#" & (TRUE & PROC INT IF 6 = 0
+                                                        THEN INT: 10
+                                                        ELSE INT: 6
+                                                        FI)) E M M d0 OF str G ("#" & (TRUE & d0 OF str)) I 10 H (INT x := i; x) F M M t[, i][2] D (INT x := e; x) B M d : 4, -1 : call (2) A M call (5) C call (6) E M M 10 G t[, j][2] I t[, j][2] H PROC INT IF 9 = 0
+       THEN INT: 10
+       ELSE INT: 9
+       FI F M M call (9) D t[, e][2] B M PROC INT IF 4 = 0
+       THEN INT: 10
+       ELSE INT: 4
+       FI] R ent;
+      
+      ent[b A M e C d6 OF str E M M call (0) G j I (INT x := j; x) H d9 OF str F M M d9 OF str D PROC INT IF 5 = 0
+          THEN INT: 10
+          ELSE INT: 5
+          FI B M call (4), 0] := ent[1, t[, b][2] A M t[, e][2] C call (6) E M M ("#" & (TRUE & 10)) G t[, j][2] I j H 9 F M M ("#" & (TRUE & d9 OF str)) D ("#" & (TRUE & d5 OF str)) B M d] := b A M 5 C ("#" & (TRUE & d6 OF str)) E M M PROC INT IF 0 = 0
+      THEN INT: 10
+      ELSE INT: 0
+      FI G j I (INT x := j; x) H i F M M 9 D PROC INT IF 5 = 0
+      THEN INT: 10
+      ELSE INT: 5
+      FI B M ("#" & (TRUE & 4));
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            ("#" & (TRUE & b)) A M (INT x := e; x) C ("#" & (TRUE & t[, f][2])) E M M (INT x := j; x) G PROC INT IF 0 = 0
+            THEN INT: 10
+            ELSE INT: 0
+            FI I d0 OF str H i F M M t[, i][2] D e B M t[, d][2];
+            REAL pi = 0.12345;
+            
+            b A M call (5) C f E M M ("#" & (TRUE & ("#" & (TRUE & d0 OF str)))) G j I 10 H 9 F M M d9 OF str D PROC INT IF 5 = 0
+            THEN INT: 10
+            ELSE INT: 5
+            FI B M d4 OF str);
+   
+   test (par);
+   alfa := ?=:=(2 A M ("#" & (TRUE & ("#" & (TRUE & (INT x := e; x))))) C d6 OF str E M M call (0) G ("#" & (TRUE & d0 OF str)) I call (0) H 9 F M M t[, i][2] D PROC INT IF 5 = 0
+                THEN INT: 10
+                ELSE INT: 5
+                FI B M ("#" & (TRUE & PROC INT IF 4 = 0
+                               THEN INT: 10
+                               ELSE INT: 4
+                               FI)));
+   R ident = PROC INT IF 2 = 0
+   THEN INT: 10
+   ELSE INT: 2
+   FI A M d5 OF str C ("#" & (TRUE & 6)) E M M d0 OF str G call (0) I ("#" & (TRUE & PROC INT IF 0 = 0
+      THEN INT: 10
+      ELSE INT: 0
+      FI)) H PROC INT IF 9 = 0
+   THEN INT: 10
+   ELSE INT: 9
+   FI F M M PROC INT IF 9 = 0
+   THEN INT: 10
+   ELSE INT: 9
+   FI D 5 B M d,
+   R loc := CASE (INT x := b; x) A M e C d6 OF str E M M call (0) G j I call (0) H PROC INT IF 9 = 0
+                 THEN INT: 10
+                 ELSE INT: 9
+                 FI F M M d9 OF str D PROC INT IF 5 = 0
+                 THEN INT: 10
+                 ELSE INT: 5
+                 FI B M (INT x := d; x)
+   IN ("#" & (TRUE & t[, b][2])) A M call (5) C call (6) E M M d0 OF str G PROC INT IF 0 = 0
+      THEN INT: 10
+      ELSE INT: 0
+      FI I t[, j][2] H ("#" & (TRUE & 9)) F M M 9 D PROC INT IF 5 = 0
+      THEN INT: 10
+      ELSE INT: 5
+      FI B M ("#" & (TRUE & (INT x := d; x))), SKIP
+   ESAC, tas := PROC INT IF 2 = 0
+   THEN INT: 10
+   ELSE INT: 2
+   FI A M call (5) C f E M M 10 G (INT x := j; x) I call (0) H t[, i][2] F M M 9 D d5 OF str B M (INT x := d; x);
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        b A M call (5) C 6 E M M call (0) G d0 OF str I d0 OF str H t[, i][2] F M M i D ("#" & (TRUE & PROC INT IF 5 = 0
+                        THEN INT: 10
+                        ELSE INT: 5
+                        FI)) B M ("#" & (TRUE & d4 OF str)),
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (call (2) A M t[, e][2] C 6 E M M j G d0 OF str I t[, j][2] H t[, i][2] F M M d9 OF str D e B M PROC INT IF 4 = 0
+THEN INT: 10
+ELSE INT: 4
+FI, (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, 2 A M e C 6 E M M t[, j][2] G ("#" & (TRUE & j)) I PROC INT IF 0 = 0
+               THEN INT: 10
+               ELSE INT: 0
+               FI H t[, i][2] F M M t[, i][2] D t[, e][2] B M call (4), proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         d2 OF str A M (INT x := e; x) C (INT x := f; x) E M M 10 G d0 OF str I 10 H t[, i][2] F M M i D d5 OF str B M call (4));
+   
+   UNION (R, CHAR) union := pr (proc, (INT x := b; x) A M call (5) C (INT x := f; x) E M M call (0) G call (0) I PROC INT IF 0 = 0
+                                THEN INT: 10
+                                ELSE INT: 0
+                                FI H t[, i][2] F M M t[, i][2] D PROC INT IF 5 = 0
+                                THEN INT: 10
+                                ELSE INT: 5
+                                FI B M d4 OF str, proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN PROC INT IF 2 = 0
+                  THEN INT: 10
+                  ELSE INT: 2
+                  FI A M 5 C PROC INT IF 6 = 0
+                  THEN INT: 10
+                  ELSE INT: 6
+                  FI E M M call (0) G (INT x := j; x) I 10 H PROC INT IF 9 = 0
+                  THEN INT: 10
+                  ELSE INT: 9
+                  FI F M M i D (INT x := e; x) B M ("#" & (TRUE & d))
+          END), ?=:=(union; 1 = (call (2) A M ("#" & (TRUE & d5 OF str)) C d6 OF str E M M (INT x := j; x) G t[, j][2] I (INT x := j; x) H t[, i][2] F M M ("#" & (TRUE & call (9))) D call (5) B M t[, d][2]) | 2 A M PROC INT IF 5 = 0
+    THEN INT: 10
+    ELSE INT: 5
+    FI C (INT x := f; x) E M M 10 G d0 OF str I (INT x := j; x) H ("#" & (TRUE & call (9))) F M M ("#" & (TRUE & ("#" & (TRUE & t[, i][2])))) D 5 B M d4 OF str), 2 A M call (5) C (INT x := f; x) E M M j G (INT x := j; x) I j H d9 OF str F M M call (9) D e B M call (4), test ((BOOL bool = FALSE; union | (R): b A M (INT x := e; x) C d6 OF str E M M d0 OF str G t[, j][2] I ("#" & (TRUE & t[, j][2])) H ("#" & (TRUE & 9)) F M M (INT x := i; x) D e B M (INT x := d; x), (CHAR car): SKIP)));
+   ctrl (17 + 28 * 15));
+  # nombre de operateurs : 14 #
+  (ctrt := 10;
+   ctrloc := ctr;
+   test (M (INT x := h; x) H call (7) E M 7 E e C M M 6 C (INT x := c; x) C PROC INT IF 4 = 0
+         THEN INT: 10
+         ELSE INT: 4
+         FI E d4 OF str E M 5 H (INT x := d; x));
+   FOR ident FROM M h H g E M t[, g][2] E e C M M d6 OF str C d3 OF str C (INT x := d; x) E 4 E M (INT x := e; x) H call (4) BY M (INT x := h; x) H t[, g][2] E M PROC INT IF 7 = 0
+   THEN INT: 10
+   ELSE INT: 7
+   FI E ("#" & (TRUE & PROC INT IF 5 = 0
+                THEN INT: 10
+                ELSE INT: 5
+                FI)) C M M d6 OF str C (INT x := c; x) C call (4) E d E M ("#" & (TRUE & PROC INT IF 5 = 0
+          THEN INT: 10
+          ELSE INT: 5
+          FI)) H PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI TO M d8 OF str H t[, g][2] E M ("#" & (TRUE & (INT x := g; x))) E d5 OF str C M M f C d3 OF str C d E (INT x := d; x) E M call (5) H 4 
+   WHILE 1 = (M ("#" & (TRUE & PROC INT IF 8 = 0
+                        THEN INT: 10
+                        ELSE INT: 8
+                        FI)) H (INT x := g; x) E M ("#" & (TRUE & g)) E ("#" & (TRUE & e)) C M M d6 OF str C (INT x := c; x) C call (4) E (INT x := d; x) E M t[, e][2] H PROC INT IF 4 = 0
+              THEN INT: 10
+              ELSE INT: 4
+              FI)
+   DO [M h H g E M (INT x := g; x) E 5 C M M (INT x := f; x) C ("#" & (TRUE & t[, c][2])) C d E PROC INT IF 4 = 0
+       THEN INT: 10
+       ELSE INT: 4
+       FI E M 5 H d4 OF str : 4, -1 : M call (8) H PROC INT IF 7 = 0
+       THEN INT: 10
+       ELSE INT: 7
+       FI E M call (7) E 5 C M M ("#" & (TRUE & d6 OF str)) C ("#" & (TRUE & PROC INT IF 3 = 0
+                                                                      THEN INT: 10
+                                                                      ELSE INT: 3
+                                                                      FI)) C ("#" & (TRUE & call (4))) E d E M PROC INT IF 5 = 0
+       THEN INT: 10
+       ELSE INT: 5
+       FI H PROC INT IF 4 = 0
+       THEN INT: 10
+       ELSE INT: 4
+       FI] R ent;
+      
+      ent[M PROC INT IF 8 = 0
+          THEN INT: 10
+          ELSE INT: 8
+          FI H g E M (INT x := g; x) E d5 OF str C M M 6 C (INT x := c; x) C t[, d][2] E call (4) E M call (5) H d4 OF str, 0] := ent[1, M d8 OF str H 7 E M call (7) E t[, e][2] C M M (INT x := f; x) C 3 C PROC INT IF 4 = 0
+                                                              THEN INT: 10
+                                                              ELSE INT: 4
+                                                              FI E (INT x := d; x) E M (INT x := e; x) H (INT x := d; x)] := M ("#" & (TRUE & PROC INT IF 8 = 0
+                                                               THEN INT: 10
+                                                               ELSE INT: 8
+                                                               FI)) H d7 OF str E M call (7) E (INT x := e; x) C M M PROC INT IF 6 = 0
+      THEN INT: 10
+      ELSE INT: 6
+      FI C d3 OF str C d E 4 E M PROC INT IF 5 = 0
+      THEN INT: 10
+      ELSE INT: 5
+      FI H call (4);
+      test (ent[1, 0]);
+      test (ent[1, 1])
+   OD;
+   R alfa,
+   R par = (SKIP;
+            M h H call (7) E M (INT x := g; x) E ("#" & (TRUE & (INT x := e; x))) C M M t[, f][2] C 3 C call (4) E d4 OF str E M ("#" & (TRUE & call (5))) H call (4);
+            REAL pi = 0.12345;
+            
+            M call (8) H call (7) E M call (7) E d5 OF str C M M PROC INT IF 6 = 0
+            THEN INT: 10
+            ELSE INT: 6
+            FI C PROC INT IF 3 = 0
+            THEN INT: 10
+            ELSE INT: 3
+            FI C call (4) E call (4) E M (INT x := e; x) H (INT x := d; x));
+   
+   test (par);
+   alfa := ?=:=(M (INT x := h; x) H PROC INT IF 7 = 0
+                THEN INT: 10
+                ELSE INT: 7
+                FI E M call (7) E e C M M ("#" & (TRUE & ("#" & (TRUE & d6 OF str)))) C call (3) C 4 E d4 OF str E M 5 H t[, d][2]);
+   R ident = M (INT x := h; x) H call (7) E M ("#" & (TRUE & PROC INT IF 7 = 0
+                                                      THEN INT: 10
+                                                      ELSE INT: 7
+                                                      FI)) E d5 OF str C M M (INT x := f; x) C t[, c][2] C d E d4 OF str E M (INT x := e; x) H ("#" & (TRUE & call (4))),
+   R loc := CASE M PROC INT IF 8 = 0
+                 THEN INT: 10
+                 ELSE INT: 8
+                 FI H call (7) E M d7 OF str E t[, e][2] C M M d6 OF str C t[, c][2] C PROC INT IF 4 = 0
+                 THEN INT: 10
+                 ELSE INT: 4
+                 FI E t[, d][2] E M t[, e][2] H t[, d][2]
+   IN M t[, h][2] H 7 E M g E ("#" & (TRUE & (INT x := e; x))) C M M f C t[, c][2] C 4 E PROC INT IF 4 = 0
+      THEN INT: 10
+      ELSE INT: 4
+      FI E M d5 OF str H call (4), SKIP
+   ESAC, tas := M ("#" & (TRUE & d8 OF str)) H g E M call (7) E e C M M call (6) C d3 OF str C 4 E d E M 5 H PROC INT IF 4 = 0
+   THEN INT: 10
+   ELSE INT: 4
+   FI;
+   
+   test (ident);
+   test (loc);
+   test (tas);
+   PROC proc = R:
+        M d8 OF str H (INT x := g; x) E M g E t[, e][2] C M M call (6) C t[, c][2] C d E d4 OF str E M 5 H t[, d][2],
+   STRUCT (COMPL of, STRUCT (R de, COMPL of) de) struct := ((0.11, 0), (M t[, h][2] H t[, g][2] E M 7 E t[, e][2] C M M 6 C t[, c][2] C ("#" & (TRUE & ("#" & (TRUE & ("#" & (TRUE & 4)))))) E call (4) E M 5 H 4, (0, 1e0)));
+   
+   test (de OF de OF struct);
+   [] R apd = (ident, par, loc, M (INT x := h; x) H t[, g][2] E M 7 E call (5) C M M t[, f][2] C PROC INT IF 3 = 0
+               THEN INT: 10
+               ELSE INT: 3
+               FI C d E PROC INT IF 4 = 0
+               THEN INT: 10
+               ELSE INT: 4
+               FI E M 5 H PROC INT IF 4 = 0
+               THEN INT: 10
+               ELSE INT: 4
+               FI, proc, tas, de OF de OF struct);
+   
+   test (apd[4]);
+   test (apd[5]);
+   PROC pr := (R rep, reprep, PROC R procrep) R:
+        (test (rep);
+         test (reprep);
+         M 8 H 7 E M call (7) E ("#" & (TRUE & PROC INT IF 5 = 0
+                                        THEN INT: 10
+                                        ELSE INT: 5
+                                        FI)) C M M f C (INT x := c; x) C (INT x := d; x) E d E M ("#" & (TRUE & ("#" & (TRUE & call (5))))) H ("#" & (TRUE & d)));
+   
+   UNION (R, CHAR) union := pr (proc, M d8 OF str H d7 OF str E M g E call (5) C M M call (6) C PROC INT IF 3 = 0
+                                THEN INT: 10
+                                ELSE INT: 3
+                                FI C (INT x := d; x) E t[, d][2] E M ("#" & (TRUE & call (5))) H d4 OF str, proc);
+   
+   test ((union | (R a): a));
+   (test (R BEGIN M PROC INT IF 8 = 0
+                  THEN INT: 10
+                  ELSE INT: 8
+                  FI H PROC INT IF 7 = 0
+                  THEN INT: 10
+                  ELSE INT: 7
+                  FI E M t[, g][2] E ("#" & (TRUE & e)) C M M ("#" & (TRUE & ("#" & (TRUE & (INT x := f; x))))) C PROC INT IF 3 = 0
+                  THEN INT: 10
+                  ELSE INT: 3
+                  FI C t[, d][2] E t[, d][2] E M d5 OF str H ("#" & (TRUE & PROC INT IF 4 = 0
+                                                                     THEN INT: 10
+                                                                     ELSE INT: 4
+                                                                     FI))
+          END), ?=:=(union; 1 = (M d8 OF str H call (7) E M t[, g][2] E call (5) C M M f C (INT x := c; x) C 4 E PROC INT IF 4 = 0
+                                 THEN INT: 10
+                                 ELSE INT: 4
+                                 FI E M t[, e][2] H 4) | M h H g E M 7 E PROC INT IF 5 = 0
+    THEN INT: 10
+    ELSE INT: 5
+    FI C M M f C ("#" & (TRUE & (INT x := c; x))) C t[, d][2] E call (4) E M 5 H PROC INT IF 4 = 0
+    THEN INT: 10
+    ELSE INT: 4
+    FI), M 8 H 7 E M g E (INT x := e; x) C M M (INT x := f; x) C PROC INT IF 3 = 0
+    THEN INT: 10
+    ELSE INT: 3
+    FI C 4 E call (4) E M t[, e][2] H ("#" & (TRUE & d4 OF str)), test ((BOOL bool = FALSE; union | (R): M ("#" & (TRUE & h)) H 7 E M d7 OF str E call (5) C M M call (6) C call (3) C PROC INT IF 4 = 0
+THEN INT: 10
+ELSE INT: 4
+FI E PROC INT IF 4 = 0
+THEN INT: 10
+ELSE INT: 4
+FI E M PROC INT IF 5 = 0
+THEN INT: 10
+ELSE INT: 5
+FI H d4 OF str, (CHAR car): SKIP)));
+   ctrl (17 + 28 * 14));
+  SKIP);
+ print ((ctr, " tests ", (ctr = vf | "ok" | "error"))))

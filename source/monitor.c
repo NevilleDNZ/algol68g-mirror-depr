@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 

@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -100,7 +100,7 @@ void genie_pq_connectdb (NODE_T * p)
   }
   STRING (file) = ref_string;
   BLOCK_GC_HANDLE (&(STRING (file)));
-  STRPOS (file) = 1;
+  STRPOS (file) = 0;
   STREAM (&DEVICE (file)) = NULL;
   set_default_event_procedures (file);
 /* Establish a connection */
@@ -251,7 +251,7 @@ void genie_pq_cmdstatus (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQcmdStatus (RESULT (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -281,7 +281,7 @@ void genie_pq_cmdtuples (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQcmdTuples (RESULT (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -368,7 +368,7 @@ void genie_pq_fname (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQfname (RESULT (file), VALUE (&a68g_index) - 1), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
   }
   PUSH_PRIMAL (p, 0, INT);
 }
@@ -484,7 +484,7 @@ void genie_pq_getvalue (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -616,7 +616,7 @@ void genie_pq_errormessage (NODE_T * p)
       bufcpy (str, "no error message available", BUFFER_SIZE);
     }
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -657,7 +657,7 @@ void genie_pq_resulterrormessage (NODE_T * p)
       bufcpy (str, "no error message available", BUFFER_SIZE);
     }
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -683,7 +683,7 @@ void genie_pq_db (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQdb (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -709,7 +709,7 @@ void genie_pq_user (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQuser (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -735,7 +735,7 @@ void genie_pq_pass (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQpass (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -761,7 +761,7 @@ void genie_pq_host (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQhost (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -787,7 +787,7 @@ void genie_pq_port (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQport (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -813,7 +813,7 @@ void genie_pq_tty (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQtty (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -839,7 +839,7 @@ void genie_pq_options (NODE_T * p)
   }
   if (!IS_NIL (STRING (file))) {
     * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQoptions (CONNECTION (file)), DEFAULT_WIDTH);
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);

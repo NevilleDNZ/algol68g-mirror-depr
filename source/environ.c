@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright (C) 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -264,6 +264,10 @@ static void stand_moids (void)
   MODE (ROW_BOOL) = add_mode (&TOP_MOID (&program), ROW_SYMBOL, 1, NO_NODE, MODE (BOOL), NO_PACK);
   HAS_ROWS (MODE (ROW_BOOL)) = A68_TRUE;
   SLICE (MODE (ROW_BOOL)) = MODE (BOOL);
+/* FLEX [] BOOL */
+  m = add_mode (&TOP_MOID (&program), FLEX_SYMBOL, 0, NO_NODE, MODE (ROW_BOOL), NO_PACK);
+  HAS_ROWS (m) = A68_TRUE;
+  MODE (FLEX_ROW_BOOL) = m;
 /* [] BITS */
   MODE (ROW_BITS) = add_mode (&TOP_MOID (&program), ROW_SYMBOL, 1, NO_NODE, MODE (BITS), NO_PACK);
   HAS_ROWS (MODE (ROW_BITS)) = A68_TRUE;
@@ -4779,7 +4783,12 @@ void genie_bin_int (NODE_T * p)
 {
   A68_INT i;
   POP_OBJECT (p, &i, A68_INT);
-/* RR does not convert negative numbers. Algol68G does */
+/* RR does not convert negative numbers. */
+  if (VALUE (&i) < 0) {
+    errno = EDOM;
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, MODE (BITS));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  }
   PUSH_PRIMITIVE (p, (unsigned) (VALUE (&i)), A68_BITS);
 }
 
@@ -8949,7 +8958,7 @@ void genie_associate (NODE_T * p)
   }
   STRING (file) = ref_string;
   BLOCK_GC_HANDLE ((A68_REF *) (&(STRING (file))));
-  STRPOS (file) = 1;
+  STRPOS (file) = 0;
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
   STREAM (&DEVICE (file)) = NO_STREAM;
   set_default_event_procedures (file);
@@ -9112,6 +9121,7 @@ void genie_set (NODE_T * p)
     A68_REF z = * DEREF (A68_REF, &STRING (file));
     A68_ARRAY *a;
     A68_TUPLE *t;
+    int size;
 /* Circumvent buffering problems */
     STRPOS (file) -= get_transput_buffer_index (TRANSPUT_BUFFER (file));
     ASSERT (STRPOS (file) > 0);
@@ -9120,7 +9130,8 @@ void genie_set (NODE_T * p)
     CHECK_INT_ADDITION (p, STRPOS (file), VALUE (&pos));
     STRPOS (file) += VALUE (&pos);
     GET_DESCRIPTOR (a, t, &z);
-    if (STRPOS (file) < LWB (t) || STRPOS (file) > UPB (t)) {
+    size = ROW_SIZE (t);
+    if (size <= 0 || STRPOS (file) < 0 || STRPOS (file) >= size) {
       A68_BOOL res;
       on_event_handler (p, FILE_END_MENDED (FILE_DEREF (&ref_file)), ref_file);
       POP_OBJECT (p, &res, A68_BOOL);
@@ -9190,7 +9201,7 @@ void genie_reset (NODE_T * p)
   if (IS_NIL (STRING (file))) {
     close_file_entry (p, FILE_ENTRY (file));
   } else {
-    STRPOS (file) = 1;
+    STRPOS (file) = 0;
   }
   READ_MOOD (file) = A68_FALSE;
   WRITE_MOOD (file) = A68_FALSE;
@@ -9508,13 +9519,15 @@ When we're outside the STRING give EOF_CHAR.
     A68_TUPLE *t;
     BYTE_T *base;
     A68_CHAR *ch;
+    int k;
     GET_DESCRIPTOR (a, t, &z);
-    if (ROW_SIZE (t) <= 0 || STRPOS (f) < LWB (t) || STRPOS (f) > UPB (t)) {
+    k = STRPOS (f) + LWB (t);
+    if (ROW_SIZE (t) <= 0 || k < LWB (t) || k > UPB (t)) {
       END_OF_FILE (f) = A68_TRUE;
       return (EOF_CHAR);
     } else {
       base = DEREF (BYTE_T, &ARRAY (a));
-      ch = (A68_CHAR *) & (base[INDEX_1_DIM (a, t, STRPOS (f))]);
+      ch = (A68_CHAR *) & (base[INDEX_1_DIM (a, t, k)]);
       STRPOS (f)++;
       return (VALUE (ch));
     }
@@ -9627,6 +9640,7 @@ void genie_new_line (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (WRITE_MOOD (file)) {
+    on_event_handler (p, LINE_END_MENDED (file), ref_file);
     if (IS_NIL (STRING (file))) {
       WRITE (FD (file), NEWLINE_STRING);
     } else {
@@ -9670,6 +9684,7 @@ void genie_new_page (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (WRITE_MOOD (file)) {
+    on_event_handler (p, PAGE_END_MENDED (file), ref_file);
     if (IS_NIL (STRING (file))) {
       WRITE (FD (file), "\f");
     } else {
@@ -10024,6 +10039,13 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
   file = FILE_DEREF (&ref_file);
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
   if (!IS_NIL (STRING (file))) {
+    if (writing) {
+      A68_REF z = * DEREF (A68_REF, &STRING (file));
+      A68_ARRAY *a;
+      A68_TUPLE *t;
+      GET_DESCRIPTOR (a, t, &z);
+      UPB (t) = LWB (t) - 1; 
+    }
 /* Associated file */
     TRANSPUT_BUFFER (file) = get_unblocked_transput_buffer (p);
     reset_transput_buffer (TRANSPUT_BUFFER (file));
@@ -10461,7 +10483,8 @@ void genie_string_to_value (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
 {
   char *str = get_transput_buffer (INPUT_BUFFER);
   RESET_ERRNO;
-  add_char_transput_buffer (p, INPUT_BUFFER, NULL_CHAR);        /* end string, just in case */
+/* end string, just in case */
+  add_char_transput_buffer (p, INPUT_BUFFER, NULL_CHAR);        
   if (mode == MODE (INT)) {
     if (genie_string_to_value_internal (p, mode, str, item) == A68_FALSE) {
       value_error (p, mode, ref_file);
@@ -10818,6 +10841,7 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
       }
       word--;
     }
+printf ("%s", str);fflush (stdout);
     stack_pointer = pop_sp;
   }
 }
@@ -10934,7 +10958,7 @@ void open_for_writing (NODE_T * p, A68_REF ref_file)
         open_error (p, ref_file, "putting");
       }
     } else {
-      FD (file) = open_physical_file (p, ref_file, A68_READ_ACCESS, 0);
+      FD (file) = open_physical_file (p, ref_file, A68_WRITE_ACCESS, 0);
     }
     DRAW_MOOD (file) = A68_FALSE;
     READ_MOOD (file) = A68_FALSE;
@@ -12529,9 +12553,14 @@ int get_replicator_value (NODE_T * p, BOOL_T check)
   } else if (IS (p, REPLICATOR)) {
     z = get_replicator_value (SUB (p), check);
   }
+/* Not conform RR as Andrew Herbert rightfully pointed out.
   if (check && z < 0) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FORMAT_INVALID_REPLICATOR);
     exit_genie (p, A68_RUNTIME_ERROR);
+  }
+*/
+  if (z < 0) {
+    z = 0;
   }
   return (z);
 }
@@ -14316,7 +14345,7 @@ void genie_write_file_format (NODE_T * p)
         open_error (p, ref_file, "putting");
       }
     } else {
-      FD (file) = open_physical_file (p, ref_file, A68_READ_ACCESS, 0);
+      FD (file) = open_physical_file (p, ref_file, A68_WRITE_ACCESS, 0);
     }
     DRAW_MOOD (file) = A68_FALSE;
     READ_MOOD (file) = A68_FALSE;

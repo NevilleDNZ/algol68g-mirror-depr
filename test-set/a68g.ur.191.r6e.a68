@@ -1,0 +1,389 @@
+# This program is part of the Rennes Test Set, 
+  automatically generated from the Algol 68 grammar 
+  using a formalism of B. Houssais (University of Rennes, 1975).
+ 
+  This test set is available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+# r6e #
+(print (("coercions in soft context", newline));
+ INT vf = 330;
+ 
+ INT ctrt := 0, ctr := 0;
+ 
+ MODE MODEREP = REF UNION (INT, COMPL);
+ 
+ # procedure de controle #
+ BOOL active := TRUE;
+ 
+ PROC c = (UNION (REF PROC INT, REF REF COMPL, REF PROC [] UNION (INT, COMPL), MODEREP) par) VOID:
+      ctr +:= (par | (REF PROC INT p): (active := FALSE;
+                                        INT x = p;
+                                        
+                                        active := TRUE;
+                                        x), (REF REF COMPL): 5, (REF PROC [] UNION (INT, COMPL)): 7, (MODEREP): 11 | print (("erreur mode", ctrt, newline)); 0);
+ 
+ # instructions de servitude generales #
+ PROC pe = INT:
+      (active | print ("activation pe"); 0 | 3);
+ 
+ PROC INT rpe := pe;
+ 
+ HEAP COMPL rc;
+ 
+ REF COMPL rrc := rc;
+ 
+ UNION (INT, COMPL) ru := 1 I 0;
+ 
+ PROC rpru := [] UNION (INT, COMPL):
+      (print ("activation pru");
+       1);
+ 
+ BEGIN # servitudes pour unites du mode  PROC  PROC  REF  PROC  INT  #
+       PROC PROC REF PROC INT ident = PROC REF PROC INT: REF PROC INT: rpe;
+       
+       OP &=: = (BOOL a, PROC PROC REF PROC INT b) PROC PROC REF PROC INT:
+          (a | b),
+       PRIO &=: = 9,
+       STRUCT (PROC PROC REF PROC INT de, of) de = (ident, SKIP);
+       
+       [] PROC PROC REF PROC INT rang = ident,
+       PROC pav = (PROC PROC REF PROC INT x) PROC PROC REF PROC INT: x;
+       
+       # contextes # ctrt := 1;
+       c ((PROC REF PROC INT: REF PROC INT: rpe) := ((PROC REF PROC INT: REF PROC INT: rpe) := (PROC REF PROC INT: REF PROC INT: rpe) := (PROC REF PROC INT: REF PROC INT: rpe) := pe));
+       (((PROC REF PROC INT: REF PROC INT: rpe) :/=: NIL) AND (rpe :=: (PROC REF PROC INT: REF PROC INT: rpe)) | ctr +:= 1);
+       ctrt := 2;
+       c (NOT FALSE &=: ident := (NOT FALSE &=: ident := NOT FALSE &=: ident := NOT FALSE &=: ident := pe));
+       ((NOT FALSE &=: ident :/=: NIL) AND (rpe :=: NOT FALSE &=: ident) | ctr +:= 1);
+       ctrt := 3;
+       c (de OF de := (de OF de := de OF de := de OF de := pe));
+       ((de OF de :/=: NIL) AND (rpe :=: de OF de) | ctr +:= 1);
+       ctrt := 4;
+       c (rang[1] := (rang[1] := rang[1] := rang[1] := pe));
+       ((rang[1] :/=: NIL) AND (rpe :=: rang[1]) | ctr +:= 1);
+       ctrt := 5;
+       c (pav (ident) := (pav (ident) := pav (ident) := pav (ident) := pe));
+       ((pav (ident) :/=: NIL) AND (rpe :=: pav (ident)) | ctr +:= 1);
+       ctrt := 6;
+       c (PROC PROC REF PROC INT BEGIN ident END := (PROC PROC REF PROC INT BEGIN ident END := PROC PROC REF PROC INT BEGIN ident END := PROC PROC REF PROC INT BEGIN ident END := pe));
+       ((PROC PROC REF PROC INT BEGIN ident END :/=: NIL) AND (rpe :=: PROC PROC REF PROC INT BEGIN ident END) | ctr +:= 1);
+       ctrt := 7;
+       c (ident := (ident := ident := ident := pe));
+       ((ident :/=: NIL) AND (rpe :=: ident) | ctr +:= 1);
+       ctrt := 8;
+       c (BEGIN (SKIP; GOTO s) EXIT
+                s: ident EXIT
+                e: SKIP
+          END := (BEGIN (SKIP; GOTO s) EXIT
+                        s: ident EXIT
+                        e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := pe));
+       ((BEGIN (SKIP; GOTO s) EXIT
+               s: ident EXIT
+               e: SKIP
+         END :/=: NIL) AND (rpe :=: BEGIN (SKIP; GOTO s) EXIT
+                                          s: ident EXIT
+                                          e: SKIP
+                            END) | ctr +:= 1);
+       ctrt := 9;
+       c ((TRUE | SKIP; ident) := ((TRUE | SKIP; ident) := (TRUE | SKIP; ident) := (TRUE | SKIP; ident) := pe));
+       (((TRUE | SKIP; ident) :/=: NIL) AND (rpe :=: (TRUE | SKIP; ident)) | ctr +:= 1);
+       ctrt := 10;
+       c (CASE -2
+          IN SKIP, ident
+          OUT ident
+          ESAC := (CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := pe));
+       ((CASE -2
+         IN SKIP, ident
+         OUT ident
+         ESAC :/=: NIL) AND (rpe :=: CASE -2
+                             IN SKIP, ident
+                             OUT ident
+                             ESAC) | ctr +:= 1);
+       ctrt := 11;
+       c ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := pe));
+       (((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) :/=: NIL) AND (rpe :=: (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident)) | ctr +:= 1);
+       SKIP
+ END;
+ BEGIN # servitudes pour unites du mode  PROC  REF  REF  COMPL  #
+       PROC REF REF COMPL ident = REF REF COMPL: rrc;
+       
+       OP &=: = (BOOL a, PROC REF REF COMPL b) PROC REF REF COMPL:
+          (a | b),
+       PRIO &=: = 9,
+       STRUCT (PROC REF REF COMPL de, of) de = (ident, SKIP);
+       
+       [] PROC REF REF COMPL rang = ident,
+       PROC pav = (PROC REF REF COMPL x) PROC REF REF COMPL: x;
+       
+       # contextes # ctrt := 12;
+       c ((REF REF COMPL: rrc) := ((REF REF COMPL: rrc) := (REF REF COMPL: rrc) := (REF REF COMPL: rrc) := rc));
+       (((REF REF COMPL: rrc) :/=: NIL) AND (rrc :=: (REF REF COMPL: rrc)) | ctr +:= 1);
+       ctrt := 13;
+       c (NOT FALSE &=: ident := (NOT FALSE &=: ident := NOT FALSE &=: ident := NOT FALSE &=: ident := rc));
+       ((NOT FALSE &=: ident :/=: NIL) AND (rrc :=: NOT FALSE &=: ident) | ctr +:= 1);
+       ctrt := 14;
+       c (de OF de := (de OF de := de OF de := de OF de := rc));
+       ((de OF de :/=: NIL) AND (rrc :=: de OF de) | ctr +:= 1);
+       ctrt := 15;
+       c (rang[1] := (rang[1] := rang[1] := rang[1] := rc));
+       ((rang[1] :/=: NIL) AND (rrc :=: rang[1]) | ctr +:= 1);
+       ctrt := 16;
+       c (pav (ident) := (pav (ident) := pav (ident) := pav (ident) := rc));
+       ((pav (ident) :/=: NIL) AND (rrc :=: pav (ident)) | ctr +:= 1);
+       ctrt := 17;
+       c (PROC REF REF COMPL BEGIN ident END := (PROC REF REF COMPL BEGIN ident END := PROC REF REF COMPL BEGIN ident END := PROC REF REF COMPL BEGIN ident END := rc));
+       ((PROC REF REF COMPL BEGIN ident END :/=: NIL) AND (rrc :=: PROC REF REF COMPL BEGIN ident END) | ctr +:= 1);
+       ctrt := 18;
+       c (ident := (ident := ident := ident := rc));
+       ((ident :/=: NIL) AND (rrc :=: ident) | ctr +:= 1);
+       ctrt := 19;
+       c (BEGIN (SKIP; GOTO s) EXIT
+                s: ident EXIT
+                e: SKIP
+          END := (BEGIN (SKIP; GOTO s) EXIT
+                        s: ident EXIT
+                        e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := rc));
+       ((BEGIN (SKIP; GOTO s) EXIT
+               s: ident EXIT
+               e: SKIP
+         END :/=: NIL) AND (rrc :=: BEGIN (SKIP; GOTO s) EXIT
+                                          s: ident EXIT
+                                          e: SKIP
+                            END) | ctr +:= 1);
+       ctrt := 20;
+       c ((TRUE | SKIP; ident) := ((TRUE | SKIP; ident) := (TRUE | SKIP; ident) := (TRUE | SKIP; ident) := rc));
+       (((TRUE | SKIP; ident) :/=: NIL) AND (rrc :=: (TRUE | SKIP; ident)) | ctr +:= 1);
+       ctrt := 21;
+       c (CASE -2
+          IN SKIP, ident
+          OUT ident
+          ESAC := (CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := rc));
+       ((CASE -2
+         IN SKIP, ident
+         OUT ident
+         ESAC :/=: NIL) AND (rrc :=: CASE -2
+                             IN SKIP, ident
+                             OUT ident
+                             ESAC) | ctr +:= 1);
+       ctrt := 22;
+       c ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := rc));
+       (((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) :/=: NIL) AND (rrc :=: (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident)) | ctr +:= 1);
+       SKIP
+ END;
+ BEGIN # servitudes pour unites du mode  PROC  PROC  PROC 
+        REF  PROC [] UNION ( INT , COMPL ) #
+       PROC PROC PROC REF PROC [] UNION (INT, COMPL) ident = PROC PROC REF PROC [] UNION (INT, COMPL):
+       PROC REF PROC [] UNION (INT, COMPL):
+       REF PROC [] UNION (INT, COMPL): rpru;
+       
+       OP &=: = (BOOL a, PROC PROC PROC REF PROC [] UNION (INT, COMPL) b) PROC PROC PROC REF PROC [] UNION (INT, COMPL):
+          (a | b),
+       PRIO &=: = 9,
+       STRUCT (PROC PROC PROC REF PROC [] UNION (INT, COMPL) de, of) de = (ident, SKIP);
+       
+       [] PROC PROC PROC REF PROC [] UNION (INT, COMPL) rang = ident,
+       PROC pav = (PROC PROC PROC REF PROC [] UNION (INT, COMPL) x) PROC PROC PROC REF PROC [] UNION (INT, COMPL): x;
+       
+       # contextes # ctrt := 23;
+       c ((PROC PROC REF PROC [] UNION (INT, COMPL):
+           PROC REF PROC [] UNION (INT, COMPL):
+           REF PROC [] UNION (INT, COMPL): rpru) := ((PROC PROC REF PROC [] UNION (INT, COMPL):
+                                                      PROC REF PROC [] UNION (INT, COMPL):
+                                                      REF PROC [] UNION (INT, COMPL): rpru) := (PROC PROC REF PROC [] UNION (INT, COMPL):
+                        PROC REF PROC [] UNION (INT, COMPL):
+                        REF PROC [] UNION (INT, COMPL): rpru) := (PROC PROC REF PROC [] UNION (INT, COMPL):
+                                                                  PROC REF PROC [] UNION (INT, COMPL):
+                                                                  REF PROC [] UNION (INT, COMPL): rpru) := rpru));
+       (((PROC PROC REF PROC [] UNION (INT, COMPL):
+          PROC REF PROC [] UNION (INT, COMPL):
+          REF PROC [] UNION (INT, COMPL): rpru) :/=: NIL) AND (rpru :=: (PROC PROC REF PROC [] UNION (INT, COMPL):
+ PROC REF PROC [] UNION (INT, COMPL):
+ REF PROC [] UNION (INT, COMPL): rpru)) | ctr +:= 1);
+       ctrt := 24;
+       c (NOT FALSE &=: ident := (NOT FALSE &=: ident := NOT FALSE &=: ident := NOT FALSE &=: ident := rpru));
+       ((NOT FALSE &=: ident :/=: NIL) AND (rpru :=: NOT FALSE &=: ident) | ctr +:= 1);
+       ctrt := 25;
+       c (de OF de := (de OF de := de OF de := de OF de := rpru));
+       ((de OF de :/=: NIL) AND (rpru :=: de OF de) | ctr +:= 1);
+       ctrt := 26;
+       c (rang[1] := (rang[1] := rang[1] := rang[1] := rpru));
+       ((rang[1] :/=: NIL) AND (rpru :=: rang[1]) | ctr +:= 1);
+       ctrt := 27;
+       c (pav (ident) := (pav (ident) := pav (ident) := pav (ident) := rpru));
+       ((pav (ident) :/=: NIL) AND (rpru :=: pav (ident)) | ctr +:= 1);
+       ctrt := 28;
+       c (PROC PROC PROC REF PROC [] UNION (INT, COMPL) BEGIN ident END := (PROC PROC PROC REF PROC [] UNION (INT, COMPL) BEGIN ident END := PROC PROC PROC REF PROC [] UNION (INT, COMPL) BEGIN ident END := PROC PROC PROC REF PROC [] UNION (INT, COMPL) BEGIN ident END := rpru));
+       ((PROC PROC PROC REF PROC [] UNION (INT, COMPL) BEGIN ident END :/=: NIL) AND (rpru :=: PROC PROC PROC REF PROC [] UNION (INT, COMPL) BEGIN ident END) | ctr +:= 1);
+       ctrt := 29;
+       c (ident := (ident := ident := ident := rpru));
+       ((ident :/=: NIL) AND (rpru :=: ident) | ctr +:= 1);
+       ctrt := 30;
+       c (BEGIN (SKIP; GOTO s) EXIT
+                s: ident EXIT
+                e: SKIP
+          END := (BEGIN (SKIP; GOTO s) EXIT
+                        s: ident EXIT
+                        e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := rpru));
+       ((BEGIN (SKIP; GOTO s) EXIT
+               s: ident EXIT
+               e: SKIP
+         END :/=: NIL) AND (rpru :=: BEGIN (SKIP; GOTO s) EXIT
+                                           s: ident EXIT
+                                           e: SKIP
+                            END) | ctr +:= 1);
+       ctrt := 31;
+       c ((TRUE | SKIP; ident) := ((TRUE | SKIP; ident) := (TRUE | SKIP; ident) := (TRUE | SKIP; ident) := rpru));
+       (((TRUE | SKIP; ident) :/=: NIL) AND (rpru :=: (TRUE | SKIP; ident)) | ctr +:= 1);
+       ctrt := 32;
+       c (CASE -2
+          IN SKIP, ident
+          OUT ident
+          ESAC := (CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := rpru));
+       ((CASE -2
+         IN SKIP, ident
+         OUT ident
+         ESAC :/=: NIL) AND (rpru :=: CASE -2
+                             IN SKIP, ident
+                             OUT ident
+                             ESAC) | ctr +:= 1);
+       ctrt := 33;
+       c ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := rpru));
+       (((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) :/=: NIL) AND (rpru :=: (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident)) | ctr +:= 1);
+       SKIP
+ END;
+ BEGIN # servitudes pour unites du mode  PROC  PROC  MODEREP  #
+       PROC PROC MODEREP ident = PROC MODEREP: MODEREP: ru;
+       
+       OP &=: = (BOOL a, PROC PROC MODEREP b) PROC PROC MODEREP:
+          (a | b),
+       PRIO &=: = 9,
+       STRUCT (PROC PROC MODEREP de, of) de = (ident, SKIP);
+       
+       [] PROC PROC MODEREP rang = ident,
+       PROC pav = (PROC PROC MODEREP x) PROC PROC MODEREP: x;
+       
+       # contextes # ctrt := 34;
+       c ((PROC MODEREP: MODEREP: ru) := ((PROC MODEREP: MODEREP: ru) := (PROC MODEREP: MODEREP: ru) := (PROC MODEREP: MODEREP: ru) := 1));
+       (((PROC MODEREP: MODEREP: ru) :/=: NIL) AND (ru :=: (PROC MODEREP: MODEREP: ru)) | ctr +:= 1);
+       ctrt := 35;
+       c (NOT FALSE &=: ident := (NOT FALSE &=: ident := NOT FALSE &=: ident := NOT FALSE &=: ident := 1));
+       ((NOT FALSE &=: ident :/=: NIL) AND (ru :=: NOT FALSE &=: ident) | ctr +:= 1);
+       ctrt := 36;
+       c (de OF de := (de OF de := de OF de := de OF de := 1));
+       ((de OF de :/=: NIL) AND (ru :=: de OF de) | ctr +:= 1);
+       ctrt := 37;
+       c (rang[1] := (rang[1] := rang[1] := rang[1] := 1));
+       ((rang[1] :/=: NIL) AND (ru :=: rang[1]) | ctr +:= 1);
+       ctrt := 38;
+       c (pav (ident) := (pav (ident) := pav (ident) := pav (ident) := 1));
+       ((pav (ident) :/=: NIL) AND (ru :=: pav (ident)) | ctr +:= 1);
+       ctrt := 39;
+       c (PROC PROC MODEREP BEGIN ident END := (PROC PROC MODEREP BEGIN ident END := PROC PROC MODEREP BEGIN ident END := PROC PROC MODEREP BEGIN ident END := 1));
+       ((PROC PROC MODEREP BEGIN ident END :/=: NIL) AND (ru :=: PROC PROC MODEREP BEGIN ident END) | ctr +:= 1);
+       ctrt := 40;
+       c (ident := (ident := ident := ident := 1));
+       ((ident :/=: NIL) AND (ru :=: ident) | ctr +:= 1);
+       ctrt := 41;
+       c (BEGIN (SKIP; GOTO s) EXIT
+                s: ident EXIT
+                e: SKIP
+          END := (BEGIN (SKIP; GOTO s) EXIT
+                        s: ident EXIT
+                        e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := BEGIN (SKIP; GOTO s) EXIT
+                               s: ident EXIT
+                               e: SKIP
+                  END := 1));
+       ((BEGIN (SKIP; GOTO s) EXIT
+               s: ident EXIT
+               e: SKIP
+         END :/=: NIL) AND (ru :=: BEGIN (SKIP; GOTO s) EXIT
+                                         s: ident EXIT
+                                         e: SKIP
+                            END) | ctr +:= 1);
+       ctrt := 42;
+       c ((TRUE | SKIP; ident) := ((TRUE | SKIP; ident) := (TRUE | SKIP; ident) := (TRUE | SKIP; ident) := 1));
+       (((TRUE | SKIP; ident) :/=: NIL) AND (ru :=: (TRUE | SKIP; ident)) | ctr +:= 1);
+       ctrt := 43;
+       c (CASE -2
+          IN SKIP, ident
+          OUT ident
+          ESAC := (CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := CASE -2
+                   IN SKIP, ident
+                   OUT ident
+                   ESAC := 1));
+       ((CASE -2
+         IN SKIP, ident
+         OUT ident
+         ESAC :/=: NIL) AND (ru :=: CASE -2
+                             IN SKIP, ident
+                             OUT ident
+                             ESAC) | ctr +:= 1);
+       ctrt := 44;
+       c ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := ((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) := 1));
+       (((ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident) :/=: NIL) AND (ru :=: (ru | (UNION (COMPL, UNION (INT, COMPL), INT)): ident)) | ctr +:= 1);
+       SKIP
+ END;
+ print ((ctr, " tests ", (ctr = vf | "ok" | "erreur"))))

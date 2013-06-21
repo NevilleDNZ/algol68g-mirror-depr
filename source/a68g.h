@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
-Copyright 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -1011,7 +1011,7 @@ struct MODES_T
   *ROW_COMPLEX, *ROW_INT, *ROW_LONG_BITS, *ROW_LONGLONG_BITS, *ROW_REAL,
   *ROW_ROW_CHAR, *ROWROW_COMPLEX, *ROWROW_REAL, *ROWS, *ROW_SIMPLIN,
   *ROW_SIMPLOUT, *ROW_STRING, *SEMA, *SIMPLIN, *SIMPLOUT, *SOUND, *SOUND_DATA,
-  *STRING, *FLEX_ROW_CHAR, *UNDEFINED, *VACUUM, *VOID;
+  *STRING, *FLEX_ROW_CHAR, *FLEX_ROW_BOOL, *UNDEFINED, *VACUUM, *VOID;
 };
 
 struct OPTIONS_T
@@ -1968,7 +1968,7 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 #define ROW_SIZE(t) ((UPB (t) >= LWB (t)) ? (UPB (t) - LWB (t) + 1) : 0)
 #define ROW_ELEMENT(a, k) (((ADDR_T) k + SLICE_OFFSET (a)) * ELEM_SIZE (a) + FIELD_OFFSET (a))
-#define INDEX_1_DIM(a, t, k) ROW_ELEMENT (a, (SPAN (t) * (int) k - SHIFT (t)))
+#define INDEX_1_DIM(a, t, k) ROW_ELEMENT (a, (SPAN (t) * (int) (k) - SHIFT (t)))
 
 /*************/
 /* Execution */

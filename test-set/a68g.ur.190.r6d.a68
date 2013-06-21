@@ -1,0 +1,289 @@
+# This program is part of the Rennes Test Set, 
+  automatically generated from the Algol 68 grammar 
+  using a formalism of B. Houssais (University of Rennes, 1975).
+ 
+  This test set is available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+# r6d #
+(print (("coercions in weak context", newline));
+ INT vf = 11 * (3 + 13 + 9 + 17);
+ 
+ INT ctrt := 0, ctr := 0;
+ 
+ PROC controle = ([] REAL a, UNION (STRING, CHAR, COMPL) b) VOID:
+      ((UPB a = 1 AND ABS (a[1] - 1) < 1e-5 | ctr +:= 1 |: UPB a = 3 AND ABS (a[3] - 1) < 1e-5 | ctr +:= 5);
+       (b | (CHAR c): (c = """" | ctr +:= 2), (STRING c): (UPB c = 3 AND c[2] = "." | ctr +:= 8), (COMPL c): (re OF c = 0 AND ABS (IM c - 1) < 1e-5 | ctr +:= 12)));
+ 
+ PRIO ?=: = 1, ?:= = 9;
+ 
+ # controle,servitudes et contextes pour modes :
+ 
+      COMPL 
+                     et
+      STRING   #
+ BEGIN PROC c = (REAL a, CHAR b) VOID:
+            (INT x = ctr; controle (a, b); ctr /= x + 3 | print (("count er in test", ctrt, ctr, x + 3, newline)));
+       
+       PROC PROC COMPL ids = PROC COMPL:
+       COMPL:
+       (0, 1);
+       
+       PROC PROC STRING idr = PROC STRING: STRING: """.""";
+       
+       OP ?=: = (PROC PROC COMPL a) PROC PROC COMPL: a,
+           ?:= = (PROC PROC STRING a) PROC PROC STRING: a,
+           ?=: = (PROC PROC COMPL a, INT b) PROC PROC COMPL:
+          (b | SKIP, a),
+           ?:= = (PROC PROC STRING a, INT b) PROC PROC STRING:
+          (b | SKIP, a),
+       STRUCT (COMPL toto, PROC PROC COMPL de) de = (0, ids),
+       STRUCT (COMPL toto, PROC PROC STRING of) of = (0, idr),
+       [] PROC PROC COMPL sang = ids,
+       [] PROC PROC STRING rang = idr,
+       PROC si = (PROC PROC COMPL a) PROC PROC COMPL: a,
+             ri = (PROC PROC STRING a) PROC PROC STRING: a,
+       UNION (CHAR, PROC PROC COMPL, PROC PROC STRING) u;
+       
+       ctrt := 1;
+       c (im OF (PROC COMPL:
+                 COMPL:
+                 (0, 1)), (PROC STRING: STRING: """.""")[3]);
+       ctrt := 2;
+       c (im OF (?=:ids ?=: 2), (?:=idr ?:= 2)[3]);
+       ctrt := 3;
+       c (im OF de OF de, (of OF of)[3]);
+       ctrt := 4;
+       c (im OF sang[1], rang[1][3]);
+       ctrt := 5;
+       c (im OF si (ids), ri (idr)[3]);
+       ctrt := 6;
+       c (im OF PROC PROC COMPL (ids), PROC PROC STRING (idr)[3]);
+       ctrt := 7;
+       c (im OF ids, idr[3]);
+       ctrt := 8;
+       c (im OF BEGIN (INT x;
+                       
+                       ids) EXIT
+                      etiq: SKIP
+          END, BEGIN (INT x;
+                      
+                      idr) EXIT
+                     etiq: SKIP
+          END[3]);
+       ctrt := 9;
+       c (im OF IF TRUE
+          THEN ids
+          FI, IF TRUE
+          THEN idr
+          FI[3]);
+       ctrt := 10;
+       c (im OF (1 | ids, SKIP), (1 | idr, SKIP)[3]);
+       ctrt := 11;
+       c (im OF (u := ids | (PROC PROC COMPL x): x), (u := idr | (PROC PROC STRING x): x)[3]);
+       SKIP
+ END;
+ # controle,servitudes et contextes pour modes :
+ 
+      STRUCT ( UNION ( INT , PROC  STRING )re ,
+     [] REAL  im)
+                     et
+     [] REF  STRING   #
+ BEGIN PROC c = ([] REAL a, REF STRING b) VOID:
+            (INT x = ctr; controle (a, b); ctr /= x + 13 | print (("count er in test", ctrt, ctr, x + 13, newline)));
+       
+       REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) ids = HEAP PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) := STRUCT (UNION (INT, PROC STRING) re, [] REAL im):
+       (0, (2, 3, 1));
+       
+       REF PROC [] REF STRING idr = HEAP PROC [] REF STRING := [] REF STRING:
+       (NIL, NIL, HEAP STRING := """.""");
+       
+       OP ?=: = (REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) a) REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im): a,
+           ?:= = (REF PROC [] REF STRING a) REF PROC [] REF STRING: a,
+           ?=: = (REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) a, INT b) REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im):
+          (b | SKIP, a),
+           ?:= = (REF PROC [] REF STRING a, INT b) REF PROC [] REF STRING:
+          (b | SKIP, a),
+       STRUCT (COMPL toto, REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) de) de = (0, ids),
+       STRUCT (COMPL toto, REF PROC [] REF STRING of) of = (0, idr),
+       [] REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) sang = ids,
+       [] REF PROC [] REF STRING rang = idr,
+       PROC si = (REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) a) REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im): a,
+             ri = (REF PROC [] REF STRING a) REF PROC [] REF STRING: a,
+       UNION (CHAR, REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im), REF PROC [] REF STRING) u;
+       
+       ctrt := 12;
+       c (im OF (HEAP PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) := STRUCT (UNION (INT, PROC STRING) re, [] REAL im):
+                 (0, (2, 3, 1))), (HEAP PROC [] REF STRING := [] REF STRING:
+                                   (NIL, NIL, HEAP STRING := """."""))[3]);
+       ctrt := 13;
+       c (im OF (?=:ids ?=: 2), (?:=idr ?:= 2)[3]);
+       ctrt := 14;
+       c (im OF de OF de, (of OF of)[3]);
+       ctrt := 15;
+       c (im OF sang[1], rang[1][3]);
+       ctrt := 16;
+       c (im OF si (ids), ri (idr)[3]);
+       ctrt := 17;
+       c (im OF REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) (ids), REF PROC [] REF STRING (idr)[3]);
+       ctrt := 18;
+       c (im OF ids, idr[3]);
+       ctrt := 19;
+       c (im OF BEGIN (INT x;
+                       
+                       ids) EXIT
+                      etiq: SKIP
+          END, BEGIN (INT x;
+                      
+                      idr) EXIT
+                     etiq: SKIP
+          END[3]);
+       ctrt := 20;
+       c (im OF IF TRUE
+          THEN ids
+          FI, IF TRUE
+          THEN idr
+          FI[3]);
+       ctrt := 21;
+       c (im OF (1 | ids, SKIP), (1 | idr, SKIP)[3]);
+       ctrt := 22;
+       c (im OF (u := ids | (REF PROC STRUCT (UNION (INT, PROC STRING) re, [] REAL im) x): x), (u := idr | (REF PROC [] REF STRING x): x)[3]);
+       SKIP
+ END;
+ # controle,servitudes et contextes pour modes :
+ 
+      REF  COMPL 
+                     et
+      REF [] REF  STRING   #
+ BEGIN PROC c = (REF REAL a, REF REF STRING b) VOID:
+            (INT x = ctr; controle (a, b); ctr /= x + 9 | print (("count er in test", ctrt, ctr, x + 9, newline)));
+       
+       PROC REF COMPL ids = REF COMPL:
+       HEAP COMPL := (0, 1);
+       
+       PROC REF [] REF STRING idr = REF [] REF STRING:
+       HEAP [3] REF STRING := (NIL, NIL, HEAP STRING := """.""");
+       
+       OP ?=: = (PROC REF COMPL a) PROC REF COMPL: a,
+           ?:= = (PROC REF [] REF STRING a) PROC REF [] REF STRING: a,
+           ?=: = (PROC REF COMPL a, INT b) PROC REF COMPL:
+          (b | SKIP, a),
+           ?:= = (PROC REF [] REF STRING a, INT b) PROC REF [] REF STRING:
+          (b | SKIP, a),
+       STRUCT (COMPL toto, PROC REF COMPL de) de = (0, ids),
+       STRUCT (COMPL toto, PROC REF [] REF STRING of) of = (0, idr),
+       [] PROC REF COMPL sang = ids,
+       [] PROC REF [] REF STRING rang = idr,
+       PROC si = (PROC REF COMPL a) PROC REF COMPL: a,
+             ri = (PROC REF [] REF STRING a) PROC REF [] REF STRING: a,
+       UNION (CHAR, PROC REF COMPL, PROC REF [] REF STRING) u;
+       
+       ctrt := 23;
+       c (im OF (REF COMPL:
+                 HEAP COMPL := (0, 1)), (REF [] REF STRING:
+                                         HEAP [3] REF STRING := (NIL, NIL, HEAP STRING := """."""))[3]);
+       ctrt := 24;
+       c (im OF (?=:ids ?=: 2), (?:=idr ?:= 2)[3]);
+       ctrt := 25;
+       c (im OF de OF de, (of OF of)[3]);
+       ctrt := 26;
+       c (im OF sang[1], rang[1][3]);
+       ctrt := 27;
+       c (im OF si (ids), ri (idr)[3]);
+       ctrt := 28;
+       c (im OF PROC REF COMPL (ids), PROC REF [] REF STRING (idr)[3]);
+       ctrt := 29;
+       c (im OF ids, idr[3]);
+       ctrt := 30;
+       c (im OF BEGIN (INT x;
+                       
+                       ids) EXIT
+                      etiq: SKIP
+          END, BEGIN (INT x;
+                      
+                      idr) EXIT
+                     etiq: SKIP
+          END[3]);
+       ctrt := 31;
+       c (im OF IF TRUE
+          THEN ids
+          FI, IF TRUE
+          THEN idr
+          FI[3]);
+       ctrt := 32;
+       c (im OF (1 | ids, SKIP), (1 | idr, SKIP)[3]);
+       ctrt := 33;
+       c (im OF (u := ids | (PROC REF COMPL x): x), (u := idr | (PROC REF [] REF STRING x): x)[3]);
+       SKIP
+ END;
+ # controle,servitudes et contextes pour modes :
+ 
+      REF [] COMPL 
+                     et
+      REF [] COMPL   #
+ BEGIN PROC c = (REF [] REAL a, REF COMPL b) VOID:
+            (INT x = ctr; controle (a, b); ctr /= x + 17 | print (("count er in test", ctrt, ctr, x + 17, newline)));
+       
+       REF PROC REF REF [] COMPL ids = HEAP PROC REF REF [] COMPL := REF REF [] COMPL:
+       HEAP REF [] COMPL := HEAP [3] COMPL := (0 I 3, 0 I 2, 0 I 1);
+       
+       REF PROC REF REF [] COMPL idr = HEAP PROC REF REF [] COMPL := REF REF [] COMPL:
+       HEAP REF [] COMPL := HEAP [3] COMPL := (0 I 3, 0 I 2, 0 I 1);
+       
+       OP ?=: = (REF PROC REF REF [] COMPL a) REF PROC REF REF [] COMPL: a,
+           ?:= = (REF PROC REF REF [] COMPL a) REF PROC REF REF [] COMPL: a,
+           ?=: = (REF PROC REF REF [] COMPL a, INT b) REF PROC REF REF [] COMPL:
+          (b | SKIP, a),
+           ?:= = (REF PROC REF REF [] COMPL a, INT b) REF PROC REF REF [] COMPL:
+          (b | SKIP, a),
+       STRUCT (COMPL toto, REF PROC REF REF [] COMPL de) de = (0, ids),
+       STRUCT (COMPL toto, REF PROC REF REF [] COMPL of) of = (0, idr),
+       [] REF PROC REF REF [] COMPL sang = ids,
+       [] REF PROC REF REF [] COMPL rang = idr,
+       PROC si = (REF PROC REF REF [] COMPL a) REF PROC REF REF [] COMPL: a,
+             ri = (REF PROC REF REF [] COMPL a) REF PROC REF REF [] COMPL: a,
+       UNION (CHAR, REF PROC REF REF [] COMPL, REF PROC REF REF [] COMPL) u;
+       
+       ctrt := 34;
+       c (im OF (HEAP PROC REF REF [] COMPL := REF REF [] COMPL:
+                 HEAP REF [] COMPL := HEAP [3] COMPL := (0 I 3, 0 I 2, 0 I 1)), (HEAP PROC REF REF [] COMPL := REF REF [] COMPL:
+         HEAP REF [] COMPL := HEAP [3] COMPL := (0 I 3, 0 I 2, 0 I 1))[3]);
+       ctrt := 35;
+       c (im OF (?=:ids ?=: 2), (?:=idr ?:= 2)[3]);
+       ctrt := 36;
+       c (im OF de OF de, (of OF of)[3]);
+       ctrt := 37;
+       c (im OF sang[1], rang[1][3]);
+       ctrt := 38;
+       c (im OF si (ids), ri (idr)[3]);
+       ctrt := 39;
+       c (im OF REF PROC REF REF [] COMPL (ids), REF PROC REF REF [] COMPL (idr)[3]);
+       ctrt := 40;
+       c (im OF ids, idr[3]);
+       ctrt := 41;
+       c (im OF BEGIN (INT x;
+                       
+                       ids) EXIT
+                      etiq: SKIP
+          END, BEGIN (INT x;
+                      
+                      idr) EXIT
+                     etiq: SKIP
+          END[3]);
+       ctrt := 42;
+       c (im OF IF TRUE
+          THEN ids
+          FI, IF TRUE
+          THEN idr
+          FI[3]);
+       ctrt := 43;
+       c (im OF (1 | ids, SKIP), (1 | idr, SKIP)[3]);
+       ctrt := 44;
+       c (im OF (u := ids | (REF PROC REF REF [] COMPL x): x), (u := idr | (REF PROC REF REF [] COMPL x): x)[3]);
+       SKIP
+ END;
+ print ((ctr, " tests ", (ctr = vf | "ok" | "erreur"))))

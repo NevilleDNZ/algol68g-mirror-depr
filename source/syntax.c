@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
-Copyright 2001-2012 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -10467,6 +10467,8 @@ static MOID_T *widens_to (MOID_T * p, MOID_T * q)
       return (MODE (LONG_BITS));
     } else if (q == MODE (ROW_BOOL)) {
       return (MODE (ROW_BOOL));
+    } else if (q == MODE (FLEX_ROW_BOOL)) {
+      return (MODE (FLEX_ROW_BOOL));
     } else {
       return (NO_MOID);
     }
@@ -10475,12 +10477,16 @@ static MOID_T *widens_to (MOID_T * p, MOID_T * q)
       return (MODE (LONGLONG_BITS));
     } else if (q == MODE (ROW_BOOL)) {
       return (MODE (ROW_BOOL));
+    } else if (q == MODE (FLEX_ROW_BOOL)) {
+      return (MODE (FLEX_ROW_BOOL));
     } else {
       return (NO_MOID);
     }
   } else if (p == MODE (LONGLONG_BITS)) {
     if (q == MODE (ROW_BOOL)) {
       return (MODE (ROW_BOOL));
+    } else if (q == MODE (FLEX_ROW_BOOL)) {
+      return (MODE (FLEX_ROW_BOOL));
     } else {
       return (NO_MOID);
     }
@@ -10488,6 +10494,10 @@ static MOID_T *widens_to (MOID_T * p, MOID_T * q)
     return (MODE (ROW_CHAR));
   } else if (p == MODE (LONG_BYTES) && q == MODE (ROW_CHAR)) {
     return (MODE (ROW_CHAR));
+  } else if (p == MODE (BYTES) && q == MODE (FLEX_ROW_CHAR)) {
+    return (MODE (FLEX_ROW_CHAR));
+  } else if (p == MODE (LONG_BYTES) && q == MODE (FLEX_ROW_CHAR)) {
+    return (MODE (FLEX_ROW_CHAR));
   } else {
     return (NO_MOID);
   }

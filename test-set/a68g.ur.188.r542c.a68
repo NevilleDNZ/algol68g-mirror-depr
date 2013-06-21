@@ -1,0 +1,192 @@
+# This program is part of the Rennes Test Set, 
+  automatically generated from the Algol 68 grammar 
+  using a formalism of B. Houssais (University of Rennes, 1975).
+ 
+  This test set is available from:
+     www.dickgrune.com/CS/Algol68
+  or from the Vrije Universiteit Amsterdam:
+     ftp://ftp.cs.vu.nl/pub/dick/Algol68/ #
+
+PR quiet PR
+
+# r542c #
+(print (("dyadic formulas", newline));
+ INT vf = 10 + 5 * (4 * 8 + 15 + 14);
+ 
+ INT ctrt := 0, ctr := 0, ctrloc;
+ 
+ PROC ctrl = (INT inc) VOID:
+      (ctr /= ctrloc + inc | print (("count er in test", ctrt, ctr, ctrloc + inc, newline)));
+ 
+ MODE R = INT;
+ 
+ PROC test = (INT a) VOID:
+      (a = 1 | ctr +:= 1 | print (("er", ctrt, ctr - ctrloc, newline)));
+ 
+ OP ?=:= = (INT x) INT:
+    (test (x);
+     x);
+ 
+ # servitudes pour secondaires #
+ INT b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10;
+ 
+ STRUCT (INT d2, d3, d4, d5, d6, d7, d8, d9, d0) str = (2, 3, 4, 5, 6, 7, 8, 9, 10);
+ 
+ [, ] INT t = ((0, b, c, d, e, f, g, h, i, j), (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+ PROC call = (INT a) INT:
+      (a = 0 | 10 | a),
+ OP & = (BOOL a, INT b) STRUCT (INT a, b):
+    (b, 0),
+     & = (CHAR a, STRUCT (INT a, b) b) INT: a OF b;
+ 
+ PRIO & = 3;
+ 
+ PRIO A = 1, B = 2, C = 3, D = 4, E = 5, F = 6, G = 7, H = 8, I = 9;
+ 
+ PROC dyad = (INT a, b) INT:
+      ((a = b | ctr +:= 1 | print (("er.prio", ctrt, ctr - ctrloc, a, b, newline)));
+       a - 1);
+ 
+ # contextes demandant un mode : rep #
+ (OP M = (INT a) REF INT:
+     HEAP INT := (ctr +:= 1; a - 1);
+  
+  PROC rep = (INT a, b) REF INT:
+       HEAP INT := dyad (a, b);
+  
+  OP (INT, INT) REF INT A = rep,
+                         B = rep,
+                         C = rep,
+                         D = rep,
+                         E = rep,
+                         F = rep,
+                         G = rep,
+                         H = rep,
+                         I = rep;
+  
+  # nombre de operateurs : 4 #
+  ctrt := 11;
+  ctrloc := ctr;
+  test (M 3 D M M 4 := M 3 D M M 4 := (M 3 D M M 4 :/=: M 3 D M M 4 | M 3 D M M 4));
+  ctrl (1 + 5 * 4);
+  ctrt := 12;
+  ctrloc := ctr;
+  test (M c D M M d := M c D M M d := (M c D M M d :/=: M c D M M d | M c D M M d));
+  ctrl (1 + 5 * 4);
+  ctrt := 13;
+  ctrloc := ctr;
+  test (M d3 OF str D M M d4 OF str := M d3 OF str D M M d4 OF str := (M d3 OF str D M M d4 OF str :/=: M d3 OF str D M M d4 OF str | M d3 OF str D M M d4 OF str));
+  ctrl (1 + 5 * 4);
+  ctrt := 14;
+  ctrloc := ctr;
+  test (M t[, c][2] D M M t[, d][2] := M t[, c][2] D M M t[, d][2] := (M t[, c][2] D M M t[, d][2] :/=: M t[, c][2] D M M t[, d][2] | M t[, c][2] D M M t[, d][2]));
+  ctrl (1 + 5 * 4);
+  ctrt := 15;
+  ctrloc := ctr;
+  test (M call (3) D M M call (4) := M call (3) D M M call (4) := (M call (3) D M M call (4) :/=: M call (3) D M M call (4) | M call (3) D M M call (4)));
+  ctrl (1 + 5 * 4);
+  ctrt := 16;
+  ctrloc := ctr;
+  test (M PROC INT IF 3 = 0
+        THEN INT: 10
+        ELSE INT: 3
+        FI D M M PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI := M PROC INT IF 3 = 0
+        THEN INT: 10
+        ELSE INT: 3
+        FI D M M PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI := (M PROC INT IF 3 = 0
+        THEN INT: 10
+        ELSE INT: 3
+        FI D M M PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI :/=: M PROC INT IF 3 = 0
+        THEN INT: 10
+        ELSE INT: 3
+        FI D M M PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI | M PROC INT IF 3 = 0
+        THEN INT: 10
+        ELSE INT: 3
+        FI D M M PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI));
+  ctrl (1 + 5 * 4);
+  ctrt := 17;
+  ctrloc := ctr;
+  test (M (INT x := c; x) D M M (INT x := d; x) := M (INT x := c; x) D M M (INT x := d; x) := (M (INT x := c; x) D M M (INT x := d; x) :/=: M (INT x := c; x) D M M (INT x := d; x) | M (INT x := c; x) D M M (INT x := d; x)));
+  ctrl (1 + 5 * 4);
+  ctrt := 18;
+  ctrloc := ctr;
+  test (M ("#" & (TRUE & PROC INT IF 3 = 0
+                  THEN INT: 10
+                  ELSE INT: 3
+                  FI)) D M M ("#" & (TRUE & d4 OF str)) := M ("#" & (TRUE & PROC INT IF 3 = 0
+                                                                     THEN INT: 10
+                                                                     ELSE INT: 3
+                                                                     FI)) D M M ("#" & (TRUE & 4)) := (M ("#" & (TRUE & d3 OF str)) D M M ("#" & (TRUE & (INT x := d; x))) :/=: M ("#" & (TRUE & call (3))) D M M ("#" & (TRUE & ("#" & (TRUE & d4 OF str)))) | M ("#" & (TRUE & t[, c][2])) D M M ("#" & (TRUE & d))));
+  ctrl (1 + 5 * 4);
+  # nombre de operateurs : 15 #
+  ctrt := 19;
+  ctrloc := ctr;
+  test (call (2) A M t[, e][2] C 6 E M M 10 G j I j H (INT x := i; x) F M M call (9) D e B M call (4) := ("#" & (TRUE & (INT x := b; x))) A M 5 C d6 OF str E M M call (0) G call (0) I d0 OF str H i F M M PROC INT IF 9 = 0
+        THEN INT: 10
+        ELSE INT: 9
+        FI D call (5) B M d := (call (2) A M e C f E M M PROC INT IF 0 = 0
+        THEN INT: 10
+        ELSE INT: 0
+        FI G j I ("#" & (TRUE & j)) H d9 OF str F M M i D PROC INT IF 5 = 0
+        THEN INT: 10
+        ELSE INT: 5
+        FI B M call (4) :/=: t[, b][2] A M (INT x := e; x) C ("#" & (TRUE & d6 OF str)) E M M t[, j][2] G ("#" & (TRUE & j)) I (INT x := j; x) H (INT x := i; x) F M M ("#" & (TRUE & t[, i][2])) D PROC INT IF 5 = 0
+        THEN INT: 10
+        ELSE INT: 5
+        FI B M (INT x := d; x) | call (2) A M call (5) C PROC INT IF 6 = 0
+        THEN INT: 10
+        ELSE INT: 6
+        FI E M M call (0) G t[, j][2] I 10 H 9 F M M PROC INT IF 9 = 0
+        THEN INT: 10
+        ELSE INT: 9
+        FI D (INT x := e; x) B M (INT x := d; x)));
+  ctrl (1 + 5 * 15);
+  # nombre de operateurs : 14 #
+  ctrt := 20;
+  ctrloc := ctr;
+  test (M PROC INT IF 8 = 0
+        THEN INT: 10
+        ELSE INT: 8
+        FI H g E M t[, g][2] E t[, e][2] C M M (INT x := f; x) C (INT x := c; x) C PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI E ("#" & (TRUE & 4)) E M PROC INT IF 5 = 0
+        THEN INT: 10
+        ELSE INT: 5
+        FI H ("#" & (TRUE & d)) := M t[, h][2] H t[, g][2] E M g E ("#" & (TRUE & PROC INT IF 5 = 0
+   THEN INT: 10
+   ELSE INT: 5
+   FI)) C M M d6 OF str C call (3) C d E t[, d][2] E M PROC INT IF 5 = 0
+        THEN INT: 10
+        ELSE INT: 5
+        FI H d4 OF str := (M h H d7 OF str E M call (7) E call (5) C M M d6 OF str C call (3) C ("#" & (TRUE & 4)) E call (4) E M t[, e][2] H 4 :/=: M d8 OF str H d7 OF str E M PROC INT IF 7 = 0
+        THEN INT: 10
+        ELSE INT: 7
+        FI E call (5) C M M PROC INT IF 6 = 0
+        THEN INT: 10
+        ELSE INT: 6
+        FI C 3 C d4 OF str E (INT x := d; x) E M ("#" & (TRUE & t[, e][2])) H PROC INT IF 4 = 0
+        THEN INT: 10
+        ELSE INT: 4
+        FI | M ("#" & (TRUE & d8 OF str)) H (INT x := g; x) E M call (7) E t[, e][2] C M M (INT x := f; x) C c C d4 OF str E t[, d][2] E M PROC INT IF 5 = 0
+        THEN INT: 10
+        ELSE INT: 5
+        FI H d4 OF str));
+  ctrl (1 + 5 * 14);
+  SKIP);
+ print ((ctr, " tests ", (ctr = vf | "ok" | "error"))))

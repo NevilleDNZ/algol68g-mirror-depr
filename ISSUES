@@ -1,0 +1,14 @@
+ALGOL68G - ALGOL 68 GENIE
+
+Next issues are yet unresolved.
+
+> Issue: a68g 2.6, Bus Error on SPARC
+> Filed: 2012-11-30 by Hannu-Heikki Puupponen
+> Status: unable to reproduce on non-SPARC machines, no access to SPARCs.
+>
+> Target machine is Sun SPARCStation 10 with two SM81 SuperSPARC II CPU 
+> modules, 512M memory. OS is NetBSD 4.0.
+>
+> Some regression tests cause a Bus Error, typically caused by unaligned fetch, 
+> SPARC being one of the architectures that do not support unaligned fetches at all.
+

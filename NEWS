@@ -1,9 +1,13 @@
-Version 2.6 November 2012
+Version 2.7, June 2013
+* Larger test set.
+* Fixes several reported issues.
+
+Version 2.6, November 2012
 * Larger test set.
 * Hyperlinked manual.
 * Fixes several reported issues.
 
-Version 2.5 October 2012
+Version 2.5, October 2012
 * FHS 2.3 compliant.
 * Larger test set.
 * Fixes minor issues.
