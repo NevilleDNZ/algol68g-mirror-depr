@@ -2018,21 +2018,18 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
 /* Tests for objects of mode INT */
 
-#if defined HAVE_IEEE_754
 #define CHECK_INT_ADDITION(p, i, j)\
-  PRELUDE_ERROR (ABS ((double) (i) + (double) (j)) > (double) INT_MAX, p, ERROR_MATH, MODE (INT))
+  PRELUDE_ERROR (\
+    ((j) > 0 && (i) > (INT_MAX - (j))) || ((j) < 0 && (i) < (-INT_MAX - (j))),\
+    p, ERROR_MATH, MODE (INT))
 #define CHECK_INT_SUBTRACTION(p, i, j)\
-  PRELUDE_ERROR (ABS ((double) (i) - (double) (j)) > (double) INT_MAX, p, ERROR_MATH, MODE (INT))
+  CHECK_INT_ADDITION(p, i, -(j))
 #define CHECK_INT_MULTIPLICATION(p, i, j)\
-  PRELUDE_ERROR (ABS ((double) (i) * (double) (j)) > (double) INT_MAX, p, ERROR_MATH, MODE (INT))
+  PRELUDE_ERROR (\
+    (j) != 0 && ABS (i) > INT_MAX / ABS (j),\
+    p, ERROR_MATH, MODE (INT))
 #define CHECK_INT_DIVISION(p, i, j)\
   PRELUDE_ERROR ((j) == 0, p, ERROR_DIVISION_BY_ZERO, MODE (INT))
-#else
-#define CHECK_INT_ADDITION(p, i, j) {;}
-#define CHECK_INT_SUBTRACTION(p, i, j) {;}
-#define CHECK_INT_MULTIPLICATION(p, i, j) {;}
-#define CHECK_INT_DIVISION(p, i, j) {;}
-#endif
 
 #define CHECK_INDEX(p, k, t) {\
   if (VALUE (k) < LWB (t) || VALUE (k) > UPB (t)) {\
@@ -4324,7 +4321,8 @@ extern GPROC genie_pq_user;
 #define ERROR_UNTERMINATED_PRAGMENT "unterminated pragment"
 #define ERROR_UNTERMINATED_STRING "unterminated string"
 #define ERROR_UNWORTHY_CHARACTER "unworthy character"
-#define ERROR_VACUUM "vacuum cannot have row elements (use a U M generator)"
+#define ERROR_VACUO "this vacuum cannot have row elements (use a U generator)"
+#define ERROR_VACUUM "this vacuum cannot have row elements (use a U M generator)"
 #define INFO_APPROPRIATE_DECLARER "appropriate declarer"
 #define INFO_MISSING_KEYWORDS "missing or unmatched keyword"
 #define WARNING_EXTENSION "@ is an extension"

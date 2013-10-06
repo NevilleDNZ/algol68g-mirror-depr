@@ -7096,7 +7096,7 @@ void genie_pow_long_complex_int (NODE_T * p)
   }
   stack_pointer = pop_sp;
   if (negative) {
-   (void) set_mp_short (re_x, (MP_T) 1, 0, digits);
+    (void) set_mp_short (re_x, (MP_T) 1, 0, digits);
     SET_MP_ZERO (im_x, digits);
     INCREMENT_STACK_POINTER (p, 2 * size);
     genie_div_long_complex (p);
@@ -7115,11 +7115,16 @@ void genie_pow_long_complex_int (NODE_T * p)
 
 void genie_eq_long_complex (NODE_T * p)
 {
-  int size = SIZEC (LHS_MODE (p));
+  int digits = DIGITSC (LHS_MODE (p)), size = SIZEC (LHS_MODE (p));
+  ADDR_T pop_sp = stack_pointer;
+  MP_T *d = (MP_T *) STACK_OFFSET (-size);
+  MP_T *c = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *b = (MP_T *) STACK_OFFSET (-3 * size);
   MP_T *a = (MP_T *) STACK_OFFSET (-4 * size);
-  genie_sub_long_complex (p);
-  DECREMENT_STACK_POINTER (p, 2 * size);
+  (void) sub_mp (p, b, b, d, digits);
+  (void) sub_mp (p, a, a, c, digits);
+  stack_pointer = pop_sp;
+  DECREMENT_STACK_POINTER (p, 4 * size);
   PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (a, 1) == 0 && MP_DIGIT (b, 1) == 0), A68_BOOL);
 }
 
@@ -7130,11 +7135,16 @@ void genie_eq_long_complex (NODE_T * p)
 
 void genie_ne_long_complex (NODE_T * p)
 {
-  int size = SIZEC (LHS_MODE (p));
+  int digits = DIGITSC (LHS_MODE (p)), size = SIZEC (LHS_MODE (p));
+  ADDR_T pop_sp = stack_pointer;
+  MP_T *d = (MP_T *) STACK_OFFSET (-size);
+  MP_T *c = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *b = (MP_T *) STACK_OFFSET (-3 * size);
   MP_T *a = (MP_T *) STACK_OFFSET (-4 * size);
-  genie_sub_long_complex (p);
-  DECREMENT_STACK_POINTER (p, 2 * size);
+  (void) sub_mp (p, b, b, d, digits);
+  (void) sub_mp (p, a, a, c, digits);
+  stack_pointer = pop_sp;
+  DECREMENT_STACK_POINTER (p, 4 * size);
   PUSH_PRIMITIVE (p, (BOOL_T) (MP_DIGIT (a, 1) != 0 || MP_DIGIT (b, 1) != 0), A68_BOOL);
 }
 
@@ -10841,7 +10851,6 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
       }
       word--;
     }
-printf ("%s", str);fflush (stdout);
     stack_pointer = pop_sp;
   }
 }

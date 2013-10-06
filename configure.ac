@@ -1,4 +1,4 @@
-AC_INIT([algol68g], [2.7], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [2.8], [Marcel van der Veer <algol68g@xs4all.nl>])
 #
 # Algol 68 Genie "configure.ac" from "a68g-tools".
 #
@@ -99,10 +99,17 @@ case "$host" in
 #
 # Linux.
 #
-*86-*-gnu | *86_64-*-gnu | *86-*-linux* | *86_64-*-linux*) 
+*86-*-gnu | *86_64-*-gnu | *86-*-linux* | *86_64-*-linux* | arm*-*-linux*) 
   AC_DEFINE(HAVE_LINUX, 1, [Define this if LINUX was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant])
   AC_MSG_RESULT([linux])
+  ;;
+#
+# Cygwin.
+#
+*86-*-cygwin* | *86_64-*-cygwin*) 
+  AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant])
+  AC_MSG_RESULT([cygwin])
   ;;
 #
 # Mac OS X.

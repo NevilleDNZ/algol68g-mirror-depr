@@ -245,7 +245,6 @@ void state_version (FILE_T f)
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Compilation is not supported.\n") >= 0);
 #endif
   WRITE (f, output_line);
-  WRITE (f, output_line);
 #if defined HAVE_PARALLEL_CLAUSE
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Parallel-clause is supported.\n") >= 0);
 #else
@@ -1318,15 +1317,19 @@ void default_options (MODULE_T *p)
 
 static void option_error (LINE_T * l, char *option, char *info)
 {
+/*
   int k;
+*/
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s", option) >= 0);
+/*
   for (k = 0; output_line[k] != NULL_CHAR; k++) {
     output_line[k] = (char) TO_LOWER (output_line[k]);
   }
+*/
   if (info != NO_TEXT) {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "error: %s option \"%s\"", info, output_line) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "*error: %s option \"%s\"", info, output_line) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "error: in option \"%s\"", output_line) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "*error: in option \"%s\"", output_line) >= 0);
   }
   scan_error (l, NO_TEXT, edit_line);
 }
@@ -5466,6 +5469,7 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
 
 /*
 Legend for special symbols:
+* as first character, copy rest of string literally
 # skip extra syntactical information
 @ non terminal
 A non terminal
@@ -5485,7 +5489,9 @@ Z quoted string literal.
 */
 
 #define COMPOSE_DIAGNOSTIC\
-  while (t[0] != NULL_CHAR) {\
+  if (t[0] == '*') {\
+    bufcat (b, &t[1], BUFFER_SIZE);\
+  } else while (t[0] != NULL_CHAR) {\
     if (t[0] == '#') {\
       extra_syntax = A68_FALSE;\
     } else if (t[0] == '@') {\
@@ -5595,14 +5601,16 @@ Z quoted string literal.
         char *sym = NCHAR_IN_LINE (p);\
         int n = 0, size = (int) strlen (txt);\
 	bufcat (b, "\"", BUFFER_SIZE);\
-        if (txt[0] != sym[0] || (int) strlen (sym) - 1 <= size) {\
-	  bufcat (b, NSYMBOL (p), BUFFER_SIZE);\
+        if (txt[0] != sym[0] || (int) strlen (sym) < size) {\
+	  bufcat (b, txt, BUFFER_SIZE);\
         } else {\
           while (n < size) {\
-            char str[2];\
-            str[0] = sym[0];\
-            str[1] = NULL_CHAR;\
-            bufcat (b, str, BUFFER_SIZE);\
+            if (IS_PRINT (sym[0])) {\
+              char str[2];\
+              str[0] = sym[0];\
+              str[1] = NULL_CHAR;\
+              bufcat (b, str, BUFFER_SIZE);\
+            }\
             if (TO_LOWER (txt[0]) == TO_LOWER (sym[0])) {\
               txt ++;\
               n ++;\
@@ -5997,9 +6005,13 @@ void set_moid_sizes (MOID_T * z)
   SIZE (MODE (LONGLONG_REAL)) = moid_size (MODE (LONGLONG_REAL));
   DIGITS (MODE (LONGLONG_REAL)) = moid_digits (MODE (LONGLONG_REAL));
   SIZEC (MODE (LONG_COMPLEX)) = SIZE (MODE (LONG_REAL));
+  SIZEC (MODE (REF_LONG_COMPLEX)) = SIZE (MODE (LONG_REAL));
   DIGITSC (MODE (LONG_COMPLEX)) = DIGITS (MODE (LONG_REAL));
+  DIGITSC (MODE (REF_LONG_COMPLEX)) = DIGITS (MODE (LONG_REAL));
   SIZEC (MODE (LONGLONG_COMPLEX)) = SIZE (MODE (LONGLONG_REAL));
+  SIZEC (MODE (REF_LONGLONG_COMPLEX)) = SIZE (MODE (LONGLONG_REAL));
   DIGITSC (MODE (LONGLONG_COMPLEX)) = DIGITS (MODE (LONGLONG_REAL));
+  DIGITSC (MODE (REF_LONGLONG_COMPLEX)) = DIGITS (MODE (LONGLONG_REAL));
 }
 
 /**

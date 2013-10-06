@@ -472,9 +472,9 @@ static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 static void unworthy (LINE_T * u, char *v, char ch)
 {
   if (IS_PRINT (ch)) {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s", ERROR_UNWORTHY_CHARACTER) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "*%s", ERROR_UNWORTHY_CHARACTER) >= 0);
   } else {
-    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s %s", ERROR_UNWORTHY_CHARACTER, ctrl_char (ch)) >= 0);
+    ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "*%s %s", ERROR_UNWORTHY_CHARACTER, ctrl_char (ch)) >= 0);
   }
   scan_error (u, v, edit_line);
 }
@@ -870,7 +870,7 @@ been included will not be included a second time - it will be ignored.
 /* Access the file */
         RESET_ERRNO;
         fd = open (fn, O_RDONLY | O_BINARY);
-        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%s \"%s\"", ERROR_SOURCE_FILE_OPEN, fn) >= 0);
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "*%s \"%s\"", ERROR_SOURCE_FILE_OPEN, fn) >= 0);
         SCAN_ERROR (fd == -1, start_l, start_c, edit_line);
 /* Access the file */
         RESET_ERRNO;
@@ -8034,6 +8034,7 @@ static void compute_derived_modes (MODULE_T *mod)
 void make_moid_list (MODULE_T *mod)
 {
   MOID_T *z;
+  BOOL_T cont = A68_TRUE;
 /* Collect modes from the syntax tree */
   reset_moid_tree (TOP_NODE (mod));
   get_modes_from_tree (TOP_NODE (mod), STOP);
@@ -8056,7 +8057,13 @@ void make_moid_list (MODULE_T *mod)
     if (IS (z, INDICANT) && EQUIVALENT (z) != NO_MOID) {
       if (!is_well_formed (z, EQUIVALENT (z), A68_FALSE, A68_FALSE, A68_TRUE)) {
         diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
+        cont = A68_FALSE;
       }
+    }
+  }
+  for (z = TOP_MOID (mod); cont && z != NO_MOID; FORWARD (z)) {
+    if (IS (z, INDICANT) && EQUIVALENT (z) != NO_MOID) {
+      ;
     } else if (NODE (z) != NO_NODE) {
       if (!is_well_formed (NO_MOID, z, A68_FALSE, A68_FALSE, A68_TRUE)) {
         diagnostic_node (A68_ERROR, NODE (z), ERROR_NOT_WELL_FORMED, z);
@@ -11754,10 +11761,14 @@ static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
   } else if (whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP)
              || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP)) {
     if (SORT (x) == STRONG) {
-      MOID_T *z = (IS (MOID (x), FLEX_SYMBOL) ? SUB_MOID (x) : MOID (x));
-      make_soid (y, STRONG, MODE (VACUUM), 0);
-      if (SUB (z) != NO_MOID && HAS_ROWS (SUB (z))) {
-        diagnostic_node (A68_ERROR, p, ERROR_VACUUM, "REF", MOID (x));
+      if (MOID (x) == NO_MOID) {
+        diagnostic_node (A68_ERROR, p, ERROR_VACUO, "REF MODE");
+      } else {
+        MOID_T *z = (IS (MOID (x), FLEX_SYMBOL) ? SUB_MOID (x) : MOID (x));
+        make_soid (y, STRONG, MODE (VACUUM), 0);
+        if (SUB (z) != NO_MOID && HAS_ROWS (SUB (z))) {
+          diagnostic_node (A68_ERROR, p, ERROR_VACUUM, "REF", MOID (x));
+        }
       }
     } else {
       make_soid (y, STRONG, MODE (UNDEFINED), 0);
