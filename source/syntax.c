@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
-Copyright 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -7005,7 +7005,7 @@ which is used in balancing conformity clauses.
 static MOID_T *make_united_mode (MOID_T * m)
 {
   MOID_T *u;
-  PACK_T *v, *w;
+  PACK_T *w;
   int mods;
   if (m == NO_MOID) {
     return (MODE (ERROR));
@@ -7022,7 +7022,6 @@ static MOID_T *make_united_mode (MOID_T * m)
   u = new_moid ();
   ATTRIBUTE (u) = UNION_SYMBOL;
   PACK (u) = NO_PACK;
-  v = PACK (u);
   w = PACK (m);
   for (w = PACK (m); w != NO_PACK; FORWARD (w)) {
     add_mode_to_pack (&(PACK (u)), MOID (w), NO_TEXT, NODE (m));
@@ -12320,11 +12319,10 @@ static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T name, tmp, value;
-  MOID_T *name_moid, *source_moid, *dest_moid, *ori;
+  MOID_T *name_moid, *ori;
 /* Get destination mode */
   make_soid (&name, SOFT, NO_MOID, 0);
   mode_check_unit (SUB (p), &name, &tmp);
-  dest_moid = MOID (&tmp);
 /* SOFT coercion */
   ori = determine_unique_mode (&tmp, SAFE_DEFLEXING);
   name_moid = deproc_completely (ori);
@@ -12340,7 +12338,6 @@ static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
   make_soid (&name, STRONG, SUB (name_moid), 0);
   mode_check_unit (NEXT_NEXT (p), &name, &value);
   if (!is_coercible_in_context (&value, &name, FORCE_DEFLEXING)) {
-    source_moid = MOID (&value);
     cannot_coerce (p, MOID (&value), MOID (&name), STRONG, FORCE_DEFLEXING, UNIT);
     make_soid (y, SORT (x), MODE (ERROR), 0);
   } else {

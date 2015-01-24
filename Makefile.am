@@ -3,7 +3,7 @@ bin_PROGRAMS =a68g
 a68g_SOURCES = source/a68g.c source/code.c source/environ.c source/genie.c source/gsl.c source/inet.c source/monitor.c source/mp.c source/plotutils.c source/postgresql.c source/pretty.c source/syntax.c
 a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 TESTS_ENVIRONMENT=./a68g
-XFAIL_TESTS=\	
+XFAIL_TESTS=\
 	test-set/a68g.mc.008.appl08.a68\
 	test-set/a68g.mc.011.appl11.a68\
 	test-set/a68g.mc.015.appl15.a68\
@@ -74,7 +74,6 @@ XFAIL_TESTS=\
 	test-set/a68g.mc.177.synt06.a68\
 	test-set/a68g.mc.178.synt07.a68\
 	test-set/a68g.mc.179.synt08.a68
-
 
 TESTS=\
 	test-set/a68g.mc.001.appl01.a68\

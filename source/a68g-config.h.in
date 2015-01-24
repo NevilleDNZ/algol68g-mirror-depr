@@ -300,6 +300,9 @@
 /* Define this if untested OS was detected */
 #undef HAVE_UNTESTED
 
+/* Define this if /usr/include/postgresql was detected */
+#undef HAVE_USR_INCLUDE_POSTGRESQL
+
 /* Define this if /usr/local/pgsql/include was detected */
 #undef HAVE_USR_LOCAL_PGSQL_INCLUDE
 
@@ -308,9 +311,6 @@
 
 /* Define to 1 if assertions should be disabled. */
 #undef NDEBUG
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -326,6 +326,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

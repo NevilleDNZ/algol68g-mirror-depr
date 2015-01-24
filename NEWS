@@ -1,4 +1,8 @@
-Version 2.8 October 2013
+Version 2.8.1, January 2015
+* Update code for recent versions of gcc, autoconf, automake and TeX.
+* Documentation updates.
+
+Version 2.8, October 2013
 * Fixes build issue on ARM.
 * Fixes reported bugs in version 2.7.
 
@@ -261,7 +265,7 @@ Version 1.8.0, July 2005
 * Makes ~ a SKIP when used as a unit (cf. RR).
 
 Version 1.7.0, May 2005
-* Adds partial parameterisation following C. H. Lindsey's proposal.
+* Adds partial parameterisation similar to C. H. Lindsey's proposal.
 * Adds elementary and trigonometric functions for complex numbers, independent of GSL.
 
 Version 1.6.0, March 2005

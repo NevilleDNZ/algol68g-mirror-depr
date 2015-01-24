@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -1041,6 +1041,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
       BLOCK_GC_HANDLE (&(ARRAY (arr)));
       PUSH_REF (p, z);
       push_mode (f, MODE (STRING));
+      (void) tup;
     }
     SCAN_CHECK (f, p);
   } else if (attr == TRUE_SYMBOL) {

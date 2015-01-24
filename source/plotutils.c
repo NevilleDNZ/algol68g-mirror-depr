@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -1190,6 +1190,7 @@ void genie_draw_aspect (NODE_T * p)
   f = FILE_DEREF (&ref_file);
   plotter = set_up_device (p, f);
   PUSH_PRIMITIVE (p, (double) WINDOW_Y_SIZE (&DEVICE (f)) / (double) WINDOW_X_SIZE (&DEVICE (f)), A68_REAL);
+  (void) plotter;
 }
 
 /**

@@ -1,4 +1,4 @@
-AC_INIT([algol68g], [2.8], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [2.8.1], [Marcel van der Veer <algol68g@xs4all.nl>])
 #
 # Algol 68 Genie "configure.ac" from "a68g-tools".
 #
@@ -175,7 +175,7 @@ AC_ARG_ENABLE(postgresql, [AS_HELP_STRING([--enable-postgresql], [if installed, 
 #
 
 AC_MSG_NOTICE([initialising...])
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE([subdir-objects serial-tests])
 AC_PREFIX_DEFAULT(/usr/local)
 AC_CONFIG_SRCDIR([source/a68g.h])
 AC_CONFIG_HEADERS([source/a68g-config.h])
@@ -201,13 +201,11 @@ else
   fi
 
   A68G_AC_PROG_CC_CFLAGS([-pedantic])
-  A68G_AC_PROG_CC_CFLAGS([-W])
-  A68G_AC_PROG_CC_CFLAGS([-Wall])
-  A68G_AC_PROG_CC_CFLAGS([-Wextra])
   A68G_AC_PROG_CC_CFLAGS([-Wshadow])
-# A68G_AC_PROG_CC_CFLAGS([-Wconversion]) Too much warnings!
   A68G_AC_PROG_CC_CFLAGS([-Wstrict-prototypes])
-  A68G_AC_PROG_CC_CFLAGS([-Wchar-subscripts])
+  A68G_AC_PROG_CC_CFLAGS([-Wunused-variable])
+  A68G_AC_PROG_CC_CFLAGS([-Wunused-parameter])
+  A68G_AC_PROG_CC_CFLAGS([-Wno-long-long])
 
 #
 # Test on gcc capabilities.
@@ -288,11 +286,11 @@ AC_TYPE_UINT16_T
 
 AC_MSG_CHECKING([__off_t or off_t])
 AC_COMPILE_IFELSE(
-[[
+[AC_LANG_SOURCE([
 #include <unistd.h>
 #include <sys/types.h>
 __off_t dummy;
-]],
+])],
   [AC_MSG_RESULT([__off_t])],
   [AC_MSG_RESULT([off_t])
    AC_DEFINE(__off_t, off_t, [Define this if we have no __off_t])]
@@ -300,11 +298,11 @@ __off_t dummy;
 
 AC_MSG_CHECKING([__pid_t or pid_t])
 AC_COMPILE_IFELSE(
-[[
+[AC_LANG_SOURCE[
 #include <unistd.h>
 #include <sys/types.h>
 __pid_t dummy;
-]],
+])],
   [AC_MSG_RESULT([__pid_t])],
   [AC_MSG_RESULT([pid_t])
    AC_DEFINE(__pid_t, pid_t, [Define this if we have no __pid_t])]
@@ -312,11 +310,11 @@ __pid_t dummy;
 
 AC_MSG_CHECKING([__mode_t or mode_t])
 AC_COMPILE_IFELSE(
-[[
+[AC_LANG_SOURCE([
 #include <unistd.h>
 #include <sys/types.h>
 __mode_t dummy;
-]],
+])],
   [AC_MSG_RESULT([__mode_t])],
   [AC_MSG_RESULT([mode_t])
    AC_DEFINE(__mode_t, mode_t, [Define this if we have no __mode_t])]
@@ -351,6 +349,13 @@ if test -d /opt/local/pgsql/include; then
   LDFLAGS="$LDFLAGS -L/opt/local/pgsql/lib"
 fi
 
+if test -d /usr/include/postgresql; then
+  AC_DEFINE(HAVE_USR_INCLUDE_POSTGRESQL, 1, [Define this if /usr/include/postgresql was detected]) 
+  CFLAGS="$CFLAGS -I/usr/include/postgresql"
+  CPPFLAGS="$CPPFLAGS -I/usr/include/postgresql"
+  CXXFLAGS="$CXXFLAGS -I/usr/include/postgresql"
+  LDFLAGS="$LDFLAGS -L/usr/lib"
+fi
 #
 # Checks for header files.
 #

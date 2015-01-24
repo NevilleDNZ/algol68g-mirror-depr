@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section Description
 
@@ -2175,6 +2175,7 @@ void genie_matrix_svd_solve (NODE_T * p)
   gsl_vector_free (s);
   gsl_matrix_free (v);
   gsl_matrix_free (u);
+  (void) rc;
   (void) gsl_set_error_handler (save_handler);
 }
 
@@ -2228,6 +2229,7 @@ void genie_matrix_qr_solve (NODE_T * p)
   gsl_vector_free (b);
   gsl_vector_free (t);
   gsl_matrix_free (q);
+  (void) rc;
   (void) gsl_set_error_handler (save_handler);
 }
 
@@ -2255,6 +2257,7 @@ void genie_matrix_qr_ls_solve (NODE_T * p)
   gsl_vector_free (b);
   gsl_vector_free (t);
   gsl_matrix_free (q);
+  (void) rc;
   (void) gsl_set_error_handler (save_handler);
 }
 
@@ -2297,6 +2300,7 @@ void genie_matrix_ch_solve (NODE_T * p)
   gsl_vector_free (x);
   gsl_vector_free (b);
   gsl_matrix_free (c);
+  (void) rc;
   (void) gsl_set_error_handler (save_handler);
 }
 

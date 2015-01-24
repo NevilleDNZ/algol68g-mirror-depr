@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -206,7 +206,7 @@ void state_license (FILE_T f)
   }
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright (c) 2013 %s.\n", PACKAGE_BUGREPORT) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright 2015 %s.\n", PACKAGE_BUGREPORT) >= 0);
   WRITE (f, output_line);
   PR ("");
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "This is free software covered by the GNU General Public License.\n") >= 0);
@@ -846,6 +846,8 @@ Accept various silent extensions.
     ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s -I/usr/pkg/pgsql/include", INCLUDEDIR) >= 0);
 #elif defined HAVE_OPT_LOCAL_PGSQL_INCLUDE
     ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s -I/opt/local/pgsql/include", INCLUDEDIR) >= 0);
+#elif defined HAVE_USR_INCLUDE_POSTGRESQL
+    ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s -I/usr/include/postgresql", INCLUDEDIR) >= 0);
 #else
     ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s", INCLUDEDIR) >= 0);
 #endif
@@ -5664,6 +5666,7 @@ void diagnostic_node (STATUS_MASK sev, NODE_T * p, char *loc_str, ...)
   BOOL_T force, extra_syntax = A68_TRUE, shortcut = A68_FALSE;
   int err = errno;
   va_start (args, loc_str);
+  (void) extra_syntax;
   b[0] = NULL_CHAR;
   force = (BOOL_T) ((sev & A68_FORCE_DIAGNOSTICS) != 0);
   sev &= ~A68_FORCE_DIAGNOSTICS;
@@ -5748,6 +5751,7 @@ void diagnostic_line (STATUS_MASK sev, LINE_T * line, char *pos, char *loc_str, 
   NODE_T *p = NO_NODE;
   b[0] = NULL_CHAR;
   va_start (args, loc_str);
+  (void) extra_syntax;
   force = (BOOL_T) ((sev & A68_FORCE_DIAGNOSTICS) != 0);
   sev &= ~A68_FORCE_DIAGNOSTICS;
 /* No warnings? */

@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -730,13 +730,11 @@ void initialise_frame (NODE_T * p)
   }
   if (PROC_OPS (TABLE (p))) {
     NODE_T *_q_;
-    ADDR_T pop_sp;
     if (SEQUENCE (TABLE (p)) == NO_NODE) {
       int count = 0;
       genie_find_proc_op (p, &count);
       PROC_OPS (TABLE (p)) = (BOOL_T) (count > 0);
     }
-    pop_sp = stack_pointer;
     for (_q_ = SEQUENCE (TABLE (p)); _q_ != NO_NODE; _q_ = SEQUENCE (_q_)) {
       NODE_T *u = NEXT_NEXT (_q_);
       if (IS (u, ROUTINE_TEXT)) {
@@ -1451,15 +1449,15 @@ static void genie_argument (NODE_T * p, NODE_T ** seq)
 /**
 @brief Evaluate partial call.
 @param p Node in syntax tree.
-@param pr_mode Full mode of procedure object.
-@param pproc Mode of resulting proc.
-@param pmap Mode of the locale.
+@param proc_mode Full mode of procedure object.
+@param result_proc_mode Mode of resulting proc.
+@param locale_mode Mode of the locale.
 @param z Procedure object to call.
 @param pop_sp Stack pointer value to restore.
 @param pop_fp Frame pointer value to restore.
 **/
 
-void genie_partial_call (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * pmap, A68_PROCEDURE z, ADDR_T pop_sp, ADDR_T pop_fp)
+void genie_partial_call (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mode, MOID_T * locale_mode, A68_PROCEDURE z, ADDR_T pop_sp, ADDR_T pop_fp)
 {
   int voids = 0;
   BYTE_T *u, *v;
@@ -1469,22 +1467,22 @@ void genie_partial_call (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * 
 /* Get locale for the new procedure descriptor. Copy is necessary */
   if (LOCALE (&z) == NO_HANDLE) {
     int size = 0;
-    for (s = PACK (pr_mode); s != NO_PACK; FORWARD (s)) {
+    for (s = PACK (proc_mode); s != NO_PACK; FORWARD (s)) {
       size += (SIZE (MODE (BOOL)) + SIZE (MOID (s)));
     }
-    ref = heap_generator (p, pr_mode, size);
+    ref = heap_generator (p, proc_mode, size);
     loc = REF_HANDLE (&ref);
   } else {
     int size = SIZE (LOCALE (&z));
-    ref = heap_generator (p, pr_mode, size);
+    ref = heap_generator (p, proc_mode, size);
     loc = REF_HANDLE (&ref);
     COPY (POINTER (loc), POINTER (LOCALE (&z)), size);
   }
-/* Move arguments from stack to locale using pmap */
+/* Move arguments from stack to locale using locale_mode */
   u = POINTER (loc);
-  s = PACK (pr_mode);
+  s = PACK (proc_mode);
   v = STACK_ADDRESS (pop_sp);
-  t = PACK (pmap);
+  t = PACK (locale_mode);
   for (; t != NO_PACK && s != NO_PACK; FORWARD (t)) {
 /* Skip already initialised arguments */
     while (u != NULL && VALUE ((A68_BOOL *) & u[0])) {
@@ -1516,7 +1514,7 @@ void genie_partial_call (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * 
     stack_pointer = pop_sp;
     u = POINTER (loc);
     v = STACK_ADDRESS (stack_pointer);
-    s = PACK (pr_mode);
+    s = PACK (proc_mode);
     for (; s != NO_PACK; FORWARD (s)) {
       int size = SIZE (MOID (s));
       COPY (v, &u[SIZE (MODE (BOOL))], size);
@@ -1524,7 +1522,7 @@ void genie_partial_call (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * 
       v = &(v[SIZE (MOID (s))]);
       INCREMENT_STACK_POINTER (p, size);
     }
-    genie_call_procedure (p, pr_mode, pproc, MODE (VOID), &z, pop_sp, pop_fp);
+    genie_call_procedure (p, proc_mode, result_proc_mode, MODE (VOID), &z, pop_sp, pop_fp);
   } else {
 /*  Closure is not complete. Return procedure body */
     PUSH_PROCEDURE (p, z);
@@ -1534,18 +1532,18 @@ void genie_partial_call (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * 
 /**
 @brief Closure and deproceduring of routines with PARAMSETY.
 @param p Node in syntax tree.
-@param pr_mode Full mode of procedure object.
-@param pproc Mode of resulting proc.
-@param pmap Mode of the locale.
+@param proc_mode Full mode of procedure object.
+@param result_proc_mode Mode of resulting proc.
+@param locale_mode Mode of the locale.
 @param z Procedure object to call.
 @param pop_sp Stack pointer value to restore.
 @param pop_fp Frame pointer value to restore.
 **/
 
-void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * pmap, A68_PROCEDURE * z, ADDR_T pop_sp, ADDR_T pop_fp)
+void genie_call_procedure (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mode, MOID_T * locale_mode, A68_PROCEDURE * z, ADDR_T pop_sp, ADDR_T pop_fp)
 {
-  if (pmap != MODE (VOID) && pr_mode != pmap) {
-    genie_partial_call (p, pr_mode, pproc, pmap, *z, pop_sp, pop_fp);
+  if (locale_mode != MODE (VOID) && proc_mode != locale_mode) {
+    genie_partial_call (p, proc_mode, result_proc_mode, locale_mode, *z, pop_sp, pop_fp);
   } else if (STATUS (z) & STANDENV_PROC_MASK) {
     (void) ((*(PROCEDURE (&(BODY (z))))) (p));
   } else if (STATUS (z) & SKIP_PROCEDURE_MASK) {
@@ -1555,7 +1553,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
     NODE_T *body = NODE (&(BODY (z)));
     if (IS (body, ROUTINE_TEXT)) {
       NODE_T *entry = SUB (body);
-      PACK_T *args = PACK (pr_mode);
+      PACK_T *args = PACK (proc_mode);
       ADDR_T fp0 = 0;
 /* Copy arguments from stack to frame */
       OPEN_PROC_FRAME (entry, ENVIRON (z));
@@ -1569,7 +1567,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
       stack_pointer = pop_sp;
       ARGSIZE (GINFO (p)) = fp0;
 /* Interpret routine text */
-      if (DIM (pr_mode) > 0) {
+      if (DIM (proc_mode) > 0) {
 /* With PARAMETERS */
         entry = NEXT (NEXT_NEXT (entry));
       } else {
@@ -1581,7 +1579,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
         change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
       }
       CLOSE_FRAME;
-      STACK_DNS (p, SUB (pr_mode), frame_pointer);
+      STACK_DNS (p, SUB (proc_mode), frame_pointer);
     } else {
       OPEN_PROC_FRAME (body, ENVIRON (z));
       INIT_STATIC_FRAME (body);
@@ -1591,7 +1589,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
         change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
       }
       CLOSE_FRAME;
-      STACK_DNS (p, SUB (pr_mode), frame_pointer);
+      STACK_DNS (p, SUB (proc_mode), frame_pointer);
     }
   }
 }
@@ -1995,6 +1993,7 @@ static PROP_T genie_slice (NODE_T * p)
     ABEND (A68_TRUE, "impossible state in genie_slice", NO_TEXT);
     return (self);
   }
+  (void) primary;
 }
 
 /**
@@ -2136,6 +2135,7 @@ static PROP_T genie_denotation (NODE_T * p)
     SIZE (GINFO (p)) = A68_REF_SIZE;
     COPY (CONSTANT (GINFO (p)), &z, A68_REF_SIZE);
     PUSH_REF (p, *(A68_REF *) (CONSTANT (GINFO (p))));
+    (void) tup;
   } else if (moid == MODE (VOID)) {
 /* VOID denotation: EMPTY */
     ;
@@ -2436,10 +2436,10 @@ void genie_call_operator (NODE_T * p, ADDR_T pop_sp)
 {
   A68_PROCEDURE *z;
   ADDR_T pop_fp = frame_pointer;
-  MOID_T *pr_mode = MOID (TAX (p));
+  MOID_T *proc_mode = MOID (TAX (p));
   FRAME_GET (z, A68_PROCEDURE, p);
-  genie_call_procedure (p, pr_mode, MOID (z), pr_mode, z, pop_sp, pop_fp);
-  STACK_DNS (p, SUB (pr_mode), frame_pointer);
+  genie_call_procedure (p, proc_mode, MOID (z), proc_mode, z, pop_sp, pop_fp);
+  STACK_DNS (p, SUB (proc_mode), frame_pointer);
 }
 
 /**
@@ -2541,6 +2541,7 @@ static PROP_T genie_formula (NODE_T * p)
   } else if (UNIT (&lhs) == genie_monadic) {
     return (lhs);
   }
+  (void) rhs;
   return (self);
 }
 
@@ -4341,8 +4342,7 @@ A68_REF c_string_to_row_char (NODE_T * p, char *str, int width)
   A68_ARRAY arr;
   A68_TUPLE tup;
   BYTE_T *base;
-  int str_size, k;
-  str_size = (int) strlen (str);
+  int k;
   z = heap_generator (p, MODE (ROW_CHAR), SIZE_AL (A68_ARRAY) + SIZE_AL (A68_TUPLE));
   row = heap_generator (p, MODE (ROW_CHAR), width * SIZE_AL (A68_CHAR));
   DIM (&arr) = 1;
@@ -5688,7 +5688,8 @@ void colour_object (BYTE_T * item, MOID_T * m)
           colour_row_elements (z, n);
         }
       }
-/*      STATUS_CLEAR (REF_HANDLE (z), COOKIE_MASK); */
+/*    STATUS_CLEAR (REF_HANDLE (z), COOKIE_MASK); */
+      (void) tup;
     }
   } else if (IS (m, STRUCT_SYMBOL)) {
 /* STRUCTures - colour fields */

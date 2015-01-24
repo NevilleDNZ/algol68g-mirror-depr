@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -939,7 +939,7 @@ MP_T *lengthen_mp (NODE_T * p, MP_T * z, int digits_z, MP_T * x, int digits_x)
 {
   int j;
   (void) p;
-  if (digits_z > digits_x) {
+  if ((unsigned) digits_z > (unsigned) digits_x) {
     if (z != x) {
       MOVE_DIGITS (&MP_DIGIT (z, 1), &MP_DIGIT (x, 1), digits_x);
       MP_EXPONENT (z) = MP_EXPONENT (x);

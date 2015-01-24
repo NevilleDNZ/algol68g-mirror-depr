@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright (C) 2001-2013 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -11553,13 +11553,12 @@ char *sub_whole (NODE_T * p, int n, int width)
 
 char *whole (NODE_T * p)
 {
-  int pop_sp, arg_sp;
+  int arg_sp;
   A68_INT width;
   MOID_T *mode;
   POP_OBJECT (p, &width, A68_INT);
   arg_sp = stack_pointer;
   DECREMENT_STACK_POINTER (p, SIZE (MODE (NUMBER)));
-  pop_sp = stack_pointer;
   mode = (MOID_T *) (VALUE ((A68_UNION *) STACK_TOP));
   if (mode == MODE (INT)) {
     int x = VALUE ((A68_INT *) (STACK_OFFSET (A68_UNION_SIZE)));
@@ -13687,7 +13686,7 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
     pattern_error (p, root, ATTRIBUTE (p));
   } else {
     ADDR_T old_stack_pointer = stack_pointer;
-    int sign_digits, stag_digits = 0, frac_digits = 0, expo_digits = 0;
+    int stag_digits = 0, frac_digits = 0, expo_digits = 0;
     int mant_length, sign = 0, exp_value;
     NODE_T *q, *sign_mould = NO_NODE, *stag_mould = NO_NODE, *point_frame = NO_NODE, *frac_mould = NO_NODE, *e_frame = NO_NODE, *expo_mould = NO_NODE;
     char *str = NO_TEXT, *stag_str = NO_TEXT, *frac_str = NO_TEXT;
@@ -13700,7 +13699,6 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
       count_zd_frames (SUB (sign_mould), &stag_digits);
       FORWARD (q);
     }
-    sign_digits = stag_digits;
     if (q != NO_NODE && IS (q, INTEGRAL_MOULD)) {
       stag_mould = q;
       count_zd_frames (SUB (stag_mould), &stag_digits);
@@ -16220,6 +16218,10 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
       exit_genie (p, A68_RUNTIME_ERROR);
     }
   }
+  (void) blockalign;
+  (void) byterate; 
+  (void) chunksize; 
+  (void) subchunk2size;
   STATUS (w) = INIT_MASK;
 }
 
