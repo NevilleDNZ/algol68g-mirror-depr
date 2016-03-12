@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2016 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -214,6 +214,7 @@ void exit_genie (NODE_T * p, int ret)
 #if defined HAVE_CURSES
   genie_curses_end (p);
 #endif
+  close_tty_on_exit = A68_TRUE;
   if (!in_execution) {
     return;
   }
@@ -1449,15 +1450,15 @@ static void genie_argument (NODE_T * p, NODE_T ** seq)
 /**
 @brief Evaluate partial call.
 @param p Node in syntax tree.
-@param proc_mode Full mode of procedure object.
-@param result_proc_mode Mode of resulting proc.
-@param locale_mode Mode of the locale.
+@param pr_mode Full mode of procedure object.
+@param pproc Mode of resulting proc.
+@param pmap Mode of the locale.
 @param z Procedure object to call.
 @param pop_sp Stack pointer value to restore.
 @param pop_fp Frame pointer value to restore.
 **/
 
-void genie_partial_call (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mode, MOID_T * locale_mode, A68_PROCEDURE z, ADDR_T pop_sp, ADDR_T pop_fp)
+void genie_partial_call (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * pmap, A68_PROCEDURE z, ADDR_T pop_sp, ADDR_T pop_fp)
 {
   int voids = 0;
   BYTE_T *u, *v;
@@ -1467,22 +1468,22 @@ void genie_partial_call (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mo
 /* Get locale for the new procedure descriptor. Copy is necessary */
   if (LOCALE (&z) == NO_HANDLE) {
     int size = 0;
-    for (s = PACK (proc_mode); s != NO_PACK; FORWARD (s)) {
+    for (s = PACK (pr_mode); s != NO_PACK; FORWARD (s)) {
       size += (SIZE (MODE (BOOL)) + SIZE (MOID (s)));
     }
-    ref = heap_generator (p, proc_mode, size);
+    ref = heap_generator (p, pr_mode, size);
     loc = REF_HANDLE (&ref);
   } else {
     int size = SIZE (LOCALE (&z));
-    ref = heap_generator (p, proc_mode, size);
+    ref = heap_generator (p, pr_mode, size);
     loc = REF_HANDLE (&ref);
     COPY (POINTER (loc), POINTER (LOCALE (&z)), size);
   }
-/* Move arguments from stack to locale using locale_mode */
+/* Move arguments from stack to locale using pmap */
   u = POINTER (loc);
-  s = PACK (proc_mode);
+  s = PACK (pr_mode);
   v = STACK_ADDRESS (pop_sp);
-  t = PACK (locale_mode);
+  t = PACK (pmap);
   for (; t != NO_PACK && s != NO_PACK; FORWARD (t)) {
 /* Skip already initialised arguments */
     while (u != NULL && VALUE ((A68_BOOL *) & u[0])) {
@@ -1514,7 +1515,7 @@ void genie_partial_call (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mo
     stack_pointer = pop_sp;
     u = POINTER (loc);
     v = STACK_ADDRESS (stack_pointer);
-    s = PACK (proc_mode);
+    s = PACK (pr_mode);
     for (; s != NO_PACK; FORWARD (s)) {
       int size = SIZE (MOID (s));
       COPY (v, &u[SIZE (MODE (BOOL))], size);
@@ -1522,7 +1523,7 @@ void genie_partial_call (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mo
       v = &(v[SIZE (MOID (s))]);
       INCREMENT_STACK_POINTER (p, size);
     }
-    genie_call_procedure (p, proc_mode, result_proc_mode, MODE (VOID), &z, pop_sp, pop_fp);
+    genie_call_procedure (p, pr_mode, pproc, MODE (VOID), &z, pop_sp, pop_fp);
   } else {
 /*  Closure is not complete. Return procedure body */
     PUSH_PROCEDURE (p, z);
@@ -1532,18 +1533,18 @@ void genie_partial_call (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mo
 /**
 @brief Closure and deproceduring of routines with PARAMSETY.
 @param p Node in syntax tree.
-@param proc_mode Full mode of procedure object.
-@param result_proc_mode Mode of resulting proc.
-@param locale_mode Mode of the locale.
+@param pr_mode Full mode of procedure object.
+@param pproc Mode of resulting proc.
+@param pmap Mode of the locale.
 @param z Procedure object to call.
 @param pop_sp Stack pointer value to restore.
 @param pop_fp Frame pointer value to restore.
 **/
 
-void genie_call_procedure (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_mode, MOID_T * locale_mode, A68_PROCEDURE * z, ADDR_T pop_sp, ADDR_T pop_fp)
+void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T * pmap, A68_PROCEDURE * z, ADDR_T pop_sp, ADDR_T pop_fp)
 {
-  if (locale_mode != MODE (VOID) && proc_mode != locale_mode) {
-    genie_partial_call (p, proc_mode, result_proc_mode, locale_mode, *z, pop_sp, pop_fp);
+  if (pmap != MODE (VOID) && pr_mode != pmap) {
+    genie_partial_call (p, pr_mode, pproc, pmap, *z, pop_sp, pop_fp);
   } else if (STATUS (z) & STANDENV_PROC_MASK) {
     (void) ((*(PROCEDURE (&(BODY (z))))) (p));
   } else if (STATUS (z) & SKIP_PROCEDURE_MASK) {
@@ -1553,7 +1554,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_
     NODE_T *body = NODE (&(BODY (z)));
     if (IS (body, ROUTINE_TEXT)) {
       NODE_T *entry = SUB (body);
-      PACK_T *args = PACK (proc_mode);
+      PACK_T *args = PACK (pr_mode);
       ADDR_T fp0 = 0;
 /* Copy arguments from stack to frame */
       OPEN_PROC_FRAME (entry, ENVIRON (z));
@@ -1567,7 +1568,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_
       stack_pointer = pop_sp;
       ARGSIZE (GINFO (p)) = fp0;
 /* Interpret routine text */
-      if (DIM (proc_mode) > 0) {
+      if (DIM (pr_mode) > 0) {
 /* With PARAMETERS */
         entry = NEXT (NEXT_NEXT (entry));
       } else {
@@ -1579,7 +1580,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_
         change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
       }
       CLOSE_FRAME;
-      STACK_DNS (p, SUB (proc_mode), frame_pointer);
+      STACK_DNS (p, SUB (pr_mode), frame_pointer);
     } else {
       OPEN_PROC_FRAME (body, ENVIRON (z));
       INIT_STATIC_FRAME (body);
@@ -1589,7 +1590,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * proc_mode, MOID_T * result_proc_
         change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
       }
       CLOSE_FRAME;
-      STACK_DNS (p, SUB (proc_mode), frame_pointer);
+      STACK_DNS (p, SUB (pr_mode), frame_pointer);
     }
   }
 }
@@ -2436,10 +2437,10 @@ void genie_call_operator (NODE_T * p, ADDR_T pop_sp)
 {
   A68_PROCEDURE *z;
   ADDR_T pop_fp = frame_pointer;
-  MOID_T *proc_mode = MOID (TAX (p));
+  MOID_T *pr_mode = MOID (TAX (p));
   FRAME_GET (z, A68_PROCEDURE, p);
-  genie_call_procedure (p, proc_mode, MOID (z), proc_mode, z, pop_sp, pop_fp);
-  STACK_DNS (p, SUB (proc_mode), frame_pointer);
+  genie_call_procedure (p, pr_mode, MOID (z), pr_mode, z, pop_sp, pop_fp);
+  STACK_DNS (p, SUB (pr_mode), frame_pointer);
 }
 
 /**
@@ -2964,19 +2965,17 @@ static void genie_jump (NODE_T * p)
 /* Beam us up, Scotty! */
 #if defined HAVE_PARALLEL_CLAUSE
   {
-    int curlev = running_par_level, tarlev = PAR_LEVEL (NODE (TAX (label)));
-    if (curlev == tarlev) {
-/* A jump within the same thread */
+    pthread_t target_id = FRAME_THREAD_ID (target_frame_pointer);
+    if (SAME_THREAD (target_id, pthread_self())) {
       jump_stat = FRAME_JUMP_STAT (target_frame_pointer);
-      JUMP_TO (TABLE (TAX (label))) = UNIT (TAX (label));
+      JUMP_TO (TAG_TABLE (TAX (label))) = UNIT (TAX (label));
       longjmp (*(jump_stat), 1);
-    } else if (curlev > 0 && tarlev == 0) {
+    } else if (SAME_THREAD (target_id, main_thread_id)) {
 /* A jump out of all parallel clauses back into the main program */
       genie_abend_all_threads (p, FRAME_JUMP_STAT (target_frame_pointer), label);
       ABEND (A68_TRUE, "should not return from genie_abend_all_threads", NO_TEXT);
     } else {
-/* A jump between threads is forbidden in Algol68G */
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_LABEL_IN_PAR_CLAUSE);
+      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_JUMP);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
   }
@@ -5666,7 +5665,7 @@ void colour_object (BYTE_T * item, MOID_T * m)
       if (!IS_NIL (*z)) {
         colour_object (ADDRESS (z), SUB (m));
       }
-      STATUS_CLEAR (REF_HANDLE (z), COOKIE_MASK);
+/*    STATUS_CLEAR (REF_HANDLE (z), COOKIE_MASK); */
     }
   } else if (IS (m, FLEX_SYMBOL) || IS (m, ROW_SYMBOL) || m == MODE (STRING)) {
 /* Claim the descriptor and the row itself */
@@ -5695,6 +5694,10 @@ void colour_object (BYTE_T * item, MOID_T * m)
 /* STRUCTures - colour fields */
     PACK_T *p = PACK (m);
     for (; p != NO_PACK; FORWARD (p)) {
+/*
+printf("\n> %s %s %d", PM(m), PM(MOID(p)), OFFSET(p));
+fflush(stdout);
+*/
       colour_object (&item[OFFSET (p)], MOID (p));
     }
   } else if (IS (m, UNION_SYMBOL)) {
@@ -5717,7 +5720,7 @@ void colour_object (BYTE_T * item, MOID_T * m)
         }
         u = &(u[SIZE (MODE (BOOL)) + SIZE (MOID (s))]);
       }
-      STATUS_CLEAR (LOCALE (z), COOKIE_MASK);
+/*    STATUS_CLEAR (LOCALE (z), COOKIE_MASK); */
     }
   } else if (m == MODE (SOUND)) {
 /* Claim the data of a SOUND object, that is in the heap */
@@ -5820,7 +5823,7 @@ void gc_heap (NODE_T * p, ADDR_T fp)
   A68_HANDLE *z;
   double t0, t1;
 #if defined HAVE_PARALLEL_CLAUSE
-  if (pthread_equal (FRAME_THREAD_ID (frame_pointer), main_thread_id) ==0) {
+  if (OTHER_THREAD (FRAME_THREAD_ID (frame_pointer), main_thread_id)) {
     return;
   }
 #endif
@@ -6487,7 +6490,6 @@ Don't copy POSIX_THREAD_THREADS_MAX since it may be ULONG_MAX.
 #endif
 
 pthread_t main_thread_id = 0;
-int running_par_level = 0;
 static A68_THREAD_CONTEXT context[THREAD_MAX];
 static ADDR_T fp0, sp0;
 static BOOL_T abend_all_threads = A68_FALSE, exit_from_threads = A68_FALSE;
@@ -6536,7 +6538,7 @@ static void restore_stacks (pthread_t);
   pthread_t _tid_ = (ptid);\
   (z) = -1;\
   for (_k_ = 0; _k_ < context_index && (z) == -1; _k_++) {\
-    if (pthread_equal (_tid_, ID (&context[_k_]))) {\
+    if (SAME_THREAD (_tid_, ID (&context[_k_]))) {\
       (z) = _k_;\
     }\
   }\
@@ -6572,31 +6574,13 @@ static int stack_direction (BYTE_T * lwb)
 }
 
 /**
-@brief Fill in tree what level of parallel clause we are in.
-@param p Node in syntax tree.
-@param n Level counter.
-**/
-
-void set_par_level (NODE_T * p, int n)
-{
-  for (; p != NO_NODE; p = NEXT (p)) {
-    if (IS (p, PARALLEL_CLAUSE)) {
-      PAR_LEVEL (p) = n + 1;
-    } else {
-      PAR_LEVEL (p) = n;
-    }
-    set_par_level (SUB (p), PAR_LEVEL (p));
-  }
-}
-
-/**
 @brief Whether we are in the main thread.
 @return See brief description.
 **/
 
 BOOL_T is_main_thread (void)
 {
-  return ((BOOL_T) (main_thread_id == pthread_self ()));
+  return (SAME_THREAD (main_thread_id, pthread_self ()));
 }
 
 /**
@@ -6859,8 +6843,6 @@ static PROP_T genie_parallel (NODE_T * p)
   int j;
   ADDR_T stack_s = 0, frame_s = 0;
   BYTE_T *system_stack_offset_s = NO_BYTE;
-  int save_par_level = running_par_level;
-  running_par_level = PAR_LEVEL (p);
   if (is_main_thread ()) {
 /* Spawn first thread and await its completion */
     pthread_attr_t new_at;
@@ -6895,28 +6877,23 @@ static PROP_T genie_parallel (NODE_T * p)
     RESET_ERRNO;
     if (pthread_attr_init (&new_at) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
-      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     if (pthread_attr_setstacksize (&new_at, (size_t) stack_size) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
-      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     if (pthread_attr_getstacksize (&new_at, &ss) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
-      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     ABEND ((size_t) ss != (size_t) stack_size, "cannot set thread stack size", NO_TEXT);
     if (pthread_create (&parent_thread_id, &new_at, start_genie_parallel, NULL) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_CANNOT_CREATE);
-      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     if (errno != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
-      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
     PARENT (u) = main_thread_id;
@@ -6926,16 +6903,16 @@ static PROP_T genie_parallel (NODE_T * p)
     UNLOCK_THREAD;
     if (pthread_join (parent_thread_id, NULL) != 0) {
       diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
-      running_par_level = save_par_level;
       exit_genie (p, A68_RUNTIME_ERROR);
     }
 /* The first spawned thread has completed, now clean up */
     for (j = 0; j < context_index; j++) {
-      if (ACTIVE (&context[j]) && ID (&context[j]) != main_thread_id && ID (&context[j]) != parent_thread_id) {
+      if (ACTIVE (&context[j]) && 
+          OTHER_THREAD (ID (&context[j]), main_thread_id) && 
+          OTHER_THREAD (ID (&context[j]), parent_thread_id)) {
 /* If threads are zapped it is possible that some are active at this point! */
         if (pthread_join (ID (&context[j]), NULL) != 0) {
           diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_THREAD_FAULT);
-          running_par_level = save_par_level;
           exit_genie (p, A68_RUNTIME_ERROR);
         }
       }
@@ -6949,7 +6926,6 @@ static PROP_T genie_parallel (NODE_T * p)
       }
     }
 /* Now every thread should have ended */
-    running_par_level = save_par_level;
     context_index = 0;
     stack_pointer = stack_s;
     frame_pointer = frame_s;
@@ -6980,7 +6956,6 @@ static PROP_T genie_parallel (NODE_T * p)
         try_change_thread (p);
       }
     } while (units_active);
-    running_par_level = save_par_level;
   }
   return (GPROP (p));
 }

@@ -1,0 +1,36 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#simp13#
+BEGIN # continued fraction #
+  OP / = ([] REAL a, b) REAL :
+   (UPB a=0|0|a[1]/(b[1]+a[2:]/b[2:])),
+  [1:20] REAL x,y;
+  FOR i TO 20 DO
+  x[i]:=(i-1)**2; y[i]:= 2*i-1 OD;
+  x[1]:=1;
+  FOR i TO 20 DO
+  print(4*(x[1:i]/y[1:i]))OD # approximations of pi #
+END

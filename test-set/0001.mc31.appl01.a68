@@ -1,0 +1,45 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#appl01#
+BEGIN # ALGOL 68 program, TJD 730705.
+    Calculates all increasing sequences
+    adding up to a given integer from 1 to 10 #
+    [1 : 4] INT a;
+    PROC print solution = (INT p) VOID:
+    print( (a[1:p], newline) );
+    PROC build up = (INT p, rest) VOID:
+    IF rest = 0 THEN print solution(p)
+    ELSE
+        FOR k FROM (p=0|1|a[p]+1) TO rest DO
+        (a[p+1]:= k; build up(p+1, rest-k))OD
+    FI;
+    FOR g TO 10 DO
+     print((newline, g, " =", newline)); build up(0, g)  OD
+    # For an ALGOL 60 program yielding the same output
+    see Th.J. Dekker, Syllabus Informatica,
+    Instituut voor Toepassingen van de Wiskunde,
+    Universiteit van Amsterdam, 1972, page 81 - 82 #
+END

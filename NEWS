@@ -1,5 +1,15 @@
+Version 2.8.3, March 2016
+* Fixes garbage collector bug.
+* Fixes "execve output" that caused a "too many open files" type error.
+* Fixes ncurses support on Ubuntu.
+
+Version 2.8.2, October 2015
+* Several bug fixes.
+* Cleaner interface for command line arguments 
+  through routines a68gargc and a68gargv.
+
 Version 2.8.1, January 2015
-* Update code for recent versions of gcc, autoconf, automake and TeX.
+* Update source code for recent versions of gcc, autoconf, automake and TeX.
 * Documentation updates.
 
 Version 2.8, October 2013

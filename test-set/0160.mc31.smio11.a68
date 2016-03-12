@@ -1,0 +1,71 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#smio11#
+BEGIN # Simple application of all formats with all allowed modes #
+    printf(($ "Integral       " 2(18x 2d) l$,
+        1, LOC INT:= 1));
+    printf(($ "Real           " 2(15x 2d.2d) l$,
+        2.0, LOC REAL:= 2.0,
+        3, LOC INT:= 3));
+    printf(($ "Complex        " 2(7x 2d.2dxix2d.2d) l$,
+        4.0 I 4.0, LOC COMPL:= 4.0 I 4.0,
+        5.0, LOC REAL:= 5.0,
+        6, LOC INT:= 6));
+    print(newline);
+    printf(($ "Boolean        " 2(19x b) l$,
+        TRUE, LOC BOOL:= TRUE));
+    printf(($ "String         " 2(16x 4a) l$,
+        "uvwx", LOC STRING:= "uvwx"));
+    printf(($ "Character      " 2(19x 1a) l$,
+        STRING("y"), LOC STRING:= "y",
+        "z", LOC CHAR:= "z"));
+    printf(($ "Bits           " 2(18x 16r 2d) l$,
+        2r10101011, LOC BITS:= 2r10101011));
+    print(newline);
+    printf(($ "Boolean choice " 2(17x b("cde", "***")) l$,
+        TRUE, LOC BOOL:= TRUE));
+    printf(($ "Integral choice" 2(17x c("fgh")) l$,
+        1, LOC INT:= 1));
+    print(newline);
+    printf(($ "General float  " 2(12x g(8,2,2)) l$,
+        1.0, LOC REAL:= 1.0,
+        2, LOC INT:= 2));
+    printf(($ "General fixed  " 2(14x g(6,2)) l$,
+        3.0, LOC REAL:= 3.0,
+        4, LOC INT:= 4));
+    printf(($ "General whole  " 2(18x g(2)) l$,
+        5.0, LOC REAL:= 5.0,
+        6, LOC INT:= 6));
+    print(newline);
+    printf(($ "General        " g 10x, g l$,
+        7, LOC INT:= 7,
+        8.0, LOC REAL:= 8.0,
+        9.0 I 9.0, LOC COMPL:= 9.0 I 9.0,
+        TRUE, LOC BOOL:= TRUE,
+        2r1, LOC BITS:= 2r1,
+        "w", LOC CHAR:= "w",
+        "xyz", LOC STRING:= "xyz"))
+END

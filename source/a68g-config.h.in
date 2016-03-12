@@ -351,7 +351,7 @@
 #undef __off_t
 
 /* Define this if we have no __pid_t */
-#undef __pid_t
+#undef a68g_pid_t
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t

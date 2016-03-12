@@ -1,0 +1,597 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+# r6b #
+(print(("coercions in firm context",newline)) ;
+ INT  vf = 800 ;
+ INT  ctrt:=0, ctr:=0 , ctrloc:=0 ;
+ BOOL  bascule:= TRUE ,b ,
+ PROC  controle =  VOID  :  IF  b  AND  ctr=ctrloc+15  THEN  ctr+:=5
+ ELSE  print(("er. in test",ctrt,ctr,ctrloc+15,newline)) FI  ;
+ PROC  tilt =  VOID  : print(("er.op",ctrt,ctr-ctrloc,newline)) ;
+
+# servitudes #
+ UNION ( INT , REAL ) vu = 1e0 ,
+ MODE   SB  =  STRUCT ( BOOL  ch,of) ,
+    UBE  =  UNION ( BOOL , INT ) ,
+ PRIO   BOLD  = 2 , -==:= 1 ;
+
+# mode a posteriori : [,] BOOL  #
+ OP  -==: = ([,] BOOL  a) [,] BOOL  :
+    ( FALSE , FALSE , NOT (ctr+:=1;a)[3,1])
+    , -==: = ([,] BOOL  a,b) [,] BOOL  :
+    (a[3,1] AND b[3,1]|
+    ctr+:=2;( FALSE , FALSE , TRUE 
+     ) | tilt ;  SKIP )
+    ,  BOLD  = ([,] BOOL  a,b) [,] BOOL  :
+    ( NOT a[3,1] AND b[3,1]|
+    ctr+:=2;( FALSE , FALSE ,bascule:= NOT bascule
+     ) | tilt ;  SKIP ) ;
+
+# mode a posteriori :  UNION ( BITS , REAL , SB ) #
+ OP  -==: = ( UNION ( BITS , REAL , SB ) a)  SB  :
+    ( NOT ch OF (ctr+:=1;a|( SB a):a), FALSE )
+    , -==: = ( UNION ( BITS , REAL , SB ) a,b)  SB  :
+    (((a|( SB a):ch OF a) AND (b|( SB b):ch OF b)|
+    ctr+:=2 ; TRUE  |
+    tilt ;  SKIP ) ,  FALSE )
+    ,  BOLD  = ( UNION ( BITS , REAL , SB ) a,b)  SB  :
+    (( NOT (a|( SB a):ch OF a) AND (b|( SB b):ch OF b)|
+    ctr+:=2 ;bascule:= NOT bascule |
+    tilt ;  SKIP ) ,  FALSE ) ;
+
+# mode a posteriori :  UNION ( UNION ( COMPL , BOOL ),
+ INT , UNION ( INT , UBE )) #
+ OP  -==: = ( UNION ( UNION ( COMPL , BOOL ),
+ INT , UNION ( INT , UBE )) a)  BOOL  :
+    (ctr+:=1;a|( BOOL a): NOT a)
+    , -==: = ( UNION ( UNION ( COMPL , BOOL ),
+     INT , UNION ( INT , UBE )) a,b)  BOOL  :
+    ((a|( BOOL a):a) AND (b|( BOOL b):b) |
+    ctr+:=2 ; TRUE  |
+    tilt ;  SKIP )
+    ,  BOLD  = ( UNION ( UNION ( COMPL , BOOL ),
+     INT , UNION ( INT , UBE )) a,b)  BOOL  :
+    ( NOT (a|( BOOL a):a) AND (b|( BOOL b):b) |
+    ctr+:=2 ;bascule:= NOT bascule |
+    tilt ;  SKIP ) ;
+
+ BEGIN  # coercion sur mode  :
+ SB  #
+     SB ident =( TRUE , FALSE );
+     STRUCT ( INT  a, SB ch)de = (0,ident) ,
+    [] SB rang = ( SKIP ,ident, SKIP ) ,
+     PROC  proc = ( SB  a)  SB  : a ;
+
+                             #contextes #
+ctrt:=   1 ; ctrloc:=ctr ;
+  b:=ch OF (ident
+  -==:ident
+  -==:-==:ident BOLD 
+    (-==:-==:ident-==:
+      (ident-==:ident))
+   BOLD ident
+) ; controle ;
+ctrt:=   2 ; ctrloc:=ctr ;
+  b:=ch OF ( SB (( TRUE , FALSE ))
+  -==: SB (( TRUE , FALSE ))
+  -==:-==: SB (( TRUE , FALSE )) BOLD 
+    (-==:-==: SB (( TRUE , FALSE ))-==:
+      ( SB (( TRUE , FALSE ))-==: SB (( TRUE , FALSE ))))
+   BOLD  SB (( TRUE , FALSE ))
+) ; controle ;
+ctrt:=   3 ; ctrloc:=ctr ;
+  b:=ch OF (ch OF de
+  -==:ch OF de
+  -==:-==:ch OF de BOLD 
+    (-==:-==:ch OF de-==:
+      (ch OF de-==:ch OF de))
+   BOLD ch OF de
+) ; controle ;
+ctrt:=   4 ; ctrloc:=ctr ;
+  b:=ch OF (rang[2]
+  -==:rang[2]
+  -==:-==:rang[2] BOLD 
+    (-==:-==:rang[2]-==:
+      (rang[2]-==:rang[2]))
+   BOLD rang[2]
+) ; controle ;
+ctrt:=   5 ; ctrloc:=ctr ;
+  b:=ch OF (proc(ident)
+  -==:proc(ident)
+  -==:-==:proc(ident) BOLD 
+    (-==:-==:proc(ident)-==:
+      (proc(ident)-==:proc(ident)))
+   BOLD proc(ident)
+) ; controle ;
+ctrt:=   6 ; ctrloc:=ctr ;
+  b:=ch OF ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+   BOLD 
+    (-==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+    -==:
+      ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+      -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+      ))
+   BOLD  IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+) ; controle ;
+ctrt:=   7 ; ctrloc:=ctr ;
+  b:=ch OF ( SB (1|ident, SKIP )
+
+  -==: SB (1|ident, SKIP )
+
+  -==:-==: SB (1|ident, SKIP )
+   BOLD 
+    (-==:-==: SB (1|ident, SKIP )
+    -==:
+      ( SB (1|ident, SKIP )
+      -==: SB (1|ident, SKIP )
+      ))
+   BOLD  SB (1|ident, SKIP )
+
+) ; controle ;
+ctrt:=   8 ; ctrloc:=ctr ;
+  b:=ch OF (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+   BOLD 
+    (-==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+         EXIT  ee: GOTO e)
+    -==:
+      (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      ))
+   BOLD ( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+) ; controle ;
+ SKIP  END  ;
+
+ BEGIN  # coercion sur mode  :
+ BOOL  #
+     BOOL ident = TRUE ;
+     STRUCT ( INT  a, BOOL ch)de = (0,ident) ,
+    [] BOOL rang = ( SKIP ,ident, SKIP ) ,
+     PROC  proc = ( BOOL  a)  BOOL  : a ;
+
+                             #contextes #
+ctrt:=   9 ; ctrloc:=ctr ;
+  b:=ident
+  -==:ident
+  -==:-==:ident BOLD 
+    (-==:-==:ident-==:
+      (ident-==:ident))
+   BOLD ident
+ ; controle ;
+ctrt:=  10 ; ctrloc:=ctr ;
+  b:= BOOL ( TRUE )
+  -==: BOOL ( TRUE )
+  -==:-==: BOOL ( TRUE ) BOLD 
+    (-==:-==: BOOL ( TRUE )-==:
+      ( BOOL ( TRUE )-==: BOOL ( TRUE )))
+   BOLD  BOOL ( TRUE )
+ ; controle ;
+ctrt:=  11 ; ctrloc:=ctr ;
+  b:=ch OF de
+  -==:ch OF de
+  -==:-==:ch OF de BOLD 
+    (-==:-==:ch OF de-==:
+      (ch OF de-==:ch OF de))
+   BOLD ch OF de
+ ; controle ;
+ctrt:=  12 ; ctrloc:=ctr ;
+  b:=rang[2]
+  -==:rang[2]
+  -==:-==:rang[2] BOLD 
+    (-==:-==:rang[2]-==:
+      (rang[2]-==:rang[2]))
+   BOLD rang[2]
+ ; controle ;
+ctrt:=  13 ; ctrloc:=ctr ;
+  b:=proc(ident)
+  -==:proc(ident)
+  -==:-==:proc(ident) BOLD 
+    (-==:-==:proc(ident)-==:
+      (proc(ident)-==:proc(ident)))
+   BOLD proc(ident)
+ ; controle ;
+ctrt:=  14 ; ctrloc:=ctr ;
+  b:= IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+   BOLD 
+    (-==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+    -==:
+      ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+      -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+      ))
+   BOLD  IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+ ; controle ;
+ctrt:=  15 ; ctrloc:=ctr ;
+  b:= BOOL (1|ident, SKIP )
+
+  -==: BOOL (1|ident, SKIP )
+
+  -==:-==: BOOL (1|ident, SKIP )
+   BOLD 
+    (-==:-==: BOOL (1|ident, SKIP )
+    -==:
+      ( BOOL (1|ident, SKIP )
+      -==: BOOL (1|ident, SKIP )
+      ))
+   BOLD  BOOL (1|ident, SKIP )
+
+ ; controle ;
+ctrt:=  16 ; ctrloc:=ctr ;
+  b:=( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+   BOLD 
+    (-==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+         EXIT  ee: GOTO e)
+    -==:
+      (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      ))
+   BOLD ( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+ ; controle ;
+ SKIP  END  ;
+
+ BEGIN  # coercion sur mode  :
+ REF [,] BOOL  #
+     REF [,] BOOL ident = HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE );
+     STRUCT ( INT  a, REF [,] BOOL ch)de = (0,ident) ,
+    [] REF [,] BOOL rang = ( SKIP ,ident, SKIP ) ,
+     PROC  proc = ( REF [,] BOOL  a)  REF [,] BOOL  : a ;
+
+                             #contextes #
+ctrt:=  17 ; ctrloc:=ctr ;
+  b:=(ident
+  -==:ident
+  -==:-==:ident BOLD 
+    (-==:-==:ident-==:
+      (ident-==:ident))
+   BOLD ident
+)[3,1] ; controle ;
+ctrt:=  18 ; ctrloc:=ctr ;
+  b:=( REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE ))
+  -==: REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE ))
+  -==:-==: REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE ))
+ BOLD 
+    (-==:-==: REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE )
+)-==:
+      ( REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE ))-==:
+ REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE ))))
+   BOLD  REF [,] BOOL ( HEAP [3,1] BOOL :=( FALSE , FALSE , TRUE ))
+)[3,1] ; controle ;
+ctrt:=  19 ; ctrloc:=ctr ;
+  b:=(ch OF de
+  -==:ch OF de
+  -==:-==:ch OF de BOLD 
+    (-==:-==:ch OF de-==:
+      (ch OF de-==:ch OF de))
+   BOLD ch OF de
+)[3,1] ; controle ;
+ctrt:=  20 ; ctrloc:=ctr ;
+  b:=(rang[2]
+  -==:rang[2]
+  -==:-==:rang[2] BOLD 
+    (-==:-==:rang[2]-==:
+      (rang[2]-==:rang[2]))
+   BOLD rang[2]
+)[3,1] ; controle ;
+ctrt:=  21 ; ctrloc:=ctr ;
+  b:=(proc(ident)
+  -==:proc(ident)
+  -==:-==:proc(ident) BOLD 
+    (-==:-==:proc(ident)-==:
+      (proc(ident)-==:proc(ident)))
+   BOLD proc(ident)
+)[3,1] ; controle ;
+ctrt:=  22 ; ctrloc:=ctr ;
+  b:=( IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+   BOLD 
+    (-==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+    -==:
+      ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+      -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+      ))
+   BOLD  IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+)[3,1] ; controle ;
+ctrt:=  23 ; ctrloc:=ctr ;
+  b:=( REF [,] BOOL (1|ident, SKIP )
+
+  -==: REF [,] BOOL (1|ident, SKIP )
+
+  -==:-==: REF [,] BOOL (1|ident, SKIP )
+   BOLD 
+    (-==:-==: REF [,] BOOL (1|ident, SKIP )
+    -==:
+      ( REF [,] BOOL (1|ident, SKIP )
+      -==: REF [,] BOOL (1|ident, SKIP )
+      ))
+   BOLD  REF [,] BOOL (1|ident, SKIP )
+
+)[3,1] ; controle ;
+ctrt:=  24 ; ctrloc:=ctr ;
+  b:=(( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+   BOLD 
+    (-==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+         EXIT  ee: GOTO e)
+    -==:
+      (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      ))
+   BOLD ( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+)[3,1] ; controle ;
+ SKIP  END  ;
+
+ BEGIN  # coercion sur mode  :
+ REF  SB  #
+     REF  SB ident = HEAP  SB :=( TRUE , FALSE );
+     STRUCT ( INT  a, REF  SB ch)de = (0,ident) ,
+    [] REF  SB rang = ( SKIP ,ident, SKIP ) ,
+     PROC  proc = ( REF  SB  a)  REF  SB  : a ;
+
+                             #contextes #
+ctrt:=  25 ; ctrloc:=ctr ;
+  b:=ch OF (ident
+  -==:ident
+  -==:-==:ident BOLD 
+    (-==:-==:ident-==:
+      (ident-==:ident))
+   BOLD ident
+) ; controle ;
+ctrt:=  26 ; ctrloc:=ctr ;
+  b:=ch OF ( REF  SB ( HEAP  SB :=( TRUE , FALSE ))
+  -==: REF  SB ( HEAP  SB :=( TRUE , FALSE ))
+  -==:-==: REF  SB ( HEAP  SB :=( TRUE , FALSE )) BOLD 
+    (-==:-==: REF  SB ( HEAP  SB :=( TRUE , FALSE ))-==:
+      ( REF  SB ( HEAP  SB :=( TRUE , FALSE ))-==: REF  SB ( HEAP  SB :=
+( TRUE , FALSE ))))
+   BOLD  REF  SB ( HEAP  SB :=( TRUE , FALSE ))
+) ; controle ;
+ctrt:=  27 ; ctrloc:=ctr ;
+  b:=ch OF (ch OF de
+  -==:ch OF de
+  -==:-==:ch OF de BOLD 
+    (-==:-==:ch OF de-==:
+      (ch OF de-==:ch OF de))
+   BOLD ch OF de
+) ; controle ;
+ctrt:=  28 ; ctrloc:=ctr ;
+  b:=ch OF (rang[2]
+  -==:rang[2]
+  -==:-==:rang[2] BOLD 
+    (-==:-==:rang[2]-==:
+      (rang[2]-==:rang[2]))
+   BOLD rang[2]
+) ; controle ;
+ctrt:=  29 ; ctrloc:=ctr ;
+  b:=ch OF (proc(ident)
+  -==:proc(ident)
+  -==:-==:proc(ident) BOLD 
+    (-==:-==:proc(ident)-==:
+      (proc(ident)-==:proc(ident)))
+   BOLD proc(ident)
+) ; controle ;
+ctrt:=  30 ; ctrloc:=ctr ;
+  b:=ch OF ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+   BOLD 
+    (-==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+    -==:
+      ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+      -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+      ))
+   BOLD  IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+) ; controle ;
+ctrt:=  31 ; ctrloc:=ctr ;
+  b:=ch OF ( REF  SB (1|ident, SKIP )
+
+  -==: REF  SB (1|ident, SKIP )
+
+  -==:-==: REF  SB (1|ident, SKIP )
+   BOLD 
+    (-==:-==: REF  SB (1|ident, SKIP )
+    -==:
+      ( REF  SB (1|ident, SKIP )
+      -==: REF  SB (1|ident, SKIP )
+      ))
+   BOLD  REF  SB (1|ident, SKIP )
+
+) ; controle ;
+ctrt:=  32 ; ctrloc:=ctr ;
+  b:=ch OF (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+   BOLD 
+    (-==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+         EXIT  ee: GOTO e)
+    -==:
+      (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      ))
+   BOLD ( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+) ; controle ;
+ SKIP  END  ;
+
+ BEGIN  # coercion sur mode  :
+ REF  BOOL  #
+     REF  BOOL ident = HEAP  BOOL := TRUE ;
+     STRUCT ( INT  a, REF  BOOL ch)de = (0,ident) ,
+    [] REF  BOOL rang = ( SKIP ,ident, SKIP ) ,
+     PROC  proc = ( REF  BOOL  a)  REF  BOOL  : a ;
+
+                             #contextes #
+ctrt:=  33 ; ctrloc:=ctr ;
+  b:=ident
+  -==:ident
+  -==:-==:ident BOLD 
+    (-==:-==:ident-==:
+      (ident-==:ident))
+   BOLD ident
+ ; controle ;
+ctrt:=  34 ; ctrloc:=ctr ;
+  b:= REF  BOOL ( HEAP  BOOL := TRUE )
+  -==: REF  BOOL ( HEAP  BOOL := TRUE )
+  -==:-==: REF  BOOL ( HEAP  BOOL := TRUE ) BOLD 
+    (-==:-==: REF  BOOL ( HEAP  BOOL := TRUE )-==:
+      ( REF  BOOL ( HEAP  BOOL := TRUE )-==: REF  BOOL ( HEAP  BOOL :=
+ TRUE )))
+   BOLD  REF  BOOL ( HEAP  BOOL := TRUE )
+ ; controle ;
+ctrt:=  35 ; ctrloc:=ctr ;
+  b:=ch OF de
+  -==:ch OF de
+  -==:-==:ch OF de BOLD 
+    (-==:-==:ch OF de-==:
+      (ch OF de-==:ch OF de))
+   BOLD ch OF de
+ ; controle ;
+ctrt:=  36 ; ctrloc:=ctr ;
+  b:=rang[2]
+  -==:rang[2]
+  -==:-==:rang[2] BOLD 
+    (-==:-==:rang[2]-==:
+      (rang[2]-==:rang[2]))
+   BOLD rang[2]
+ ; controle ;
+ctrt:=  37 ; ctrloc:=ctr ;
+  b:=proc(ident)
+  -==:proc(ident)
+  -==:-==:proc(ident) BOLD 
+    (-==:-==:proc(ident)-==:
+      (proc(ident)-==:proc(ident)))
+   BOLD proc(ident)
+ ; controle ;
+ctrt:=  38 ; ctrloc:=ctr ;
+  b:= IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+  -==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+   BOLD 
+    (-==:-==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+    -==:
+      ( IF  FALSE  THEN  SKIP  ELSE ident FI 
+      -==: IF  FALSE  THEN  SKIP  ELSE ident FI 
+      ))
+   BOLD  IF  FALSE  THEN  SKIP  ELSE ident FI 
+
+ ; controle ;
+ctrt:=  39 ; ctrloc:=ctr ;
+  b:= REF  BOOL (1|ident, SKIP )
+
+  -==: REF  BOOL (1|ident, SKIP )
+
+  -==:-==: REF  BOOL (1|ident, SKIP )
+   BOLD 
+    (-==:-==: REF  BOOL (1|ident, SKIP )
+    -==:
+      ( REF  BOOL (1|ident, SKIP )
+      -==: REF  BOOL (1|ident, SKIP )
+      ))
+   BOLD  REF  BOOL (1|ident, SKIP )
+
+ ; controle ;
+ctrt:=  40 ; ctrloc:=ctr ;
+  b:=( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+  -==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+   BOLD 
+    (-==:-==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+         EXIT  ee: GOTO e)
+    -==:
+      (( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      -==:( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+           EXIT  ee: GOTO e)
+      ))
+   BOLD ( GOTO ee EXIT e:( INT x;vu|( REAL ):ident)
+       EXIT  ee: GOTO e)
+
+ ; controle ;
+ SKIP  END  ;
+
+
+print((ctr," tests ",(ctr=vf|"ok"|"error"))))

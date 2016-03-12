@@ -1,0 +1,50 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#appl10#
+BEGIN # Conversion from Gregorian date to weekday #
+    PROC weekday = (INT year, month, day) STRING:
+    []STRING("Sun", "Mon", "Tues", "Wednes", "Thurs", "Fri", "Satur")
+        [( INT y:= year, m:= month - 2;
+            IF m < 1 THEN m +:= 12; y -:= 1 FI;
+                # since the year actually starts March 1st #
+            365 * y                  # number of days since year 0 #
+            + y OVER 4               # plus leap days #
+            - y OVER 100             # minus 1 for every century #
+            + y OVER 400             # plus 1 for every 4 centuries #
+            + []INT
+             (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337) [m]
+                     # plus number of days in this year since March 1 #
+            + day + 2) MOD 7 + 1
+        ] + "day";
+    # Prints the week around 1968, Feb 29th, starting at Sunday #
+    print((weekday(1968, 2, 25), newline));
+    print((weekday(1968, 2, 26), newline));
+    print((weekday(1968, 2, 27), newline));
+    print((weekday(1968, 2, 28), newline));
+    print((weekday(1968, 2, 29), newline));
+    print((weekday(1968, 3,  1), newline));
+    print((weekday(1968, 3,  2), newline))
+END

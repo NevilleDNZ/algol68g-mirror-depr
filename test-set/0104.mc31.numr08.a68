@@ -1,0 +1,70 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#numr08#
+BEGIN#Test sqrt#
+   PROC warn = (STRING s)VOID:
+        BEGIN
+           print((newline,"++++test error: ", s,newline,newline))
+        END;
+   REAL eps = 20.0*smallreal; #moan if discrepancy is larger than this#
+   REAL sumdelta := 0, sumsqdelta := 0, maxdelta := 0, at,
+   INT count := 0;
+   PROC test = (REAL r)VOID:
+        BEGIN
+           REAL s = sqrt(r);
+           REAL t = s*s;
+           REAL d = ABS((r-t)/r);
+           IF d>eps
+           THEN print("sqrt("); print(r); print(") = "); print(s);
+                warn("relative error in sqrt*sqrt exceeds 20*smallreal")
+           ELSE REAL dd = d/smallreal;
+                sumdelta +:= dd; sumsqdelta +:= dd*dd; count +:= 1;
+                IF dd>maxdelta THEN maxdelta := dd; at := r FI
+           FI
+        END;
+   REAL r := pi, REAL l = maxreal/4;
+   WHILE test(r); r<l DO r*:=pi OD;
+   r := 1/pi;
+   WHILE test(r); REAL s=r; r/:=pi;
+          r+r<s AND r/=0
+      DO SKIP OD;
+   IF REAL r = sqrt(0); r/=0
+   THEN print("sqrt(0)=");
+           print(fixed(r,-(realwidth+1),realwidth-1));
+        warn("sqrt(0) should be 0")
+   FI;
+   IF count/=0
+   THEN print((newline,"Except when indicated above,",
+              newline,"Maximum relative error=smallreal*"));
+              print(fixed(maxdelta,-(realwidth%2+2),realwidth%2));
+        print((newline,"Average relative error=smallreal*"));
+              print(fixed(sumdelta/count,-(realwidth%2+2),realwidth%2));
+        print((newline,"R.M.S. relative error =smallreal*"));
+              print(fixed(sqrt(sumdelta/count),-(realwidth%2+2),
+                                                          realwidth%2));
+        print(newline)
+   FI
+END

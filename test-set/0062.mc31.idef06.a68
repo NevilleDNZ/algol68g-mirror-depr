@@ -1,0 +1,58 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#idef06#
+BEGIN # Operators #
+  STRING int = "INT   ", real = "REAL  ", rreal = "[]REAL";
+  PROC(REF FILE)VOID n = newline;
+  print(("Results must be:", n,
+    int, 1, n, real, 1.0, n, rreal, 1.0, n, real, 3.0, n, rreal, 3.0,
+    n, rreal, 2.0, n, rreal, 2.0, n, int, 3, n, real, 3.0, n,
+    rreal, 3.0, n, real, 4.0, n, rreal, 4.0, n, real, 4.0, n,
+    rreal, 4.0, n, n,
+    "Results are:", n));
+  OP AA = (UNION(INT, REAL, []REAL) p)
+    UNION(REAL, []REAL):
+  CASE p
+  IN
+    (INT i): (print((int, i, n)); AA REAL(i)),
+    (REAL r): (print((real, r, n)); AA []REAL(r))
+  OUSE print((rreal, p, n)); p
+  IN
+    ([]REAL rr):
+      CASE ROUND rr[1] IN 3.0, rr OUT 4.0 ESAC
+  OUT error
+  ESAC;
+  FOR i TO 3
+  DO
+    AA AA
+      CASE i IN
+        UNION(REAL, INT)(1),
+        UNION(INT, []REAL) ([]REAL(2)),
+        AA 3
+      ESAC
+  OD
+EXIT error: print("Error in united-case-clause")
+END

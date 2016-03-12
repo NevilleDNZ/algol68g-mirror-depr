@@ -1,0 +1,989 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+# r541b #
+(print(("routine texts with parameters",newline)) ;
+ INT  vf = 44*10+3 ;
+ INT  ctr:=0 , ctrt:=0 , ctrloc ;
+ PROC  ctrl = ( INT  inc) VOID  : (ctr/=ctrloc+inc |
+    print(("count er in test",ctrt,ctr,ctrloc+inc,newline)));
+ MODE   MU  =  UNION ( STRING , CHAR ) ;
+
+# servitudes pour les corps de routines #
+ OP   MON  = ( REAL  a) REAL  : (ctr+:=1 ; 3.1415) ,
+ = =( BOOL  a, INT  b) INT  : (a|b| ctr-:=1) ,
+ UNION ( INT , BOOL ) vu ,
+ MODE   STRA  =  STRUCT ( INT  de, REF  INT  of) ,
+[,] INT  ta = 1 ,
+ PROC  pra = ( UNION ( INT , BOOL ) a) INT  :
+(a|( INT  x) : (ctr+:=1;x)) ,
+ INT  ida = 1 ;
+ MODE   STRB  =  STRUCT ( BOOL  de, REF  INT  of) ,
+[,] BOOL  tb =  TRUE  ,
+ PROC  prb = ( UNION ( INT , BOOL ) a) BOOL  :
+(a|( BOOL  x) : (ctr+:=1;x)) ,
+ BOOL  idb =  TRUE  ;
+
+# mode rendu :  PROC ( INT , MU , MU ) INT  #
+(  MODE   R  =  PROC ( INT , MU , MU ) INT  ;
+ PROC  test = ( R  proc) VOID  :
+     IF  proc(1,""," ")=1  THEN  ctr+:=1
+     ELSE  print(("er",ctrt,ctr-ctrloc,newline))  FI  ;
+ OP  ?=:= =( R  x) R  : (test(x) ; x) ;
+
+(ctrt:=   1 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+tb[ida,(ctr+:=1;1)]
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)],  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+pra(1) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1) ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END ,(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ),proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+pra(1) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+prb( TRUE )
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+pra(1)) ,
+( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   2 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+tb[ida,(ctr+:=1;1)]
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+pra(1)) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1),  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida),(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ),proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+ BOOL (ctr+:=1;ida |  TRUE  ,  SKIP )
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )) ,
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   3 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+de OF  STRB ( TRUE  , ctr+:=1)
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida),  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1) ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1,(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1,proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+ CASE  vu:=(ctr+:=1; TRUE ) IN 
+( BOOL  x) : x  ESAC 
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)) ,
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   4 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+de OF  STRB ( TRUE  , ctr+:=1)
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+pra(1) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END ) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ),  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)],(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+pra(1)
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)],proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+pra(1) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+ BOOL (ctr+:=1;ida |  TRUE  ,  SKIP )
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)) ,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC  ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   5 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+ TRUE  EXIT  f: SKIP  END 
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END 
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida) ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+pra(1),  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+pra(1) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+pra(1) ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1),(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ),proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+tb[ida,(ctr+:=1;1)]
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END ) ,
+( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1) ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   6 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+de OF  STRB ( TRUE  , ctr+:=1)
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END 
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+pra(1) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1),  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC  ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ,(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1,proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+ CASE  vu:=(ctr+:=1; TRUE ) IN 
+( BOOL  x) : x  ESAC 
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)) ,
+( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1) ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   7 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END ) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+ CASE  vu:=(ctr+:=1; TRUE ) IN 
+( BOOL  x) : x  ESAC 
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)],  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1,(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+pra(1)
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ,proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC  END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+de OF  STRB ( TRUE  , ctr+:=1)
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)) ,
+( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   8 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END 
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+ CASE  vu:=(ctr+:=1; TRUE ) IN 
+( BOOL  x) : x  ESAC 
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+pra(1)) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ,  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1),(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1,proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+pra(1) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+( NOT idb |  SKIP  | ctr+:=1 ; idb)
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )) ,
+( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=   9 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END 
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+de OF  STRB ( TRUE  , ctr+:=1)
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP )
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+pra(1),  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)],(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC 
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1),proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END  END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+ CASE  vu:=(ctr+:=1; TRUE ) IN 
+( BOOL  x) : x  ESAC 
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END ) ,
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+
+(ctrt:=  10 ; ctrloc:=ctr ;
+test(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)) ;
+ FOR  ident  FROM  (( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+
+ BY  (( INT  ida, MU  b,c) INT  :
+ BEGIN   INT  x ;ctr+:=1 ; e :
+1 EXIT  f: SKIP  END 
+) (1,""," ")
+
+ TO  (( INT  ida, MU  b,c) INT  :
+pra(1)
+) (1,""," ")
+
+ WHILE  (( INT  ida, MU  b,c) BOOL  :
+tb[ida,(ctr+:=1;1)]
+) (1,""," ")
+
+ DO  [(( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1)
+) (1,""," ")
+ : 4 ,
+-1 : (( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)
+) (1,""," ")
+]  R  ent ;
+ent[(( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida)
+) (1,""," ")
+ , 0] :=
+ent[1,(( INT  ida, MU  b,c) INT  :
+ INT  : (ctr+:=1 ; 1)
+) (1,""," ")
+]:=
+( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ;
+test(ent[1,0]) ; test(ent[1,1])  OD  ;
+ R  alfa ,  R  par = ( SKIP  ;( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) ;
+ REAL  e = .12345 ;( INT  ida, MU  b,c) INT  :
+pra(1)) ;
+test(par) ; alfa:=?=:=(( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1) ;
+ R  ident = ( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1 ,
+ R  loc:= CASE (( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)]
+) (1,""," ")
+ IN 
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1,  SKIP   ESAC  ,
+tas:=( INT  ida, MU  b,c) INT  :
+( NOT idb |  SKIP  | ctr+:=1 ; ida) ;
+test(ident) ; test(loc) ; test(tas) ;
+ PROC  proc =  R  : ( INT  ida, MU  b,c) INT  :
+ INT (ctr+:=1;ida | 1 ,  SKIP ) ,
+ STRUCT ( COMPL  of, STRUCT ( R  de, COMPL  of)de) struct
+:=((.11,0),(( INT  ida, MU  b,c) INT  :
+ CASE  vu:=(ctr+:=1;1) IN 
+( INT  x) : x  ESAC ,(0,1e0)));
+test(de OF de OF struct) ;
+[] R  apd = (ident,par,loc,
+( INT  ida, MU  b,c) INT  :
+3.1415 =  MON .5 = 1
+,proc,tas,de OF de OF struct) ;
+test(apd[4]) ; test(apd[5]) ;
+ PROC  pr:=( R  rep,reprep, PROC  R  procrep) R  : (
+test(rep) ; test(reprep) ;( INT  ida, MU  b,c) INT  :
+pra(1)) ;
+ UNION ( R , CHAR ) union:=pr(proc,
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)],proc) ;
+test((union | ( R  a) : a )) ;
+(test( R  BEGIN ( INT  ida, MU  b,c) INT  :
+ LOC  INT :=(ctr+:=1 ;1) END ) ,
+?=:=(union ;(( INT  ida, MU  b,c) BOOL  :
+ BOOL  : (ctr+:=1 ;  TRUE )
+) (1,""," ")
+ | ( INT  ida, MU  b,c) INT  :
+de OF  STRA (1 , ctr+:=1)) ,
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+test(( BOOL  bool= FALSE ;union | ( R ) :
+( INT  ida, MU  b,c) INT  :
+ta[ida,(ctr+:=1;1)] ,
+( CHAR  car) :  SKIP ))) ;
+ctrl(44)) ;
+ SKIP ) ;
+
+# corps = relation d IDENTITE #
+ctrt:=  11 ; ctrloc:=ctr ;
+ TO  1  WHILE   BOOL  : vu:/=:(ctr+:=1; NIL )
+     DO  ( BOOL  :
+         (idb|ctr|ctrt):=:ctr+:=1 | ctr+:=1)  OD  ;
+ctrl(3) ;
+
+print((ctr," tests ",(ctr=vf|"ok"|"error"))))

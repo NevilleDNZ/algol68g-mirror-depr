@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2016 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -38,6 +38,7 @@ int global_argc; /* Keep argc and argv for reference from A68 */
 char **global_argv;
 
 BOOL_T in_execution;
+BOOL_T close_tty_on_exit;
 BYTE_T *system_stack_offset;
 MODES_T a68_modes;
 MODULE_T program;
@@ -206,7 +207,7 @@ void state_license (FILE_T f)
   }
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
   WRITE (f, output_line);
-  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright 2015 %s.\n", PACKAGE_BUGREPORT) >= 0);
+  ASSERT (snprintf (output_line, SNPRINTF_SIZE, "Copyright 2016 %s.\n", PACKAGE_BUGREPORT) >= 0);
   WRITE (f, output_line);
   PR ("");
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "This is free software covered by the GNU General Public License.\n") >= 0);
@@ -351,6 +352,7 @@ int main (int argc, char *argv[])
   int argcc, k;
   global_argc = argc;
   global_argv = argv;
+  close_tty_on_exit = A68_TRUE;
   FILE_DIAGS_FD (&program) = -1;
 /* Get command name and discard path */
   bufcpy (a68g_cmd_name, argv[0], BUFFER_SIZE);
@@ -421,9 +423,6 @@ int main (int argc, char *argv[])
     }
     if (!set_options (OPTION_LIST (&program), A68_TRUE)) {
       a68g_exit (EXIT_FAILURE);
-    }
-    if (OPTION_REGRESSION_TEST (&program)) {
-      bufcpy (a68g_cmd_name, "a68g", BUFFER_SIZE);
     }
 /* Attention for --version */
     if (OPTION_VERSION (&program)) {
@@ -670,6 +669,9 @@ Accept various silent extensions.
   }
 /* Final initialisations */
   if (ERROR_COUNT (&program) == 0) {
+    if (OPTION_REGRESSION_TEST (&program)) {
+      bufcpy (a68g_cmd_name, "a68g", BUFFER_SIZE);
+    }
     a68g_standenv = NO_TABLE;
     init_postulates ();
     mode_count = 0;
@@ -735,9 +737,6 @@ Accept various silent extensions.
       NEST (TABLE (TOP_NODE (&program))) = symbol_table_count = 3;
       reset_symbol_table_nest_count (TOP_NODE (&program));
       fill_symbol_table_outer (TOP_NODE (&program), TABLE (TOP_NODE (&program)));
-#if defined HAVE_PARALLEL_CLAUSE
-      set_par_level (TOP_NODE (&program), 0);
-#endif
       set_nest (TOP_NODE (&program), NO_NODE);
       set_proc_level (TOP_NODE (&program), 1);
     }
@@ -948,8 +947,9 @@ Compilation on Mac OS X using gcc
   diagnostics_to_terminal (TOP_LINE (&program), A68_ALL_DIAGNOSTICS);
   if (ERROR_COUNT (&program) == 0 && OPTION_COMPILE (&program) == A68_FALSE && (OPTION_CHECK_ONLY (&program) ? OPTION_RUN (&program) : A68_TRUE)) {
 #if defined HAVE_COMPILER
-  void * compile_lib;
+    void * compile_lib;
 #endif
+    close_tty_on_exit = A68_FALSE; /* Assuming no runtime errors a priori */
 #if defined HAVE_COMPILER
     if (OPTION_RUN_SCRIPT (&program)) {
       rewrite_script_source ();
@@ -1068,7 +1068,11 @@ void a68g_exit (int code)
 /* Close unclosed files, remove temp files */
   free_file_entries ();
 /* Close the terminal */
-  io_close_tty_line ();
+  if (close_tty_on_exit || OPTION_REGRESSION_TEST (&program)) {
+    io_close_tty_line ();
+  } else if (OPTION_VERBOSE (&program)) {
+    io_close_tty_line ();
+  }
 #if defined HAVE_CURSES
 /* 
 "curses" might still be open if it was not closed from A68, or the program
@@ -1307,7 +1311,6 @@ void default_options (MODULE_T *p)
   OPTION_UNUSED (p) = A68_FALSE;
   OPTION_VERBOSE (p) = A68_FALSE;
   OPTION_VERSION (p) = A68_FALSE;
-  OPTION_TARGET (p) = NO_TEXT;
 }
 
 /**
@@ -1604,16 +1607,74 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, "missing argument in");
           }
         }
-/* TARGET accepts its argument as editor target */
-        else if (eq (p, "TArget") && cmd_line) {
+/* LIBRARY requires its argument as environ */
+        else if (eq (p, "LIBrary")) {
           FORWARD (i);
           if (i != NO_OPTION_LIST && strcmp (STR (i), "=") == 0) {
             FORWARD (i);
           }
-          if (i != NO_OPTION_LIST) {
-            OPTION_TARGET (&program) = new_string (STR (i), NO_TEXT);
-          } else {
+          if (i == NO_OPTION_LIST) {
             option_error (start_l, start_c, "missing argument in");
+          } else {
+            char *q = strip_sign (STR (i));
+            if (eq (q, "MVS")) {
+              WRITELN (STDOUT_FILENO, "mvs required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#if (! defined HAVE_CURSES)
+            if (eq (q, "curses")) {
+              WRITELN (STDOUT_FILENO, "curses required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_GNU_GSL)
+            if (eq (q, "gsl")) {
+              WRITELN (STDOUT_FILENO, "gsl required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_GNU_PLOTUTILS)
+            if (eq (q, "plotutils")) {
+              WRITELN (STDOUT_FILENO, "plotutils required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_IEEE_754)
+            if (eq (q, "ieee")) {
+              WRITELN (STDOUT_FILENO, "ieee required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_LINUX)
+            if (eq (q, "linux")) {
+              WRITELN (STDOUT_FILENO, "linux required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_PARALLEL_CLAUSE)
+            if (eq (q, "threads")) {
+              WRITELN (STDOUT_FILENO, "threads required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_POSTGRESQL)
+            if (eq (q, "postgresql")) {
+              WRITELN (STDOUT_FILENO, "postgresql required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_COMPILER)
+            if (eq (q, "compilers")) {
+              WRITELN (STDOUT_FILENO, "compiler required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
+#if (! defined HAVE_HTTP)
+            if (eq (q, "http")) {
+              WRITELN (STDOUT_FILENO, "http required - exiting graciously");
+              a68g_exit (EXIT_SUCCESS);
+            }
+#endif
           }
         }
 /* SCRIPT takes next argument as filename.
@@ -1690,7 +1751,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               if (eq (p, "Execute") || eq (p, "X")) {
                 fprintf (f, "(%s)\n", STR (i));
               } else {
-                fprintf (f, "(print ((%s)))\n", STR (i));
+                fprintf (f, "(print (((%s), new line)))\n", STR (i));
               }
               ASSERT (fclose (f) == 0);
               FILE_INITIAL_NAME (&program) = new_string (new_name, NO_TEXT);

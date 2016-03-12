@@ -1,0 +1,66 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#jump05#
+BEGIN # Test stack jump in ALGOL 68, Dick Grune, 24-07-73.
+    A bit-pattern is decomposed on the stack into a sequence of PROC
+    VOID's, the bit-pattern is re-assembled by calling the deepest
+    PROC VOID and the resulting pattern is compared to the original.
+    #
+  INT max width = 12;
+# Additional BITS-operators #
+    INT conv = bits width - max width;
+    BITS one = BIN 1 SHL (bits width - 1);
+    OP SET = (INT i, REF BITS rb) REF BITS:
+        rb:= rb OR one SHR (i - 1);
+    OP NEXT = (BITS b) BITS:
+    BIN (ABS (b SHR conv) + 1) SHL conv;
+    PRIO SET = 9;
+    BITS max bits = BIN(2 ** max width - 1) SHL conv;
+# End #
+    PROC dive = (INT level, PROC VOID back) VOID:
+    (   IF level > max width THEN back ELSE
+            dive(level + 1,
+                IF level ELEM bits THEN here ELSE back FI)
+        FI;
+    here: level SET acc; back
+    ) # dive #;
+# Try all (4096) bit-patterns #
+    BITS bits # proposed pattern # := BIN 0,
+         acc  # assembled pattern #;
+    INT cnt:= 0;
+    WHILE
+      acc:= BIN 0; (dive(1,out); out:SKIP# it just happened #);
+      IF bits NE acc
+      THEN print(("Stack jump test failed. Bits: ", bits,
+            "   acc: ", acc, newline)); stop
+      FI;
+      bits NE max bits # WHILE #
+    DO bits:= NEXT bits; cnt +:= 1 OD;
+    IF cnt /= 2 ** max width - 1 THEN
+        print(("Something wrong", cnt, 2 ** max width - 1)); stop
+    FI;
+    print(("Stack jump test successful", newline))
+END

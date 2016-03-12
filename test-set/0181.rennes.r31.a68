@@ -1,0 +1,1475 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+# r31 #
+(print(("closed clauses",newline)) ;
+ INT  vf = ((27+4+5+2)*2+7)*6 ;
+ INT  ctr:=0,ctrt,mem ;
+ PROC  controle = ( INT  incr) VOID  :
+    (ctr/=mem+incr |
+    print(("count er in test",ctrt,ctr,mem+incr,newline))) ;
+ PROC  test =  INT  : (ctr+:=1;1) ,
+   rre = [] PROC  INT :(ctr+:=1;test) ,
+   pche =  PROC ( STRING ) PROC  INT  :
+(ctr+:=1;( STRING  a) PROC  INT :test);
+ UNION ( INT , STRING ) vu:=1 ;
+
+# servitudes pour contextes #
+ MODE   MSTR  =  STRUCT ( COMPL  de,of) ,
+ PRIO  += =5 , ? =9 ,
+ OP   ?= =( INT  x) VOID  : x ,
+    += =( INT  a) PROC  INT :test ,
+    += =( UNION ( INT , BOOL ) a, INT  b) BOOL :(ctr+:=1)=b ,
+    += =( UNION ( REF  INT , REF  BOOL ) a, REAL  b) MSTR  :  SKIP  ,
+    += =( MSTR  a,b) REF  INT  : ctr+:=1 ;
+
+                   # declarations pour unites du mode
+                    PROC   INT  #
+ OP  ? =( INT  a, PROC  INT  b)
+ PROC   INT  :
+(ctr+:=1 ;
+test),
+ STRUCT ( INT of, PROC  INT  de) structa
+=(0,
+test) ,
+ PROC  proca=([] INT  a)
+ PROC  INT : (ctr+:=1 ;
+test)
+, identa= PROC  INT 
+:(ctr+:=1;
+test) ,
+[] PROC  PROC  INT 
+ ranga= identa;
+
+                   # declarations pour unites du mode
+                    PROC   REF  BOOL  #
+ OP  ? =( INT  a, PROC  REF  BOOL  b)
+ PROC   REF  BOOL  :
+(ctr+:=1 ;
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )),
+ STRUCT ( INT of, PROC  REF  BOOL  de) structb
+=(0,
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )) ,
+ PROC  procb=([] INT  a)
+ PROC  REF  BOOL : (ctr+:=1 ;
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+, identb= PROC  REF  BOOL 
+:(ctr+:=1;
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )) ,
+[] PROC  PROC  REF  BOOL 
+ rangb= identb;
+
+                   # declarations pour unites du mode
+                    PROC   MSTR  #
+ OP  ? =( INT  a, PROC  MSTR  b)
+ PROC   MSTR  :
+(ctr+:=1 ;
+ MSTR :((0,0),ctr+:=1)),
+ STRUCT ( INT of, PROC  MSTR  de) structc
+=(0,
+ MSTR :((0,0),ctr+:=1)) ,
+ PROC  procc=([] INT  a)
+ PROC  MSTR : (ctr+:=1 ;
+ MSTR :((0,0),ctr+:=1))
+, identc= PROC  MSTR 
+:(ctr+:=1;
+ MSTR :((0,0),ctr+:=1)) ,
+[] PROC  PROC  MSTR 
+ rangc= identc;
+
+                   # declarations pour unites du mode
+                    PROC  [] PROC  INT  #
+ OP  ? =( INT  a, PROC [] PROC  INT  b)
+ PROC  [] PROC  INT  :
+(ctr+:=1 ;
+rre),
+ STRUCT ( INT of, PROC [] PROC  INT  de) structd
+=(0,
+rre) ,
+ PROC  procd=([] INT  a)
+ PROC [] PROC  INT : (ctr+:=1 ;
+rre)
+, identd= PROC [] PROC  INT 
+:(ctr+:=1;
+rre) ,
+[] PROC  PROC [] PROC  INT 
+ rangd= identd;
+
+                   # declarations pour unites du mode
+                    PROC   PROC ( STRING ) PROC  INT  #
+ OP  ? =( INT  a, PROC  PROC ( STRING ) PROC  INT  b)
+ PROC   PROC ( STRING ) PROC  INT  :
+(ctr+:=1 ;
+pche),
+ STRUCT ( INT of, PROC  PROC ( STRING ) PROC  INT  de) structe
+=(0,
+pche) ,
+ PROC  proce=([] INT  a)
+ PROC  PROC ( STRING ) PROC  INT : (ctr+:=1 ;
+pche)
+, idente= PROC  PROC ( STRING ) PROC  INT 
+:(ctr+:=1;
+pche) ,
+[] PROC  PROC  PROC ( STRING ) PROC  INT 
+ range= idente;
+
+                   #  contextes  #
+
+ctrt:=   1 ; mem:=ctr ;
+
+( FOR  ident FROM 
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ BY 
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ TO 
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ WHILE 
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
+ DO  [
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+: 4,-ident:
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+]  INT  ent ; ent [
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+,0]:=ent[ident,
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+]:=
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+; REAL  pp=1.00001;
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+);alfa:=1+
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ ;  INT  ident=
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+, INT  loc:= CASE 
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ IN 
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+, SKIP   ESAC  , tas:=
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+, PROC  proc =  INT  :
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+,proc)
+;( INT  BEGIN 
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ END  , ?=  (union;
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
+ |
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+) ,
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+,( BOOL  bool= TRUE  ; union|( INT ):
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+,( COMPL  complex): SKIP )) ;
+controle(27*2) ;
+ctrt:=   2 ; mem:=ctr ;
+
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
+:=
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
+:=
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
+:=:
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
+;
+controle( 4*2) ;
+ctrt:=   3 ; mem:=ctr ;
++=
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
++=(
+ BEGIN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ END 
++= re OF de OF 
+ BEGIN 
+    ctr+:=1;vu:=1;
+     MSTR :((0,0),ctr+:=1)
+ END 
++=
+ BEGIN 
+    ctr+:=1;vu:=1;
+     MSTR :((0,0),ctr+:=1)
+ END 
+) += +=
+ BEGIN 
+    ctr+:=1;vu:=1;
+    test
+ END 
+ ;
+controle(5*2+5) ;
+ctrt:=   4 ; mem:=ctr ;
+
+ BEGIN 
+    ctr+:=1;vu:=1;
+    rre
+ END 
+[1] ;
+ BEGIN 
+    ctr+:=1;vu:=1;
+    pche
+ END 
+("") ;
+controle(2*2+2) ) ;
+
+ctrt:=   5 ; mem:=ctr ;
+
+( FOR  ident FROM 
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ BY 
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ TO 
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ WHILE 
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ DO  [
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+: 4,-ident:
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+]  INT  ent ; ent [
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+,0]:=ent[ident,
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+]:=
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+; REAL  pp=1.00001;
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+);alfa:=1+
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;  INT  ident=
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+, INT  loc:= CASE 
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ IN 
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+, SKIP   ESAC  , tas:=
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+, PROC  proc =  INT  :
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+,proc)
+;( INT  BEGIN 
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ END  , ?=  (union;
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ |
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+) ,
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+,( BOOL  bool= TRUE  ; union|( INT ):
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*2) ;
+ctrt:=   6 ; mem:=ctr ;
+
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=:
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+;
+controle( 4*2) ;
+ctrt:=   7 ; mem:=ctr ;
++=
+(
+     INT  x=1;ctr+:=x;
+    test
+)
++=(
+(
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
++= re OF de OF 
+(
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1)
+)
++=
+(
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1)
+)
+) += +=
+(
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;
+controle(5*2+5) ;
+ctrt:=   8 ; mem:=ctr ;
+
+(
+     INT  x=1;ctr+:=x;
+    rre
+)
+[1] ;
+(
+     INT  x=1;ctr+:=x;
+    pche
+)
+("") ;
+controle(2*2+2) ) ;
+
+ctrt:=   9 ; mem:=ctr ;
+
+( FOR  ident FROM 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ BY 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ TO 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ WHILE 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
+ DO  [
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+: 4,-ident:
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+]  INT  ent ; ent [
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+,0]:=ent[ident,
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+]:=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+; REAL  pp=1.00001;
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+);alfa:=1+
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ ;  INT  ident=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+, INT  loc:= CASE 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ IN 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+, SKIP   ESAC  , tas:=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+, PROC  proc =  INT  :
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+,proc)
+;( INT  BEGIN 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ END  , ?=  (union;
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
+ |
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+) ,
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+,( BOOL  bool= TRUE  ; union|( INT ):
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+,( COMPL  complex): SKIP )) ;
+controle(27*2) ;
+ctrt:=  10 ; mem:=ctr ;
+
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
+:=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
+:=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
+:=:
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
+;
+controle( 4*2) ;
+ctrt:=  11 ; mem:=ctr ;
++=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
++=(
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ END 
++= re OF de OF 
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     MSTR :((0,0),ctr+:=1))
+ END 
++=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     MSTR :((0,0),ctr+:=1))
+ END 
+) += +=
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ END 
+ ;
+controle(5*2+5) ;
+ctrt:=  12 ; mem:=ctr ;
+
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    rre)
+ END 
+[1] ;
+ BEGIN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    pche)
+ END 
+("") ;
+controle(2*2+2) ) ;
+
+ctrt:=  13 ; mem:=ctr ;
+
+( FOR  ident FROM 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ BY 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ TO 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ WHILE 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ DO  [
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+: 4,-ident:
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+]  INT  ent ; ent [
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,0]:=ent[ident,
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+]:=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+; REAL  pp=1.00001;
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+);alfa:=1+
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ ;  INT  ident=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, INT  loc:= CASE 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ IN 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, SKIP   ESAC  , tas:=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, PROC  proc =  INT  :
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,proc)
+;( INT  BEGIN 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ END  , ?=  (union;
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ |
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+) ,
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,( BOOL  bool= TRUE  ; union|( INT ):
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*2) ;
+ctrt:=  14 ; mem:=ctr ;
+
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=:
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+;
+controle( 4*2) ;
+ctrt:=  15 ; mem:=ctr ;
++=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
++=(
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
++= re OF de OF 
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     MSTR :((0,0),ctr+:=1)
+)
++=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     MSTR :((0,0),ctr+:=1)
+)
+) += +=
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ ;
+controle(5*2+5) ;
+ctrt:=  16 ; mem:=ctr ;
+
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    rre
+)
+[1] ;
+(
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    pche
+)
+("") ;
+controle(2*2+2) ) ;
+
+ctrt:=  17 ; mem:=ctr ;
+
+( FOR  ident FROM 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ BY 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ TO 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ WHILE 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
+ DO  [
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+: 4,-ident:
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+]  INT  ent ; ent [
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+,0]:=ent[ident,
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+]:=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+; REAL  pp=1.00001;
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+);alfa:=1+
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ ;  INT  ident=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+, INT  loc:= CASE 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ IN 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+, SKIP   ESAC  , tas:=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+, PROC  proc =  INT  :
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+,proc)
+;( INT  BEGIN 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ END  , ?=  (union;
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
+ |
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+) ,
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+,( BOOL  bool= TRUE  ; union|( INT ):
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+,( COMPL  complex): SKIP )) ;
+controle(27*2) ;
+ctrt:=  18 ; mem:=ctr ;
+
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
+:=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
+:=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
+:=:
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
+;
+controle( 4*2) ;
+ctrt:=  19 ; mem:=ctr ;
++=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
++=(
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ END 
++= re OF de OF 
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT e: SKIP 
+ END 
++=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT e: SKIP 
+ END 
+) += +=
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ END 
+ ;
+controle(5*2+5) ;
+ctrt:=  20 ; mem:=ctr ;
+
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    rre EXIT e: SKIP 
+ END 
+[1] ;
+ BEGIN 
+     INT  x=1;ctr+:=x;
+    pche EXIT e: SKIP 
+ END 
+("") ;
+controle(2*2+2) ) ;
+
+ctrt:=  21 ; mem:=ctr ;
+
+( FOR  ident FROM 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ BY 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ TO 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ WHILE 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ DO  [
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+: 4,-ident:
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+]  INT  ent ; ent [
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,0]:=ent[ident,
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+]:=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+; REAL  pp=1.00001;
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+);alfa:=1+
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ ;  INT  ident=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+, INT  loc:= CASE 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ IN 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+, SKIP   ESAC  , tas:=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+, PROC  proc =  INT  :
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,proc)
+;( INT  BEGIN 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ END  , ?=  (union;
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ |
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+) ,
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,( BOOL  bool= TRUE  ; union|( INT ):
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*2) ;
+ctrt:=  22 ; mem:=ctr ;
+
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+:=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+:=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+:=:
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+;
+controle( 4*2) ;
+ctrt:=  23 ; mem:=ctr ;
++=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
++=(
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
++= re OF de OF 
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
++=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+) += +=
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ ;
+controle(5*2+5) ;
+ctrt:=  24 ; mem:=ctr ;
+
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    rre EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+[1] ;
+(
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    pche EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+("") ;
+controle(2*2+2) ) ;
+
+print((ctr," tests ",(ctr=vf|"ok"|"error"))))

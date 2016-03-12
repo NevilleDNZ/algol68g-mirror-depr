@@ -1,0 +1,64 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#numr02#
+BEGIN  # Brinkmanship #
+   # What minreal is the smallest positive real on your installation ? #
+   PROC test = (STRING titel, REAL min real) VOID:
+       (print((newline,newline,titel,newline));
+        print(("minreal =           ", minreal, newline));
+        print(("2*minreal =         ", 2*minreal, newline));
+        print(("minreal*maxreal =   ", minreal*maxreal, newline));
+        print(("sqrt(minreal) =     ", sqrt(minreal), newline));
+        print(("sqrt(minreal)**2 =  ", sqrt(minreal)*sqrt(minreal),
+                                                            newline));
+        IF minreal>0
+        THEN print(("ln(minreal) =       ", ln(minreal), newline));
+              print(("exp(ln(minreal) =   ", exp(ln(minreal)),newline))
+        FI);
+   test("minreal = 5.0/(smallreal**2 * maxreal)",
+        5.0/(smallreal*maxreal*smallreal));
+   test("minreal = 2.0/(smallreal**2 * maxreal)",
+        2.0/(smallreal*maxreal*smallreal));
+   test("minreal = 1.5/(smallreal**2 * maxreal)",
+        1.5/(smallreal*maxreal*smallreal));
+   test("minreal = 1.1/(smallreal**2 * maxreal)",
+        1.1/(smallreal*maxreal*smallreal));
+   test("minreal = 1.0/(smallreal**2 * maxreal)",
+        1.0/(smallreal*maxreal*smallreal));
+   test("minreal = (x; x>0, x/10 = 0)",
+        (REAL x:=1; WHILE x/10 > 0 DO x/:=10 OD; x));
+   test("minreal = (x; x>0, x/2 = 0)",
+        (REAL x:=1; WHILE x/2 > 0 DO x/:=2 OD; x));
+   test("minreal = 1/maxreal", 1/maxreal);
+   # to compare #
+   print((newline,newline,"to compare",newline));
+   print(("maxreal =           ", maxreal,newline));
+   print(("smallreal =         ", smallreal, newline));
+   print(("1/smallreal**2 =    ", 1/(smallreal*smallreal),newline));
+   # What would you like this one to do? #
+   print((newline,newline,"e**-maxreal is positive",newline));
+   print(("exp(-maxreal) = ",exp(-maxreal),newline))
+END

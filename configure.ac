@@ -1,4 +1,4 @@
-AC_INIT([algol68g], [2.8.1], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [2.8.3], [Marcel van der Veer <algol68g@xs4all.nl>])
 #
 # Algol 68 Genie "configure.ac" from "a68g-tools".
 #
@@ -303,9 +303,10 @@ AC_COMPILE_IFELSE(
 #include <sys/types.h>
 __pid_t dummy;
 ])],
-  [AC_MSG_RESULT([__pid_t])],
+  [AC_MSG_RESULT([__pid_t])
+   AC_DEFINE(a68g_pid_t, __pid_t, [Define this if we have __pid_t])],
   [AC_MSG_RESULT([pid_t])
-   AC_DEFINE(__pid_t, pid_t, [Define this if we have no __pid_t])]
+   AC_DEFINE(a68g_pid_t, pid_t, [Define this if we have no __pid_t])]
 )
 
 AC_MSG_CHECKING([__mode_t or mode_t])

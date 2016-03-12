@@ -1,0 +1,826 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#oper16#
+#    Tests  on  operators          #
+BEGIN
+    PROC error = (INT i) VOID:
+    print(("Error in test", i));
+    PROC tste = (INT i) VOID:
+    BEGIN error(i);
+        print(("; wrong branch taken", newline))
+    END;
+    PROC tsti = (INT i, INT p, q) VOID:
+    IF p = q THEN SKIP
+    ELSE error(i);
+        print(("; value is: ", q, ", must be: ", p, newline))
+    FI;
+    PROC tstr = (INT i, REAL p, q) VOID:
+    # two reals are considered equal if their difference is negligible
+      compared to one of them
+    #
+    IF p + (p-q)/8 = p THEN SKIP
+    ELSE error(i);
+        print(("; value is: ", q, ", must be: ", p, newline))
+    FI;
+    PROC tstb = (INT i, BOOL p, q) VOID:
+    BEGIN
+        IF p THEN IF q THEN SKIP ELSE GOTO bad FI
+               ELSE IF q THEN GOTO bad ELSE SKIP FI
+        FI
+    EXIT bad:
+        error(i);
+        print(("; value is: ", q, ", must be: ", p, newline))
+    END;
+    PROC tstc = (INT i, CHAR p, q) VOID:
+    IF p = q THEN SKIP
+    ELSE error(i);
+        print(("; value is: ", q, ", must be: ", p, newline))
+    FI;
+    PROC tstli = (INT i, LONG INT p, q) VOID:
+    IF p = q THEN SKIP
+    ELSE error(i);
+        print(("; value is: ", q, ", must be: ", p, newline))
+    FI;
+    PROC tstlr = (INT i, LONG REAL p, q) VOID:
+    IF p + (p-q)/LONG 8 = p THEN SKIP
+    ELSE error(i);
+        print(("; value is: ", q, ", must be: ", p, newline))
+    FI;
+print(("Test: REPR, ABS", newline));
+BEGIN
+    INT b1; LONG INT b2;
+    INT b0 = 44;
+    [1:2]CHAR a;
+    a[2]:="a";
+    tstc(1, "a", REPR ABS"a");
+    tstc(2, "a", REPR ABS a[2]);
+    tsti(3, +43, ABS(REPR 43));
+    tsti(4, +44, ABS(REPR b0));
+    b1:=45;
+    tsti(5, +45, ABS(REPR b1));
+    tsti(6, +46, ABS(REPR (46+0)));
+    b2:=LONG 43;
+    tsti(7, +43, ABS(REPR SHORTEN b2));
+    tsti(8, +46, ABS REPR SHORTEN LONG 46)
+END;
+print(("Test: LWB, UPB", newline));
+BEGIN
+    REF[]CHAR b;
+    [-5:-3, -1:3]REF[ , ]REAL a;
+    tsti(9, -5, 1 LWB a);
+    tsti(10, -5, LWB a);
+    tsti(11, -1, 2 LWB a);
+    tsti(12, -3, 1 UPB a);
+    tsti(13, -3, UPB a);
+    tsti(14, +3, 2 UPB a);
+    FOR i FROM LWB a BY 1 TO UPB a DO
+    FOR j FROM 2 LWB a BY 1 TO 2 UPB a DO
+        BEGIN
+            [i:j, -j:-i]REAL b;
+            a[i, j] := b;
+            tsti(15,  i, 1 LWB a[i, j]);
+            tsti(16,  j, UPB a[i, j]);
+            tsti(17, -j, 2 LWB a[i, j]);
+            tsti(18, -i, 2 UPB a[i, j])
+        END
+    OD OD
+END;
+BEGIN
+    [1:3, 2:4, 3:5]INT a aaaaa;
+    INT jjjjjj;
+    FOR i FROM 1 BY 1 TO 3
+    DO tsti(19, i, i LWB aaaaaa);
+            tsti(20, i+2, i UPB aaaaaa)
+    OD;
+    FOR i FROM-3BY 1 TO-1
+    DO tsti(21, -i, -i LWB aaaaaa);
+            tsti(22, 2-i, -i UPB aaaaaa)
+    OD;
+    jjjjjj:=2; tsti(23, +2, jjjjjj LWB aaaaaa);
+               tsti(24, +4, jjjjjj UPB aaaaaa);
+    tsti(25, +1, LWB"abc");
+    tsti(26, +3, UPB"cde");
+    tsti(27, +1, (1+0) LWB"abc");
+    tsti(28, +3, 1 UPB"efg")
+END;
+print(("Test: OR, AND", newline));
+BEGIN
+    BOOL t = TRUE; BOOL f = FALSE;
+    BOOL a;
+    a:=t OR t; tstb(29, TRUE, a);
+    a:=t OR f; tstb(30, TRUE, a);
+    a:=f OR t; tstb(31, TRUE, a);
+    a:=f OR f; tstb(32, FALSE, a);
+    a:=t AND t; tstb(33, TRUE, a);
+    a:=t AND f; tstb(34, FALSE, a);
+    a:=f AND t; tstb(35, FALSE, a);
+    a:=f AND f; tstb(36, FALSE, a);
+    a:=NOT t AND t; tstb(37, FALSE, a);
+    a:=NOT f AND t; tstb(38, TRUE, a);
+    a:=NOT t AND f; tstb(39, FALSE, a);
+    a:=NOT f AND f; tstb(40, FALSE, a);
+    a:=NOT t OR t; tstb(41, TRUE, a);
+    a:=NOT f OR t; tstb(42, TRUE, a);
+    a:=NOT t OR f; tstb(43, FALSE, a);
+    a:=NOT f OR f; tstb(44, TRUE, a);
+    a:=t AND NOT t; tstb(45, FALSE, a);
+    a:=t AND NOT f; tstb(46, TRUE, a);
+    a:=f AND NOT t; tstb(47, FALSE, a);
+    a:=f AND NOT f; tstb(48, FALSE, a);
+    a:=t OR NOT t; tstb(49, TRUE, a);
+    a:=t OR NOT f; tstb(50, TRUE, a);
+    a:=f OR NOT t; tstb(51, FALSE, a);
+    a:=f OR NOT f; tstb(52, TRUE, a);
+    a:=NOT t AND NOT t; tstb(53, FALSE, a);
+    a:=NOT t AND NOT f; tstb(54, FALSE, a);
+    a:=NOT f AND NOT t; tstb(55, FALSE, a);
+    a:=NOT f AND NOT f; tstb(56, TRUE, a);
+    a:=NOT t OR NOT t; tstb(57, FALSE, a);
+    a:=NOT t OR NOT f; tstb(58, TRUE, a);
+    a:=NOT f OR NOT t; tstb(59, TRUE, a);
+    a:=NOT f OR NOT f; tstb(60, TRUE, a);
+    a:=t; tstb(61, TRUE, a);
+    a:=a AND t; tstb(62, TRUE, a);
+    a:=a OR t; tstb(63, TRUE, a);
+    a:=a OR f; tstb(64, TRUE, a);
+    a:=a AND f; tstb(65, FALSE, a);
+    a:=a AND f; tstb(66, FALSE, a);
+    a:=a AND t; tstb(67, FALSE, a);
+    a:=a OR f; tstb(68, FALSE, a);
+    a:=a OR t; tstb(69, TRUE, a);
+    a:=t; tstb(70, TRUE, a);
+    a:=t AND a; tstb(71, TRUE, a);
+    a:=t OR a; tstb(72, TRUE, a);
+    a:=f OR a; tstb(73, TRUE, a);
+    a:=f AND a; tstb(74, FALSE, a);
+    a:=f AND a; tstb(75, FALSE, a);
+    a:=t AND a; tstb(76, FALSE, a);
+    a:=f OR a; tstb(77, FALSE, a);
+    a:=t OR a; tstb(78, TRUE, a);
+    SKIP
+END;
+BEGIN
+    BOOL t = TRUE; BOOL f = FALSE;
+    tstb(79, TRUE, t OR f);
+    tstb(80, TRUE, t OR t);
+    tstb(81, TRUE, f OR t);
+    tstb(82, FALSE, f OR f);
+    tstb(83, TRUE, NOT (f OR f));
+    tstb(84, TRUE, NOT (f AND f));
+    tstb(85, TRUE, t AND t);
+    tstb(86, FALSE, t AND f);
+    tstb(87, FALSE, f AND t);
+    tstb(88, FALSE, f AND f);
+    tstb(89, TRUE, (t OR t) OR (f OR f));
+    tstb(90, FALSE, (t OR t) AND (f OR f));
+    tstb(91, TRUE, t OR (f OR f));
+    tstb(92, TRUE, NOT (t AND (f OR f)));
+    tstb(93, FALSE, NOT NOT ((f OR f) OR f));
+    tstb(94, TRUE, NOT NOT NOT ((f OR f) AND f));
+    IF t OR f THEN SKIP ELSE tste(95) FI;
+    IF t OR t THEN SKIP ELSE tste(96) FI;
+    IF f OR t THEN SKIP ELSE tste(97) FI;
+    IF f OR f THEN tste(98) FI;
+    IF NOT (f OR f) THEN SKIP ELSE tste(99) FI;
+    IF NOT (f AND f) THEN SKIP ELSE tste(100) FI;
+    IF t AND t THEN SKIP ELSE tste(101) FI;
+    IF t AND f THEN tste(102) FI;
+    IF f AND t THEN tste(103) FI;
+    IF f AND f THEN tste(104) FI;
+    IF (t OR t) AND (t OR t) THEN SKIP ELSE tste(105) FI;
+    IF (t OR t) OR (t OR t) THEN SKIP ELSE tste(106) FI;
+    IF (t OR t) OR f THEN SKIP ELSE tste(107) FI;
+    IF (t OR t) AND t THEN SKIP ELSE tste(108) FI;
+    IF t OR (t OR t) THEN SKIP ELSE tste(109) FI;
+    IF t AND (t OR f) THEN SKIP ELSE tste(110) FI;
+    BOOL a1; a1:=t AND f; tstb(111, FALSE, a1);
+    BOOL a2; a2:=NOT (t OR f); tstb(112, FALSE, a2);
+    BEGIN
+        BOOL t; t := TRUE;
+        BOOL f; f:=FALSE;
+        IF (NOT (NOT ((t OR t) AND (t OR t)) OR
+                ((f OR f) OR f) AND (t OR f AND f)) AND f)
+                OR NOT t
+        THEN tste(113) ELSE SKIP FI;
+        BOOL x; x:=
+            (NOT (NOT ((t OR t) AND (t OR t)) OR
+            ((f OR f) OR f) AND (t OR (f AND f))) AND f)
+            OR NOT t;
+        tstb(114, FALSE, x);
+        BOOL y =
+            (NOT (NOT ((t OR t) AND (t OR t)) OR
+            ((f OR f) OR f) AND (t OR (f AND f))) AND f)
+            OR NOT t;
+        tstb(115, FALSE, y)
+    END
+END;
+print(("Test: NE, EQ for booleans", newline));
+BEGIN
+    BOOL t = TRUE; BOOL f = FALSE;
+    tstb(116, TRUE, t NE f);
+    tstb(117, FALSE, t NE t);
+    tstb(118, TRUE, f NE t);
+    tstb(119, FALSE, f NE f);
+    tstb(120, TRUE, NOT (f NE f));
+    tstb(121, FALSE, NOT (f EQ f));
+    tstb(122, TRUE, t EQ t);
+    tstb(123, FALSE, t EQ f);
+    tstb(124, FALSE, f EQ t);
+    tstb(125, TRUE, f EQ f);
+    tstb(126, FALSE, (t NE t) NE (f NE f));
+    tstb(127, TRUE, (t NE t) EQ (f NE f));
+    tstb(128, TRUE, t NE (f NE f));
+    tstb(129, TRUE, NOT (t EQ (f NE f)));
+    tstb(130, FALSE, NOT NOT ((f NE f) NE f));
+    tstb(131, FALSE, NOT NOT NOT ((f NE f) EQ f));
+    IF t NE f THEN SKIP ELSE tste(132) FI;
+    IF t NE t THEN tste(133) FI;
+    IF f NE t THEN SKIP ELSE tste(134) FI;
+    IF f NE f THEN tste(135) FI;
+    IF NOT (f NE f) THEN SKIP ELSE tste(136) FI;
+    IF NOT (f EQ f) THEN tste(137) FI;
+    IF t EQ t THEN SKIP ELSE tste(138) FI;
+    IF t EQ f THEN tste(139) FI;
+    IF f EQ t THEN tste(140) FI;
+    IF f EQ f THEN SKIP ELSE tste(141) FI;
+    IF (t NE t) EQ (t NE t) THEN SKIP ELSE tste(142) FI;
+    IF (t NE t) NE (t NE t) THEN tste(143) FI;
+    IF (t NE t) NE f THEN tste(144) FI;
+    IF (t NE t) EQ t THEN tste(145) FI;
+    IF t NE (t NE t) THEN SKIP ELSE tste(146) FI;
+    IF t EQ (t NE f) THEN SKIP ELSE tste(147) FI;
+    BOOL a1; a1:=t EQ f; tstb(148, FALSE, a1);
+    BOOL a2; a2:=NOT (t NE f); tstb(149, FALSE, a2);
+    BEGIN
+        BOOL t; t := TRUE;
+        BOOL f; f:=FALSE;
+        IF (NOT (NOT ((t NE t) EQ (t NE t)) NE
+                ((f NE f) NE f) EQ (t NE f EQ f)) EQ f)
+                NE NOT t
+        THEN SKIP ELSE tste(150) FI;
+        BOOL x; x:=
+            (NOT (NOT ((t NE t) EQ (t NE t)) NE
+            ((f NE f) NE f) EQ (t NE (f EQ f))) EQ f)
+            NE NOT t;
+        tstb(151, TRUE, x);
+        BOOL y =
+            (NOT (NOT ((t NE t) EQ (t NE t)) NE
+            ((f NE f) NE f) EQ (t NE (f EQ f))) EQ f)
+            NE NOT t;
+        tstb(152, TRUE, y)
+    END
+END;
+print(("Test: NOT", newline));
+BEGIN
+    BOOL a1, a2, a3, b1, b2, b3;
+    BOOL a4=NOT FALSE; BOOL a5=NOT NOT FALSE;
+    BOOL a6=NOT NOT NOT FALSE;
+    BOOL a7=NOT a6; BOOL a8=NOT a7; BOOL a9=NOT NOT a8;
+    BOOL a10=NOT NOT NOT a9;
+    IF NOT TRUE THEN tste(153) FI;
+    IF NOT NOT TRUE THEN SKIP ELSE tste(154) FI;
+    IF NOT NOT NOT TRUE THEN tste(155) FI;
+    a1:=NOT TRUE; a2:=NOT NOT FALSE;
+    a3:=NOT NOT NOT TRUE;
+    b1:=NOT TRUE AND FALSE;
+    b2:=NOT NOT TRUE AND FALSE;
+    b3:=TRUE OR NOT NOT NOT TRUE OR FALSE;
+    tstb(156, FALSE, a1);
+    tstb(157, FALSE, a2);
+    tstb(158, FALSE, a3);
+    tstb(159, TRUE, a4);
+    tstb(160, FALSE, a5);
+    tstb(161, TRUE, a6);
+    tstb(162, FALSE, a7);
+    tstb(163, TRUE, a8);
+    tstb(164, TRUE, a9);
+    tstb(165, FALSE, a10);
+    tstb(166, FALSE, b1);
+    tstb(167, FALSE, b2);
+    tstb(168, TRUE, b3)
+END;
+print(("Test: EQ, NE, LT, LE, GT, GE", newline));
+BEGIN
+    IF -1=-1 THEN SKIP ELSE tste(169) FI;
+    tstb(170, TRUE, -LONG 1=-LONG 1);
+    IF -1/=1 THEN SKIP ELSE tste(171) FI;
+    tstb(172, TRUE, -LONG 1/=LONG 1);
+    IF 1 /= -1 THEN SKIP ELSE tste(173) FI;
+    tstb(174, TRUE, LONG 1/=-LONG 1);
+    IF 1 =1 THEN SKIP ELSE tste(175) FI;
+    tstb(176, TRUE, LONG 1=LONG 1);
+    IF 0=0.0 THEN SKIP ELSE tste(177) FI;
+    tstb(178, TRUE, LONG 0=LONG 0.0);
+    IF 1.0=1 THEN SKIP ELSE tste(179) FI;
+    tstb(180, TRUE, LONG 1.0=LONG 1);
+    IF -1.0=-1.0 THEN SKIP ELSE tste(181) FI;
+    tstb(182, TRUE, -LONG 1.0=-LONG 1.0);
+    IF -1.0/=1.0 THEN SKIP ELSE tste(183) FI;
+    tstb(184, TRUE, LENG-1.0/=LONG 1.0);
+    IF 1.0/= -1.0 THEN SKIP ELSE tste(185) FI;
+    tstb(186, TRUE, LONG 1.0/=LENG-1.0);
+    BOOL
+    a1=1=1, a2=1/=1, a3=1>1,
+    a4=1<1, a5=1<= 1, a6=1>=0,
+    a7=1.0=2.0, a8=1.0/=2.0, a9=1.0<2.0,
+    a10=1.0>0.0, a11=1.0<=1.0,
+    a12=1.0>=-1.0;
+    tstb(187, TRUE, a1);
+    tstb(188, FALSE, a2);
+    tstb(189, FALSE, a3);
+    tstb(190, FALSE, a4);
+    tstb(191, TRUE, a5);
+    tstb(192, TRUE, a6);
+    tstb(193, FALSE, a7);
+    tstb(194, TRUE, a8);
+    tstb(195, TRUE, a9);
+    tstb(196, TRUE, a10);
+    tstb(197, TRUE, a11);
+    tstb(198, TRUE, a12);
+    IF 1 = 1 THEN SKIP ELSE tste(199) FI;
+    tstb(200, TRUE, 1=1);
+    IF NOT (1/=1) THEN SKIP ELSE tste(201) FI;
+    tstb(202, TRUE, NOT NOT NOT (1/=1));
+    IF 1/=2 AND 2/=3 AND 4/=5 THEN SKIP ELSE tste(203) FI
+END;
+BEGIN
+    REAL j;
+    [-3 : 3] BOOL lt0;
+    lt0[-3]:= lt0[-2]:= lt0[-1]:= TRUE;
+    lt0[0]:= lt0[1]:= lt0[2]:= lt0[3]:= FALSE;
+    FOR i FROM -3 BY 1 TO 3
+    DO
+        tstb(204, NOT(lt0[i] OR lt0[-i]), i=0);
+        tstb(205, lt0[i] OR lt0[-i], i/=0);
+        tstb(206, lt0[-i], i>0);
+        tstb(207, NOT lt0[i], i>=0);
+        tstb(208, lt0[i], i<0);
+        tstb(209, NOT lt0[-i], i<=0);
+        j:=i;
+        tstb(210, NOT(lt0[i] OR lt0[-i]), j=0);
+        tstb(211, lt0[i] OR lt0[-i], j/=0);
+        tstb(212, lt0[-i], j>0);
+        tstb(213, NOT lt0[i], j>=0);
+        tstb(214, lt0[i], j<0);
+        tstb(215, NOT lt0[-i], j<=0)
+    OD
+END;
+print(("Test: monadic -", newline));
+BEGIN
+    INT x0, x1, x2, x3; LONG INT z0, z1, z2, z3;
+    REAL y0, y1, y2, y3; LONG REAL t0, t1, t2, t3;
+    INT x4 = 10; LONG INT z4 = LONG 10;
+    REAL y4 = x4; LONG REAL t4 = z4;
+    z0 := --LONG 38; z1 := -LONG 1000000000; z2 := -z1;
+    x0:=--79; x1 := -1; x2 := -x1; x3 := -SHORTEN z0;
+    t0 := --LONG 8.7; t1 := -LONG 79.99e-2; t2 := -t1;
+    y0 := --6.7e-4; y1 := -39.47e-2; y2 := -y1; y3 := -SHORTEN t2;
+    tsti(216, +79, x0);
+    tsti(217, -1, x1);
+    tsti(218, +1, x2);
+    tsti(219, -38, x3);
+    tsti(220, +10, x4);
+    tstli(221, +LONG 38, z0);
+    tstli(222, -LONG 1000000000, z1);
+    tstli(223, +LONG 1000000000, z2);
+    tstli(224, +LONG 10, z4);
+    tstr(225, +6.7e-4, y0);
+    tstr(226, -3.947e-1, y1);
+    tstr(227, +3.947e-1, y2);
+    tstr(228, -7.999e-1, y3);
+    tstr(229, +1e+1, y4);
+    tstlr(230, +LONG 8.7e+0, t0);
+    tstlr(231, -LONG 7.999e-1, t1);
+    tstlr(232, +LONG 7.999e-1, t2);
+    tstlr(233, +LONG 10e+0, t4)
+END;
+print(("Test: dyadic -", newline));
+BEGIN
+    tsti(234, -2, 1-3);
+    tstli(235, +LONG 4, LONG 7-LONG 3);
+    tsti(236, -4, -1-3);
+    tstli(237, -LONG 13, -LONG 8-LONG 5);
+    tsti(238, +4, 1--3);
+    tstli(239, +LONG 7, LONG 4--LONG 3);
+    tsti(240, +2, -1--3);
+    tstli(241, -LONG 10, -LONG 5--LENG-5);
+    tstr(242, -6.4e+0, 1-7.4);
+    tstlr(243, +LONG 8e+0, LONG 4-LENG-4.0);
+    tstr(244, +6.4e+0, 7.4-1);
+    tstlr(245, -LONG 1.2e+1, -LONG 6.0-LONG 6);
+    tstr(246, +1.22e+1, 6.1--6.1);
+    tstlr(247, +LONG 8.6e+0, LONG 4.3--LONG 4.3);
+    tsti(248, +29999, 30000-1);
+    tstli(249, +LONG 999999998, LONG 1000000000-LONG 2);
+    tstr(250, +1e+0, -1.0-(-1.0-(-1.0-(-1.0-1))));
+    tstlr(251, +LONG 0e+0,
+        -LONG 1.0-(-LONG 1.0-(-LONG 1.0-(-LONG 1.0
+        -(LONG 1-LONG 1.0)))))
+END;
+print(("Test: dyadic +", newline));
+BEGIN
+    tsti(252, +4, 1+3);
+    tstli(253, +LONG 10, LONG 7+LONG 3);
+    tsti(254, +2, -1+3);
+    tstli(255, -LONG 3, -LONG 8+LONG 5);
+    tsti(256, -2, 1+-3);
+    tstli(257, +LONG 1, LONG 4+-LONG 3);
+    tsti(258, -4, -1+-3);
+    tstli(259, +LONG 0, -LONG 5+-LENG-5);
+    tstr(260, +8.4e+0, 1+7.4);
+    tstlr(261, +LONG 0e+0, LONG 4+LENG-4.0);
+    tstr(262, +8.4e+0, 7.4+1);
+    tstlr(263, +LONG 0e+0, -LONG 6.0+LONG 6);
+    tstr(264, +0e+0, 6.1+-6.1);
+    tstlr(265, +LONG 0e+0, LONG 4.3+-LONG 4.3);
+    tsti(266, -29999, -30000+1);
+    tstli(267, -LONG 999999998, -LONG 1000000000+LONG 2);
+    tstr(268, -3e+0, -1.0+(-1.0+(-1.0+(-1.0+1))));
+    tstlr(269, -LONG 2e+0,
+        -LONG 1.0+(-LONG 1.0+(-LONG 1.0+(-LONG 1.0
+        +(LONG 1+LONG 1.0)))))
+END;
+print(("Test: ABS", newline));
+BEGIN
+    tsti(270, +19, ABS 19);
+    tsti(271, +19, ABS-19);
+    tsti(272, +0, ABS 0);
+    tsti(273, +32, SHORTEN ABS LONG 32);
+    tsti(274, +43, SHORTEN ABS-LONG 43);
+    tsti(275, +0, SHORTEN ABS LONG 0);
+    tstr(276, +1.97e+2, ABS 197.0);
+    tstr(277, +4.97e+1, ABS-49.7);
+    tstr(278, +0e+0, ABS .0);
+    tstr(279, +1e+0, SHORTEN ABS LONG 1.0);
+    tstr(280, +0e+0, SHORTEN ABS LONG 0.0e+7);
+    tstr(281, +1.9e+0, SHORTEN ABS-LONG 1.9)
+END;
+print(("Test: * for integers", newline));
+BEGIN
+    tsti(282, +6, 2*3);
+    tsti(283, -6, -2*3);
+    tsti(284, -6, 2*-3);
+    tsti(285, +6, -2*-3);
+    tsti(286, +6, SHORTEN(-LONG 2*-LONG 3));
+    tsti(287, -6, SHORTEN(LONG 2*-LONG 3));
+    tsti(288, -6, SHORTEN(-LONG 2*LONG 3));
+    tsti(289, +6, SHORTEN(LONG 2*LONG 3));
+    tsti(290, +0, 0*10);
+    tstli(291, +LONG 0, LONG 0*-LONG 10);
+    tsti(292, +0, 10*0);
+    tstli(293, +LONG 0, -LONG 10*LENG 0);
+    tsti(294, +3, 1*3);
+    tstli(295, +LONG 3, LONG 3*LONG 1);
+    tsti (296, +16384, 2*(2*(2*(2*(2*(2*(2*(2*(2*(2*(2*(2*(2*(2
+        ))))))))))))))
+END;
+print(("Test: * mixed", newline));
+BEGIN
+    REAL a1=1.0; LONG REAL a2=-LONG 1.0;
+    REAL a3; LONG REAL a4;
+    tstr(297, +4.2e+1, 6.0*7.0);
+    tstlr(298, +LONG 2.6e+1, LONG 13.0*LONG 2.0);
+    tstr(299, -4.2e+1, -6.0*7.0);
+    tstlr(300, -LONG 6e+0, -LONG 2.0*LONG 3.0);
+    tstr(301, -5.6e+1, 7.0*-8.0);
+    tstlr(302, -LONG 4.8e+1, LONG 16.0*-LENG 3.0);
+    tstr(303, +5.6e+1, -8.0*-7.0);
+    tstlr(304, +LONG 2.5e+1, -LENG 5.0*-LONG 5.0);
+    tstr(305, +4.2e+1, 7*6.0);
+    tstlr(306, +LONG 2.1e+1, LONG 3*LONG 7.0);
+    tstr(307, +4.2e+1, 6.0*7);
+    tstlr(308, +LONG 3.6e+1, LONG 6.0*LONG 6);
+    tstr(309, +4.2e+1, -7*-6.0);
+    tstlr(310, +LONG 2.25e+2, -LONG 15*-LONG 15.0);
+    tstr(311, +4.2e+1, -6.0*-7);
+    tstlr(312, +LONG 1.9e+1, -LONG 19.0*-LONG 1);
+    a3:=14.0; a4:=LENG-13.0;
+    tstr(313, +1.4e+1, a3*a1);
+    tstlr(314, +LONG 1.3e+1, a2*a4);
+    tstr(315, +10e-43, 1.0e-20*1.0e-22);
+    tstlr(316, +LONG 10e+39, LONG 1.0e+20*LONG 1.0e+20)
+END;
+print(("Test: OVER, MOD", newline));
+BEGIN
+    tsti(317, +2, 12 OVER 6);
+    tsti(318, -5, -20 OVER 4);
+    tsti(319, -25, 100 OVER -4);
+    tsti(320, +10, -10 OVER -1);
+    tsti(321, +2, 7 OVER 3);
+    tsti(322, -2, -8 OVER 3);
+    tsti(323, -1, 10 OVER -7);
+    tsti(324, +1, -49 OVER -27);
+    tsti(325, +3, SHORTEN(LONG 10 OVER LONG 3));
+    tsti(326, -1, SHORTEN(-LONG 50 OVER LONG 50));
+    tsti(327, -1, -12 OVER 7);
+    tsti(328, -1, 12 OVER -7);
+    tsti(329, -1, SHORTEN(-LONG 50 OVER LONG 50));
+    tsti(330, +0, SHORTEN(LONG 0 OVER -LONG 25));
+    tsti(331, +0, 12 MOD 6);
+    tsti(332, +0, -20 MOD 4);
+    tsti(333, +0, 100 MOD -4);
+    tsti(334, +0, -10 MOD -1);
+    tsti(335, +1, 7 MOD 3);
+    tsti(336, +1, -8 MOD 3);
+    tsti(337, +3, 10 MOD -7);
+    tsti(338, +5, -49 MOD -27);
+    tsti(339, +1, SHORTEN(LONG 10 MOD LONG 3));
+    tsti(340, +0, SHORTEN(-LONG 50 MOD LONG 50));
+    tsti(341, +2, -12 MOD 7);
+    tsti(342, +5, 12 MOD -7);
+    tsti(343, +0, SHORTEN(-LONG 50 MOD LONG 50));
+    tsti(344, +0, SHORTEN(LONG 0 MOD -LONG 25))
+END;
+print(("Test: /", newline));
+BEGIN
+    REAL a, b; LONG REAL c, d; REAL x = 127.0;
+    FOR i FROM -3 BY 1 TO 3 DO
+    FOR j FROM -3 BY 1 TO 3 DO
+        IF j /= 0 THEN
+            a:=i/j;
+            tstr(345, i, a*j);
+            a:=i; a:=a/j;
+            tstr(346, i, a*j);
+            a:=j; a :=i/a;
+            tstr(347, i, a*j);
+            a := i; b := j; a := a/b;
+            tstr(348, i, a*j);
+            c := LENG i/LENG j;
+            tstlr(349, LENG i, c*LENG j);
+            c := LENG i; c := c/LENG j;
+            tstlr(350, LENG i, c*LENG j);
+            c := LENG j; c :=LENG i/c;
+            tstlr(351, LENG i, c*LENG j);
+            c := LENG i; d:=LENG j; c:=c/d;
+            tstlr(352, LENG i, c*LENG j)
+        FI
+    OD OD;
+    tstr(353, -1e+0, 1.9e-7/-1.9e-7);
+    a:=19.74e+2;
+    tstr(354, +1e+0, 19.74e+2/a);
+    tstr(355, +10e-5, 19.74e-2/19.74e+2);
+    tstr(356, +1e+3, 127000.0/x);
+    tstr(357, +1e+2, x/1.27);
+    tstr(358, -1e+1, x/-12.7);
+    tstr(359, +1e+0, x/x);
+    a:=1270.0;
+    tstr(360, +10e-2, x/a);
+    a:=0.0149; tstr(361, +1e+0, a/149e-4);
+    tstr(362, +1e+0, a/a);
+    tstr(363, +1.173228346456693e-4, a/x);
+    tstr(364, -1e-2, a/-1.49);
+    tstr(365, +1.27e+2, -x/-1.0);
+    tstr(366, -1e+0, -x/x);
+    tstr(367, -8.523489932885906e+3, -x/a);
+    tstr(368, +1e+0, -x/-x)
+END;
+print(("Test: **", newline));
+BEGIN
+    INT a;
+    tsti(369, +1, 1**0);
+    tsti(370, +1, 10**0);
+    tsti(371, +1, -20**0);
+    tsti(372, +1, 1**1);
+    tsti(373, +10, 10**1);
+    tsti(374, -10, -10**1);
+    tsti(375, +0, 0**1);
+    tsti(376, +0, 0**30000);
+    tsti(377, +1, 0**0);
+    tsti(378, +49, 7**2);
+    tsti(379, +1, 1**2);
+    tsti(380, +9, -3**2);
+    tsti(381, -27, -3**3);
+    tsti(382, +32, 2**5);
+    tsti(383, +81, SHORTEN(LONG 9**2));
+    tsti(384, -19683, SHORTEN(-LONG 27**3));
+    tstr(385, +2.7e+1, 3.0**3);
+    tstr(386, +6.5536e+4, 2.0**16);
+    tstr(387, -3.2768e+4, -2.0**15);
+    tstr(388, +3.6e+1, -6.0**2);
+    tstr(389, +2.5e-1, 2.0**-2);
+    tstr(390, -10e-4, -10.0**-3);
+    tstr(391, +1e+0, 3.0**-0);
+    tstr(392, +1e+0, 3.0**-0);
+    tstr(393, +4.9e+1, SHORTEN(LONG 7.0**2));
+    tstr(394, +3.969e+1, SHORTEN(-LONG 6.3**2));
+    tstr(395, +1.385019350059107e-8, SHORTEN(LONG 37.3**-5));
+    a:= 1;
+    FOR i FROM 1 BY 1 TO 10
+    DO  tsti(396, a, (-1)**(i-1)); a:= -a OD;
+    a:= 0;
+    FOR i FROM 1 BY 1 TO 10
+    DO a := a + 1**30000 OD;
+    tsti(397, +10, a)
+END;
+print(("Test: SHORTEN, LENG", newline));
+BEGIN
+    LONG INT a1 = LONG 128; LONG INT a2;
+    LONG REAL a3 = LONG 1.9999999999; LONG REAL a4;
+    REAL a6;
+    INT a5; a5 := 30000;
+    a6 := 2/3;
+    tstli(398, +LONG 179, LENG 179);
+    tsti(399, +19, SHORTEN LONG 19);
+    tsti(400, +30000, SHORTEN LONG 30000);
+    tsti(401, -27, SHORTEN-LONG 27);
+    tsti(402, -30000, SHORTEN-LONG 30000);
+    tsti(403, +128, SHORTEN a1);
+    a2:=LONG 0;
+    tsti(404, +0, SHORTEN a2);
+    tsti(405, +30000, SHORTEN LENG a5);
+    tstr(406, +1.234566666e-1, SHORTEN LONG .1234566666);
+    tstr(407, +1.9999999999e+0, SHORTEN a3);
+    a4:=LONG .1111111111; tstr(408, +1.111111111e-1, SHORTEN a4);
+    tstr(409, -3.333333333333333e-1, SHORTEN-LENG (1/3));
+    tstr(410, +6.666666666666667e-1, SHORTEN LENG a6)
+END;
+print(("Test: ODD", newline));
+BEGIN
+    IF ODD-1 THEN SKIP ELSE tste(411) FI;
+    tstb(412, FALSE, ODD 2);
+    IF NOT ODD-LONG 2 THEN SKIP ELSE tste(413) FI;
+    tstb(414, TRUE, ODD LONG 1);
+    BOOL a1, a2;
+    a1:= FALSE;
+    FOR i FROM -10 BY 1 TO 10
+    DO tstb(415, a1, ODD i); a1:= NOT a1 OD;
+    a1:=ODD-3;
+    a2:=ODD-LONG 0;
+    BOOL b1 = NOT ODD -13;
+    BOOL b2 = NOT NOT ODD -LONG 16;
+    tstb(416, TRUE, a1);
+    tstb(417, FALSE, a2);
+    tstb(418, FALSE, b1);
+    tstb(419, FALSE, b2);
+    tstb(420, FALSE, NOT NOT NOT ODD 55);
+    tstb(421, FALSE, NOT NOT NOT ODD LONG 1)
+END;
+print(("Test: SIGN", newline));
+BEGIN
+    tsti(422, +1, SIGN 7);
+    tsti(423, +0, SIGN 0);
+    tsti(424, -1, SIGN-7);
+    tsti(425, +1, SIGN LONG 1000000000);
+    tsti(426, +0, SIGN LONG 0);
+    tsti(427, -1, SIGN-LONG 8);
+    tsti(428, +1, SIGN 1.9);
+    tsti(429, +0, SIGN 0.0);
+    tsti(430, -1, SIGN-3.6);
+    tsti(431, +1, SIGN LONG 67.0);
+    tsti(432, +0, SIGN LONG 0.0);
+    tsti(433, -1, SIGN-LONG 37.0)
+END;
+print(("Test: ROUND, ENTIER", newline));
+BEGIN
+    REAL a1 = 1.7; LONG REAL a2 = LONG 27.7;
+    REAL a3; LONG REAL a4;
+    tstli(434, -LONG 28, LENG ROUND-27.7);
+    tstli(435, -LONG 28, LENG ENTIER-27.7);
+    tstli(436, +LONG 2, LENG ROUND a1);
+    tstli(437, +LONG 1, LENG ENTIER a1);
+    tstli(438, +LONG 13, LENG ROUND 12.9);
+    tstli(439, +LONG 12, LENG ENTIER 12.994);
+    a3:=134e+2; a4:=LONG 135.1e-1;
+    tstli(440, +LONG 13400, LENG ROUND a3);
+    tstli(441, +LONG 13400, LENG ENTIER a3);
+    tstli(442, +LONG 14, LENG ROUND SHORTEN a4);
+    tstli(443, +LONG 13, LENG ENTIER SHORTEN a4);
+    tstli(444, -LONG 1, ROUND-LENG 127e-2);
+    tstli(445, +LONG 1, ENTIER--LONG 127e-2);
+    tstli(446, +LONG 28, ROUND a2);
+    tstli(447, +LONG 27, ENTIER a2);
+    tstli(448, +LONG 13, ROUND LONG 12.87);
+    tstli(449, +LONG 12, ENTIER LONG 12.87);
+    tstli(450, +LONG 14, ROUND a4);
+    tstli(451, +LONG 13, ENTIER a4);
+    tstli(452, -LONG 2, ROUND-LONG 1.5001);
+    tstli(453, -LONG 2, ENTIER-LENG 1.5001);
+    tstli(454, +LONG 6, LENG ROUND 6.499)
+END;
+print(("Test: EQ, NE, LT, LE, GT, GE for chars", newline));
+BEGIN
+    CHAR a = "1"; CHAR b = "2"; CHAR c; c := "1";
+    [1:1]CHAR d; d[1]:="$";
+    INT abs0 = ABS"0", abs1 = ABS"1", abs2 = ABS"2";
+    tstb(455, TRUE, "1"="1");
+    tstb(456, FALSE, "1"/="1");
+    tstb(457, TRUE, "1"<="1");
+    tstb(458, FALSE, "1"<"1");
+    tstb(459, TRUE, "1">="1");
+    tstb(460, FALSE, "1">"1");
+    tstb(461, FALSE, "1"="2");
+    tstb(462, TRUE, "1"/="2");
+    tstb(463, TRUE, "1"<="2");
+    tstb(464, TRUE, "1"<"2");
+    tstb(465, FALSE, "1">="2");
+    tstb(466, FALSE, "1">"2");
+    tstb(467, FALSE, "2"="1");
+    tstb(468, TRUE, "2"/="1");
+    tstb(469, FALSE, "2"<="1");
+    tstb(470, FALSE, "2"<"1");
+    tstb(471, TRUE, "2">="1");
+    tstb(472, TRUE, "2">"1");
+    tstb(473, TRUE, a=a);
+    tstb(474, FALSE, a/=a);
+    tstb(475, TRUE, a<=a);
+    tstb(476, FALSE, a<a);
+    tstb(477, TRUE, a>=a);
+    tstb(478, FALSE, a>a);
+    tstb(479, FALSE, a=b);
+    tstb(480, TRUE, a/=b);
+    tstb(481, TRUE, a<=b);
+    tstb(482, TRUE, a<b);
+    tstb(483, FALSE, a>=b);
+    tstb(484, FALSE, a>b);
+    tstb(485, FALSE, b=a);
+    tstb(486, TRUE, b/=a);
+    tstb(487, FALSE, b<=a);
+    tstb(488, FALSE, b<a);
+    tstb(489, TRUE, b>=a);
+    tstb(490, TRUE, b>a);
+    tstb(491, TRUE, REPR abs1=REPR abs1);
+    tstb(492, FALSE, REPR abs1/=REPR abs1);
+    tstb(493, TRUE, REPR abs1<=REPR abs1);
+    tstb(494, FALSE, REPR abs1<REPR abs1);
+    tstb(495, TRUE, REPR abs1>=REPR abs1);
+    tstb(496, FALSE, REPR abs1>REPR abs1);
+    tstb(497, FALSE, REPR abs1=REPR abs2);
+    tstb(498, TRUE, REPR abs1/=REPR abs2);
+    tstb(499, TRUE, REPR abs1<=REPR abs2);
+    tstb(500, TRUE, REPR abs1<REPR abs2);
+    tstb(501, FALSE, REPR abs1>=REPR abs2);
+    tstb(502, FALSE, REPR abs1>REPR abs2);
+    tstb(503, FALSE, REPR abs2=REPR abs1);
+    tstb(504, TRUE, REPR abs2/=REPR abs1);
+    tstb(505, FALSE, REPR abs2<=REPR abs1);
+    tstb(506, FALSE, REPR abs2<REPR abs1);
+    tstb(507, TRUE, REPR abs2>=REPR abs1);
+    tstb(508, TRUE, REPR abs2>REPR abs1);
+    tstb(509, TRUE, REPR abs1=c);
+    tstb(510, FALSE, REPR abs1/=c);
+    tstb(511, TRUE, REPR abs1<=c);
+    tstb(512, FALSE, REPR abs1<c);
+    tstb(513, TRUE, REPR abs1>=c);
+    tstb(514, FALSE, REPR abs1>c);
+    tstb(515, FALSE, REPR abs0=c);
+    tstb(516, TRUE, REPR abs0/=c);
+    tstb(517, TRUE, REPR abs0<=c);
+    tstb(518, TRUE, REPR abs0<c);
+    tstb(519, FALSE, REPR abs0>=c);
+    tstb(520, FALSE, REPR abs0>c);
+    tstb(521, FALSE, REPR abs2=c);
+    tstb(522, TRUE, REPR abs2/=c);
+    tstb(523, FALSE, REPR abs2<=c);
+    tstb(524, FALSE, REPR abs2<c);
+    tstb(525, TRUE, REPR abs2>=c);
+    tstb(526, TRUE, REPR abs2>c);
+    tstb(527, TRUE, c=REPR abs1);
+    tstb(528, FALSE, c/=REPR abs1);
+    tstb(529, TRUE, c<=REPR abs1);
+    tstb(530, FALSE, c<REPR abs1);
+    tstb(531, TRUE, c>=REPR abs1);
+    tstb(532, FALSE, c>REPR abs1);
+    tstb(533, FALSE, c=REPR abs0);
+    tstb(534, TRUE, c/=REPR abs0);
+    tstb(535, FALSE, c<=REPR abs0);
+    tstb(536, FALSE, c<REPR abs0);
+    tstb(537, TRUE, c>=REPR abs0);
+    tstb(538, TRUE, c>REPR abs0);
+    tstb(539, FALSE, c=REPR abs2);
+    tstb(540, TRUE, c/=REPR abs2);
+    tstb(541, TRUE, c<=REPR abs2);
+    tstb(542, TRUE, c<REPR abs2);
+    tstb(543, FALSE, c>=REPR abs2);
+    tstb(544, FALSE, c>REPR abs2);
+    tstb(545, TRUE, "$"=d[1]);
+    tstb(546, FALSE, "$"/=d[1]);
+    tstb(547, TRUE, "$"<=d[1]);
+    tstb(548, FALSE, "$"<d[1]);
+    tstb(549, TRUE, "$">=d[1]);
+    tstb(550, FALSE, "$">d[1]);
+    tstb(551, TRUE, "$"=d[1])
+END
+END

@@ -1,0 +1,75 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#coer10#
+BEGIN # Union with VOID #
+  OP TOPROCINT = (INT i) PROC INT : INT : 1;
+  OP TOVOID = (INT i) VOID : 1;
+  STRING proc int = "proc int", void = "void",
+    before = "before ", after = " after";
+  print(("Results must be:", newline,
+        void, newline,
+        proc int, after, 1, newline,
+        before, void, newline,
+        before, void, newline,
+        before, void, newline,
+        proc int, 1, newline,
+        void, newline,
+        proc int, 1, newline,
+        proc int, after, 1, newline,
+        before, void, newline,
+         newline, "Results are:", newline));
+  UNION(PROC INT, VOID) upiv := EMPTY;
+  PROC pupiv = VOID:
+    print((upiv
+        |(PROC INT pi) : ((print(proc int); pi), newline)
+        |(void, newline)));
+  pupiv;
+  upiv:= INT : (print(after); 1);
+  pupiv;
+  upiv:= VOID : (print(before); 1);
+  pupiv;
+  upiv:= VOID ((print(before); 1));
+  pupiv;
+    # firm void position #
+  upiv:= print(before);
+  pupiv;
+  upiv:= TOPROCINT 1;
+  pupiv;
+  upiv:= TOVOID 1;
+  pupiv;
+  upiv:= INT : 1;
+  upiv:= label # must jump before assigning #; print("Error 1");
+label:
+  pupiv;
+  FOR i TO 2
+  DO upiv:=
+    CASE i IN
+         INT : (print(after); 1),
+         VOID : (print(before); 1)
+    ESAC;
+    pupiv
+  OD
+END

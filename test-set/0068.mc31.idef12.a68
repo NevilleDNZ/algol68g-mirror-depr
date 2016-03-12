@@ -1,0 +1,70 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#idef12#
+  # Priorities and weird constructions #
+WHILE INT n:= 0;
+    OP + = (REF INT i, CHAR c) STRING: "ab";
+  ( WHILE DO GOTO skip OD; TRUE DO SKIP OD;
+    PRIO + = 1; SKIP
+    EXIT skid:
+        (HEAP INT +:= 1 + "1" +=: (HEAP STRING := "c")) = "abc"
+    EXIT skip: GOTO skid
+  )
+DO DO
+    # The implicit structure of the formulas is
+            ( a O1 ( b + ( c O2 d)))
+      which is only achieved if   pr(O1) < pr(+) < pr(O2)
+    #
+    PRIO + = 2;
+    OP + = (INT i, BOOL b) STRING: (print("corr"); "ect,");
+    OP + = (REAL x, BOOL b) BOOL: (print("Line "); FALSE);
+    OP + = (CHAR c, BOOL b) BOOL: (print("two "); FALSE);
+    OP + = (BITS b, INT i) STRING: (print("one "); "Nope ");
+    OP + = (REF BYTES b, REAL x) INT: (print("is "); -(n+:=1));
+    OP + = (STRING s, COMPL c) BITS: (print("sho"); drop);
+     print((HEAP STRING +:=
+         ABS
+         IF PRIO + = 3;
+             ODD n OR 2.0 + "a" = "b"
+         THEN PRIO + = 4;
+             TRUE AND "a" + 2 < 3
+         ELSE PRIO + = 5;
+             "prio" = 2r1 + 2 - 3
+         FI
+         +              # prio 2 #
+         CASE PRIO + = 7;
+             0 - LOC BYTES + 3.0 ** 5
+         IN TRUE, FALSE
+         OUT PRIO + = 8;
+             3 ELEM "prio" + 2.0 I 3.0
+         ESAC
+         AND random < .5,
+         newline))
+     OD
+     EXIT drop:
+         print(("rter than line three.", newline, "End of test"));
+         stop
+OD

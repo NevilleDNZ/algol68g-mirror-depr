@@ -1,0 +1,2101 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+# r34a #
+(print(("choice using boolean",newline)) ;
+ INT  vf = (27+4+5+2)*(4*3+2*4)+7*6 ;
+ INT  ctr:=0,ctrt,mem ;
+ PROC  controle = ( INT  incr) VOID  :
+    (ctr/=mem+incr |
+    print(("count er in test",ctrt,ctr,mem+incr,newline))) ;
+ PROC  test =  INT  : (ctr+:=1;1) ,
+   rre = [] PROC  INT :(ctr+:=1;test) ,
+   pche =  PROC ( STRING ) PROC  INT  :
+(ctr+:=1;( STRING  a) PROC  INT :test);
+ UNION ( INT , STRING ) vu:=1 ;
+
+# servitudes pour contextes #
+ MODE   MSTR  =  STRUCT ( COMPL  de,of) ,
+ PRIO  += =5 , ? =9 ,
+ OP   ?= =( INT  x) VOID  : x ,
+    += =( INT  a) PROC  INT :test ,
+    += =( UNION ( INT , BOOL ) a, INT  b) BOOL :(ctr+:=1)=b ,
+    += =( UNION ( REF  INT , REF  BOOL ) a, REAL  b) MSTR  :  SKIP  ,
+    += =( MSTR  a,b) REF  INT  : ctr+:=1 ;
+
+                   # declarations pour unites du mode
+                    PROC   INT  #
+ OP  ? =( INT  a, PROC  INT  b)
+ PROC   INT  :
+(ctr+:=1 ;
+test),
+ STRUCT ( INT of, PROC  INT  de) structa
+=(0,
+test) ,
+ PROC  proca=([] INT  a)
+ PROC  INT : (ctr+:=1 ;
+test)
+, identa= PROC  INT 
+:(ctr+:=1;
+test) ,
+[] PROC  PROC  INT 
+ ranga= identa;
+
+                   # declarations pour unites du mode
+                    PROC   REF  BOOL  #
+ OP  ? =( INT  a, PROC  REF  BOOL  b)
+ PROC   REF  BOOL  :
+(ctr+:=1 ;
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )),
+ STRUCT ( INT of, PROC  REF  BOOL  de) structb
+=(0,
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )) ,
+ PROC  procb=([] INT  a)
+ PROC  REF  BOOL : (ctr+:=1 ;
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+, identb= PROC  REF  BOOL 
+:(ctr+:=1;
+ REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )) ,
+[] PROC  PROC  REF  BOOL 
+ rangb= identb;
+
+                   # declarations pour unites du mode
+                    PROC   MSTR  #
+ OP  ? =( INT  a, PROC  MSTR  b)
+ PROC   MSTR  :
+(ctr+:=1 ;
+ MSTR :((0,0),ctr+:=1)),
+ STRUCT ( INT of, PROC  MSTR  de) structc
+=(0,
+ MSTR :((0,0),ctr+:=1)) ,
+ PROC  procc=([] INT  a)
+ PROC  MSTR : (ctr+:=1 ;
+ MSTR :((0,0),ctr+:=1))
+, identc= PROC  MSTR 
+:(ctr+:=1;
+ MSTR :((0,0),ctr+:=1)) ,
+[] PROC  PROC  MSTR 
+ rangc= identc;
+
+                   # declarations pour unites du mode
+                    PROC  [] PROC  INT  #
+ OP  ? =( INT  a, PROC [] PROC  INT  b)
+ PROC  [] PROC  INT  :
+(ctr+:=1 ;
+rre),
+ STRUCT ( INT of, PROC [] PROC  INT  de) structd
+=(0,
+rre) ,
+ PROC  procd=([] INT  a)
+ PROC [] PROC  INT : (ctr+:=1 ;
+rre)
+, identd= PROC [] PROC  INT 
+:(ctr+:=1;
+rre) ,
+[] PROC  PROC [] PROC  INT 
+ rangd= identd;
+
+                   # declarations pour unites du mode
+                    PROC   PROC ( STRING ) PROC  INT  #
+ OP  ? =( INT  a, PROC  PROC ( STRING ) PROC  INT  b)
+ PROC   PROC ( STRING ) PROC  INT  :
+(ctr+:=1 ;
+pche),
+ STRUCT ( INT of, PROC  PROC ( STRING ) PROC  INT  de) structe
+=(0,
+pche) ,
+ PROC  proce=([] INT  a)
+ PROC  PROC ( STRING ) PROC  INT : (ctr+:=1 ;
+pche)
+, idente= PROC  PROC ( STRING ) PROC  INT 
+:(ctr+:=1;
+pche) ,
+[] PROC  PROC  PROC ( STRING ) PROC  INT 
+ range= idente;
+
+                   #  contextes  #
+
+ctrt:=   1 ; mem:=ctr ;
+
+( FOR  ident FROM 
+ IF 
+    ctr+:=1; SKIP ;0<=0
+ THEN 
+    ctr+:=1;vu:=1;
+    test
+ ELSE  SKIP  FI 
+ BY 
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ FI 
+ TO 
+ IF 
+    ctr+:=1; SKIP ;0<=0
+ THEN 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ FI 
+ WHILE 
+ IF 
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ THEN 
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ ELSE  SKIP  FI 
+ DO  [
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
+: 4,-ident:
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
+]  INT  ent ; ent [
+ IF 
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ THEN 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ ELSE  SKIP  FI 
+,0]:=ent[ident,
+ IF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ ELSE  SKIP  FI 
+]:=
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+ IF 
+    (ctr+:=1; INT x=1;x) ;0<=0
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ ELSE  SKIP  FI 
+; REAL  pp=1.00001;
+ IF 
+    (ctr+:=1; INT x=1;x) ;0<=0
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ ELSE  SKIP  FI 
+);alfa:=1+
+ IF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ THEN 
+    ctr+:=1;vu:=1;
+    test
+ ELSE  SKIP  FI 
+ ;  INT  ident=
+ IF 
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ ELSE  SKIP  FI 
+, INT  loc:= CASE 
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ FI 
+ IN 
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ ELSE  SKIP  FI 
+, SKIP   ESAC  , tas:=
+ IF 
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ THEN 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ FI 
+, PROC  proc =  INT  :
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ ELSE  SKIP  FI 
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+ IF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ FI 
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ ELSE  SKIP  FI 
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+     INT  x=1;ctr+:=x;
+    test
+ ELSE  SKIP  FI 
+,proc)
+;( INT  BEGIN 
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+    ctr+:=1;vu:=1;
+    test
+ ELSE  SKIP  FI 
+ END  , ?=  (union;
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ FI 
+ |
+ IF 
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ THEN 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+) ,
+ IF 
+    (ctr+:=1; INT x=1;x) ;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+,( BOOL  bool= TRUE  ; union|( INT ):
+ IF 
+    (ctr+:=1; INT x=1;x) ;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ ELSE  SKIP  FI 
+,( COMPL  complex): SKIP )) ;
+controle(27*3) ;
+ctrt:=   2 ; mem:=ctr ;
+
+ IF 
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ THEN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ FI 
+:=
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ FI 
+:=
+ IF 
+    ctr+:=1; SKIP ;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ FI 
+:=:
+ IF 
+    ctr+:=1; SKIP ;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ ELSE  SKIP  FI 
+;
+controle( 4*3) ;
+ctrt:=   3 ; mem:=ctr ;
++=
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+    test
+ ELSE  SKIP  FI 
++=(
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ FI 
++= re OF de OF 
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ THEN 
+    ctr+:=1;vu:=1;
+     MSTR :((0,0),ctr+:=1)
+ FI 
++=
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     MSTR :((0,0),ctr+:=1)
+ ELSE  SKIP  FI 
+) += +=
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ THEN 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ ELSE  SKIP  FI 
+ ;
+controle(5*3+5) ;
+ctrt:=   4 ; mem:=ctr ;
+
+ IF 
+    ctr+:=1; SKIP ;0<=0
+ THEN 
+     INT  x=1;ctr+:=x;
+    rre
+ ELSE  SKIP  FI 
+[1] ;
+ IF 
+    ctr+:=1; INT  x;0<=0
+ THEN 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    pche)
+ ELSE  SKIP  FI 
+("") ;
+controle(2*3+2) ) ;
+
+ctrt:=   5 ; mem:=ctr ;
+
+( FOR  ident FROM 
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+ BY 
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+ TO 
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ WHILE 
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ DO  [
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+: 4,-ident:
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+]  INT  ent ; ent [
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,0]:=ent[ident,
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ctr+:=1;vu:=1;
+    test
+)
+]:=
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+; REAL  pp=1.00001;
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+);alfa:=1+
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;  INT  ident=
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, INT  loc:= CASE 
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ IN 
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+, SKIP   ESAC  , tas:=
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, PROC  proc =  INT  :
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+(
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ctr+:=1;vu:=1;
+    test
+)
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+,proc)
+;( INT  BEGIN 
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+ END  , ?=  (union;
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ |
+(
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+) ,
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+,( BOOL  bool= TRUE  ; union|( INT ):
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*3) ;
+ctrt:=   6 ; mem:=ctr ;
+
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+:=
+(
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+:=:
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+)
+;
+controle( 4*3) ;
+ctrt:=   7 ; mem:=ctr ;
++=
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
++=(
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+)
++= re OF de OF 
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1)
+)
++=
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1)
+)
+) += +=
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;
+controle(5*3+5) ;
+ctrt:=   8 ; mem:=ctr ;
+
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    rre
+)
+[1] ;
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    pche EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+("") ;
+controle(2*3+2) ) ;
+
+ctrt:=   9 ; mem:=ctr ;
+
+( FOR  ident FROM 
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+)
+ BY 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+ | SKIP )
+ TO 
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+ | SKIP )
+ WHILE 
+( FALSE | SKIP |: FALSE | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ DO  [
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+: 4,-ident:
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+)
+]  INT  ent ; ent [
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ | SKIP )
+,0]:=ent[ident,
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+ | SKIP )
+]:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+ | SKIP )
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+( FALSE | SKIP |: FALSE | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ | SKIP )
+; REAL  pp=1.00001;
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+)
+);alfa:=1+
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;  INT  ident=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+ | SKIP )
+, INT  loc:= CASE 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
+ IN 
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+, SKIP   ESAC  , tas:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, PROC  proc =  INT  :
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+ | SKIP )
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+( FALSE | SKIP |: FALSE | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ | SKIP )
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,proc)
+;( INT  BEGIN 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+ | SKIP )
+ END  , ?=  (union;
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ |
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+) ,
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+     INT  x=1;ctr+:=x;
+    test
+ | SKIP )
+,( BOOL  bool= TRUE  ; union|( INT ):
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*3) ;
+ctrt:=  10 ; mem:=ctr ;
+
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+)
+:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+)
+:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+)
+:=:
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+    ctr+:=1;vu:=1;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+;
+controle( 4*3) ;
+ctrt:=  11 ; mem:=ctr ;
++=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
++=(
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+)
++= re OF de OF 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     MSTR :((0,0),ctr+:=1))
+ | SKIP )
++=
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT e: SKIP 
+ | SKIP )
+) += +=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;
+controle(5*3+5) ;
+ctrt:=  12 ; mem:=ctr ;
+
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+    ctr+:=1;vu:=1;
+    rre
+)
+[1] ;
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    pche EXIT e: SKIP 
+ | SKIP )
+("") ;
+controle(2*3+2) ) ;
+
+ctrt:=  13 ; mem:=ctr ;
+
+( FOR  ident FROM 
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+ BY 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+ TO 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+ WHILE 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+)
+ DO  [
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+    ctr+:=1;vu:=1;
+    test
+)
+: 4,-ident:
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+]  INT  ent ; ent [
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+    ctr+:=1;vu:=1;
+    test
+)
+,0]:=ent[ident,
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+]:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+; REAL  pp=1.00001;
+( FALSE | SKIP |: FALSE | SKIP |:
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+);alfa:=1+
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+ ;  INT  ident=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+, INT  loc:= CASE 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ IN 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+, SKIP   ESAC  , tas:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+    ctr+:=1;vu:=1;
+    test
+)
+, PROC  proc =  INT  :
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+( FALSE | SKIP |: FALSE | SKIP |:
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+,proc)
+;( INT  BEGIN 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+ END  , ?=  (union;
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+ |
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+) ,
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+,( BOOL  bool= TRUE  ; union|( INT ):
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*3) ;
+ctrt:=  14 ; mem:=ctr ;
+
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+)
+:=
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=:
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+;
+controle( 4*3) ;
+ctrt:=  15 ; mem:=ctr ;
++=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
++=(
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+)
++= re OF de OF 
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT e: SKIP 
+)
++=
+( FALSE | SKIP |: FALSE | SKIP |:
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     MSTR :((0,0),ctr+:=1)
+)
+) += +=
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    test
+)
+ ;
+controle(5*3+5) ;
+ctrt:=  16 ; mem:=ctr ;
+
+( FALSE | SKIP |: FALSE | SKIP |:
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |
+     INT  x=1;ctr+:=x;
+    rre EXIT e: SKIP 
+)
+[1] ;
+( FALSE | SKIP |: FALSE | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    pche)
+)
+("") ;
+controle(2*3+2) ) ;
+
+ctrt:=  17 ; mem:=ctr ;
+
+( FOR  ident FROM 
+(
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+ BY 
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+ TO 
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ | SKIP )
+ WHILE 
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT e: SKIP 
+ | SKIP )
+ DO  [
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ | SKIP )
+: 4,-ident:
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ | SKIP )
+]  INT  ent ; ent [
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ | SKIP )
+,0]:=ent[ident,
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+]:=
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+ | SKIP )
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+; REAL  pp=1.00001;
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
+);alfa:=1+
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
+ ;  INT  ident=
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+, INT  loc:= CASE 
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+)
+ IN 
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+ | SKIP )
+, SKIP   ESAC  , tas:=
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ctr+:=1;vu:=1;
+    test
+ | SKIP )
+, PROC  proc =  INT  :
+(
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ | SKIP )
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ | SKIP )
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    ctr+:=1; INT  x;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+)
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+(
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+,proc)
+;( INT  BEGIN 
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    ( INT  x:=10;ctr+:=1; TRUE |0<=0)
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
+ END  , ?=  (union;
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ | SKIP )
+ |
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ | SKIP )
+) ,
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+     INT  x=1;ctr+:=x;
+    test
+)
+,( BOOL  bool= TRUE  ; union|( INT ):
+(
+    ctr+:=1; SKIP ; FALSE 
+ | SKIP |:
+    ( GOTO e;ctr+:=100;e:ctr+:=1);0<=0
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+)
+,( COMPL  complex): SKIP )) ;
+controle(27*4) ;
+ctrt:=  18 ; mem:=ctr ;
+
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ | SKIP )
+:=
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+)
+:=
+(
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ | SKIP )
+:=:
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ | SKIP )
+;
+controle( 4*4) ;
+ctrt:=  19 ; mem:=ctr ;
++=
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    ( INT  x=5;x);ctr+:=1; INT  x;0<=0
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ | SKIP )
++=(
+(
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ | SKIP )
++= re OF de OF 
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+     CASE ctr+:=1;1 IN 0<=0, SKIP  ESAC 
+ |
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+)
++=
+(
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    ctr+:=1; SKIP ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1)
+)
+) += +=
+(
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ | SKIP |:
+    (ctr+:=1;0<=0
+     EXIT e:ctr+:=100; SKIP )
+ |
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ | SKIP )
+ ;
+controle(5*4+5) ;
+ctrt:=  20 ; mem:=ctr ;
+
+(
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    rre EXIT e: SKIP 
+)
+[1] ;
+(
+    ctr+:=1; INT  x; FALSE 
+ | SKIP |:
+    (ctr+:=1; INT x=1;x) ;0<=0
+ |
+     INT  x=1;ctr+:=x;
+    pche EXIT e: SKIP 
+ | SKIP )
+("") ;
+controle(2*4+2) ) ;
+
+ctrt:=  21 ; mem:=ctr ;
+
+( FOR  ident FROM 
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
+ BY 
+ IF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELIF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+ TO 
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ FI 
+ WHILE 
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ FI 
+ DO  [
+ IF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ FI 
+: 4,-ident:
+ IF 
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ THEN  SKIP  ELIF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ FI 
+]  INT  ent ; ent [
+ IF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+,0]:=ent[ident,
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+]:=
+ IF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+ OD ;
+ INT  alfa, INT  par=( SKIP ;
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELSE 
+    ctr+:=1;vu:=1;
+    test
+ FI 
+; REAL  pp=1.00001;
+ IF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ FI 
+);alfa:=1+
+ IF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELIF 
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+ ;  INT  ident=
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ FI 
+, INT  loc:= CASE 
+ IF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELSE 
+    ctr+:=1;vu:=1;
+    test
+ FI 
+ IN 
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    test)
+ FI 
+, SKIP   ESAC  , tas:=
+ IF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELIF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELSE 
+    ctr+:=1;vu:=1;
+    test
+ FI 
+, PROC  proc =  INT  :
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+    test EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ FI 
+, STRUCT ( COMPL of, STRUCT ( INT de, COMPL of)de) de:=
+((.111,0),(
+ IF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELIF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
+,(0,0e1)));
+[] INT  apd=(ident,par,loc,
+ IF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ FI 
+,proc,tas,de OF de OF de),
+ PROC  pr:=( INT rep,reprep, PROC  INT  repproc) INT :
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
+; UNION ( REAL , INT , COMPL )union:=pr(proc,
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+    ctr+:=1;vu:=1;
+    test
+ FI 
+,proc)
+;( INT  BEGIN 
+ IF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ FI 
+ END  , ?=  (union;
+ IF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; SKIP ; FALSE 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ FI 
+ |
+ IF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+    ctr+:=1;vu:=1;
+    test
+ FI 
+) ,
+ IF 
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ THEN  SKIP  ELIF 
+    (ctr+:=1; FALSE 
+     EXIT e:ctr+:=100; SKIP )
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test
+ FI 
+,( BOOL  bool= TRUE  ; union|( INT ):
+ IF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
+,( COMPL  complex): SKIP )) ;
+controle(27*4) ;
+ctrt:=  22 ; mem:=ctr ;
+
+ IF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELIF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ))
+ FI 
+:=
+ IF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ FI 
+:=
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+     GOTO f EXIT e:( INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE ) EXIT 
+    e: SKIP ) EXIT  f: GOTO e
+ FI 
+:=:
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ FI 
+;
+controle( 4*4) ;
+ctrt:=  23 ; mem:=ctr ;
++=
+ IF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELIF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELSE 
+    ( INT  x;ctr+:=1 EXIT e:x);
+     INT  y;e:f:g:h:
+    test
+ FI 
++=(
+ IF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+     REF  BOOL :(ctr+:=1; HEAP  BOOL := TRUE )
+ FI 
++= re OF de OF 
+ IF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+     MSTR :((0,0),ctr+:=1) EXIT e: SKIP 
+ FI 
++=
+ IF 
+    ( GOTO e;ctr+:=100;e:ctr+:=1); FALSE 
+ THEN  SKIP  ELIF 
+    ( INT  x:=10;ctr+:=1; TRUE | FALSE )
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+     MSTR :((0,0),ctr+:=1))
+ FI 
+) += +=
+ IF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELIF 
+     CASE ctr+:=1;1 IN  FALSE , SKIP  ESAC 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    test EXIT e: SKIP 
+ FI 
+ ;
+controle(5*4+5) ;
+ctrt:=  24 ; mem:=ctr ;
+
+ IF 
+    (ctr+:=1; INT x=1;x) ; FALSE 
+ THEN  SKIP  ELIF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+    vu:=1;( INT  x:=1; TRUE |
+    ctr+:=1;x; INT  y;
+    rre)
+ FI 
+[1] ;
+ IF 
+    ( INT  x=5;x);ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELIF 
+    ctr+:=1; INT  x; FALSE 
+ THEN  SKIP  ELSE 
+     INT  x=1;ctr+:=x;
+    pche EXIT e: SKIP 
+ FI 
+("") ;
+controle(2*4+2) ) ;
+
+print((ctr," tests ",(ctr=vf|"ok"|"error"))))

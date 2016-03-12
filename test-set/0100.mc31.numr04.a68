@@ -1,0 +1,111 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#numr04#
+BEGIN # Two versions of the integration procedure 'qad',
+    one fully recursive (and understandable), one half-recursive,
+    a result of an optimization attempt on the ALGOL60 version #
+  REAL eps = 10000 * small real;
+  PROC qad fr = (REAL a, b, PROC (REAL) REAL fx,
+                 STRUCT (REAL re, ae, REF INT skip) e) REAL:
+  BEGIN REAL sum:= 0;
+    REAL re = re OF e, ae = ae OF e * 180 / ABS(b - a),
+    REF INT skip = skip OF e:= 0;
+    REAL h min = ABS(b - a) * re;
+    PROC int = (REAL x0, f0, x2, f2, x4, f4) VOID:
+      IF REAL x1 = (x0 + x2) / 2, x3 = (x2 + x4) /2;
+        REAL  f1 = fx(x1), f3 = fx(x3);
+        REAL h = x4 - x0,
+          aid1 = 4 * (f1 + f3), aid2 = f0 + f4,
+          v = (aid1 + 2 * f2 + aid2) * 15,
+          t = 6 * f2 - aid1 + aid2;
+          ABS t < ABS v * re + ae
+      THEN sum +:= h * (v - t)
+      ELIF ABS h < h min THEN skip +:= 1
+      ELSE int(x0, f0, x1, f1, x2, f2);
+             int(x2, f2, x3, f3, x4, f4)
+      FI # of int #;
+    int(a, fx(a), (a + b) / 2, fx((a + b) / 2), b, fx(b));
+    sum / 180
+  END #of qad fr#;
+  PROC qad hr = (REAL a, b, PROC (REAL) REAL fx,
+                 STRUCT (REAL re, ae, REF INT skip) e) REAL:
+  BEGIN REAL x0:= a, f0:= fx(a), x2:= b, f2:= fx(b);
+    REAL x1:= (x0 + x2) / 2; REAL f1:= fx(x1);
+    REAL sum:= 0;
+    REAL re = re OF e, ae = ae OF e * 180 / ABS(b - a),
+    REF INT skip = skip OF e:= 0;
+    REAL h min = ABS(b - a) * re;
+    PROC int = VOID:
+      BEGIN REAL x4 = x2, f4 = f2;
+        x2:= x1; f2:= f1;
+      anew:
+        IF x1:= (x0 + x2) / 2; f1:= fx(x1);
+          REAL  x3= (x2 + x4) / 2; REAL f3:= fx(x3);
+          REAL h = x4 - x0,
+            aid1 = 4 * (f1 + f3), aid2 = f0 + f4;
+          REAL v = (aid1 + 2 * f2 + aid2) * 15,
+            t = 6 * f2 - aid1 + aid2;
+            ABS t < ABS v * re + ae
+        THEN sum +:= h * (v - t)
+        ELIF ABS h < h min THEN skip +:= 1
+        ELSE int; x2:= x3; f2:= f3; GOTO anew FI;
+      x0:= x4; f0:= f4
+    END #of int#;
+    int; sum / 180
+  END #of qad hr#;
+  PROC test qad =
+    (STRING type,
+      PROC (REAL, REAL, PROC (REAL) REAL,
+               STRUCT (REAL re, ae, REF INT skip))REAL qad
+    ) VOID:
+  BEGIN INT real size = real width + exp width + 6;
+    print((
+      newline, "Results for ", type, ":", newline, " ",
+      "exponent", (real size - 8) * " ",
+      "integral", (real size - 8) * " ",
+      "error", (real size - 5) * " ",
+      "skip points   time",
+      newline));
+    PROC exp test = (REAL power, answer) VOID:
+    BEGIN
+      INT skip, eval:= 0;
+      REAL time:= clock;
+      REAL result =
+        qad(0, 1, (REAL x)REAL: (eval +:= 1;
+                     (x <= 0 | 0 | exp(ln(x) * power))),
+             (eps, eps, skip)
+           );
+      time:= clock - time;
+      print(( power, ",", result, ",", 0.0 #result-answer#, ",",
+              whole(skip, -6), ",", whole(eval, -6), ",",
+              #time# "time", newline))
+    END # test exp #;
+    FOR k FROM 4 TO 10 DO exp test(k, 1 / (k+1)) OD;
+    FOR k FROM 2 TO 7 DO exp test(1 / k, k / (k+1)) OD
+  END # test qad #;
+  test qad("fully recursive version", qad fr);
+  test qad("half-recursive version", qad hr)
+END

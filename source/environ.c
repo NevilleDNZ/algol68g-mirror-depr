@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 compiler-interpreter.
-Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2016 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -2156,6 +2156,7 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "rows", m, genie_rows);
   a68_idf (A68_EXT, "columns", m, genie_columns);
   a68_idf (A68_EXT, "argc", m, genie_argc);
+  a68_idf (A68_EXT, "a68gargc", m, genie_a68g_argc);
   a68_idf (A68_EXT, "errno", m, genie_errno);
   a68_idf (A68_EXT, "fork", m, genie_fork);
   m = a68_proc (MODE (STRING), NO_MOID);
@@ -2177,6 +2178,7 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "filemode", m, genie_file_mode);
   m = a68_proc (MODE (STRING), MODE (INT), NO_MOID);
   a68_idf (A68_EXT, "argv", m, genie_argv);
+  a68_idf (A68_EXT, "a68gargv", m, genie_a68g_argv);
   m = proc_void;
   a68_idf (A68_EXT, "reseterrno", m, genie_reset_errno);
   m = a68_proc (MODE (STRING), MODE (INT), NO_MOID);
@@ -5593,7 +5595,7 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
 @return See brief description.
 **/
 
-     double curt (double x)
+double curt (double x)
 {
 #define CBRT2 1.2599210498948731647672;
 #define CBRT4 1.5874010519681994747517;
@@ -10562,7 +10564,20 @@ void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   RESET_ERRNO;
-  if (mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
+  if (END_OF_FILE (f)) {
+    end_of_file_error (p, ref_file);
+  }
+  if (mode == MODE (PROC_REF_FILE_VOID)) {
+    genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
+  } else if (mode == MODE (FORMAT)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (REF_SOUND)) {
+    read_sound (p, ref_file, DEREF (A68_SOUND, (A68_REF *) item));
+  } else if (IS (mode, REF_SYMBOL)) {
+    CHECK_REF (p, *(A68_REF *) item, mode);
+    genie_read_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
+  } else if (mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
     scan_integer (p, ref_file);
     genie_string_to_value (p, mode, item, ref_file);
   } else if (mode == MODE (REAL) || mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
@@ -10707,20 +10722,7 @@ void genie_read_file (NODE_T * p)
     A68_UNION *z = (A68_UNION *) & base_address[elem_index];
     MOID_T *mode = (MOID_T *) (VALUE (z));
     BYTE_T *item = (BYTE_T *) & base_address[elem_index + A68_UNION_SIZE];
-    if (mode == MODE (PROC_REF_FILE_VOID)) {
-      genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
-    } else if (mode == MODE (FORMAT)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (REF_SOUND)) {
-      read_sound (p, ref_file, DEREF (A68_SOUND, (A68_REF *) item));
-    } else {
-      if (END_OF_FILE (file)) {
-        end_of_file_error (p, ref_file);
-      }
-      CHECK_REF (p, *(A68_REF *) item, mode);
-      genie_read_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
-    }
+    genie_read_standard (p, mode, item, ref_file);
     elem_index += SIZE (MODE (SIMPLIN));
   }
 }
@@ -10866,7 +10868,14 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
 void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   RESET_ERRNO;
-  if (mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
+  if (mode == MODE (PROC_REF_FILE_VOID)) {
+    genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
+  } else if (mode == MODE (FORMAT)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (SOUND)) {
+    write_sound (p, ref_file, (A68_SOUND *) item);
+  } else if (mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
     genie_value_to_string (p, mode, item, FORMAT_ITEM_G);
     add_string_from_stack_transput_buffer (p, UNFORMATTED_BUFFER);
   } else if (mode == MODE (REAL) || mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL)) {
@@ -11013,18 +11022,9 @@ void genie_write_file (NODE_T * p)
     A68_UNION *z = (A68_UNION *) & (base_address[elem_index]);
     MOID_T *mode = (MOID_T *) (VALUE (z));
     BYTE_T *item = (BYTE_T *) & base_address[elem_index + A68_UNION_SIZE];
-    if (mode == MODE (PROC_REF_FILE_VOID)) {
-      genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
-    } else if (mode == MODE (FORMAT)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (SOUND)) {
-      write_sound (p, ref_file, (A68_SOUND *) item);
-    } else {
-      reset_transput_buffer (UNFORMATTED_BUFFER);
-      genie_write_standard (p, mode, item, ref_file);
-      write_purge_buffer (p, ref_file, UNFORMATTED_BUFFER);
-    }
+    reset_transput_buffer (UNFORMATTED_BUFFER);
+    genie_write_standard (p, mode, item, ref_file);
+    write_purge_buffer (p, ref_file, UNFORMATTED_BUFFER);
     elem_index += SIZE (MODE (SIMPLOUT));
   }
 }
@@ -11039,9 +11039,24 @@ void genie_write_file (NODE_T * p)
 
 static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
-  A68_FILE *f = FILE_DEREF (&ref_file);
+  A68_FILE *f;
+  CHECK_REF (p, ref_file, MODE (REF_FILE));
+  f = FILE_DEREF (&ref_file);
   RESET_ERRNO;
-  if (mode == MODE (INT)) {
+  if (END_OF_FILE (f)) {
+    end_of_file_error (p, ref_file);
+  }
+  if (mode == MODE (PROC_REF_FILE_VOID)) {
+    genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
+  } else if (mode == MODE (FORMAT)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (REF_SOUND)) {
+    read_sound (p, ref_file, (A68_SOUND *) ADDRESS ((A68_REF *) item));
+  } else if (IS (mode, REF_SYMBOL)) {
+    CHECK_REF (p, *(A68_REF *) item, mode);
+    genie_read_bin_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
+  } else if (mode == MODE (INT)) {
     A68_INT *z = (A68_INT *) item;
     ASSERT (io_read (FD (f), &(VALUE (z)), sizeof (VALUE (z))) != -1);
     STATUS (z) = INIT_MASK;
@@ -11198,20 +11213,7 @@ void genie_read_bin_file (NODE_T * p)
     A68_UNION *z = (A68_UNION *) & base_address[elem_index];
     MOID_T *mode = (MOID_T *) (VALUE (z));
     BYTE_T *item = (BYTE_T *) & base_address[elem_index + A68_UNION_SIZE];
-    if (mode == MODE (PROC_REF_FILE_VOID)) {
-      genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
-    } else if (mode == MODE (FORMAT)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (REF_SOUND)) {
-      read_sound (p, ref_file, (A68_SOUND *) ADDRESS ((A68_REF *) item));
-    } else {
-      if (END_OF_FILE (file)) {
-        end_of_file_error (p, ref_file);
-      }
-      CHECK_REF (p, *(A68_REF *) item, mode);
-      genie_read_bin_standard (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
-    }
+    genie_read_bin_standard (p, mode, item, ref_file);
     elem_index += SIZE (MODE (SIMPLIN));
   }
 }
@@ -11226,9 +11228,18 @@ void genie_read_bin_file (NODE_T * p)
 
 static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
-  A68_FILE *f = FILE_DEREF (&ref_file);
+  A68_FILE *f;
+  CHECK_REF (p, ref_file, MODE (REF_FILE));
+  f = FILE_DEREF (&ref_file);
   RESET_ERRNO;
-  if (mode == MODE (INT)) {
+  if (mode == MODE (PROC_REF_FILE_VOID)) {
+    genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
+  } else if (mode == MODE (FORMAT)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (SOUND)) {
+    write_sound (p, ref_file, (A68_SOUND *) item);
+  } else if (mode == MODE (INT)) {
     ASSERT (io_write (FD (f), &(VALUE ((A68_INT *) item)), sizeof (VALUE ((A68_INT *) item))) != -1);
   } else if (mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
     ASSERT (io_write (FD (f), (MP_T *) item, (size_t) SIZE (mode)) != -1);
@@ -11364,16 +11375,7 @@ void genie_write_bin_file (NODE_T * p)
     A68_UNION *z = (A68_UNION *) & base_address[elem_index];
     MOID_T *mode = (MOID_T *) (VALUE (z));
     BYTE_T *item = (BYTE_T *) & base_address[elem_index + A68_UNION_SIZE];
-    if (mode == MODE (PROC_REF_FILE_VOID)) {
-      genie_call_proc_ref_file_void (p, ref_file, *(A68_PROCEDURE *) item);
-    } else if (mode == MODE (FORMAT)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (FORMAT));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (SOUND)) {
-      write_sound (p, ref_file, (A68_SOUND *) item);
-    } else {
-      genie_write_bin_standard (p, mode, item, ref_file);
-    }
+    genie_write_bin_standard (p, mode, item, ref_file);
     elem_index += SIZE (MODE (SIMPLOUT));
   }
 }
@@ -14017,17 +14019,64 @@ static void genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF
 }
 
 /**
+@brief At end of write purge all insertions.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+**/
+
+static void purge_format_write (NODE_T * p, A68_REF ref_file)
+{
+/* Problem here is shutting down embedded formats */
+  BOOL_T go_on;
+  do {
+    A68_FILE *file;
+    NODE_T *dollar, *pat;
+    A68_FORMAT *old_fmt;
+    while ((pat = get_next_format_pattern (p, ref_file, SKIP_PATTERN)) != NO_NODE) {
+      format_error (p, ref_file, ERROR_FORMAT_PICTURES);
+    }
+    file = FILE_DEREF (&ref_file);
+    dollar = SUB (BODY (&FORMAT (file)));
+    old_fmt = (A68_FORMAT *) FRAME_LOCAL (frame_pointer, OFFSET (TAX (dollar)));
+    go_on = (BOOL_T) ! IS_NIL_FORMAT (old_fmt);
+    if (go_on) {
+/* Pop embedded format and proceed */
+      (void) end_of_format (p, ref_file);
+    }
+  } while (go_on);
+}
+
+/**
 @brief Write value to file.
 @param p Node in syntax tree.
 @param mode Mode of value.
 @param item Pointer to value.
 @param ref_file Fat pointer to A68 file.
+@param formats Format counter.
 **/
 
-static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
 {
   RESET_ERRNO;
-  if (mode == MODE (INT)) {
+  if (mode == MODE (FORMAT)) {
+    A68_FILE *file;
+    CHECK_REF (p, ref_file, MODE (REF_FILE));
+    file = FILE_DEREF (&ref_file);
+/* Forget about eventual active formats and set up new one */
+    if (*formats > 0) {
+      purge_format_write (p, ref_file);
+    }
+    (*formats)++;
+    frame_pointer = FRAME_POINTER (file);
+    stack_pointer = STACK_POINTER (file);
+    open_format_frame (p, ref_file, (A68_FORMAT *) item, NOT_EMBEDDED_FORMAT, A68_TRUE);
+  } else if (mode == MODE (PROC_REF_FILE_VOID)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (PROC_REF_FILE_VOID));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (SOUND)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (SOUND));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (INT)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, GENERAL_PATTERN) && NEXT_SUB (pat) == NO_NODE) {
       genie_value_to_string (p, mode, item, ATTRIBUTE (SUB (pat)));
@@ -14125,7 +14174,7 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     } else {
 /* Try writing as two REAL values */
       genie_write_real_format (pat, item, ref_file);
-      genie_write_standard_format (p, MODE (REAL), &item[SIZE (MODE (REAL))], ref_file);
+      genie_write_standard_format (p, MODE (REAL), &item[SIZE (MODE (REAL))], ref_file, formats);
     }
   } else if (mode == MODE (LONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
@@ -14134,7 +14183,7 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     } else {
 /* Try writing as two LONG REAL values */
       genie_write_long_real_format (pat, item, ref_file);
-      genie_write_standard_format (p, MODE (LONG_REAL), &item[SIZE (MODE (LONG_REAL))], ref_file);
+      genie_write_standard_format (p, MODE (LONG_REAL), &item[SIZE (MODE (LONG_REAL))], ref_file, formats);
     }
   } else if (mode == MODE (LONGLONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
@@ -14143,7 +14192,7 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     } else {
 /* Try writing as two LONG LONG REAL values */
       genie_write_longlong_real_format (pat, item, ref_file);
-      genie_write_standard_format (p, MODE (LONGLONG_REAL), &item[SIZE (MODE (LONGLONG_REAL))], ref_file);
+      genie_write_standard_format (p, MODE (LONGLONG_REAL), &item[SIZE (MODE (LONGLONG_REAL))], ref_file, formats);
     }
   } else if (mode == MODE (BOOL)) {
     A68_BOOL *z = (A68_BOOL *) item;
@@ -14232,13 +14281,13 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
     }
   } else if (IS (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
-    genie_write_standard_format (p, (MOID_T *) (VALUE (z)), &item[A68_UNION_SIZE], ref_file);
+    genie_write_standard_format (p, (MOID_T *) (VALUE (z)), &item[A68_UNION_SIZE], ref_file, formats);
   } else if (IS (mode, STRUCT_SYMBOL)) {
     PACK_T *q = PACK (mode);
     for (; q != NO_PACK; FORWARD (q)) {
       BYTE_T *elem = &item[OFFSET (q)];
       genie_check_initialisation (p, elem, MOID (q));
-      genie_write_standard_format (p, MOID (q), elem, ref_file);
+      genie_write_standard_format (p, MOID (q), elem, ref_file, formats);
     }
   } else if (IS (mode, ROW_SYMBOL) || IS (mode, FLEX_SYMBOL)) {
     MOID_T *deflexed = DEFLEX (mode);
@@ -14255,7 +14304,7 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
         ADDR_T elem_addr = ROW_ELEMENT (arr, a68g_index);
         BYTE_T *elem = &base_addr[elem_addr];
         genie_check_initialisation (p, elem, SUB (deflexed));
-        genie_write_standard_format (p, SUB (deflexed), elem, ref_file);
+        genie_write_standard_format (p, SUB (deflexed), elem, ref_file, formats);
         done = increment_internal_index (tup, DIM (arr));
       }
     }
@@ -14263,34 +14312,6 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
   if (errno != 0) {
     transput_error (p, ref_file, mode);
   }
-}
-
-/**
-@brief At end of write purge all insertions.
-@param p Node in syntax tree.
-@param ref_file Fat pointer to A68 file.
-**/
-
-static void purge_format_write (NODE_T * p, A68_REF ref_file)
-{
-/* Problem here is shutting down embedded formats */
-  BOOL_T go_on;
-  do {
-    A68_FILE *file;
-    NODE_T *dollar, *pat;
-    A68_FORMAT *old_fmt;
-    while ((pat = get_next_format_pattern (p, ref_file, SKIP_PATTERN)) != NO_NODE) {
-      format_error (p, ref_file, ERROR_FORMAT_PICTURES);
-    }
-    file = FILE_DEREF (&ref_file);
-    dollar = SUB (BODY (&FORMAT (file)));
-    old_fmt = (A68_FORMAT *) FRAME_LOCAL (frame_pointer, OFFSET (TAX (dollar)));
-    go_on = (BOOL_T) ! IS_NIL_FORMAT (old_fmt);
-    if (go_on) {
-/* Pop embedded format and proceed */
-      (void) end_of_format (p, ref_file);
-    }
-  } while (go_on);
 }
 
 /**
@@ -14382,24 +14403,7 @@ void genie_write_file_format (NODE_T * p)
     A68_UNION *z = (A68_UNION *) & (base_address[elem_index]);
     MOID_T *mode = (MOID_T *) (VALUE (z));
     BYTE_T *item = &(base_address[elem_index + A68_UNION_SIZE]);
-    if (mode == MODE (FORMAT)) {
-/* Forget about eventual active formats and set up new one */
-      if (formats > 0) {
-        purge_format_write (p, ref_file);
-      }
-      formats++;
-      frame_pointer = FRAME_POINTER (file);
-      stack_pointer = STACK_POINTER (file);
-      open_format_frame (p, ref_file, (A68_FORMAT *) item, NOT_EMBEDDED_FORMAT, A68_TRUE);
-    } else if (mode == MODE (PROC_REF_FILE_VOID)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (PROC_REF_FILE_VOID));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (SOUND)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (SOUND));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else {
-      genie_write_standard_format (p, mode, item, ref_file);
-    }
+    genie_write_standard_format (p, mode, item, ref_file, &formats);
     elem_index += SIZE (MODE (SIMPLOUT));
   }
 /* Empty the format to purge insertions */
@@ -14925,18 +14929,72 @@ static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A6
 }
 
 /**
+@brief At end of read purge all insertions.
+@param p Node in syntax tree.
+@param ref_file Fat pointer to A68 file.
+**/
+
+static void purge_format_read (NODE_T * p, A68_REF ref_file)
+{
+  BOOL_T go_on;
+  do {
+    A68_FILE *file;
+    NODE_T *dollar, *pat;
+    A68_FORMAT *old_fmt;
+/*
+    while (get_next_format_pattern (p, ref_file, SKIP_PATTERN) != NO_NODE) {
+	;
+    }
+*/
+    while ((pat = get_next_format_pattern (p, ref_file, SKIP_PATTERN)) != NO_NODE) {
+      format_error (p, ref_file, ERROR_FORMAT_PICTURES);
+    }
+    file = FILE_DEREF (&ref_file);
+    dollar = SUB (BODY (&FORMAT (file)));
+    old_fmt = (A68_FORMAT *) FRAME_LOCAL (frame_pointer, OFFSET (TAX (dollar)));
+    go_on = (BOOL_T) ! IS_NIL_FORMAT (old_fmt);
+    if (go_on) {
+/* Pop embedded format and proceed */
+      (void) end_of_format (p, ref_file);
+    }
+  } while (go_on);
+}
+
+/**
 @brief Read object with from file and store.
 @param p Node in syntax tree.
 @param mode Mode of value.
 @param item Pointer to value.
 @param ref_file Fat pointer to A68 file.
+@param formats Format counter.
 **/
 
-static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
 {
   RESET_ERRNO;
   reset_transput_buffer (INPUT_BUFFER);
-  if (mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
+  if (mode == MODE (FORMAT)) {
+    A68_FILE *file;
+    CHECK_REF (p, ref_file, MODE (REF_FILE));
+    file = FILE_DEREF (&ref_file);
+/* Forget about eventual active formats and set up new one */
+    if (*formats > 0) {
+      purge_format_read (p, ref_file);
+    }
+    (*formats)++;
+    frame_pointer = FRAME_POINTER (file);
+    stack_pointer = STACK_POINTER (file);
+    open_format_frame (p, ref_file, (A68_FORMAT *) item, NOT_EMBEDDED_FORMAT, A68_TRUE);
+  } else if (mode == MODE (PROC_REF_FILE_VOID)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (PROC_REF_FILE_VOID));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (mode == MODE (REF_SOUND)) {
+    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (REF_SOUND));
+    exit_genie (p, A68_RUNTIME_ERROR);
+  } else if (IS (mode, REF_SYMBOL)) {
+    CHECK_REF (p, *(A68_REF *) item, mode);
+    genie_read_standard_format (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file, formats);
+  } else if (mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
     if (IS (pat, GENERAL_PATTERN) && NEXT_SUB (pat) == NO_NODE) {
       genie_read_standard (pat, mode, item, ref_file);
@@ -14974,7 +15032,7 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
     } else {
 /* Try reading as two REAL values */
       genie_read_real_format (pat, MODE (REAL), item, ref_file);
-      genie_read_standard_format (p, MODE (REAL), &item[SIZE (MODE (REAL))], ref_file);
+      genie_read_standard_format (p, MODE (REAL), &item[SIZE (MODE (REAL))], ref_file, formats);
     }
   } else if (mode == MODE (LONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
@@ -14983,7 +15041,7 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
     } else {
 /* Try reading as two LONG REAL values */
       genie_read_real_format (pat, MODE (LONG_REAL), item, ref_file);
-      genie_read_standard_format (p, MODE (LONG_REAL), &item[SIZE (MODE (LONG_REAL))], ref_file);
+      genie_read_standard_format (p, MODE (LONG_REAL), &item[SIZE (MODE (LONG_REAL))], ref_file, formats);
     }
   } else if (mode == MODE (LONGLONG_COMPLEX)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
@@ -14992,7 +15050,7 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
     } else {
 /* Try reading as two LONG LONG REAL values */
       genie_read_real_format (pat, MODE (LONGLONG_REAL), item, ref_file);
-      genie_read_standard_format (p, MODE (LONGLONG_REAL), &item[SIZE (MODE (LONGLONG_REAL))], ref_file);
+      genie_read_standard_format (p, MODE (LONGLONG_REAL), &item[SIZE (MODE (LONGLONG_REAL))], ref_file, formats);
     }
   } else if (mode == MODE (BOOL)) {
     NODE_T *pat = get_next_format_pattern (p, ref_file, WANT_PATTERN);
@@ -15052,12 +15110,12 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
     }
   } else if (IS (mode, UNION_SYMBOL)) {
     A68_UNION *z = (A68_UNION *) item;
-    genie_read_standard_format (p, (MOID_T *) (VALUE (z)), &item[A68_UNION_SIZE], ref_file);
+    genie_read_standard_format (p, (MOID_T *) (VALUE (z)), &item[A68_UNION_SIZE], ref_file, formats);
   } else if (IS (mode, STRUCT_SYMBOL)) {
     PACK_T *q = PACK (mode);
     for (; q != NO_PACK; FORWARD (q)) {
       BYTE_T *elem = &item[OFFSET (q)];
-      genie_read_standard_format (p, MOID (q), elem, ref_file);
+      genie_read_standard_format (p, MOID (q), elem, ref_file, formats);
     }
   } else if (IS (mode, ROW_SYMBOL) || IS (mode, FLEX_SYMBOL)) {
     MOID_T *deflexed = DEFLEX (mode);
@@ -15073,7 +15131,7 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
         ADDR_T a68g_index = calculate_internal_index (tup, DIM (arr));
         ADDR_T elem_addr = ROW_ELEMENT (arr, a68g_index);
         BYTE_T *elem = &base_addr[elem_addr];
-        genie_read_standard_format (p, SUB (deflexed), elem, ref_file);
+        genie_read_standard_format (p, SUB (deflexed), elem, ref_file, formats);
         done = increment_internal_index (tup, DIM (arr));
       }
     }
@@ -15081,38 +15139,6 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
   if (errno != 0) {
     transput_error (p, ref_file, mode);
   }
-}
-
-/**
-@brief At end of read purge all insertions.
-@param p Node in syntax tree.
-@param ref_file Fat pointer to A68 file.
-**/
-
-static void purge_format_read (NODE_T * p, A68_REF ref_file)
-{
-  BOOL_T go_on;
-  do {
-    A68_FILE *file;
-    NODE_T *dollar, *pat;
-    A68_FORMAT *old_fmt;
-/*
-    while (get_next_format_pattern (p, ref_file, SKIP_PATTERN) != NO_NODE) {
-	;
-    }
-*/
-    while ((pat = get_next_format_pattern (p, ref_file, SKIP_PATTERN)) != NO_NODE) {
-      format_error (p, ref_file, ERROR_FORMAT_PICTURES);
-    }
-    file = FILE_DEREF (&ref_file);
-    dollar = SUB (BODY (&FORMAT (file)));
-    old_fmt = (A68_FORMAT *) FRAME_LOCAL (frame_pointer, OFFSET (TAX (dollar)));
-    go_on = (BOOL_T) ! IS_NIL_FORMAT (old_fmt);
-    if (go_on) {
-/* Pop embedded format and proceed */
-      (void) end_of_format (p, ref_file);
-    }
-  } while (go_on);
 }
 
 /**
@@ -15204,25 +15230,7 @@ void genie_read_file_format (NODE_T * p)
     A68_UNION *z = (A68_UNION *) & (base_address[elem_index]);
     MOID_T *mode = (MOID_T *) (VALUE (z));
     BYTE_T *item = (BYTE_T *) & (base_address[elem_index + A68_UNION_SIZE]);
-    if (mode == MODE (FORMAT)) {
-/* Forget about eventual active formats and set up new one */
-      if (formats > 0) {
-        purge_format_read (p, ref_file);
-      }
-      formats++;
-      frame_pointer = FRAME_POINTER (file);
-      stack_pointer = STACK_POINTER (file);
-      open_format_frame (p, ref_file, (A68_FORMAT *) item, NOT_EMBEDDED_FORMAT, A68_TRUE);
-    } else if (mode == MODE (PROC_REF_FILE_VOID)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (PROC_REF_FILE_VOID));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else if (mode == MODE (REF_SOUND)) {
-      diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_UNDEFINED_TRANSPUT, MODE (REF_SOUND));
-      exit_genie (p, A68_RUNTIME_ERROR);
-    } else {
-      CHECK_REF (p, *(A68_REF *) item, mode);
-      genie_read_standard_format (p, SUB (mode), ADDRESS ((A68_REF *) item), ref_file);
-    }
+    genie_read_standard_format (p, mode, item, ref_file, &formats);
     elem_index += SIZE (MODE (SIMPLIN));
   }
 /* Empty the format to purge insertions */
@@ -16943,6 +16951,71 @@ void genie_argv (NODE_T * p)
 }
 
 /**
+@brief Find good argument
+@param k
+**/
+
+int find_good_arg(void)
+{
+  int i;
+  for (i = 0; i < global_argc; i++) {
+    char *q = global_argv[i];
+    if (strncmp (q, "--script", 8) == 0) {
+      return (i + 1);
+    }
+    if (strncmp (q, "--run-script", 12) == 0) {
+      return (i + 1);
+    }
+    if (strcmp (q, "--") == 0) {
+      return (i);
+    }
+    if (strcmp (q, "--exit") == 0) {
+      return (i);
+    }
+  }
+  return (0);
+}
+
+/**
+@brief PROC INT a68g argc
+@param p Node in syntax tree.
+**/
+
+void genie_a68g_argc (NODE_T * p)
+{
+  RESET_ERRNO;
+  PUSH_PRIMITIVE (p, global_argc - find_good_arg(), A68_INT);
+}
+
+/**
+@brief PROC (INT) STRING a68g_argv
+@param p Node in syntax tree.
+**/
+
+void genie_a68g_argv (NODE_T * p)
+{
+  A68_INT a68g_index;
+  int k;
+  RESET_ERRNO;
+  POP_OBJECT (p, &a68g_index, A68_INT);
+  k = VALUE(&a68g_index);
+  if (k > 1) {
+    k += find_good_arg();
+  }
+  if (k >= 1 && k <= global_argc) {
+    char *q = global_argv[k - 1];
+    int n = (int) strlen (q);
+/* Allow for spaces ending in # to have A68 comment syntax with '#!' */
+    while (n > 0 && (IS_SPACE(q[n - 1]) || q[n - 1] == '#')) {
+      q[--n] = NULL_CHAR;
+    }
+    PUSH_REF (p, c_to_a_string (p, q, DEFAULT_WIDTH));
+  } else {
+    PUSH_REF (p, empty_string (p));
+  }
+}
+
+/**
 @brief PROC STRING pwd
 @param p Node in syntax tree.
 **/
@@ -17618,7 +17691,7 @@ Child redirects STDIN and STDOUT.
       }
     } while (pipe_read > 0);
     do {
-      ret = (int) waitpid ((__pid_t) pid, &status, 0);
+      ret = (int) waitpid ((a68g_pid_t) pid, &status, 0);
     } while (ret == -1 && errno == EINTR);
     if (ret != pid) {
       status = -1;
@@ -17628,6 +17701,8 @@ Child redirects STDIN and STDOUT.
         c_to_a_string (p, get_transput_buffer (INPUT_BUFFER),
                           get_transput_buffer_index (INPUT_BUFFER));
     }
+    ASSERT (close (ptoc_fd[FD_WRITE]) == 0);
+    ASSERT (close (ctop_fd[FD_READ]) == 0);
     PUSH_PRIMITIVE (p, ret, A68_INT);
   }
 #endif /* defined HAVE_WIN32 */
@@ -17657,7 +17732,7 @@ void genie_waitpid (NODE_T * p)
   RESET_ERRNO;
   POP_OBJECT (p, &k, A68_INT);
 #if ! defined HAVE_WIN32
-  ASSERT (waitpid ((__pid_t) VALUE (&k), NULL, 0) != -1);
+  ASSERT (waitpid ((a68g_pid_t) VALUE (&k), NULL, 0) != -1);
 #endif
 }
 
@@ -17744,12 +17819,8 @@ int rgetchar (void)
 
 void genie_curses_start (NODE_T * p)
 {
-  errno = 0;
+  (void) p;
   init_curses ();
-  if (errno != 0) {
-    diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CURSES);
-    exit_genie (p, A68_RUNTIME_ERROR);
-  }
   a68g_curses_mode = A68_TRUE;
 }
 

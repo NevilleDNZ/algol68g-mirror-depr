@@ -1,0 +1,97 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#smio01#
+formatless
+transput:
+BEGIN   #Formatless tests-
+                create a file
+                write on the file
+                read the file
+                The reading of the file should produce the same info as
+                   was written#
+          FILE ti,to;
+          #Use a channel with bi-directional properties#
+          establish(ti, "ti", stand back channel, 10, 60, 136);
+          to:= ti; # 'to' is now open; use it#
+          #try something#
+          [1:100] INT rj;
+          INT j:= 505; REAL x:= 3.14159; COMPL c:= (2.01, 3.10);
+          BOOL t:= TRUE;
+          FOR i TO UPB rjDO rj[i]:=iOD;
+          put (to, (newpage, newline, j,x,c,t,rj));
+          #try characters#
+          put(to, ("*" # no preceding space#, newline, "*" #no
+                     preceding space again#));
+          put(to, (newline, "*", backspace, "x" #overwrite the *#));
+          #try string#
+          STRING s:= "i am a string",
+                   s2:= "me too";
+          put(to, (newline, s));
+          TO UPB s DO backspace(to)OD;
+          put(to, s2);
+          backspace(to);
+          put(to,s2); #write over last character#
+                #  yields  "me tome toong"   #
+                           #now let's check the file#
+          reset(ti);# we have filled "to" and shall read from "ti" #
+          [1:UPB rj] INT rj2;
+          INT j2; REAL x2; COMPL c2; BOOL t2; STRING u,u2;
+          get(ti,(newpage,newline,j2,x2,c2,t2,rj2));
+          FOR i TO UPB rj
+          DO (rj[i] /= rj2[i]
+               | print(("Error1", rj[i] - rj2[i], newline)))
+          OD;
+          IF j/=j2 OR x/=x2 OR c/=c2 OR t/= t2 THEN
+            print(("Error2", x, x2, c, c2, t, t2, x-x2, c-c2, t=t2,
+                newline))
+          FI;
+          CHAR char1, char2;
+          get(ti,(char1,newline,char2));
+          IF char1/= "*" OR char2/= "*" THEN
+            print(("Error3", char 1, char 2, newline))
+          FI;
+          get(ti,(newline, char1, backspace, char2));
+          IF char1 /= char2 OR char2 /= "x" THEN
+            print(("Error4", char 1, char 2, newline))
+          FI;
+          [] CHAR char5 = ("m","e"," ","t","o",
+                "m", "e", " ", "t", "o", "o", "n", "g");
+          [1:UPB char5] CHAR char6;
+          get(ti,(newline, char6 #at end of file#));
+          FOR i TO UPB char 5
+          DO (char5[i] /= char6[i]
+               | print(("Error5", ABS char 5[i], ABS char 6[i],
+                        newline)))
+          OD;
+          #test EOF-stuff#
+          on logical file end(ti,(REF FILE f)BOOL:okay);
+          get(ti, char1); #should cause call to 'logical
+                                   file end' to be generated #
+          #if we continue here, then there was an error#
+          print(("Error6", newline));
+          okay:
+          print(("End of test",newline))
+END

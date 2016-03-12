@@ -5,7 +5,7 @@
 @section Copyright
 
 This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
-Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2016 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -1019,7 +1019,6 @@ struct OPTIONS_T
   OPTION_LIST_T *list;
   BOOL_T backtrace, brackets, check_only, clock, cross_reference, debug, compile, keep, fold, local, moid_listing, object_listing, optimise, portcheck, pragmat_sema, pretty, reductions, regression_test, run, rerun, run_script, source_listing, standard_prelude_listing, statistics_listing, strict, stropping, trace, tree_listing, unused, verbose, version, no_warnings, quiet; 
   int time_limit, opt_level, indent;
-  char *target; 
   STATUS_MASK nodemask;
 };
 
@@ -1053,7 +1052,7 @@ struct MOID_T
 struct NODE_T
 {
   GINFO_T *genie;
-  int number, attribute, annotation, par_level;
+  int number, attribute, annotation;
   MOID_T *type;
   NODE_INFO_T *info;
   NODE_T *next, *previous, *sub, *sequence, *nest;
@@ -1734,7 +1733,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define OPTION_STATISTICS_LISTING(p) (OPTIONS (p).statistics_listing)
 #define OPTION_STRICT(p) (OPTIONS (p).strict)
 #define OPTION_STROPPING(p) (OPTIONS (p).stropping)
-#define OPTION_TARGET(p) (OPTIONS (p).target)
 #define OPTION_TIME_LIMIT(p) (OPTIONS (p).time_limit)
 #define OPTION_TRACE(p) (OPTIONS (p).trace)
 #define OPTION_TREE_LISTING(p) (OPTIONS (p).tree_listing)
@@ -1753,7 +1751,6 @@ on various systems. PDP-11s and IBM 370s are still haunting us with this.
 #define PARENT(p) ((p)->parent)
 #define PARTIAL_LOCALE(p) ((p)->partial_locale)
 #define PARTIAL_PROC(p) ((p)->partial_proc)
-#define PAR_LEVEL(p) ((p)->par_level)
 #define PATTERN(p) ((p)->pattern)
 #define PERM(p) ((p)->perm)
 #define PERMS(p) ((p)->perms)
@@ -2776,7 +2773,7 @@ extern A68_FORMAT nil_format;
 extern A68_HANDLE nil_handle, *free_handles, *busy_handles;
 extern A68_REF nil_ref, stand_in, stand_out, skip_file;
 extern ADDR_T fixed_heap_pointer, temp_heap_pointer, frame_pointer, stack_pointer, heap_pointer, handle_pointer, global_pointer, frame_start, frame_end, stack_start, stack_end, finish_frame_pointer;
-extern BOOL_T halt_typing, heap_is_fluid, in_execution, in_monitor, do_confirm_exit, no_warnings;
+extern BOOL_T halt_typing, heap_is_fluid, in_execution, in_monitor, do_confirm_exit, no_warnings, close_tty_on_exit;
 extern BYTE_T *stack_segment, *heap_segment, *handle_segment, *system_stack_offset;
 extern KEYWORD_T *top_keyword;
 extern MODES_T a68_modes;
@@ -2798,7 +2795,8 @@ extern BOOL_T a68g_curses_mode;
 
 #if defined HAVE_PARALLEL_CLAUSE
 extern pthread_t main_thread_id;
-extern int running_par_level;
+#define SAME_THREAD(p, q) (pthread_equal((p), (q)) != 0)
+#define OTHER_THREAD(p, q) (pthread_equal((p), (q)) == 0)
 #endif
 
 #if defined HAVE_WIN32
@@ -2965,6 +2963,8 @@ extern void gc_heap (NODE_T *, ADDR_T);
 extern void genie (void *);
 extern void genie_argc (NODE_T *);
 extern void genie_argv (NODE_T *);
+extern void genie_a68g_argc (NODE_T *);
+extern void genie_a68g_argv (NODE_T *);
 extern void genie_call_operator (NODE_T *, ADDR_T);
 extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
 extern void genie_call_event_routine (NODE_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
@@ -3035,6 +3035,7 @@ extern void make_standard_environ (void);
 extern void make_sub (NODE_T *, NODE_T *, int);
 extern void make_moid_list (MODULE_T *);
 extern void mark_auxilliary (NODE_T *);
+extern void mark_jump_in_par (NODE_T *, BOOL_T);
 extern void mark_moids (NODE_T *);
 extern void mode_checker (NODE_T *);
 extern void monitor_error (char *, char *);
@@ -3066,7 +3067,6 @@ extern void set_default_event_procedure (A68_PROCEDURE *);
 extern void set_default_event_procedures (A68_FILE *);
 extern void set_moid_sizes (MOID_T *);
 extern void set_nest (NODE_T *, NODE_T *);
-extern void set_par_level (NODE_T *, int);
 extern void set_proc_level (NODE_T *, int);
 extern void set_transput_buffer_index (int, int);
 extern void set_transput_buffer_size (int, int);
@@ -4244,7 +4244,6 @@ extern GPROC genie_pq_user;
 #define ERROR_KEYWORD "check for missing or unmatched keyword in clause starting at S"
 #define ERROR_LABELED_UNIT_MUST_FOLLOW "S must be followed by a labeled unit"
 #define ERROR_LABEL_BEFORE_DECLARATION "declaration cannot follow a labeled unit"
-#define ERROR_LABEL_IN_PAR_CLAUSE "target label is in another parallel unit"
 #define ERROR_LAPLACE "laplace transform error; U; U"
 #define ERROR_LONG_STRING "string exceeds end of line"
 #define ERROR_MATH "M math error"
@@ -4278,6 +4277,7 @@ extern GPROC genie_pq_user;
 #define ERROR_OUT_OF_BOUNDS "M value out of bounds"
 #define ERROR_OUT_OF_CORE "insufficient memory"
 #define ERROR_PAGE_SIZE "error in page size"
+#define ERROR_PARALLEL_JUMP "jump into different thread"
 #define ERROR_PARALLEL_CANNOT_CREATE "cannot create thread"
 #define ERROR_PARALLEL_OUTSIDE "invalid outside a parallel clause"
 #define ERROR_PARALLEL_OVERFLOW "too many parallel units"

@@ -1,0 +1,89 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#oper09#
+BEGIN # Monadic operators, non-bold monads # INT decls := 0;
+    OP    += (INT a) INT: a + 1; decls +:= 1;
+    OP   +<= (INT a) INT: a + 1; decls +:= 1;
+    OP   +>= (INT a) INT: a + 1; decls +:= 1;
+    OP   +/= (INT a) INT: a + 1; decls +:= 1;
+    OP   +== (INT a) INT: a + 1; decls +:= 1;
+    OP   +*= (INT a) INT: a + 1; decls +:= 1;
+    OP  +:== (INT a) INT: a + 1; decls +:= 1;
+    OP +<:== (INT a) INT: a + 1; decls +:= 1;
+    OP +>:== (INT a) INT: a + 1; decls +:= 1;
+    OP +/:== (INT a) INT: a + 1; decls +:= 1;
+    OP +=:== (INT a) INT: a + 1; decls +:= 1;
+    OP +*:== (INT a) INT: a + 1; decls +:= 1;
+    OP  +=:= (INT a) INT: a + 1; decls +:= 1;
+    OP +<=:= (INT a) INT: a + 1; decls +:= 1;
+    OP +>=:= (INT a) INT: a + 1; decls +:= 1;
+    OP +/=:= (INT a) INT: a + 1; decls +:= 1;
+    OP +==:= (INT a) INT: a + 1; decls +:= 1;
+    OP +*=:= (INT a) INT: a + 1; decls +:= 1;
+    OP    -= (INT a) INT: a + 1; decls +:= 1;
+    OP   -<= (INT a) INT: a + 1; decls +:= 1;
+    OP   ->= (INT a) INT: a + 1; decls +:= 1;
+    OP   -/= (INT a) INT: a + 1; decls +:= 1;
+    OP   -== (INT a) INT: a + 1; decls +:= 1;
+    OP   -*= (INT a) INT: a + 1; decls +:= 1;
+    OP  -:== (INT a) INT: a + 1; decls +:= 1;
+    OP -<:== (INT a) INT: a + 1; decls +:= 1;
+    OP ->:== (INT a) INT: a + 1; decls +:= 1;
+    OP -/:== (INT a) INT: a + 1; decls +:= 1;
+    OP -=:== (INT a) INT: a + 1; decls +:= 1;
+    OP -*:== (INT a) INT: a + 1; decls +:= 1;
+    OP  -=:= (INT a) INT: a + 1; decls +:= 1;
+    OP -<=:= (INT a) INT: a + 1; decls +:= 1;
+    OP ->=:= (INT a) INT: a + 1; decls +:= 1;
+    OP -/=:= (INT a) INT: a + 1; decls +:= 1;
+    OP -==:= (INT a) INT: a + 1; decls +:= 1;
+    OP -*=:= (INT a) INT: a + 1; decls +:= 1;
+    OP    %= (INT a) INT: a + 1; decls +:= 1;
+    OP   %<= (INT a) INT: a + 1; decls +:= 1;
+    OP   %>= (INT a) INT: a + 1; decls +:= 1;
+    OP   %/= (INT a) INT: a + 1; decls +:= 1;
+    OP   %== (INT a) INT: a + 1; decls +:= 1;
+    OP   %*= (INT a) INT: a + 1; decls +:= 1;
+    OP  %:== (INT a) INT: a + 1; decls +:= 1;
+    OP %<:== (INT a) INT: a + 1; decls +:= 1;
+    OP %>:== (INT a) INT: a + 1; decls +:= 1;
+    OP %/:== (INT a) INT: a + 1; decls +:= 1;
+    OP %=:== (INT a) INT: a + 1; decls +:= 1;
+    OP %*:== (INT a) INT: a + 1; decls +:= 1;
+    OP  %=:= (INT a) INT: a + 1; decls +:= 1;
+    OP %<=:= (INT a) INT: a + 1; decls +:= 1;
+    OP %>=:= (INT a) INT: a + 1; decls +:= 1;
+    OP %/=:= (INT a) INT: a + 1; decls +:= 1;
+    OP %==:= (INT a) INT: a + 1; decls +:= 1;
+    OP %*=:= (INT a) INT: a + 1; decls +:= 1;
+    print((
+    "Should print two equal integers (number of non-bold monads)",
+    newline,
+    ++<+>+/+=+*+:=+<:=+>:=+/:=+=:=+*:=+=:+<=:+>=:+/=:+==:+*=:
+    --<->-/-=-*-:=-<:=->:=-/:=-=:=-*:=-=:-<=:->=:-/=:-==:-*=:
+    %%<%>%/%=%*%:=%<:=%>:=%/:=%=:=%*:=%=:%<=:%>=:%/=:%==:%*=:
+    0, decls))
+END

@@ -1,0 +1,130 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#stan03#
+BEGIN # All format items #
+      INT i = 2; UNION(INT, REAL) uir = 2;
+      print(("10.3.4.1. Literals and insertions", newline));
+      printf(($ d l $, 1));
+      printf(($ # comment # d l $, 1));
+      printf(($ CO comment CO  d l $, 1));
+      printf(($ COMMENT comment COMMENT d l $, 1));
+      printf(($ x 2(d) l $, 1));
+      printf(($ x k d l $, 1));
+      printf(($ x x d l $, 1));
+      printf(($ x y d l $, 1));
+      printf(($ x p d l $, 1));
+      printf(($ x q d l $, 1));
+      printf(($ x "one" d l $, 1));
+      printf(($ x 2"one" d l $, 1));
+      printf(($ x "one" 2"two" d l $, 1));
+      printf(($ x "one""two" d l $, 1));
+      printf(($ x "one"1"two" 2x "three" d l $, 1));
+      printf(($ x "one"1"two" 2y "three" d l $, 1));
+      printf(($ x "aa" n(i)y d l $, 1));
+      printf(($ x "aa" nBEGIN i ENDy d l $, 1));
+      printf(($ x "aa" n( TRUE | i )y d l $, 1));
+      printf(($ x "aa" nIF TRUE THEN i FIy d l $, 1));
+      printf(($ x "aa" n( i | i, i )y d l $, 1));
+      printf(($ x "aa" nCASE i IN i, i ESACy d l $, 1));
+      printf(($ x "aa" n( uir | (INT): i )y d l $, 1));
+      printf(($ x "aa" nCASE uir IN (INT): i ESACy d l $, 1));
+      printf(($ x "aa" n(HEAP INT:= i)y d l $, 1));
+      printf(($ x "Do not show" n(INT:jmp n)y "Do not show" dl $,1));
+jmp n:
+      printf(($ x "a" d l $, 1));
+      print(newline);
+      print(("10.3.4.2. Integral patterns", newline));
+      printf(($ x d l $, 1));
+      printf(($ x sd l $, 1));
+      printf(($ x z l $, 1));
+      printf(($ x sz l $, 1));
+      printf(($ x zdzd l $, 1));
+      printf(($ x z2dzd l $, 1));
+      printf(($ x z2sdzd l $, 1));
+      printf(($ x z2sdsz "a"d l $, 1));
+      printf(($ x z+sdsz "a"d l $, 1));
+      print(newline);
+      print(("10.3.4.3. Real patterns", newline));
+      printf(($ x d . d l $, 1.0));
+      printf(($ x d s. d l $, 1.0));
+      printf(($ x d "s"s. d l $, 1.0));
+      printf(($ x d . l $, 1.0));
+      printf(($ x d . d e + d l $, 1.0));
+      printf(($ x d . d se + d l $, 1.0));
+      printf(($ x d . d "a"se + d l $, 1.0));
+      printf(($ x d . e + d l $, 1.0));
+      printf(($ x d e + d l $, 1.0));
+      print(newline);
+      print(("10.3.4.4. Boolean patterns", newline));
+      printf(($ x b l $, TRUE));
+      print(newline);
+      print(("10.3.4.5. Complex patterns", newline));
+      printf(($ x d.d i d.d l $, COMPL(1, 1)));
+      printf(($ x d.d si d.d l $, COMPL(1, 1)));
+      printf(($ x d.d "a"si d.d l $, COMPL(1, 1)));
+      print(newline);
+      print(("10.3.4.6. String patterns", newline));
+      printf(($ x aa l $, "xx"));
+      printf(($ x asa l $, "xx"));
+      printf(($ x 2a l $, "xx"));
+      printf(($ x a "a"sa l $, "xx"));
+      print(newline);
+      print(("10.3.4.7. Bits patterns", newline));
+      printf(($ x 2r d l $, 2r1));
+      printf(($ x 4r d l $, 2r1));
+      printf(($ x 8r d l $, 2r1));
+      printf(($ x 16r d l $, 2r1));
+      printf(($ x 2r sd l $, 2r1));
+      printf(($ x "a"2r d l $, 2r1));
+      print(newline);
+      print(("10.3.4.8. Choice patterns", newline));
+      printf(($ x c ( "a", CO c CO 2"a"1"p", "bcd") l $, 2));
+      printf(($ x "z"c ( "a", CO c CO 2"a"1"p", "bcd") l $, 2));
+      printf(($ x b ( "a", CO c CO 2"a"1"p") l $, FALSE));
+      printf(($ x "z"b ( "a", CO c CO 2"a"1"p") l $, FALSE));
+      print(newline);
+      print(("10.3.4.9. Format patterns", newline));
+      printf(($ x f ($ d l $) $, 1));
+      printf(($ x f IF TRUE THEN $ d l $ FI $, 1));
+      printf(($ x f CASE 1 IN $ d l $, SKIP ESAC $, 1));
+      printf(($ x f CASE uir IN (INT):$ d l $ ESAC $, 1));
+      print(newline);
+      print(("10.3.4.10. General patterns", newline));
+      printf(($ x g l $, 1));
+      printf(($ x "z"g l $, 1));
+      printf(($ x g(2) l $, 1));
+      printf(($ x g(4,1) l $, 1));
+      printf(($ x g(7,1,2) l $, 1));
+      printf(($ x g l $, 1.0));
+      printf(($ x "z"g l $, 1.0));
+      printf(($ x g(2) l $, 1.0));
+      printf(($ x g(4,1) l $, 1.0));
+      printf(($ x g(7,1,2) l $, 1.0));
+      printf(($ x g(HEAP INT:=7, HEAP INT:=1, HEAP INT:=2)l$,1));
+      printf(($ x "Show" g(INT:jmp g) "Do not show" l $, 1)); jmp g:
+      print(("End of show", newline));
+      SKIP
+END

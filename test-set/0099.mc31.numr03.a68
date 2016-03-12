@@ -1,0 +1,78 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#numr03#
+BEGIN # Test ALGOL 68 version of 'zeroin' (MCA 2310 in 'ALGOL 60
+    Procedures in Numerical Algebra' by Th.J. Dekker) #
+    PROC zero in = (REF REAL x, y, PROC(REAL)REAL f, tol)
+    BOOL:
+    BEGIN REAL a:= x, b:= y; REAL fa:= f(a), fb:= f(b);
+        REAL c:= a, fc:= fa;
+        WHILE
+            ( ABS fc < ABS fb | # interchange: #
+                (a:=b, fa:= fb); (b:=c, fb:= fc); (c:=a, fc:= fa));
+            REAL tolb:= tol(b), m:= (c + b) * .5;
+            ABS (m - b) > tolb
+        DO
+         REAL p:= (b - a) * fb, q:= fa - fb;
+            (p < 0 | (p:= -p, q:= -q));
+            (a:= b, fa:= fb);
+            fb:= f(b:=
+                IF p <= ABS q * tolb
+                THEN (c > b | b + tolb | b - tolb)
+                ELIF p < (m - b) * q
+                THEN p / q + b
+                ELSE m
+                FI);
+            IF ABS(SIGN fb + SIGN fc) = 2
+            THEN (c:= a, fc:= fa) FI
+        OD  # while, do # ;
+        (x:= b, y:= c); ABS(SIGN fb + SIGN fc) < 2
+    END # zero in # ;
+##
+    REAL eps = 3 * small real;
+    PROC test = (REAL x0, y0, PROC(REAL)REAL f, STRING s,
+        UNION (STRING, REAL) sol)
+    VOID:
+    print((newline, "Expression:  ", s, newline,
+        "Zero to be found between ", x0, "    and ", y0, newline,
+        IF REAL x, y;
+            zero in(x:= x0, y:= y0, f,
+                (REAL p) REAL : eps + eps * ABS p)
+        THEN STRUCT(STRING s1, REAL r1, STRING s2, REAL r2)
+             ("Value found at   ", x, "    is ", f(x))
+        ELSE "    no solution found"
+        FI, newline,
+        "Result on EL-X8: ", sol, newline)) #test #;
+    test(-1, 0, (REAL x) REAL : exp(x) - x * x, "exp(x) - x * x",
+        -0.7034674224979);
+    test(1, 10, (REAL x) REAL : ln(x) - x + 2, "ln(x) - x + 2",
+        3.146193220622);
+    test(0,  5, (REAL x) REAL : x * x - 4, "x * x - 4", 2.0);
+    test(1,1.5, (REAL x) REAL : sin(3 * x), "sin(3 * x)",
+        1.047197551197);
+    test(-1, 1, (REAL x) REAL : x * x + 1, "x * x + 1",
+        "no solution found")
+END

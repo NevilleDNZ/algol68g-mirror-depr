@@ -1,0 +1,94 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+#decl02#
+BEGIN # Shielding, yin and yang #
+  MODE
+    Z  = Z,                           # wrong #
+    A  = REF A,                       # wrong #
+    B  = PROC B,                      # wrong #
+    C  = STRUCT(C c),                 # wrong #
+    D  = PROC(D)INT,                  # right #
+    E  = PROC(INT)E,                  # right #
+    F  = [3] F,                       # wrong #
+    G  = UNION(INT, G),               # wrong #
+##
+    AA = REF REF AA,                  # wrong #
+    AB = REF PROC AB,                 # wrong #
+    AC = REF STRUCT(AC ac),           # right #
+    AD = REF PROC(AD)INT,             # right #
+    AE = REF PROC(INT)AE,             # right #
+    AF = REF [ ] AF,                  # wrong #
+    AG = REF UNION(INT, AG),          # wrong #
+##
+    BA = PROC REF BA,                 # wrong #
+    BB = PROC PROC BB,                # wrong #
+    BC = PROC STRUCT(BC bc),          # right #
+    BD = PROC PROC(BD)INT,            # right #
+    BE = PROC PROC(INT)BE,            # right #
+    BF = PROC [ ] BF,                 # wrong #
+    BG = PROC UNION(INT, BG),         # wrong #
+##
+    CA = STRUCT(REF CA ca),           # right #
+    CB = STRUCT(PROC CB cb),          # right #
+    CC = STRUCT(STRUCT(CC cc)cc),     # wrong #
+    CD = STRUCT(PROC(CD)INT cd),      # right #
+    CE = STRUCT(PROC(INT)CE ce),      # right #
+    CF = STRUCT([3] CF cf),           # wrong #
+    CG = STRUCT(UNION(INT, CG)cg),    # wrong #
+##
+    DA = PROC(REF DA)INT,             # right #
+    DB = PROC(PROC DB)INT,            # right #
+    DC = PROC(STRUCT(DC dc))INT,      # right #
+    DD = PROC(PROC(DD)INT)INT,        # right #
+    DE = PROC(PROC(INT)DE)INT,        # right #
+    DF = PROC([ ] DF)INT,             # right #
+    DG = PROC(UNION(INT, DG))INT,     # right #
+##
+    EA = PROC(INT)REF EA,             # right #
+    EB = PROC(INT)PROC EB,            # right #
+    EC = PROC(INT)STRUCT(EC ec),      # right #
+    ED = PROC(INT)PROC(ED)INT,        # right #
+    EE = PROC(INT)PROC(INT)EE,        # right #
+    EF = PROC(INT)[ ] EF,             # right #
+    EG = PROC(INT)UNION(INT, EG),     # right #
+##
+    FA = [3] REF FA,                  # wrong #
+    FB = [3] PROC FB,                 # wrong #
+    FC = [3] STRUCT(FC fc),           # wrong #
+    FD = [3] PROC(FD)INT,             # right #
+    FE = [3] PROC(INT)FE,             # right #
+    FF = [3] [2] FF,                  # wrong #
+    FG = [3] UNION(INT, FG),          # wrong #
+##
+    GA = UNION(INT, REF GA),          # wrong #
+    GB = UNION(INT, PROC GB),         # wrong #
+    GC = UNION(INT, STRUCT(GC gc)),   # wrong #
+    GD = UNION(INT, PROC(GD)INT),     # right #
+    GE = UNION(INT, PROC(INT)GE),     # right #
+    GF = UNION(INT, [ ] GF),          # wrong #
+    GG = UNION(INT, UNION(INT, GG));  # wrong #
+    SKIP
+END

@@ -1,0 +1,198 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test.
+
+The test set contains programs from the 
+   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
+and synthetic programs from the 
+   "Rennes test set" [1975].
+These test sets are available from:
+   www.dickgrune.com/CS/Algol68
+or from the Vrije Universiteit Amsterdam:
+   ftp://ftp.cs.vu.nl/pub/dick/Algol68
+
+Above two test sets were used in the 1980's to validate the ALGOL68RS compilers [Algol Bulletin 49.2]. 
+
+The "Rennes test-set" programs are automatically generated from the Algol 68 grammar using a formalism from Bernard Houssais (Universite de Rennes).  Especially the "Rennes test set" has proven very effective in exposing problems in Algol 68 implementations.  All programs are converted to upper-stropping and reformatted for lay-out.
+
+The "Revised Mathematisch Centrum test set" programs are not synthetic like those in the "Rennes test set", but are selected programmer-made applications that are distributed with Algol 68 Genie with kind permission of the author of this test set, Dick Grune.
+
+Note that part of the programs in this test set will fail; most due to intentional (syntactic or runtime) errors and a few due to differences between Algol 68 Genie and revised Algol 68. 
+
+COMMENT
+
+PR regression PR
+
+# r71b #
+(print(("independance of operators in different range contexts"
+,newline)) ;
+ INT  vf = 17 ;
+ INT  ctr:=0 ;
+ BOOL  b =  TRUE  ;
+ MODE  M = STRUCT ( CHAR  e1, REF  M  e2);
+ PRIO  +> = 1 ,
+ OP   +> = ( BOOL b) REF  BOOL : HEAP  BOOL :=b,
+     +> = ( BOOL a, REF  BOOL b) INT :ctr+:=(b|0|1);
+
+b+>+> FALSE  ;
+
+(
+    OP   +> = ( INT a) INT :1
+   , PRIO   +> = 2
+   , OP   +> = ( REAL  a,b) INT :6
+   ;  OP   +> = ( INT  a,b) INT :4
+   , +> = ( REAL  a) INT :5
+ ; b+>+> FALSE  ;
+ SKIP );
+ IF 
+    OP   +> = ( M a) INT :4
+   , PRIO   +> = 1
+   , OP   +> = ( STRUCT ( CHAR  e1,
+          REF  STRUCT ( CHAR  e1, REF  M  e)e2) a,b) INT :9
+   ;  OP   +> = ( M  a,b) INT :2
+   , +> = ( STRUCT ( CHAR  e1,
+          REF  STRUCT ( CHAR  e1, REF  M  e)e2) a) INT :7
+ ; b+>+> FALSE  ;
+b
+ THEN 
+    OP   +> = ( PROC ( INT , REAL ) VOID a) INT :1
+   , PRIO   +> = 6
+   , OP   +> = ( PROC ( REAL , INT ) VOID  a,b) INT :2
+   ;  OP   +> = ( PROC ( INT , REAL ) VOID  a,b) INT :6
+   , +> = ( PROC ( REAL , INT ) VOID  a) INT :3
+ ; b+>+> FALSE  ;
+ SKIP 
+ ELSE 
+    OP   +> = ( STRUCT ( INT  x,y)a) INT :5
+   , PRIO   +> = 6
+   , OP   +> = ( STRUCT ( INT  y,x) a,b) INT :2
+   ;  OP   +> = ( STRUCT ( INT  x,y) a,b) INT :8
+   , +> = ( STRUCT ( INT  y,x) a) INT :8
+ ; b+>+> FALSE  ;
+ SKIP  FI ;
+ TO  1  WHILE 
+    OP   +> = ( PROC ( INT , REAL ) VOID a) INT :7
+   , PRIO   +> = 6
+   , OP   +> = ( UNION ( PROC ( REAL , INT ) VOID ,
+          PROC ( INT , REAL ) INT ) a,b) INT :6
+   ;  OP   +> = ( PROC ( INT , REAL ) VOID  a,b) INT :5
+   , +> = ( UNION ( PROC ( REAL , INT ) VOID ,
+          PROC ( INT , REAL ) INT ) a) INT :6
+ ; b+>+> FALSE  ;
+b
+ DO 
+    OP   +> = ( UNION ( PROC ( INT , REAL ) INT ,
+          PROC ( REAL , INT ) INT )a) INT :3
+   , PRIO   +> = 4
+   , OP   +> = ( UNION ( PROC ( REAL , INT ) VOID ,
+          PROC ( INT , INT ) INT ) a,b) INT :3
+   ;  OP   +> = ( UNION ( PROC ( INT , REAL ) INT ,
+          PROC ( REAL , INT ) INT ) a,b) INT :6
+   , +> = ( UNION ( PROC ( REAL , INT ) VOID ,
+          PROC ( INT , INT ) INT ) a) INT :9
+ ; b+>+> FALSE  ;
+ SKIP  OD ;
+(
+    OP   +> = ( UNION ( STRUCT ( INT  y,x),
+          STRUCT ( INT  x,y))a) INT :4
+   , PRIO   +> = 4
+   , OP   +> = ( UNION ( STRUCT ( REAL  x,y),
+          STRUCT ( REAL  y,x)) a,b) INT :6
+   ;  OP   +> = ( UNION ( STRUCT ( INT  y,x),
+          STRUCT ( INT  x,y)) a,b) INT :7
+   , +> = ( UNION ( STRUCT ( REAL  x,y),
+          STRUCT ( REAL  y,x)) a) INT :1
+ ; b+>+> FALSE  ;
+ SKIP );
+ IF 
+    OP   +> = ( CHAR a) INT :8
+   , PRIO   +> = 8
+   , OP   +> = ( REF  REF  PROC  REF  PROC [ ] CHAR  a,b) INT :5
+   ;  OP   +> = ( CHAR  a,b) INT :6
+   , +> = ( REF  REF  PROC  REF  PROC [ ] CHAR  a) INT :4
+ ; b+>+> FALSE  ;
+b
+ THEN 
+    OP   +> = ( PROC ( INT , REAL ) INT a) INT :7
+   , PRIO   +> = 4
+   , OP   +> = ( INT  a,b) INT :2
+   ;  OP   +> = ( PROC ( INT , REAL ) INT  a,b) INT :8
+   , +> = ( INT  a) INT :7
+ ; b+>+> FALSE  ;
+ SKIP 
+ ELSE 
+    OP   +> = ( REF  PROC  REF  M a) INT :8
+   , PRIO   +> = 8
+   , OP   +> = ( REF  PROC  M  a,b) INT :3
+   ;  OP   +> = ( REF  PROC  REF  M  a,b) INT :6
+   , +> = ( REF  PROC  M  a) INT :6
+ ; b+>+> FALSE  ;
+ SKIP  FI ;
+ TO  1  WHILE 
+    OP   +> = ( PROC  BOOL a) INT :6
+   , PRIO   +> = 7
+   , OP   +> = ( REF  BOOL  a,b) INT :5
+   ;  OP   +> = ( PROC  BOOL  a,b) INT :4
+   , +> = ( REF  BOOL  a) INT :3
+ ; b+>+> FALSE  ;
+b
+ DO 
+    OP   +> = ( REF  PROC  INT a) INT :3
+   , PRIO   +> = 4
+   , OP   +> = ( COMPL  a,b) INT :5
+   ;  OP   +> = ( REF  PROC  INT  a,b) INT :4
+   , +> = ( COMPL  a) INT :9
+ ; b+>+> FALSE  ;
+ SKIP  OD ;
+(
+    OP   +> = ( REAL a) INT :5
+   , PRIO   +> = 3
+   , OP   +> = ( COMPL  a,b) INT :6
+   ;  OP   +> = ( REAL  a,b) INT :3
+   , +> = ( COMPL  a) INT :2
+ ; b+>+> FALSE  ;
+ SKIP );
+ IF 
+    OP   +> = ( INT a) INT :6
+   , PRIO   +> = 5
+   , OP   +> = ( REF  COMPL  a,b) INT :4
+   ;  OP   +> = ( INT  a,b) INT :1
+   , +> = ( REF  COMPL  a) INT :8
+ ; b+>+> FALSE  ;
+b
+ THEN 
+    OP   +> = ([] BOOL a) INT :3
+   , PRIO   +> = 2
+   , OP   +> = ( BITS  a,b) INT :3
+   ;  OP   +> = ([] BOOL  a,b) INT :3
+   , +> = ( BITS  a) INT :4
+ ; b+>+> FALSE  ;
+ SKIP 
+ ELSE 
+    MODE   BITES  =  STRUCT  ( INT  n, [1 : 4]  CHAR  text);
+    OP   +> = ([] CHAR a) INT :3
+   , PRIO   +> = 7
+   , OP   +> = ( BITES  a,b) INT :9
+   ;  OP   +> = ([] CHAR  a,b) INT :8
+   , +> = ( BITES  a) INT :7
+ ; b+>+> FALSE  ;
+ SKIP  FI ;
+ TO  1  WHILE 
+    OP   +> = ([ ] REAL a) INT :5
+   , PRIO   +> = 3
+   , OP   +> = ( REAL  a,b) INT :2
+   ;  OP   +> = ([ ] REAL  a,b) INT :1
+   , +> = ( REAL  a) INT :1
+ ; b+>+> FALSE  ;
+b
+ DO 
+    OP   +> = ([,,][ ] M a) INT :3
+   , PRIO   +> = 2
+   , OP   +> = ( M  a,b) INT :1
+   ;  OP   +> = ([,,][ ] M  a,b) INT :3
+   , +> = ( M  a) INT :8
+ ; b+>+> FALSE  ;
+ SKIP  OD ;
+b+>+> FALSE ;
+print((ctr," tests ",(ctr=vf|"ok"|"error"))))
+######

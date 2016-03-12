@@ -6,7 +6,7 @@
 @section Copyright
 
 This file is part of Algol68G - an Algol 68 interpreter.
-Copyright 2001-2015 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2016 J. Marcel van der Veer <algol68g@xs4all.nl>.
 
 @section License
 
@@ -35,13 +35,9 @@ Error codes:
 -3	Other error
 **/
 
-#if defined HAVE_CONFIG_H
-#include "a68g-config.h"
-#endif
+#include "a68g.h"
 
 #if defined HAVE_POSTGRESQL
-
-#include "a68g.h"
 
 #define LIBPQ_STRING "PostgreSQL libq"
 #define ERROR_NOT_CONNECTED "not connected to a database"
