@@ -1,3 +1,6 @@
+Version 2.8.4, November 2016
+* Fixes several minor bugs.
+
 Version 2.8.3, March 2016
 * Fixes garbage collector bug.
 * Fixes "execve output" that caused a "too many open files" type error.

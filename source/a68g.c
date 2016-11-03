@@ -34,7 +34,7 @@ detailed description of Algol68G.
 
 #include "a68g.h"
 
-int global_argc; /* Keep argc and argv for reference from A68 */
+int global_argc;                /* Keep argc and argv for reference from A68 */
 char **global_argv;
 
 BOOL_T in_execution;
@@ -53,7 +53,7 @@ static int max_simplout_size;
 static POSTULATE_T *postulates;
 
 #define EXTENSIONS 11
-static char * extensions[EXTENSIONS] = {
+static char *extensions[EXTENSIONS] = {
   NO_TEXT,
   ".a68", ".A68",
   ".a68g", ".A68G",
@@ -88,7 +88,8 @@ This stub looks unsafe but should work with a68g.
 @return Characters printed.
 */
 
-int a68g_snprintf (char *buf, size_t size, char *fmt, ...)
+int
+a68g_snprintf (char *buf, size_t size, char *fmt, ...)
 {
   va_list p;
   int len;
@@ -107,7 +108,8 @@ int a68g_snprintf (char *buf, size_t size, char *fmt, ...)
 @return See brief description.
 */
 
-char *error_specification (void)
+char *
+error_specification (void)
 {
   static char txt[BUFFER_SIZE];
   if (errno == 0) {
@@ -129,7 +131,8 @@ char *error_specification (void)
 @return Pointer to descriptor.
 */
 
-FILE *a68g_fopen (char *fn, char *mode, char *new_fn)
+FILE *
+a68g_fopen (char *fn, char *mode, char *new_fn)
 {
 #if defined HAVE_WIN32 || ! defined HAVE_DIRENT_H
   ASSERT (snprintf (new_fn, SNPRINTF_SIZE, "%s", fn) >= 0);
@@ -149,7 +152,7 @@ FILE *a68g_fopen (char *fn, char *mode, char *new_fn)
       if (f != NO_FILE) {
         return (f);
       }
-    }    
+    }
   }
   ASSERT (snprintf (new_fn, SNPRINTF_SIZE, "%s", fn) >= 0);
   return (fopen (new_fn, mode));
@@ -163,14 +166,15 @@ FILE *a68g_fopen (char *fn, char *mode, char *new_fn)
 @param k Length.
 **/
 
-void print_bytes (BYTE_T *z, int k)
+void
+print_bytes (BYTE_T * z, int k)
 {
   int j;
-  for (j = 0; j < k; j ++) {
+  for (j = 0; j < k; j++) {
     printf ("%02x ", z[j]);
-    }
+  }
   printf ("\n");
-  ASSERT (fflush (stdout) == 0); /* print_bytes */
+  ASSERT (fflush (stdout) == 0);        /* print_bytes */
 }
 
 /**
@@ -180,7 +184,8 @@ void print_bytes (BYTE_T *z, int k)
 @param digits Precision in mp-digits.
 **/
 
-void raw_write_mp (char *str, MP_T * z, int digits)
+void
+raw_write_mp (char *str, MP_T * z, int digits)
 {
   int i;
   printf ("\n%s", str);
@@ -189,7 +194,7 @@ void raw_write_mp (char *str, MP_T * z, int digits)
   }
   printf (" ^ %d", (int) MP_EXPONENT (z));
   printf (" status=%d", (int) MP_STATUS (z));
-  ASSERT (fflush (stdout) == 0); /* raw_write_mp */
+  ASSERT (fflush (stdout) == 0);        /* raw_write_mp */
 }
 
 /**
@@ -197,7 +202,8 @@ void raw_write_mp (char *str, MP_T * z, int digits)
 @param f File number to write to.
 **/
 
-void state_license (FILE_T f)
+void
+state_license (FILE_T f)
 {
 #define PR(s)\
   ASSERT (snprintf(output_line, SNPRINTF_SIZE, "%s\n", (s)) >= 0);\
@@ -229,7 +235,8 @@ void state_license (FILE_T f)
 @param f File number to write to.
 **/
 
-void state_version (FILE_T f)
+void
+state_version (FILE_T f)
 {
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
@@ -307,7 +314,8 @@ void state_version (FILE_T f)
 @param f File number.
 **/
 
-void online_help (FILE_T f)
+void
+online_help (FILE_T f)
 {
   if (f == STDOUT_FILENO) {
     io_close_tty_line ();
@@ -323,7 +331,8 @@ void online_help (FILE_T f)
 @brief First initialisations.
 **/
 
-static void init_before_tokeniser (void)
+static void
+init_before_tokeniser (void)
 {
 /* Heap management set-up */
   init_heap ();
@@ -346,7 +355,8 @@ static void init_before_tokeniser (void)
 @return Exit code.
 **/
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   BYTE_T stack_offset;
   int argcc, k;
@@ -457,15 +467,16 @@ int main (int argc, char *argv[])
 @return Whether stripped.
 **/
 
-static BOOL_T strip_extension (char * ext)
+static BOOL_T
+strip_extension (char *ext)
 {
   int nlen, xlen;
   if (ext == NO_TEXT) {
     return (A68_FALSE);
   }
-  nlen = (int) strlen (FILE_SOURCE_NAME (&program)); 
+  nlen = (int) strlen (FILE_SOURCE_NAME (&program));
   xlen = (int) strlen (ext);
-  if (nlen > xlen && strcmp (&(FILE_SOURCE_NAME (&program)[nlen - xlen]), ext) == 0) { 
+  if (nlen > xlen && strcmp (&(FILE_SOURCE_NAME (&program)[nlen - xlen]), ext) == 0) {
     char *fn = (char *) get_heap_space ((size_t) (nlen + 1));
     bufcpy (fn, FILE_SOURCE_NAME (&program), nlen);
     fn[nlen - xlen] = NULL_CHAR;
@@ -480,13 +491,14 @@ static BOOL_T strip_extension (char * ext)
 @brief Try opening with an extension.
 **/
 
-static void open_with_extensions (void)
+static void
+open_with_extensions (void)
 {
   int k;
   FILE_SOURCE_FD (&program) = -1;
-  for (k = 0; k < EXTENSIONS && FILE_SOURCE_FD (&program) == -1; k ++) {
+  for (k = 0; k < EXTENSIONS && FILE_SOURCE_FD (&program) == -1; k++) {
     int len;
-    char * fn;
+    char *fn;
     if (extensions[k] == NO_TEXT) {
       len = (int) strlen (FILE_INITIAL_NAME (&program)) + 1;
       fn = (char *) get_heap_space ((size_t) len);
@@ -503,7 +515,7 @@ static void open_with_extensions (void)
       BOOL_T cont = A68_TRUE;
       FILE_SOURCE_NAME (&program) = new_string (fn, NO_TEXT);
       FILE_GENERIC_NAME (&program) = new_string (fn, NO_TEXT);
-      for (l = 0; l < EXTENSIONS && cont; l ++) {
+      for (l = 0; l < EXTENSIONS && cont; l++) {
         if (strip_extension (extensions[l])) {
           cont = A68_FALSE;
         }
@@ -516,7 +528,9 @@ static void open_with_extensions (void)
 @brief Pretty print memory size.
 **/
 
-char *pretty_size (int k) {
+char *
+pretty_size (int k)
+{
   if (k >= 10 * MEGABYTE) {
     ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "%dM", k / MEGABYTE) >= 0);
   } else if (k >= 10 * KILOBYTE) {
@@ -531,7 +545,8 @@ char *pretty_size (int k) {
 @brief Verbose statistics, only useful when debugging a68g.
 **/
 
-static void verbosity (void)
+static void
+verbosity (void)
 {
   ;
 }
@@ -540,7 +555,8 @@ static void verbosity (void)
 @brief Drives compilation and interpretation.
 **/
 
-static void compiler_interpreter (void)
+static void
+compiler_interpreter (void)
 {
   int k, len, num;
   BOOL_T path_set = A68_FALSE;
@@ -652,7 +668,7 @@ Accept various silent extensions.
     if (frame_stack_size_2 != frame_stack_size || expr_stack_size_2 != expr_stack_size || heap_size_2 != heap_size || handle_pool_size_2 != handle_pool_size) {
       discard_heap ();
       init_before_tokeniser ();
-      SOURCE_SCAN (&program) ++;
+      SOURCE_SCAN (&program)++;
       ok = lexical_analyser ();
       verbosity ();
     }
@@ -826,7 +842,7 @@ Accept various silent extensions.
     renumber_nodes (TOP_NODE (&program), &num);
     node_register = (NODE_T **) get_heap_space ((size_t) num * sizeof (NODE_T));
     ABEND (node_register == NO_VAR, "compiler cannot register nodes", NO_TEXT);
-    register_nodes (TOP_NODE (&program)); 
+    register_nodes (TOP_NODE (&program));
     FILE_OBJECT_FD (&program) = open (FILE_OBJECT_NAME (&program), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
     ABEND (FILE_OBJECT_FD (&program) == -1, "cannot open object file", NO_TEXT);
     FILE_OBJECT_OPENED (&program) = A68_TRUE;
@@ -851,23 +867,23 @@ Accept various silent extensions.
     ASSERT (snprintf (extra_inc, SNPRINTF_SIZE, "-I. -I%s", INCLUDEDIR) >= 0);
 #endif
     switch (OPTION_OPT_LEVEL (&program)) {
-      case 0: {
+    case 0:{
         optimisation = "-O0";
         break;
       }
-      case 1: {
+    case 1:{
         optimisation = "-O1";
         break;
       }
-      case 2: {
+    case 2:{
         optimisation = "-O2";
         break;
       }
-      case 3: {
+    case 3:{
         optimisation = "-O3";
         break;
       }
-      default: {
+    default:{
         optimisation = "-O2";
         break;
       }
@@ -884,15 +900,15 @@ Accept various silent extensions.
 Compilation on Linux, FreeBSD or NetBSD using gcc
 */
 #if (defined HAVE_LINUX || defined HAVE_FREEBSD || defined HAVE_NETBSD)
-  #if defined HAVE_TUNING
+#if defined HAVE_TUNING
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g", extra_inc, optimisation, HAVE_TUNING) >= 0);
-  #else
+#else
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s -g", extra_inc, optimisation) >= 0);
-  #endif
-  #if defined HAVE_PIC
+#endif
+#if defined HAVE_PIC
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
-  #endif
+#endif
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&program), FILE_OBJECT_NAME (&program)) >= 0);
       if (OPTION_VERBOSE (&program)) {
         WRITELN (STDOUT_FILENO, cmd);
@@ -908,15 +924,15 @@ Compilation on Linux, FreeBSD or NetBSD using gcc
 Compilation on Mac OS X using gcc
 */
 #elif defined HAVE_MAC_OS_X
-  #if defined HAVE_TUNING
+#if defined HAVE_TUNING
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s %s -g -fno-common -dynamic", extra_inc, optimisation, HAVE_TUNING) >= 0);
-  #else
+#else
       ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s -g -fno-common -dynamic", extra_inc, optimisation) >= 0);
-  #endif
-  #if defined HAVE_PIC
+#endif
+#if defined HAVE_PIC
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
-  #endif
+#endif
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&program), FILE_OBJECT_NAME (&program)) >= 0);
       if (OPTION_VERBOSE (&program)) {
         WRITELN (STDOUT_FILENO, cmd);
@@ -947,9 +963,9 @@ Compilation on Mac OS X using gcc
   diagnostics_to_terminal (TOP_LINE (&program), A68_ALL_DIAGNOSTICS);
   if (ERROR_COUNT (&program) == 0 && OPTION_COMPILE (&program) == A68_FALSE && (OPTION_CHECK_ONLY (&program) ? OPTION_RUN (&program) : A68_TRUE)) {
 #if defined HAVE_COMPILER
-    void * compile_lib;
+    void *compile_lib;
 #endif
-    close_tty_on_exit = A68_FALSE; /* Assuming no runtime errors a priori */
+    close_tty_on_exit = A68_FALSE;      /* Assuming no runtime errors a priori */
 #if defined HAVE_COMPILER
     if (OPTION_RUN_SCRIPT (&program)) {
       rewrite_script_source ();
@@ -961,7 +977,7 @@ Compilation on Mac OS X using gcc
 #if defined HAVE_COMPILER
     if (OPTION_OPTIMISE (&program)) {
       char libname[BUFFER_SIZE];
-      void * a68g_lib;
+      void *a68g_lib;
       struct stat srcstat, objstat;
       int ret;
       announce_phase ("dynamic linker");
@@ -1056,7 +1072,8 @@ Compilation on Mac OS X using gcc
 @param code Exit code.
 **/
 
-void a68g_exit (int code)
+void
+a68g_exit (int code)
 {
 /*
   char name[BUFFER_SIZE];
@@ -1089,7 +1106,8 @@ terminal
 @param t Name of phase.
 **/
 
-static void announce_phase (char *t)
+static void
+announce_phase (char *t)
 {
   if (OPTION_VERBOSE (&program)) {
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: %s", a68g_cmd_name, t) >= 0);
@@ -1104,7 +1122,8 @@ static void announce_phase (char *t)
 @brief Build shell script from program.
 **/
 
-static void build_script (void)
+static void
+build_script (void)
 {
   int ret;
   FILE_T script, source;
@@ -1157,7 +1176,7 @@ static void build_script (void)
   ret = system (cmd);
   ABEND (ret != 0, "cannot compose script file", cmd);
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s", FILE_SCRIPT_NAME (&program)) >= 0);
-  ret = chmod (cmd, (__mode_t) (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH)); /* -rwx-r--r-- */
+  ret = chmod (cmd, (__mode_t) (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH));      /* -rwx-r--r-- */
   ABEND (ret != 0, "cannot compose script file", cmd);
   ABEND (ret != 0, "cannot remove", cmd);
 /* Clean up */
@@ -1183,7 +1202,8 @@ static void build_script (void)
 @brief Load program from shell script .
 **/
 
-static void load_script (void)
+static void
+load_script (void)
 {
   int k;
   FILE_T script;
@@ -1235,9 +1255,10 @@ static void load_script (void)
 @brief Rewrite source for shell script .
 **/
 
-static void rewrite_script_source (void)
+static void
+rewrite_script_source (void)
 {
-  LINE_T * ref_l = NO_LINE;
+  LINE_T *ref_l = NO_LINE;
   FILE_T source;
 /* Rebuild the source file */
   ASSERT (remove (FILE_SOURCE_NAME (&program)) == 0);
@@ -1273,7 +1294,8 @@ OPTIONS_T *options;
 @brief Set default values for options.
 **/
 
-void default_options (MODULE_T *p)
+void
+default_options (MODULE_T * p)
 {
   OPTION_NO_WARNINGS (p) = A68_TRUE;
   OPTION_BACKTRACE (p) = A68_FALSE;
@@ -1320,7 +1342,8 @@ void default_options (MODULE_T *p)
 @param info Info text.
 **/
 
-static void option_error (LINE_T * l, char *option, char *info)
+static void
+option_error (LINE_T * l, char *option, char *info)
 {
 /*
   int k;
@@ -1345,7 +1368,8 @@ static void option_error (LINE_T * l, char *option, char *info)
 @return Stripped string.
 **/
 
-static char *strip_sign (char *p)
+static char *
+strip_sign (char *p)
 {
   while (p[0] == '-' || p[0] == '+') {
     p++;
@@ -1360,7 +1384,8 @@ static char *strip_sign (char *p)
 @param line Source line.
 **/
 
-void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
+void
+add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
 {
   if (*l == NO_OPTION_LIST) {
     *l = (OPTION_LIST_T *) get_heap_space ((size_t) SIZE_AL (OPTION_LIST_T));
@@ -1378,7 +1403,8 @@ void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
 @brief Initialise option handler.
 **/
 
-void init_options (void)
+void
+init_options (void)
 {
   options = (OPTIONS_T *) malloc ((size_t) SIZE_AL (OPTIONS_T));
   OPTION_LIST (&program) = NO_OPTION_LIST;
@@ -1391,7 +1417,8 @@ void init_options (void)
 @return Whether equal.
 **/
 
-static BOOL_T eq (char *p, char *q)
+static BOOL_T
+eq (char *p, char *q)
 {
 /* Upper case letters in 'q' are mandatory, lower case must match */
   if (OPTION_PRAGMAT_SEMA (&program)) {
@@ -1406,7 +1433,8 @@ static BOOL_T eq (char *p, char *q)
 @param i Option chain.
 **/
 
-void prune_echoes (OPTION_LIST_T * i)
+void
+prune_echoes (OPTION_LIST_T * i)
 {
   while (i != NO_OPTION_LIST) {
     if (SCAN (i) == SOURCE_SCAN (&program)) {
@@ -1447,7 +1475,8 @@ void prune_echoes (OPTION_LIST_T * i)
 @return Argument value.
 **/
 
-static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
+static int
+fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
 {
   LINE_T *start_l = LINE (*i);
   char *start_c = STR (*i);
@@ -1477,7 +1506,7 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
   } else {
     char *suffix;
     RESET_ERRNO;
-    k = (int) strtol (num, &suffix, 0);      /* Accept also octal and hex */
+    k = (int) strtol (num, &suffix, 0); /* Accept also octal and hex */
     *error = (BOOL_T) (suffix == num);
     if (errno != 0 || *error) {
       option_error (start_l, start_c, "conversion error in");
@@ -1540,7 +1569,8 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
 @return Whether processing was successful.
 **/
 
-BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
+BOOL_T
+set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 {
   BOOL_T go_on = A68_TRUE, name_set = A68_FALSE, skip = A68_FALSE;
   OPTION_LIST_T *j = i;
@@ -1554,7 +1584,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
       char *start_c = STR (i);
       int n = (int) strlen (STR (i));
 /* Allow for spaces ending in # to have A68 comment syntax with '#!' */
-      while (n > 0 && (IS_SPACE((STR (i))[n - 1]) || (STR (i))[n - 1] == '#')) {
+      while (n > 0 && (IS_SPACE ((STR (i))[n - 1]) || (STR (i))[n - 1] == '#')) {
         (STR (i))[--n] = NULL_CHAR;
       }
       if (!(PROCESSED (i))) {
@@ -1772,8 +1802,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           } else if (k > 0) {
             default_mem_sizes (k);
           }
-        }
-        else if (eq (p, "HEAP") || eq (p, "HANDLES") || eq (p, "STACK") || eq (p, "FRAME") || eq (p, "OVERHEAD")) {
+        } else if (eq (p, "HEAP") || eq (p, "HANDLES") || eq (p, "STACK") || eq (p, "FRAME") || eq (p, "OVERHEAD")) {
           BOOL_T error = A68_FALSE;
           int k = fetch_integral (p, &i, &error);
 /* Adjust size */
@@ -1822,7 +1851,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "OPTimise")) {
           OPTION_OPTIMISE (&program) = A68_TRUE;
           OPTION_OPT_LEVEL (&program) = 2;
-        } else if (eq (p, "O0")) { 
+        } else if (eq (p, "O0")) {
           OPTION_OPTIMISE (&program) = A68_TRUE;
           OPTION_OPT_LEVEL (&program) = 0;
         } else if (eq (p, "O")) {
@@ -1872,7 +1901,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 #else
           option_error (start_l, start_c, "linux-only");
 #endif
-        } 
+        }
 /* RUN-QUOTE-SCRIPT runs a comiled .sh script */
         else if (eq (p, "RUN-QUOTE-SCRIPT")) {
 #if defined HAVE_LINUX
@@ -1896,14 +1925,14 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 #else
           option_error (start_l, start_c, "linux-only");
 #endif
-        } 
+        }
 /* RERUN re-uses an existing .so file */
         else if (eq (p, "RERUN")) {
           OPTION_COMPILE (&program) = A68_FALSE;
           OPTION_RERUN (&program) = A68_TRUE;
           OPTION_OPTIMISE (&program) = A68_TRUE;
           OPTION_OPT_LEVEL (&program) = 2;
-        } 
+        }
 /* KEEP and NOKEEP switch off/on object file deletion */
         else if (eq (p, "KEEP")) {
           OPTION_KEEP (&program) = A68_TRUE;
@@ -1921,8 +1950,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         else if (eq (p, "PRETty-print")) {
           OPTION_PRETTY (&program) = A68_TRUE;
           OPTION_CHECK_ONLY (&program) = A68_TRUE;
-        }
-        else if (eq (p, "INDENT")) {
+        } else if (eq (p, "INDENT")) {
           OPTION_PRETTY (&program) = A68_TRUE;
           OPTION_CHECK_ONLY (&program) = A68_TRUE;
         }
@@ -2191,7 +2219,8 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 @brief Set default core size.
 **/
 
-static void default_mem_sizes (int n)
+static void
+default_mem_sizes (int n)
 {
   if (n < 0 || n > 20) {
     n = 1;
@@ -2207,7 +2236,8 @@ static void default_mem_sizes (int n)
 @brief Read options from the .rc file.
 **/
 
-void read_rc_options (void)
+void
+read_rc_options (void)
 {
   FILE *f;
   char name[BUFFER_SIZE], new_name[BUFFER_SIZE];
@@ -2233,7 +2263,8 @@ void read_rc_options (void)
 @brief Read options from A68G_OPTIONS.
 **/
 
-void read_env_options (void)
+void
+read_env_options (void)
 {
   if (getenv ("A68G_OPTIONS") != NULL) {
     isolate_options (getenv ("A68G_OPTIONS"), NO_LINE);
@@ -2248,7 +2279,8 @@ void read_env_options (void)
 @param line Source line.
 **/
 
-void isolate_options (char *p, LINE_T * line)
+void
+isolate_options (char *p, LINE_T * line)
 {
   char *q;
 /* 'q' points at first significant char in item .*/
@@ -2309,7 +2341,8 @@ char *bar[BUFFER_SIZE];
 @param z Moid to print.
 **/
 
-static void a68g_print_short_mode (FILE_T f, MOID_T * z)
+static void
+a68g_print_short_mode (FILE_T f, MOID_T * z)
 {
   if (IS (z, STANDARD)) {
     int i = DIM (z);
@@ -2330,7 +2363,7 @@ static void a68g_print_short_mode (FILE_T f, MOID_T * z)
   } else if (IS (z, PROC_SYMBOL) && PACK (z) == NO_PACK && IS (SUB (z), STANDARD)) {
     WRITE (f, "PROC ");
     a68g_print_short_mode (f, SUB (z));
-  } else {  
+  } else {
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "#%d", NUMBER (z)) >= 0);
     WRITE (f, output_line);
   }
@@ -2342,7 +2375,8 @@ static void a68g_print_short_mode (FILE_T f, MOID_T * z)
 @param z Moid to print.
 **/
 
-void a68g_print_flat_mode (FILE_T f, MOID_T * z)
+void
+a68g_print_flat_mode (FILE_T f, MOID_T * z)
 {
   if (IS (z, STANDARD)) {
     int i = DIM (z);
@@ -2384,7 +2418,8 @@ void a68g_print_flat_mode (FILE_T f, MOID_T * z)
 @param pack Pack to print.
 **/
 
-static void a68g_print_short_pack (FILE_T f, PACK_T * pack)
+static void
+a68g_print_short_pack (FILE_T f, PACK_T * pack)
 {
   if (pack != NO_PACK) {
     a68g_print_short_mode (f, MOID (pack));
@@ -2402,7 +2437,8 @@ static void a68g_print_short_pack (FILE_T f, PACK_T * pack)
 @param z Moid to print.
 **/
 
-void a68g_print_mode (FILE_T f, MOID_T * z)
+void
+a68g_print_mode (FILE_T f, MOID_T * z)
 {
   if (z != NO_MOID) {
     if (IS (z, STANDARD)) {
@@ -2465,7 +2501,8 @@ void a68g_print_mode (FILE_T f, MOID_T * z)
 @param m Moid to print.
 **/
 
-void print_mode_flat (FILE_T f, MOID_T * m)
+void
+print_mode_flat (FILE_T f, MOID_T * m)
 {
   if (m != NO_MOID) {
     a68g_print_mode (f, m);
@@ -2526,7 +2563,8 @@ void print_mode_flat (FILE_T f, MOID_T * m)
 @param a Attribute.
 **/
 
-static void xref_tags (FILE_T f, TAG_T * s, int a)
+static void
+xref_tags (FILE_T f, TAG_T * s, int a)
 {
   for (; s != NO_TAG; FORWARD (s)) {
     NODE_T *where_tag = NODE (s);
@@ -2627,7 +2665,8 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
 @param t Symbol table.
 **/
 
-static void xref_decs (FILE_T f, TABLE_T * t)
+static void
+xref_decs (FILE_T f, TABLE_T * t)
 {
   if (INDICANTS (t) != NO_TAG) {
     xref_tags (f, INDICANTS (t), INDICANT);
@@ -2655,7 +2694,8 @@ static void xref_decs (FILE_T f, TABLE_T * t)
 @param p Moid to xref.
 **/
 
-static void xref1_moid (FILE_T f, MOID_T * p)
+static void
+xref1_moid (FILE_T f, MOID_T * p)
 {
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "\n     #%d ", NUMBER (p)) >= 0);
   WRITE (f, output_line);
@@ -2668,7 +2708,8 @@ static void xref1_moid (FILE_T f, MOID_T * p)
 @param m Moid list to xref.
 **/
 
-void moid_listing (FILE_T f, MOID_T * m)
+void
+moid_listing (FILE_T f, MOID_T * m)
 {
   for (; m != NO_MOID; FORWARD (m)) {
     xref1_moid (f, m);
@@ -2689,7 +2730,8 @@ void moid_listing (FILE_T f, MOID_T * m)
 @param l Source line.
 **/
 
-static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
+static void
+cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
 {
   if (p != NO_NODE && CROSS_REFERENCE_SAFE (&program)) {
     for (; p != NO_NODE; FORWARD (p)) {
@@ -2724,7 +2766,8 @@ static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
 @param ld Index for indenting and drawing bars connecting nodes.
 **/
 
-void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
+void
+tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
 {
   for (; q != NO_NODE; FORWARD (q)) {
     NODE_T *p = q;
@@ -2738,16 +2781,11 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
       ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d %06d p%02d ", x, NUMBER (p), PROCEDURE_LEVEL (INFO (p))) >= 0);
       WRITE (f, output_line);
       if (PREVIOUS (TABLE (p)) != NO_TABLE) {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d-%02d-%02d ", 
-          (TABLE (p) != NO_TABLE ? LEX_LEVEL (p) : 0), 
-          (TABLE (p) != NO_TABLE ? LEVEL (PREVIOUS (TABLE (p))) : 0),
-          (NON_LOCAL (p) != NO_TABLE ? LEVEL (NON_LOCAL (p)) : 0)
-        ) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d-%02d-%02d ", (TABLE (p) != NO_TABLE ? LEX_LEVEL (p) : 0), (TABLE (p) != NO_TABLE ? LEVEL (PREVIOUS (TABLE (p))) : 0), (NON_LOCAL (p) != NO_TABLE ? LEVEL (NON_LOCAL (p)) : 0)
+                ) >= 0);
       } else {
-        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d-  -%02d", 
-          (TABLE (p) != NO_TABLE ? LEX_LEVEL (p) : 0),
-          (NON_LOCAL (p) != NO_TABLE ? LEVEL (NON_LOCAL (p)) : 0)
-        ) >= 0);
+        ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%02d-  -%02d", (TABLE (p) != NO_TABLE ? LEX_LEVEL (p) : 0), (NON_LOCAL (p) != NO_TABLE ? LEVEL (NON_LOCAL (p)) : 0)
+                ) >= 0);
       }
       WRITE (f, output_line);
       if (MOID (q) != NO_MOID) {
@@ -2809,7 +2847,8 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld)
 @return Number of nodes to be printed in tree listing.
 **/
 
-static int leaves_to_print (NODE_T * p, LINE_T * l)
+static int
+leaves_to_print (NODE_T * p, LINE_T * l)
 {
   int z = 0;
   for (; p != NO_NODE && z == 0; FORWARD (p)) {
@@ -2829,7 +2868,8 @@ static int leaves_to_print (NODE_T * p, LINE_T * l)
 @param tree List syntax tree, or not.
 **/
 
-void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
+void
+list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
 {
   int k = (int) strlen (STRING (line)) - 1;
   if (NUMBER (line) <= 0) {
@@ -2863,7 +2903,8 @@ void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
 @brief Source_listing.
 **/
 
-void write_source_listing (void)
+void
+write_source_listing (void)
 {
   LINE_T *line = TOP_LINE (&program);
   FILE_T f = FILE_LISTING_FD (&program);
@@ -2893,7 +2934,8 @@ void write_source_listing (void)
 @brief Write_source_listing.
 **/
 
-void write_tree_listing (void)
+void
+write_tree_listing (void)
 {
   LINE_T *line = TOP_LINE (&program);
   FILE_T f = FILE_LISTING_FD (&program);
@@ -2923,7 +2965,8 @@ void write_tree_listing (void)
 @brief Write_object_listing.
 **/
 
-void write_object_listing (void)
+void
+write_object_listing (void)
 {
   if (OPTION_OBJECT_LISTING (&program)) {
     WRITE (FILE_LISTING_FD (&program), NEWLINE_STRING);
@@ -2938,7 +2981,8 @@ void write_object_listing (void)
 @brief Write_listing.
 **/
 
-void write_listing (void)
+void
+write_listing (void)
 {
   FILE_T f = FILE_LISTING_FD (&program);
   if (OPTION_MOID_LISTING (&program)) {
@@ -3011,10 +3055,11 @@ void write_listing (void)
 @brief Write_listing_header.
 **/
 
-void write_listing_header (void)
+void
+write_listing_header (void)
 {
   FILE_T f = FILE_LISTING_FD (&program);
-  LINE_T * z;
+  LINE_T *z;
   state_version (FILE_LISTING_FD (&program));
   WRITE (FILE_LISTING_FD (&program), "\nFile \"");
   WRITE (FILE_LISTING_FD (&program), FILE_SOURCE_NAME (&program));
@@ -3039,17 +3084,18 @@ void write_listing_header (void)
 @param c Width in columns.
 **/
 
-void a68g_getty (int * h, int * c)
+void
+a68g_getty (int *h, int *c)
 {
 /* Default action first */
-  (* h) = MAX_TERM_HEIGTH;
-  (* c) = MAX_TERM_WIDTH;
+  (*h) = MAX_TERM_HEIGTH;
+  (*c) = MAX_TERM_WIDTH;
 #if (defined HAVE_SYS_IOCTL_H && defined TIOCGWINSZ)
   {
     struct winsize w;
     if (ioctl (0, TIOCGWINSZ, &w) == 0) {
-      (* h) = w.ws_row;
-      (* c) = w.ws_col;
+      (*h) = w.ws_row;
+      (*c) = w.ws_col;
     }
   }
 #elif (defined HAVE_SYS_IOCTL_H && defined TIOCGSIZE)
@@ -3057,10 +3103,10 @@ void a68g_getty (int * h, int * c)
     struct ttysize w;
     (void) ioctl (0, TIOCGSIZE, &w);
     if (w.ts_lines > 0) {
-      (* h) = w.ts_lines;
+      (*h) = w.ts_lines;
     }
     if (w.ts_cols > 0) {
-      (* c) = w.ts_cols;
+      (*c) = w.ts_cols;
     }
   }
 #elif (defined HAVE_SYS_IOCTL_H && defined WIOCGETD)
@@ -3068,10 +3114,10 @@ void a68g_getty (int * h, int * c)
     struct uwdata w;
     (void) ioctl (0, WIOCGETD, &w);
     if (w.uw_heigth > 0 && w.uw_vs != 0) {
-      (* h) = w.uw_heigth / w.uw_vs;
+      (*h) = w.uw_heigth / w.uw_vs;
     }
     if (w.uw_width > 0 && w.uw_hs != 0) {
-      (* c) = w.uw_width / w.uw_hs;
+      (*c) = w.uw_width / w.uw_hs;
     }
   }
 #endif
@@ -3085,7 +3131,8 @@ void a68g_getty (int * h, int * c)
 **/
 
 #if defined SIGWINCH
-static void sigwinch_handler (int i)
+static void
+sigwinch_handler (int i)
 {
   (void) i;
   ABEND (signal (SIGWINCH, sigwinch_handler) == SIG_ERR, "cannot install SIGWINCH handler", NO_TEXT);
@@ -3099,7 +3146,8 @@ static void sigwinch_handler (int i)
 @param i Dummy.
 **/
 
-static void sigsegv_handler (int i)
+static void
+sigsegv_handler (int i)
 {
   (void) i;
   exit (EXIT_FAILURE);
@@ -3111,7 +3159,8 @@ static void sigsegv_handler (int i)
 @param i Dummy.
 **/
 
-static void sigint_handler (int i)
+static void
+sigint_handler (int i)
 {
   (void) i;
   ABEND (signal (SIGINT, sigint_handler) == SIG_ERR, "cannot install SIGINT handler", NO_TEXT);
@@ -3128,7 +3177,8 @@ static void sigint_handler (int i)
 @param i Dummy.
 **/
 
-static void sigttin_handler (int i)
+static void
+sigttin_handler (int i)
 {
   (void) i;
   ABEND (A68_TRUE, "background process attempts reading from disconnected terminal", NO_TEXT);
@@ -3139,7 +3189,8 @@ static void sigttin_handler (int i)
 @param i Dummy.
 **/
 
-static void sigpipe_handler (int i)
+static void
+sigpipe_handler (int i)
 {
   (void) i;
   ABEND (A68_TRUE, "forked process has broken the pipe", NO_TEXT);
@@ -3150,7 +3201,8 @@ static void sigpipe_handler (int i)
 @param i Dummy.
 **/
 
-static void sigalrm_handler (int i)
+static void
+sigalrm_handler (int i)
 {
   (void) i;
   if (in_execution && !in_monitor) {
@@ -3169,7 +3221,8 @@ static void sigalrm_handler (int i)
 @brief Install_signal_handlers.
 **/
 
-void install_signal_handlers (void)
+void
+install_signal_handlers (void)
 {
   ABEND (signal (SIGINT, sigint_handler) == SIG_ERR, "cannot install SIGINT handler", NO_TEXT);
   ABEND (signal (SIGSEGV, sigsegv_handler) == SIG_ERR, "cannot install SIGSEGV handler", NO_TEXT);
@@ -3197,7 +3250,8 @@ static int tag_number = 0;
 @return See brief description.
 **/
 
-BYTE_T *get_heap_space (size_t s)
+BYTE_T *
+get_heap_space (size_t s)
 {
   BYTE_T *z = (BYTE_T *) (A68_ALIGN_T *) malloc (A68_ALIGN (s));
   ABEND (z == NO_BYTE, ERROR_OUT_OF_CORE, NO_TEXT);
@@ -3210,7 +3264,8 @@ BYTE_T *get_heap_space (size_t s)
 @return Pointer.
 **/
 
-char *new_string (char *t, ...)
+char *
+new_string (char *t, ...)
 {
   va_list vl;
   char *q, *z;
@@ -3222,7 +3277,7 @@ char *new_string (char *t, ...)
     q = va_arg (vl, char *);
   }
   va_end (vl);
-  len ++;
+  len++;
   z = (char *) get_heap_space ((size_t) len);
   z[0] = NULL_CHAR;
   q = t;
@@ -3241,7 +3296,8 @@ char *new_string (char *t, ...)
 @return Pointer.
 **/
 
-char *new_fixed_string (char *t)
+char *
+new_fixed_string (char *t)
 {
   int n = (int) (strlen (t) + 1);
   char *z = (char *) get_fixed_heap_space ((size_t) n);
@@ -3255,7 +3311,8 @@ char *new_fixed_string (char *t)
 @return Pointer.
 **/
 
-char *new_temp_string (char *t)
+char *
+new_temp_string (char *t)
 {
   int n = (int) (strlen (t) + 1);
   char *z = (char *) get_temp_heap_space ((size_t) n);
@@ -3269,17 +3326,18 @@ char *new_temp_string (char *t)
 @return Pointer to block.
 **/
 
-BYTE_T *get_fixed_heap_space (size_t s)
+BYTE_T *
+get_fixed_heap_space (size_t s)
 {
   BYTE_T *z;
   if (heap_is_fluid) {
     z = HEAP_ADDRESS (fixed_heap_pointer);
     fixed_heap_pointer += A68_ALIGN ((int) s);
-  /* Allow for extra storage for diagnostics etcetera */
+    /* Allow for extra storage for diagnostics etcetera */
     ABEND (fixed_heap_pointer >= (heap_size - MIN_MEM_SIZE), ERROR_OUT_OF_CORE, NO_TEXT);
     ABEND (((int) temp_heap_pointer - (int) fixed_heap_pointer) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, NO_TEXT);
     return (z);
-  } else { 
+  } else {
     return (get_heap_space (s));
   }
 }
@@ -3290,7 +3348,8 @@ BYTE_T *get_fixed_heap_space (size_t s)
 @return Pointer to block.
 **/
 
-BYTE_T *get_temp_heap_space (size_t s)
+BYTE_T *
+get_temp_heap_space (size_t s)
 {
   BYTE_T *z;
   /* ABEND (!heap_is_fluid, ERROR_INTERNAL_CONSISTENCY, NO_TEXT); */
@@ -3300,7 +3359,7 @@ BYTE_T *get_temp_heap_space (size_t s)
     ABEND (((int) temp_heap_pointer - (int) fixed_heap_pointer) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, NO_TEXT);
     z = HEAP_ADDRESS (temp_heap_pointer);
     return (z);
-  } else { 
+  } else {
     return (get_heap_space (s));
   }
 }
@@ -3309,10 +3368,11 @@ BYTE_T *get_temp_heap_space (size_t s)
 @brief Get size of stack segment.
 **/
 
-void get_stack_size (void)
+void
+get_stack_size (void)
 {
 #if defined HAVE_WIN32
-  stack_size = MEGABYTE; /* guess */
+  stack_size = MEGABYTE;        /* guess */
 #else
   struct rlimit limits;
   RESET_ERRNO;
@@ -3337,7 +3397,8 @@ void get_stack_size (void)
 @return Character.
 **/
 
-char digit_to_char (int i)
+char
+digit_to_char (int i)
 {
   char *z = "0123456789abcdefghijklmnopqrstuvwxyz";
   if (i >= 0 && i < (int) strlen (z)) {
@@ -3353,7 +3414,8 @@ char digit_to_char (int i)
 @param n Node number counter.
 **/
 
-void renumber_nodes (NODE_T * p, int *n)
+void
+renumber_nodes (NODE_T * p, int *n)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     NUMBER (p) = (*n)++;
@@ -3366,7 +3428,8 @@ void renumber_nodes (NODE_T * p, int *n)
 @param p Node in syntax tree.
 **/
 
-void register_nodes (NODE_T * p)
+void
+register_nodes (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     node_register[NUMBER (p)] = p;
@@ -3379,7 +3442,8 @@ void register_nodes (NODE_T * p)
 @return See brief description.
 **/
 
-NODE_INFO_T *new_node_info (void)
+NODE_INFO_T *
+new_node_info (void)
 {
   NODE_INFO_T *z = (NODE_INFO_T *) get_fixed_heap_space ((size_t) SIZE_AL (NODE_INFO_T));
   new_node_infos++;
@@ -3397,7 +3461,8 @@ NODE_INFO_T *new_node_info (void)
 @return See brief description.
 **/
 
-GINFO_T *new_genie_info (void)
+GINFO_T *
+new_genie_info (void)
 {
   GINFO_T *z = (GINFO_T *) get_fixed_heap_space ((size_t) SIZE_AL (GINFO_T));
   new_genie_infos++;
@@ -3424,7 +3489,8 @@ GINFO_T *new_genie_info (void)
 @return See brief description.
 **/
 
-NODE_T *new_node (void)
+NODE_T *
+new_node (void)
 {
   NODE_T *z = (NODE_T *) get_fixed_heap_space ((size_t) SIZE_AL (NODE_T));
   new_nodes++;
@@ -3453,7 +3519,8 @@ NODE_T *new_node (void)
 @return See brief description.
 **/
 
-TABLE_T *new_symbol_table (TABLE_T * p)
+TABLE_T *
+new_symbol_table (TABLE_T * p)
 {
   TABLE_T *z = (TABLE_T *) get_fixed_heap_space ((size_t) SIZE_AL (TABLE_T));
   LEVEL (z) = symbol_table_count++;
@@ -3481,7 +3548,8 @@ TABLE_T *new_symbol_table (TABLE_T * p)
 @return See brief description.
 **/
 
-MOID_T *new_moid (void)
+MOID_T *
+new_moid (void)
 {
   MOID_T *z = (MOID_T *) get_fixed_heap_space ((size_t) SIZE_AL (MOID_T));
   new_modes++;
@@ -3514,7 +3582,8 @@ MOID_T *new_moid (void)
 @return See brief description.
 **/
 
-PACK_T *new_pack (void)
+PACK_T *
+new_pack (void)
 {
   PACK_T *z = (PACK_T *) get_fixed_heap_space ((size_t) SIZE_AL (PACK_T));
   MOID (z) = NO_MOID;
@@ -3532,7 +3601,8 @@ PACK_T *new_pack (void)
 @return See brief description.
 **/
 
-TAG_T *new_tag (void)
+TAG_T *
+new_tag (void)
 {
   TAG_T *z = (TAG_T *) get_fixed_heap_space ((size_t) SIZE_AL (TAG_T));
   STATUS (z) = NULL_MASK;
@@ -3566,7 +3636,8 @@ TAG_T *new_tag (void)
 @return See brief description.
 **/
 
-LINE_T *new_source_line (void)
+LINE_T *
+new_source_line (void)
 {
   LINE_T *z = (LINE_T *) get_fixed_heap_space ((size_t) SIZE_AL (LINE_T));
   MARKER (z)[0] = NULL_CHAR;
@@ -3587,7 +3658,8 @@ LINE_T *new_source_line (void)
 @param m Moid number.
 **/
 
-void make_special_mode (MOID_T ** n, int m)
+void
+make_special_mode (MOID_T ** n, int m)
 {
   (*n) = new_moid ();
   ATTRIBUTE (*n) = 0;
@@ -3610,7 +3682,8 @@ void make_special_mode (MOID_T ** n, int m)
 @return Whether match.
 **/
 
-BOOL_T match_string (char *x, char *c, char alt)
+BOOL_T
+match_string (char *x, char *c, char alt)
 {
   BOOL_T match = A68_TRUE;
   while ((IS_UPPER (c[0]) || IS_DIGIT (c[0]) || c[0] == '-') && match) {
@@ -3631,7 +3704,8 @@ BOOL_T match_string (char *x, char *c, char alt)
 @return Whether match.
 **/
 
-BOOL_T whether (NODE_T * p, ...)
+BOOL_T
+whether (NODE_T * p, ...)
 {
   va_list vl;
   int a;
@@ -3664,7 +3738,8 @@ BOOL_T whether (NODE_T * p, ...)
 @return Whether match.
 **/
 
-BOOL_T is_one_of (NODE_T * p, ...)
+BOOL_T
+is_one_of (NODE_T * p, ...)
 {
   if (p != NO_NODE) {
     va_list vl;
@@ -3689,7 +3764,8 @@ BOOL_T is_one_of (NODE_T * p, ...)
 @param t Attribute for branch.
 **/
 
-void make_sub (NODE_T * p, NODE_T * q, int t)
+void
+make_sub (NODE_T * p, NODE_T * q, int t)
 {
   NODE_T *z = new_node ();
   ABEND (p == NO_NODE || q == NO_NODE, ERROR_INTERNAL_CONSISTENCY, "make_sub");
@@ -3721,7 +3797,8 @@ void make_sub (NODE_T * p, NODE_T * q, int t)
 @return See brief description.
 **/
 
-TABLE_T *find_level (NODE_T * n, int i)
+TABLE_T *
+find_level (NODE_T * n, int i)
 {
   if (n == NO_NODE) {
     return (NO_TABLE);
@@ -3744,7 +3821,8 @@ TABLE_T *find_level (NODE_T * n, int i)
 @return See brief description.
 **/
 
-double seconds (void)
+double
+seconds (void)
 {
   return ((double) clock () / (double) CLOCKS_PER_SEC);
 }
@@ -3755,7 +3833,8 @@ double seconds (void)
 @return See brief description.
 **/
 
-BOOL_T is_new_lexical_level (NODE_T * p)
+BOOL_T
+is_new_lexical_level (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case ALT_DO_PART:
@@ -3799,7 +3878,8 @@ BOOL_T is_new_lexical_level (NODE_T * p)
 @return See brief description.
 **/
 
-NODE_T *some_node (char *t)
+NODE_T *
+some_node (char *t)
 {
   NODE_T *z = new_node ();
   INFO (z) = new_node_info ();
@@ -3812,7 +3892,8 @@ NODE_T *some_node (char *t)
 @brief Initialise use of elem-lists.
 **/
 
-void init_postulates (void)
+void
+init_postulates (void)
 {
   top_postulate = NO_POSTULATE;
   top_postulate_list = NO_POSTULATE;
@@ -3824,14 +3905,15 @@ void init_postulates (void)
 @param stop First element to not save.
 **/
 
-void free_postulate_list (POSTULATE_T *start, POSTULATE_T *stop)
+void
+free_postulate_list (POSTULATE_T * start, POSTULATE_T * stop)
 {
   POSTULATE_T *last;
   if (start == stop) {
     return;
   }
   for (last = start; NEXT (last) != stop; FORWARD (last)) {
-    /* skip */;
+    /* skip */ ;
   }
   NEXT (last) = top_postulate_list;
   top_postulate_list = start;
@@ -3844,7 +3926,8 @@ void free_postulate_list (POSTULATE_T *start, POSTULATE_T *stop)
 @param b Moid 2.
 **/
 
-void make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
+void
+make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
 {
   POSTULATE_T *new_one;
   if (top_postulate_list != NO_POSTULATE) {
@@ -3868,7 +3951,8 @@ void make_postulate (POSTULATE_T ** p, MOID_T * a, MOID_T * b)
 @return Containing postulate.
 **/
 
-POSTULATE_T *is_postulated_pair (POSTULATE_T * p, MOID_T * a, MOID_T * b)
+POSTULATE_T *
+is_postulated_pair (POSTULATE_T * p, MOID_T * a, MOID_T * b)
 {
   for (; p != NO_POSTULATE; FORWARD (p)) {
     if (A (p) == a && B (p) == b) {
@@ -3885,7 +3969,8 @@ POSTULATE_T *is_postulated_pair (POSTULATE_T * p, MOID_T * a, MOID_T * b)
 @return Containing postulate.
 **/
 
-POSTULATE_T *is_postulated (POSTULATE_T * p, MOID_T * a)
+POSTULATE_T *
+is_postulated (POSTULATE_T * p, MOID_T * a)
 {
   for (; p != NO_POSTULATE; FORWARD (p)) {
     if (A (p) == a) {
@@ -3903,7 +3988,8 @@ POSTULATE_T *is_postulated (POSTULATE_T * p, MOID_T * a)
 @brief Discard_heap.
 **/
 
-void discard_heap (void)
+void
+discard_heap (void)
 {
   if (heap_segment != NO_BYTE) {
     free (heap_segment);
@@ -3916,7 +4002,8 @@ void discard_heap (void)
 @brief Initialise C and A68 heap management.
 **/
 
-void init_heap (void)
+void
+init_heap (void)
 {
   int heap_a_size = A68_ALIGN (heap_size);
   int handle_a_size = A68_ALIGN (handle_pool_size);
@@ -3942,7 +4029,8 @@ void init_heap (void)
 @return New entry.
 **/
 
-TOKEN_T *add_token (TOKEN_T ** p, char *t)
+TOKEN_T *
+add_token (TOKEN_T ** p, char *t)
 {
   char *z = new_fixed_string (t);
   while (*p != NO_TOKEN) {
@@ -3968,7 +4056,8 @@ TOKEN_T *add_token (TOKEN_T ** p, char *t)
 @return Entry.
 **/
 
-KEYWORD_T *find_keyword (KEYWORD_T * p, char *t)
+KEYWORD_T *
+find_keyword (KEYWORD_T * p, char *t)
 {
   while (p != NO_KEYWORD) {
     int k = strcmp (t, TEXT (p));
@@ -3990,7 +4079,8 @@ KEYWORD_T *find_keyword (KEYWORD_T * p, char *t)
 @return Entry.
 **/
 
-KEYWORD_T *find_keyword_from_attribute (KEYWORD_T * p, int a)
+KEYWORD_T *
+find_keyword_from_attribute (KEYWORD_T * p, int a)
 {
   if (p == NO_KEYWORD) {
     return (NO_KEYWORD);
@@ -4022,7 +4112,8 @@ static double pow_10[] = {
 @return See brief description.
 **/
 
-double ten_up (int expo)
+double
+ten_up (int expo)
 {
 /* This way appears sufficiently accurate */
   double dbl_expo = 1.0, *dep;
@@ -4046,7 +4137,8 @@ double ten_up (int expo)
 @return Pointer to first "c" in "str".
 **/
 
-char *a68g_strchr (char *str, int c)
+char *
+a68g_strchr (char *str, int c)
 {
   return (strchr (str, c));
 }
@@ -4058,12 +4150,13 @@ char *a68g_strchr (char *str, int c)
 @param len Size of dst.
 **/
 
-void bufcat (char *dst, char *src, int len)
+void
+bufcat (char *dst, char *src, int len)
 {
   if (src != NO_TEXT) {
     char *d = dst, *s = src;
     int n = len, dlen;
-  /* Find end of dst and left-adjust; do not go past end */
+    /* Find end of dst and left-adjust; do not go past end */
     for (; n-- != 0 && d[0] != NULL_CHAR; d++) {
       ;
     }
@@ -4079,7 +4172,7 @@ void bufcat (char *dst, char *src, int len)
       }
       d[0] = NULL_CHAR;
     }
-  /* Better sure than sorry */
+    /* Better sure than sorry */
     dst[len - 1] = NULL_CHAR;
   }
 }
@@ -4091,12 +4184,13 @@ void bufcat (char *dst, char *src, int len)
 @param len Size of dst.
 **/
 
-void bufcpy (char *dst, char *src, int len)
+void
+bufcpy (char *dst, char *src, int len)
 {
   if (src != NO_TEXT) {
     char *d = dst, *s = src;
     int n = len;
-  /* Copy as many as fit */
+    /* Copy as many as fit */
     if (n > 0 && --n > 0) {
       do {
         if (((d++)[0] = (s++)[0]) == NULL_CHAR) {
@@ -4105,10 +4199,10 @@ void bufcpy (char *dst, char *src, int len)
       } while (--n > 0);
     }
     if (n == 0 && len > 0) {
-  /* Not enough room in dst, so terminate */
+      /* Not enough room in dst, so terminate */
       d[0] = NULL_CHAR;
     }
-  /* Better sure than sorry */
+    /* Better sure than sorry */
     dst[len - 1] = NULL_CHAR;
   }
 }
@@ -4122,7 +4216,8 @@ void bufcpy (char *dst, char *src, int len)
 @return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
-int grep_in_string (char *pat, char *str, int *start, int *end)
+int
+grep_in_string (char *pat, char *str, int *start, int *end)
 {
 #if defined HAVE_REGEX_H
   int rc, nmatch, k, max_k, widest;
@@ -4196,7 +4291,8 @@ static void make_acronym (char *, char *);
 @return See brief description.
 **/
 
-static BOOL_T is_vowel (char ch)
+static BOOL_T
+is_vowel (char ch)
 {
   return ((BOOL_T) (a68g_strchr ("aeiouAEIOU", ch) != NO_TEXT));
 }
@@ -4207,7 +4303,8 @@ static BOOL_T is_vowel (char ch)
 @return See brief description.
 **/
 
-static BOOL_T is_consonant (char ch)
+static BOOL_T
+is_consonant (char ch)
 {
   return ((BOOL_T) (a68g_strchr ("qwrtypsdfghjklzxcvbnmQWRTYPSDFGHJKLZXCVBNM", ch) != NO_TEXT));
 }
@@ -4243,7 +4340,8 @@ static char *codas[] = {
 @return Difference between key and data.
 **/
 
-static int qsort_strcmp (const void *key, const void *data)
+static int
+qsort_strcmp (const void *key, const void *data)
 {
   return (strcmp ((char *) key, *(char **) data));
 }
@@ -4255,7 +4353,8 @@ static int qsort_strcmp (const void *key, const void *data)
 @return See brief description.
 **/
 
-static BOOL_T is_coda (char *str, int len)
+static BOOL_T
+is_coda (char *str, int len)
 {
   char str2[BUFFER_SIZE];
   bufcpy (str2, str, BUFFER_SIZE);
@@ -4269,7 +4368,8 @@ static BOOL_T is_coda (char *str, int len)
 @param out Output string.
 **/
 
-static void get_init_sylls (char *in, char *out)
+static void
+get_init_sylls (char *in, char *out)
 {
   char *coda;
   while (*in != NULL_CHAR) {
@@ -4305,7 +4405,8 @@ static void get_init_sylls (char *in, char *out)
 @param str String.
 **/
 
-static void reduce_vowels (char *str)
+static void
+reduce_vowels (char *str)
 {
   char *next;
   while (*str != NULL_CHAR) {
@@ -4336,7 +4437,8 @@ static void reduce_vowels (char *str)
 @param max_len Maximym length.
 **/
 
-static void remove_boundaries (char *str, int max_len)
+static void
+remove_boundaries (char *str, int max_len)
 {
   int len = 0;
   while (*str != NULL_CHAR) {
@@ -4359,7 +4461,8 @@ static void remove_boundaries (char *str, int max_len)
 @return See brief description.
 **/
 
-static int error_length (char *str)
+static int
+error_length (char *str)
 {
   int len = 0;
   while (*str != NULL_CHAR) {
@@ -4377,7 +4480,8 @@ static int error_length (char *str)
 @return Whether operation succeeded.
 **/
 
-static BOOL_T remove_extra_coda (char *str)
+static BOOL_T
+remove_extra_coda (char *str)
 {
   int len;
   while (*str != NULL_CHAR) {
@@ -4397,7 +4501,8 @@ static BOOL_T remove_extra_coda (char *str)
 @param out Output string.
 **/
 
-static void make_acronym (char *in, char *out)
+static void
+make_acronym (char *in, char *out)
 {
   get_init_sylls (in, out);
   reduce_vowels (out);
@@ -4410,7 +4515,8 @@ static void make_acronym (char *in, char *out)
 @param p Node in syntax tree.
 **/
 
-void genie_acronym (NODE_T * p)
+void
+genie_acronym (NODE_T * p)
 {
   A68_REF z;
   int len;
@@ -4441,6 +4547,9 @@ static char *attribute_names[WILDCARD + 1] = {
   "A68_PATTERN",
   "ACCO_SYMBOL",
   "ACTUAL_DECLARER_MARK",
+  "ALIF_IF_PART",
+  "ALIF_PART",
+  "ALIF_SYMBOL",
   "ALT_DO_PART",
   "ALT_DO_SYMBOL",
   "ALT_EQUALS_SYMBOL",
@@ -4615,6 +4724,8 @@ static char *attribute_names[WILDCARD + 1] = {
   "GENERIC_ARGUMENT_LIST",
   "GOTO_SYMBOL",
   "GO_SYMBOL",
+  "GUARDED_CONDITIONAL_CLAUSE",
+  "GUARDED_LOOP_CLAUSE",
   "HEAP_SYMBOL",
   "IDENTIFIER",
   "IDENTITY_DECLARATION",
@@ -4802,7 +4913,8 @@ static char *attribute_names[WILDCARD + 1] = {
 @return Buf, containing name of non terminal string.
 **/
 
-char *non_terminal_string (char *buf, int att)
+char *
+non_terminal_string (char *buf, int att)
 {
   if (att > 0 && att < WILDCARD) {
     if (attribute_names[att] != NO_TEXT) {
@@ -4831,7 +4943,8 @@ char *non_terminal_string (char *buf, int att)
 @return Name of that what "f" implements.
 **/
 
-char *standard_environ_proc_name (GPROC f)
+char *
+standard_environ_proc_name (GPROC f)
 {
   TAG_T *i = IDENTIFIERS (a68g_standenv);
   for (; i != NO_TAG; FORWARD (i)) {
@@ -4943,7 +5056,8 @@ static A68_INFO info_text[] = {
 @param k Index of info item to print.
 **/
 
-static void print_info (FILE_T f, char *prompt, int k)
+static void
+print_info (FILE_T f, char *prompt, int k)
 {
   if (prompt != NO_TEXT) {
     ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s %s: %s.", prompt, TERM (&info_text[k]), DEF (&info_text[k])) >= 0);
@@ -4960,7 +5074,8 @@ static void print_info (FILE_T f, char *prompt, int k)
 @param item Item to print.
 **/
 
-void apropos (FILE_T f, char *prompt, char *item)
+void
+apropos (FILE_T f, char *prompt, char *item)
 {
   int k, n = 0;
   if (item == NO_TEXT) {
@@ -4996,7 +5111,8 @@ void apropos (FILE_T f, char *prompt, char *item)
 @return See brief description.
 **/
 
-BOOL_T unprintable (char ch)
+BOOL_T
+unprintable (char ch)
 {
   return ((BOOL_T) (!IS_PRINT (ch) && ch != TAB_CHAR));
 }
@@ -5007,7 +5123,8 @@ BOOL_T unprintable (char ch)
 @return String containing formatted character.
 **/
 
-char *ctrl_char (int ch)
+char *
+ctrl_char (int ch)
 {
   static char loc_str[SMALL_BUFFER_SIZE];
   ch = TO_UCHAR (ch);
@@ -5025,7 +5142,8 @@ char *ctrl_char (int ch)
 @return (short) string
 **/
 
-static char *char_to_str (char ch)
+static char *
+char_to_str (char ch)
 {
   static char loc_str[2];
   loc_str[0] = ch;
@@ -5039,7 +5157,8 @@ static char *char_to_str (char ch)
 @param p Text.
 **/
 
-static void pretty_diag (FILE_T f, char *p)
+static void
+pretty_diag (FILE_T f, char *p)
 {
   int pos = 1, line_width = (f == STDOUT_FILENO ? term_width : MAX_TERM_WIDTH);
   while (p[0] != NULL_CHAR) {
@@ -5078,7 +5197,8 @@ static void pretty_diag (FILE_T f, char *p)
 @param line Line in source file where abend.
 **/
 
-void abend (char *reason, char *info, char *file, int line)
+void
+abend (char *reason, char *info, char *file, int line)
 {
   ASSERT (snprintf (output_line, SNPRINTF_SIZE, "%s: exiting: %s: %d: %s", a68g_cmd_name, file, line, reason) >= 0);
   if (info != NO_TEXT) {
@@ -5101,7 +5221,8 @@ void abend (char *reason, char *info, char *file, int line)
 @param q Node pertaining to "p".
 **/
 
-static char *where_pos (LINE_T * p, NODE_T * q)
+static char *
+where_pos (LINE_T * p, NODE_T * q)
 {
   char *pos;
   if (q != NO_NODE && p == LINE (INFO (q))) {
@@ -5128,7 +5249,8 @@ static char *where_pos (LINE_T * p, NODE_T * q)
 @return Pointer to character to mark.
 **/
 
-static char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
+static char *
+diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
 {
   char *pos;
   if (WHERE (d) != NO_NODE && p == LINE (INFO (WHERE (d)))) {
@@ -5156,7 +5278,8 @@ static char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
 @param diag Whether and how to print diagnostics.
 **/
 
-void write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
+void
+write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
 {
   char *c, *c0;
   int continuations = 0;
@@ -5334,7 +5457,8 @@ void write_source_line (FILE_T f, LINE_T * p, NODE_T * nwhere, int diag)
 @param what Severity of diagnostics to print.
 **/
 
-void diagnostics_to_terminal (LINE_T * p, int what)
+void
+diagnostics_to_terminal (LINE_T * p, int what)
 {
   for (; p != NO_LINE; FORWARD (p)) {
     if (DIAGNOSTICS (p) != NO_DIAGNOSTIC) {
@@ -5361,7 +5485,8 @@ void diagnostics_to_terminal (LINE_T * p, int what)
 @param txt Error text.
 **/
 
-void scan_error (LINE_T * u, char *v, char *txt)
+void
+scan_error (LINE_T * u, char *v, char *txt)
 {
   if (errno != 0) {
     diagnostic_line (A68_SUPPRESS_SEVERITY, u, v, txt, error_specification ());
@@ -5377,7 +5502,8 @@ void scan_error (LINE_T * u, char *v, char *txt)
 @return See brief description.
 **/
 
-static char *get_severity (int sev)
+static char *
+get_severity (int sev)
 {
   switch (sev) {
   case A68_ERROR:
@@ -5417,7 +5543,8 @@ static char *get_severity (int sev)
 @param b Diagnostic text.
 */
 
-static void write_diagnostic (int sev, char *b)
+static void
+write_diagnostic (int sev, char *b)
 {
   char st[SMALL_BUFFER_SIZE];
   char *severity = get_severity (sev);
@@ -5440,7 +5567,8 @@ static void write_diagnostic (int sev, char *b)
 @param b Diagnostic text.
 */
 
-static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
+static void
+add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
 {
 /* Add diagnostic and choose GNU style or non-GNU style */
   DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) SIZE_AL (DIAGNOSTIC_T));
@@ -5719,7 +5847,8 @@ Z quoted string literal.
 @param ... various arguments needed by special symbols in loc_str
 **/
 
-void diagnostic_node (STATUS_MASK sev, NODE_T * p, char *loc_str, ...)
+void
+diagnostic_node (STATUS_MASK sev, NODE_T * p, char *loc_str, ...)
 {
   va_list args;
   MOID_T *moid = NO_MOID;
@@ -5802,7 +5931,8 @@ void diagnostic_node (STATUS_MASK sev, NODE_T * p, char *loc_str, ...)
 @param ... various arguments needed by special symbols in loc_str
 **/
 
-void diagnostic_line (STATUS_MASK sev, LINE_T * line, char *pos, char *loc_str, ...)
+void
+diagnostic_line (STATUS_MASK sev, LINE_T * line, char *pos, char *loc_str, ...)
 {
   va_list args;
   MOID_T *moid = NO_MOID;
@@ -5890,7 +6020,8 @@ void diagnostic_line (STATUS_MASK sev, LINE_T * line, char *pos, char *loc_str, 
 @param t Keyword text.
 **/
 
-static void add_keyword (KEYWORD_T ** p, int a, char *t)
+static void
+add_keyword (KEYWORD_T ** p, int a, char *t)
 {
   while (*p != NO_KEYWORD) {
     int k = strcmp (t, TEXT (*p));
@@ -5910,7 +6041,8 @@ static void add_keyword (KEYWORD_T ** p, int a, char *t)
 @brief Make tables of keywords and non-terminals.
 **/
 
-void set_up_tables (void)
+void
+set_up_tables (void)
 {
 /* Entries are randomised to balance the tree */
   if (OPTION_STRICT (&program) == A68_FALSE) {
@@ -5931,6 +6063,7 @@ void set_up_tables (void)
     add_keyword (&top_keyword, ORF_SYMBOL, "OREL");
     add_keyword (&top_keyword, ANDF_SYMBOL, "ANDF");
     add_keyword (&top_keyword, ORF_SYMBOL, "ORF");
+    add_keyword (&top_keyword, ALIF_SYMBOL, "ALIF");
   }
   add_keyword (&top_keyword, POINT_SYMBOL, ".");
   add_keyword (&top_keyword, COMPLEX_SYMBOL, "COMPLEX");
@@ -6026,7 +6159,8 @@ void set_up_tables (void)
 @param max Maximum calculated moid size.
 **/
 
-static void max_unitings_to_simplout (NODE_T * p, int *max)
+static void
+max_unitings_to_simplout (NODE_T * p, int *max)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNITING) && MOID (p) == MODE (SIMPLOUT)) {
@@ -6047,9 +6181,10 @@ static void max_unitings_to_simplout (NODE_T * p, int *max)
 @param p Node in syntax tree.
 **/
 
-void get_max_simplout_size (NODE_T * p)
+void
+get_max_simplout_size (NODE_T * p)
 {
-  max_simplout_size = A68_REF_SIZE; /* For anonymous SKIP */
+  max_simplout_size = A68_REF_SIZE;     /* For anonymous SKIP */
   max_unitings_to_simplout (p, &max_simplout_size);
 }
 
@@ -6058,7 +6193,8 @@ void get_max_simplout_size (NODE_T * p)
 @param z Moid to start from.
 **/
 
-void set_moid_sizes (MOID_T * z)
+void
+set_moid_sizes (MOID_T * z)
 {
   for (; z != NO_MOID; FORWARD (z)) {
     SIZE (z) = moid_size (z);
@@ -6085,7 +6221,8 @@ void set_moid_sizes (MOID_T * z)
 @return Moid size.
 **/
 
-static int moid_size_2 (MOID_T * p)
+static int
+moid_size_2 (MOID_T * p)
 {
   if (p == NO_MOID) {
     return (0);
@@ -6221,7 +6358,8 @@ static int moid_size_2 (MOID_T * p)
 @return Moid digits.
 **/
 
-static int moid_digits_2 (MOID_T * p)
+static int
+moid_digits_2 (MOID_T * p)
 {
   if (p == NO_MOID) {
     return (0);
@@ -6250,7 +6388,8 @@ static int moid_digits_2 (MOID_T * p)
 @return Moid size.
 **/
 
-int moid_size (MOID_T * p)
+int
+moid_size (MOID_T * p)
 {
   SIZE (p) = A68_ALIGN (moid_size_2 (p));
   return (SIZE (p));
@@ -6262,7 +6401,8 @@ int moid_size (MOID_T * p)
 @return Moid size.
 **/
 
-int moid_digits (MOID_T * p)
+int
+moid_digits (MOID_T * p)
 {
   DIGITS (p) = moid_digits_2 (p);
   return (DIGITS (p));
@@ -6279,7 +6419,8 @@ int moid_digits (MOID_T * p)
 @param w Estimated width.
 **/
 
-static void add_to_moid_text (char *dst, char *str, int *w)
+static void
+add_to_moid_text (char *dst, char *str, int *w)
 {
   bufcat (dst, str, BUFFER_SIZE);
   (*w) -= (int) strlen (str);
@@ -6292,7 +6433,8 @@ static void add_to_moid_text (char *dst, char *str, int *w)
 @return Entry in symbol table.
 **/
 
-TAG_T *find_indicant_global (TABLE_T * table, MOID_T * mode)
+TAG_T *
+find_indicant_global (TABLE_T * table, MOID_T * mode)
 {
   if (table != NO_TABLE) {
     TAG_T *s;
@@ -6316,7 +6458,8 @@ TAG_T *find_indicant_global (TABLE_T * table, MOID_T * mode)
 @param idf Print indicants if one exists in this range.
 **/
 
-static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * idf)
+static void
+pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * idf)
 {
   for (; p != NO_PACK; FORWARD (p)) {
     moid_to_string_2 (b, MOID (p), w, idf);
@@ -6340,7 +6483,8 @@ static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * i
 @param idf Print indicants if one exists in this range.
 **/
 
-static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
+static void
+moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
 {
 /* Oops. Should not happen */
   if (n == NO_MOID) {
@@ -6395,7 +6539,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
     if (DIM (n) > 0) {
       int k = DIM (n);
       if ((*w) >= k * (int) strlen ("LONG ") + (int) strlen (NSYMBOL (NODE (n)))) {
-        while (k --) {
+        while (k--) {
           add_to_moid_text (b, "LONG ", w);
         }
         add_to_moid_text (b, NSYMBOL (NODE (n)), w);
@@ -6405,7 +6549,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
     } else if (DIM (n) < 0) {
       int k = -DIM (n);
       if ((*w) >= k * (int) strlen ("LONG ") + (int) strlen (NSYMBOL (NODE (n)))) {
-        while (k --) {
+        while (k--) {
           add_to_moid_text (b, "LONG ", w);
         }
         add_to_moid_text (b, NSYMBOL (NODE (n)), w);
@@ -6541,7 +6685,8 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
 @return Text buffer.
 **/
 
-char *moid_to_string (MOID_T * n, int w, NODE_T * idf)
+char *
+moid_to_string (MOID_T * n, int w, NODE_T * idf)
 {
   char a[BUFFER_SIZE];
   a[0] = NULL_CHAR;

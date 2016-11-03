@@ -732,7 +732,8 @@ const colour_info A68_COLOURS[COLOUR_NAMES + 1] = {
 @return Whether colour name is found.
 **/
 
-static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
+static BOOL_T
+string_to_colour (NODE_T * p, char *name, int *iindex)
 {
   A68_REF z_ref = heap_generator (p, MODE (C_STRING), (int) (1 + strlen (name)));
   char *z = DEREF (char, &z_ref);
@@ -764,7 +765,8 @@ static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
 @return Whether conversion is successful.
 **/
 
-static BOOL_T scan_int (char **z, int *k)
+static BOOL_T
+scan_int (char **z, int *k)
 {
   char *y = *z;
   while (y[0] != NULL_CHAR && !IS_DIGIT (y[0])) {
@@ -783,7 +785,8 @@ static BOOL_T scan_int (char **z, int *k)
 @param p Node in syntax tree.
 **/
 
-void genie_make_device (NODE_T * p)
+void
+genie_make_device (NODE_T * p)
 {
   int size;
   A68_REF ref_device, ref_page, ref_file;
@@ -825,7 +828,8 @@ void genie_make_device (NODE_T * p)
 @return TRUE or exits
 **/
 
-BOOL_T close_device (NODE_T * p, A68_FILE * f)
+BOOL_T
+close_device (NODE_T * p, A68_FILE * f)
 {
   CHECK_INIT (p, INITIALISED (f), MODE (FILE));
   if (!OPENED (f)) {
@@ -867,7 +871,8 @@ BOOL_T close_device (NODE_T * p, A68_FILE * f)
 @return Plotter of file.
 **/
 
-static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
+static plPlotter *
+set_up_device (NODE_T * p, A68_FILE * f)
 {
   A68_REF ref_filename;
   char *filename, *device_type;
@@ -1145,7 +1150,8 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_clear (NODE_T * p)
+void
+genie_draw_clear (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *f;
@@ -1163,7 +1169,8 @@ void genie_draw_clear (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_show (NODE_T * p)
+void
+genie_draw_show (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *f;
@@ -1180,7 +1187,8 @@ void genie_draw_show (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_aspect (NODE_T * p)
+void
+genie_draw_aspect (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *f;
@@ -1198,7 +1206,8 @@ void genie_draw_aspect (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_fillstyle (NODE_T * p)
+void
+genie_draw_fillstyle (NODE_T * p)
 {
   A68_INT z;
   A68_REF ref_file;
@@ -1217,7 +1226,8 @@ void genie_draw_fillstyle (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_get_colour_name (NODE_T * p)
+void
+genie_draw_get_colour_name (NODE_T * p)
 {
   A68_INT z;
   int j;
@@ -1233,7 +1243,8 @@ void genie_draw_get_colour_name (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_colour (NODE_T * p)
+void
+genie_draw_colour (NODE_T * p)
 {
   A68_REAL x, y, z;
   A68_REF ref_file;
@@ -1259,7 +1270,8 @@ void genie_draw_colour (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_background_colour (NODE_T * p)
+void
+genie_draw_background_colour (NODE_T * p)
 {
   A68_REAL x, y, z;
   A68_REF ref_file;
@@ -1280,7 +1292,8 @@ void genie_draw_background_colour (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_colour_name (NODE_T * p)
+void
+genie_draw_colour_name (NODE_T * p)
 {
   A68_REF ref_c, ref_file;
   A68_FILE *f;
@@ -1317,7 +1330,8 @@ void genie_draw_colour_name (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_background_colour_name (NODE_T * p)
+void
+genie_draw_background_colour_name (NODE_T * p)
 {
   A68_REF ref_c, ref_file;
   A68_FILE *f;
@@ -1352,7 +1366,8 @@ void genie_draw_background_colour_name (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_linestyle (NODE_T * p)
+void
+genie_draw_linestyle (NODE_T * p)
 {
   A68_REF txt, ref_file;
   A68_FILE *f;
@@ -1377,7 +1392,8 @@ void genie_draw_linestyle (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_linewidth (NODE_T * p)
+void
+genie_draw_linewidth (NODE_T * p)
 {
   A68_REAL width;
   A68_REF ref_file;
@@ -1396,7 +1412,8 @@ void genie_draw_linewidth (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_move (NODE_T * p)
+void
+genie_draw_move (NODE_T * p)
 {
   A68_REAL x, y;
   A68_REF ref_file;
@@ -1418,7 +1435,8 @@ void genie_draw_move (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_line (NODE_T * p)
+void
+genie_draw_line (NODE_T * p)
 {
   A68_REAL x, y;
   A68_REF ref_file;
@@ -1440,7 +1458,8 @@ void genie_draw_line (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_point (NODE_T * p)
+void
+genie_draw_point (NODE_T * p)
 {
   A68_REAL x, y;
   A68_REF ref_file;
@@ -1462,7 +1481,8 @@ void genie_draw_point (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_rect (NODE_T * p)
+void
+genie_draw_rect (NODE_T * p)
 {
   A68_REAL x, y;
   A68_REF ref_file;
@@ -1484,7 +1504,8 @@ void genie_draw_rect (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_circle (NODE_T * p)
+void
+genie_draw_circle (NODE_T * p)
 {
   A68_REAL x, y, r;
   A68_REF ref_file;
@@ -1507,7 +1528,8 @@ void genie_draw_circle (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_atom (NODE_T * p)
+void
+genie_draw_atom (NODE_T * p)
 {
   A68_REAL x, y, r;
   double frac;
@@ -1540,7 +1562,8 @@ void genie_draw_atom (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_star (NODE_T * p)
+void
+genie_draw_star (NODE_T * p)
 {
   A68_REAL x, y, r;
   double z, frac;
@@ -1578,7 +1601,8 @@ void genie_draw_star (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_text (NODE_T * p)
+void
+genie_draw_text (NODE_T * p)
 {
   A68_CHAR just_v, just_h;
   A68_REF txt, ref_file;
@@ -1606,7 +1630,8 @@ void genie_draw_text (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_fontname (NODE_T * p)
+void
+genie_draw_fontname (NODE_T * p)
 {
   A68_REF txt, ref_file;
   A68_FILE *f;
@@ -1631,7 +1656,8 @@ void genie_draw_fontname (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_fontsize (NODE_T * p)
+void
+genie_draw_fontsize (NODE_T * p)
 {
   A68_INT size;
   A68_REF ref_file;
@@ -1650,7 +1676,8 @@ void genie_draw_fontsize (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_textangle (NODE_T * p)
+void
+genie_draw_textangle (NODE_T * p)
 {
   A68_INT angle;
   A68_REF ref_file;

@@ -48,7 +48,8 @@ typedef int socklen_t;
 @param p Node in syntax tree.
 **/
 
-void genie_http_content (NODE_T * p)
+void
+genie_http_content (NODE_T * p)
 {
   WSADATA wsa_data;
   A68_REF path_string, domain_string, content_string;
@@ -70,7 +71,7 @@ void genie_http_content (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  * DEREF (A68_REF, &content_string) = empty_string (p);
+  *DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -83,7 +84,7 @@ void genie_http_content (NODE_T * p)
   add_string_transput_buffer (p, REQUEST_BUFFER, get_transput_buffer (PATH_BUFFER));
   add_string_transput_buffer (p, REQUEST_BUFFER, " HTTP/1.0\n\n");
 /* Connect to host */
-  if (WSAStartup(MAKEWORD(1, 1), &wsa_data) != NO_ERROR) {
+  if (WSAStartup (MAKEWORD (1, 1), &wsa_data) != NO_ERROR) {
     PUSH_PRIMITIVE (p, 1, A68_INT);
     return;
   }
@@ -158,9 +159,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  * DEREF (A68_REF, &content_string) =
-    c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
-      get_transput_buffer_index (CONTENT_BUFFER));
+  *DEREF (A68_REF, &content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER), get_transput_buffer_index (CONTENT_BUFFER));
   if (k != 0) {
 /* Not gracefully closed by recv () */
     ASSERT (close (socket_id) == 0);
@@ -174,7 +173,8 @@ This warning can be safely ignored.
 @param p Node in syntax tree.
 **/
 
-void genie_tcp_request (NODE_T * p)
+void
+genie_tcp_request (NODE_T * p)
 {
   WSADATA wsa_data;
   A68_REF path_string, domain_string, content_string;
@@ -196,7 +196,7 @@ void genie_tcp_request (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  * DEREF (A68_REF, &content_string) = empty_string (p);
+  *DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -207,7 +207,7 @@ void genie_tcp_request (NODE_T * p)
 /* Make request */
   add_string_transput_buffer (p, REQUEST_BUFFER, get_transput_buffer (PATH_BUFFER));
 /* Connect to host */
-  if (WSAStartup(MAKEWORD(1, 1), &wsa_data) != NO_ERROR) {
+  if (WSAStartup (MAKEWORD (1, 1), &wsa_data) != NO_ERROR) {
     PUSH_PRIMITIVE (p, 1, A68_INT);
     return;
   }
@@ -282,9 +282,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  * DEREF (A68_REF, &content_string) =
-    c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
-      get_transput_buffer_index (CONTENT_BUFFER));
+  *DEREF (A68_REF, &content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER), get_transput_buffer_index (CONTENT_BUFFER));
   if (k != 0) {
 /* Not gracefully closed by recv () */
     ASSERT (close (socket_id) == 0);
@@ -300,7 +298,8 @@ This warning can be safely ignored.
 @param p Node in syntax tree.
 **/
 
-void genie_http_content (NODE_T * p)
+void
+genie_http_content (NODE_T * p)
 {
   A68_REF path_string, domain_string, content_string;
   A68_INT port_number;
@@ -322,7 +321,7 @@ void genie_http_content (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  * DEREF (A68_REF, &content_string) = empty_string (p);
+  *DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -425,9 +424,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  * DEREF (A68_REF, &content_string) =
-    c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
-      get_transput_buffer_index (CONTENT_BUFFER));
+  *DEREF (A68_REF, &content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER), get_transput_buffer_index (CONTENT_BUFFER));
   ASSERT (close (socket_id) == 0);
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }
@@ -437,7 +434,8 @@ This warning can be safely ignored.
 @param p Node in syntax tree.
 **/
 
-void genie_tcp_request (NODE_T * p)
+void
+genie_tcp_request (NODE_T * p)
 {
   A68_REF path_string, domain_string, content_string;
   A68_INT port_number;
@@ -459,7 +457,7 @@ void genie_tcp_request (NODE_T * p)
   CHECK_INIT (p, INITIALISED (&domain_string), MODE (STRING));
   POP_REF (p, &content_string);
   CHECK_REF (p, content_string, MODE (REF_STRING));
-  * DEREF (A68_REF, &content_string) = empty_string (p);
+  *DEREF (A68_REF, &content_string) = empty_string (p);
 /* Reset buffers */
   reset_transput_buffer (DOMAIN_BUFFER);
   reset_transput_buffer (PATH_BUFFER);
@@ -560,9 +558,7 @@ This warning can be safely ignored.
     return;
   }
 /* Convert string */
-  * DEREF (A68_REF, &content_string) =
-    c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER),
-      get_transput_buffer_index (CONTENT_BUFFER));
+  *DEREF (A68_REF, &content_string) = c_to_a_string (p, get_transput_buffer (CONTENT_BUFFER), get_transput_buffer_index (CONTENT_BUFFER));
   ASSERT (close (socket_id) == 0);
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }

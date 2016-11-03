@@ -262,31 +262,26 @@ static char *bold_prelude_start[] = {
   "      start: commence:",
   "      BEGIN",
   NO_TEXT
-  };
+};
 
 static char *bold_postlude[] = {
   "      END;",
   "      stop: abort: halt: SKIP",
   "END",
   NO_TEXT
-  };
+};
 
 static char *quote_prelude_start[] = {
-  "'BEGIN' 'MODE' 'DOUBLE' = 'LONG' 'REAL',"
-  "               'QUAD' = 'LONG' 'LONG' 'REAL',"
-  "               'DEVICE' = 'FILE',"
-  "               'TEXT' = 'STRING';"
-  "        START: COMMENCE:"
-  "        'BEGIN'",
+  "'BEGIN' 'MODE' 'DOUBLE' = 'LONG' 'REAL'," "               'QUAD' = 'LONG' 'LONG' 'REAL'," "               'DEVICE' = 'FILE'," "               'TEXT' = 'STRING';" "        START: COMMENCE:" "        'BEGIN'",
   NO_TEXT
-  };
+};
 
 static char *quote_postlude[] = {
   "     'END';",
   "     STOP: ABORT: HALT: 'SKIP'",
   "'END'",
   NO_TEXT
-  };
+};
 
 /**
 @brief Is_ref_refety_flex.
@@ -294,7 +289,8 @@ static char *quote_postlude[] = {
 @return See brief description.
 **/
 
-static BOOL_T is_ref_refety_flex (MOID_T * m)
+static BOOL_T
+is_ref_refety_flex (MOID_T * m)
 {
   if (IS_REF_FLEX (m)) {
     return (A68_TRUE);
@@ -311,7 +307,8 @@ static BOOL_T is_ref_refety_flex (MOID_T * m)
 @param k Counter.
 **/
 
-static void count_pictures (NODE_T * p, int *k)
+static void
+count_pictures (NODE_T * p, int *k)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PICTURE)) {
@@ -327,7 +324,8 @@ static void count_pictures (NODE_T * p, int *k)
 @return See brief description.
 **/
 
-static int count_operands (NODE_T * p)
+static int
+count_operands (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, DECLARER)) {
@@ -348,7 +346,8 @@ static int count_operands (NODE_T * p)
 @return See brief description.
 **/
 
-static int count_formal_bounds (NODE_T * p)
+static int
+count_formal_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (0);
@@ -367,7 +366,8 @@ static int count_formal_bounds (NODE_T * p)
 @return See brief description.
 **/
 
-static int count_bounds (NODE_T * p)
+static int
+count_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (0);
@@ -386,7 +386,8 @@ static int count_bounds (NODE_T * p)
 @return See brief description.
 **/
 
-static int count_sizety (NODE_T * p)
+static int
+count_sizety (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (0);
@@ -409,7 +410,8 @@ static int count_sizety (NODE_T * p)
 @return See brief description.
 **/
 
-int count_pack_members (PACK_T * u)
+int
+count_pack_members (PACK_T * u)
 {
   int k = 0;
   for (; u != NO_PACK; FORWARD (u)) {
@@ -423,7 +425,8 @@ int count_pack_members (PACK_T * u)
 @param m Mode to replace.
 **/
 
-static void resolve_equivalent (MOID_T ** m)
+static void
+resolve_equivalent (MOID_T ** m)
 {
   while ((*m) != NO_MOID && EQUIVALENT ((*m)) != NO_MOID && (*m) != EQUIVALENT (*m)) {
     (*m) = EQUIVALENT (*m);
@@ -437,7 +440,8 @@ static void resolve_equivalent (MOID_T ** m)
 @param ch Last scanned character.
 **/
 
-static void save_state (LINE_T * ref_l, char *ref_s, char ch)
+static void
+save_state (LINE_T * ref_l, char *ref_s, char ch)
 {
   SCAN_STATE_L (&program) = ref_l;
   SCAN_STATE_S (&program) = ref_s;
@@ -451,7 +455,8 @@ static void save_state (LINE_T * ref_l, char *ref_s, char ch)
 @param ch Last scanned character.
 **/
 
-static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
+static void
+restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   *ref_l = SCAN_STATE_L (&program);
   *ref_s = SCAN_STATE_S (&program);
@@ -469,7 +474,8 @@ static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 @param ch
 **/
 
-static void unworthy (LINE_T * u, char *v, char ch)
+static void
+unworthy (LINE_T * u, char *v, char ch)
 {
   if (IS_PRINT (ch)) {
     ASSERT (snprintf (edit_line, SNPRINTF_SIZE, "*%s", ERROR_UNWORTHY_CHARACTER) >= 0);
@@ -484,7 +490,8 @@ static void unworthy (LINE_T * u, char *v, char ch)
 @param top Top source line.
 **/
 
-static void concatenate_lines (LINE_T * top)
+static void
+concatenate_lines (LINE_T * top)
 {
   LINE_T *q;
 /* Work from bottom backwards */
@@ -513,7 +520,8 @@ static void concatenate_lines (LINE_T * top)
 @return Whether u is v.
 **/
 
-static BOOL_T is_bold (char *u, char *v)
+static BOOL_T
+is_bold (char *u, char *v)
 {
   unsigned len = (unsigned) strlen (v);
   if (OPTION_STROPPING (&program) == QUOTE_STROPPING) {
@@ -534,7 +542,8 @@ static BOOL_T is_bold (char *u, char *v)
 @return Whether string is properly terminated.
 **/
 
-static BOOL_T skip_string (LINE_T ** top, char **ch)
+static BOOL_T
+skip_string (LINE_T ** top, char **ch)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -569,7 +578,8 @@ static BOOL_T skip_string (LINE_T ** top, char **ch)
 @return Whether comment is properly terminated.
 **/
 
-static BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
+static BOOL_T
+skip_comment (LINE_T ** top, char **ch, int delim)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -611,7 +621,8 @@ static BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
 @return Whether pragmat is properly terminated.
 **/
 
-static BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespace)
+static BOOL_T
+skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespace)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -656,14 +667,15 @@ static BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespa
 @return Pointer to next item, NO_TEXT if none remains.
 **/
 
-static char *get_pragmat_item (LINE_T ** top, char **ch)
+static char *
+get_pragmat_item (LINE_T ** top, char **ch)
 {
-  LINE_T *u = *top; 
+  LINE_T *u = *top;
   char *v = *ch;
   while (u != NO_LINE) {
     while (v[0] != NULL_CHAR) {
       if (!IS_SPACE (v[0]) && v[0] != NEWLINE_CHAR) {
-        *top = u; 
+        *top = u;
         *ch = v;
         return (v);
       } else {
@@ -687,7 +699,8 @@ static char *get_pragmat_item (LINE_T ** top, char **ch)
 @return Alphabetic difference between 1 and 2.
 **/
 
-static int streq (char *u, char *v)
+static int
+streq (char *u, char *v)
 {
   int diff;
   for (diff = 0; diff == 0 && u[0] != NULL_CHAR && v[0] != NULL_CHAR; u++, v++) {
@@ -704,7 +717,8 @@ static int streq (char *u, char *v)
 @return Pointer to next item or NO_TEXT if none remain.
 **/
 
-static char *next_preprocessor_item (LINE_T ** top, char **ch, int *delim)
+static char *
+next_preprocessor_item (LINE_T ** top, char **ch, int *delim)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -792,7 +806,8 @@ static char *next_preprocessor_item (LINE_T ** top, char **ch, int *delim)
 @param top Top source line.
 **/
 
-static void include_files (LINE_T * top)
+static void
+include_files (LINE_T * top)
 {
 /*
 include_files
@@ -864,7 +879,7 @@ been included will not be included a second time - it will be ignored.
 /* Recursive include? Then *ignore* the file */
         for (t = top; t != NO_LINE; t = NEXT (t)) {
           if (strcmp (FILENAME (t), fn) == 0) {
-            goto search_next_pragmat; /* Eeek! */
+            goto search_next_pragmat;   /* Eeek! */
           }
         }
 /* Access the file */
@@ -899,21 +914,22 @@ been included will not be included a second time - it will be ignored.
           scan_buf[0] = NEWLINE_CHAR;
           scan_buf[1] = NULL_CHAR;
           append_source_line (scan_buf, &t, &linum, fn);
-        } else while (k < fsize) {
-          n = 0;
-          scan_buf[0] = NULL_CHAR;
-          while (k < fsize && fbuf[k] != NEWLINE_CHAR) {
-            SCAN_ERROR ((IS_CNTRL (fbuf[k]) && !IS_SPACE (fbuf[k])) || fbuf[k] == STOP_CHAR, start_l, start_c, ERROR_FILE_INCLUDE_CTRL);
-            scan_buf[n++] = fbuf[k++];
+        } else
+          while (k < fsize) {
+            n = 0;
+            scan_buf[0] = NULL_CHAR;
+            while (k < fsize && fbuf[k] != NEWLINE_CHAR) {
+              SCAN_ERROR ((IS_CNTRL (fbuf[k]) && !IS_SPACE (fbuf[k])) || fbuf[k] == STOP_CHAR, start_l, start_c, ERROR_FILE_INCLUDE_CTRL);
+              scan_buf[n++] = fbuf[k++];
+              scan_buf[n] = NULL_CHAR;
+            }
+            scan_buf[n++] = NEWLINE_CHAR;
             scan_buf[n] = NULL_CHAR;
+            if (k < fsize) {
+              k++;
+            }
+            append_source_line (scan_buf, &t, &linum, fn);
           }
-          scan_buf[n++] = NEWLINE_CHAR;
-          scan_buf[n] = NULL_CHAR;
-          if (k < fsize) {
-            k++;
-          }
-          append_source_line (scan_buf, &t, &linum, fn);
-        }
 /* Conclude and go find another include directive, if any */
         NEXT (t) = s;
         PREVIOUS (s) = t;
@@ -921,7 +937,7 @@ been included will not be included a second time - it will be ignored.
         ASSERT (close (fd) == 0);
         make_pass = A68_TRUE;
       }
-    search_next_pragmat:/* skip */ ;
+    search_next_pragmat:       /* skip */ ;
     }
   }
 }
@@ -934,7 +950,8 @@ been included will not be included a second time - it will be ignored.
 @param filename Name of file being read.
 **/
 
-static void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char *filename)
+static void
+append_source_line (char *str, LINE_T ** ref_l, int *line_num, char *filename)
 {
   LINE_T *z = new_source_line ();
 /* Allow shell command in first line, f.i. "#!/usr/share/bin/a68g" */
@@ -968,7 +985,8 @@ static void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char 
 @return Size of file.
 **/
 
-static int get_source_size (void)
+static int
+get_source_size (void)
 {
   FILE_T f = FILE_SOURCE_FD (&program);
 /* This is why WIN32 must open as "read binary" */
@@ -983,14 +1001,15 @@ static int get_source_size (void)
 @param name Either "prelude" or "postlude".
 **/
 
-static void append_environ (char *str[], LINE_T ** ref_l, int *line_num, char *name)
+static void
+append_environ (char *str[], LINE_T ** ref_l, int *line_num, char *name)
 {
   int k;
-  for (k = 0; str[k] != NO_TEXT; k ++) {
+  for (k = 0; str[k] != NO_TEXT; k++) {
     int zero_line_num = 0;
     (*line_num)++;
     append_source_line (str[k], ref_l, &zero_line_num, name);
-  } 
+  }
 /*
   char *text = new_string (str, NO_TEXT);
   while (text != NO_TEXT && text[0] != NULL_CHAR) {
@@ -1011,15 +1030,16 @@ static void append_environ (char *str[], LINE_T ** ref_l, int *line_num, char *n
 @return Whether reading is satisfactory .
 **/
 
-static BOOL_T read_script_file (void)
+static BOOL_T
+read_script_file (void)
 {
-  LINE_T * ref_l = NO_LINE;
+  LINE_T *ref_l = NO_LINE;
   int k, n, num;
   unsigned len;
   BOOL_T file_end = A68_FALSE;
   char filename[BUFFER_SIZE], linenum[BUFFER_SIZE];
-  char ch, * fn, * line; 
-  char * buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
+  char ch, *fn, *line;
+  char *buffer = (char *) get_temp_heap_space ((unsigned) (8 + source_file_size));
   FILE_T source = FILE_SOURCE_FD (&program);
   ABEND (source == -1, "source file not open", NO_TEXT);
   buffer[0] = NULL_CHAR;
@@ -1072,7 +1092,8 @@ static BOOL_T read_script_file (void)
 @return Whether reading is satisfactory .
 **/
 
-static BOOL_T read_source_file (void)
+static BOOL_T
+read_source_file (void)
 {
   LINE_T *ref_l = NO_LINE;
   int line_num = 0, k, bytes_read;
@@ -1137,7 +1158,8 @@ static BOOL_T read_source_file (void)
 @return Next char on input.
 **/
 
-static char next_char (LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
+static char
+next_char (LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
 {
   char ch;
 #if defined NO_TYPO
@@ -1175,7 +1197,8 @@ static char next_char (LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
 @param ref_s Character (in source line) we're scanning.
 **/
 
-static void get_good_char (char *ref_c, LINE_T ** ref_l, char **ref_s)
+static void
+get_good_char (char *ref_c, LINE_T ** ref_l, char **ref_s)
 {
   while (*ref_c != STOP_CHAR && (IS_SPACE (*ref_c) || (*ref_c == NULL_CHAR))) {
     if (*ref_l != NO_LINE) {
@@ -1193,7 +1216,8 @@ static void get_good_char (char *ref_c, LINE_T ** ref_l, char **ref_s)
 @return Pragment text as a string for binding in the tree.
 **/
 
-static char *pragment (int type, LINE_T ** ref_l, char **ref_c)
+static char *
+pragment (int type, LINE_T ** ref_l, char **ref_c)
 {
 #define INIT_BUFFER {chars_in_buf = 0; scan_buf[chars_in_buf] = NULL_CHAR;}
 #define ADD_ONE_CHAR(ch) {scan_buf[chars_in_buf ++] = ch; scan_buf[chars_in_buf] = NULL_CHAR;}
@@ -1239,8 +1263,7 @@ static char *pragment (int type, LINE_T ** ref_l, char **ref_c)
   while (stop == A68_FALSE) {
     SCAN_ERROR (c == STOP_CHAR, start_l, start_c, ERROR_UNTERMINATED_PRAGMENT);
 /* A ".." or '..' delimited string in a PRAGMAT */
-    if (pragmat && (c == QUOTE_CHAR || 
-        (c == '\'' && OPTION_STROPPING (&program) == UPPER_STROPPING))) {
+    if (pragmat && (c == QUOTE_CHAR || (c == '\'' && OPTION_STROPPING (&program) == UPPER_STROPPING))) {
       char delim = c;
       BOOL_T eos = A68_FALSE;
       ADD_ONE_CHAR (c);
@@ -1291,41 +1314,104 @@ static char *pragment (int type, LINE_T ** ref_l, char **ref_c)
 @return See brief description.
 **/
 
-static int get_format_item (char ch)
+static int
+get_format_item (char ch)
 {
   switch (TO_LOWER (ch)) {
-    case 'a': { return (FORMAT_ITEM_A); }
-    case 'b': { return (FORMAT_ITEM_B); }
-    case 'c': { return (FORMAT_ITEM_C); }
-    case 'd': { return (FORMAT_ITEM_D); }
-    case 'e': { return (FORMAT_ITEM_E); }
-    case 'f': { return (FORMAT_ITEM_F); }
-    case 'g': { return (FORMAT_ITEM_G); }
-    case 'h': { return (FORMAT_ITEM_H); }
-    case 'i': { return (FORMAT_ITEM_I); }
-    case 'j': { return (FORMAT_ITEM_J); }
-    case 'k': { return (FORMAT_ITEM_K); }
-    case 'l': 
-    case '/': { return (FORMAT_ITEM_L); }
-    case 'm': { return (FORMAT_ITEM_M); }
-    case 'n': { return (FORMAT_ITEM_N); }
-    case 'o': { return (FORMAT_ITEM_O); }
-    case 'p': { return (FORMAT_ITEM_P); }
-    case 'q': { return (FORMAT_ITEM_Q); }
-    case 'r': { return (FORMAT_ITEM_R); }
-    case 's': { return (FORMAT_ITEM_S); }
-    case 't': { return (FORMAT_ITEM_T); }
-    case 'u': { return (FORMAT_ITEM_U); }
-    case 'v': { return (FORMAT_ITEM_V); }
-    case 'w': { return (FORMAT_ITEM_W); }
-    case 'x': { return (FORMAT_ITEM_X); }
-    case 'y': { return (FORMAT_ITEM_Y); }
-    case 'z': { return (FORMAT_ITEM_Z); }
-    case '+': { return (FORMAT_ITEM_PLUS); }
-    case '-': { return (FORMAT_ITEM_MINUS); }
-    case POINT_CHAR: { return (FORMAT_ITEM_POINT); }
-    case '%': { return (FORMAT_ITEM_ESCAPE); }
-    default: { return (0); }
+  case 'a':{
+      return (FORMAT_ITEM_A);
+    }
+  case 'b':{
+      return (FORMAT_ITEM_B);
+    }
+  case 'c':{
+      return (FORMAT_ITEM_C);
+    }
+  case 'd':{
+      return (FORMAT_ITEM_D);
+    }
+  case 'e':{
+      return (FORMAT_ITEM_E);
+    }
+  case 'f':{
+      return (FORMAT_ITEM_F);
+    }
+  case 'g':{
+      return (FORMAT_ITEM_G);
+    }
+  case 'h':{
+      return (FORMAT_ITEM_H);
+    }
+  case 'i':{
+      return (FORMAT_ITEM_I);
+    }
+  case 'j':{
+      return (FORMAT_ITEM_J);
+    }
+  case 'k':{
+      return (FORMAT_ITEM_K);
+    }
+  case 'l':
+  case '/':{
+      return (FORMAT_ITEM_L);
+    }
+  case 'm':{
+      return (FORMAT_ITEM_M);
+    }
+  case 'n':{
+      return (FORMAT_ITEM_N);
+    }
+  case 'o':{
+      return (FORMAT_ITEM_O);
+    }
+  case 'p':{
+      return (FORMAT_ITEM_P);
+    }
+  case 'q':{
+      return (FORMAT_ITEM_Q);
+    }
+  case 'r':{
+      return (FORMAT_ITEM_R);
+    }
+  case 's':{
+      return (FORMAT_ITEM_S);
+    }
+  case 't':{
+      return (FORMAT_ITEM_T);
+    }
+  case 'u':{
+      return (FORMAT_ITEM_U);
+    }
+  case 'v':{
+      return (FORMAT_ITEM_V);
+    }
+  case 'w':{
+      return (FORMAT_ITEM_W);
+    }
+  case 'x':{
+      return (FORMAT_ITEM_X);
+    }
+  case 'y':{
+      return (FORMAT_ITEM_Y);
+    }
+  case 'z':{
+      return (FORMAT_ITEM_Z);
+    }
+  case '+':{
+      return (FORMAT_ITEM_PLUS);
+    }
+  case '-':{
+      return (FORMAT_ITEM_MINUS);
+    }
+  case POINT_CHAR:{
+      return (FORMAT_ITEM_POINT);
+    }
+  case '%':{
+      return (FORMAT_ITEM_ESCAPE);
+    }
+  default:{
+      return (0);
+    }
   }
 }
 
@@ -1355,7 +1441,8 @@ static int get_format_item (char ch)
 @return See brief description.
 **/
 
-static BOOL_T is_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T
+is_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   char exp_syms[3];
@@ -1385,7 +1472,8 @@ static BOOL_T is_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
 @return See brief description.
 **/
 
-static BOOL_T is_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T
+is_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   save_state (*ref_l, *ref_s, *ch);
@@ -1412,7 +1500,8 @@ static BOOL_T is_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
 @return See brief description.
 **/
 
-static BOOL_T is_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
+static BOOL_T
+is_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   save_state (*ref_l, *ref_s, *ch);
@@ -1449,7 +1538,8 @@ static BOOL_T is_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
 @param att Attribute designated to token.
 **/
 
-static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** start_l, char **start_c, int *att)
+static void
+get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** start_l, char **start_c, int *att)
 {
   char c = **ref_s, *sym = scan_buf;
   sym[0] = NULL_CHAR;
@@ -1469,7 +1559,7 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
     char *format_items;
     if (OPTION_STROPPING (&program) == UPPER_STROPPING) {
       format_items = "/%\\+-.abcdefghijklmnopqrstuvwxyz";
-    } else {/* if (OPTION_STROPPING (&program) == QUOTE_STROPPING) */
+    } else {                    /* if (OPTION_STROPPING (&program) == QUOTE_STROPPING) */
       format_items = "/%\\+-.ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     }
     if (a68g_strchr (format_items, c) != NO_TEXT) {
@@ -1750,7 +1840,8 @@ static void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LIN
 @return Whether att opens an embedded clause.
 **/
 
-static BOOL_T open_nested_clause (int att)
+static BOOL_T
+open_nested_clause (int att)
 {
   switch (att) {
   case OPEN_SYMBOL:
@@ -1780,7 +1871,8 @@ static BOOL_T open_nested_clause (int att)
 @return Whether att closes an embedded clause.
 **/
 
-static BOOL_T close_nested_clause (int att)
+static BOOL_T
+close_nested_clause (int att)
 {
   switch (att) {
   case CLOSE_SYMBOL:
@@ -1802,7 +1894,8 @@ static BOOL_T close_nested_clause (int att)
 @param p String to cast.
 **/
 
-static void make_lower_case (char *p)
+static void
+make_lower_case (char *p)
 {
   for (; p != NO_TEXT && p[0] != NULL_CHAR; p++) {
     p[0] = (char) TO_LOWER (p[0]);
@@ -1820,7 +1913,8 @@ static void make_lower_case (char *p)
 @param start_c Character where symbol starts.
 **/
 
-static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, char **s, LINE_T ** start_l, char **start_c)
+static void
+tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, char **s, LINE_T ** start_l, char **start_c)
 {
   char *lpr = NO_TEXT;
   int lprt = 0;
@@ -1898,23 +1992,23 @@ static void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T
         NODE_T *q = new_node ();
         INFO (q) = new_node_info ();
         switch (att) {
-          case ASSIGN_SYMBOL:
-          case END_SYMBOL:
-          case ESAC_SYMBOL:
-          case OD_SYMBOL:
-          case OF_SYMBOL:
-          case FI_SYMBOL:
-          case CLOSE_SYMBOL:
-          case BUS_SYMBOL:
-          case COLON_SYMBOL:
-          case COMMA_SYMBOL:
-          case DOTDOT_SYMBOL:
-          case SEMI_SYMBOL: 
+        case ASSIGN_SYMBOL:
+        case END_SYMBOL:
+        case ESAC_SYMBOL:
+        case OD_SYMBOL:
+        case OF_SYMBOL:
+        case FI_SYMBOL:
+        case CLOSE_SYMBOL:
+        case BUS_SYMBOL:
+        case COLON_SYMBOL:
+        case COMMA_SYMBOL:
+        case DOTDOT_SYMBOL:
+        case SEMI_SYMBOL:
           {
             GINFO (q) = NO_GINFO;
             break;
           }
-          default: {
+        default:{
             GINFO (q) = new_genie_info ();
             break;
           }
@@ -1987,7 +2081,8 @@ to know when it scans a format text and when not.
 @return Whether tokenising ended satisfactorily.
 **/
 
-BOOL_T lexical_analyser (void)
+BOOL_T
+lexical_analyser (void)
 {
   LINE_T *l, *start_l = NO_LINE;
   char *s = NO_TEXT, *start_c = NO_TEXT;
@@ -2004,7 +2099,7 @@ BOOL_T lexical_analyser (void)
       return (A68_FALSE);
     }
   } else {
-    max_scan_buf_length += KILOBYTE; /* for the environ, more than enough */
+    max_scan_buf_length += KILOBYTE;    /* for the environ, more than enough */
     scan_buf = (char *) get_temp_heap_space ((unsigned) max_scan_buf_length);
 /* Errors in file? */
     if (!read_source_file ()) {
@@ -2031,7 +2126,8 @@ BOOL_T lexical_analyser (void)
 @return See brief description.
 **/
 
-static BOOL_T is_refinement_terminator (NODE_T * p)
+static BOOL_T
+is_refinement_terminator (NODE_T * p)
 {
   if (IS (p, POINT_SYMBOL)) {
     if (IN_PRELUDE (NEXT (p))) {
@@ -2048,7 +2144,8 @@ static BOOL_T is_refinement_terminator (NODE_T * p)
 @brief Get refinement definitions in the internal source.
 **/
 
-void get_refinements (void)
+void
+get_refinements (void)
 {
   NODE_T *p = TOP_NODE (&program);
   TOP_REFINEMENT (&program) = NO_REFINEMENT;
@@ -2121,7 +2218,8 @@ void get_refinements (void)
 @brief Put refinement applications in the internal source.
 **/
 
-void put_refinements (void)
+void
+put_refinements (void)
 {
   REFINEMENT_T *x;
   NODE_T *p, *point;
@@ -2180,7 +2278,7 @@ void put_refinements (void)
           if (END (y) != NO_NODE) {
             NEXT (END (y)) = NEXT (p);
           }
-          p = BEGIN (y); /* So we can substitute the refinements within */
+          p = BEGIN (y);        /* So we can substitute the refinements within */
         }
       } else {
         FORWARD (p);
@@ -2221,7 +2319,8 @@ void put_refinements (void)
 @param p Node after which to insert.
 **/
 
-static void insert_alt_equals (NODE_T * p)
+static void
+insert_alt_equals (NODE_T * p)
 {
   NODE_T *q = new_node ();
   *q = *p;
@@ -2243,7 +2342,8 @@ static void insert_alt_equals (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void substitute_brackets (NODE_T * p)
+void
+substitute_brackets (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     substitute_brackets (SUB (p));
@@ -2278,7 +2378,8 @@ void substitute_brackets (NODE_T * p)
 \return TRUE or FALSE whether token terminates a unit
 **/
 
-static BOOL_T is_unit_terminator (NODE_T * p)
+static BOOL_T
+is_unit_terminator (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case BUS_SYMBOL:
@@ -2312,7 +2413,8 @@ static BOOL_T is_unit_terminator (NODE_T * p)
 @return Whether token is a unit-terminator in a loop clause.
 **/
 
-static BOOL_T is_loop_keyword (NODE_T * p)
+static BOOL_T
+is_loop_keyword (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case FOR_SYMBOL:
@@ -2335,7 +2437,8 @@ static BOOL_T is_loop_keyword (NODE_T * p)
 @return Whether token cannot follow semicolon or EXIT.
 **/
 
-static BOOL_T is_semicolon_less (NODE_T * p)
+static BOOL_T
+is_semicolon_less (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case BUS_SYMBOL:
@@ -2373,7 +2476,8 @@ static BOOL_T is_semicolon_less (NODE_T * p)
 @return See brief description.
 **/
 
-static int get_good_attribute (NODE_T * p)
+static int
+get_good_attribute (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case UNIT:
@@ -2396,7 +2500,8 @@ static int get_good_attribute (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T dont_mark_here (NODE_T * p)
+static BOOL_T
+dont_mark_here (NODE_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case ACCO_SYMBOL:
@@ -2516,7 +2621,8 @@ static BOOL_T dont_mark_here (NODE_T * p)
 @return See brief description.
 **/
 
-char *phrase_to_text (NODE_T * p, NODE_T ** w)
+char *
+phrase_to_text (NODE_T * p, NODE_T ** w)
 {
 #define MAX_TERMINALS 8
   int count = 0, line = -1;
@@ -2594,7 +2700,8 @@ diagnostic is not as important as accurately indicating *were* the problem is!
 @return See brief description.
 **/
 
-char *phrase_to_text_2 (NODE_T * p, NODE_T ** w)
+char *
+phrase_to_text_2 (NODE_T * p, NODE_T ** w)
 {
 #define MAX_TERMINALS 8
   int count = 0;
@@ -2619,8 +2726,8 @@ diagnostic is not as important as accurately indicating *were* the problem is!
       }
 /* Attribute or symbol */
       if (z != NO_TEXT) {
-          ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " %s", z) >= 0);
-          bufcat (buffer, edit_line, BUFFER_SIZE);
+        ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " %s", z) >= 0);
+        bufcat (buffer, edit_line, BUFFER_SIZE);
       } else if (NSYMBOL (p) != NO_TEXT) {
         ASSERT (snprintf (edit_line, SNPRINTF_SIZE, " \"%s\"", NSYMBOL (p)) >= 0);
         bufcat (buffer, edit_line, BUFFER_SIZE);
@@ -2651,7 +2758,8 @@ static char bracket_check_error_text[BUFFER_SIZE];
 @return See brief description.
 **/
 
-static void bracket_check_error (char *txt, int n, char *bra, char *ket)
+static void
+bracket_check_error (char *txt, int n, char *bra, char *ket)
 {
   if (n != 0) {
     char b[BUFFER_SIZE];
@@ -2669,7 +2777,8 @@ static void bracket_check_error (char *txt, int n, char *bra, char *ket)
 @return Error message.
 **/
 
-static char *bracket_check_diagnose (NODE_T * p)
+static char *
+bracket_check_diagnose (NODE_T * p)
 {
   int begins = 0, opens = 0, format_delims = 0, format_opens = 0, subs = 0, ifs = 0, cases = 0, dos = 0, accos = 0;
   for (; p != NO_NODE; FORWARD (p)) {
@@ -2785,7 +2894,8 @@ static char *bracket_check_diagnose (NODE_T * p)
 @return Token from where to continue.
 **/
 
-static NODE_T *bracket_check_parse (NODE_T * top, NODE_T * p)
+static NODE_T *
+bracket_check_parse (NODE_T * top, NODE_T * p)
 {
   BOOL_T ignore_token;
   for (; p != NO_NODE; FORWARD (p)) {
@@ -2879,7 +2989,8 @@ static NODE_T *bracket_check_parse (NODE_T * top, NODE_T * p)
 @param top Top node in syntax tree.
 **/
 
-void check_parenthesis (NODE_T * top)
+void
+check_parenthesis (NODE_T * top)
 {
   if (!setjmp (top_down_crash_exit)) {
     if (bracket_check_parse (top, top) != NO_NODE) {
@@ -2901,7 +3012,8 @@ After this we can assign symbol tables to basic blocks.
 @param expected Token expected.
 **/
 
-static void top_down_diagnose (NODE_T * start, NODE_T * posit, int clause, int expected)
+static void
+top_down_diagnose (NODE_T * start, NODE_T * posit, int clause, int expected)
 {
   NODE_T *issue = (posit != NO_NODE ? posit : start);
   if (expected != 0) {
@@ -2917,7 +3029,8 @@ static void top_down_diagnose (NODE_T * start, NODE_T * posit, int clause, int e
 @param q
 **/
 
-static void tokens_exhausted (NODE_T * p, NODE_T * q)
+static void
+tokens_exhausted (NODE_T * p, NODE_T * q)
 {
   if (p == NO_NODE) {
     diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_KEYWORD);
@@ -2933,7 +3046,8 @@ static void tokens_exhausted (NODE_T * p, NODE_T * q)
 @return Number of symbols to skip.
 **/
 
-static int is_loop_cast_formula (NODE_T * p)
+static int
+is_loop_cast_formula (NODE_T * p)
 {
 /* Accept declarers that can appear in such casts but not much more */
   if (IS (p, VOID_SYMBOL)) {
@@ -2962,7 +3076,8 @@ static int is_loop_cast_formula (NODE_T * p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_skip_loop_unit (NODE_T * p)
+static NODE_T *
+top_down_skip_loop_unit (NODE_T * p)
 {
 /* Unit may start with, or consist of, a loop */
   if (is_loop_keyword (p)) {
@@ -3009,7 +3124,8 @@ static NODE_T *top_down_skip_loop_unit (NODE_T * p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_skip_loop_series (NODE_T * p)
+static NODE_T *
+top_down_skip_loop_series (NODE_T * p)
 {
   BOOL_T siga;
   do {
@@ -3028,7 +3144,8 @@ static NODE_T *top_down_skip_loop_series (NODE_T * p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-NODE_T *top_down_loop (NODE_T * p)
+NODE_T *
+top_down_loop (NODE_T * p)
 {
   NODE_T *start = p, *q = p, *save;
   if (IS (q, FOR_SYMBOL)) {
@@ -3124,7 +3241,8 @@ NODE_T *top_down_loop (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void top_down_loops (NODE_T * p)
+static void
+top_down_loops (NODE_T * p)
 {
   NODE_T *q = p;
   for (; q != NO_NODE; FORWARD (q)) {
@@ -3147,7 +3265,8 @@ static void top_down_loops (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void top_down_untils (NODE_T * p)
+static void
+top_down_untils (NODE_T * p)
 {
   NODE_T *q = p;
   for (; q != NO_NODE; FORWARD (q)) {
@@ -3178,7 +3297,8 @@ static void top_down_untils (NODE_T * p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_series (NODE_T * p)
+static NODE_T *
+top_down_series (NODE_T * p)
 {
   BOOL_T siga = A68_TRUE;
   while (siga) {
@@ -3200,7 +3320,8 @@ static NODE_T *top_down_series (NODE_T * p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_begin (NODE_T * begin_p)
+static NODE_T *
+top_down_begin (NODE_T * begin_p)
 {
   NODE_T *end_p = top_down_series (NEXT (begin_p));
   if (end_p == NO_NODE || ISNT (end_p, END_SYMBOL)) {
@@ -3219,7 +3340,8 @@ static NODE_T *top_down_begin (NODE_T * begin_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_code (NODE_T * code_p)
+static NODE_T *
+top_down_code (NODE_T * code_p)
 {
   NODE_T *edoc_p = top_down_series (NEXT (code_p));
   if (edoc_p == NO_NODE || ISNT (edoc_p, EDOC_SYMBOL)) {
@@ -3238,7 +3360,8 @@ static NODE_T *top_down_code (NODE_T * code_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_open (NODE_T * open_p)
+static NODE_T *
+top_down_open (NODE_T * open_p)
 {
   NODE_T *then_bar_p = top_down_series (NEXT (open_p)), *elif_bar_p;
   if (then_bar_p != NO_NODE && IS (then_bar_p, CLOSE_SYMBOL)) {
@@ -3285,7 +3408,8 @@ static NODE_T *top_down_open (NODE_T * open_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_sub (NODE_T * sub_p)
+static NODE_T *
+top_down_sub (NODE_T * sub_p)
 {
   NODE_T *bus_p = top_down_series (NEXT (sub_p));
   if (bus_p != NO_NODE && IS (bus_p, BUS_SYMBOL)) {
@@ -3304,7 +3428,8 @@ static NODE_T *top_down_sub (NODE_T * sub_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_acco (NODE_T * acco_p)
+static NODE_T *
+top_down_acco (NODE_T * acco_p)
 {
   NODE_T *occa_p = top_down_series (NEXT (acco_p));
   if (occa_p != NO_NODE && IS (occa_p, OCCA_SYMBOL)) {
@@ -3323,7 +3448,8 @@ static NODE_T *top_down_acco (NODE_T * acco_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_if (NODE_T * if_p)
+static NODE_T *
+top_down_if (NODE_T * if_p)
 {
   NODE_T *then_p = top_down_series (NEXT (if_p)), *elif_p;
   if (then_p == NO_NODE || ISNT (then_p, THEN_SYMBOL)) {
@@ -3367,7 +3493,8 @@ static NODE_T *top_down_if (NODE_T * if_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_case (NODE_T * case_p)
+static NODE_T *
+top_down_case (NODE_T * case_p)
 {
   NODE_T *in_p = top_down_series (NEXT (case_p)), *ouse_p;
   if (in_p == NO_NODE || ISNT (in_p, IN_SYMBOL)) {
@@ -3411,7 +3538,8 @@ static NODE_T *top_down_case (NODE_T * case_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-NODE_T *top_down_skip_unit (NODE_T * p)
+NODE_T *
+top_down_skip_unit (NODE_T * p)
 {
   while (p != NO_NODE && !is_unit_terminator (p)) {
     if (IS (p, BEGIN_SYMBOL)) {
@@ -3443,7 +3571,8 @@ static NODE_T *top_down_skip_format (NODE_T *);
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_format_open (NODE_T * open_p)
+static NODE_T *
+top_down_format_open (NODE_T * open_p)
 {
   NODE_T *close_p = top_down_skip_format (NEXT (open_p));
   if (close_p != NO_NODE && IS (close_p, FORMAT_CLOSE_SYMBOL)) {
@@ -3462,7 +3591,8 @@ static NODE_T *top_down_format_open (NODE_T * open_p)
 @return Token from where to proceed or NO_NODE.
 **/
 
-static NODE_T *top_down_skip_format (NODE_T * p)
+static NODE_T *
+top_down_skip_format (NODE_T * p)
 {
   while (p != NO_NODE) {
     if (IS (p, FORMAT_OPEN_SYMBOL)) {
@@ -3481,7 +3611,8 @@ static NODE_T *top_down_skip_format (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void top_down_formats (NODE_T * p)
+static void
+top_down_formats (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -3514,7 +3645,8 @@ static void top_down_formats (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void top_down_parser (NODE_T * p)
+void
+top_down_parser (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (!setjmp (top_down_crash_exit)) {
@@ -3536,7 +3668,8 @@ void top_down_parser (NODE_T * p)
 @param construct Where detected.
 */
 
-static void detect_redefined_keyword (NODE_T * p, int construct)
+static void
+detect_redefined_keyword (NODE_T * p, int construct)
 {
   if (p != NO_NODE && whether (p, KEYWORD, EQUALS_SYMBOL, STOP)) {
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_REDEFINED_KEYWORD, NSYMBOL (p), construct);
@@ -3549,7 +3682,8 @@ static void detect_redefined_keyword (NODE_T * p, int construct)
 @return Whether a series is serial or collateral.
 **/
 
-static int serial_or_collateral (NODE_T * p)
+static int
+serial_or_collateral (NODE_T * p)
 {
   NODE_T *q;
   int semis = 0, commas = 0, exits = 0;
@@ -3580,7 +3714,8 @@ static int serial_or_collateral (NODE_T * p)
 @return Whether formal bounds.
 **/
 
-static BOOL_T is_formal_bounds (NODE_T * p)
+static BOOL_T
+is_formal_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -3613,7 +3748,8 @@ static BOOL_T is_formal_bounds (NODE_T * p)
 @param a Attribute.
 **/
 
-static void pad_node (NODE_T * p, int a)
+static void
+pad_node (NODE_T * p, int a)
 {
 /*
 This is used to fill information that Algol 68 does not require to be present.
@@ -3639,7 +3775,8 @@ Filling in gives one format for such construct; this helps later passes.
 @param p Node in syntax tree.
 **/
 
-static void a68_extension (NODE_T * p)
+static void
+a68_extension (NODE_T * p)
 {
   if (OPTION_PORTCHECK (&program)) {
     diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION);
@@ -3653,7 +3790,8 @@ static void a68_extension (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void empty_clause (NODE_T * p)
+static void
+empty_clause (NODE_T * p)
 {
   diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_CLAUSE_WITHOUT_VALUE);
 }
@@ -3665,7 +3803,8 @@ static void empty_clause (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void par_clause (NODE_T * p)
+static void
+par_clause (NODE_T * p)
 {
   diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_NO_PARALLEL_CLAUSE);
 }
@@ -3677,7 +3816,8 @@ static void par_clause (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void strange_tokens (NODE_T * p)
+static void
+strange_tokens (NODE_T * p)
 {
   NODE_T *q = ((p != NO_NODE && NEXT (p) != NO_NODE) ? NEXT (p) : p);
   diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_STRANGE_TOKENS);
@@ -3688,7 +3828,8 @@ static void strange_tokens (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void strange_separator (NODE_T * p)
+static void
+strange_separator (NODE_T * p)
 {
   NODE_T *q = ((p != NO_NODE && NEXT (p) != NO_NODE) ? NEXT (p) : p);
   diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_SYNTAX_STRANGE_SEPARATOR);
@@ -3707,7 +3848,8 @@ kind of symbols to find a pattern that they recognise.
 @return Node from where to proceed.
 **/
 
-static NODE_T *skip_unit (NODE_T * p)
+static NODE_T *
+skip_unit (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, COMMA_SYMBOL)) {
@@ -3728,7 +3870,8 @@ static NODE_T *skip_unit (NODE_T * p)
 @return Attribute of entry in symbol table, or 0 if not found.
 **/
 
-static int find_tag_definition (TABLE_T * table, char *name)
+static int
+find_tag_definition (TABLE_T * table, char *name)
 {
   if (table != NO_TABLE) {
     int ret = 0;
@@ -3763,7 +3906,8 @@ static int find_tag_definition (TABLE_T * table, char *name)
 @param p Node in syntax tree.
 **/
 
-static void elaborate_bold_tags (NODE_T * p)
+static void
+elaborate_bold_tags (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -3795,7 +3939,8 @@ static void elaborate_bold_tags (NODE_T * p)
 @return Node before token that is not part of pack or declarer .
 **/
 
-static NODE_T *skip_pack_declarer (NODE_T * p)
+static NODE_T *
+skip_pack_declarer (NODE_T * p)
 {
 /* Skip () REF [] REF FLEX [] [] .. */
   while (p != NO_NODE && (is_one_of (p, SUB_SYMBOL, OPEN_SYMBOL, REF_SYMBOL, FLEX_SYMBOL, SHORT_SYMBOL, LONG_SYMBOL, STOP))) {
@@ -3816,7 +3961,8 @@ static NODE_T *skip_pack_declarer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_indicants (NODE_T * p)
+static void
+extract_indicants (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -3862,7 +4008,8 @@ static void extract_indicants (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_priorities (NODE_T * p)
+static void
+extract_priorities (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -3887,8 +4034,7 @@ static void extract_priorities (NODE_T * p)
           ATTRIBUTE (q) = PRIORITY;
           ASSERT (add_tag (TABLE (p), PRIO_SYMBOL, y, NO_MOID, k) != NO_TAG);
           FORWARD (q);
-        } else if (whether (q, OPERATOR, EQUALS_SYMBOL, INT_DENOTATION, STOP) || 
-                   whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, INT_DENOTATION, STOP)) {
+        } else if (whether (q, OPERATOR, EQUALS_SYMBOL, INT_DENOTATION, STOP) || whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, INT_DENOTATION, STOP)) {
           int k;
           NODE_T *y = q;
           ATTRIBUTE (q) = DEFINING_OPERATOR;
@@ -3912,9 +4058,7 @@ static void extract_priorities (NODE_T * p)
           ATTRIBUTE (q) = PRIORITY;
           ASSERT (add_tag (TABLE (p), PRIO_SYMBOL, y, NO_MOID, k) != NO_TAG);
           FORWARD (q);
-        } else if (whether (q, BOLD_TAG, INT_DENOTATION, STOP) || 
-                   whether (q, OPERATOR, INT_DENOTATION, STOP) || 
-                   whether (q, EQUALS_SYMBOL, INT_DENOTATION, STOP)) {
+        } else if (whether (q, BOLD_TAG, INT_DENOTATION, STOP) || whether (q, OPERATOR, INT_DENOTATION, STOP) || whether (q, EQUALS_SYMBOL, INT_DENOTATION, STOP)) {
 /* The scanner cannot separate operator and "=" sign so we do this here */
           int len = (int) strlen (NSYMBOL (q));
           if (len > 1 && NSYMBOL (q)[len - 1] == '=') {
@@ -3952,7 +4096,8 @@ static void extract_priorities (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_operators (NODE_T * p)
+static void
+extract_operators (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -3974,13 +4119,12 @@ static void extract_operators (NODE_T * p)
             diagnostic_node (A68_SYNTAX_ERROR, q, ERROR_INVALID_OPERATOR_TAG);
             ATTRIBUTE (q) = DEFINING_OPERATOR;
             ASSERT (add_tag (TABLE (p), OP_SYMBOL, q, NO_MOID, STOP) != NO_TAG);
-            NEXT (q) = NEXT_NEXT (q); /* Remove one superfluous operator, and hope it was only one */
+            NEXT (q) = NEXT_NEXT (q);   /* Remove one superfluous operator, and hope it was only one */
             PREVIOUS (NEXT (q)) = q;
             FORWARD (q);
             ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;
             q = skip_unit (q);
-          } else if (whether (q, OPERATOR, EQUALS_SYMBOL, STOP) || 
-                     whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, STOP)) {
+          } else if (whether (q, OPERATOR, EQUALS_SYMBOL, STOP) || whether (q, EQUALS_SYMBOL, EQUALS_SYMBOL, STOP)) {
             ATTRIBUTE (q) = DEFINING_OPERATOR;
             ASSERT (add_tag (TABLE (p), OP_SYMBOL, q, NO_MOID, STOP) != NO_TAG);
             FORWARD (q);
@@ -4028,7 +4172,8 @@ static void extract_operators (NODE_T * p)
 @param expect Information the parser may have on what is expected.
 **/
 
-static void extract_labels (NODE_T * p, int expect)
+static void
+extract_labels (NODE_T * p, int expect)
 {
   NODE_T *q;
 /* Only handle candidate phrases as not to search indexers! */
@@ -4048,7 +4193,8 @@ static void extract_labels (NODE_T * p, int expect)
 @param p Node in syntax tree.
 **/
 
-static void extract_identities (NODE_T * p)
+static void
+extract_identities (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -4083,7 +4229,8 @@ static void extract_identities (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_variables (NODE_T * p)
+static void
+extract_variables (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -4115,7 +4262,8 @@ static void extract_variables (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_proc_identities (NODE_T * p)
+static void
+extract_proc_identities (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -4151,7 +4299,8 @@ static void extract_proc_identities (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_proc_variables (NODE_T * p)
+static void
+extract_proc_variables (NODE_T * p)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -4186,7 +4335,8 @@ static void extract_proc_variables (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void extract_declarations (NODE_T * p)
+static void
+extract_declarations (NODE_T * p)
 {
   NODE_T *q;
 /* Get definitions so we know what is defined in this range */
@@ -4248,7 +4398,8 @@ static void extract_declarations (NODE_T * p)
 @param z If not NO_TICK, to be set to TRUE upon match.
 **/
 
-static void reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
+static void
+reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
 {
   va_list list;
   int result, arg;
@@ -4319,7 +4470,8 @@ static void reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
 @param p Node in syntax tree.
 **/
 
-static void ignore_superfluous_semicolons (NODE_T * p)
+static void
+ignore_superfluous_semicolons (NODE_T * p)
 {
 /*
 This routine relaxes the parser a bit with respect to superfluous semicolons,
@@ -4345,7 +4497,8 @@ for instance "FI; OD". These provoke only a warning.
 @param p Node in syntax tree.
 **/
 
-void bottom_up_parser (NODE_T * p)
+void
+bottom_up_parser (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (!setjmp (bottom_up_crash_exit)) {
@@ -4353,7 +4506,7 @@ void bottom_up_parser (NODE_T * p)
       int error_count_0 = ERROR_COUNT (&program);
       ignore_superfluous_semicolons (p);
 /* A program is "label sequence; particular program" */
-      extract_labels (p, SERIAL_CLAUSE/* a fake here, but ok */ );
+      extract_labels (p, SERIAL_CLAUSE /* a fake here, but ok */ );
 /* Parse the program itself */
       for (q = p; q != NO_NODE; FORWARD (q)) {
         BOOL_T siga = A68_TRUE;
@@ -4368,11 +4521,11 @@ void bottom_up_parser (NODE_T * p)
       }
 /* Determine the encompassing enclosed clause */
       for (q = p; q != NO_NODE; FORWARD (q)) {
-    #if defined HAVE_PARALLEL_CLAUSE
+#if defined HAVE_PARALLEL_CLAUSE
         reduce (q, NO_NOTE, NO_TICK, PARALLEL_CLAUSE, PAR_SYMBOL, COLLATERAL_CLAUSE, STOP);
-    #else
+#else
         reduce (q, par_clause, NO_TICK, PARALLEL_CLAUSE, PAR_SYMBOL, COLLATERAL_CLAUSE, STOP);
-    #endif
+#endif
         reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, PARALLEL_CLAUSE, STOP);
         reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, CLOSED_CLAUSE, STOP);
         reduce (q, NO_NOTE, NO_TICK, ENCLOSED_CLAUSE, COLLATERAL_CLAUSE, STOP);
@@ -4397,7 +4550,8 @@ void bottom_up_parser (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_code_clause (NODE_T * p)
+static void
+reduce_code_clause (NODE_T * p)
 {
   BOOL_T siga = A68_TRUE;
   while (siga) {
@@ -4418,7 +4572,8 @@ static void reduce_code_clause (NODE_T * p)
 @param expect Information the parser may have on what is expected.
 **/
 
-static void reduce_branch (NODE_T * q, int expect)
+static void
+reduce_branch (NODE_T * q, int expect)
 {
 /*
 If this is unsuccessful then it will at least copy the resulting attribute
@@ -4429,14 +4584,14 @@ as the parser can repair some faults. This gives less spurious diagnostics.
     int error_count_0 = ERROR_COUNT (&program), error_count_02;
     BOOL_T declarer_pack = A68_FALSE, no_error;
     switch (expect) {
-      case STRUCTURE_PACK:
-      case PARAMETER_PACK:
-      case FORMAL_DECLARERS:
-      case UNION_PACK:
-      case SPECIFIER: {
+    case STRUCTURE_PACK:
+    case PARAMETER_PACK:
+    case FORMAL_DECLARERS:
+    case UNION_PACK:
+    case SPECIFIER:{
         declarer_pack = A68_TRUE;
       }
-      default: {
+    default:{
         declarer_pack = A68_FALSE;
       }
     }
@@ -4565,9 +4720,11 @@ as the parser can repair some faults. This gives less spurious diagnostics.
 @param expect Information the parser may have on what is expected.
 **/
 
-static void reduce_declarers (NODE_T * p, int expect)
+static void
+reduce_declarers (NODE_T * p, int expect)
 {
-  NODE_T *q; BOOL_T siga;
+  NODE_T *q;
+  BOOL_T siga;
 /* Reduce lengtheties */
   for (q = p; q != NO_NODE; FORWARD (q)) {
     siga = A68_TRUE;
@@ -4814,7 +4971,8 @@ static void reduce_declarers (NODE_T * p, int expect)
 @param p Node in syntax tree.
 **/
 
-static void reduce_right_to_left_constructs (NODE_T * p)
+static void
+reduce_right_to_left_constructs (NODE_T * p)
 {
 /*
 Here are cases that need reducing from right-to-left whereas many things
@@ -4893,7 +5051,8 @@ history. Meanwhile we use this routine.
 @param expect Information the parser may have on what is expected.
 **/
 
-static void reduce_primary_parts (NODE_T * p, int expect)
+static void
+reduce_primary_parts (NODE_T * p, int expect)
 {
   NODE_T *q = p;
   for (; q != NO_NODE; FORWARD (q)) {
@@ -4950,7 +5109,8 @@ static void reduce_primary_parts (NODE_T * p, int expect)
 @param expect Information the parser may have on what is expected.
 **/
 
-static void reduce_primaries (NODE_T * p, int expect)
+static void
+reduce_primaries (NODE_T * p, int expect)
 {
   NODE_T *q = p;
   while (q != NO_NODE) {
@@ -5015,7 +5175,8 @@ static void reduce_primaries (NODE_T * p, int expect)
 @param p Node in syntax tree.
 **/
 
-static void ambiguous_patterns (NODE_T * p)
+static void
+ambiguous_patterns (NODE_T * p)
 {
 /*
 Example: printf (($+d.2d +d.2d$, 1, 2)) can produce either "+1.00 +2.00" or
@@ -5030,7 +5191,7 @@ routines for implementing formatted transput. This is a pragmatic system.
   NODE_T *q, *last_pat = NO_NODE;
   for (q = p; q != NO_NODE; FORWARD (q)) {
     switch (ATTRIBUTE (q)) {
-    case INTEGRAL_PATTERN: /* These are the potentially ambiguous patterns */
+    case INTEGRAL_PATTERN:     /* These are the potentially ambiguous patterns */
     case REAL_PATTERN:
     case COMPLEX_PATTERN:
     case BITS_PATTERN:
@@ -5057,7 +5218,8 @@ routines for implementing formatted transput. This is a pragmatic system.
 @param let Letter.
 **/
 
-void reduce_c_pattern (NODE_T * p, int pr, int let)
+void
+reduce_c_pattern (NODE_T * p, int pr, int let)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -5085,7 +5247,8 @@ void reduce_c_pattern (NODE_T * p, int pr, int let)
 @param p Node in syntax tree.
 **/
 
-static void reduce_format_texts (NODE_T * p)
+static void
+reduce_format_texts (NODE_T * p)
 {
   NODE_T *q;
 /* Replicators */
@@ -5291,7 +5454,7 @@ static void reduce_format_texts (NODE_T * p)
       while (siga) {
         siga = A68_FALSE;
         reduce (q, NO_NOTE, &siga, PICTURE_LIST, PICTURE_LIST, COMMA_SYMBOL, PICTURE, STOP);
- /* We filtered ambiguous patterns, so commas may be omitted */
+        /* We filtered ambiguous patterns, so commas may be omitted */
         reduce (q, NO_NOTE, &siga, PICTURE_LIST, PICTURE_LIST, PICTURE, STOP);
       }
     }
@@ -5303,7 +5466,8 @@ static void reduce_format_texts (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_secondaries (NODE_T * p)
+static void
+reduce_secondaries (NODE_T * p)
 {
   NODE_T *q;
   BOOL_T siga;
@@ -5334,7 +5498,8 @@ static void reduce_secondaries (NODE_T * p)
 @return Whether "q" is an operator with priority "k".
 **/
 
-static int operator_with_priority (NODE_T * q, int k)
+static int
+operator_with_priority (NODE_T * q, int k)
 {
   return (NEXT (q) != NO_NODE && ATTRIBUTE (NEXT (q)) == OPERATOR && PRIO (INFO (NEXT (q))) == k);
 }
@@ -5344,7 +5509,8 @@ static int operator_with_priority (NODE_T * q, int k)
 @param p Node in syntax tree.
 **/
 
-static void reduce_formulae (NODE_T * p)
+static void
+reduce_formulae (NODE_T * p)
 {
   NODE_T *q = p;
   int priority;
@@ -5402,7 +5568,8 @@ static void reduce_formulae (NODE_T * p)
 @return Token from where to continue.
 **/
 
-static NODE_T *reduce_dyadic (NODE_T * p, int u)
+static NODE_T *
+reduce_dyadic (NODE_T * p, int u)
 {
 /* We work inside out - higher priority expressions get reduced first */
   if (u > MAX_PRIORITY) {
@@ -5441,7 +5608,8 @@ static NODE_T *reduce_dyadic (NODE_T * p, int u)
 @param p Node in syntax tree.
 **/
 
-static void reduce_tertiaries (NODE_T * p)
+static void
+reduce_tertiaries (NODE_T * p)
 {
   NODE_T *q;
   BOOL_T siga;
@@ -5485,7 +5653,8 @@ static void reduce_tertiaries (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_units (NODE_T * p)
+static void
+reduce_units (NODE_T * p)
 {
   NODE_T *q;
 /* Stray ~ is a SKIP */
@@ -5514,7 +5683,8 @@ static void reduce_units (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_generic_arguments (NODE_T * p)
+static void
+reduce_generic_arguments (NODE_T * p)
 {
   NODE_T *q;
   BOOL_T siga;
@@ -5577,7 +5747,8 @@ static void reduce_generic_arguments (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_bounds (NODE_T * p)
+static void
+reduce_bounds (NODE_T * p)
 {
   NODE_T *q;
   BOOL_T siga;
@@ -5607,7 +5778,8 @@ static void reduce_bounds (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_arguments (NODE_T * p)
+static void
+reduce_arguments (NODE_T * p)
 {
   if (NEXT (p) != NO_NODE) {
     NODE_T *q = NEXT (p);
@@ -5626,7 +5798,8 @@ static void reduce_arguments (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_basic_declarations (NODE_T * p)
+static void
+reduce_basic_declarations (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -5670,7 +5843,8 @@ static void reduce_basic_declarations (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_declaration_lists (NODE_T * p)
+static void
+reduce_declaration_lists (NODE_T * p)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -5726,7 +5900,8 @@ static void reduce_declaration_lists (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_serial_clauses (NODE_T * p)
+static void
+reduce_serial_clauses (NODE_T * p)
 {
   if (NEXT (p) != NO_NODE) {
     NODE_T *q = NEXT (p), *u;
@@ -5760,7 +5935,7 @@ static void reduce_serial_clauses (NODE_T * p)
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, EXIT_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, SEMI_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, NO_NOTE, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, SEMI_SYMBOL, DECLARATION_LIST, STOP);
- /* Errors */
+        /* Errors */
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, COMMA_SYMBOL, UNIT, STOP);
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, SERIAL_CLAUSE, COMMA_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, SERIAL_CLAUSE, COMMA_SYMBOL, DECLARATION_LIST, STOP);
@@ -5774,7 +5949,7 @@ static void reduce_serial_clauses (NODE_T * p)
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, UNIT, STOP);
         reduce (q, NO_NOTE, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, SEMI_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, NO_NOTE, &siga, INITIALISER_SERIES, INITIALISER_SERIES, SEMI_SYMBOL, DECLARATION_LIST, STOP);
- /* Errors */
+        /* Errors */
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, UNIT, STOP);
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, COMMA_SYMBOL, LABELED_UNIT, STOP);
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, COMMA_SYMBOL, DECLARATION_LIST, STOP);
@@ -5785,7 +5960,7 @@ static void reduce_serial_clauses (NODE_T * p)
         reduce (q, strange_separator, &siga, SERIAL_CLAUSE, INITIALISER_SERIES, LABELED_UNIT, STOP);
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, DECLARATION_LIST, STOP);
       }
-    } 
+    }
     while (siga);
   }
 }
@@ -5795,7 +5970,8 @@ static void reduce_serial_clauses (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_enquiry_clauses (NODE_T * p)
+static void
+reduce_enquiry_clauses (NODE_T * p)
 {
   if (NEXT (p) != NO_NODE) {
     NODE_T *q = NEXT (p);
@@ -5823,7 +5999,7 @@ static void reduce_enquiry_clauses (NODE_T * p)
         reduce (q, strange_separator, &siga, ENQUIRY_CLAUSE, INITIALISER_SERIES, UNIT, STOP);
         reduce (q, strange_separator, &siga, INITIALISER_SERIES, INITIALISER_SERIES, DECLARATION_LIST, STOP);
       }
-    } 
+    }
     while (siga);
   }
 }
@@ -5833,7 +6009,8 @@ static void reduce_enquiry_clauses (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reduce_collateral_clauses (NODE_T * p)
+static void
+reduce_collateral_clauses (NODE_T * p)
 {
   if (NEXT (p) != NO_NODE) {
     NODE_T *q = NEXT (p);
@@ -5863,7 +6040,8 @@ static void reduce_collateral_clauses (NODE_T * p)
 @param expect Information the parser may have on what is expected.
 **/
 
-static void reduce_enclosed_clauses (NODE_T * q, int expect)
+static void
+reduce_enclosed_clauses (NODE_T * q, int expect)
 {
   NODE_T *p = q;
   if (SUB (p) == NO_NODE) {
@@ -6064,7 +6242,8 @@ static void reduce_enclosed_clauses (NODE_T * q, int expect)
 @param suppress Suppresses a diagnostic_node message (nested c.q. related diagnostics).
 **/
 
-static void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
+static void
+recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
 {
 /* This routine does not do fancy things as that might introduce more errors */
   NODE_T *q = p;
@@ -6149,7 +6328,8 @@ static void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
 @param p Node in syntax tree.
 **/
 
-static void reduce_erroneous_units (NODE_T * p)
+static void
+reduce_erroneous_units (NODE_T * p)
 {
 /* Constructs are reduced to units in an attempt to limit spurious diagnostics */
   NODE_T *q;
@@ -6179,7 +6359,8 @@ unsuspecting user */
 @param p Node in syntax tree.
 **/
 
-void bottom_up_error_check (NODE_T * p)
+void
+bottom_up_error_check (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, BOOLEAN_PATTERN)) {
@@ -6201,7 +6382,8 @@ void bottom_up_error_check (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void rearrange_goto_less_jumps (NODE_T * p)
+void
+rearrange_goto_less_jumps (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -6270,7 +6452,8 @@ void rearrange_goto_less_jumps (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_generator (NODE_T * p)
+static void
+victal_check_generator (NODE_T * p)
 {
   if (!victal_check_declarer (NEXT (p), ACTUAL_DECLARER_MARK)) {
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "actual declarer");
@@ -6284,7 +6467,8 @@ static void victal_check_generator (NODE_T * p)
 @param z Flag.
 **/
 
-static void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
+static void
+victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, FORMAL_DECLARERS)) {
@@ -6306,7 +6490,8 @@ static void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_operator_dec (NODE_T * p)
+static void
+victal_check_operator_dec (NODE_T * p)
 {
   if (IS (NEXT (p), FORMAL_DECLARERS)) {
     BOOL_T z = A68_TRUE;
@@ -6326,7 +6511,8 @@ static void victal_check_operator_dec (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_mode_dec (NODE_T * p)
+static void
+victal_check_mode_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, MODE_DECLARATION)) {
@@ -6348,7 +6534,8 @@ static void victal_check_mode_dec (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_variable_dec (NODE_T * p)
+static void
+victal_check_variable_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, VARIABLE_DECLARATION)) {
@@ -6373,7 +6560,8 @@ static void victal_check_variable_dec (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_identity_dec (NODE_T * p)
+static void
+victal_check_identity_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTITY_DECLARATION)) {
@@ -6399,7 +6587,8 @@ static void victal_check_identity_dec (NODE_T * p)
 @param z Flag.
 **/
 
-static void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
+static void
+victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, PARAMETER_PACK)) {
@@ -6420,7 +6609,8 @@ static void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_routine_text (NODE_T * p)
+static void
+victal_check_routine_text (NODE_T * p)
 {
   if (IS (p, PARAMETER_PACK)) {
     BOOL_T z = A68_TRUE;
@@ -6443,7 +6633,8 @@ static void victal_check_routine_text (NODE_T * p)
 @param z Flag.
 **/
 
-static void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
+static void
+victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, STRUCTURE_PACK)) {
@@ -6466,7 +6657,8 @@ static void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
 @param z Flag.
 **/
 
-static void victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
+static void
+victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, UNION_PACK)) {
@@ -6489,7 +6681,8 @@ static void victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
 @param x Expected attribute.
 **/
 
-static BOOL_T victal_check_declarer (NODE_T * p, int x)
+static BOOL_T
+victal_check_declarer (NODE_T * p, int x)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
@@ -6559,7 +6752,8 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
 @param p Node in syntax tree.
 **/
 
-static void victal_check_cast (NODE_T * p)
+static void
+victal_check_cast (NODE_T * p)
 {
   if (!victal_check_declarer (p, FORMAL_DECLARER_MARK)) {
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "formal declarer");
@@ -6572,7 +6766,8 @@ static void victal_check_cast (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void victal_checker (NODE_T * p)
+void
+victal_checker (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, MODE_DECLARATION)) {
@@ -6608,7 +6803,8 @@ void victal_checker (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void reset_moid_tree (NODE_T * p)
+static void
+reset_moid_tree (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     MOID (p) = NO_MOID;
@@ -6622,7 +6818,8 @@ static void reset_moid_tree (NODE_T * p)
 @param n Index.
 **/
 
-void renumber_moids (MOID_T * p, int n)
+void
+renumber_moids (MOID_T * p, int n)
 {
   if (p != NO_MOID) {
     NUMBER (p) = n;
@@ -6650,7 +6847,8 @@ assuming their equivalence.
 @return See brief description.
 **/
 
-static BOOL_T is_packs_equivalent (PACK_T * s, PACK_T * t)
+static BOOL_T
+is_packs_equivalent (PACK_T * s, PACK_T * t)
 {
   for (; s != NO_PACK && t != NO_PACK; FORWARD (s), FORWARD (t)) {
     if (!is_modes_equivalent (MOID (s), MOID (t))) {
@@ -6670,9 +6868,11 @@ static BOOL_T is_packs_equivalent (PACK_T * s, PACK_T * t)
 @return See brief description.
 **/
 
-static BOOL_T is_united_packs_equivalent (PACK_T * s, PACK_T * t)
+static BOOL_T
+is_united_packs_equivalent (PACK_T * s, PACK_T * t)
 {
-  PACK_T *p, *q; BOOL_T f;
+  PACK_T *p, *q;
+  BOOL_T f;
 /* whether s is a subset of t ... */
   for (p = s; p != NO_PACK; FORWARD (p)) {
     for (f = A68_FALSE, q = t; q != NO_PACK && !f; FORWARD (q)) {
@@ -6701,7 +6901,8 @@ static BOOL_T is_united_packs_equivalent (PACK_T * s, PACK_T * t)
 @return See brief description.
 **/
 
-BOOL_T is_modes_equivalent (MOID_T * a, MOID_T * b)
+BOOL_T
+is_modes_equivalent (MOID_T * a, MOID_T * b)
 {
   if (a == NO_MOID || b == NO_MOID) {
 /* Modes can be NO_MOID in partial argument lists */
@@ -6728,16 +6929,17 @@ BOOL_T is_modes_equivalent (MOID_T * a, MOID_T * b)
     }
   }
   switch (ATTRIBUTE (a)) {
-    case REF_SYMBOL: 
-    case ROW_SYMBOL: 
-    case FLEX_SYMBOL: {
+  case REF_SYMBOL:
+  case ROW_SYMBOL:
+  case FLEX_SYMBOL:{
       return (is_modes_equivalent (SUB (a), SUB (b)));
     }
   }
   if (IS (a, PROC_SYMBOL) && PACK (a) == NO_PACK && PACK (b) == NO_PACK) {
     return (is_modes_equivalent (SUB (a), SUB (b)));
   } else if (IS (a, STRUCT_SYMBOL)) {
-    POSTULATE_T *save; BOOL_T z;
+    POSTULATE_T *save;
+    BOOL_T z;
     save = top_postulate;
     make_postulate (&top_postulate, a, b);
     z = is_packs_equivalent (PACK (a), PACK (b));
@@ -6747,7 +6949,8 @@ BOOL_T is_modes_equivalent (MOID_T * a, MOID_T * b)
   } else if (IS (a, UNION_SYMBOL)) {
     return (is_united_packs_equivalent (PACK (a), PACK (b)));
   } else if (IS (a, PROC_SYMBOL) && PACK (a) != NO_PACK && PACK (b) != NO_PACK) {
-    POSTULATE_T *save; BOOL_T z;
+    POSTULATE_T *save;
+    BOOL_T z;
     save = top_postulate;
     make_postulate (&top_postulate, a, b);
     z = is_modes_equivalent (SUB (a), SUB (b));
@@ -6770,7 +6973,8 @@ BOOL_T is_modes_equivalent (MOID_T * a, MOID_T * b)
 @return See brief description.
 **/
 
-static BOOL_T prove_moid_equivalence (MOID_T * p, MOID_T * q)
+static BOOL_T
+prove_moid_equivalence (MOID_T * p, MOID_T * q)
 {
 /* Prove two modes to be equivalent under assumption that they indeed are */
   POSTULATE_T *save = top_postulate;
@@ -6787,7 +6991,8 @@ static BOOL_T prove_moid_equivalence (MOID_T * p, MOID_T * q)
 @return Mode table entry.
 **/
 
-static MOID_T *register_extra_mode (MOID_T ** z, MOID_T * u)
+static MOID_T *
+register_extra_mode (MOID_T ** z, MOID_T * u)
 {
   MOID_T *head = TOP_MOID (&program);
 /* If we already know this mode, return the existing entry; otherwise link it in */
@@ -6798,8 +7003,8 @@ static MOID_T *register_extra_mode (MOID_T ** z, MOID_T * u)
   }
 /* Link to chain and exit */
   NUMBER (u) = mode_count++;
-  NEXT (u) = (* z);
-  return (* z = u);
+  NEXT (u) = (*z);
+  return (*z = u);
 }
 
 /**
@@ -6813,7 +7018,8 @@ static MOID_T *register_extra_mode (MOID_T ** z, MOID_T * u)
 @return New entry.
 **/
 
-MOID_T *add_mode (MOID_T ** z, int att, int dim, NODE_T * node, MOID_T * sub, PACK_T * pack)
+MOID_T *
+add_mode (MOID_T ** z, int att, int dim, NODE_T * node, MOID_T * sub, PACK_T * pack)
 {
   MOID_T *new_mode = new_moid ();
   ABEND (att == REF_SYMBOL && sub == NO_MOID, ERROR_INTERNAL_CONSISTENCY, "store REF NULL");
@@ -6842,7 +7048,8 @@ MOID_T *add_mode (MOID_T ** z, int att, int dim, NODE_T * node, MOID_T * sub, PA
 @param u United mode.
 **/
 
-static void contract_union (MOID_T * u)
+static void
+contract_union (MOID_T * u)
 {
   PACK_T *s = PACK (u);
   for (; s != NO_PACK; FORWARD (s)) {
@@ -6864,7 +7071,8 @@ static void contract_union (MOID_T * u)
 @return Absorbed pack.
 **/
 
-static PACK_T *absorb_union_pack (PACK_T * u)
+static PACK_T *
+absorb_union_pack (PACK_T * u)
 {
   BOOL_T go_on;
   PACK_T *t, *z;
@@ -6892,7 +7100,8 @@ static PACK_T *absorb_union_pack (PACK_T * u)
 @param p Mode.
 **/
 
-static void absorb_series_pack (MOID_T ** p)
+static void
+absorb_series_pack (MOID_T ** p)
 {
   BOOL_T go_on;
   do {
@@ -6918,7 +7127,8 @@ static void absorb_series_pack (MOID_T ** p)
 @param p Mode.
 **/
 
-static void absorb_series_union_pack (MOID_T ** p)
+static void
+absorb_series_union_pack (MOID_T ** p)
 {
   BOOL_T go_on;
   do {
@@ -6946,7 +7156,8 @@ static void absorb_series_union_pack (MOID_T ** p)
 \return SERIES (u, v)
 **/
 
-static MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
+static MOID_T *
+make_series_from_moids (MOID_T * u, MOID_T * v)
 {
   MOID_T *x = new_moid ();
   ATTRIBUTE (x) = SERIES_MODE;
@@ -6968,7 +7179,8 @@ static MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
 @return Absorbed "m".
 **/
 
-static MOID_T *absorb_related_subsets (MOID_T * m)
+static MOID_T *
+absorb_related_subsets (MOID_T * m)
 {
 /*
 For instance invalid UNION (PROC REF UNION (A, B), A, B) -> valid UNION (A, B),
@@ -7002,7 +7214,8 @@ which is used in balancing conformity clauses.
 @return Mode table entry.
 **/
 
-static MOID_T *make_united_mode (MOID_T * m)
+static MOID_T *
+make_united_mode (MOID_T * m)
 {
   MOID_T *u;
   PACK_T *w;
@@ -7052,9 +7265,10 @@ static MOID_T *make_united_mode (MOID_T * m)
 @return Pointer to entry.
 **/
 
-static MOID_T *add_row (MOID_T ** p, int dim, MOID_T * sub, NODE_T * n, BOOL_T derivate)
+static MOID_T *
+add_row (MOID_T ** p, int dim, MOID_T * sub, NODE_T * n, BOOL_T derivate)
 {
-  MOID_T * q = add_mode (p, ROW_SYMBOL, dim, n, sub, NO_PACK);
+  MOID_T *q = add_mode (p, ROW_SYMBOL, dim, n, sub, NO_PACK);
   DERIVATE (q) |= derivate;
   if (dim > 1) {
     SLICE (q) = add_row (&NEXT (q), dim - 1, sub, n, derivate);
@@ -7072,7 +7286,8 @@ static MOID_T *add_row (MOID_T ** p, int dim, MOID_T * sub, NODE_T * n, BOOL_T d
 @param node Node in syntax tree.
 **/
 
-void add_mode_to_pack (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
+void
+add_mode_to_pack (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
 {
   PACK_T *z = new_pack ();
   MOID (z) = m;
@@ -7095,7 +7310,8 @@ void add_mode_to_pack (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
 @param node Node in syntax tree.
 **/
 
-void add_mode_to_pack_end (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
+void
+add_mode_to_pack_end (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
 {
   PACK_T *z = new_pack ();
   MOID (z) = m;
@@ -7118,7 +7334,8 @@ void add_mode_to_pack_end (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
 @param m First MOID.
 **/
 
-static void absorb_unions (MOID_T * m)
+static void
+absorb_unions (MOID_T * m)
 {
 /*
 UNION (A, UNION (B, C)) = UNION (A, B, C) or
@@ -7137,7 +7354,8 @@ UNION (A, UNION (A, B)) = UNION (A, B).
 @param m First MOID.
 **/
 
-static void contract_unions (MOID_T * m)
+static void
+contract_unions (MOID_T * m)
 {
 /* UNION (A, B, A) -> UNION (A, B) */
   for (; m != NO_MOID; FORWARD (m)) {
@@ -7158,7 +7376,8 @@ static void contract_unions (MOID_T * m)
 @return Moid entry in standard environ.
 **/
 
-static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
+static MOID_T *
+search_standard_mode (int sizety, NODE_T * indicant)
 {
   MOID_T *p = TOP_MOID (&program);
 /* Search standard mode */
@@ -7188,23 +7407,24 @@ static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
 @param u Pack to insert to.
 **/
 
-static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
+static void
+get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTIFIER)) {
-        ATTRIBUTE (p) = FIELD_IDENTIFIER;
-        (void) add_mode_to_pack (u, NO_MOID, NSYMBOL (p), p);
+      ATTRIBUTE (p) = FIELD_IDENTIFIER;
+      (void) add_mode_to_pack (u, NO_MOID, NSYMBOL (p), p);
     } else if (IS (p, DECLARER)) {
-        MOID_T *new_one = get_mode_from_declarer (p);
-        PACK_T *t;
-        get_mode_from_struct_field (NEXT (p), u);
-        for (t = *u; t && MOID (t) == NO_MOID; FORWARD (t)) {
-          MOID (t) = new_one;
-          MOID (NODE (t)) = new_one;
-        }
+      MOID_T *new_one = get_mode_from_declarer (p);
+      PACK_T *t;
+      get_mode_from_struct_field (NEXT (p), u);
+      for (t = *u; t && MOID (t) == NO_MOID; FORWARD (t)) {
+        MOID (t) = new_one;
+        MOID (NODE (t)) = new_one;
+      }
     } else {
-        get_mode_from_struct_field (NEXT (p), u);
-        get_mode_from_struct_field (SUB (p), u);
+      get_mode_from_struct_field (NEXT (p), u);
+      get_mode_from_struct_field (SUB (p), u);
     }
   }
 }
@@ -7215,17 +7435,18 @@ static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
 @param u Pack to insert to.
 **/
 
-static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
+static void
+get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, DECLARER)) {
-        MOID_T *z;
-        get_mode_from_formal_pack (NEXT (p), u);
-        z = get_mode_from_declarer (p);
-        (void) add_mode_to_pack (u, z, NO_TEXT, p);
-     } else {
-        get_mode_from_formal_pack (NEXT (p), u);
-        get_mode_from_formal_pack (SUB (p), u);
+      MOID_T *z;
+      get_mode_from_formal_pack (NEXT (p), u);
+      z = get_mode_from_declarer (p);
+      (void) add_mode_to_pack (u, z, NO_TEXT, p);
+    } else {
+      get_mode_from_formal_pack (NEXT (p), u);
+      get_mode_from_formal_pack (SUB (p), u);
     }
   }
 }
@@ -7236,17 +7457,18 @@ static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
 @param u Pack to insert to.
 **/
 
-static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
+static void
+get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, DECLARER) || IS (p, VOID_SYMBOL)) {
-        MOID_T *z;
-        get_mode_from_union_pack (NEXT (p), u);
-        z = get_mode_from_declarer (p);
-        (void) add_mode_to_pack (u, z, NO_TEXT, p);
+      MOID_T *z;
+      get_mode_from_union_pack (NEXT (p), u);
+      z = get_mode_from_declarer (p);
+      (void) add_mode_to_pack (u, z, NO_TEXT, p);
     } else {
-        get_mode_from_union_pack (NEXT (p), u);
-        get_mode_from_union_pack (SUB (p), u);
+      get_mode_from_union_pack (NEXT (p), u);
+      get_mode_from_union_pack (SUB (p), u);
     }
   }
 }
@@ -7257,22 +7479,23 @@ static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
 @param u Pack to insert to.
 **/
 
-static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
+static void
+get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTIFIER)) {
       (void) add_mode_to_pack (u, NO_MOID, NO_TEXT, p);
     } else if (IS (p, DECLARER)) {
-        MOID_T *z = get_mode_from_declarer (p);
-        PACK_T *t = *u;
-        for (; t != NO_PACK && MOID (t) == NO_MOID; FORWARD (t)) {
-          MOID (t) = z;
-          MOID (NODE (t)) = z;
-        }
-        (void) add_mode_to_pack (u, z, NO_TEXT, p);
+      MOID_T *z = get_mode_from_declarer (p);
+      PACK_T *t = *u;
+      for (; t != NO_PACK && MOID (t) == NO_MOID; FORWARD (t)) {
+        MOID (t) = z;
+        MOID (NODE (t)) = z;
+      }
+      (void) add_mode_to_pack (u, z, NO_TEXT, p);
     } else {
-        get_mode_from_routine_pack (NEXT (p), u);
-        get_mode_from_routine_pack (SUB (p), u);
+      get_mode_from_routine_pack (NEXT (p), u);
+      get_mode_from_routine_pack (SUB (p), u);
     }
   }
 }
@@ -7283,7 +7506,8 @@ static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
 @return Mode table entry.
 **/
 
-static MOID_T *get_mode_from_declarer (NODE_T * p)
+static MOID_T *
+get_mode_from_declarer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (NO_MOID);
@@ -7380,7 +7604,8 @@ static MOID_T *get_mode_from_declarer (NODE_T * p)
 @return Mode table entry.
 **/
 
-static MOID_T *get_mode_from_routine_text (NODE_T * p)
+static MOID_T *
+get_mode_from_routine_text (NODE_T * p)
 {
   PACK_T *u = NO_PACK;
   MOID_T *n;
@@ -7399,7 +7624,8 @@ static MOID_T *get_mode_from_routine_text (NODE_T * p)
 @return Mode table entry.
 **/
 
-static MOID_T *get_mode_from_operator (NODE_T * p)
+static MOID_T *
+get_mode_from_operator (NODE_T * p)
 {
   PACK_T *u = NO_PACK;
   MOID_T *new_one;
@@ -7420,7 +7646,8 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
 @return Mode table entry.
 **/
 
-static void get_mode_from_denotation (NODE_T * p, int sizety)
+static void
+get_mode_from_denotation (NODE_T * p, int sizety)
 {
   if (p != NO_NODE) {
     if (IS (p, ROW_CHAR_DENOTATION)) {
@@ -7476,7 +7703,8 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
 @param attribute
 **/
 
-static void get_modes_from_tree (NODE_T * p, int attribute)
+static void
+get_modes_from_tree (NODE_T * p, int attribute)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -7519,7 +7747,8 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
 @param p Node in syntax tree.
 **/
 
-static void get_mode_from_proc_variables (NODE_T * p)
+static void
+get_mode_from_proc_variables (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
@@ -7539,7 +7768,8 @@ static void get_mode_from_proc_variables (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
+static void
+get_mode_from_proc_var_declarations_tree (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     get_mode_from_proc_var_declarations_tree (SUB (p));
@@ -7548,6 +7778,7 @@ static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
     }
   }
 }
+
 /**********************************/
 /* Various routines to test modes */
 /**********************************/
@@ -7562,7 +7793,8 @@ static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T yang, BOOL_T video)
+static BOOL_T
+is_well_formed (MOID_T * def, MOID_T * z, BOOL_T yin, BOOL_T yang, BOOL_T video)
 {
   if (z == NO_MOID) {
     return (A68_FALSE);
@@ -7605,7 +7837,7 @@ static BOOL_T is_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T yang, 
   } else if (IS (z, STRUCT_SYMBOL)) {
     PACK_T *s = PACK (z);
     for (; s != NO_PACK; FORWARD (s)) {
-      if (! is_well_formed (def, MOID (s), yin, A68_TRUE, A68_FALSE)) {
+      if (!is_well_formed (def, MOID (s), yin, A68_TRUE, A68_FALSE)) {
         return (A68_FALSE);
       }
     }
@@ -7613,7 +7845,7 @@ static BOOL_T is_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T yang, 
   } else if (IS (z, UNION_SYMBOL)) {
     PACK_T *s = PACK (z);
     for (; s != NO_PACK; FORWARD (s)) {
-      if (! is_well_formed (def, MOID (s), yin, yang, A68_TRUE)) {
+      if (!is_well_formed (def, MOID (s), yin, yang, A68_TRUE)) {
         return (A68_FALSE);
       }
     }
@@ -7628,7 +7860,8 @@ static BOOL_T is_well_formed (MOID_T *def, MOID_T * z, BOOL_T yin, BOOL_T yang, 
 @param q Mode to track.
 **/
 
-static void resolve_eq_members (MOID_T * q)
+static void
+resolve_eq_members (MOID_T * q)
 {
   PACK_T *p;
   resolve_equivalent (&SUB (q));
@@ -7648,12 +7881,13 @@ static void resolve_eq_members (MOID_T * q)
 @param z Tag to track.
 **/
 
-static void resolve_eq_tags (TAG_T * z)
+static void
+resolve_eq_tags (TAG_T * z)
 {
   for (; z != NO_TAG; FORWARD (z)) {
     if (MOID (z) != NO_MOID) {
-      resolve_equivalent (& MOID (z));
-    }  
+      resolve_equivalent (&MOID (z));
+    }
   }
 }
 
@@ -7662,21 +7896,22 @@ static void resolve_eq_tags (TAG_T * z)
 @param p Node in syntax tree.
 **/
 
-static void bind_modes (NODE_T * p)
+static void
+bind_modes (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
-    resolve_equivalent (& MOID (p));
+    resolve_equivalent (&MOID (p));
     if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
       TABLE_T *s = TABLE (SUB (p));
       TAG_T *z = INDICANTS (s);
       for (; z != NO_TAG; FORWARD (z)) {
         if (NODE (z) != NO_NODE) {
-          resolve_equivalent (& MOID (NEXT_NEXT (NODE (z))));
+          resolve_equivalent (&MOID (NEXT_NEXT (NODE (z))));
           MOID (z) = MOID (NEXT_NEXT (NODE (z)));
           MOID (NODE (z)) = MOID (z);
         }
       }
-    } 
+    }
     bind_modes (SUB (p));
   }
 }
@@ -7694,7 +7929,8 @@ from REF STRUCT (A) yields REF A fields and selection from [] STRUCT (A) yields
 @param p Chain to insert new modes into.
 **/
 
-static void make_name_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p)
+static void
+make_name_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p)
 {
   if (src != NO_PACK) {
     MOID_T *z;
@@ -7712,7 +7948,8 @@ static void make_name_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p)
 @param dim Dimension.
 **/
 
-static void make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
+static void
+make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
 {
   if (src != NO_PACK) {
     MOID_T *z;
@@ -7730,7 +7967,8 @@ static void make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** 
 @return Mode table entry.
 **/
 
-static MOID_T *make_name_struct (MOID_T * m, MOID_T ** p)
+static MOID_T *
+make_name_struct (MOID_T * m, MOID_T ** p)
 {
   PACK_T *u = NO_PACK;
   make_name_pack (PACK (m), &u, p);
@@ -7744,14 +7982,15 @@ static MOID_T *make_name_struct (MOID_T * m, MOID_T ** p)
 @return Mode table entry.
 **/
 
-static MOID_T *make_name_row (MOID_T * m, MOID_T ** p)
+static MOID_T *
+make_name_row (MOID_T * m, MOID_T ** p)
 {
   if (SLICE (m) != NO_MOID) {
     return (add_mode (p, REF_SYMBOL, 0, NO_NODE, SLICE (m), NO_PACK));
   } else if (SUB (m) != NO_MOID) {
     return (add_mode (p, REF_SYMBOL, 0, NO_NODE, SUB (m), NO_PACK));
   } else {
-    return (NO_MOID); /* weird, FLEX INT or so ... */
+    return (NO_MOID);           /* weird, FLEX INT or so ... */
   }
 }
 
@@ -7763,7 +8002,8 @@ static MOID_T *make_name_row (MOID_T * m, MOID_T ** p)
 @param dim Dimension.
 **/
 
-static void make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
+static void
+make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
 {
   if (src != NO_PACK) {
     make_multiple_row_pack (NEXT (src), dst, p, dim);
@@ -7779,7 +8019,8 @@ static void make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, in
 @return Mode table entry.
 **/
 
-static MOID_T *make_flex_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
+static MOID_T *
+make_flex_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 {
   PACK_T *u = NO_PACK;
   make_flex_multiple_row_pack (PACK (m), &u, p, dim);
@@ -7794,7 +8035,8 @@ static MOID_T *make_flex_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 @return Mode table entry.
 **/
 
-static MOID_T *make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
+static MOID_T *
+make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 {
   PACK_T *u = NO_PACK;
   make_multiple_row_pack (PACK (m), &u, p, dim);
@@ -7807,7 +8049,8 @@ static MOID_T *make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 @return See brief description.
 **/
 
-static BOOL_T is_mode_has_row (MOID_T * m)
+static BOOL_T
+is_mode_has_row (MOID_T * m)
 {
   if (IS (m, STRUCT_SYMBOL) || IS (m, UNION_SYMBOL)) {
     BOOL_T k = A68_FALSE;
@@ -7827,7 +8070,8 @@ static BOOL_T is_mode_has_row (MOID_T * m)
 @param mod Module.
 **/
 
-static void compute_derived_modes (MODULE_T *mod)
+static void
+compute_derived_modes (MODULE_T * mod)
 {
   MOID_T *z;
   int k, len = 0, nlen = 1;
@@ -7835,7 +8079,7 @@ static void compute_derived_modes (MODULE_T *mod)
   absorb_unions (TOP_MOID (mod));
   contract_unions (TOP_MOID (mod));
 /* The for-statement below prevents an endless loop */
-  for (k = 1; k <= 10 && len != nlen; k ++) {
+  for (k = 1; k <= 10 && len != nlen; k++) {
 /* Make deflexed modes */
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
       if (SUB (z) != NO_MOID) {
@@ -7887,9 +8131,9 @@ static void compute_derived_modes (MODULE_T *mod)
     }
 /* Fill out stuff for rows, f.i. inverse relations */
     for (z = TOP_MOID (mod); z != NO_MOID; FORWARD (z)) {
-      if (IS (z, ROW_SYMBOL) && DIM (z) > 0 && SUB (z) != NO_MOID && ! DERIVATE (z)) {
+      if (IS (z, ROW_SYMBOL) && DIM (z) > 0 && SUB (z) != NO_MOID && !DERIVATE (z)) {
         (void) add_row (&TOP_MOID (mod), DIM (z) + 1, SUB (z), NODE (z), A68_TRUE);
-      } else if (IS (z, REF_SYMBOL) && IS (SUB (z), ROW_SYMBOL) && ! DERIVATE (SUB (z))) {
+      } else if (IS (z, REF_SYMBOL) && IS (SUB (z), ROW_SYMBOL) && !DERIVATE (SUB (z))) {
         MOID_T *x = add_row (&TOP_MOID (mod), DIM (SUB (z)) + 1, SUB_SUB (z), NODE (SUB (z)), A68_TRUE);
         MOID_T *y = add_mode (&TOP_MOID (mod), REF_SYMBOL, 0, NODE (z), x, NO_PACK);
         NAME (y) = z;
@@ -7946,7 +8190,7 @@ static void compute_derived_modes (MODULE_T *mod)
           EQUIVALENT (z) = v;
           EQUIVALENT (v) = NO_MOID;
         }
-      } 
+      }
     }
 /* Count the modes to check self consistency */
     len = nlen;
@@ -8030,7 +8274,8 @@ static void compute_derived_modes (MODULE_T *mod)
 @param mod Module to list modes of.
 **/
 
-void make_moid_list (MODULE_T *mod)
+void
+make_moid_list (MODULE_T * mod)
 {
   MOID_T *z;
   BOOL_T cont = A68_TRUE;
@@ -8089,7 +8334,8 @@ void make_moid_list (MODULE_T *mod)
 @param n Proc level number.
 **/
 
-void set_proc_level (NODE_T * p, int n)
+void
+set_proc_level (NODE_T * p, int n)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     PROCEDURE_LEVEL (INFO (p)) = n;
@@ -8107,7 +8353,8 @@ void set_proc_level (NODE_T * p, int n)
 @param s Start of enclosing nest.
 **/
 
-void set_nest (NODE_T * p, NODE_T * s)
+void
+set_nest (NODE_T * p, NODE_T * s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     NEST (p) = s;
@@ -8145,7 +8392,8 @@ static void tax_format_texts (NODE_T *);
 @return Type of tag, identifier or label or ....
 **/
 
-int first_tag_global (TABLE_T * table, char *name)
+int
+first_tag_global (TABLE_T * table, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s = NO_TAG;
@@ -8190,7 +8438,8 @@ int first_tag_global (TABLE_T * table, char *name)
 @param p Node in syntax tree.
 **/
 
-void portcheck (NODE_T * p)
+void
+portcheck (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     portcheck (SUB (p));
@@ -8205,7 +8454,7 @@ void portcheck (NODE_T * p)
         PORTCHECK_TAX (p, PORTABLE (TAX (p)));
         PORTABLE (TAX (p)) = A68_TRUE;
       } else if (IS (p, ASSERTION)) {
-        diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_TAG_NOT_PORTABLE);\
+        diagnostic_node (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_TAG_NOT_PORTABLE);
       }
     }
   }
@@ -8217,7 +8466,8 @@ void portcheck (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_mappable_routine (char *z)
+static BOOL_T
+is_mappable_routine (char *z)
 {
 #define ACCEPT(u, v) {\
   if (strlen (u) >= strlen (v)) {\
@@ -8263,7 +8513,8 @@ static BOOL_T is_mappable_routine (char *z)
 @return Tag to map onto.
 **/
 
-static TAG_T *bind_lengthety_identifier (char *u)
+static TAG_T *
+bind_lengthety_identifier (char *u)
 {
 #define CAR(u, v) (strncmp (u, v, strlen(v)) == 0)
 /*
@@ -8302,7 +8553,8 @@ We can only map routines blessed by "is_mappable_routine", so there is no
 @param p Node in syntax tree.
 **/
 
-static void bind_identifier_tag_to_symbol_table (NODE_T * p)
+static void
+bind_identifier_tag_to_symbol_table (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     bind_identifier_tag_to_symbol_table (SUB (p));
@@ -8347,7 +8599,8 @@ static void bind_identifier_tag_to_symbol_table (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void bind_indicant_tag_to_symbol_table (NODE_T * p)
+static void
+bind_indicant_tag_to_symbol_table (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     bind_indicant_tag_to_symbol_table (SUB (p));
@@ -8369,7 +8622,8 @@ static void bind_indicant_tag_to_symbol_table (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_specifiers (NODE_T * p)
+static void
+tax_specifiers (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_specifiers (SUB (p));
@@ -8384,7 +8638,8 @@ static void tax_specifiers (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_specifier_list (NODE_T * p)
+static void
+tax_specifier_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, OPEN_SYMBOL)) {
@@ -8409,7 +8664,8 @@ static void tax_specifier_list (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_parameters (NODE_T * p)
+static void
+tax_parameters (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
@@ -8426,7 +8682,8 @@ static void tax_parameters (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_parameter_list (NODE_T * p)
+static void
+tax_parameter_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
@@ -8456,7 +8713,8 @@ static void tax_parameter_list (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_for_identifiers (NODE_T * p)
+static void
+tax_for_identifiers (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_for_identifiers (SUB (p));
@@ -8473,7 +8731,8 @@ static void tax_for_identifiers (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_routine_texts (NODE_T * p)
+static void
+tax_routine_texts (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_routine_texts (SUB (p));
@@ -8491,7 +8750,8 @@ static void tax_routine_texts (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_format_texts (NODE_T * p)
+static void
+tax_format_texts (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_format_texts (SUB (p));
@@ -8512,7 +8772,8 @@ static void tax_format_texts (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_pictures (NODE_T * p)
+static void
+tax_pictures (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_pictures (SUB (p));
@@ -8527,7 +8788,8 @@ static void tax_pictures (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_generators (NODE_T * p)
+static void
+tax_generators (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_generators (SUB (p));
@@ -8552,7 +8814,8 @@ static void tax_generators (NODE_T * p)
 @return Pointer to entry in table.
 **/
 
-static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T * r, TAG_T * self)
+static TAG_T *
+find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T * r, TAG_T * self)
 {
   if (c != NO_TABLE) {
     TAG_T *s = OPERATORS (c);
@@ -8584,19 +8847,22 @@ static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T *
 @param s Operator tag to start from.
 **/
 
-static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
+static void
+test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
 {
   if (s != NO_TAG) {
     PACK_T *u = PACK (MOID (s));
-    MOID_T *l = MOID (u);
-    MOID_T *r = (NEXT (u) != NO_PACK ? MOID (NEXT (u)) : NO_MOID);
-    TAG_T *t = find_firmly_related_op (TAG_TABLE (s), NSYMBOL (NODE (s)), l, r, s);
-    if (t != NO_TAG) {
-      if (TAG_TABLE (t) == a68g_standenv) {
-        diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), NSYMBOL (NODE (s)), MOID (t), NSYMBOL (NODE (t)));
-        ABEND (A68_TRUE, "standard environ error", NO_TEXT);
-      } else {
-        diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), NSYMBOL (NODE (s)), MOID (t), NSYMBOL (NODE (t)));
+    if (u != NO_PACK) {
+      MOID_T *l = MOID (u);
+      MOID_T *r = (NEXT (u) != NO_PACK ? MOID (NEXT (u)) : NO_MOID);
+      TAG_T *t = find_firmly_related_op (TAG_TABLE (s), NSYMBOL (NODE (s)), l, r, s);
+      if (t != NO_TAG) {
+        if (TAG_TABLE (t) == a68g_standenv) {
+          diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), NSYMBOL (NODE (s)), MOID (t), NSYMBOL (NODE (t)));
+          ABEND (A68_TRUE, "standard environ error", NO_TEXT);
+        } else {
+          diagnostic_node (A68_ERROR, p, ERROR_OPERATOR_RELATED, MOID (s), NSYMBOL (NODE (s)), MOID (t), NSYMBOL (NODE (t)));
+        }
       }
     }
     if (NEXT (s) != NO_TAG) {
@@ -8610,7 +8876,8 @@ static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
 @param p Node in syntax tree.
 **/
 
-static void test_firmly_related_ops (NODE_T * p)
+static void
+test_firmly_related_ops (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
@@ -8628,7 +8895,8 @@ static void test_firmly_related_ops (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void collect_taxes (NODE_T * p)
+void
+collect_taxes (NODE_T * p)
 {
   tax_tags (p);
   tax_specifiers (p);
@@ -8650,7 +8918,8 @@ void collect_taxes (NODE_T * p)
 @param a Attribute of tag.
 **/
 
-static void already_declared (NODE_T * n, int a)
+static void
+already_declared (NODE_T * n, int a)
 {
   if (find_tag_local (TABLE (n), a, NSYMBOL (n)) != NO_TAG) {
     diagnostic_node (A68_ERROR, n, ERROR_MULTIPLE_TAG);
@@ -8663,7 +8932,8 @@ static void already_declared (NODE_T * n, int a)
 @param a Attribute of tag.
 **/
 
-static void already_declared_hidden (NODE_T * n, int a)
+static void
+already_declared_hidden (NODE_T * n, int a)
 {
   TAG_T *s;
   if (find_tag_local (TABLE (n), a, NSYMBOL (n)) != NO_TAG) {
@@ -8688,7 +8958,8 @@ static void already_declared_hidden (NODE_T * n, int a)
 @return Entry in symbol table.
 **/
 
-TAG_T *add_tag (TABLE_T * s, int a, NODE_T * n, MOID_T * m, int p)
+TAG_T *
+add_tag (TABLE_T * s, int a, NODE_T * n, MOID_T * m, int p)
 {
 #define INSERT_TAG(l, n) {NEXT (n) = *(l); *(l) = (n);}
   if (s != NO_TABLE) {
@@ -8751,7 +9022,8 @@ TAG_T *add_tag (TABLE_T * s, int a, NODE_T * n, MOID_T * m, int p)
 @return Entry in symbol table.
 **/
 
-TAG_T *find_tag_global (TABLE_T * table, int a, char *name)
+TAG_T *
+find_tag_global (TABLE_T * table, int a, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s = NO_TAG;
@@ -8799,7 +9071,8 @@ TAG_T *find_tag_global (TABLE_T * table, int a, char *name)
 @return Attribute of tag.
 **/
 
-int is_identifier_or_label_global (TABLE_T * table, char *name)
+int
+is_identifier_or_label_global (TABLE_T * table, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s;
@@ -8827,7 +9100,8 @@ int is_identifier_or_label_global (TABLE_T * table, char *name)
 @return Entry in symbol table.
 **/
 
-TAG_T *find_tag_local (TABLE_T * table, int a, char *name)
+TAG_T *
+find_tag_local (TABLE_T * table, int a, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s = NO_TAG;
@@ -8859,7 +9133,8 @@ TAG_T *find_tag_local (TABLE_T * table, int a, char *name)
 @return Attribute of generator.
 **/
 
-static int tab_qualifier (NODE_T * p)
+static int
+tab_qualifier (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (is_one_of (p, UNIT, ASSIGNATION, TERTIARY, SECONDARY, GENERATOR, STOP)) {
@@ -8880,7 +9155,8 @@ static int tab_qualifier (NODE_T * p)
 @param m Mode of identifiers to enter (picked from the left-most one in fi. INT i = 1, j = 2).
 **/
 
-static void tax_identity_dec (NODE_T * p, MOID_T ** m)
+static void
+tax_identity_dec (NODE_T * p, MOID_T ** m)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTITY_DECLARATION)) {
@@ -8915,7 +9191,8 @@ static void tax_identity_dec (NODE_T * p, MOID_T ** m)
 @param m Mode of identifiers to enter (picked from the left-most one in fi. INT i, j, k).
 **/
 
-static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
+static void
+tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
 {
   if (p != NO_NODE) {
     if (IS (p, VARIABLE_DECLARATION)) {
@@ -8957,7 +9234,8 @@ static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
 @param q Qualifier of generator (HEAP, LOC) picked from left-most identifier.
 **/
 
-static void tax_proc_variable_dec (NODE_T * p, int *q)
+static void
+tax_proc_variable_dec (NODE_T * p, int *q)
 {
   if (p != NO_NODE) {
     if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
@@ -8993,7 +9271,8 @@ static void tax_proc_variable_dec (NODE_T * p, int *q)
 @param p Node in syntax tree.
 **/
 
-static void tax_proc_dec (NODE_T * p)
+static void
+tax_proc_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, PROCEDURE_DECLARATION)) {
@@ -9022,11 +9301,12 @@ static void tax_proc_dec (NODE_T * p)
 @param u Moid for a operator-plan.
 **/
 
-static void check_operator_dec (NODE_T * p, MOID_T *u)
+static void
+check_operator_dec (NODE_T * p, MOID_T * u)
 {
   int k = 0;
   if (u == NO_MOID) {
-    NODE_T *pack = SUB_SUB (NEXT_NEXT (p)); /* Where the parameter pack is */
+    NODE_T *pack = SUB_SUB (NEXT_NEXT (p));     /* Where the parameter pack is */
     if (ATTRIBUTE (NEXT_NEXT (p)) != ROUTINE_TEXT) {
       pack = SUB (pack);
     }
@@ -9051,7 +9331,8 @@ static void check_operator_dec (NODE_T * p, MOID_T *u)
 @param m Mode of operators to enter (picked from the left-most one).
 **/
 
-static void tax_op_dec (NODE_T * p, MOID_T ** m)
+static void
+tax_op_dec (NODE_T * p, MOID_T ** m)
 {
   if (p != NO_NODE) {
     if (IS (p, OPERATOR_DECLARATION)) {
@@ -9087,7 +9368,8 @@ static void tax_op_dec (NODE_T * p, MOID_T ** m)
 @param p Node in syntax tree.
 **/
 
-static void tax_brief_op_dec (NODE_T * p)
+static void
+tax_brief_op_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, BRIEF_OPERATOR_DECLARATION)) {
@@ -9118,7 +9400,8 @@ static void tax_brief_op_dec (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_prio_dec (NODE_T * p)
+static void
+tax_prio_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, PRIORITY_DECLARATION)) {
@@ -9146,7 +9429,8 @@ static void tax_prio_dec (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void tax_tags (NODE_T * p)
+static void
+tax_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     int heap = LOC_SYMBOL;
@@ -9176,7 +9460,8 @@ static void tax_tags (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void reset_symbol_table_nest_count (NODE_T * p)
+void
+reset_symbol_table_nest_count (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
@@ -9191,7 +9476,8 @@ void reset_symbol_table_nest_count (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void bind_routine_tags_to_tree (NODE_T * p)
+void
+bind_routine_tags_to_tree (NODE_T * p)
 {
 /* By inserting coercions etc. some may have shifted */
   for (; p != NO_NODE; FORWARD (p)) {
@@ -9207,7 +9493,8 @@ void bind_routine_tags_to_tree (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void bind_format_tags_to_tree (NODE_T * p)
+void
+bind_format_tags_to_tree (NODE_T * p)
 {
 /* By inserting coercions etc. some may have shifted */
   for (; p != NO_NODE; FORWARD (p)) {
@@ -9226,7 +9513,8 @@ void bind_format_tags_to_tree (NODE_T * p)
 @param s Parent symbol table.
 **/
 
-void fill_symbol_table_outer (NODE_T * p, TABLE_T * s)
+void
+fill_symbol_table_outer (NODE_T * p, TABLE_T * s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (TABLE (p) != NO_TABLE) {
@@ -9248,7 +9536,8 @@ void fill_symbol_table_outer (NODE_T * p, TABLE_T * s)
 @param s Parent symbol table.
 **/
 
-static void flood_with_symbol_table_restricted (NODE_T * p, TABLE_T * s)
+static void
+flood_with_symbol_table_restricted (NODE_T * p, TABLE_T * s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     TABLE (p) = s;
@@ -9268,7 +9557,8 @@ static void flood_with_symbol_table_restricted (NODE_T * p, TABLE_T * s)
 @param l Current lexical level.
 **/
 
-void finalise_symbol_table_setup (NODE_T * p, int l)
+void
+finalise_symbol_table_setup (NODE_T * p, int l)
 {
   TABLE_T *s = TABLE (p);
   NODE_T *q = p;
@@ -9323,7 +9613,8 @@ void finalise_symbol_table_setup (NODE_T * p, int l)
 @param p Node in syntax tree.
 **/
 
-void preliminary_symbol_table_setup (NODE_T * p)
+void
+preliminary_symbol_table_setup (NODE_T * p)
 {
   NODE_T *q;
   TABLE_T *s = TABLE (p);
@@ -9459,7 +9750,8 @@ void preliminary_symbol_table_setup (NODE_T * p)
 @param m Mode to mark.
 **/
 
-static void mark_mode (MOID_T * m)
+static void
+mark_mode (MOID_T * m)
 {
   if (m != NO_MOID && USE (m) == A68_FALSE) {
     PACK_T *p = PACK (m);
@@ -9477,7 +9769,8 @@ static void mark_mode (MOID_T * m)
 @param p Node in syntax tree.
 **/
 
-void mark_moids (NODE_T * p)
+void
+mark_moids (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     mark_moids (SUB (p));
@@ -9492,7 +9785,8 @@ void mark_moids (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void mark_auxilliary (NODE_T * p)
+void
+mark_auxilliary (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
@@ -9529,7 +9823,8 @@ routines in transput.
 @param s Tag to check.
 **/
 
-static void unused (TAG_T * s)
+static void
+unused (TAG_T * s)
 {
   for (; s != NO_TAG; FORWARD (s)) {
     if (LINE_NUMBER (NODE (s)) > 0 && !USE (s)) {
@@ -9543,7 +9838,8 @@ static void unused (TAG_T * s)
 @param p Node in syntax tree.
 **/
 
-void warn_for_unused_tags (NODE_T * p)
+void
+warn_for_unused_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
@@ -9564,7 +9860,8 @@ void warn_for_unused_tags (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void jumps_from_procs (NODE_T * p)
+void
+jumps_from_procs (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PROCEDURING)) {
@@ -9582,7 +9879,7 @@ void jumps_from_procs (NODE_T * p)
         (void) add_tag (TABLE (u), LABEL, u, NO_MOID, LOCAL_LABEL);
         diagnostic_node (A68_ERROR, u, ERROR_UNDECLARED_TAG);
       } else {
-         USE (TAX (u)) = A68_TRUE;
+        USE (TAX (u)) = A68_TRUE;
       }
     } else {
       jumps_from_procs (SUB (p));
@@ -9597,7 +9894,8 @@ void jumps_from_procs (NODE_T * p)
 @return End address.
 **/
 
-static ADDR_T assign_offset_tags (TAG_T * t, ADDR_T base)
+static ADDR_T
+assign_offset_tags (TAG_T * t, ADDR_T base)
 {
   ADDR_T sum = base;
   for (; t != NO_TAG; FORWARD (t)) {
@@ -9616,7 +9914,8 @@ static ADDR_T assign_offset_tags (TAG_T * t, ADDR_T base)
 @param c Symbol table .
 **/
 
-void assign_offsets_table (TABLE_T * c)
+void
+assign_offsets_table (TABLE_T * c)
 {
   AP_INCREMENT (c) = assign_offset_tags (IDENTIFIERS (c), 0);
   AP_INCREMENT (c) = assign_offset_tags (OPERATORS (c), AP_INCREMENT (c));
@@ -9629,7 +9928,8 @@ void assign_offsets_table (TABLE_T * c)
 @param p Node in syntax tree.
 **/
 
-void assign_offsets (NODE_T * p)
+void
+assign_offsets (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
@@ -9644,7 +9944,8 @@ void assign_offsets (NODE_T * p)
 @param q Moid to start from.
 **/
 
-void assign_offsets_packs (MOID_T * q)
+void
+assign_offsets_packs (MOID_T * q)
 {
   for (; q != NO_MOID; FORWARD (q)) {
     if (EQUIVALENT (q) == NO_MOID && IS (q, STRUCT_SYMBOL)) {
@@ -9675,7 +9976,8 @@ void assign_offsets_packs (MOID_T * q)
 @return Error text.
 **/
 
-static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, int deflex, int depth)
+static char *
+mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, int deflex, int depth)
 {
 #define TAIL(z) (&(z)[strlen (z)])
   static char txt[BUFFER_SIZE];
@@ -9782,7 +10084,8 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
 @param att Attribute of context.
 **/
 
-static void cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, int deflex, int att)
+static void
+cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, int deflex, int att)
 {
   char *txt = mode_error_text (p, from, to, context, deflex, 1);
   if (att == STOP) {
@@ -9808,7 +10111,8 @@ static void cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, 
 @param attribute Attribute.
 **/
 
-static void make_soid (SOID_T * s, int sort, MOID_T * type, int attribute)
+static void
+make_soid (SOID_T * s, int sort, MOID_T * type, int attribute)
 {
   ATTRIBUTE (s) = attribute;
   SORT (s) = sort;
@@ -9821,7 +10125,8 @@ static void make_soid (SOID_T * s, int sort, MOID_T * type, int attribute)
 @param p Node in syntax tree.
 **/
 
-void mode_checker (NODE_T * p)
+void
+mode_checker (NODE_T * p)
 {
   if (IS (p, PARTICULAR_PROGRAM)) {
     SOID_T x, y;
@@ -9837,7 +10142,8 @@ void mode_checker (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void coercion_inserter (NODE_T * p)
+void
+coercion_inserter (NODE_T * p)
 {
   if (IS (p, PARTICULAR_PROGRAM)) {
     SOID_T q;
@@ -9852,7 +10158,8 @@ void coercion_inserter (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_mode_isnt_well (MOID_T * p)
+static BOOL_T
+is_mode_isnt_well (MOID_T * p)
 {
   if (p == NO_MOID) {
     return (A68_TRUE);
@@ -9874,11 +10181,13 @@ static BOOL_T is_mode_isnt_well (MOID_T * p)
 @param root Top soid list.
 **/
 
-void free_soid_list (SOID_T *root) {
+void
+free_soid_list (SOID_T * root)
+{
   if (root != NO_SOID) {
     SOID_T *q;
     for (q = root; NEXT (q) != NO_SOID; FORWARD (q)) {
-      /* skip */;
+      /* skip */ ;
     }
     NEXT (q) = top_soid_list;
     top_soid_list = root;
@@ -9892,7 +10201,8 @@ void free_soid_list (SOID_T *root) {
 @param soid Entry to add.
 **/
 
-static void add_to_soid_list (SOID_T ** root, NODE_T * where, SOID_T * soid)
+static void
+add_to_soid_list (SOID_T ** root, NODE_T * where, SOID_T * soid)
 {
   if (*root != NO_SOID) {
     add_to_soid_list (&(NEXT (*root)), where, soid);
@@ -9918,7 +10228,8 @@ static void add_to_soid_list (SOID_T ** root, NODE_T * where, SOID_T * soid)
 @return Mode table entry.
 **/
 
-static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
+static MOID_T *
+pack_soids_in_moid (SOID_T * top_sl, int attribute)
 {
   MOID_T *x = new_moid ();
   PACK_T *t, **p;
@@ -9954,7 +10265,8 @@ static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
 @return See brief description.
 **/
 
-static BOOL_T is_equal_modes (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T
+is_equal_modes (MOID_T * p, MOID_T * q, int deflex)
 {
   if (deflex == FORCE_DEFLEXING) {
     return (DEFLEX (p) == DEFLEX (q));
@@ -9978,7 +10290,8 @@ static BOOL_T is_equal_modes (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-BOOL_T is_deprefable (MOID_T * p)
+BOOL_T
+is_deprefable (MOID_T * p)
 {
   if (IS (p, REF_SYMBOL)) {
     return (A68_TRUE);
@@ -9993,7 +10306,8 @@ BOOL_T is_deprefable (MOID_T * p)
 @return Single-depreffed mode.
 **/
 
-static MOID_T *depref_once (MOID_T * p)
+static MOID_T *
+depref_once (MOID_T * p)
 {
   if (IS_REF_FLEX (p)) {
     return (SUB_SUB (p));
@@ -10012,7 +10326,8 @@ static MOID_T *depref_once (MOID_T * p)
 @return Completely depreffed mode.
 **/
 
-MOID_T *depref_completely (MOID_T * p)
+MOID_T *
+depref_completely (MOID_T * p)
 {
   while (is_deprefable (p)) {
     p = depref_once (p);
@@ -10026,7 +10341,8 @@ MOID_T *depref_completely (MOID_T * p)
 @return Completely deprocedured mode.
 **/
 
-static MOID_T *deproc_completely (MOID_T * p)
+static MOID_T *
+deproc_completely (MOID_T * p)
 {
   while (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     p = depref_once (p);
@@ -10041,7 +10357,8 @@ static MOID_T *deproc_completely (MOID_T * p)
 @return Possibly depreffed mode.
 **/
 
-static MOID_T *depref_rows (MOID_T * p, MOID_T * q)
+static MOID_T *
+depref_rows (MOID_T * p, MOID_T * q)
 {
   if (q == MODE (ROWS)) {
     while (is_deprefable (p)) {
@@ -10059,7 +10376,8 @@ static MOID_T *depref_rows (MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static MOID_T *derow (MOID_T * p)
+static MOID_T *
+derow (MOID_T * p)
 {
   if (IS (p, ROW_SYMBOL) || IS (p, FLEX_SYMBOL)) {
     return (derow (SUB (p)));
@@ -10074,7 +10392,8 @@ static MOID_T *derow (MOID_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_rows_type (MOID_T * p)
+static BOOL_T
+is_rows_type (MOID_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case ROW_SYMBOL:
@@ -10105,7 +10424,8 @@ static BOOL_T is_rows_type (MOID_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_proc_ref_file_void_or_format (MOID_T * p)
+static BOOL_T
+is_proc_ref_file_void_or_format (MOID_T * p)
 {
   if (p == MODE (PROC_REF_FILE_VOID)) {
     return (A68_TRUE);
@@ -10123,7 +10443,8 @@ static BOOL_T is_proc_ref_file_void_or_format (MOID_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_transput_mode (MOID_T * p, char rw)
+static BOOL_T
+is_transput_mode (MOID_T * p, char rw)
 {
   if (p == MODE (INT)) {
     return (A68_TRUE);
@@ -10185,7 +10506,8 @@ static BOOL_T is_transput_mode (MOID_T * p, char rw)
 @return See brief description.
 **/
 
-static BOOL_T is_printable_mode (MOID_T * p)
+static BOOL_T
+is_printable_mode (MOID_T * p)
 {
   if (is_proc_ref_file_void_or_format (p)) {
     return (A68_TRUE);
@@ -10200,7 +10522,8 @@ static BOOL_T is_printable_mode (MOID_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_readable_mode (MOID_T * p)
+static BOOL_T
+is_readable_mode (MOID_T * p)
 {
   if (is_proc_ref_file_void_or_format (p)) {
     return (A68_TRUE);
@@ -10215,7 +10538,8 @@ static BOOL_T is_readable_mode (MOID_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_name_struct (MOID_T * p)
+static BOOL_T
+is_name_struct (MOID_T * p)
 {
   return ((BOOL_T) (NAME (p) != NO_MOID ? IS (DEFLEX (SUB (p)), STRUCT_SYMBOL) : A68_FALSE));
 }
@@ -10227,7 +10551,8 @@ static BOOL_T is_name_struct (MOID_T * p)
 @return See brief description.
 **/
 
-MOID_T *unites_to (MOID_T * m, MOID_T * u)
+MOID_T *
+unites_to (MOID_T * m, MOID_T * u)
 {
 /* Uniting U (m) */
   MOID_T *v = NO_MOID;
@@ -10254,7 +10579,8 @@ MOID_T *unites_to (MOID_T * m, MOID_T * u)
 @return See brief description.
 **/
 
-static BOOL_T is_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
+static BOOL_T
+is_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
 {
   for (; v != NO_PACK; FORWARD (v)) {
     if (is_equal_modes (u, MOID (v), deflex)) {
@@ -10272,7 +10598,8 @@ static BOOL_T is_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
 @return See brief description.
 **/
 
-BOOL_T is_subset (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T
+is_subset (MOID_T * p, MOID_T * q, int deflex)
 {
   PACK_T *u = PACK (p);
   BOOL_T j = A68_TRUE;
@@ -10290,7 +10617,8 @@ BOOL_T is_subset (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-BOOL_T is_unitable (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T
+is_unitable (MOID_T * p, MOID_T * q, int deflex)
 {
   if (IS (q, UNION_SYMBOL)) {
     if (IS (p, UNION_SYMBOL)) {
@@ -10310,7 +10638,8 @@ BOOL_T is_unitable (MOID_T * p, MOID_T * q, int deflex)
 @param some Some coercible.
 **/
 
-static void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BOOL_T * some)
+static void
+investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BOOL_T * some)
 {
   *all = A68_TRUE;
   *some = A68_FALSE;
@@ -10333,7 +10662,8 @@ static void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BO
 @return See brief description.
 **/
 
-static BOOL_T is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T
+is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
@@ -10352,7 +10682,8 @@ static BOOL_T is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T
+is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
@@ -10371,7 +10702,8 @@ static BOOL_T is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T
+is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
@@ -10390,7 +10722,8 @@ static BOOL_T is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T is_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T
+is_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
@@ -10412,7 +10745,8 @@ static BOOL_T is_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-static MOID_T *widens_to (MOID_T * p, MOID_T * q)
+static MOID_T *
+widens_to (MOID_T * p, MOID_T * q)
 {
   if (p == MODE (INT)) {
     if (q == MODE (LONG_INT) || q == MODE (LONGLONG_INT) || q == MODE (LONG_REAL) || q == MODE (LONGLONG_REAL) || q == MODE (LONG_COMPLEX) || q == MODE (LONGLONG_COMPLEX)) {
@@ -10518,7 +10852,8 @@ static MOID_T *widens_to (MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static BOOL_T is_widenable (MOID_T * p, MOID_T * q)
+static BOOL_T
+is_widenable (MOID_T * p, MOID_T * q)
 {
   MOID_T *z = widens_to (p, q);
   if (z != NO_MOID) {
@@ -10534,7 +10869,8 @@ static BOOL_T is_widenable (MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static BOOL_T is_ref_row (MOID_T * p)
+static BOOL_T
+is_ref_row (MOID_T * p)
 {
   return ((BOOL_T) (NAME (p) != NO_MOID ? IS (DEFLEX (SUB (p)), ROW_SYMBOL) : A68_FALSE));
 }
@@ -10546,7 +10882,8 @@ static BOOL_T is_ref_row (MOID_T * p)
 @return See brief description.
 **/
 
-static BOOL_T is_strong_name (MOID_T * p, MOID_T * q)
+static BOOL_T
+is_strong_name (MOID_T * p, MOID_T * q)
 {
   if (p == q) {
     return (A68_TRUE);
@@ -10564,7 +10901,8 @@ static BOOL_T is_strong_name (MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static BOOL_T is_strong_slice (MOID_T * p, MOID_T * q)
+static BOOL_T
+is_strong_slice (MOID_T * p, MOID_T * q)
 {
   if (p == q || is_widenable (p, q)) {
     return (A68_TRUE);
@@ -10587,7 +10925,8 @@ static BOOL_T is_strong_slice (MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static BOOL_T is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
+static BOOL_T
+is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
 /* Keep this sequence of statements */
   if (is_equal_modes (p, q, deflex)) {
@@ -10625,7 +10964,8 @@ static BOOL_T is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
 @return See brief description.
 **/
 
-BOOL_T is_firm (MOID_T * p, MOID_T * q)
+BOOL_T
+is_firm (MOID_T * p, MOID_T * q)
 {
   return ((BOOL_T) (is_firmly_coercible (p, q, SAFE_DEFLEXING) || is_firmly_coercible (q, p, SAFE_DEFLEXING)));
 }
@@ -10639,7 +10979,8 @@ BOOL_T is_firm (MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static BOOL_T is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
+static BOOL_T
+is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (c == STRONG) {
     if (q == MODE (VOID)) {
@@ -10688,7 +11029,8 @@ static BOOL_T is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T is_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
+static BOOL_T
+is_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (c != STRONG) {
     return (A68_FALSE);
@@ -10721,7 +11063,8 @@ static BOOL_T is_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
+static BOOL_T
+basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return (A68_TRUE);
@@ -10751,7 +11094,8 @@ static BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
 @return See brief description.
 **/
 
-BOOL_T is_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
+BOOL_T
+is_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (is_mode_isnt_well (p) || is_mode_isnt_well (q)) {
     return (A68_TRUE);
@@ -10778,7 +11122,8 @@ BOOL_T is_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
+static BOOL_T
+is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
 {
   if (SORT (p) != SORT (q)) {
     return (A68_FALSE);
@@ -10797,7 +11142,8 @@ static BOOL_T is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
 @return See brief description.
 **/
 
-static BOOL_T is_balanced (NODE_T * n, SOID_T * y, int sort)
+static BOOL_T
+is_balanced (NODE_T * n, SOID_T * y, int sort)
 {
   if (sort == STRONG) {
     return (A68_TRUE);
@@ -10822,7 +11168,8 @@ static BOOL_T is_balanced (NODE_T * n, SOID_T * y, int sort)
 @return See brief description.
 **/
 
-MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int deflex)
+MOID_T *
+get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int deflex)
 {
   MOID_T *common = NO_MOID;
   if (m != NO_MOID && !is_mode_isnt_well (m) && IS (m, UNION_SYMBOL)) {
@@ -10867,8 +11214,8 @@ MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int de
             }
           }
         }
-      }/* for */
-    }/* for */
+      }                         /* for */
+    }                           /* for */
   }
   return (common == NO_MOID ? m : common);
 }
@@ -10879,7 +11226,8 @@ MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int de
 @return See brief description.
 **/
 
-static BOOL_T clause_allows_balancing (int att)
+static BOOL_T
+clause_allows_balancing (int att)
 {
   switch (att) {
   case CLOSED_CLAUSE:
@@ -10901,7 +11249,8 @@ static BOOL_T clause_allows_balancing (int att)
 @return See brief description.
 **/
 
-static MOID_T *determine_unique_mode (SOID_T * z, int deflex)
+static MOID_T *
+determine_unique_mode (SOID_T * z, int deflex)
 {
   if (z == NO_SOID) {
     return (NO_MOID);
@@ -10927,7 +11276,8 @@ static MOID_T *determine_unique_mode (SOID_T * z, int deflex)
 @param c Context.
 **/
 
-static void warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
+static void
+warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
 {
   (void) c;
   if (CAST (x) == A68_FALSE) {
@@ -10949,7 +11299,8 @@ static void warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
 @param u Attribute.
 **/
 
-static void semantic_pitfall (NODE_T * p, MOID_T * m, int c, int u)
+static void
+semantic_pitfall (NODE_T * p, MOID_T * m, int c, int u)
 {
 /*
 semantic_pitfall: warn for things that are likely unintended, for instance
@@ -10970,7 +11321,8 @@ semantic_pitfall: warn for things that are likely unintended, for instance
 @param m (coerced) moid
 **/
 
-static void make_coercion (NODE_T * l, int a, MOID_T * m)
+static void
+make_coercion (NODE_T * l, int a, MOID_T * m)
 {
   make_sub (l, l, a);
   MOID (l) = depref_rows (MOID (l), m);
@@ -10983,7 +11335,8 @@ static void make_coercion (NODE_T * l, int a, MOID_T * m)
 @param q Mode.
 **/
 
-static void make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+static void
+make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   MOID_T *z = widens_to (p, q);
   make_coercion (n, WIDENING, z);
@@ -10999,7 +11352,8 @@ static void make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 @param q Mode.
 **/
 
-static void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+static void
+make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) != DEFLEX (q)) {
     if (is_widenable (p, q)) {
@@ -11018,7 +11372,8 @@ static void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 @param q Mode.
 **/
 
-static void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+static void
+make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) != DEFLEX (q)) {
     if (is_widenable (p, q)) {
@@ -11040,7 +11395,8 @@ static void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 @param q Mode.
 **/
 
-static void make_uniting_coercion (NODE_T * n, MOID_T * q)
+static void
+make_uniting_coercion (NODE_T * n, MOID_T * q)
 {
   make_coercion (n, UNITING, derow (q));
   if (IS (q, ROW_SYMBOL) || IS (q, FLEX_SYMBOL)) {
@@ -11055,7 +11411,8 @@ static void make_uniting_coercion (NODE_T * n, MOID_T * q)
 @param q Mode.
 **/
 
-static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+static void
+make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) == DEFLEX (q)) {
     return;
@@ -11101,7 +11458,8 @@ static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 @return See brief description.
 **/
 
-static BOOL_T is_nonproc (MOID_T * p)
+static BOOL_T
+is_nonproc (MOID_T * p)
 {
   if (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     return (A68_FALSE);
@@ -11118,7 +11476,8 @@ static BOOL_T is_nonproc (MOID_T * p)
 @param q Mode.
 **/
 
-static void make_void (NODE_T * p, MOID_T * q)
+static void
+make_void (NODE_T * p, MOID_T * q)
 {
   switch (ATTRIBUTE (p)) {
   case ASSIGNATION:
@@ -11174,7 +11533,8 @@ static void make_void (NODE_T * p, MOID_T * q)
 @param q Mode.
 **/
 
-static void make_strong (NODE_T * n, MOID_T * p, MOID_T * q)
+static void
+make_strong (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (q == MODE (VOID) && p != MODE (VOID)) {
     make_void (n, p);
@@ -11188,7 +11548,8 @@ static void make_strong (NODE_T * n, MOID_T * p, MOID_T * q)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_bounds (NODE_T * p)
+static void
+mode_check_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -11211,7 +11572,8 @@ static void mode_check_bounds (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_declarer (NODE_T * p)
+static void
+mode_check_declarer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -11229,7 +11591,8 @@ static void mode_check_declarer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_identity_declaration (NODE_T * p)
+static void
+mode_check_identity_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -11267,7 +11630,8 @@ static void mode_check_identity_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_variable_declaration (NODE_T * p)
+static void
+mode_check_variable_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -11308,7 +11672,8 @@ static void mode_check_variable_declaration (NODE_T * p)
 @param y Resulting soid.
 **/
 
-static void mode_check_routine_text (NODE_T * p, SOID_T * y)
+static void
+mode_check_routine_text (NODE_T * p, SOID_T * y)
 {
   SOID_T w;
   if (IS (p, PARAMETER_PACK)) {
@@ -11328,7 +11693,8 @@ static void mode_check_routine_text (NODE_T * p, SOID_T * y)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_proc_declaration (NODE_T * p)
+static void
+mode_check_proc_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -11347,7 +11713,8 @@ static void mode_check_proc_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_brief_op_declaration (NODE_T * p)
+static void
+mode_check_brief_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -11371,7 +11738,8 @@ static void mode_check_brief_op_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_op_declaration (NODE_T * p)
+static void
+mode_check_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -11393,7 +11761,8 @@ static void mode_check_op_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_declaration_list (NODE_T * p)
+static void
+mode_check_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -11446,7 +11815,8 @@ static void mode_check_declaration_list (NODE_T * p)
 @param k Whether statement yields a value other than VOID.
 **/
 
-static void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
+static void
+mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
 {
   if (p == NO_NODE) {
     return;
@@ -11497,7 +11867,8 @@ static void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
 @param att Attribute (SERIAL or ENQUIRY).
 **/
 
-static void mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att)
+static void
+mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att)
 {
   SOID_T *top_sl = NO_SOID;
   (void) att;
@@ -11518,7 +11889,8 @@ static void mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att
 @param x Expected soid.
 **/
 
-static void mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
+static void
+mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
 {
   if (p == NO_NODE) {
     return;
@@ -11542,7 +11914,8 @@ static void mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
 @param fields Pack.
 **/
 
-static void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields)
+static void
+mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields)
 {
   if (p == NO_NODE) {
     return;
@@ -11571,7 +11944,8 @@ static void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields
 @param u United mode to add to.
 **/
 
-static void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
+static void
+mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
@@ -11591,7 +11965,8 @@ static void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
 @param u Resulting united mode.
 **/
 
-static void mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x, MOID_T * u)
+static void
+mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x, MOID_T * u)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
@@ -11616,7 +11991,8 @@ static void mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x,
 @param x Expected soid.
 **/
 
-static void mode_check_united_case_parts (SOID_T ** ry, NODE_T * p, SOID_T * x)
+static void
+mode_check_united_case_parts (SOID_T ** ry, NODE_T * p, SOID_T * x)
 {
   SOID_T enq_expct, enq_yield;
   MOID_T *u = NO_MOID, *v = NO_MOID, *w = NO_MOID;
@@ -11678,7 +12054,8 @@ get a coercion-error later */
 @param y Resulting soid.
 **/
 
-static void mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
@@ -11704,7 +12081,8 @@ static void mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   if (MOID (x) != NO_MOID) {
@@ -11736,7 +12114,8 @@ static void mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -11755,7 +12134,8 @@ static void mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -11791,7 +12171,8 @@ static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
 @param x Expected soid.
 **/
 
-static void mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
+static void
+mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 {
   SOID_T enq_expct, enq_yield;
   make_soid (&enq_expct, STRONG, MODE (BOOL), 0);
@@ -11817,7 +12198,8 @@ static void mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 @param y Resulting soid.
 **/
 
-static void mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
@@ -11842,7 +12224,8 @@ static void mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
 @param x Expected soid.
 **/
 
-static void mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
+static void
+mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 {
   SOID_T enq_expct, enq_yield;
   make_soid (&enq_expct, STRONG, MODE (INT), 0);
@@ -11868,7 +12251,8 @@ static void mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 @param y Resulting soid.
 **/
 
-static void mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
@@ -11892,7 +12276,8 @@ static void mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_loop_2 (NODE_T * p, SOID_T * y)
+static void
+mode_check_loop_2 (NODE_T * p, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -11943,7 +12328,8 @@ static void mode_check_loop_2 (NODE_T * p, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_loop (NODE_T * p, SOID_T * y)
+static void
+mode_check_loop (NODE_T * p, SOID_T * y)
 {
   SOID_T *z = NO_SOID;
   mode_check_loop_2 (p, /* y */ z);
@@ -11957,7 +12343,8 @@ static void mode_check_loop (NODE_T * p, SOID_T * y)
 @param y Resulting soid.
 **/
 
-void mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
+void
+mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -11992,7 +12379,8 @@ void mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
 @return Tag entry.
 **/
 
-static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T * y)
+static TAG_T *
+search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T * y)
 {
   if (is_mode_isnt_well (x)) {
     return (error_tag);
@@ -12026,7 +12414,8 @@ static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T 
 @return Tag entry.
 **/
 
-static TAG_T *search_table_chain_for_operator (TABLE_T * s, char * n, MOID_T * x, MOID_T * y)
+static TAG_T *
+search_table_chain_for_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 {
   if (is_mode_isnt_well (x)) {
     return (error_tag);
@@ -12052,7 +12441,8 @@ static TAG_T *search_table_chain_for_operator (TABLE_T * s, char * n, MOID_T * x
 @return Tag entry.
 **/
 
-static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
+static TAG_T *
+find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 {
 /* Coercions to operand modes are FIRM */
   TAG_T *z;
@@ -12192,7 +12582,8 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p != NO_NODE) {
     TAG_T *t;
@@ -12237,7 +12628,8 @@ static void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_monadic_formula (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_monadic_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T e;
   make_soid (&e, FIRM, NO_MOID, 0);
@@ -12253,7 +12645,8 @@ static void mode_check_monadic_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T ls, rs;
   TAG_T *op;
@@ -12318,7 +12711,8 @@ static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T name, tmp, value;
   MOID_T *name_moid, *ori;
@@ -12354,7 +12748,8 @@ static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T e, l, r;
   MOID_T *lhs, *rhs, *oril, *orir;
@@ -12398,7 +12793,8 @@ static void mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T e, l, r;
   NODE_T *ln = p, *rn = NEXT_NEXT (p);
@@ -12423,7 +12819,8 @@ static void mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w;
   mode_check_declarer (p);
@@ -12441,12 +12838,13 @@ static void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_assertion (NODE_T * p)
+static void
+mode_check_assertion (NODE_T * p)
 {
   SOID_T w, y;
   make_soid (&w, STRONG, MODE (BOOL), 0);
   mode_check_enclosed (SUB_NEXT (p), &w, &y);
-  SORT (&y) = SORT (&w); /* Patch */
+  SORT (&y) = SORT (&w);        /* Patch */
   if (!is_coercible_in_context (&y, &w, NO_DEFLEXING)) {
     cannot_coerce (NEXT (p), MOID (&y), MOID (&w), MEEK, NO_DEFLEXING, ENCLOSED_CLAUSE);
   }
@@ -12461,7 +12859,8 @@ static void mode_check_assertion (NODE_T * p)
 @param w Partial proc pack.
 **/
 
-static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK_T ** v, PACK_T ** w)
+static void
+mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK_T ** v, PACK_T ** w)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, GENERIC_ARGUMENT_LIST)) {
@@ -12512,7 +12911,8 @@ static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK
 @param w Partial proc pack.
 **/
 
-static void mode_check_argument_list_2 (NODE_T * p, PACK_T * x, SOID_T * y, PACK_T ** v, PACK_T ** w)
+static void
+mode_check_argument_list_2 (NODE_T * p, PACK_T * x, SOID_T * y, PACK_T ** v, PACK_T ** w)
 {
   SOID_T *top_sl = NO_SOID;
   mode_check_argument_list (&top_sl, SUB (p), &x, v, w);
@@ -12525,7 +12925,8 @@ static void mode_check_argument_list_2 (NODE_T * p, PACK_T * x, SOID_T * y, PACK
 @param p Node in syntax tree.
 **/
 
-static void mode_check_meek_int (NODE_T * p)
+static void
+mode_check_meek_int (NODE_T * p)
 {
   SOID_T x, y;
   make_soid (&x, STRONG, MODE (INT), 0);
@@ -12540,7 +12941,8 @@ static void mode_check_meek_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_trimmer (NODE_T * p)
+static void
+mode_check_trimmer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -12561,7 +12963,8 @@ static void mode_check_trimmer (NODE_T * p)
 @param trims Trimmer counter.
 **/
 
-static void mode_check_indexer (NODE_T * p, int *subs, int *trims)
+static void
+mode_check_indexer (NODE_T * p, int *subs, int *trims)
 {
   if (p == NO_NODE) {
     return;
@@ -12585,7 +12988,8 @@ static void mode_check_indexer (NODE_T * p, int *subs, int *trims)
 @param y Resulting soid.
 **/
 
-static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
+static void
+mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
 {
   SOID_T d;
   MOID (p) = n;
@@ -12633,7 +13037,8 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
 @return Whether construct is a CALL or a SLICE.
 **/
 
-static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
+static void
+mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 {
   BOOL_T is_ref;
   int rowdim, subs, trims;
@@ -12698,7 +13103,8 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 @return Whether construct is a CALL or SLICE.
 **/
 
-static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
+static int
+mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   MOID_T *m, *ori;
@@ -12730,7 +13136,8 @@ static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   BOOL_T coerce;
@@ -12813,7 +13220,8 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   NODE_T *tert;
@@ -12878,7 +13286,8 @@ static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   NODE_T *tert = NEXT (p);
@@ -12927,7 +13336,8 @@ static void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
 @param y Resulting soid.
 **/
 
-static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   NODE_T *tert;
@@ -12984,7 +13394,8 @@ static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
 @param p Node in syntax tree.
 **/
 
-static void mode_check_format_text (NODE_T * p)
+static void
+mode_check_format_text (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     mode_check_format_text (SUB (p));
@@ -13020,7 +13431,8 @@ static void mode_check_format_text (NODE_T * p)
 @param y Resulting soid.
 **/
 
-static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
+static void
+mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -13122,7 +13534,8 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 @param p Node in syntax tree.
 **/
 
-static void coerce_bounds (NODE_T * p)
+static void
+coerce_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -13140,7 +13553,8 @@ static void coerce_bounds (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_declarer (NODE_T * p)
+static void
+coerce_declarer (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, BOUNDS)) {
@@ -13156,7 +13570,8 @@ static void coerce_declarer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_identity_declaration (NODE_T * p)
+static void
+coerce_identity_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -13188,7 +13603,8 @@ static void coerce_identity_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_variable_declaration (NODE_T * p)
+static void
+coerce_variable_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -13222,7 +13638,8 @@ static void coerce_variable_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_routine_text (NODE_T * p)
+static void
+coerce_routine_text (NODE_T * p)
 {
   SOID_T w;
   if (IS (p, PARAMETER_PACK)) {
@@ -13237,7 +13654,8 @@ static void coerce_routine_text (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_proc_declaration (NODE_T * p)
+static void
+coerce_proc_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -13254,7 +13672,8 @@ static void coerce_proc_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_op_declaration (NODE_T * p)
+static void
+coerce_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -13273,7 +13692,8 @@ static void coerce_op_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_brief_op_declaration (NODE_T * p)
+static void
+coerce_brief_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -13290,7 +13710,8 @@ static void coerce_brief_op_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_declaration_list (NODE_T * p)
+static void
+coerce_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -13342,7 +13763,8 @@ static void coerce_declaration_list (NODE_T * p)
 @param k Whether k yields value other than VOID.
 **/
 
-static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
+static void
+coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
 {
   if (p == NO_NODE) {
     return;
@@ -13384,7 +13806,8 @@ static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
 @param q Soid.
 **/
 
-static void coerce_closed (NODE_T * p, SOID_T * q)
+static void
+coerce_closed (NODE_T * p, SOID_T * q)
 {
   if (IS (p, SERIAL_CLAUSE)) {
     coerce_serial (p, q, A68_TRUE);
@@ -13399,7 +13822,8 @@ static void coerce_closed (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-static void coerce_conditional (NODE_T * p, SOID_T * q)
+static void
+coerce_conditional (NODE_T * p, SOID_T * q)
 {
   SOID_T w;
   make_soid (&w, MEEK, MODE (BOOL), 0);
@@ -13421,7 +13845,8 @@ static void coerce_conditional (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-static void coerce_unit_list (NODE_T * p, SOID_T * q)
+static void
+coerce_unit_list (NODE_T * p, SOID_T * q)
 {
   if (p == NO_NODE) {
     return;
@@ -13442,7 +13867,8 @@ static void coerce_unit_list (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-static void coerce_int_case (NODE_T * p, SOID_T * q)
+static void
+coerce_int_case (NODE_T * p, SOID_T * q)
 {
   SOID_T w;
   make_soid (&w, MEEK, MODE (INT), 0);
@@ -13464,7 +13890,8 @@ static void coerce_int_case (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-static void coerce_spec_unit_list (NODE_T * p, SOID_T * q)
+static void
+coerce_spec_unit_list (NODE_T * p, SOID_T * q)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
@@ -13481,7 +13908,8 @@ static void coerce_spec_unit_list (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-static void coerce_united_case (NODE_T * p, SOID_T * q)
+static void
+coerce_united_case (NODE_T * p, SOID_T * q)
 {
   SOID_T w;
   make_soid (&w, MEEK, MOID (SUB (p)), 0);
@@ -13502,7 +13930,8 @@ static void coerce_united_case (NODE_T * p, SOID_T * q)
 @param p Node in syntax tree.
 **/
 
-static void coerce_loop (NODE_T * p)
+static void
+coerce_loop (NODE_T * p)
 {
   if (IS (p, FOR_PART)) {
     coerce_loop (NEXT (p));
@@ -13540,7 +13969,8 @@ static void coerce_loop (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_struct_display (PACK_T ** r, NODE_T * p)
+static void
+coerce_struct_display (PACK_T ** r, NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -13564,7 +13994,8 @@ static void coerce_struct_display (PACK_T ** r, NODE_T * p)
 @param q Soid.
 **/
 
-static void coerce_collateral (NODE_T * p, SOID_T * q)
+static void
+coerce_collateral (NODE_T * p, SOID_T * q)
 {
   if (!(whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP) || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP))) {
     if (IS (MOID (q), STRUCT_SYMBOL)) {
@@ -13591,7 +14022,8 @@ static void coerce_collateral (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-void coerce_enclosed (NODE_T * p, SOID_T * q)
+void
+coerce_enclosed (NODE_T * p, SOID_T * q)
 {
   if (IS (p, ENCLOSED_CLAUSE)) {
     coerce_enclosed (SUB (p), q);
@@ -13618,7 +14050,8 @@ void coerce_enclosed (NODE_T * p, SOID_T * q)
 @param p Node in syntax tree.
 **/
 
-static MOID_T *get_monad_moid (NODE_T * p)
+static MOID_T *
+get_monad_moid (NODE_T * p)
 {
   if (TAX (p) != NO_TAG && TAX (p) != error_tag) {
     MOID (p) = MOID (TAX (p));
@@ -13634,7 +14067,8 @@ static MOID_T *get_monad_moid (NODE_T * p)
 @param q Soid.
 **/
 
-static void coerce_monad_oper (NODE_T * p, SOID_T * q)
+static void
+coerce_monad_oper (NODE_T * p, SOID_T * q)
 {
   if (p != NO_NODE) {
     SOID_T z;
@@ -13648,7 +14082,8 @@ static void coerce_monad_oper (NODE_T * p, SOID_T * q)
 @param p Node in syntax tree.
 **/
 
-static void coerce_monad_formula (NODE_T * p)
+static void
+coerce_monad_formula (NODE_T * p)
 {
   SOID_T e;
   make_soid (&e, STRONG, get_monad_moid (p), 0);
@@ -13662,7 +14097,8 @@ static void coerce_monad_formula (NODE_T * p)
 @param q Soid.
 **/
 
-static void coerce_operand (NODE_T * p, SOID_T * q)
+static void
+coerce_operand (NODE_T * p, SOID_T * q)
 {
   if (IS (p, MONADIC_FORMULA)) {
     coerce_monad_formula (SUB (p));
@@ -13688,7 +14124,8 @@ static void coerce_operand (NODE_T * p, SOID_T * q)
 @param q Soid.
 **/
 
-static void coerce_formula (NODE_T * p, SOID_T * q)
+static void
+coerce_formula (NODE_T * p, SOID_T * q)
 {
   (void) q;
   if (IS (p, MONADIC_FORMULA) && NEXT (p) == NO_NODE) {
@@ -13712,7 +14149,8 @@ static void coerce_formula (NODE_T * p, SOID_T * q)
 @param p Node in syntax tree.
 **/
 
-static void coerce_assignation (NODE_T * p)
+static void
+coerce_assignation (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, SOFT, MOID (p), 0);
@@ -13726,7 +14164,8 @@ static void coerce_assignation (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_relation (NODE_T * p)
+static void
+coerce_relation (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, STRONG, MOID (p), 0);
@@ -13740,7 +14179,8 @@ static void coerce_relation (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_bool_function (NODE_T * p)
+static void
+coerce_bool_function (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, STRONG, MODE (BOOL), 0);
@@ -13753,7 +14193,8 @@ static void coerce_bool_function (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_assertion (NODE_T * p)
+static void
+coerce_assertion (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, MEEK, MODE (BOOL), 0);
@@ -13765,7 +14206,8 @@ static void coerce_assertion (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_selection (NODE_T * p)
+static void
+coerce_selection (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, /* WEAK */ STRONG, MOID (NEXT (p)), 0);
@@ -13777,7 +14219,8 @@ static void coerce_selection (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_cast (NODE_T * p)
+static void
+coerce_cast (NODE_T * p)
 {
   SOID_T w;
   coerce_declarer (p);
@@ -13791,7 +14234,8 @@ static void coerce_cast (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_argument_list (PACK_T ** r, NODE_T * p)
+static void
+coerce_argument_list (PACK_T ** r, NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ARGUMENT_LIST)) {
@@ -13812,7 +14256,8 @@ static void coerce_argument_list (PACK_T ** r, NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_call (NODE_T * p)
+static void
+coerce_call (NODE_T * p)
 {
   MOID_T *proc = MOID (p);
   SOID_T w;
@@ -13829,7 +14274,8 @@ static void coerce_call (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_meek_int (NODE_T * p)
+static void
+coerce_meek_int (NODE_T * p)
 {
   SOID_T x;
   make_soid (&x, MEEK, MODE (INT), 0);
@@ -13841,7 +14287,8 @@ static void coerce_meek_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_trimmer (NODE_T * p)
+static void
+coerce_trimmer (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, UNIT)) {
@@ -13858,7 +14305,8 @@ static void coerce_trimmer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_indexer (NODE_T * p)
+static void
+coerce_indexer (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, TRIMMER)) {
@@ -13877,7 +14325,8 @@ static void coerce_indexer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_slice (NODE_T * p)
+static void
+coerce_slice (NODE_T * p)
 {
   SOID_T w;
   MOID_T *row;
@@ -13892,7 +14341,8 @@ static void coerce_slice (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_diagonal (NODE_T * p)
+static void
+coerce_diagonal (NODE_T * p)
 {
   SOID_T w;
   if (IS (p, TERTIARY)) {
@@ -13909,7 +14359,8 @@ static void coerce_diagonal (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_transpose (NODE_T * p)
+static void
+coerce_transpose (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, /* WEAK */ STRONG, MOID (NEXT (p)), 0);
@@ -13921,7 +14372,8 @@ static void coerce_transpose (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_row_column_function (NODE_T * p)
+static void
+coerce_row_column_function (NODE_T * p)
 {
   SOID_T w;
   if (IS (p, TERTIARY)) {
@@ -13938,7 +14390,8 @@ static void coerce_row_column_function (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void coerce_format_text (NODE_T * p)
+static void
+coerce_format_text (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     coerce_format_text (SUB (p));
@@ -13964,7 +14417,8 @@ static void coerce_format_text (NODE_T * p)
 @param q Soid.
 **/
 
-static void coerce_unit (NODE_T * p, SOID_T * q)
+static void
+coerce_unit (NODE_T * p, SOID_T * q)
 {
   if (p == NO_NODE) {
     return;
@@ -14048,7 +14502,8 @@ static void coerce_unit (NODE_T * p, SOID_T * q)
 @param p Node in syntax tree.
 **/
 
-void widen_denotation (NODE_T * p)
+void
+widen_denotation (NODE_T * p)
 {
 #define WIDEN {\
   *q = *(SUB (q));\
@@ -14120,7 +14575,8 @@ Also a little preparation for the monitor:
 @return Tuple (e, t).
 **/
 
-static TUPLE_T scope_make_tuple (int e, int t)
+static TUPLE_T
+scope_make_tuple (int e, int t)
 {
   static TUPLE_T z;
   LEVEL (&z) = e;
@@ -14135,7 +14591,8 @@ static TUPLE_T scope_make_tuple (int e, int t)
 @param tup Tuple to link.
 **/
 
-static void scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
+static void
+scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
 {
   if (sl != NO_VAR) {
     SCOPE_T *ns = (SCOPE_T *) get_temp_heap_space ((unsigned) SIZE_AL (SCOPE_T));
@@ -14154,7 +14611,8 @@ static void scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
 @return Whether errors were detected.
 **/
 
-static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
+static BOOL_T
+scope_check (SCOPE_T * top, int mask, int dest)
 {
   SCOPE_T *s;
   int errors = 0;
@@ -14169,14 +14627,13 @@ static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
     }
   }
   for (s = top; s != NO_SCOPE; FORWARD (s)) {
-    if (dest < LEVEL (&TUPLE (s)) && ! STATUS_TEST (WHERE (s), SCOPE_ERROR_MASK)) {
+    if (dest < LEVEL (&TUPLE (s)) && !STATUS_TEST (WHERE (s), SCOPE_ERROR_MASK)) {
 /* Potential scope violations */
       MOID_T *sw = MOID (WHERE (s));
       if (sw != NO_MOID) {
         if (IS (sw, REF_SYMBOL) || IS (sw, PROC_SYMBOL)
             || IS (sw, FORMAT_SYMBOL) || IS (sw, UNION_SYMBOL)) {
-          diagnostic_node (A68_WARNING, WHERE (s), WARNING_SCOPE_STATIC, 
-                           MOID (WHERE (s)), ATTRIBUTE (WHERE (s)));
+          diagnostic_node (A68_WARNING, WHERE (s), WARNING_SCOPE_STATIC, MOID (WHERE (s)), ATTRIBUTE (WHERE (s)));
         }
       }
       STATUS_SET (WHERE (s), SCOPE_ERROR_MASK);
@@ -14194,7 +14651,8 @@ static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
 @return Whether error.
 **/
 
-static BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
+static BOOL_T
+scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
 {
   BOOL_T no_err = A68_TRUE;
   for (; dest != NO_SCOPE; FORWARD (dest)) {
@@ -14209,7 +14667,8 @@ static BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
 @param p Node in syntax tree.
 **/
 
-static void check_identifier_usage (TAG_T * t, NODE_T * p)
+static void
+check_identifier_usage (TAG_T * t, NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IDENTIFIER) && TAX (p) == t && ATTRIBUTE (MOID (t)) != PROC_SYMBOL) {
@@ -14226,7 +14685,8 @@ static void check_identifier_usage (TAG_T * t, NODE_T * p)
 @return Youngest tuple outside.
 **/
 
-static TUPLE_T scope_find_youngest_outside (SCOPE_T * s, int treshold)
+static TUPLE_T
+scope_find_youngest_outside (SCOPE_T * s, int treshold)
 {
   TUPLE_T z = scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT);
   for (; s != NO_SCOPE; FORWARD (s)) {
@@ -14243,7 +14703,8 @@ static TUPLE_T scope_find_youngest_outside (SCOPE_T * s, int treshold)
 @return Youngest tuple outside.
 **/
 
-static TUPLE_T scope_find_youngest (SCOPE_T * s)
+static TUPLE_T
+scope_find_youngest (SCOPE_T * s)
 {
   return (scope_find_youngest_outside (s, A68_MAX_INT));
 }
@@ -14257,7 +14718,8 @@ static TUPLE_T scope_find_youngest (SCOPE_T * s)
 @param no_ref Whether no REF seen yet.
 **/
 
-static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
+static void
+get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 {
   if (p != NO_NODE) {
     if (IS (p, BOUNDS)) {
@@ -14283,7 +14745,8 @@ static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 @param s Chain to link into.
 **/
 
-static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
+static void
+gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if ((is_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) && (YOUNGEST_ENVIRON (TAX (p)) == PRIMAL_SCOPE)) {
@@ -14318,7 +14781,8 @@ static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 @param p Node in syntax tree.
 **/
 
-static void get_youngest_environs (NODE_T * p)
+static void
+get_youngest_environs (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) {
@@ -14338,7 +14802,8 @@ static void get_youngest_environs (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void bind_scope_to_tag (NODE_T * p)
+static void
+bind_scope_to_tag (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, DEFINING_IDENTIFIER) && MOID (p) == MODE (FORMAT)) {
@@ -14364,7 +14829,8 @@ static void bind_scope_to_tag (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void bind_scope_to_tags (NODE_T * p)
+static void
+bind_scope_to_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, PROCEDURE_DECLARATION, IDENTITY_DECLARATION, STOP)) {
@@ -14380,7 +14846,8 @@ static void bind_scope_to_tags (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_bounds (NODE_T * p)
+static void
+scope_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -14396,7 +14863,8 @@ static void scope_bounds (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_declarer (NODE_T * p)
+static void
+scope_declarer (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, BOUNDS)) {
@@ -14419,7 +14887,8 @@ static void scope_declarer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_identity_declaration (NODE_T * p)
+static void
+scope_identity_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_identity_declaration (SUB (p));
@@ -14450,7 +14919,8 @@ static void scope_identity_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_variable_declaration (NODE_T * p)
+static void
+scope_variable_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_variable_declaration (SUB (p));
@@ -14475,7 +14945,8 @@ static void scope_variable_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_procedure_declaration (NODE_T * p)
+static void
+scope_procedure_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_procedure_declaration (SUB (p));
@@ -14495,7 +14966,8 @@ static void scope_procedure_declaration (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_declaration_list (NODE_T * p)
+static void
+scope_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTITY_DECLARATION)) {
@@ -14524,7 +14996,8 @@ static void scope_declaration_list (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void scope_arguments (NODE_T * p)
+static void
+scope_arguments (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -14542,7 +15015,8 @@ static void scope_arguments (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-BOOL_T is_coercion (NODE_T * p)
+BOOL_T
+is_coercion (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -14572,7 +15046,8 @@ BOOL_T is_coercion (NODE_T * p)
 @param s Chain to link into.
 **/
 
-static void scope_coercion (NODE_T * p, SCOPE_T ** s)
+static void
+scope_coercion (NODE_T * p, SCOPE_T ** s)
 {
   if (is_coercion (p)) {
     if (IS (p, VOIDING)) {
@@ -14589,7 +15064,7 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
       if (IS_REF_FLEX (MOID (SUB (p)))) {
         scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), TRANSIENT));
       } else {
-        scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), NOT_TRANSIENT)); 
+        scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), NOT_TRANSIENT));
       }
     } else if (IS (p, PROCEDURING)) {
 /* Can only be a JUMP */
@@ -14602,7 +15077,7 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
       SCOPE_T *z = NO_SCOPE;
       scope_coercion (SUB (p), &z);
       (void) scope_check (z, TRANSIENT, LEX_LEVEL (p));
-      scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), NOT_TRANSIENT)); 
+      scope_add (s, p, scope_make_tuple (LEX_LEVEL (p), NOT_TRANSIENT));
     } else {
       scope_coercion (SUB (p), s);
     }
@@ -14617,7 +15092,8 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_format_text (NODE_T * p, SCOPE_T ** s)
+static void
+scope_format_text (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_PATTERN)) {
@@ -14638,7 +15114,8 @@ static void scope_format_text (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_operand (NODE_T * p, SCOPE_T ** s)
+static void
+scope_operand (NODE_T * p, SCOPE_T ** s)
 {
   if (IS (p, MONADIC_FORMULA)) {
     scope_operand (NEXT_SUB (p), s);
@@ -14655,7 +15132,8 @@ static void scope_operand (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_formula (NODE_T * p, SCOPE_T ** s)
+static void
+scope_formula (NODE_T * p, SCOPE_T ** s)
 {
   NODE_T *q = SUB (p);
   SCOPE_T *s2 = NO_SCOPE;
@@ -14675,7 +15153,8 @@ static void scope_formula (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
+static void
+scope_routine_text (NODE_T * p, SCOPE_T ** s)
 {
   NODE_T *q = SUB (p), *routine = (IS (q, PARAMETER_PACK) ? NEXT (q) : q);
   SCOPE_T *x = NO_SCOPE;
@@ -14692,7 +15171,8 @@ static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_statement (NODE_T * p, SCOPE_T ** s)
+static void
+scope_statement (NODE_T * p, SCOPE_T ** s)
 {
   if (is_coercion (p)) {
     scope_coercion (p, s);
@@ -14846,7 +15326,8 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
+static void
+scope_statement_list (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -14865,7 +15346,8 @@ static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
 @param terminator Whether unit terminates clause.
 **/
 
-static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
+static void
+scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
 {
   if (p != NO_NODE) {
     if (IS (p, INITIALISER_SERIES)) {
@@ -14906,7 +15388,8 @@ static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
 @param s Chain to link into.
 **/
 
-static void scope_closed_clause (NODE_T * p, SCOPE_T ** s)
+static void
+scope_closed_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (p != NO_NODE) {
     if (IS (p, SERIAL_CLAUSE)) {
@@ -14923,7 +15406,8 @@ static void scope_closed_clause (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
+static void
+scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (p != NO_NODE) {
     if (!(whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP) || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP))) {
@@ -14938,7 +15422,8 @@ static void scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
+static void
+scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
 {
   scope_serial_clause (NEXT_SUB (p), NO_VAR, A68_TRUE);
   FORWARD (p);
@@ -14958,7 +15443,8 @@ static void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
 @param s Chain to link into.
 **/
 
-static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
+static void
+scope_case_clause (NODE_T * p, SCOPE_T ** s)
 {
   SCOPE_T *n = NO_SCOPE;
   scope_serial_clause (NEXT_SUB (p), &n, A68_TRUE);
@@ -14981,7 +15467,8 @@ static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
 @param p Node in syntax tree.
 **/
 
-static void scope_loop_clause (NODE_T * p)
+static void
+scope_loop_clause (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, FOR_PART)) {
@@ -15013,7 +15500,8 @@ static void scope_loop_clause (NODE_T * p)
 @param s Chain to link into.
 **/
 
-static void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
+static void
+scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (IS (p, ENCLOSED_CLAUSE)) {
     scope_enclosed_clause (SUB (p), s);
@@ -15036,7 +15524,8 @@ static void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
 \return TRUE or FALSE
 **/
 
-static BOOL_T empty_table (TABLE_T * t)
+static BOOL_T
+empty_table (TABLE_T * t)
 {
   if (IDENTIFIERS (t) == NO_TAG) {
     return ((BOOL_T) (OPERATORS (t) == NO_TAG && INDICANTS (t) == NO_TAG));
@@ -15055,7 +15544,8 @@ static BOOL_T empty_table (TABLE_T * t)
 @param max Lex level threshold.
 **/
 
-static void get_non_local_environs (NODE_T * p, int max)
+static void
+get_non_local_environs (NODE_T * p, int max)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ROUTINE_TEXT)) {
@@ -15067,12 +15557,11 @@ static void get_non_local_environs (NODE_T * p, int max)
       NON_LOCAL (p) = NO_TABLE;
       if (TABLE (p) != NO_TABLE) {
         TABLE_T *q = TABLE (p);
-        while (q != NO_TABLE && empty_table (q) 
-               && PREVIOUS (q) != NO_TABLE
-               && LEVEL (PREVIOUS (q)) >= max) {
+        while (q != NO_TABLE && empty_table (q)
+               && PREVIOUS (q) != NO_TABLE && LEVEL (PREVIOUS (q)) >= max) {
           NON_LOCAL (p) = PREVIOUS (q);
           q = PREVIOUS (q);
-        }  
+        }
       }
     }
   }
@@ -15083,12 +15572,13 @@ static void get_non_local_environs (NODE_T * p, int max)
 @param p Node in syntax tree.
 **/
 
-void scope_checker (NODE_T * p)
+void
+scope_checker (NODE_T * p)
 {
 /* Establish scopes of routine texts and format texts */
   get_youngest_environs (p);
 /* Find non-local environs */
-  get_non_local_environs (p, PRIMAL_SCOPE);  
+  get_non_local_environs (p, PRIMAL_SCOPE);
 /* PROC and FORMAT identities can now be assigned a scope */
   bind_scope_to_tags (p);
 /* Now check evertyhing else */
@@ -15096,4 +15586,3 @@ void scope_checker (NODE_T * p)
 }
 
 /* syntax.c*/
-

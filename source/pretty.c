@@ -55,10 +55,11 @@ static void in_format (NODE_T *);
 @brief Write newline and indent.
 **/
 
-static void put_nl (void)
+static void
+put_nl (void)
 {
   WRITE (fd, "\n");
-  for (col = 1; col < ind % 72; col ++) {
+  for (col = 1; col < ind % 72; col++) {
     WRITE (fd, " ");
   }
 }
@@ -68,7 +69,8 @@ static void put_nl (void)
 @param txt
 **/
 
-static void put_str (char *txt)
+static void
+put_str (char *txt)
 {
   WRITE (fd, txt);
   col += (int) strlen (txt);
@@ -79,7 +81,8 @@ static void put_str (char *txt)
 @param ch
 **/
 
-static void put_ch (char ch)
+static void
+put_ch (char ch)
 {
   char str[2];
   str[0] = ch;
@@ -92,7 +95,8 @@ static void put_ch (char ch)
 @param p Node in syntax tree.
 **/
 
-static void put_pragment (NODE_T *p)
+static void
+put_pragment (NODE_T * p)
 {
   char *txt = NPRAGMENT (p);
   for (; txt != NO_TEXT && txt[0] != NULL_CHAR; txt++) {
@@ -110,19 +114,19 @@ static void put_pragment (NODE_T *p)
 @param keyw Whether keyword.
 **/
 
-static void pragment (NODE_T *p, BOOL_T keyw)
+static void
+pragment (NODE_T * p, BOOL_T keyw)
 {
   if (NPRAGMENT (p) != NO_TEXT) {
-    if (NPRAGMENT_TYPE (p) == BOLD_COMMENT_SYMBOL ||
-        NPRAGMENT_TYPE (p) == BOLD_PRAGMAT_SYMBOL) {
-      if (! keyw) {
+    if (NPRAGMENT_TYPE (p) == BOLD_COMMENT_SYMBOL || NPRAGMENT_TYPE (p) == BOLD_PRAGMAT_SYMBOL) {
+      if (!keyw) {
         put_nl ();
       }
       put_pragment (p);
       put_nl ();
       put_nl ();
     } else {
-      if (! keyw && (int) strlen (NPRAGMENT (p)) < 20) {
+      if (!keyw && (int) strlen (NPRAGMENT (p)) < 20) {
         if (col > ind) {
           BLANK;
         }
@@ -136,7 +140,8 @@ static void pragment (NODE_T *p, BOOL_T keyw)
         put_nl ();
       }
     }
-  }}
+  }
+}
 
 /**
 @brief Write with typographic display features.
@@ -144,7 +149,8 @@ static void pragment (NODE_T *p, BOOL_T keyw)
 @param keyw Whether p is a keyword.
 **/
 
-static void put_sym (NODE_T *p, BOOL_T keyw)
+static void
+put_sym (NODE_T * p, BOOL_T keyw)
 {
   char *txt = NSYMBOL (p);
   char *sym = NCHAR_IN_LINE (p);
@@ -158,10 +164,10 @@ static void put_sym (NODE_T *p, BOOL_T keyw)
     while (n < size) {
       put_ch (sym[0]);
       if (TO_LOWER (txt[0]) == TO_LOWER (sym[0])) {
-        txt ++;
-        n ++;
+        txt++;
+        n++;
       }
-      sym ++;
+      sym++;
     }
   }
 }
@@ -173,17 +179,17 @@ static void put_sym (NODE_T *p, BOOL_T keyw)
 @param seps
 **/
 
-static void count (NODE_T *p, int *units, int *seps)
+static void
+count (NODE_T * p, int *units, int *seps)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
-      (*units) ++;
+      (*units)++;
       count (SUB (p), units, seps);
     } else if (IS (p, SEMI_SYMBOL)) {
-      (*seps) ++;
+      (*seps)++;
     } else if (IS (p, COMMA_SYMBOL)) {
-      (*seps) ++;
+      (*seps)++;
     } else {
       count (SUB (p), units, seps);
     }
@@ -197,22 +203,20 @@ static void count (NODE_T *p, int *units, int *seps)
 @param seps
 **/
 
-static void count_stowed (NODE_T *p, int *units, int *seps)
+static void
+count_stowed (NODE_T * p, int *units, int *seps)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
       MOID_T *v = MOID (p);
-      BOOL_T stowed = (BOOL_T) (IS (v, FLEX_SYMBOL) || 
-                                IS (v, ROW_SYMBOL) || 
-                                IS (v, STRUCT_SYMBOL));
+      BOOL_T stowed = (BOOL_T) (IS (v, FLEX_SYMBOL) || IS (v, ROW_SYMBOL) || IS (v, STRUCT_SYMBOL));
       if (stowed) {
-        (*units) ++;
+        (*units)++;
       }
     } else if (IS (p, SEMI_SYMBOL)) {
-      (*seps) ++;
+      (*seps)++;
     } else if (IS (p, COMMA_SYMBOL)) {
-      (*seps) ++;
+      (*seps)++;
     } else {
       count_stowed (SUB (p), units, seps);
     }
@@ -226,16 +230,16 @@ static void count_stowed (NODE_T *p, int *units, int *seps)
 @param seps
 **/
 
-static void count_enclos (NODE_T *p, int *enclos, int *seps)
+static void
+count_enclos (NODE_T * p, int *enclos, int *seps)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ENCLOSED_CLAUSE)) {
-      (*enclos) ++;
+      (*enclos)++;
     } else if (IS (p, SEMI_SYMBOL)) {
-      (*seps) ++;
+      (*seps)++;
     } else if (IS (p, COMMA_SYMBOL)) {
-      (*seps) ++;
+      (*seps)++;
     } else {
       count_enclos (SUB (p), enclos, seps);
     }
@@ -247,7 +251,8 @@ static void count_enclos (NODE_T *p, int *enclos, int *seps)
 @param p Node in syntax tree.
 **/
 
-static void in_sizety (NODE_T * p)
+static void
+in_sizety (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, LONGETY) || IS (p, SHORTETY)) {
@@ -266,7 +271,8 @@ static void in_sizety (NODE_T * p)
 @param one_liner Whether construct is one-liner.
 **/
 
-static void in_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
+static void
+in_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
 {
   for (; p != NULL; FORWARD (p)) {
     if (IS_OPEN_SYMBOL (p)) {
@@ -312,7 +318,7 @@ static void in_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
       }
       put_sym (q, !KEYWORD);
       FORWARD (q);
-      put_sym (NEXT (p), !KEYWORD); /* : */
+      put_sym (NEXT (p), !KEYWORD);     /* : */
       BLANK;
       FORWARD (p);
     } else if (IS (p, COMMA_SYMBOL)) {
@@ -333,7 +339,8 @@ static void in_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
 @param p Node in syntax tree.
 **/
 
-static void in_pack (NODE_T *p)
+static void
+in_pack (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS_OPEN_SYMBOL (p) || IS_CLOSE_SYMBOL (p)) {
@@ -361,7 +368,8 @@ static void in_pack (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_declarer (NODE_T *p)
+static void
+in_declarer (NODE_T * p)
 {
   if (IS (p, DECLARER)) {
     in_declarer (SUB (p));
@@ -401,7 +409,7 @@ static void in_declarer (NODE_T *p)
     }
     in_declarer (q);
     return;
-  } else if (IS (p, OP_SYMBOL)) { /* Operator plan */
+  } else if (IS (p, OP_SYMBOL)) {       /* Operator plan */
     NODE_T *q = NEXT (p);
     put_sym (p, KEYWORD);
     BLANK;
@@ -422,10 +430,10 @@ static void in_declarer (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_conditional (NODE_T *p)
+static void
+in_conditional (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IF_PART) || IS (p, ELIF_IF_PART)) {
       NODE_T *what = NO_NODE;
       int pop_ind = ind;
@@ -486,10 +494,10 @@ static void in_conditional (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_case (NODE_T *p)
+static void
+in_case (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, CASE_PART) || IS (p, OUSE_PART)) {
       NODE_T *what = NO_NODE;
       int pop_ind = ind;
@@ -556,10 +564,10 @@ static void in_case (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_conformity (NODE_T *p)
+static void
+in_conformity (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, CASE_PART) || IS (p, OUSE_PART)) {
       NODE_T *what = NO_NODE;
       int pop_ind = ind;
@@ -626,7 +634,8 @@ static void in_conformity (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_loop (NODE_T * p)
+static void
+in_loop (NODE_T * p)
 {
   int parts = 0, pop_ind = col;
   for (; p != NO_NODE; FORWARD (p)) {
@@ -635,13 +644,13 @@ static void in_loop (NODE_T * p)
       BLANK;
       put_sym (NEXT_SUB (p), !KEYWORD);
       BLANK;
-      parts ++;
+      parts++;
     } else if (is_one_of (p, FROM_PART, BY_PART, TO_PART, STOP)) {
       put_sym (SUB (p), KEYWORD);
       BLANK;
       in_statement (NEXT_SUB (p));
       BLANK;
-      parts ++;
+      parts++;
     } else if (IS (p, WHILE_PART)) {
       NODE_T *what = NO_NODE;
       ind = pop_ind;
@@ -653,7 +662,7 @@ static void in_loop (NODE_T * p)
       ind = col;
       in_serial (NEXT_SUB (p), !ONE_LINER, &what);
       ind = pop_ind;
-      parts ++;
+      parts++;
     } else if (is_one_of (p, DO_PART, ALT_DO_PART, STOP)) {
       NODE_T *q = SUB (p);
       NODE_T *what = NO_NODE;
@@ -661,7 +670,7 @@ static void in_loop (NODE_T * p)
       if (parts > 0) {
         put_nl ();
       }
-      put_sym (q, KEYWORD); /* DO */
+      put_sym (q, KEYWORD);     /* DO */
       BLANK;
       ind = col;
       FORWARD (q);
@@ -669,7 +678,7 @@ static void in_loop (NODE_T * p)
       if (IS (q, SERIAL_CLAUSE)) {
         in_serial (SUB (q), !ONE_LINER, &what);
         FORWARD (q);
-        parts ++;
+        parts++;
       }
       if (IS (q, UNTIL_PART)) {
         int pop_ind2 = ind;
@@ -685,8 +694,8 @@ static void in_loop (NODE_T * p)
       }
       ind = pop_ind;
       put_nl ();
-      put_sym (q, KEYWORD); /* OD */
-      parts ++;
+      put_sym (q, KEYWORD);     /* OD */
+      parts++;
     }
   }
 }
@@ -696,7 +705,8 @@ static void in_loop (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void in_closed (NODE_T *p)
+static void
+in_closed (NODE_T * p)
 {
   int units = 0, seps = 0;
   count (SUB_NEXT (p), &units, &seps);
@@ -713,7 +723,7 @@ static void in_closed (NODE_T *p)
     }
     put_sym (NEXT_NEXT (p), KEYWORD);
   } else if (units <= 3 && seps == (units - 1) && IS_OPEN_SYMBOL (p)) {
-      NODE_T *what = NO_NODE;
+    NODE_T *what = NO_NODE;
     put_sym (p, KEYWORD);
     in_serial (SUB_NEXT (p), ONE_LINER, &what);
     put_sym (NEXT_NEXT (p), KEYWORD);
@@ -739,7 +749,8 @@ static void in_closed (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_collateral (NODE_T *p)
+static void
+in_collateral (NODE_T * p)
 {
   int units = 0, seps = 0;
   NODE_T *what = NO_NODE;
@@ -758,7 +769,8 @@ static void in_collateral (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_enclosed (NODE_T *p)
+static void
+in_enclosed (NODE_T * p)
 {
   if (IS (p, ENCLOSED_CLAUSE)) {
     in_enclosed (SUB (p));
@@ -785,7 +797,8 @@ static void in_enclosed (NODE_T *p)
 @param txt
 **/
 
-static void in_literal (char *txt)
+static void
+in_literal (char *txt)
 {
   put_str ("\"");
   while (txt[0] != NULL_CHAR) {
@@ -794,7 +807,7 @@ static void in_literal (char *txt)
     } else {
       put_ch (txt[0]);
     }
-    txt ++;
+    txt++;
   }
   put_str ("\"");
 }
@@ -804,7 +817,8 @@ static void in_literal (char *txt)
 @param p Node in syntax tree.
 **/
 
-static void in_denotation (NODE_T *p)
+static void
+in_denotation (NODE_T * p)
 {
   if (IS (p, ROW_CHAR_DENOTATION)) {
     in_literal (NSYMBOL (p));
@@ -821,7 +835,8 @@ static void in_denotation (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_label (NODE_T *p)
+static void
+in_label (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NULL) {
@@ -838,10 +853,10 @@ static void in_label (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_collection (NODE_T *p)
+static void
+in_collection (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_OPEN_SYMBOL) || IS (p, FORMAT_CLOSE_SYMBOL)) {
       put_sym (p, !KEYWORD);
     } else if (IS (p, COMMA_SYMBOL)) {
@@ -858,7 +873,8 @@ static void in_collection (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_format (NODE_T *p)
+static void
+in_format (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_DELIMITER_SYMBOL)) {
@@ -875,42 +891,102 @@ static void in_format (NODE_T *p)
       put_sym (p, !KEYWORD);
       BLANK;
     } else {
-       if (SUB (p) != NO_NODE) {
-         in_format (SUB (p));
-       } else {
-         switch (ATTRIBUTE (p)) {
-           case FORMAT_ITEM_A: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_B: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_C: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_D: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_E: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_ESCAPE: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_F: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_G: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_H: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_I: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_J: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_K: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_L: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_M: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_MINUS: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_N: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_O: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_P: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_PLUS: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_POINT: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_Q: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_R: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_S: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_T: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_U: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_V: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_W: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_X: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_Y: put_sym (p, !KEYWORD); break;
-           case FORMAT_ITEM_Z: put_sym (p, !KEYWORD); break;
-         }
-       }
+      if (SUB (p) != NO_NODE) {
+        in_format (SUB (p));
+      } else {
+        switch (ATTRIBUTE (p)) {
+        case FORMAT_ITEM_A:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_B:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_C:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_D:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_E:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_ESCAPE:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_F:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_G:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_H:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_I:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_J:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_K:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_L:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_M:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_MINUS:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_N:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_O:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_P:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_PLUS:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_POINT:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_Q:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_R:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_S:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_T:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_U:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_V:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_W:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_X:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_Y:
+          put_sym (p, !KEYWORD);
+          break;
+        case FORMAT_ITEM_Z:
+          put_sym (p, !KEYWORD);
+          break;
+        }
+      }
     }
   }
 }
@@ -920,7 +996,8 @@ static void in_format (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static BOOL_T in_folder (NODE_T *p)
+static BOOL_T
+in_folder (NODE_T * p)
 {
   if (MOID (p) == MODE (INT)) {
     A68_INT k;
@@ -957,9 +1034,7 @@ static BOOL_T in_folder (NODE_T *p)
       } else if (errno == ERANGE) {
         return (A68_FALSE);
       } else {
-        if (strchr (in_line, '.') == NO_TEXT && 
-            strchr (in_line, 'e') == NO_TEXT && 
-            strchr (in_line, 'E') == NO_TEXT) {
+        if (strchr (in_line, '.') == NO_TEXT && strchr (in_line, 'e') == NO_TEXT && strchr (in_line, 'E') == NO_TEXT) {
           strncat (in_line, ".0", BUFFER_SIZE);
         }
         put_str (in_line);
@@ -1001,7 +1076,8 @@ static BOOL_T in_folder (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_statement (NODE_T *p)
+static void
+in_statement (NODE_T * p)
 {
   if (IS (p, LABEL)) {
     int enclos = 0, seps = 0;
@@ -1036,7 +1112,7 @@ static void in_statement (NODE_T *p)
     NODE_T *rhs = NEXT (decl);
     in_declarer (decl);
     BLANK;
-    in_enclosed (rhs); 
+    in_enclosed (rhs);
   } else if (IS (p, CALL)) {
     NODE_T *primary = SUB (p);
     NODE_T *arguments = NEXT (primary);
@@ -1063,7 +1139,7 @@ static void in_statement (NODE_T *p)
     NODE_T *identifier = SUB (p);
     put_sym (identifier, !KEYWORD);
     BLANK;
-    put_sym (NEXT (identifier), !KEYWORD); /* OF */
+    put_sym (NEXT (identifier), !KEYWORD);      /* OF */
     BLANK;
   } else if (IS (p, GENERATOR)) {
     NODE_T *q = SUB (p);
@@ -1100,10 +1176,7 @@ static void in_statement (NODE_T *p)
     put_sym (op, !KEYWORD);
     BLANK;
     in_statement (rhs);
-  } else if (IS (p, TRANSPOSE_FUNCTION) ||
-             IS (p, DIAGONAL_FUNCTION) ||
-             IS (p, ROW_FUNCTION) ||
-             IS (p, COLUMN_FUNCTION)) {
+  } else if (IS (p, TRANSPOSE_FUNCTION) || IS (p, DIAGONAL_FUNCTION) || IS (p, ROW_FUNCTION) || IS (p, COLUMN_FUNCTION)) {
     NODE_T *q = SUB (p);
     if (IS (p, TERTIARY)) {
       in_statement (q);
@@ -1121,7 +1194,7 @@ static void in_statement (NODE_T *p)
     BLANK;
     put_sym (bec, !KEYWORD);
     BLANK;
-    in_statement (src); 
+    in_statement (src);
   } else if (IS (p, ROUTINE_TEXT)) {
     NODE_T *q = SUB (p);
     int units, seps;
@@ -1132,7 +1205,7 @@ static void in_statement (NODE_T *p)
     }
     in_declarer (q);
     FORWARD (q);
-    put_sym (q, !KEYWORD); /* : */
+    put_sym (q, !KEYWORD);      /* : */
     FORWARD (q);
     units = 0;
     seps = 0;
@@ -1173,7 +1246,7 @@ static void in_statement (NODE_T *p)
     put_sym (q, KEYWORD);
     BLANK;
     FORWARD (q);
-    in_collection(SUB (q));
+    in_collection (SUB (q));
     FORWARD (q);
     put_sym (q, KEYWORD);
   }
@@ -1184,10 +1257,10 @@ static void in_statement (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_iddecl (NODE_T *p)
+static void
+in_iddecl (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IDENTITY_DECLARATION) || IS (p, VARIABLE_DECLARATION)) {
       in_iddecl (SUB (p));
     } else if (IS (p, QUALIFIER)) {
@@ -1200,7 +1273,7 @@ static void in_iddecl (NODE_T *p)
       NODE_T *q = p;
       put_sym (q, !KEYWORD);
       FORWARD (q);
-      if (q != NO_NODE) { /* := unit */
+      if (q != NO_NODE) {       /* := unit */
         BLANK;
         put_sym (q, !KEYWORD);
         BLANK;
@@ -1219,12 +1292,11 @@ static void in_iddecl (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_procdecl (NODE_T *p)
+static void
+in_procdecl (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
-    if (IS (p, PROCEDURE_DECLARATION) || 
-        IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
+  for (; p != NO_NODE; FORWARD (p)) {
+    if (IS (p, PROCEDURE_DECLARATION) || IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       in_procdecl (SUB (p));
     } else if (IS (p, PROC_SYMBOL)) {
       put_sym (p, KEYWORD);
@@ -1252,12 +1324,11 @@ static void in_procdecl (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_opdecl (NODE_T *p)
+static void
+in_opdecl (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
-    if (IS (p, OPERATOR_DECLARATION) || 
-        IS (p, BRIEF_OPERATOR_DECLARATION)) {
+  for (; p != NO_NODE; FORWARD (p)) {
+    if (IS (p, OPERATOR_DECLARATION) || IS (p, BRIEF_OPERATOR_DECLARATION)) {
       in_opdecl (SUB (p));
     } else if (IS (p, OP_SYMBOL)) {
       put_sym (p, KEYWORD);
@@ -1289,10 +1360,10 @@ static void in_opdecl (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_priodecl (NODE_T *p)
+static void
+in_priodecl (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PRIORITY_DECLARATION)) {
       in_priodecl (SUB (p));
     } else if (IS (p, PRIO_SYMBOL)) {
@@ -1319,10 +1390,10 @@ static void in_priodecl (NODE_T *p)
 @param p Node in syntax tree.
 **/
 
-static void in_modedecl (NODE_T *p)
+static void
+in_modedecl (NODE_T * p)
 {
-  for (; p != NO_NODE; FORWARD (p))
-  {
+  for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, MODE_DECLARATION)) {
       in_modedecl (SUB (p));
     } else if (IS (p, MODE_SYMBOL)) {
@@ -1352,20 +1423,19 @@ static void in_modedecl (NODE_T *p)
 @param one_liner Whether construct is one-liner.
 **/
 
-static void in_declist (NODE_T *p, BOOL_T one_liner)
+static void
+in_declist (NODE_T * p, BOOL_T one_liner)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IDENTITY_DECLARATION) || IS (p, VARIABLE_DECLARATION)) {
       int pop_ind = ind;
       in_iddecl (p);
       ind = pop_ind;
-    } else if (IS (p, PROCEDURE_DECLARATION) || 
-               IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
+    } else if (IS (p, PROCEDURE_DECLARATION) || IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
       int pop_ind = ind;
       in_procdecl (p);
       ind = pop_ind;
-    } else if (IS (p, OPERATOR_DECLARATION) || 
-               IS (p, BRIEF_OPERATOR_DECLARATION)) {
+    } else if (IS (p, OPERATOR_DECLARATION) || IS (p, BRIEF_OPERATOR_DECLARATION)) {
       int pop_ind = ind;
       in_opdecl (p);
       ind = pop_ind;
@@ -1397,7 +1467,8 @@ static void in_declist (NODE_T *p, BOOL_T one_liner)
 @param what Pointer telling type of construct.
 **/
 
-static void in_serial (NODE_T *p, BOOL_T one_liner, NODE_T **what)
+static void
+in_serial (NODE_T * p, BOOL_T one_liner, NODE_T ** what)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT) || IS (p, LABELED_UNIT)) {
@@ -1439,11 +1510,12 @@ static void in_serial (NODE_T *p, BOOL_T one_liner, NODE_T **what)
 @param p Node in syntax tree.
 **/
 
-static void skip_environ (NODE_T *p)
+static void
+skip_environ (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (LINE_NUMBER (p) == 0) {
-      pragment (p, ! KEYWORD);
+      pragment (p, !KEYWORD);
       skip_environ (SUB (p));
     } else {
       NODE_T *what = NO_NODE;
@@ -1457,7 +1529,8 @@ static void skip_environ (NODE_T *p)
 @param q Module to indent.
 **/
 
-void indenter (MODULE_T *q)
+void
+indenter (MODULE_T * q)
 {
   ind = 1;
   col = 1;

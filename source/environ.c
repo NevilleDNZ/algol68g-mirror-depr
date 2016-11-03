@@ -51,7 +51,8 @@ static MOID_T *proc_int, *proc_real, *proc_real_real, *proc_real_real_real, *pro
 @param q Interpreter routine that executes this token.
 **/
 
-static void add_a68g_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T * m, int p, GPROC * q)
+static void
+add_a68g_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T * m, int p, GPROC * q)
 {
 #define INSERT_TAG(l, n) {\
   NEXT (n) = *(l);\
@@ -91,7 +92,8 @@ static void add_a68g_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID
 @return Entry in mode table.
 **/
 
-static MOID_T *a68_proc (MOID_T * m, ...)
+static MOID_T *
+a68_proc (MOID_T * m, ...)
 {
   MOID_T *y, **z = &TOP_MOID (&program);
   PACK_T *p = NO_PACK, *q = NO_PACK;
@@ -121,7 +123,8 @@ static MOID_T *a68_proc (MOID_T * m, ...)
 @param q Interpreter routine that executes this token.
 **/
 
-static void a68_idf (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
+static void
+a68_idf (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
 {
   add_a68g_standenv (portable, IDENTIFIER, some_node (TEXT (add_token (&top_token, n))), NO_TEXT, m, 0, q);
 }
@@ -133,7 +136,8 @@ static void a68_idf (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
 @param m Will point to entry in mode table.
 **/
 
-static void a68_mode (int p, char *t, MOID_T ** m)
+static void
+a68_mode (int p, char *t, MOID_T ** m)
 {
   (*m) = add_mode (&TOP_MOID (&program), STANDARD, p, some_node (TEXT (find_keyword (top_keyword, t))), NO_MOID, NO_PACK);
 }
@@ -144,7 +148,8 @@ static void a68_mode (int p, char *t, MOID_T ** m)
 @param b Priority of operator.
 **/
 
-static void a68_prio (char *p, int b)
+static void
+a68_prio (char *p, int b)
 {
   add_a68g_standenv (A68_TRUE, PRIO_SYMBOL, some_node (TEXT (add_token (&top_token, p))), NO_TEXT, NO_MOID, b, NO_GPROC);
 }
@@ -157,7 +162,8 @@ static void a68_prio (char *p, int b)
 @param q Interpreter routine that executes this token.
 **/
 
-static void a68_op (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
+static void
+a68_op (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
 {
   add_a68g_standenv (portable, OP_SYMBOL, some_node (TEXT (add_token (&top_token, n))), NO_TEXT, m, 0, q);
 }
@@ -166,7 +172,8 @@ static void a68_op (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
 @brief Enter standard modes in standenv.
 **/
 
-static void stand_moids (void)
+static void
+stand_moids (void)
 {
   MOID_T *m;
   PACK_T *z;
@@ -358,7 +365,7 @@ static void stand_moids (void)
   EQUIVALENT (MODE (SEMA)) = add_mode (&TOP_MOID (&program), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
 /* PROC VOID */
   z = NO_PACK;
-  MODE (PROC_VOID) =  add_mode (&TOP_MOID (&program), PROC_SYMBOL, count_pack_members (z), NO_NODE, MODE (VOID), z);
+  MODE (PROC_VOID) = add_mode (&TOP_MOID (&program), PROC_SYMBOL, count_pack_members (z), NO_NODE, MODE (VOID), z);
 /* PROC (REAL) REAL */
   z = NO_PACK;
   (void) add_mode_to_pack (&z, MODE (REAL), NO_TEXT, NO_NODE);
@@ -395,7 +402,8 @@ static void stand_moids (void)
 @brief Set up standenv - general RR but not transput.
 **/
 
-static void stand_prelude (void)
+static void
+stand_prelude (void)
 {
   MOID_T *m;
 /* Identifiers */
@@ -448,7 +456,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "clock", MODE (REAL), genie_cputime);
   a68_idf (A68_EXT, "cputime", MODE (REAL), genie_cputime);
   a68_idf (A68_EXT, "collections", proc_int, genie_garbage_collections);
-  a68_idf (A68_EXT, "blocks",proc_int, genie_block);
+  a68_idf (A68_EXT, "blocks", proc_int, genie_block);
   m = a68_proc (MODE (VOID), proc_void, NO_MOID);
   a68_idf (A68_EXT, "ongcevent", m, genie_on_gc_event);
   m = a68_proc (MODE (LONG_INT), NO_MOID);
@@ -458,6 +466,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "systemstackpointer", MODE (INT), genie_system_stack_pointer);
   a68_idf (A68_EXT, "systemstacksize", MODE (INT), genie_system_stack_size);
   a68_idf (A68_EXT, "actualstacksize", MODE (INT), genie_stack_pointer);
+  a68_idf (A68_EXT, "systemheappointer", MODE (INT), genie_system_heap_pointer);
   m = proc_void;
   a68_idf (A68_EXT, "gcheap", m, genie_gc_heap);
   a68_idf (A68_EXT, "sweepheap", m, genie_gc_heap);
@@ -468,7 +477,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "debug", m, genie_debug);
   a68_idf (A68_EXT, "monitor", m, genie_debug);
   m = a68_proc (MODE (VOID), MODE (STRING), NO_MOID);
-  a68_idf (A68_EXT, "abend", m, genie_abend); 
+  a68_idf (A68_EXT, "abend", m, genie_abend);
   m = a68_proc (MODE (STRING), MODE (STRING), NO_MOID);
   a68_idf (A68_EXT, "evaluate", m, genie_evaluate);
   m = a68_proc (MODE (INT), MODE (STRING), NO_MOID);
@@ -476,6 +485,8 @@ static void stand_prelude (void)
   m = a68_proc (MODE (STRING), MODE (STRING), NO_MOID);
   a68_idf (A68_EXT, "acronym", m, genie_acronym);
   a68_idf (A68_EXT, "vmsacronym", m, genie_acronym);
+  m = a68_proc (MODE (INT), MODE (INT), NO_MOID);
+  a68_idf (A68_EXT, "sleep", m, genie_sleep);
 /* BITS procedures */
   m = a68_proc (MODE (BITS), MODE (ROW_BOOL), NO_MOID);
   a68_idf (A68_STD, "bitspack", m, genie_bits_pack);
@@ -1273,7 +1284,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "qacosh", m, genie_arccosh_long_mp);
   a68_idf (A68_EXT, "qatanh", m, genie_arctanh_long_mp);
   m = a68_proc (MODE (LONGLONG_REAL), MODE (LONGLONG_REAL), MODE (LONGLONG_REAL), NO_MOID);
-  a68_idf (A68_STD, "longarctan2", m, genie_atan2_long_mp);
+  a68_idf (A68_STD, "longlongarctan2", m, genie_atan2_long_mp);
   a68_idf (A68_STD, "qarctan2", m, genie_atan2_long_mp);
   m = a68_proc (MODE (LONGLONG_REAL), MODE (LONGLONG_REAL), MODE (LONGLONG_REAL), NO_MOID);
   a68_op (A68_STD, "+", m, genie_add_long_mp);
@@ -1511,7 +1522,8 @@ static void stand_prelude (void)
 @brief Set up standenv - transput.
 **/
 
-static void stand_transput (void)
+static void
+stand_transput (void)
 {
   MOID_T *m;
   a68_idf (A68_STD, "errorchar", MODE (CHAR), genie_error_char);
@@ -1636,26 +1648,26 @@ static void stand_transput (void)
   m = a68_proc (MODE (VOID), MODE (mode), NO_MOID);\
   a68_idf (A68_EXT, "print" #name, m, genie_print_##pname);
 
-  A68C_DEFIO(int, int, INT)
-  A68C_DEFIO(longint, long_int, LONG_INT)
-  A68C_DEFIO(longlongint, longlong_int, LONGLONG_INT)
-  A68C_DEFIO(real, real, REAL)
-  A68C_DEFIO(longreal, long_real, LONG_REAL)
-  A68C_DEFIO(double, long_real, LONG_REAL)
-  A68C_DEFIO(longlongreal, longlong_real, LONGLONG_REAL)
-  A68C_DEFIO(quad, longlong_real, LONGLONG_REAL)
-  A68C_DEFIO(compl, complex, COMPLEX)
-  A68C_DEFIO(longcompl, long_complex, LONG_COMPLEX)
-  A68C_DEFIO(longlongcompl, longlong_complex, LONGLONG_COMPLEX)
-  A68C_DEFIO(complex, complex, COMPLEX)
-  A68C_DEFIO(longcomplex, long_complex, LONG_COMPLEX)
-  A68C_DEFIO(longlongcomplex, longlong_complex, LONGLONG_COMPLEX)
-  A68C_DEFIO(bits, bits, BITS)
-  A68C_DEFIO(longbits, long_bits, LONG_BITS)
-  A68C_DEFIO(longlongbits, longlong_bits, LONGLONG_BITS)
-  A68C_DEFIO(bool, bool, BOOL);
-  A68C_DEFIO(char, char, CHAR);
-  A68C_DEFIO(string, string, STRING);
+  A68C_DEFIO (int, int, INT)
+    A68C_DEFIO (longint, long_int, LONG_INT)
+    A68C_DEFIO (longlongint, longlong_int, LONGLONG_INT)
+    A68C_DEFIO (real, real, REAL)
+    A68C_DEFIO (longreal, long_real, LONG_REAL)
+    A68C_DEFIO (double, long_real, LONG_REAL)
+    A68C_DEFIO (longlongreal, longlong_real, LONGLONG_REAL)
+    A68C_DEFIO (quad, longlong_real, LONGLONG_REAL)
+    A68C_DEFIO (compl, complex, COMPLEX)
+    A68C_DEFIO (longcompl, long_complex, LONG_COMPLEX)
+    A68C_DEFIO (longlongcompl, longlong_complex, LONGLONG_COMPLEX)
+    A68C_DEFIO (complex, complex, COMPLEX)
+    A68C_DEFIO (longcomplex, long_complex, LONG_COMPLEX)
+    A68C_DEFIO (longlongcomplex, longlong_complex, LONGLONG_COMPLEX)
+    A68C_DEFIO (bits, bits, BITS)
+    A68C_DEFIO (longbits, long_bits, LONG_BITS)
+    A68C_DEFIO (longlongbits, longlong_bits, LONGLONG_BITS)
+    A68C_DEFIO (bool, bool, BOOL);
+  A68C_DEFIO (char, char, CHAR);
+  A68C_DEFIO (string, string, STRING);
 #undef A68C_DEFIO
 
   a68_idf (A68_EXT, "readline", MODE (PROC_STRING), genie_read_line);
@@ -1878,7 +1890,8 @@ static void stand_transput (void)
 @brief Set up standenv - extensions.
 **/
 
-static void stand_extensions (void)
+static void
+stand_extensions (void)
 {
   MOID_T *m = NO_MOID;
   (void) m;                     /* To fool cc in case we have none of the libraries */
@@ -2090,8 +2103,7 @@ static void stand_extensions (void)
   a68_idf (A68_EXT, "complvectorecho", m, genie_vector_complex_echo);
   m = a68_proc (MODE (ROWROW_COMPLEX), MODE (ROWROW_COMPLEX), NO_MOID);
   a68_idf (A68_EXT, "complmatrixecho", m, genie_matrix_complex_echo);
-   /**/ 
-  m = a68_proc (MODE (REAL), MODE (ROW_REAL), MODE (ROW_REAL), NO_MOID);
+   /**/ m = a68_proc (MODE (REAL), MODE (ROW_REAL), MODE (ROW_REAL), NO_MOID);
   a68_op (A68_EXT, "*", m, genie_vector_dot);
   m = a68_proc (MODE (COMPLEX), MODE (ROW_COMPLEX), MODE (ROW_COMPLEX), NO_MOID);
   a68_op (A68_EXT, "*", m, genie_vector_complex_dot);
@@ -2289,7 +2301,8 @@ static void stand_extensions (void)
 @brief Build the standard environ symbol table.
 **/
 
-void make_standard_environ (void)
+void
+make_standard_environ (void)
 {
   stand_moids ();
   proc_int = a68_proc (MODE (INT), NO_MOID);
@@ -2336,7 +2349,8 @@ void n (NODE_T * p) {\
 @param p Node in syntax tree.
 **/
 
-void genie_on_gc_event (NODE_T * p)
+void
+genie_on_gc_event (NODE_T * p)
 {
   POP_PROCEDURE (p, &on_gc_event);
 }
@@ -2348,7 +2362,8 @@ void genie_on_gc_event (NODE_T * p)
 @param f Pointer to function that performs operation.
 **/
 
-void genie_f_and_becomes (NODE_T * p, MOID_T * ref, GPROC * f)
+void
+genie_f_and_becomes (NODE_T * p, MOID_T * ref, GPROC * f)
 {
   MOID_T *mode = SUB (ref);
   int size = SIZE (mode);
@@ -2367,45 +2382,55 @@ void genie_f_and_becomes (NODE_T * p, MOID_T * ref, GPROC * f)
 /* Environment enquiries */
 
 A68_ENV_INT (genie_int_lengths, 3)
-A68_ENV_INT (genie_int_shorths, 1)
-A68_ENV_INT (genie_real_lengths, 3)
-A68_ENV_INT (genie_real_shorths, 1)
-A68_ENV_INT (genie_complex_lengths, 3)
-A68_ENV_INT (genie_complex_shorths, 1)
-A68_ENV_INT (genie_bits_lengths, 3)
-A68_ENV_INT (genie_bits_shorths, 1)
-A68_ENV_INT (genie_bytes_lengths, 2)
-A68_ENV_INT (genie_bytes_shorths, 1)
-A68_ENV_INT (genie_int_width, INT_WIDTH)
-A68_ENV_INT (genie_long_int_width, LONG_INT_WIDTH)
-A68_ENV_INT (genie_longlong_int_width, LONGLONG_INT_WIDTH)
-A68_ENV_INT (genie_real_width, REAL_WIDTH)
-A68_ENV_INT (genie_long_real_width, LONG_REAL_WIDTH)
-A68_ENV_INT (genie_longlong_real_width, LONGLONG_REAL_WIDTH)
-A68_ENV_INT (genie_exp_width, EXP_WIDTH)
-A68_ENV_INT (genie_long_exp_width, LONG_EXP_WIDTH)
-A68_ENV_INT (genie_longlong_exp_width, LONGLONG_EXP_WIDTH)
-A68_ENV_INT (genie_bits_width, BITS_WIDTH)
-A68_ENV_INT (genie_long_bits_width, get_mp_bits_width (MODE (LONG_BITS)))
-A68_ENV_INT (genie_longlong_bits_width, get_mp_bits_width (MODE (LONGLONG_BITS)))
-A68_ENV_INT (genie_bytes_width, BYTES_WIDTH)
-A68_ENV_INT (genie_long_bytes_width, LONG_BYTES_WIDTH)
-A68_ENV_INT (genie_max_abs_char, UCHAR_MAX)
-A68_ENV_INT (genie_max_int, A68_MAX_INT)
-A68_ENV_REAL (genie_max_real, DBL_MAX)
-A68_ENV_REAL (genie_min_real, DBL_MIN)
-A68_ENV_REAL (genie_small_real, DBL_EPSILON)
-A68_ENV_REAL (genie_pi, A68_PI)
-A68_ENV_REAL (genie_cputime, seconds () - cputime_0)
-A68_ENV_INT (genie_stack_pointer, stack_pointer)
-A68_ENV_INT (genie_system_stack_size, stack_size)
+  A68_ENV_INT (genie_int_shorths, 1)
+  A68_ENV_INT (genie_real_lengths, 3)
+  A68_ENV_INT (genie_real_shorths, 1)
+  A68_ENV_INT (genie_complex_lengths, 3)
+  A68_ENV_INT (genie_complex_shorths, 1)
+  A68_ENV_INT (genie_bits_lengths, 3)
+  A68_ENV_INT (genie_bits_shorths, 1)
+  A68_ENV_INT (genie_bytes_lengths, 2)
+  A68_ENV_INT (genie_bytes_shorths, 1)
+  A68_ENV_INT (genie_int_width, INT_WIDTH)
+  A68_ENV_INT (genie_long_int_width, LONG_INT_WIDTH)
+  A68_ENV_INT (genie_longlong_int_width, LONGLONG_INT_WIDTH)
+  A68_ENV_INT (genie_real_width, REAL_WIDTH)
+  A68_ENV_INT (genie_long_real_width, LONG_REAL_WIDTH)
+  A68_ENV_INT (genie_longlong_real_width, LONGLONG_REAL_WIDTH)
+  A68_ENV_INT (genie_exp_width, EXP_WIDTH)
+  A68_ENV_INT (genie_long_exp_width, LONG_EXP_WIDTH)
+  A68_ENV_INT (genie_longlong_exp_width, LONGLONG_EXP_WIDTH)
+  A68_ENV_INT (genie_bits_width, BITS_WIDTH)
+  A68_ENV_INT (genie_long_bits_width, get_mp_bits_width (MODE (LONG_BITS)))
+  A68_ENV_INT (genie_longlong_bits_width, get_mp_bits_width (MODE (LONGLONG_BITS)))
+  A68_ENV_INT (genie_bytes_width, BYTES_WIDTH)
+  A68_ENV_INT (genie_long_bytes_width, LONG_BYTES_WIDTH)
+  A68_ENV_INT (genie_max_abs_char, UCHAR_MAX)
+  A68_ENV_INT (genie_max_int, A68_MAX_INT)
+  A68_ENV_REAL (genie_max_real, DBL_MAX)
+  A68_ENV_REAL (genie_min_real, DBL_MIN)
+  A68_ENV_REAL (genie_small_real, DBL_EPSILON)
+  A68_ENV_REAL (genie_pi, A68_PI)
+  A68_ENV_REAL (genie_cputime, seconds () - cputime_0)
+  A68_ENV_INT (genie_stack_pointer, stack_pointer)
+  A68_ENV_INT (genie_system_stack_size, stack_size)
+
+/**
+@brief INT system heap pointer
+@param p Node in syntax tree.
+**/
+     void genie_system_heap_pointer (NODE_T * p)
+{
+  PUSH_PRIMITIVE (p, (int) (heap_pointer), A68_INT);
+}
 
 /**
 @brief INT system stack pointer
 @param p Node in syntax tree.
 **/
 
-void genie_system_stack_pointer (NODE_T * p)
+void
+genie_system_stack_pointer (NODE_T * p)
 {
   BYTE_T stack_offset;
   PUSH_PRIMITIVE (p, (int) (system_stack_offset - &stack_offset), A68_INT);
@@ -2416,7 +2441,8 @@ void genie_system_stack_pointer (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_max_int (NODE_T * p)
+void
+genie_long_max_int (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_INT));
   MP_T *z;
@@ -2434,7 +2460,8 @@ void genie_long_max_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_longlong_max_int (NODE_T * p)
+void
+genie_longlong_max_int (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONGLONG_INT));
   MP_T *z;
@@ -2452,7 +2479,8 @@ void genie_longlong_max_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_max_real (NODE_T * p)
+void
+genie_long_max_real (NODE_T * p)
 {
   int j, digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
@@ -2469,7 +2497,8 @@ void genie_long_max_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_longlong_max_real (NODE_T * p)
+void
+genie_longlong_max_real (NODE_T * p)
 {
   int j, digits = DIGITS (MODE (LONGLONG_REAL));
   MP_T *z;
@@ -2486,14 +2515,15 @@ void genie_longlong_max_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_min_real (NODE_T * p)
+void
+genie_long_min_real (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   SET_MP_ZERO (z, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
-  MP_EXPONENT (z) = (MP_T) -(MAX_MP_EXPONENT);
+  MP_EXPONENT (z) = (MP_T) - (MAX_MP_EXPONENT);
   MP_DIGIT (z, 1) = (MP_T) 1;
 }
 
@@ -2502,14 +2532,15 @@ void genie_long_min_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_longlong_min_real (NODE_T * p)
+void
+genie_longlong_min_real (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONGLONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   SET_MP_ZERO (z, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
-  MP_EXPONENT (z) = (MP_T) -(MAX_MP_EXPONENT);
+  MP_EXPONENT (z) = (MP_T) - (MAX_MP_EXPONENT);
   MP_DIGIT (z, 1) = (MP_T) 1;
 }
 
@@ -2518,13 +2549,14 @@ void genie_longlong_min_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_small_real (NODE_T * p)
+void
+genie_long_small_real (NODE_T * p)
 {
   int j, digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
-  MP_EXPONENT (z) = (MP_T) -(digits - 1);
+  MP_EXPONENT (z) = (MP_T) - (digits - 1);
   MP_DIGIT (z, 1) = (MP_T) 1;
   for (j = 3; j <= 1 + digits; j++) {
     z[j] = (MP_T) 0;
@@ -2536,13 +2568,14 @@ void genie_long_small_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_longlong_small_real (NODE_T * p)
+void
+genie_longlong_small_real (NODE_T * p)
 {
   int j, digits = DIGITS (MODE (LONGLONG_REAL));
   MP_T *z;
   STACK_MP (z, p, digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
-  MP_EXPONENT (z) = (MP_T) -(digits - 1);
+  MP_EXPONENT (z) = (MP_T) - (digits - 1);
   MP_DIGIT (z, 1) = (MP_T) 1;
   for (j = 3; j <= 1 + digits; j++) {
     z[j] = (MP_T) 0;
@@ -2554,7 +2587,8 @@ void genie_longlong_small_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_max_bits (NODE_T * p)
+void
+genie_max_bits (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, A68_MAX_BITS, A68_BITS);
 }
@@ -2564,7 +2598,8 @@ void genie_max_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_max_bits (NODE_T * p)
+void
+genie_long_max_bits (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_BITS));
   int width = get_mp_bits_width (MODE (LONG_BITS));
@@ -2585,7 +2620,8 @@ void genie_long_max_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_longlong_max_bits (NODE_T * p)
+void
+genie_longlong_max_bits (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONGLONG_BITS));
   int width = get_mp_bits_width (MODE (LONGLONG_BITS));
@@ -2606,7 +2642,8 @@ void genie_longlong_max_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pi_long_mp (NODE_T * p)
+void
+genie_pi_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p));
   MP_T *z;
@@ -2625,8 +2662,7 @@ A68_MONAD (genie_not_bool, A68_BOOL, (BOOL_T) !)
 @brief OP ABS = (BOOL) INT
 @param p Node in syntax tree.
 **/
-
-void genie_abs_bool (NODE_T * p)
+     void genie_abs_bool (NODE_T * p)
 {
   A68_BOOL j;
   POP_OBJECT (p, &j, A68_BOOL);
@@ -2641,21 +2677,20 @@ void n (NODE_T * p) {\
 }
 
 A68_BOOL_DYAD (genie_and_bool, &)
-A68_BOOL_DYAD (genie_or_bool, |)
-A68_BOOL_DYAD (genie_xor_bool, ^)
-A68_BOOL_DYAD (genie_eq_bool, ==)
-A68_BOOL_DYAD (genie_ne_bool, !=)
+  A68_BOOL_DYAD (genie_or_bool, |)
+  A68_BOOL_DYAD (genie_xor_bool, ^)
+  A68_BOOL_DYAD (genie_eq_bool, ==)
+  A68_BOOL_DYAD (genie_ne_bool, !=)
 
 /* INT operations */
 /* OP - = (INT) INT */
-
-A68_MONAD (genie_minus_int, A68_INT, -)
+  A68_MONAD (genie_minus_int, A68_INT, -)
 
 /**
 @brief OP ABS = (INT) INT
 @param p Node in syntax tree.
 **/
-void genie_abs_int (NODE_T * p)
+     void genie_abs_int (NODE_T * p)
 {
   A68_INT *j;
   POP_OPERAND_ADDRESS (p, j, A68_INT);
@@ -2667,7 +2702,8 @@ void genie_abs_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sign_int (NODE_T * p)
+void
+genie_sign_int (NODE_T * p)
 {
   A68_INT *j;
   POP_OPERAND_ADDRESS (p, j, A68_INT);
@@ -2679,7 +2715,8 @@ void genie_sign_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_odd_int (NODE_T * p)
+void
+genie_odd_int (NODE_T * p)
 {
   A68_INT j;
   POP_OBJECT (p, &j, A68_INT);
@@ -2691,7 +2728,8 @@ void genie_odd_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_int (NODE_T * p)
+void
+genie_add_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
@@ -2704,7 +2742,8 @@ void genie_add_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sub_int (NODE_T * p)
+void
+genie_sub_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
@@ -2717,7 +2756,8 @@ void genie_sub_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mul_int (NODE_T * p)
+void
+genie_mul_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
@@ -2730,7 +2770,8 @@ void genie_mul_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_over_int (NODE_T * p)
+void
+genie_over_int (NODE_T * p)
 {
   A68_INT *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_INT);
@@ -2743,7 +2784,8 @@ void genie_over_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mod_int (NODE_T * p)
+void
+genie_mod_int (NODE_T * p)
 {
   A68_INT *i, *j;
   int k;
@@ -2761,7 +2803,8 @@ void genie_mod_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_div_int (NODE_T * p)
+void
+genie_div_int (NODE_T * p)
 {
   A68_INT i, j;
   POP_OBJECT (p, &j, A68_INT);
@@ -2775,7 +2818,8 @@ void genie_div_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_int (NODE_T * p)
+void
+genie_pow_int (NODE_T * p)
 {
   A68_INT i, j;
   int expo, mult, prod;
@@ -2810,18 +2854,17 @@ void n (NODE_T * p) {\
   }
 
 A68_CMP_INT (genie_eq_int, ==)
-A68_CMP_INT (genie_ne_int, !=)
-A68_CMP_INT (genie_lt_int, <)
-A68_CMP_INT (genie_gt_int, >)
-A68_CMP_INT (genie_le_int, <=)
-A68_CMP_INT (genie_ge_int, >=)
+  A68_CMP_INT (genie_ne_int, !=)
+  A68_CMP_INT (genie_lt_int, <)
+  A68_CMP_INT (genie_gt_int, >)
+  A68_CMP_INT (genie_le_int, <=)
+  A68_CMP_INT (genie_ge_int, >=)
 
 /**
 @brief OP +:= = (REF INT, INT) REF INT
 @param p Node in syntax tree.
 **/
-
-void genie_plusab_int (NODE_T * p)
+     void genie_plusab_int (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_INT), genie_add_int);
 }
@@ -2831,7 +2874,8 @@ void genie_plusab_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minusab_int (NODE_T * p)
+void
+genie_minusab_int (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_INT), genie_sub_int);
 }
@@ -2841,7 +2885,8 @@ void genie_minusab_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_int (NODE_T * p)
+void
+genie_timesab_int (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_INT), genie_mul_int);
 }
@@ -2851,7 +2896,8 @@ void genie_timesab_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_overab_int (NODE_T * p)
+void
+genie_overab_int (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_INT), genie_over_int);
 }
@@ -2861,7 +2907,8 @@ void genie_overab_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_modab_int (NODE_T * p)
+void
+genie_modab_int (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_INT), genie_mod_int);
 }
@@ -2871,7 +2918,8 @@ void genie_modab_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lengthen_int_to_long_mp (NODE_T * p)
+void
+genie_lengthen_int_to_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_INT));
   MP_T *z;
@@ -2887,7 +2935,8 @@ void genie_lengthen_int_to_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lengthen_unsigned_to_long_mp (NODE_T * p)
+void
+genie_lengthen_unsigned_to_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_INT));
   MP_T *z;
@@ -2903,7 +2952,8 @@ void genie_lengthen_unsigned_to_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_long_mp_to_int (NODE_T * p)
+void
+genie_shorten_long_mp_to_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -2919,7 +2969,8 @@ void genie_shorten_long_mp_to_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_odd_long_mp (NODE_T * p)
+void
+genie_odd_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -2939,7 +2990,8 @@ void genie_odd_long_mp (NODE_T * p)
 @param m Mode associated with z.
 **/
 
-void test_long_int_range (NODE_T * p, MP_T * z, MOID_T * m)
+void
+test_long_int_range (NODE_T * p, MP_T * z, MOID_T * m)
 {
   PRELUDE_ERROR (!check_mp_int (z, m), p, ERROR_OUT_OF_BOUNDS, m);
 }
@@ -2949,7 +3001,8 @@ void test_long_int_range (NODE_T * p, MP_T * z, MOID_T * m)
 @param p Node in syntax tree.
 **/
 
-void genie_add_long_int (NODE_T * p)
+void
+genie_add_long_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
   int digits = DIGITS (m), size = SIZE (m);
@@ -2966,7 +3019,8 @@ void genie_add_long_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sub_long_int (NODE_T * p)
+void
+genie_sub_long_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
   int digits = DIGITS (m), size = SIZE (m);
@@ -2983,7 +3037,8 @@ void genie_sub_long_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mul_long_int (NODE_T * p)
+void
+genie_mul_long_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
   int digits = DIGITS (m), size = SIZE (m);
@@ -3000,7 +3055,8 @@ void genie_mul_long_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_long_mp_int_int (NODE_T * p)
+void
+genie_pow_long_mp_int_int (NODE_T * p)
 {
   MOID_T *m = LHS_MODE (p);
   int digits = DIGITS (m), size = SIZE (m);
@@ -3018,7 +3074,8 @@ void genie_pow_long_mp_int_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_long_int (NODE_T * p)
+void
+genie_plusab_long_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_add_long_int);
@@ -3029,7 +3086,8 @@ void genie_plusab_long_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minusab_long_int (NODE_T * p)
+void
+genie_minusab_long_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_sub_long_int);
@@ -3040,7 +3098,8 @@ void genie_minusab_long_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_long_int (NODE_T * p)
+void
+genie_timesab_long_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_mul_long_int);
@@ -3056,8 +3115,7 @@ A68_MONAD (genie_minus_real, A68_REAL, -)
 @brief OP ABS = (REAL) REAL
 @param p Node in syntax tree.
 **/
-
-void genie_abs_real (NODE_T * p)
+     void genie_abs_real (NODE_T * p)
 {
   A68_REAL *x;
   POP_OPERAND_ADDRESS (p, x, A68_REAL);
@@ -3069,7 +3127,8 @@ void genie_abs_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_round_real (NODE_T * p)
+void
+genie_round_real (NODE_T * p)
 {
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
@@ -3082,11 +3141,12 @@ void genie_round_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_entier_real (NODE_T * p)
+void
+genie_entier_real (NODE_T * p)
 {
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
-  PRELUDE_ERROR (VALUE (&x) < -(double) A68_MAX_INT || VALUE (&x) > (double)A68_MAX_INT, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
+  PRELUDE_ERROR (VALUE (&x) < -(double) A68_MAX_INT || VALUE (&x) > (double) A68_MAX_INT, p, ERROR_OUT_OF_BOUNDS, MODE (INT));
   PUSH_PRIMITIVE (p, (int) floor (VALUE (&x)), A68_INT);
 }
 
@@ -3095,7 +3155,8 @@ void genie_entier_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sign_real (NODE_T * p)
+void
+genie_sign_real (NODE_T * p)
 {
   A68_REAL x;
   POP_OBJECT (p, &x, A68_REAL);
@@ -3107,7 +3168,8 @@ void genie_sign_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_real (NODE_T * p)
+void
+genie_add_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
@@ -3120,7 +3182,8 @@ void genie_add_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sub_real (NODE_T * p)
+void
+genie_sub_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
@@ -3133,7 +3196,8 @@ void genie_sub_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mul_real (NODE_T * p)
+void
+genie_mul_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
@@ -3146,7 +3210,8 @@ void genie_mul_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_div_real (NODE_T * p)
+void
+genie_div_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
@@ -3159,7 +3224,8 @@ void genie_div_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_real_int (NODE_T * p)
+void
+genie_pow_real_int (NODE_T * p)
 {
   A68_INT j;
   A68_REAL x;
@@ -3196,7 +3262,8 @@ void genie_pow_real_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_real (NODE_T * p)
+void
+genie_pow_real (NODE_T * p)
 {
   A68_REAL x, y;
   double z = 0;
@@ -3229,18 +3296,17 @@ void n (NODE_T * p) {\
   }
 
 A68_CMP_REAL (genie_eq_real, ==)
-A68_CMP_REAL (genie_ne_real, !=)
-A68_CMP_REAL (genie_lt_real, <)
-A68_CMP_REAL (genie_gt_real, >)
-A68_CMP_REAL (genie_le_real, <=)
-A68_CMP_REAL (genie_ge_real, >=)
+  A68_CMP_REAL (genie_ne_real, !=)
+  A68_CMP_REAL (genie_lt_real, <)
+  A68_CMP_REAL (genie_gt_real, >)
+  A68_CMP_REAL (genie_le_real, <=)
+  A68_CMP_REAL (genie_ge_real, >=)
 
 /**
 @brief OP +:= = (REF REAL, REAL) REF REAL
 @param p Node in syntax tree.
 **/
-
-void genie_plusab_real (NODE_T * p)
+     void genie_plusab_real (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_REAL), genie_add_real);
 }
@@ -3250,7 +3316,8 @@ void genie_plusab_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minusab_real (NODE_T * p)
+void
+genie_minusab_real (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_REAL), genie_sub_real);
 }
@@ -3260,7 +3327,8 @@ void genie_minusab_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_real (NODE_T * p)
+void
+genie_timesab_real (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_REAL), genie_mul_real);
 }
@@ -3270,7 +3338,8 @@ void genie_timesab_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_divab_real (NODE_T * p)
+void
+genie_divab_real (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_REAL), genie_div_real);
 }
@@ -3280,7 +3349,8 @@ void genie_divab_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lengthen_real_to_long_mp (NODE_T * p)
+void
+genie_lengthen_real_to_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
@@ -3296,7 +3366,8 @@ void genie_lengthen_real_to_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_long_mp_to_real (NODE_T * p)
+void
+genie_shorten_long_mp_to_real (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3312,7 +3383,8 @@ void genie_shorten_long_mp_to_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_round_long_mp (NODE_T * p)
+void
+genie_round_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3327,7 +3399,8 @@ void genie_round_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_entier_long_mp (NODE_T * p)
+void
+genie_entier_long_mp (NODE_T * p)
 {
   int digits = DIGITS (LHS_MODE (p)), size = SIZE (LHS_MODE (p));
   ADDR_T pop_sp = stack_pointer;
@@ -3341,7 +3414,8 @@ void genie_entier_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sqrt_long_mp (NODE_T * p)
+void
+genie_sqrt_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3354,7 +3428,8 @@ void genie_sqrt_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curt_long_mp (NODE_T * p)
+void
+genie_curt_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3367,7 +3442,8 @@ void genie_curt_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_exp_long_mp (NODE_T * p)
+void
+genie_exp_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   ADDR_T pop_sp = stack_pointer;
@@ -3382,7 +3458,8 @@ void genie_exp_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ln_long_mp (NODE_T * p)
+void
+genie_ln_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   ADDR_T pop_sp = stack_pointer;
@@ -3397,7 +3474,8 @@ void genie_ln_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_log_long_mp (NODE_T * p)
+void
+genie_log_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   ADDR_T pop_sp = stack_pointer;
@@ -3412,7 +3490,8 @@ void genie_log_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sinh_long_mp (NODE_T * p)
+void
+genie_sinh_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3425,7 +3504,8 @@ void genie_sinh_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cosh_long_mp (NODE_T * p)
+void
+genie_cosh_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3438,7 +3518,8 @@ void genie_cosh_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tanh_long_mp (NODE_T * p)
+void
+genie_tanh_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3451,7 +3532,8 @@ void genie_tanh_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arcsinh_long_mp (NODE_T * p)
+void
+genie_arcsinh_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3464,7 +3546,8 @@ void genie_arcsinh_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arccosh_long_mp (NODE_T * p)
+void
+genie_arccosh_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3477,7 +3560,8 @@ void genie_arccosh_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arctanh_long_mp (NODE_T * p)
+void
+genie_arctanh_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3490,7 +3574,8 @@ void genie_arctanh_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sin_long_mp (NODE_T * p)
+void
+genie_sin_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3503,7 +3588,8 @@ void genie_sin_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cos_long_mp (NODE_T * p)
+void
+genie_cos_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3516,7 +3602,8 @@ void genie_cos_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tan_long_mp (NODE_T * p)
+void
+genie_tan_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3529,7 +3616,8 @@ void genie_tan_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_asin_long_mp (NODE_T * p)
+void
+genie_asin_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3542,7 +3630,8 @@ void genie_asin_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_acos_long_mp (NODE_T * p)
+void
+genie_acos_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3555,7 +3644,8 @@ void genie_acos_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_atan_long_mp (NODE_T * p)
+void
+genie_atan_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
@@ -3568,7 +3658,8 @@ void genie_atan_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_atan2_long_mp (NODE_T * p)
+void
+genie_atan2_long_mp (NODE_T * p)
 {
   int digits = DIGITS (MOID (p)), size = SIZE (MOID (p));
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
@@ -3585,7 +3676,8 @@ void genie_atan2_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
+void
+genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
 {
   MP_T *z;
   DECREMENT_STACK_POINTER (p, (int) size_long_mp ());
@@ -3599,7 +3691,8 @@ void genie_lengthen_long_mp_to_longlong_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
+void
+genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
 {
   MP_T *z;
   MOID_T *m = SUB_MOID (p);
@@ -3617,7 +3710,8 @@ void genie_shorten_longlong_mp_to_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minus_long_mp (NODE_T * p)
+void
+genie_minus_long_mp (NODE_T * p)
 {
   int size = SIZE (LHS_MODE (p));
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
@@ -3630,7 +3724,8 @@ void genie_minus_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_abs_long_mp (NODE_T * p)
+void
+genie_abs_long_mp (NODE_T * p)
 {
   int size = SIZE (LHS_MODE (p));
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
@@ -3643,7 +3738,8 @@ void genie_abs_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sign_long_mp (NODE_T * p)
+void
+genie_sign_long_mp (NODE_T * p)
 {
   int size = SIZE (LHS_MODE (p));
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
@@ -3656,7 +3752,8 @@ void genie_sign_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_long_mp (NODE_T * p)
+void
+genie_add_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3672,7 +3769,8 @@ void genie_add_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sub_long_mp (NODE_T * p)
+void
+genie_sub_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3688,7 +3786,8 @@ void genie_sub_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mul_long_mp (NODE_T * p)
+void
+genie_mul_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3704,7 +3803,8 @@ void genie_mul_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_div_long_mp (NODE_T * p)
+void
+genie_div_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3720,7 +3820,8 @@ void genie_div_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_over_long_mp (NODE_T * p)
+void
+genie_over_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3736,7 +3837,8 @@ void genie_over_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mod_long_mp (NODE_T * p)
+void
+genie_mod_long_mp (NODE_T * p)
 {
   MOID_T *mode = RHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3745,7 +3847,7 @@ void genie_mod_long_mp (NODE_T * p)
   PRELUDE_ERROR (mod_mp (p, x, x, y, digits) == NO_MP, p, ERROR_DIVISION_BY_ZERO, MODE (LONG_INT));
   if (MP_DIGIT (x, 1) < 0) {
     MP_DIGIT (y, 1) = ABS (MP_DIGIT (y, 1));
-   (void) add_mp (p, x, x, y, digits);
+    (void) add_mp (p, x, x, y, digits);
   }
   MP_STATUS (x) = (MP_T) INIT_MASK;
   DECREMENT_STACK_POINTER (p, size);
@@ -3756,7 +3858,8 @@ void genie_mod_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_long_mp (NODE_T * p)
+void
+genie_plusab_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_add_long_mp);
@@ -3767,7 +3870,8 @@ void genie_plusab_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minusab_long_mp (NODE_T * p)
+void
+genie_minusab_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_sub_long_mp);
@@ -3778,7 +3882,8 @@ void genie_minusab_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_long_mp (NODE_T * p)
+void
+genie_timesab_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_mul_long_mp);
@@ -3789,7 +3894,8 @@ void genie_timesab_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_divab_long_mp (NODE_T * p)
+void
+genie_divab_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_div_long_mp);
@@ -3800,7 +3906,8 @@ void genie_divab_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_overab_long_mp (NODE_T * p)
+void
+genie_overab_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_over_long_mp);
@@ -3811,7 +3918,8 @@ void genie_overab_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_modab_long_mp (NODE_T * p)
+void
+genie_modab_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_mod_long_mp);
@@ -3832,18 +3940,17 @@ void n (NODE_T * p) {\
 }
 
 A68_CMP_LONG (genie_eq_long_mp, eq_mp)
-A68_CMP_LONG (genie_ne_long_mp, ne_mp)
-A68_CMP_LONG (genie_lt_long_mp, lt_mp)
-A68_CMP_LONG (genie_gt_long_mp, gt_mp)
-A68_CMP_LONG (genie_le_long_mp, le_mp)
-A68_CMP_LONG (genie_ge_long_mp, ge_mp)
+  A68_CMP_LONG (genie_ne_long_mp, ne_mp)
+  A68_CMP_LONG (genie_lt_long_mp, lt_mp)
+  A68_CMP_LONG (genie_gt_long_mp, gt_mp)
+  A68_CMP_LONG (genie_le_long_mp, le_mp)
+  A68_CMP_LONG (genie_ge_long_mp, ge_mp)
 
 /**
 @brief OP ** = (LONG MODE, INT) LONG MODE
 @param p Node in syntax tree.
 **/
-
-void genie_pow_long_mp_int (NODE_T * p)
+     void genie_pow_long_mp_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3860,7 +3967,8 @@ void genie_pow_long_mp_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_long_mp (NODE_T * p)
+void
+genie_pow_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -3897,18 +4005,17 @@ void n (NODE_T * p) {\
   }
 
 A68_CMP_CHAR (genie_eq_char, ==)
-A68_CMP_CHAR (genie_ne_char, !=)
-A68_CMP_CHAR (genie_lt_char, <)
-A68_CMP_CHAR (genie_gt_char, >)
-A68_CMP_CHAR (genie_le_char, <=)
-A68_CMP_CHAR (genie_ge_char, >=)
+  A68_CMP_CHAR (genie_ne_char, !=)
+  A68_CMP_CHAR (genie_lt_char, <)
+  A68_CMP_CHAR (genie_gt_char, >)
+  A68_CMP_CHAR (genie_le_char, <=)
+  A68_CMP_CHAR (genie_ge_char, >=)
 
 /**
 @brief OP ABS = (CHAR) INT
 @param p Node in syntax tree.
 **/
-
-void genie_abs_char (NODE_T * p)
+     void genie_abs_char (NODE_T * p)
 {
   A68_CHAR i;
   POP_OBJECT (p, &i, A68_CHAR);
@@ -3920,7 +4027,8 @@ void genie_abs_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_repr_char (NODE_T * p)
+void
+genie_repr_char (NODE_T * p)
 {
   A68_INT k;
   POP_OBJECT (p, &k, A68_INT);
@@ -3938,33 +4046,30 @@ void n (NODE_T * p) {\
   }
 
 A68_CHAR_BOOL (genie_is_alnum, IS_ALNUM)
-A68_CHAR_BOOL (genie_is_alpha, IS_ALPHA)
-A68_CHAR_BOOL (genie_is_cntrl, IS_CNTRL)
-A68_CHAR_BOOL (genie_is_digit, IS_DIGIT)
-A68_CHAR_BOOL (genie_is_graph, IS_GRAPH)
-A68_CHAR_BOOL (genie_is_lower, IS_LOWER)
-A68_CHAR_BOOL (genie_is_print, IS_PRINT)
-A68_CHAR_BOOL (genie_is_punct, IS_PUNCT)
-A68_CHAR_BOOL (genie_is_space, IS_SPACE)
-A68_CHAR_BOOL (genie_is_upper, IS_UPPER)
-A68_CHAR_BOOL (genie_is_xdigit, IS_XDIGIT)
-
+  A68_CHAR_BOOL (genie_is_alpha, IS_ALPHA)
+  A68_CHAR_BOOL (genie_is_cntrl, IS_CNTRL)
+  A68_CHAR_BOOL (genie_is_digit, IS_DIGIT)
+  A68_CHAR_BOOL (genie_is_graph, IS_GRAPH)
+  A68_CHAR_BOOL (genie_is_lower, IS_LOWER)
+  A68_CHAR_BOOL (genie_is_print, IS_PRINT)
+  A68_CHAR_BOOL (genie_is_punct, IS_PUNCT)
+  A68_CHAR_BOOL (genie_is_space, IS_SPACE)
+  A68_CHAR_BOOL (genie_is_upper, IS_UPPER)
+  A68_CHAR_BOOL (genie_is_xdigit, IS_XDIGIT)
 #define A68_CHAR_CHAR(n, OP)\
 void n (NODE_T * p) {\
   A68_CHAR *ch;\
   POP_OPERAND_ADDRESS (p, ch, A68_CHAR);\
   VALUE (ch) = (char) (OP (TO_UCHAR (VALUE (ch))));\
 }
-
-A68_CHAR_CHAR (genie_to_lower, TO_LOWER)
-A68_CHAR_CHAR (genie_to_upper, TO_UPPER)
+  A68_CHAR_CHAR (genie_to_lower, TO_LOWER)
+  A68_CHAR_CHAR (genie_to_upper, TO_UPPER)
 
 /**
 @brief OP + = (CHAR, CHAR) STRING
 @param p Node in syntax tree.
 **/
-
-void genie_add_char (NODE_T * p)
+     void genie_add_char (NODE_T * p)
 {
   A68_CHAR a, b;
   A68_REF c, d;
@@ -4003,7 +4108,8 @@ void genie_add_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elem_string (NODE_T * p)
+void
+genie_elem_string (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *a;
@@ -4027,7 +4133,8 @@ void genie_elem_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_string (NODE_T * p)
+void
+genie_add_string (NODE_T * p)
 {
   A68_REF a, b, c, d;
   A68_ARRAY *a_1, *a_2, *a_3;
@@ -4086,7 +4193,8 @@ void genie_add_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_times_int_string (NODE_T * p)
+void
+genie_times_int_string (NODE_T * p)
 {
   A68_INT k;
   A68_REF a;
@@ -4105,7 +4213,8 @@ void genie_times_int_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_times_string_int (NODE_T * p)
+void
+genie_times_string_int (NODE_T * p)
 {
   A68_INT k;
   A68_REF a;
@@ -4121,7 +4230,8 @@ void genie_times_string_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_times_int_char (NODE_T * p)
+void
+genie_times_int_char (NODE_T * p)
 {
   A68_INT str_size;
   A68_CHAR a;
@@ -4165,7 +4275,8 @@ void genie_times_int_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_times_char_int (NODE_T * p)
+void
+genie_times_char_int (NODE_T * p)
 {
   A68_INT k;
   A68_CHAR a;
@@ -4181,7 +4292,8 @@ void genie_times_char_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_string (NODE_T * p)
+void
+genie_plusab_string (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_STRING), genie_add_string);
 }
@@ -4191,12 +4303,13 @@ void genie_plusab_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusto_string (NODE_T * p)
+void
+genie_plusto_string (NODE_T * p)
 {
   A68_REF refa, a, b;
   POP_REF (p, &refa);
   CHECK_REF (p, refa, MODE (REF_STRING));
-  a = * DEREF (A68_REF, &refa);
+  a = *DEREF (A68_REF, &refa);
   CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
   POP_REF (p, &b);
   PUSH_REF (p, b);
@@ -4211,7 +4324,8 @@ void genie_plusto_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_string (NODE_T * p)
+void
+genie_timesab_string (NODE_T * p)
 {
   A68_INT k;
   A68_REF refa, a;
@@ -4222,7 +4336,7 @@ void genie_timesab_string (NODE_T * p)
 /* REF STRING */
   POP_REF (p, &refa);
   CHECK_REF (p, refa, MODE (REF_STRING));
-  a = * DEREF (A68_REF, &refa);
+  a = *DEREF (A68_REF, &refa);
   CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
 /* Multiplication as repeated addition */
   PUSH_REF (p, empty_string (p));
@@ -4241,7 +4355,8 @@ void genie_timesab_string (NODE_T * p)
 @return -1 if a < b, 0 if a = b or -1 if a > b
 **/
 
-static int string_difference (NODE_T * p)
+static int
+string_difference (NODE_T * p)
 {
   A68_REF row1, row2;
   A68_ARRAY *a_1, *a_2;
@@ -4290,19 +4405,18 @@ void n (NODE_T * p) {\
 }
 
 A68_CMP_STRING (genie_eq_string, ==)
-A68_CMP_STRING (genie_ne_string, !=)
-A68_CMP_STRING (genie_lt_string, <)
-A68_CMP_STRING (genie_gt_string, >)
-A68_CMP_STRING (genie_le_string, <=)
-A68_CMP_STRING (genie_ge_string, >=)
+  A68_CMP_STRING (genie_ne_string, !=)
+  A68_CMP_STRING (genie_lt_string, <)
+  A68_CMP_STRING (genie_gt_string, >)
+  A68_CMP_STRING (genie_le_string, <=)
+  A68_CMP_STRING (genie_ge_string, >=)
 
 /* RNG functions are in gsl.c.*/
-
 /**
 @brief PROC first random = (INT) VOID
 @param p Node in syntax tree.
 **/
-void genie_first_random (NODE_T * p)
+     void genie_first_random (NODE_T * p)
 {
   A68_INT i;
   POP_OBJECT (p, &i, A68_INT);
@@ -4314,7 +4428,8 @@ void genie_first_random (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_next_random (NODE_T * p)
+void
+genie_next_random (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, rng_53_bit (), A68_REAL);
 }
@@ -4324,7 +4439,8 @@ void genie_next_random (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_next_rnd (NODE_T * p)
+void
+genie_next_rnd (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, 2 * rng_53_bit () - 1, A68_REAL);
 }
@@ -4334,7 +4450,8 @@ void genie_next_rnd (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_next_random (NODE_T * p)
+void
+genie_long_next_random (NODE_T * p)
 {
   int digits = DIGITS (MOID (p));
   MP_T *z;
@@ -4354,7 +4471,8 @@ void genie_long_next_random (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elem_bytes (NODE_T * p)
+void
+genie_elem_bytes (NODE_T * p)
 {
   A68_BYTES j;
   A68_INT i;
@@ -4373,7 +4491,8 @@ void genie_elem_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bytespack (NODE_T * p)
+void
+genie_bytespack (NODE_T * p)
 {
   A68_REF z;
   A68_BYTES b;
@@ -4390,7 +4509,8 @@ void genie_bytespack (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_bytes (NODE_T * p)
+void
+genie_add_bytes (NODE_T * p)
 {
   A68_BYTES *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_BYTES);
@@ -4403,7 +4523,8 @@ void genie_add_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_bytes (NODE_T * p)
+void
+genie_plusab_bytes (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_BYTES), genie_add_bytes);
 }
@@ -4413,7 +4534,8 @@ void genie_plusab_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusto_bytes (NODE_T * p)
+void
+genie_plusto_bytes (NODE_T * p)
 {
   A68_BYTES i, *address, j;
   A68_REF z;
@@ -4435,7 +4557,8 @@ void genie_plusto_bytes (NODE_T * p)
 @return Difference between objects.
 **/
 
-static int compare_bytes (NODE_T * p)
+static int
+compare_bytes (NODE_T * p)
 {
   A68_BYTES x, y;
   POP_OBJECT (p, &y, A68_BYTES);
@@ -4452,18 +4575,17 @@ void n (NODE_T * p) {\
 }
 
 A68_CMP_BYTES (genie_eq_bytes, ==)
-A68_CMP_BYTES (genie_ne_bytes, !=)
-A68_CMP_BYTES (genie_lt_bytes, <)
-A68_CMP_BYTES (genie_gt_bytes, >)
-A68_CMP_BYTES (genie_le_bytes, <=)
-A68_CMP_BYTES (genie_ge_bytes, >=)
+  A68_CMP_BYTES (genie_ne_bytes, !=)
+  A68_CMP_BYTES (genie_lt_bytes, <)
+  A68_CMP_BYTES (genie_gt_bytes, >)
+  A68_CMP_BYTES (genie_le_bytes, <=)
+  A68_CMP_BYTES (genie_ge_bytes, >=)
 
 /**
 @brief OP LENG = (BYTES) LONG BYTES
 @param p Node in syntax tree.
 **/
-
-void genie_leng_bytes (NODE_T * p)
+     void genie_leng_bytes (NODE_T * p)
 {
   A68_BYTES a;
   POP_OBJECT (p, &a, A68_BYTES);
@@ -4475,7 +4597,8 @@ void genie_leng_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_bytes (NODE_T * p)
+void
+genie_shorten_bytes (NODE_T * p)
 {
   A68_LONG_BYTES a;
   POP_OBJECT (p, &a, A68_LONG_BYTES);
@@ -4488,7 +4611,8 @@ void genie_shorten_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elem_long_bytes (NODE_T * p)
+void
+genie_elem_long_bytes (NODE_T * p)
 {
   A68_LONG_BYTES j;
   A68_INT i;
@@ -4507,7 +4631,8 @@ void genie_elem_long_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_bytespack (NODE_T * p)
+void
+genie_long_bytespack (NODE_T * p)
 {
   A68_REF z;
   A68_LONG_BYTES b;
@@ -4524,7 +4649,8 @@ void genie_long_bytespack (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_long_bytes (NODE_T * p)
+void
+genie_add_long_bytes (NODE_T * p)
 {
   A68_LONG_BYTES *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_LONG_BYTES);
@@ -4537,7 +4663,8 @@ void genie_add_long_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_long_bytes (NODE_T * p)
+void
+genie_plusab_long_bytes (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_LONG_BYTES), genie_add_long_bytes);
 }
@@ -4547,7 +4674,8 @@ void genie_plusab_long_bytes (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusto_long_bytes (NODE_T * p)
+void
+genie_plusto_long_bytes (NODE_T * p)
 {
   A68_LONG_BYTES i, *address, j;
   A68_REF z;
@@ -4569,7 +4697,8 @@ void genie_plusto_long_bytes (NODE_T * p)
 @return Difference between objects.
 **/
 
-static int compare_long_bytes (NODE_T * p)
+static int
+compare_long_bytes (NODE_T * p)
 {
   A68_LONG_BYTES x, y;
   POP_OBJECT (p, &y, A68_LONG_BYTES);
@@ -4586,24 +4715,21 @@ void n (NODE_T * p) {\
 }
 
 A68_CMP_LONG_BYTES (genie_eq_long_bytes, ==)
-A68_CMP_LONG_BYTES (genie_ne_long_bytes, !=)
-A68_CMP_LONG_BYTES (genie_lt_long_bytes, <)
-A68_CMP_LONG_BYTES (genie_gt_long_bytes, >)
-A68_CMP_LONG_BYTES (genie_le_long_bytes, <=)
-A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=)
+  A68_CMP_LONG_BYTES (genie_ne_long_bytes, !=)
+  A68_CMP_LONG_BYTES (genie_lt_long_bytes, <)
+  A68_CMP_LONG_BYTES (genie_gt_long_bytes, >)
+  A68_CMP_LONG_BYTES (genie_le_long_bytes, <=)
+  A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=)
 
 /* BITS operations */
-
 /* OP NOT = (BITS) BITS */
-
-A68_MONAD (genie_not_bits, A68_BITS, ~)
+  A68_MONAD (genie_not_bits, A68_BITS, ~)
 
 /**
 @brief OP AND = (BITS, BITS) BITS
 @param p Node in syntax tree.
 **/
-
-void genie_and_bits (NODE_T * p)
+     void genie_and_bits (NODE_T * p)
 {
   A68_BITS *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_BITS);
@@ -4615,7 +4741,8 @@ void genie_and_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_or_bits (NODE_T * p)
+void
+genie_or_bits (NODE_T * p)
 {
   A68_BITS *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_BITS);
@@ -4627,7 +4754,8 @@ void genie_or_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_xor_bits (NODE_T * p)
+void
+genie_xor_bits (NODE_T * p)
 {
   A68_BITS *i, *j;
   POP_OPERAND_ADDRESSES (p, i, j, A68_BITS);
@@ -4645,14 +4773,13 @@ void n (NODE_T * p) {\
   }
 
 A68_CMP_BITS (genie_eq_bits, ==)
-A68_CMP_BITS (genie_ne_bits, !=)
+  A68_CMP_BITS (genie_ne_bits, !=)
 
 /**
 @brief OP <= = (BITS, BITS) BOOL
 @param p Node in syntax tree.
 **/
-
-void genie_le_bits (NODE_T * p)
+     void genie_le_bits (NODE_T * p)
 {
   A68_BITS i, j;
   POP_OBJECT (p, &j, A68_BITS);
@@ -4665,7 +4792,8 @@ void genie_le_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ge_bits (NODE_T * p)
+void
+genie_ge_bits (NODE_T * p)
 {
   A68_BITS i, j;
   POP_OBJECT (p, &j, A68_BITS);
@@ -4678,7 +4806,8 @@ void genie_ge_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shl_bits (NODE_T * p)
+void
+genie_shl_bits (NODE_T * p)
 {
   A68_BITS i;
   A68_INT j;
@@ -4696,7 +4825,8 @@ void genie_shl_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shr_bits (NODE_T * p)
+void
+genie_shr_bits (NODE_T * p)
 {
   A68_INT *j;
   POP_OPERAND_ADDRESS (p, j, A68_INT);
@@ -4709,7 +4839,8 @@ void genie_shr_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elem_bits (NODE_T * p)
+void
+genie_elem_bits (NODE_T * p)
 {
   A68_BITS j;
   A68_INT i;
@@ -4729,7 +4860,8 @@ void genie_elem_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_set_bits (NODE_T * p)
+void
+genie_set_bits (NODE_T * p)
 {
   A68_BITS j;
   A68_INT i;
@@ -4749,7 +4881,8 @@ void genie_set_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_clear_bits (NODE_T * p)
+void
+genie_clear_bits (NODE_T * p)
 {
   A68_BITS j;
   A68_INT i;
@@ -4769,7 +4902,8 @@ void genie_clear_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_abs_bits (NODE_T * p)
+void
+genie_abs_bits (NODE_T * p)
 {
   A68_BITS i;
   POP_OBJECT (p, &i, A68_BITS);
@@ -4781,7 +4915,8 @@ void genie_abs_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bin_int (NODE_T * p)
+void
+genie_bin_int (NODE_T * p)
 {
   A68_INT i;
   POP_OBJECT (p, &i, A68_INT);
@@ -4799,7 +4934,8 @@ void genie_bin_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bin_long_mp (NODE_T * p)
+void
+genie_bin_long_mp (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int size = SIZE (mode);
@@ -4816,7 +4952,8 @@ void genie_bin_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_not_long_mp (NODE_T * p)
+void
+genie_not_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int size = SIZE (mode);
@@ -4836,7 +4973,8 @@ void genie_not_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_long_mp_to_bits (NODE_T * p)
+void
+genie_shorten_long_mp_to_bits (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -4854,7 +4992,8 @@ void genie_shorten_long_mp_to_bits (NODE_T * p)
 @return See brief description.
 **/
 
-unsigned elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
+unsigned
+elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
 {
   int n;
   ADDR_T pop_sp = stack_pointer;
@@ -4872,7 +5011,8 @@ unsigned elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
 @param p Node in syntax tree.
 **/
 
-void genie_elem_long_bits (NODE_T * p)
+void
+genie_elem_long_bits (NODE_T * p)
 {
   A68_INT *i;
   MP_T *z;
@@ -4891,7 +5031,8 @@ void genie_elem_long_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elem_longlong_bits (NODE_T * p)
+void
+genie_elem_longlong_bits (NODE_T * p)
 {
   A68_INT *i;
   MP_T *z;
@@ -4914,7 +5055,8 @@ void genie_elem_longlong_bits (NODE_T * p)
 @param bit Bit to set.
 **/
 
-static unsigned *set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, unsigned bit)
+static unsigned *
+set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, unsigned bit)
 {
   int n;
   unsigned *words = stack_mp_bits (p, z, m), mask = 0x1;
@@ -4935,7 +5077,8 @@ static unsigned *set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, unsigne
 @param p Node in syntax tree.
 **/
 
-void genie_set_long_bits (NODE_T * p)
+void
+genie_set_long_bits (NODE_T * p)
 {
   A68_INT *i;
   MP_T *z;
@@ -4956,7 +5099,8 @@ void genie_set_long_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_set_longlong_bits (NODE_T * p)
+void
+genie_set_longlong_bits (NODE_T * p)
 {
   A68_INT *i;
   MP_T *z;
@@ -4977,7 +5121,8 @@ void genie_set_longlong_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_clear_long_bits (NODE_T * p)
+void
+genie_clear_long_bits (NODE_T * p)
 {
   A68_INT *i;
   MP_T *z;
@@ -4998,7 +5143,8 @@ void genie_clear_long_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_clear_longlong_bits (NODE_T * p)
+void
+genie_clear_longlong_bits (NODE_T * p)
 {
   A68_INT *i;
   MP_T *z;
@@ -5019,7 +5165,8 @@ void genie_clear_longlong_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bits_pack (NODE_T * p)
+void
+genie_bits_pack (NODE_T * p)
 {
   A68_REF z;
   A68_BITS b;
@@ -5056,7 +5203,8 @@ void genie_bits_pack (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_long_bits_pack (NODE_T * p)
+void
+genie_long_bits_pack (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   A68_REF z;
@@ -5086,9 +5234,9 @@ void genie_long_bits_pack (NODE_T * p)
       A68_BOOL *boo = (A68_BOOL *) & (base[addr]);
       CHECK_INIT (p, INITIALISED (boo), MODE (BOOL));
       if (VALUE (boo)) {
-       (void) add_mp (p, sum, sum, fact, digits);
+        (void) add_mp (p, sum, sum, fact, digits);
       }
-     (void) mul_mp_digit (p, fact, fact, (MP_T) 2, digits);
+      (void) mul_mp_digit (p, fact, fact, (MP_T) 2, digits);
     }
   }
   stack_pointer = pop_sp;
@@ -5100,7 +5248,8 @@ void genie_long_bits_pack (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shl_long_mp (NODE_T * p)
+void
+genie_shl_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int i, k, size = SIZE (mode), words = get_mp_bits_words (mode);
@@ -5146,12 +5295,13 @@ void genie_shl_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shr_long_mp (NODE_T * p)
+void
+genie_shr_long_mp (NODE_T * p)
 {
   A68_INT *j;
   POP_OPERAND_ADDRESS (p, j, A68_INT);
   VALUE (j) = -VALUE (j);
-  (void) genie_shl_long_mp (p);        /* Conform RR */
+  (void) genie_shl_long_mp (p); /* Conform RR */
 }
 
 /**
@@ -5159,7 +5309,8 @@ void genie_shr_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_le_long_bits (NODE_T * p)
+void
+genie_le_long_bits (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int k, size = SIZE (mode), words = get_mp_bits_words (mode);
@@ -5180,7 +5331,8 @@ void genie_le_long_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ge_long_bits (NODE_T * p)
+void
+genie_ge_long_bits (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int k, size = SIZE (mode), words = get_mp_bits_words (mode);
@@ -5201,7 +5353,8 @@ void genie_ge_long_bits (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_and_long_mp (NODE_T * p)
+void
+genie_and_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int k, size = SIZE (mode), words = get_mp_bits_words (mode);
@@ -5221,7 +5374,8 @@ void genie_and_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_or_long_mp (NODE_T * p)
+void
+genie_or_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int k, size = SIZE (mode), words = get_mp_bits_words (mode);
@@ -5241,7 +5395,8 @@ void genie_or_long_mp (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_xor_long_mp (NODE_T * p)
+void
+genie_xor_long_mp (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int k, size = SIZE (mode), words = get_mp_bits_words (mode);
@@ -5257,241 +5412,237 @@ void genie_xor_long_mp (NODE_T * p)
 }
 
 A68_ENV_REAL (genie_cgs_acre, GSL_CONST_CGSM_ACRE)
-A68_ENV_REAL (genie_cgs_angstrom, GSL_CONST_CGSM_ANGSTROM)
-A68_ENV_REAL (genie_cgs_astronomical_unit, GSL_CONST_CGSM_ASTRONOMICAL_UNIT)
-A68_ENV_REAL (genie_cgs_bar, GSL_CONST_CGSM_BAR)
-A68_ENV_REAL (genie_cgs_barn, GSL_CONST_CGSM_BARN)
-A68_ENV_REAL (genie_cgs_bohr_magneton, GSL_CONST_CGSM_BOHR_MAGNETON)
-A68_ENV_REAL (genie_cgs_bohr_radius, GSL_CONST_CGSM_BOHR_RADIUS)
-A68_ENV_REAL (genie_cgs_boltzmann, GSL_CONST_CGSM_BOLTZMANN)
-A68_ENV_REAL (genie_cgs_btu, GSL_CONST_CGSM_BTU)
-A68_ENV_REAL (genie_cgs_calorie, GSL_CONST_CGSM_CALORIE)
-A68_ENV_REAL (genie_cgs_canadian_gallon, GSL_CONST_CGSM_CANADIAN_GALLON)
-A68_ENV_REAL (genie_cgs_carat, GSL_CONST_CGSM_CARAT)
-A68_ENV_REAL (genie_cgs_cup, GSL_CONST_CGSM_CUP)
-A68_ENV_REAL (genie_cgs_curie, GSL_CONST_CGSM_CURIE)
-A68_ENV_REAL (genie_cgs_day, GSL_CONST_CGSM_DAY)
-A68_ENV_REAL (genie_cgs_dyne, GSL_CONST_CGSM_DYNE)
-A68_ENV_REAL (genie_cgs_electron_charge, GSL_CONST_CGSM_ELECTRON_CHARGE)
-A68_ENV_REAL (genie_cgs_electron_magnetic_moment, GSL_CONST_CGSM_ELECTRON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_cgs_electron_volt, GSL_CONST_CGSM_ELECTRON_VOLT) 
-A68_ENV_REAL (genie_cgs_erg, GSL_CONST_CGSM_ERG)
-A68_ENV_REAL (genie_cgs_faraday, GSL_CONST_CGSM_FARADAY) 
-A68_ENV_REAL (genie_cgs_fathom, GSL_CONST_CGSM_FATHOM)
-A68_ENV_REAL (genie_cgs_fluid_ounce, GSL_CONST_CGSM_FLUID_OUNCE) 
-A68_ENV_REAL (genie_cgs_foot, GSL_CONST_CGSM_FOOT)
-A68_ENV_REAL (genie_cgs_footcandle, GSL_CONST_CGSM_FOOTCANDLE) 
-A68_ENV_REAL (genie_cgs_footlambert, GSL_CONST_CGSM_FOOTLAMBERT)
-A68_ENV_REAL (genie_cgs_gauss, GSL_CONST_CGSM_GAUSS) 
-A68_ENV_REAL (genie_cgs_gram_force, GSL_CONST_CGSM_GRAM_FORCE)
-A68_ENV_REAL (genie_cgs_grav_accel, GSL_CONST_CGSM_GRAV_ACCEL)
-A68_ENV_REAL (genie_cgs_gravitational_constant, GSL_CONST_CGSM_GRAVITATIONAL_CONSTANT)
-A68_ENV_REAL (genie_cgs_hectare, GSL_CONST_CGSM_HECTARE) 
-A68_ENV_REAL (genie_cgs_horsepower, GSL_CONST_CGSM_HORSEPOWER)
-A68_ENV_REAL (genie_cgs_hour, GSL_CONST_CGSM_HOUR) 
-A68_ENV_REAL (genie_cgs_inch, GSL_CONST_CGSM_INCH)
-A68_ENV_REAL (genie_cgs_inch_of_mercury, GSL_CONST_CGSM_INCH_OF_MERCURY)
-A68_ENV_REAL (genie_cgs_inch_of_water, GSL_CONST_CGSM_INCH_OF_WATER) 
-A68_ENV_REAL (genie_cgs_joule, GSL_CONST_CGSM_JOULE)
-A68_ENV_REAL (genie_cgs_kilometers_per_hour, GSL_CONST_CGSM_KILOMETERS_PER_HOUR)
-A68_ENV_REAL (genie_cgs_kilopound_force, GSL_CONST_CGSM_KILOPOUND_FORCE) 
-A68_ENV_REAL (genie_cgs_knot, GSL_CONST_CGSM_KNOT)
-A68_ENV_REAL (genie_cgs_lambert, GSL_CONST_CGSM_LAMBERT) 
-A68_ENV_REAL (genie_cgs_light_year, GSL_CONST_CGSM_LIGHT_YEAR)
-A68_ENV_REAL (genie_cgs_liter, GSL_CONST_CGSM_LITER) 
-A68_ENV_REAL (genie_cgs_lumen, GSL_CONST_CGSM_LUMEN)
-A68_ENV_REAL (genie_cgs_lux, GSL_CONST_CGSM_LUX) 
-A68_ENV_REAL (genie_cgs_mass_electron, GSL_CONST_CGSM_MASS_ELECTRON)
-A68_ENV_REAL (genie_cgs_mass_muon, GSL_CONST_CGSM_MASS_MUON) 
-A68_ENV_REAL (genie_cgs_mass_neutron, GSL_CONST_CGSM_MASS_NEUTRON)
-A68_ENV_REAL (genie_cgs_mass_proton, GSL_CONST_CGSM_MASS_PROTON)
-A68_ENV_REAL (genie_cgs_meter_of_mercury, GSL_CONST_CGSM_METER_OF_MERCURY)
-A68_ENV_REAL (genie_cgs_metric_ton, GSL_CONST_CGSM_METRIC_TON) 
-A68_ENV_REAL (genie_cgs_micron, GSL_CONST_CGSM_MICRON)
-A68_ENV_REAL (genie_cgs_mil, GSL_CONST_CGSM_MIL) 
-A68_ENV_REAL (genie_cgs_mile, GSL_CONST_CGSM_MILE)
-A68_ENV_REAL (genie_cgs_miles_per_hour, GSL_CONST_CGSM_MILES_PER_HOUR) 
-A68_ENV_REAL (genie_cgs_minute, GSL_CONST_CGSM_MINUTE)
-A68_ENV_REAL (genie_cgs_molar_gas, GSL_CONST_CGSM_MOLAR_GAS) 
-A68_ENV_REAL (genie_cgs_nautical_mile, GSL_CONST_CGSM_NAUTICAL_MILE)
-A68_ENV_REAL (genie_cgs_newton, GSL_CONST_CGSM_NEWTON) 
-A68_ENV_REAL (genie_cgs_nuclear_magneton, GSL_CONST_CGSM_NUCLEAR_MAGNETON)
-A68_ENV_REAL (genie_cgs_ounce_mass, GSL_CONST_CGSM_OUNCE_MASS) 
-A68_ENV_REAL (genie_cgs_parsec, GSL_CONST_CGSM_PARSEC)
-A68_ENV_REAL (genie_cgs_phot, GSL_CONST_CGSM_PHOT) 
-A68_ENV_REAL (genie_cgs_pint, GSL_CONST_CGSM_PINT)
-A68_ENV_REAL (genie_cgs_planck_constant_h, 6.6260693e-27) 
-A68_ENV_REAL (genie_cgs_planck_constant_hbar, 6.6260693e-27 / (2 * A68_PI))
-A68_ENV_REAL (genie_cgs_point, GSL_CONST_CGSM_POINT) 
-A68_ENV_REAL (genie_cgs_poise, GSL_CONST_CGSM_POISE)
-A68_ENV_REAL (genie_cgs_pound_force, GSL_CONST_CGSM_POUND_FORCE) 
-A68_ENV_REAL (genie_cgs_pound_mass, GSL_CONST_CGSM_POUND_MASS)
-A68_ENV_REAL (genie_cgs_poundal, GSL_CONST_CGSM_POUNDAL)
-A68_ENV_REAL (genie_cgs_proton_magnetic_moment, GSL_CONST_CGSM_PROTON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_cgs_psi, GSL_CONST_CGSM_PSI) 
-A68_ENV_REAL (genie_cgs_quart, GSL_CONST_CGSM_QUART)
-A68_ENV_REAL (genie_cgs_rad, GSL_CONST_CGSM_RAD) 
-A68_ENV_REAL (genie_cgs_roentgen, GSL_CONST_CGSM_ROENTGEN)
-A68_ENV_REAL (genie_cgs_rydberg, GSL_CONST_CGSM_RYDBERG) 
-A68_ENV_REAL (genie_cgs_solar_mass, GSL_CONST_CGSM_SOLAR_MASS)
-A68_ENV_REAL (genie_cgs_speed_of_light, GSL_CONST_CGSM_SPEED_OF_LIGHT)
-A68_ENV_REAL (genie_cgs_standard_gas_volume, GSL_CONST_CGSM_STANDARD_GAS_VOLUME)
-A68_ENV_REAL (genie_cgs_std_atmosphere, GSL_CONST_CGSM_STD_ATMOSPHERE) 
-A68_ENV_REAL (genie_cgs_stilb, GSL_CONST_CGSM_STILB)
-A68_ENV_REAL (genie_cgs_stokes, GSL_CONST_CGSM_STOKES) 
-A68_ENV_REAL (genie_cgs_tablespoon, GSL_CONST_CGSM_TABLESPOON)
-A68_ENV_REAL (genie_cgs_teaspoon, GSL_CONST_CGSM_TEASPOON) 
-A68_ENV_REAL (genie_cgs_texpoint, GSL_CONST_CGSM_TEXPOINT)
-A68_ENV_REAL (genie_cgs_therm, GSL_CONST_CGSM_THERM) 
-A68_ENV_REAL (genie_cgs_ton, GSL_CONST_CGSM_TON)
-A68_ENV_REAL (genie_cgs_torr, GSL_CONST_CGSM_TORR) 
-A68_ENV_REAL (genie_cgs_troy_ounce, GSL_CONST_CGSM_TROY_OUNCE)
-A68_ENV_REAL (genie_cgs_uk_gallon, GSL_CONST_CGSM_UK_GALLON) 
-A68_ENV_REAL (genie_cgs_uk_ton, GSL_CONST_CGSM_UK_TON)
-A68_ENV_REAL (genie_cgs_unified_atomic_mass, GSL_CONST_CGSM_UNIFIED_ATOMIC_MASS)
-A68_ENV_REAL (genie_cgs_us_gallon, GSL_CONST_CGSM_US_GALLON) 
-A68_ENV_REAL (genie_cgs_week, GSL_CONST_CGSM_WEEK)
-A68_ENV_REAL (genie_cgs_yard, GSL_CONST_CGSM_YARD) 
-A68_ENV_REAL (genie_mks_acre, GSL_CONST_MKS_ACRE)
-A68_ENV_REAL (genie_mks_angstrom, GSL_CONST_MKS_ANGSTROM)
-A68_ENV_REAL (genie_mks_astronomical_unit, GSL_CONST_MKS_ASTRONOMICAL_UNIT) 
-A68_ENV_REAL (genie_mks_bar, GSL_CONST_MKS_BAR)
-A68_ENV_REAL (genie_mks_barn, GSL_CONST_MKS_BARN) 
-A68_ENV_REAL (genie_mks_bohr_magneton, GSL_CONST_MKS_BOHR_MAGNETON)
-A68_ENV_REAL (genie_mks_bohr_radius, GSL_CONST_MKS_BOHR_RADIUS) 
-A68_ENV_REAL (genie_mks_boltzmann, GSL_CONST_MKS_BOLTZMANN)
-A68_ENV_REAL (genie_mks_btu, GSL_CONST_MKS_BTU) 
-A68_ENV_REAL (genie_mks_calorie, GSL_CONST_MKS_CALORIE)
-A68_ENV_REAL (genie_mks_canadian_gallon, GSL_CONST_MKS_CANADIAN_GALLON) 
-A68_ENV_REAL (genie_mks_carat, GSL_CONST_MKS_CARAT)
-A68_ENV_REAL (genie_mks_cup, GSL_CONST_MKS_CUP) 
-A68_ENV_REAL (genie_mks_curie, GSL_CONST_MKS_CURIE)
-A68_ENV_REAL (genie_mks_day, GSL_CONST_MKS_DAY) 
-A68_ENV_REAL (genie_mks_dyne, GSL_CONST_MKS_DYNE)
-A68_ENV_REAL (genie_mks_electron_charge, GSL_CONST_MKS_ELECTRON_CHARGE)
-A68_ENV_REAL (genie_mks_electron_magnetic_moment, GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_mks_electron_volt, GSL_CONST_MKS_ELECTRON_VOLT) 
-A68_ENV_REAL (genie_mks_erg, GSL_CONST_MKS_ERG)
-A68_ENV_REAL (genie_mks_faraday, GSL_CONST_MKS_FARADAY) 
-A68_ENV_REAL (genie_mks_fathom, GSL_CONST_MKS_FATHOM)
-A68_ENV_REAL (genie_mks_fluid_ounce, GSL_CONST_MKS_FLUID_OUNCE) 
-A68_ENV_REAL (genie_mks_foot, GSL_CONST_MKS_FOOT)
-A68_ENV_REAL (genie_mks_footcandle, GSL_CONST_MKS_FOOTCANDLE) 
-A68_ENV_REAL (genie_mks_footlambert, GSL_CONST_MKS_FOOTLAMBERT)
-A68_ENV_REAL (genie_mks_gauss, GSL_CONST_MKS_GAUSS) 
-A68_ENV_REAL (genie_mks_gram_force, GSL_CONST_MKS_GRAM_FORCE)
-A68_ENV_REAL (genie_mks_grav_accel, GSL_CONST_MKS_GRAV_ACCEL)
-A68_ENV_REAL (genie_mks_gravitational_constant, GSL_CONST_MKS_GRAVITATIONAL_CONSTANT)
-A68_ENV_REAL (genie_mks_hectare, GSL_CONST_MKS_HECTARE) 
-A68_ENV_REAL (genie_mks_horsepower, GSL_CONST_MKS_HORSEPOWER)
-A68_ENV_REAL (genie_mks_hour, GSL_CONST_MKS_HOUR) 
-A68_ENV_REAL (genie_mks_inch, GSL_CONST_MKS_INCH)
-A68_ENV_REAL (genie_mks_inch_of_mercury, GSL_CONST_MKS_INCH_OF_MERCURY)
-A68_ENV_REAL (genie_mks_inch_of_water, GSL_CONST_MKS_INCH_OF_WATER) 
-A68_ENV_REAL (genie_mks_joule, GSL_CONST_MKS_JOULE)
-A68_ENV_REAL (genie_mks_kilometers_per_hour, GSL_CONST_MKS_KILOMETERS_PER_HOUR)
-A68_ENV_REAL (genie_mks_kilopound_force, GSL_CONST_MKS_KILOPOUND_FORCE) 
-A68_ENV_REAL (genie_mks_knot, GSL_CONST_MKS_KNOT)
-A68_ENV_REAL (genie_mks_lambert, GSL_CONST_MKS_LAMBERT) 
-A68_ENV_REAL (genie_mks_light_year, GSL_CONST_MKS_LIGHT_YEAR)
-A68_ENV_REAL (genie_mks_liter, GSL_CONST_MKS_LITER) 
-A68_ENV_REAL (genie_mks_lumen, GSL_CONST_MKS_LUMEN)
-A68_ENV_REAL (genie_mks_lux, GSL_CONST_MKS_LUX) 
-A68_ENV_REAL (genie_mks_mass_electron, GSL_CONST_MKS_MASS_ELECTRON)
-A68_ENV_REAL (genie_mks_mass_muon, GSL_CONST_MKS_MASS_MUON) 
-A68_ENV_REAL (genie_mks_mass_neutron, GSL_CONST_MKS_MASS_NEUTRON)
-A68_ENV_REAL (genie_mks_mass_proton, GSL_CONST_MKS_MASS_PROTON)
-A68_ENV_REAL (genie_mks_meter_of_mercury, GSL_CONST_MKS_METER_OF_MERCURY)
-A68_ENV_REAL (genie_mks_metric_ton, GSL_CONST_MKS_METRIC_TON) 
-A68_ENV_REAL (genie_mks_micron, GSL_CONST_MKS_MICRON)
-A68_ENV_REAL (genie_mks_mil, GSL_CONST_MKS_MIL) 
-A68_ENV_REAL (genie_mks_mile, GSL_CONST_MKS_MILE)
-A68_ENV_REAL (genie_mks_miles_per_hour, GSL_CONST_MKS_MILES_PER_HOUR) 
-A68_ENV_REAL (genie_mks_minute, GSL_CONST_MKS_MINUTE)
-A68_ENV_REAL (genie_mks_molar_gas, GSL_CONST_MKS_MOLAR_GAS) 
-A68_ENV_REAL (genie_mks_nautical_mile, GSL_CONST_MKS_NAUTICAL_MILE)
-A68_ENV_REAL (genie_mks_newton, GSL_CONST_MKS_NEWTON) 
-A68_ENV_REAL (genie_mks_nuclear_magneton, GSL_CONST_MKS_NUCLEAR_MAGNETON)
-A68_ENV_REAL (genie_mks_ounce_mass, GSL_CONST_MKS_OUNCE_MASS) 
-A68_ENV_REAL (genie_mks_parsec, GSL_CONST_MKS_PARSEC)
-A68_ENV_REAL (genie_mks_phot, GSL_CONST_MKS_PHOT) 
-A68_ENV_REAL (genie_mks_pint, GSL_CONST_MKS_PINT)
-A68_ENV_REAL (genie_mks_planck_constant_h, 6.6260693e-34) 
-A68_ENV_REAL (genie_mks_planck_constant_hbar, 6.6260693e-34 / (2 * A68_PI))
-A68_ENV_REAL (genie_mks_point, GSL_CONST_MKS_POINT) 
-A68_ENV_REAL (genie_mks_poise, GSL_CONST_MKS_POISE)
-A68_ENV_REAL (genie_mks_pound_force, GSL_CONST_MKS_POUND_FORCE) 
-A68_ENV_REAL (genie_mks_pound_mass, GSL_CONST_MKS_POUND_MASS)
-A68_ENV_REAL (genie_mks_poundal, GSL_CONST_MKS_POUNDAL)
-A68_ENV_REAL (genie_mks_proton_magnetic_moment, GSL_CONST_MKS_PROTON_MAGNETIC_MOMENT)
-A68_ENV_REAL (genie_mks_psi, GSL_CONST_MKS_PSI) 
-A68_ENV_REAL (genie_mks_quart, GSL_CONST_MKS_QUART)
-A68_ENV_REAL (genie_mks_rad, GSL_CONST_MKS_RAD) 
-A68_ENV_REAL (genie_mks_roentgen, GSL_CONST_MKS_ROENTGEN)
-A68_ENV_REAL (genie_mks_rydberg, GSL_CONST_MKS_RYDBERG) 
-A68_ENV_REAL (genie_mks_solar_mass, GSL_CONST_MKS_SOLAR_MASS)
-A68_ENV_REAL (genie_mks_speed_of_light, GSL_CONST_MKS_SPEED_OF_LIGHT)
-A68_ENV_REAL (genie_mks_standard_gas_volume, GSL_CONST_MKS_STANDARD_GAS_VOLUME)
-A68_ENV_REAL (genie_mks_std_atmosphere, GSL_CONST_MKS_STD_ATMOSPHERE) 
-A68_ENV_REAL (genie_mks_stilb, GSL_CONST_MKS_STILB)
-A68_ENV_REAL (genie_mks_stokes, GSL_CONST_MKS_STOKES) 
-A68_ENV_REAL (genie_mks_tablespoon, GSL_CONST_MKS_TABLESPOON)
-A68_ENV_REAL (genie_mks_teaspoon, GSL_CONST_MKS_TEASPOON) 
-A68_ENV_REAL (genie_mks_texpoint, GSL_CONST_MKS_TEXPOINT)
-A68_ENV_REAL (genie_mks_therm, GSL_CONST_MKS_THERM) 
-A68_ENV_REAL (genie_mks_ton, GSL_CONST_MKS_TON)
-A68_ENV_REAL (genie_mks_torr, GSL_CONST_MKS_TORR) 
-A68_ENV_REAL (genie_mks_troy_ounce, GSL_CONST_MKS_TROY_OUNCE)
-A68_ENV_REAL (genie_mks_uk_gallon, GSL_CONST_MKS_UK_GALLON) 
-A68_ENV_REAL (genie_mks_uk_ton, GSL_CONST_MKS_UK_TON)
-A68_ENV_REAL (genie_mks_unified_atomic_mass, GSL_CONST_MKS_UNIFIED_ATOMIC_MASS)
-A68_ENV_REAL (genie_mks_us_gallon, GSL_CONST_MKS_US_GALLON)
-A68_ENV_REAL (genie_mks_vacuum_permeability, GSL_CONST_MKS_VACUUM_PERMEABILITY)
-A68_ENV_REAL (genie_mks_vacuum_permittivity, GSL_CONST_MKS_VACUUM_PERMITTIVITY) 
-A68_ENV_REAL (genie_mks_week, GSL_CONST_MKS_WEEK)
-A68_ENV_REAL (genie_mks_yard, GSL_CONST_MKS_YARD) 
-A68_ENV_REAL (genie_num_atto, GSL_CONST_NUM_ATTO)
-A68_ENV_REAL (genie_num_avogadro, GSL_CONST_NUM_AVOGADRO) 
-A68_ENV_REAL (genie_num_exa, GSL_CONST_NUM_EXA)
-A68_ENV_REAL (genie_num_femto, GSL_CONST_NUM_FEMTO) 
-A68_ENV_REAL (genie_num_fine_structure, GSL_CONST_NUM_FINE_STRUCTURE)
-A68_ENV_REAL (genie_num_giga, GSL_CONST_NUM_GIGA) 
-A68_ENV_REAL (genie_num_kilo, GSL_CONST_NUM_KILO)
-A68_ENV_REAL (genie_num_mega, GSL_CONST_NUM_MEGA) 
-A68_ENV_REAL (genie_num_micro, GSL_CONST_NUM_MICRO)
-A68_ENV_REAL (genie_num_milli, GSL_CONST_NUM_MILLI) 
-A68_ENV_REAL (genie_num_nano, GSL_CONST_NUM_NANO)
-A68_ENV_REAL (genie_num_peta, GSL_CONST_NUM_PETA) 
-A68_ENV_REAL (genie_num_pico, GSL_CONST_NUM_PICO)
-A68_ENV_REAL (genie_num_tera, GSL_CONST_NUM_TERA) 
-A68_ENV_REAL (genie_num_yocto, GSL_CONST_NUM_YOCTO)
-A68_ENV_REAL (genie_num_yotta, GSL_CONST_NUM_YOTTA) 
-A68_ENV_REAL (genie_num_zepto, GSL_CONST_NUM_ZEPTO)
-A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
+  A68_ENV_REAL (genie_cgs_angstrom, GSL_CONST_CGSM_ANGSTROM)
+  A68_ENV_REAL (genie_cgs_astronomical_unit, GSL_CONST_CGSM_ASTRONOMICAL_UNIT)
+  A68_ENV_REAL (genie_cgs_bar, GSL_CONST_CGSM_BAR)
+  A68_ENV_REAL (genie_cgs_barn, GSL_CONST_CGSM_BARN)
+  A68_ENV_REAL (genie_cgs_bohr_magneton, GSL_CONST_CGSM_BOHR_MAGNETON)
+  A68_ENV_REAL (genie_cgs_bohr_radius, GSL_CONST_CGSM_BOHR_RADIUS)
+  A68_ENV_REAL (genie_cgs_boltzmann, GSL_CONST_CGSM_BOLTZMANN)
+  A68_ENV_REAL (genie_cgs_btu, GSL_CONST_CGSM_BTU)
+  A68_ENV_REAL (genie_cgs_calorie, GSL_CONST_CGSM_CALORIE)
+  A68_ENV_REAL (genie_cgs_canadian_gallon, GSL_CONST_CGSM_CANADIAN_GALLON)
+  A68_ENV_REAL (genie_cgs_carat, GSL_CONST_CGSM_CARAT)
+  A68_ENV_REAL (genie_cgs_cup, GSL_CONST_CGSM_CUP)
+  A68_ENV_REAL (genie_cgs_curie, GSL_CONST_CGSM_CURIE)
+  A68_ENV_REAL (genie_cgs_day, GSL_CONST_CGSM_DAY)
+  A68_ENV_REAL (genie_cgs_dyne, GSL_CONST_CGSM_DYNE)
+  A68_ENV_REAL (genie_cgs_electron_charge, GSL_CONST_CGSM_ELECTRON_CHARGE)
+  A68_ENV_REAL (genie_cgs_electron_magnetic_moment, GSL_CONST_CGSM_ELECTRON_MAGNETIC_MOMENT)
+  A68_ENV_REAL (genie_cgs_electron_volt, GSL_CONST_CGSM_ELECTRON_VOLT)
+  A68_ENV_REAL (genie_cgs_erg, GSL_CONST_CGSM_ERG)
+  A68_ENV_REAL (genie_cgs_faraday, GSL_CONST_CGSM_FARADAY)
+  A68_ENV_REAL (genie_cgs_fathom, GSL_CONST_CGSM_FATHOM)
+  A68_ENV_REAL (genie_cgs_fluid_ounce, GSL_CONST_CGSM_FLUID_OUNCE)
+  A68_ENV_REAL (genie_cgs_foot, GSL_CONST_CGSM_FOOT)
+  A68_ENV_REAL (genie_cgs_footcandle, GSL_CONST_CGSM_FOOTCANDLE)
+  A68_ENV_REAL (genie_cgs_footlambert, GSL_CONST_CGSM_FOOTLAMBERT)
+  A68_ENV_REAL (genie_cgs_gauss, GSL_CONST_CGSM_GAUSS)
+  A68_ENV_REAL (genie_cgs_gram_force, GSL_CONST_CGSM_GRAM_FORCE)
+  A68_ENV_REAL (genie_cgs_grav_accel, GSL_CONST_CGSM_GRAV_ACCEL)
+  A68_ENV_REAL (genie_cgs_gravitational_constant, GSL_CONST_CGSM_GRAVITATIONAL_CONSTANT)
+  A68_ENV_REAL (genie_cgs_hectare, GSL_CONST_CGSM_HECTARE)
+  A68_ENV_REAL (genie_cgs_horsepower, GSL_CONST_CGSM_HORSEPOWER)
+  A68_ENV_REAL (genie_cgs_hour, GSL_CONST_CGSM_HOUR)
+  A68_ENV_REAL (genie_cgs_inch, GSL_CONST_CGSM_INCH)
+  A68_ENV_REAL (genie_cgs_inch_of_mercury, GSL_CONST_CGSM_INCH_OF_MERCURY)
+  A68_ENV_REAL (genie_cgs_inch_of_water, GSL_CONST_CGSM_INCH_OF_WATER)
+  A68_ENV_REAL (genie_cgs_joule, GSL_CONST_CGSM_JOULE)
+  A68_ENV_REAL (genie_cgs_kilometers_per_hour, GSL_CONST_CGSM_KILOMETERS_PER_HOUR)
+  A68_ENV_REAL (genie_cgs_kilopound_force, GSL_CONST_CGSM_KILOPOUND_FORCE)
+  A68_ENV_REAL (genie_cgs_knot, GSL_CONST_CGSM_KNOT)
+  A68_ENV_REAL (genie_cgs_lambert, GSL_CONST_CGSM_LAMBERT)
+  A68_ENV_REAL (genie_cgs_light_year, GSL_CONST_CGSM_LIGHT_YEAR)
+  A68_ENV_REAL (genie_cgs_liter, GSL_CONST_CGSM_LITER)
+  A68_ENV_REAL (genie_cgs_lumen, GSL_CONST_CGSM_LUMEN)
+  A68_ENV_REAL (genie_cgs_lux, GSL_CONST_CGSM_LUX)
+  A68_ENV_REAL (genie_cgs_mass_electron, GSL_CONST_CGSM_MASS_ELECTRON)
+  A68_ENV_REAL (genie_cgs_mass_muon, GSL_CONST_CGSM_MASS_MUON)
+  A68_ENV_REAL (genie_cgs_mass_neutron, GSL_CONST_CGSM_MASS_NEUTRON)
+  A68_ENV_REAL (genie_cgs_mass_proton, GSL_CONST_CGSM_MASS_PROTON)
+  A68_ENV_REAL (genie_cgs_meter_of_mercury, GSL_CONST_CGSM_METER_OF_MERCURY)
+  A68_ENV_REAL (genie_cgs_metric_ton, GSL_CONST_CGSM_METRIC_TON)
+  A68_ENV_REAL (genie_cgs_micron, GSL_CONST_CGSM_MICRON)
+  A68_ENV_REAL (genie_cgs_mil, GSL_CONST_CGSM_MIL)
+  A68_ENV_REAL (genie_cgs_mile, GSL_CONST_CGSM_MILE)
+  A68_ENV_REAL (genie_cgs_miles_per_hour, GSL_CONST_CGSM_MILES_PER_HOUR)
+  A68_ENV_REAL (genie_cgs_minute, GSL_CONST_CGSM_MINUTE)
+  A68_ENV_REAL (genie_cgs_molar_gas, GSL_CONST_CGSM_MOLAR_GAS)
+  A68_ENV_REAL (genie_cgs_nautical_mile, GSL_CONST_CGSM_NAUTICAL_MILE)
+  A68_ENV_REAL (genie_cgs_newton, GSL_CONST_CGSM_NEWTON)
+  A68_ENV_REAL (genie_cgs_nuclear_magneton, GSL_CONST_CGSM_NUCLEAR_MAGNETON)
+  A68_ENV_REAL (genie_cgs_ounce_mass, GSL_CONST_CGSM_OUNCE_MASS)
+  A68_ENV_REAL (genie_cgs_parsec, GSL_CONST_CGSM_PARSEC)
+  A68_ENV_REAL (genie_cgs_phot, GSL_CONST_CGSM_PHOT)
+  A68_ENV_REAL (genie_cgs_pint, GSL_CONST_CGSM_PINT)
+  A68_ENV_REAL (genie_cgs_planck_constant_h, 6.6260693e-27)
+  A68_ENV_REAL (genie_cgs_planck_constant_hbar, 6.6260693e-27 / (2 * A68_PI))
+  A68_ENV_REAL (genie_cgs_point, GSL_CONST_CGSM_POINT)
+  A68_ENV_REAL (genie_cgs_poise, GSL_CONST_CGSM_POISE)
+  A68_ENV_REAL (genie_cgs_pound_force, GSL_CONST_CGSM_POUND_FORCE)
+  A68_ENV_REAL (genie_cgs_pound_mass, GSL_CONST_CGSM_POUND_MASS)
+  A68_ENV_REAL (genie_cgs_poundal, GSL_CONST_CGSM_POUNDAL)
+  A68_ENV_REAL (genie_cgs_proton_magnetic_moment, GSL_CONST_CGSM_PROTON_MAGNETIC_MOMENT)
+  A68_ENV_REAL (genie_cgs_psi, GSL_CONST_CGSM_PSI)
+  A68_ENV_REAL (genie_cgs_quart, GSL_CONST_CGSM_QUART)
+  A68_ENV_REAL (genie_cgs_rad, GSL_CONST_CGSM_RAD)
+  A68_ENV_REAL (genie_cgs_roentgen, GSL_CONST_CGSM_ROENTGEN)
+  A68_ENV_REAL (genie_cgs_rydberg, GSL_CONST_CGSM_RYDBERG)
+  A68_ENV_REAL (genie_cgs_solar_mass, GSL_CONST_CGSM_SOLAR_MASS)
+  A68_ENV_REAL (genie_cgs_speed_of_light, GSL_CONST_CGSM_SPEED_OF_LIGHT)
+  A68_ENV_REAL (genie_cgs_standard_gas_volume, GSL_CONST_CGSM_STANDARD_GAS_VOLUME)
+  A68_ENV_REAL (genie_cgs_std_atmosphere, GSL_CONST_CGSM_STD_ATMOSPHERE)
+  A68_ENV_REAL (genie_cgs_stilb, GSL_CONST_CGSM_STILB)
+  A68_ENV_REAL (genie_cgs_stokes, GSL_CONST_CGSM_STOKES)
+  A68_ENV_REAL (genie_cgs_tablespoon, GSL_CONST_CGSM_TABLESPOON)
+  A68_ENV_REAL (genie_cgs_teaspoon, GSL_CONST_CGSM_TEASPOON)
+  A68_ENV_REAL (genie_cgs_texpoint, GSL_CONST_CGSM_TEXPOINT)
+  A68_ENV_REAL (genie_cgs_therm, GSL_CONST_CGSM_THERM)
+  A68_ENV_REAL (genie_cgs_ton, GSL_CONST_CGSM_TON)
+  A68_ENV_REAL (genie_cgs_torr, GSL_CONST_CGSM_TORR)
+  A68_ENV_REAL (genie_cgs_troy_ounce, GSL_CONST_CGSM_TROY_OUNCE)
+  A68_ENV_REAL (genie_cgs_uk_gallon, GSL_CONST_CGSM_UK_GALLON)
+  A68_ENV_REAL (genie_cgs_uk_ton, GSL_CONST_CGSM_UK_TON)
+  A68_ENV_REAL (genie_cgs_unified_atomic_mass, GSL_CONST_CGSM_UNIFIED_ATOMIC_MASS)
+  A68_ENV_REAL (genie_cgs_us_gallon, GSL_CONST_CGSM_US_GALLON)
+  A68_ENV_REAL (genie_cgs_week, GSL_CONST_CGSM_WEEK)
+  A68_ENV_REAL (genie_cgs_yard, GSL_CONST_CGSM_YARD)
+  A68_ENV_REAL (genie_mks_acre, GSL_CONST_MKS_ACRE)
+  A68_ENV_REAL (genie_mks_angstrom, GSL_CONST_MKS_ANGSTROM)
+  A68_ENV_REAL (genie_mks_astronomical_unit, GSL_CONST_MKS_ASTRONOMICAL_UNIT)
+  A68_ENV_REAL (genie_mks_bar, GSL_CONST_MKS_BAR)
+  A68_ENV_REAL (genie_mks_barn, GSL_CONST_MKS_BARN)
+  A68_ENV_REAL (genie_mks_bohr_magneton, GSL_CONST_MKS_BOHR_MAGNETON)
+  A68_ENV_REAL (genie_mks_bohr_radius, GSL_CONST_MKS_BOHR_RADIUS)
+  A68_ENV_REAL (genie_mks_boltzmann, GSL_CONST_MKS_BOLTZMANN)
+  A68_ENV_REAL (genie_mks_btu, GSL_CONST_MKS_BTU)
+  A68_ENV_REAL (genie_mks_calorie, GSL_CONST_MKS_CALORIE)
+  A68_ENV_REAL (genie_mks_canadian_gallon, GSL_CONST_MKS_CANADIAN_GALLON)
+  A68_ENV_REAL (genie_mks_carat, GSL_CONST_MKS_CARAT)
+  A68_ENV_REAL (genie_mks_cup, GSL_CONST_MKS_CUP)
+  A68_ENV_REAL (genie_mks_curie, GSL_CONST_MKS_CURIE)
+  A68_ENV_REAL (genie_mks_day, GSL_CONST_MKS_DAY)
+  A68_ENV_REAL (genie_mks_dyne, GSL_CONST_MKS_DYNE)
+  A68_ENV_REAL (genie_mks_electron_charge, GSL_CONST_MKS_ELECTRON_CHARGE)
+  A68_ENV_REAL (genie_mks_electron_magnetic_moment, GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT)
+  A68_ENV_REAL (genie_mks_electron_volt, GSL_CONST_MKS_ELECTRON_VOLT)
+  A68_ENV_REAL (genie_mks_erg, GSL_CONST_MKS_ERG)
+  A68_ENV_REAL (genie_mks_faraday, GSL_CONST_MKS_FARADAY)
+  A68_ENV_REAL (genie_mks_fathom, GSL_CONST_MKS_FATHOM)
+  A68_ENV_REAL (genie_mks_fluid_ounce, GSL_CONST_MKS_FLUID_OUNCE)
+  A68_ENV_REAL (genie_mks_foot, GSL_CONST_MKS_FOOT)
+  A68_ENV_REAL (genie_mks_footcandle, GSL_CONST_MKS_FOOTCANDLE)
+  A68_ENV_REAL (genie_mks_footlambert, GSL_CONST_MKS_FOOTLAMBERT)
+  A68_ENV_REAL (genie_mks_gauss, GSL_CONST_MKS_GAUSS)
+  A68_ENV_REAL (genie_mks_gram_force, GSL_CONST_MKS_GRAM_FORCE)
+  A68_ENV_REAL (genie_mks_grav_accel, GSL_CONST_MKS_GRAV_ACCEL)
+  A68_ENV_REAL (genie_mks_gravitational_constant, GSL_CONST_MKS_GRAVITATIONAL_CONSTANT)
+  A68_ENV_REAL (genie_mks_hectare, GSL_CONST_MKS_HECTARE)
+  A68_ENV_REAL (genie_mks_horsepower, GSL_CONST_MKS_HORSEPOWER)
+  A68_ENV_REAL (genie_mks_hour, GSL_CONST_MKS_HOUR)
+  A68_ENV_REAL (genie_mks_inch, GSL_CONST_MKS_INCH)
+  A68_ENV_REAL (genie_mks_inch_of_mercury, GSL_CONST_MKS_INCH_OF_MERCURY)
+  A68_ENV_REAL (genie_mks_inch_of_water, GSL_CONST_MKS_INCH_OF_WATER)
+  A68_ENV_REAL (genie_mks_joule, GSL_CONST_MKS_JOULE)
+  A68_ENV_REAL (genie_mks_kilometers_per_hour, GSL_CONST_MKS_KILOMETERS_PER_HOUR)
+  A68_ENV_REAL (genie_mks_kilopound_force, GSL_CONST_MKS_KILOPOUND_FORCE)
+  A68_ENV_REAL (genie_mks_knot, GSL_CONST_MKS_KNOT)
+  A68_ENV_REAL (genie_mks_lambert, GSL_CONST_MKS_LAMBERT)
+  A68_ENV_REAL (genie_mks_light_year, GSL_CONST_MKS_LIGHT_YEAR)
+  A68_ENV_REAL (genie_mks_liter, GSL_CONST_MKS_LITER)
+  A68_ENV_REAL (genie_mks_lumen, GSL_CONST_MKS_LUMEN)
+  A68_ENV_REAL (genie_mks_lux, GSL_CONST_MKS_LUX)
+  A68_ENV_REAL (genie_mks_mass_electron, GSL_CONST_MKS_MASS_ELECTRON)
+  A68_ENV_REAL (genie_mks_mass_muon, GSL_CONST_MKS_MASS_MUON)
+  A68_ENV_REAL (genie_mks_mass_neutron, GSL_CONST_MKS_MASS_NEUTRON)
+  A68_ENV_REAL (genie_mks_mass_proton, GSL_CONST_MKS_MASS_PROTON)
+  A68_ENV_REAL (genie_mks_meter_of_mercury, GSL_CONST_MKS_METER_OF_MERCURY)
+  A68_ENV_REAL (genie_mks_metric_ton, GSL_CONST_MKS_METRIC_TON)
+  A68_ENV_REAL (genie_mks_micron, GSL_CONST_MKS_MICRON)
+  A68_ENV_REAL (genie_mks_mil, GSL_CONST_MKS_MIL)
+  A68_ENV_REAL (genie_mks_mile, GSL_CONST_MKS_MILE)
+  A68_ENV_REAL (genie_mks_miles_per_hour, GSL_CONST_MKS_MILES_PER_HOUR)
+  A68_ENV_REAL (genie_mks_minute, GSL_CONST_MKS_MINUTE)
+  A68_ENV_REAL (genie_mks_molar_gas, GSL_CONST_MKS_MOLAR_GAS)
+  A68_ENV_REAL (genie_mks_nautical_mile, GSL_CONST_MKS_NAUTICAL_MILE)
+  A68_ENV_REAL (genie_mks_newton, GSL_CONST_MKS_NEWTON)
+  A68_ENV_REAL (genie_mks_nuclear_magneton, GSL_CONST_MKS_NUCLEAR_MAGNETON)
+  A68_ENV_REAL (genie_mks_ounce_mass, GSL_CONST_MKS_OUNCE_MASS)
+  A68_ENV_REAL (genie_mks_parsec, GSL_CONST_MKS_PARSEC)
+  A68_ENV_REAL (genie_mks_phot, GSL_CONST_MKS_PHOT)
+  A68_ENV_REAL (genie_mks_pint, GSL_CONST_MKS_PINT)
+  A68_ENV_REAL (genie_mks_planck_constant_h, 6.6260693e-34)
+  A68_ENV_REAL (genie_mks_planck_constant_hbar, 6.6260693e-34 / (2 * A68_PI))
+  A68_ENV_REAL (genie_mks_point, GSL_CONST_MKS_POINT)
+  A68_ENV_REAL (genie_mks_poise, GSL_CONST_MKS_POISE)
+  A68_ENV_REAL (genie_mks_pound_force, GSL_CONST_MKS_POUND_FORCE)
+  A68_ENV_REAL (genie_mks_pound_mass, GSL_CONST_MKS_POUND_MASS)
+  A68_ENV_REAL (genie_mks_poundal, GSL_CONST_MKS_POUNDAL)
+  A68_ENV_REAL (genie_mks_proton_magnetic_moment, GSL_CONST_MKS_PROTON_MAGNETIC_MOMENT)
+  A68_ENV_REAL (genie_mks_psi, GSL_CONST_MKS_PSI)
+  A68_ENV_REAL (genie_mks_quart, GSL_CONST_MKS_QUART)
+  A68_ENV_REAL (genie_mks_rad, GSL_CONST_MKS_RAD)
+  A68_ENV_REAL (genie_mks_roentgen, GSL_CONST_MKS_ROENTGEN)
+  A68_ENV_REAL (genie_mks_rydberg, GSL_CONST_MKS_RYDBERG)
+  A68_ENV_REAL (genie_mks_solar_mass, GSL_CONST_MKS_SOLAR_MASS)
+  A68_ENV_REAL (genie_mks_speed_of_light, GSL_CONST_MKS_SPEED_OF_LIGHT)
+  A68_ENV_REAL (genie_mks_standard_gas_volume, GSL_CONST_MKS_STANDARD_GAS_VOLUME)
+  A68_ENV_REAL (genie_mks_std_atmosphere, GSL_CONST_MKS_STD_ATMOSPHERE)
+  A68_ENV_REAL (genie_mks_stilb, GSL_CONST_MKS_STILB)
+  A68_ENV_REAL (genie_mks_stokes, GSL_CONST_MKS_STOKES)
+  A68_ENV_REAL (genie_mks_tablespoon, GSL_CONST_MKS_TABLESPOON)
+  A68_ENV_REAL (genie_mks_teaspoon, GSL_CONST_MKS_TEASPOON)
+  A68_ENV_REAL (genie_mks_texpoint, GSL_CONST_MKS_TEXPOINT)
+  A68_ENV_REAL (genie_mks_therm, GSL_CONST_MKS_THERM)
+  A68_ENV_REAL (genie_mks_ton, GSL_CONST_MKS_TON)
+  A68_ENV_REAL (genie_mks_torr, GSL_CONST_MKS_TORR)
+  A68_ENV_REAL (genie_mks_troy_ounce, GSL_CONST_MKS_TROY_OUNCE)
+  A68_ENV_REAL (genie_mks_uk_gallon, GSL_CONST_MKS_UK_GALLON)
+  A68_ENV_REAL (genie_mks_uk_ton, GSL_CONST_MKS_UK_TON)
+  A68_ENV_REAL (genie_mks_unified_atomic_mass, GSL_CONST_MKS_UNIFIED_ATOMIC_MASS)
+  A68_ENV_REAL (genie_mks_us_gallon, GSL_CONST_MKS_US_GALLON)
+  A68_ENV_REAL (genie_mks_vacuum_permeability, GSL_CONST_MKS_VACUUM_PERMEABILITY)
+  A68_ENV_REAL (genie_mks_vacuum_permittivity, GSL_CONST_MKS_VACUUM_PERMITTIVITY)
+  A68_ENV_REAL (genie_mks_week, GSL_CONST_MKS_WEEK)
+  A68_ENV_REAL (genie_mks_yard, GSL_CONST_MKS_YARD)
+  A68_ENV_REAL (genie_num_atto, GSL_CONST_NUM_ATTO)
+  A68_ENV_REAL (genie_num_avogadro, GSL_CONST_NUM_AVOGADRO)
+  A68_ENV_REAL (genie_num_exa, GSL_CONST_NUM_EXA)
+  A68_ENV_REAL (genie_num_femto, GSL_CONST_NUM_FEMTO)
+  A68_ENV_REAL (genie_num_fine_structure, GSL_CONST_NUM_FINE_STRUCTURE)
+  A68_ENV_REAL (genie_num_giga, GSL_CONST_NUM_GIGA)
+  A68_ENV_REAL (genie_num_kilo, GSL_CONST_NUM_KILO)
+  A68_ENV_REAL (genie_num_mega, GSL_CONST_NUM_MEGA)
+  A68_ENV_REAL (genie_num_micro, GSL_CONST_NUM_MICRO)
+  A68_ENV_REAL (genie_num_milli, GSL_CONST_NUM_MILLI)
+  A68_ENV_REAL (genie_num_nano, GSL_CONST_NUM_NANO)
+  A68_ENV_REAL (genie_num_peta, GSL_CONST_NUM_PETA)
+  A68_ENV_REAL (genie_num_pico, GSL_CONST_NUM_PICO)
+  A68_ENV_REAL (genie_num_tera, GSL_CONST_NUM_TERA)
+  A68_ENV_REAL (genie_num_yocto, GSL_CONST_NUM_YOCTO)
+  A68_ENV_REAL (genie_num_yotta, GSL_CONST_NUM_YOTTA)
+  A68_ENV_REAL (genie_num_zepto, GSL_CONST_NUM_ZEPTO)
+  A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
 
 /* Macros */
-
 #define C_FUNCTION(p, f)\
   A68_REAL *x;\
   POP_OPERAND_ADDRESS (p, x, A68_REAL);\
   RESET_ERRNO;\
   VALUE (x) = f (VALUE (x));\
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
-
 #define OWN_FUNCTION(p, f)\
   A68_REAL *x;\
   POP_OPERAND_ADDRESS (p, x, A68_REAL);\
   RESET_ERRNO;\
   VALUE (x) = f (p, VALUE (x));\
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
-
 #define GSL_FUNCTION(p, f)\
   A68_REAL *x;\
   POP_OPERAND_ADDRESS (p, x, A68_REAL);\
   RESET_ERRNO;\
   VALUE (x) = f (VALUE (x));\
   MATH_RTE (p, errno != 0, MODE (REAL), NO_TEXT);
-
 #define GSL_COMPLEX_FUNCTION(f)\
   gsl_complex x, z;\
   A68_REAL *rex, *imx;\
@@ -5504,7 +5655,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   MATH_RTE (p, errno != 0, MODE (COMPLEX), NO_TEXT);\
   VALUE (imx) = GSL_IMAG(z);\
   VALUE (rex) = GSL_REAL(z)
-
 #define GSL_1_FUNCTION(p, f)\
   A68_REAL *x;\
   gsl_sf_result y;\
@@ -5514,7 +5664,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), &y);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&y)
-
 #define GSL_2_FUNCTION(p, f)\
   A68_REAL *x, *y;\
   gsl_sf_result r;\
@@ -5524,7 +5673,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), VALUE (y), &r);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
-
 #define GSL_2_INT_FUNCTION(p, f)\
   A68_REAL *x, *y;\
   gsl_sf_result r;\
@@ -5534,7 +5682,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f ((int) VALUE (x), VALUE (y), &r);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
-
 #define GSL_3_FUNCTION(p, f)\
   A68_REAL *x, *y, *z;\
   gsl_sf_result r;\
@@ -5545,7 +5692,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), VALUE (y), VALUE (z),  &r);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
-
 #define GSL_1D_FUNCTION(p, f)\
   A68_REAL *x;\
   gsl_sf_result y;\
@@ -5555,7 +5701,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), GSL_PREC_DOUBLE, &y);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&y)
-
 #define GSL_2D_FUNCTION(p, f)\
   A68_REAL *x, *y;\
   gsl_sf_result r;\
@@ -5565,7 +5710,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), VALUE (y), GSL_PREC_DOUBLE, &r);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
-
 #define GSL_3D_FUNCTION(p, f)\
   A68_REAL *x, *y, *z;\
   gsl_sf_result r;\
@@ -5576,7 +5720,6 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), VALUE (y), VALUE (z), GSL_PREC_DOUBLE, &r);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
-
 #define GSL_4D_FUNCTION(p, f)\
   A68_REAL *x, *y, *z, *rho;\
   gsl_sf_result r;\
@@ -5588,14 +5731,12 @@ A68_ENV_REAL (genie_num_zetta, GSL_CONST_NUM_ZETTA)
   status = f (VALUE (x), VALUE (y), VALUE (z), VALUE (rho), GSL_PREC_DOUBLE, &r);\
   MATH_RTE (p, status != 0, MODE (REAL), (char *) gsl_strerror (status));\
   VALUE (x) = VAL (&r)
-
 /**
 @brief The cube root of x.
 @param x X.
 @return See brief description.
 **/
-
-double curt (double x)
+     double curt (double x)
 {
 #define CBRT2 1.2599210498948731647672;
 #define CBRT4 1.5874010519681994747517;
@@ -5660,7 +5801,8 @@ double curt (double x)
 @return See brief description.
 **/
 
-double inverfc (double y)
+double
+inverfc (double y)
 {
   if (y < 0.0 || y > 2.0) {
     errno = EDOM;
@@ -5701,7 +5843,8 @@ double inverfc (double y)
 @return See brief description.
 **/
 
-double inverf (double y)
+double
+inverf (double y)
 {
   return (inverfc (1 - y));
 }
@@ -5711,7 +5854,8 @@ double inverf (double y)
 @param p Node in syntax tree.
 **/
 
-void genie_sqrt_real (NODE_T * p)
+void
+genie_sqrt_real (NODE_T * p)
 {
   C_FUNCTION (p, sqrt);
 }
@@ -5721,7 +5865,8 @@ void genie_sqrt_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curt_real (NODE_T * p)
+void
+genie_curt_real (NODE_T * p)
 {
   C_FUNCTION (p, curt);
 }
@@ -5731,7 +5876,8 @@ void genie_curt_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_exp_real (NODE_T * p)
+void
+genie_exp_real (NODE_T * p)
 {
   C_FUNCTION (p, a68g_exp);
 }
@@ -5741,7 +5887,8 @@ void genie_exp_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ln_real (NODE_T * p)
+void
+genie_ln_real (NODE_T * p)
 {
   C_FUNCTION (p, log);
 }
@@ -5751,7 +5898,8 @@ void genie_ln_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_log_real (NODE_T * p)
+void
+genie_log_real (NODE_T * p)
 {
   C_FUNCTION (p, log10);
 }
@@ -5761,7 +5909,8 @@ void genie_log_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sin_real (NODE_T * p)
+void
+genie_sin_real (NODE_T * p)
 {
   C_FUNCTION (p, sin);
 }
@@ -5771,7 +5920,8 @@ void genie_sin_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arcsin_real (NODE_T * p)
+void
+genie_arcsin_real (NODE_T * p)
 {
   C_FUNCTION (p, asin);
 }
@@ -5781,7 +5931,8 @@ void genie_arcsin_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cos_real (NODE_T * p)
+void
+genie_cos_real (NODE_T * p)
 {
   C_FUNCTION (p, cos);
 }
@@ -5791,7 +5942,8 @@ void genie_cos_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arccos_real (NODE_T * p)
+void
+genie_arccos_real (NODE_T * p)
 {
   C_FUNCTION (p, acos);
 }
@@ -5801,7 +5953,8 @@ void genie_arccos_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tan_real (NODE_T * p)
+void
+genie_tan_real (NODE_T * p)
 {
   C_FUNCTION (p, tan);
 }
@@ -5811,7 +5964,8 @@ void genie_tan_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arctan_real (NODE_T * p)
+void
+genie_arctan_real (NODE_T * p)
 {
   C_FUNCTION (p, atan);
 }
@@ -5821,7 +5975,8 @@ void genie_arctan_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_atan2_real (NODE_T * p)
+void
+genie_atan2_real (NODE_T * p)
 {
   A68_REAL *x, *y;
   POP_OPERAND_ADDRESSES (p, x, y, A68_REAL);
@@ -5836,7 +5991,8 @@ void genie_atan2_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sinh_real (NODE_T * p)
+void
+genie_sinh_real (NODE_T * p)
 {
   C_FUNCTION (p, sinh);
 }
@@ -5846,7 +6002,8 @@ void genie_sinh_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cosh_real (NODE_T * p)
+void
+genie_cosh_real (NODE_T * p)
 {
   C_FUNCTION (p, cosh);
 }
@@ -5856,7 +6013,8 @@ void genie_cosh_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tanh_real (NODE_T * p)
+void
+genie_tanh_real (NODE_T * p)
 {
   C_FUNCTION (p, tanh);
 }
@@ -5866,7 +6024,8 @@ void genie_tanh_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arcsinh_real (NODE_T * p)
+void
+genie_arcsinh_real (NODE_T * p)
 {
   C_FUNCTION (p, a68g_asinh);
 }
@@ -5876,7 +6035,8 @@ void genie_arcsinh_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arccosh_real (NODE_T * p)
+void
+genie_arccosh_real (NODE_T * p)
 {
   C_FUNCTION (p, a68g_acosh);
 }
@@ -5886,7 +6046,8 @@ void genie_arccosh_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arctanh_real (NODE_T * p)
+void
+genie_arctanh_real (NODE_T * p)
 {
   C_FUNCTION (p, a68g_atanh);
 }
@@ -5896,7 +6057,8 @@ void genie_arctanh_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_inverf_real (NODE_T * p)
+void
+genie_inverf_real (NODE_T * p)
 {
   C_FUNCTION (p, inverf);
 }
@@ -5906,7 +6068,8 @@ void genie_inverf_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_inverfc_real (NODE_T * p)
+void
+genie_inverfc_real (NODE_T * p)
 {
   C_FUNCTION (p, inverfc);
 }
@@ -5916,7 +6079,8 @@ void genie_inverfc_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lj_e_12_6 (NODE_T * p)
+void
+genie_lj_e_12_6 (NODE_T * p)
 {
   A68_REAL *e, *s, *r;
   double u, u2, u6;
@@ -5932,7 +6096,8 @@ void genie_lj_e_12_6 (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lj_f_12_6 (NODE_T * p)
+void
+genie_lj_f_12_6 (NODE_T * p)
 {
   A68_REAL *e, *s, *r;
   double u, u2, u6;
@@ -5952,7 +6117,8 @@ void genie_lj_f_12_6 (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_erf_real (NODE_T * p)
+void
+genie_erf_real (NODE_T * p)
 {
   GSL_1_FUNCTION (p, gsl_sf_erf_e);
 }
@@ -5962,7 +6128,8 @@ void genie_erf_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_erfc_real (NODE_T * p)
+void
+genie_erfc_real (NODE_T * p)
 {
   GSL_1_FUNCTION (p, gsl_sf_erfc_e);
 }
@@ -5972,7 +6139,8 @@ void genie_erfc_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_gamma_real (NODE_T * p)
+void
+genie_gamma_real (NODE_T * p)
 {
   GSL_1_FUNCTION (p, gsl_sf_gamma_e);
 }
@@ -5982,7 +6150,8 @@ void genie_gamma_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_gamma_inc_real (NODE_T * p)
+void
+genie_gamma_inc_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_gamma_inc_P_e);
 }
@@ -5992,7 +6161,8 @@ void genie_gamma_inc_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lngamma_real (NODE_T * p)
+void
+genie_lngamma_real (NODE_T * p)
 {
   GSL_1_FUNCTION (p, gsl_sf_lngamma_e);
 }
@@ -6002,7 +6172,8 @@ void genie_lngamma_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_factorial_real (NODE_T * p)
+void
+genie_factorial_real (NODE_T * p)
 {
 /* gsl_sf_fact reduces argument to int, hence we do gamma (x + 1) */
   A68_REAL *z = (A68_REAL *) STACK_OFFSET (-SIZE (MODE (REAL)));
@@ -6017,7 +6188,8 @@ void genie_factorial_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_beta_real (NODE_T * p)
+void
+genie_beta_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_beta_e);
 }
@@ -6027,7 +6199,8 @@ void genie_beta_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_beta_inc_real (NODE_T * p)
+void
+genie_beta_inc_real (NODE_T * p)
 {
   GSL_3_FUNCTION (p, gsl_sf_beta_inc_e);
 }
@@ -6037,7 +6210,8 @@ void genie_beta_inc_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_airy_ai_real (NODE_T * p)
+void
+genie_airy_ai_real (NODE_T * p)
 {
   GSL_1D_FUNCTION (p, gsl_sf_airy_Ai_e);
 }
@@ -6047,7 +6221,8 @@ void genie_airy_ai_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_airy_bi_real (NODE_T * p)
+void
+genie_airy_bi_real (NODE_T * p)
 {
   GSL_1D_FUNCTION (p, gsl_sf_airy_Bi_e);
 }
@@ -6057,7 +6232,8 @@ void genie_airy_bi_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_airy_ai_deriv_real (NODE_T * p)
+void
+genie_airy_ai_deriv_real (NODE_T * p)
 {
   GSL_1D_FUNCTION (p, gsl_sf_airy_Ai_deriv_e);
 }
@@ -6067,7 +6243,8 @@ void genie_airy_ai_deriv_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_airy_bi_deriv_real (NODE_T * p)
+void
+genie_airy_bi_deriv_real (NODE_T * p)
 {
   GSL_1D_FUNCTION (p, gsl_sf_airy_Bi_deriv_e);
 }
@@ -6077,7 +6254,8 @@ void genie_airy_bi_deriv_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_jn_real (NODE_T * p)
+void
+genie_bessel_jn_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Jn_e);
 }
@@ -6087,7 +6265,8 @@ void genie_bessel_jn_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_yn_real (NODE_T * p)
+void
+genie_bessel_yn_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Yn_e);
 }
@@ -6097,7 +6276,8 @@ void genie_bessel_yn_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_in_real (NODE_T * p)
+void
+genie_bessel_in_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_In_e);
 }
@@ -6107,7 +6287,8 @@ void genie_bessel_in_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_exp_in_real (NODE_T * p)
+void
+genie_bessel_exp_in_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_In_scaled_e);
 }
@@ -6117,7 +6298,8 @@ void genie_bessel_exp_in_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_kn_real (NODE_T * p)
+void
+genie_bessel_kn_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Kn_e);
 }
@@ -6127,7 +6309,8 @@ void genie_bessel_kn_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_exp_kn_real (NODE_T * p)
+void
+genie_bessel_exp_kn_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_Kn_scaled_e);
 }
@@ -6137,7 +6320,8 @@ void genie_bessel_exp_kn_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_jl_real (NODE_T * p)
+void
+genie_bessel_jl_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_jl_e);
 }
@@ -6147,7 +6331,8 @@ void genie_bessel_jl_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_yl_real (NODE_T * p)
+void
+genie_bessel_yl_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_yl_e);
 }
@@ -6157,7 +6342,8 @@ void genie_bessel_yl_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_exp_il_real (NODE_T * p)
+void
+genie_bessel_exp_il_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_il_scaled_e);
 }
@@ -6167,7 +6353,8 @@ void genie_bessel_exp_il_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_exp_kl_real (NODE_T * p)
+void
+genie_bessel_exp_kl_real (NODE_T * p)
 {
   GSL_2_INT_FUNCTION (p, gsl_sf_bessel_kl_scaled_e);
 }
@@ -6177,7 +6364,8 @@ void genie_bessel_exp_kl_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_jnu_real (NODE_T * p)
+void
+genie_bessel_jnu_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_bessel_Jnu_e);
 }
@@ -6187,7 +6375,8 @@ void genie_bessel_jnu_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_ynu_real (NODE_T * p)
+void
+genie_bessel_ynu_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_bessel_Ynu_e);
 }
@@ -6197,7 +6386,8 @@ void genie_bessel_ynu_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_inu_real (NODE_T * p)
+void
+genie_bessel_inu_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_bessel_Inu_e);
 }
@@ -6207,7 +6397,8 @@ void genie_bessel_inu_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_exp_inu_real (NODE_T * p)
+void
+genie_bessel_exp_inu_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_bessel_Inu_scaled_e);
 }
@@ -6217,7 +6408,8 @@ void genie_bessel_exp_inu_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_knu_real (NODE_T * p)
+void
+genie_bessel_knu_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_bessel_Knu_e);
 }
@@ -6227,7 +6419,8 @@ void genie_bessel_knu_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bessel_exp_knu_real (NODE_T * p)
+void
+genie_bessel_exp_knu_real (NODE_T * p)
 {
   GSL_2_FUNCTION (p, gsl_sf_bessel_Knu_scaled_e);
 }
@@ -6237,7 +6430,8 @@ void genie_bessel_exp_knu_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elliptic_integral_k_real (NODE_T * p)
+void
+genie_elliptic_integral_k_real (NODE_T * p)
 {
   GSL_1D_FUNCTION (p, gsl_sf_ellint_Kcomp_e);
 }
@@ -6247,7 +6441,8 @@ void genie_elliptic_integral_k_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elliptic_integral_e_real (NODE_T * p)
+void
+genie_elliptic_integral_e_real (NODE_T * p)
 {
   GSL_1D_FUNCTION (p, gsl_sf_ellint_Ecomp_e);
 }
@@ -6257,7 +6452,8 @@ void genie_elliptic_integral_e_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elliptic_integral_rf_real (NODE_T * p)
+void
+genie_elliptic_integral_rf_real (NODE_T * p)
 {
   GSL_3D_FUNCTION (p, gsl_sf_ellint_RF_e);
 }
@@ -6267,7 +6463,8 @@ void genie_elliptic_integral_rf_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elliptic_integral_rd_real (NODE_T * p)
+void
+genie_elliptic_integral_rd_real (NODE_T * p)
 {
   GSL_3D_FUNCTION (p, gsl_sf_ellint_RD_e);
 }
@@ -6277,7 +6474,8 @@ void genie_elliptic_integral_rd_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elliptic_integral_rj_real (NODE_T * p)
+void
+genie_elliptic_integral_rj_real (NODE_T * p)
 {
   GSL_4D_FUNCTION (p, gsl_sf_ellint_RJ_e);
 }
@@ -6287,7 +6485,8 @@ void genie_elliptic_integral_rj_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_elliptic_integral_rc_real (NODE_T * p)
+void
+genie_elliptic_integral_rc_real (NODE_T * p)
 {
   GSL_2D_FUNCTION (p, gsl_sf_ellint_RC_e);
 }
@@ -6364,7 +6563,8 @@ static void taus113_set (taus113_state_t * state, unsigned long int s);
 @return See brief description.
 **/
 
-static unsigned long taus113_get (taus113_state_t * state)
+static unsigned long
+taus113_get (taus113_state_t * state)
 {
   unsigned long b1, b2, b3, b4;
   b1 = ((((Z1 (state) << 6UL) & TAUSWORTHE_MASK) ^ Z1 (state)) >> 13UL);
@@ -6384,7 +6584,8 @@ static unsigned long taus113_get (taus113_state_t * state)
 @param s S.
 **/
 
-static void taus113_set (taus113_state_t * state, unsigned long int s)
+static void
+taus113_set (taus113_state_t * state, unsigned long int s)
 {
   if (!s) {
 /* default seed is 1 */
@@ -6424,7 +6625,8 @@ static void taus113_set (taus113_state_t * state, unsigned long int s)
 @param u Initialiser.
 **/
 
-void init_rng (unsigned long u)
+void
+init_rng (unsigned long u)
 {
   taus113_set (&rng_state, u);
 }
@@ -6434,7 +6636,8 @@ void init_rng (unsigned long u)
 @return See brief description.
 **/
 
-double rng_53_bit (void)
+double
+rng_53_bit (void)
 {
   double a = (double) (taus113_get (&rng_state) >> 5);
   double b = (double) (taus113_get (&rng_state) >> 6);
@@ -6491,7 +6694,8 @@ Some routines are based on
 @param p Node in syntax tree.
 **/
 
-void genie_icomplex (NODE_T * p)
+void
+genie_icomplex (NODE_T * p)
 {
   (void) p;
 }
@@ -6501,7 +6705,8 @@ void genie_icomplex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_iint_complex (NODE_T * p)
+void
+genie_iint_complex (NODE_T * p)
 {
   A68_INT re, im;
   POP_OBJECT (p, &im, A68_INT);
@@ -6515,7 +6720,8 @@ void genie_iint_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_re_complex (NODE_T * p)
+void
+genie_re_complex (NODE_T * p)
 {
   DECREMENT_STACK_POINTER (p, SIZE (MODE (REAL)));
 }
@@ -6525,7 +6731,8 @@ void genie_re_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_im_complex (NODE_T * p)
+void
+genie_im_complex (NODE_T * p)
 {
   A68_REAL im;
   POP_OBJECT (p, &im, A68_REAL);
@@ -6537,7 +6744,8 @@ void genie_im_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minus_complex (NODE_T * p)
+void
+genie_minus_complex (NODE_T * p)
 {
   A68_REAL *re_x, *im_x;
   im_x = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -6552,7 +6760,8 @@ void genie_minus_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_abs_complex (NODE_T * p)
+void
+genie_abs_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x;
   POP_COMPLEX (p, &re_x, &im_x);
@@ -6564,7 +6773,8 @@ void genie_abs_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arg_complex (NODE_T * p)
+void
+genie_arg_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x;
   POP_COMPLEX (p, &re_x, &im_x);
@@ -6577,7 +6787,8 @@ void genie_arg_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_conj_complex (NODE_T * p)
+void
+genie_conj_complex (NODE_T * p)
 {
   A68_REAL *im;
   POP_OPERAND_ADDRESS (p, im, A68_REAL);
@@ -6589,7 +6800,8 @@ void genie_conj_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_complex (NODE_T * p)
+void
+genie_add_complex (NODE_T * p)
 {
   A68_REAL *re_x, *im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
@@ -6605,7 +6817,8 @@ void genie_add_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sub_complex (NODE_T * p)
+void
+genie_sub_complex (NODE_T * p)
 {
   A68_REAL *re_x, *im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
@@ -6621,7 +6834,8 @@ void genie_sub_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mul_complex (NODE_T * p)
+void
+genie_mul_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x, re_y, im_y;
   double re, im;
@@ -6638,7 +6852,8 @@ void genie_mul_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_div_complex (NODE_T * p)
+void
+genie_div_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x, re_y, im_y;
   double re = 0.0, im = 0.0;
@@ -6665,7 +6880,8 @@ void genie_div_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_complex_int (NODE_T * p)
+void
+genie_pow_complex_int (NODE_T * p)
 {
   A68_REAL re_x, im_x;
   double re_y, im_y, re_z, im_z, rea;
@@ -6712,7 +6928,8 @@ void genie_pow_complex_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_eq_complex (NODE_T * p)
+void
+genie_eq_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
@@ -6725,7 +6942,8 @@ void genie_eq_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ne_complex (NODE_T * p)
+void
+genie_ne_complex (NODE_T * p)
 {
   A68_REAL re_x, im_x, re_y, im_y;
   POP_COMPLEX (p, &re_y, &im_y);
@@ -6738,7 +6956,8 @@ void genie_ne_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_complex (NODE_T * p)
+void
+genie_plusab_complex (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_add_complex);
 }
@@ -6748,7 +6967,8 @@ void genie_plusab_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minusab_complex (NODE_T * p)
+void
+genie_minusab_complex (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_sub_complex);
 }
@@ -6758,7 +6978,8 @@ void genie_minusab_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_complex (NODE_T * p)
+void
+genie_timesab_complex (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_mul_complex);
 }
@@ -6768,7 +6989,8 @@ void genie_timesab_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_divab_complex (NODE_T * p)
+void
+genie_divab_complex (NODE_T * p)
 {
   genie_f_and_becomes (p, MODE (REF_COMPLEX), genie_div_complex);
 }
@@ -6778,7 +7000,8 @@ void genie_divab_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lengthen_complex_to_long_complex (NODE_T * p)
+void
+genie_lengthen_complex_to_long_complex (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_REAL));
   MP_T *z;
@@ -6798,7 +7021,8 @@ void genie_lengthen_complex_to_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_long_complex_to_complex (NODE_T * p)
+void
+genie_shorten_long_complex_to_complex (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_REAL)), size = SIZE (MODE (LONG_REAL));
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
@@ -6813,7 +7037,8 @@ void genie_shorten_long_complex_to_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lengthen_long_complex_to_longlong_complex (NODE_T * p)
+void
+genie_lengthen_long_complex_to_longlong_complex (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_REAL)), size = SIZE (MODE (LONG_REAL));
   int digs_long = DIGITS (MODE (LONGLONG_REAL)), size_long = SIZE (MODE (LONGLONG_REAL));
@@ -6838,7 +7063,8 @@ void genie_lengthen_long_complex_to_longlong_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_shorten_longlong_complex_to_long_complex (NODE_T * p)
+void
+genie_shorten_longlong_complex_to_long_complex (NODE_T * p)
 {
   int digits = DIGITS (MODE (LONG_REAL)), size = SIZE (MODE (LONG_REAL));
   int digs_long = DIGITS (MODE (LONGLONG_REAL)), size_long = SIZE (MODE (LONGLONG_REAL));
@@ -6859,7 +7085,8 @@ void genie_shorten_longlong_complex_to_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_re_long_complex (NODE_T * p)
+void
+genie_re_long_complex (NODE_T * p)
 {
   int size = SIZE (SUB_MOID (p));
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
@@ -6872,7 +7099,8 @@ void genie_re_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_im_long_complex (NODE_T * p)
+void
+genie_im_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -6888,7 +7116,8 @@ void genie_im_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minus_long_complex (NODE_T * p)
+void
+genie_minus_long_complex (NODE_T * p)
 {
   int size = SIZEC (SUB_MOID (p));
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
@@ -6904,7 +7133,8 @@ void genie_minus_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_conj_long_complex (NODE_T * p)
+void
+genie_conj_long_complex (NODE_T * p)
 {
   int size = SIZEC (SUB_MOID (p));
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
@@ -6919,7 +7149,8 @@ void genie_conj_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_abs_long_complex (NODE_T * p)
+void
+genie_abs_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -6941,7 +7172,8 @@ void genie_abs_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arg_long_complex (NODE_T * p)
+void
+genie_arg_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITS (mode), size = SIZE (mode);
@@ -6963,7 +7195,8 @@ void genie_arg_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_add_long_complex (NODE_T * p)
+void
+genie_add_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -6985,7 +7218,8 @@ void genie_add_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sub_long_complex (NODE_T * p)
+void
+genie_sub_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7007,7 +7241,8 @@ void genie_sub_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_mul_long_complex (NODE_T * p)
+void
+genie_mul_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7028,7 +7263,8 @@ void genie_mul_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_div_long_complex (NODE_T * p)
+void
+genie_div_long_complex (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7049,7 +7285,8 @@ void genie_div_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pow_long_complex_int (NODE_T * p)
+void
+genie_pow_long_complex_int (NODE_T * p)
 {
   MOID_T *mode = SUB_MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7079,20 +7316,20 @@ void genie_pow_long_complex_int (NODE_T * p)
   }
   while ((unsigned) expo <= (unsigned) (VALUE (&j))) {
     if (expo & VALUE (&j)) {
-     (void) mul_mp (p, acc, im_z, im_y, digits);
-     (void) mul_mp (p, rea, re_z, re_y, digits);
-     (void) sub_mp (p, rea, rea, acc, digits);
-     (void) mul_mp (p, acc, im_z, re_y, digits);
-     (void) mul_mp (p, im_z, re_z, im_y, digits);
-     (void) add_mp (p, im_z, im_z, acc, digits);
+      (void) mul_mp (p, acc, im_z, im_y, digits);
+      (void) mul_mp (p, rea, re_z, re_y, digits);
+      (void) sub_mp (p, rea, rea, acc, digits);
+      (void) mul_mp (p, acc, im_z, re_y, digits);
+      (void) mul_mp (p, im_z, re_z, im_y, digits);
+      (void) add_mp (p, im_z, im_z, acc, digits);
       MOVE_MP (re_z, rea, digits);
     }
-   (void) mul_mp (p, acc, im_y, im_y, digits);
-   (void) mul_mp (p, rea, re_y, re_y, digits);
-   (void) sub_mp (p, rea, rea, acc, digits);
-   (void) mul_mp (p, acc, im_y, re_y, digits);
-   (void) mul_mp (p, im_y, re_y, im_y, digits);
-   (void) add_mp (p, im_y, im_y, acc, digits);
+    (void) mul_mp (p, acc, im_y, im_y, digits);
+    (void) mul_mp (p, rea, re_y, re_y, digits);
+    (void) sub_mp (p, rea, rea, acc, digits);
+    (void) mul_mp (p, acc, im_y, re_y, digits);
+    (void) mul_mp (p, im_y, re_y, im_y, digits);
+    (void) add_mp (p, im_y, im_y, acc, digits);
     MOVE_MP (re_y, rea, digits);
     expo <<= 1;
   }
@@ -7115,7 +7352,8 @@ void genie_pow_long_complex_int (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_eq_long_complex (NODE_T * p)
+void
+genie_eq_long_complex (NODE_T * p)
 {
   int digits = DIGITSC (LHS_MODE (p)), size = SIZEC (LHS_MODE (p));
   ADDR_T pop_sp = stack_pointer;
@@ -7135,7 +7373,8 @@ void genie_eq_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ne_long_complex (NODE_T * p)
+void
+genie_ne_long_complex (NODE_T * p)
 {
   int digits = DIGITSC (LHS_MODE (p)), size = SIZEC (LHS_MODE (p));
   ADDR_T pop_sp = stack_pointer;
@@ -7155,7 +7394,8 @@ void genie_ne_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_plusab_long_complex (NODE_T * p)
+void
+genie_plusab_long_complex (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_add_long_complex);
@@ -7166,7 +7406,8 @@ void genie_plusab_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_minusab_long_complex (NODE_T * p)
+void
+genie_minusab_long_complex (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_sub_long_complex);
@@ -7177,7 +7418,8 @@ void genie_minusab_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_timesab_long_complex (NODE_T * p)
+void
+genie_timesab_long_complex (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_mul_long_complex);
@@ -7188,7 +7430,8 @@ void genie_timesab_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_divab_long_complex (NODE_T * p)
+void
+genie_divab_long_complex (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   genie_f_and_becomes (p, mode, genie_div_long_complex);
@@ -7199,7 +7442,8 @@ void genie_divab_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sqrt_complex (NODE_T * p)
+void
+genie_sqrt_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
   im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7235,7 +7479,8 @@ void genie_sqrt_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sqrt_long_complex (NODE_T * p)
+void
+genie_sqrt_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7255,7 +7500,8 @@ void genie_sqrt_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_exp_complex (NODE_T * p)
+void
+genie_exp_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
   double r;
@@ -7273,7 +7519,8 @@ void genie_exp_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_exp_long_complex (NODE_T * p)
+void
+genie_exp_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7292,7 +7539,8 @@ void genie_exp_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ln_complex (NODE_T * p)
+void
+genie_ln_complex (NODE_T * p)
 {
   A68_REAL *re, *im, r, th;
   im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7314,7 +7562,8 @@ void genie_ln_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_ln_long_complex (NODE_T * p)
+void
+genie_ln_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7333,7 +7582,8 @@ void genie_ln_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sin_complex (NODE_T * p)
+void
+genie_sin_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
   im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7355,7 +7605,8 @@ void genie_sin_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sin_long_complex (NODE_T * p)
+void
+genie_sin_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7374,7 +7625,8 @@ void genie_sin_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cos_complex (NODE_T * p)
+void
+genie_cos_complex (NODE_T * p)
 {
   A68_REAL *re, *im;
   im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7396,7 +7648,8 @@ void genie_cos_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cos_long_complex (NODE_T * p)
+void
+genie_cos_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7415,7 +7668,8 @@ void genie_cos_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tan_complex (NODE_T * p)
+void
+genie_tan_complex (NODE_T * p)
 {
   A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
   A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
@@ -7443,7 +7697,8 @@ void genie_tan_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tan_long_complex (NODE_T * p)
+void
+genie_tan_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7462,7 +7717,8 @@ void genie_tan_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arcsin_complex (NODE_T * p)
+void
+genie_arcsin_complex (NODE_T * p)
 {
   A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7484,7 +7740,8 @@ void genie_arcsin_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_asin_long_complex (NODE_T * p)
+void
+genie_asin_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7504,7 +7761,8 @@ void genie_asin_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arccos_complex (NODE_T * p)
+void
+genie_arccos_complex (NODE_T * p)
 {
   A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7526,7 +7784,8 @@ void genie_arccos_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_acos_long_complex (NODE_T * p)
+void
+genie_acos_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7546,7 +7805,8 @@ void genie_acos_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arctan_complex (NODE_T * p)
+void
+genie_arctan_complex (NODE_T * p)
 {
   A68_REAL *re = (A68_REAL *) (STACK_OFFSET (-2 * SIZE (MODE (REAL))));
   A68_REAL *im = (A68_REAL *) (STACK_OFFSET (-SIZE (MODE (REAL))));
@@ -7567,7 +7827,8 @@ void genie_arctan_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_atan_long_complex (NODE_T * p)
+void
+genie_atan_long_complex (NODE_T * p)
 {
   MOID_T *mode = MOID (p);
   int digits = DIGITSC (mode), size = SIZEC (mode);
@@ -7589,7 +7850,8 @@ void genie_atan_long_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sinh_complex (NODE_T * p)
+void
+genie_sinh_complex (NODE_T * p)
 {
   GSL_COMPLEX_FUNCTION (gsl_complex_sinh);
 }
@@ -7599,7 +7861,8 @@ void genie_sinh_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cosh_complex (NODE_T * p)
+void
+genie_cosh_complex (NODE_T * p)
 {
   GSL_COMPLEX_FUNCTION (gsl_complex_cosh);
 }
@@ -7609,7 +7872,8 @@ void genie_cosh_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tanh_complex (NODE_T * p)
+void
+genie_tanh_complex (NODE_T * p)
 {
   GSL_COMPLEX_FUNCTION (gsl_complex_tanh);
 }
@@ -7619,7 +7883,8 @@ void genie_tanh_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arcsinh_complex (NODE_T * p)
+void
+genie_arcsinh_complex (NODE_T * p)
 {
   GSL_COMPLEX_FUNCTION (gsl_complex_arcsinh);
 }
@@ -7629,7 +7894,8 @@ void genie_arcsinh_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arccosh_complex (NODE_T * p)
+void
+genie_arccosh_complex (NODE_T * p)
 {
   GSL_COMPLEX_FUNCTION (gsl_complex_arccosh);
 }
@@ -7639,7 +7905,8 @@ void genie_arccosh_complex (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_arctanh_complex (NODE_T * p)
+void
+genie_arctanh_complex (NODE_T * p)
 {
   GSL_COMPLEX_FUNCTION (gsl_complex_arctanh);
 }
@@ -7669,7 +7936,8 @@ This keeps /tmp free of spurious files :-)
 
 typedef struct FILE_ENTRY FILE_ENTRY;
 
-struct FILE_ENTRY {
+struct FILE_ENTRY
+{
   NODE_T *pos;
   BOOL_T is_open, is_tmp;
   FILE_T fd;
@@ -7683,7 +7951,8 @@ FILE_ENTRY file_entries[MAX_OPEN_FILES];
 @param k  Entry to initialise.
 **/
 
-void init_file_entry (int k)
+void
+init_file_entry (int k)
 {
   if (k >= 0 && k < MAX_OPEN_FILES) {
     FILE_ENTRY *fe = &(file_entries[k]);
@@ -7699,10 +7968,11 @@ void init_file_entry (int k)
 @brief Initialise file entry table.
 **/
 
-void init_file_entries (void)
+void
+init_file_entries (void)
 {
   int k;
-  for (k = 0; k < MAX_OPEN_FILES; k ++) {
+  for (k = 0; k < MAX_OPEN_FILES; k++) {
     init_file_entry (k);
   }
 }
@@ -7716,11 +7986,11 @@ void init_file_entries (void)
 @return Entry in table.
 **/
 
-int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
+int
+store_file_entry (NODE_T * p, FILE_T fd, char *idf, BOOL_T is_tmp)
 {
   int k;
-  for (k = 0; k < MAX_OPEN_FILES; k ++)
-  {
+  for (k = 0; k < MAX_OPEN_FILES; k++) {
     FILE_ENTRY *fe = &(file_entries[k]);
     if (!IS_OPEN (fe)) {
       int len = 1 + (int) strlen (idf);
@@ -7736,7 +8006,7 @@ int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
   }
   diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_TOO_MANY_OPEN_FILES);
   exit_genie (p, A68_RUNTIME_ERROR);
-  return (-1); /* Fool them */
+  return (-1);                  /* Fool them */
 }
 
 /**
@@ -7745,7 +8015,8 @@ int store_file_entry (NODE_T *p, FILE_T fd, char *idf, BOOL_T is_tmp)
 @param k Entry in table.
 **/
 
-static void close_file_entry (NODE_T *p, int k)
+static void
+close_file_entry (NODE_T * p, int k)
 {
   if (k >= 0 && k < MAX_OPEN_FILES) {
     FILE_ENTRY *fe = &(file_entries[k]);
@@ -7767,7 +8038,8 @@ static void close_file_entry (NODE_T *p, int k)
 @param k Entry in table.
 **/
 
-static void free_file_entry (NODE_T *p, int k)
+static void
+free_file_entry (NODE_T * p, int k)
 {
   close_file_entry (p, k);
   if (k >= 0 && k < MAX_OPEN_FILES) {
@@ -7797,10 +8069,11 @@ static void free_file_entry (NODE_T *p, int k)
 @brief Close all files and delete all temp files.
 **/
 
-void free_file_entries (void)
+void
+free_file_entries (void)
 {
   int k;
-  for (k = 0; k < MAX_OPEN_FILES; k ++) {
+  for (k = 0; k < MAX_OPEN_FILES; k++) {
     free_file_entry (NO_NODE, k);
   }
 }
@@ -7811,7 +8084,8 @@ void free_file_entries (void)
 @param p Node in syntax tree.
 **/
 
-void genie_char_in_string (NODE_T * p)
+void
+genie_char_in_string (NODE_T * p)
 {
   A68_CHAR c;
   A68_INT pos;
@@ -7835,7 +8109,7 @@ void genie_char_in_string (NODE_T * p)
     if (q[k] == ch) {
       STATUS (&pos) = INIT_MASK;
       VALUE (&pos) = k + LOWER_BOUND (tup);
-      * DEREF (A68_INT, &ref_pos) = pos;
+      *DEREF (A68_INT, &ref_pos) = pos;
       PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
       return;
     }
@@ -7848,7 +8122,8 @@ void genie_char_in_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_last_char_in_string (NODE_T * p)
+void
+genie_last_char_in_string (NODE_T * p)
 {
   A68_CHAR c;
   A68_INT pos;
@@ -7872,7 +8147,7 @@ void genie_last_char_in_string (NODE_T * p)
     if (q[k] == ch) {
       STATUS (&pos) = INIT_MASK;
       VALUE (&pos) = k + LOWER_BOUND (tup);
-      * DEREF (A68_INT, &ref_pos) = pos;
+      *DEREF (A68_INT, &ref_pos) = pos;
       PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
       return;
     }
@@ -7885,7 +8160,8 @@ void genie_last_char_in_string (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_string_in_string (NODE_T * p)
+void
+genie_string_in_string (NODE_T * p)
 {
   A68_REF ref_pos, ref_str, ref_pat, row;
   A68_ARRAY *arr;
@@ -7908,7 +8184,7 @@ void genie_string_in_string (NODE_T * p)
       STATUS (&pos) = INIT_MASK;
 /* ANSI standard leaves pointer difference undefined */
       VALUE (&pos) = LOWER_BOUND (tup) + (int) get_transput_buffer_index (STRING_BUFFER) - (int) strlen (q);
-      * DEREF (A68_INT, &ref_pos) = pos;
+      *DEREF (A68_INT, &ref_pos) = pos;
     }
     PUSH_PRIMITIVE (p, A68_TRUE, A68_BOOL);
   } else {
@@ -7931,7 +8207,8 @@ static A68_REF ref_transput_buffer[MAX_TRANSPUT_BUFFER];
 @param size Max number of chars.
 **/
 
-void set_transput_buffer_size (int n, int size)
+void
+set_transput_buffer_size (int n, int size)
 {
   A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]));
   STATUS (k) = INIT_MASK;
@@ -7944,7 +8221,8 @@ void set_transput_buffer_size (int n, int size)
 @param cindex Char index.
 **/
 
-void set_transput_buffer_index (int n, int cindex)
+void
+set_transput_buffer_index (int n, int cindex)
 {
   A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]) + SIZE (MODE (INT)));
   STATUS (k) = INIT_MASK;
@@ -7957,7 +8235,8 @@ void set_transput_buffer_index (int n, int cindex)
 @return See brief description.
 **/
 
-int get_transput_buffer_size (int n)
+int
+get_transput_buffer_size (int n)
 {
   A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]));
   return (VALUE (k));
@@ -7969,7 +8248,8 @@ int get_transput_buffer_size (int n)
 @return See brief description.
 **/
 
-int get_transput_buffer_index (int n)
+int
+get_transput_buffer_index (int n)
 {
   A68_INT *k = (A68_INT *) (ADDRESS (&ref_transput_buffer[n]) + SIZE (MODE (INT)));
   return (VALUE (k));
@@ -7981,7 +8261,8 @@ int get_transput_buffer_index (int n)
 @return See brief description.
 **/
 
-char *get_transput_buffer (int n)
+char *
+get_transput_buffer (int n)
 {
   return ((char *) (ADDRESS (&ref_transput_buffer[n]) + 2 * SIZE (MODE (INT))));
 }
@@ -7991,7 +8272,8 @@ char *get_transput_buffer (int n)
 @param n Transput buffer number.
 **/
 
-void unblock_transput_buffer (int n)
+void
+unblock_transput_buffer (int n)
 {
   set_transput_buffer_index (n, -1);
 }
@@ -8002,7 +8284,8 @@ void unblock_transput_buffer (int n)
 @return See brief description.
 **/
 
-int get_unblocked_transput_buffer (NODE_T * p)
+int
+get_unblocked_transput_buffer (NODE_T * p)
 {
   int k;
   for (k = FIXED_TRANSPUT_BUFFERS; k < MAX_TRANSPUT_BUFFER; k++) {
@@ -8021,7 +8304,8 @@ int get_unblocked_transput_buffer (NODE_T * p)
 @param n Transput buffer number.
 **/
 
-void reset_transput_buffer (int n)
+void
+reset_transput_buffer (int n)
 {
   set_transput_buffer_index (n, 0);
   (get_transput_buffer (n))[0] = NULL_CHAR;
@@ -8032,7 +8316,8 @@ void reset_transput_buffer (int n)
 @param p Node in syntax tree position in syntax tree.
 **/
 
-void init_transput_buffers (NODE_T * p)
+void
+init_transput_buffers (NODE_T * p)
 {
   int k;
   for (k = 0; k < MAX_TRANSPUT_BUFFER; k++) {
@@ -8054,7 +8339,8 @@ void init_transput_buffers (NODE_T * p)
 @param size New size in characters.
 **/
 
-void enlarge_transput_buffer (NODE_T * p, int k, int size)
+void
+enlarge_transput_buffer (NODE_T * p, int k, int size)
 {
   int tbindex = get_transput_buffer_index (k);
   char *sb_1 = get_transput_buffer (k), *sb_2;
@@ -8074,7 +8360,8 @@ void enlarge_transput_buffer (NODE_T * p, int k, int size)
 @param ch Char to add.
 **/
 
-void add_char_transput_buffer (NODE_T * p, int k, char ch)
+void
+add_char_transput_buffer (NODE_T * p, int k, char ch)
 {
   char *sb = get_transput_buffer (k);
   int size = get_transput_buffer_size (k);
@@ -8096,7 +8383,8 @@ void add_char_transput_buffer (NODE_T * p, int k, char ch)
 @param ch String to add.
 **/
 
-void add_string_transput_buffer (NODE_T * p, int k, char *ch)
+void
+add_string_transput_buffer (NODE_T * p, int k, char *ch)
 {
   for (; ch[0] != NULL_CHAR; ch++) {
     add_char_transput_buffer (p, k, ch[0]);
@@ -8110,7 +8398,8 @@ void add_string_transput_buffer (NODE_T * p, int k, char *ch)
 @param ref Fat pointer to A68 string.
 **/
 
-void add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
+void
+add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
 {
   A68_REF row = *(A68_REF *) ref;
   A68_ARRAY *arr;
@@ -8135,7 +8424,8 @@ void add_a_string_transput_buffer (NODE_T * p, int k, BYTE_T * ref)
 @param k Transput buffer number.
 **/
 
-void add_string_from_stack_transput_buffer (NODE_T * p, int k)
+void
+add_string_from_stack_transput_buffer (NODE_T * p, int k)
 {
   DECREMENT_STACK_POINTER (p, A68_REF_SIZE);
   add_a_string_transput_buffer (p, k, STACK_TOP);
@@ -8147,7 +8437,8 @@ void add_string_from_stack_transput_buffer (NODE_T * p, int k)
 @return See brief description.
 **/
 
-char pop_char_transput_buffer (int k)
+char
+pop_char_transput_buffer (int k)
 {
   char *sb = get_transput_buffer (k);
   int tbindex = get_transput_buffer_index (k);
@@ -8168,7 +8459,8 @@ char pop_char_transput_buffer (int k)
 @param str Pointer to C string.
 **/
 
-static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
+static void
+add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
 {
   A68_REF a, c, d;
   A68_ARRAY *a_1, *a_3;
@@ -8178,7 +8470,7 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
   l_2 = (int) strlen (str);
 /* left part */
   CHECK_REF (p, ref_str, MODE (REF_STRING));
-  a = * DEREF (A68_REF, &ref_str);
+  a = *DEREF (A68_REF, &ref_str);
   CHECK_INIT (p, INITIALISED (&a), MODE (STRING));
   GET_DESCRIPTOR (a_1, t_1, &a);
   l_1 = ROW_SIZE (t_1);
@@ -8214,7 +8506,7 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
     MOVE ((BYTE_T *) & b_3[u], (BYTE_T *) & ch, SIZE (MODE (CHAR)));
     u += SIZE (MODE (CHAR));
   }
-  * DEREF (A68_REF, &ref_str) = c;
+  *DEREF (A68_REF, &ref_str) = c;
 }
 
 /**
@@ -8224,7 +8516,8 @@ static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *str)
 @param k Transput buffer number for file.
 **/
 
-void write_purge_buffer (NODE_T * p, A68_REF ref_file, int k)
+void
+write_purge_buffer (NODE_T * p, A68_REF ref_file, int k)
 {
   A68_FILE *file = FILE_DEREF (&ref_file);
   if (IS_NIL (STRING (file))) {
@@ -8246,7 +8539,8 @@ void write_purge_buffer (NODE_T * p, A68_REF ref_file, int k)
 @return See brief description.
 **/
 
-char *stack_string (NODE_T * p, int size)
+char *
+stack_string (NODE_T * p, int size)
 {
   char *new_str = (char *) STACK_TOP;
   INCREMENT_STACK_POINTER (p, size);
@@ -8265,7 +8559,8 @@ char *stack_string (NODE_T * p, int size)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_in (NODE_T * p)
+void
+genie_stand_in (NODE_T * p)
 {
   PUSH_REF (p, stand_in);
 }
@@ -8275,7 +8570,8 @@ void genie_stand_in (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_out (NODE_T * p)
+void
+genie_stand_out (NODE_T * p)
 {
   PUSH_REF (p, stand_out);
 }
@@ -8285,7 +8581,8 @@ void genie_stand_out (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_back (NODE_T * p)
+void
+genie_stand_back (NODE_T * p)
 {
   PUSH_REF (p, stand_back);
 }
@@ -8295,7 +8592,8 @@ void genie_stand_back (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_error (NODE_T * p)
+void
+genie_stand_error (NODE_T * p)
 {
   PUSH_REF (p, stand_error);
 }
@@ -8305,7 +8603,8 @@ void genie_stand_error (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_error_char (NODE_T * p)
+void
+genie_error_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, ERROR_CHAR, A68_CHAR);
 }
@@ -8315,7 +8614,8 @@ void genie_error_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_exp_char (NODE_T * p)
+void
+genie_exp_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, EXPONENT_CHAR, A68_CHAR);
 }
@@ -8325,7 +8625,8 @@ void genie_exp_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_flip_char (NODE_T * p)
+void
+genie_flip_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, FLIP_CHAR, A68_CHAR);
 }
@@ -8335,7 +8636,8 @@ void genie_flip_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_flop_char (NODE_T * p)
+void
+genie_flop_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, FLOP_CHAR, A68_CHAR);
 }
@@ -8345,7 +8647,8 @@ void genie_flop_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_null_char (NODE_T * p)
+void
+genie_null_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, NULL_CHAR, A68_CHAR);
 }
@@ -8355,7 +8658,8 @@ void genie_null_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_blank_char (NODE_T * p)
+void
+genie_blank_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, BLANK_CHAR, A68_CHAR);
 }
@@ -8365,7 +8669,8 @@ void genie_blank_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_newline_char (NODE_T * p)
+void
+genie_newline_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, NEWLINE_CHAR, A68_CHAR);
 }
@@ -8375,7 +8680,8 @@ void genie_newline_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_formfeed_char (NODE_T * p)
+void
+genie_formfeed_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, FORMFEED_CHAR, A68_CHAR);
 }
@@ -8385,7 +8691,8 @@ void genie_formfeed_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_tab_char (NODE_T * p)
+void
+genie_tab_char (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, TAB_CHAR, A68_CHAR);
 }
@@ -8395,7 +8702,8 @@ void genie_tab_char (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_in_channel (NODE_T * p)
+void
+genie_stand_in_channel (NODE_T * p)
 {
   PUSH_OBJECT (p, stand_in_channel, A68_CHANNEL);
 }
@@ -8405,7 +8713,8 @@ void genie_stand_in_channel (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_out_channel (NODE_T * p)
+void
+genie_stand_out_channel (NODE_T * p)
 {
   PUSH_OBJECT (p, stand_out_channel, A68_CHANNEL);
 }
@@ -8415,7 +8724,8 @@ void genie_stand_out_channel (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_draw_channel (NODE_T * p)
+void
+genie_stand_draw_channel (NODE_T * p)
 {
   PUSH_OBJECT (p, stand_draw_channel, A68_CHANNEL);
 }
@@ -8425,7 +8735,8 @@ void genie_stand_draw_channel (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_back_channel (NODE_T * p)
+void
+genie_stand_back_channel (NODE_T * p)
 {
   PUSH_OBJECT (p, stand_back_channel, A68_CHANNEL);
 }
@@ -8435,7 +8746,8 @@ void genie_stand_back_channel (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_stand_error_channel (NODE_T * p)
+void
+genie_stand_error_channel (NODE_T * p)
 {
   PUSH_OBJECT (p, stand_error_channel, A68_CHANNEL);
 }
@@ -8445,7 +8757,8 @@ void genie_stand_error_channel (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_program_idf (NODE_T * p)
+void
+genie_program_idf (NODE_T * p)
 {
   PUSH_REF (p, c_to_a_string (p, FILE_SOURCE_NAME (&program), DEFAULT_WIDTH));
 }
@@ -8457,7 +8770,8 @@ void genie_program_idf (NODE_T * p)
 @param z
 **/
 
-void set_default_event_procedure (A68_PROCEDURE * z)
+void
+set_default_event_procedure (A68_PROCEDURE * z)
 {
   STATUS (z) = INIT_MASK;
   NODE (&(BODY (z))) = NO_NODE;
@@ -8475,7 +8789,8 @@ void set_default_event_procedure (A68_PROCEDURE * z)
 @param d Draw possible.
 **/
 
-static void init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL_T p, BOOL_T b, BOOL_T d)
+static void
+init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL_T p, BOOL_T b, BOOL_T d)
 {
   STATUS (chan) = INIT_MASK;
   RESET (chan) = r;
@@ -8492,7 +8807,8 @@ static void init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL
 @param f File.
 **/
 
-void set_default_event_procedures (A68_FILE * f)
+void
+set_default_event_procedures (A68_FILE * f)
 {
   set_default_event_procedure (&(FILE_END_MENDED (f)));
   set_default_event_procedure (&(PAGE_END_MENDED (f)));
@@ -8516,7 +8832,8 @@ void set_default_event_procedures (A68_FILE * f)
 @param env Unix ENVIRONMENT variable.
 **/
 
-static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, BOOL_T rm, BOOL_T wm, BOOL_T cm, char *env)
+static void
+init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, BOOL_T rm, BOOL_T wm, BOOL_T cm, char *env)
 {
   A68_FILE *f;
   char *filename = (env == NO_TEXT ? NO_TEXT : getenv (env));
@@ -8562,7 +8879,8 @@ static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, 
 @param p Node in syntax tree.
 **/
 
-void genie_init_transput (NODE_T * p)
+void
+genie_init_transput (NODE_T * p)
 {
   init_transput_buffers (p);
 /* Channels */
@@ -8590,7 +8908,8 @@ void genie_init_transput (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_idf (NODE_T * p)
+void
+genie_idf (NODE_T * p)
 {
   A68_REF ref_file, ref_filename;
   char *filename;
@@ -8608,7 +8927,8 @@ void genie_idf (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_term (NODE_T * p)
+void
+genie_term (NODE_T * p)
 {
   A68_REF ref_file, ref_term;
   char *term;
@@ -8626,7 +8946,8 @@ void genie_term (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_make_term (NODE_T * p)
+void
+genie_make_term (NODE_T * p)
 {
   int size;
   A68_FILE *file;
@@ -8652,7 +8973,8 @@ void genie_make_term (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_put_possible (NODE_T * p)
+void
+genie_put_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8668,7 +8990,8 @@ void genie_put_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_get_possible (NODE_T * p)
+void
+genie_get_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8684,7 +9007,8 @@ void genie_get_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_bin_possible (NODE_T * p)
+void
+genie_bin_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8700,7 +9024,8 @@ void genie_bin_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_set_possible (NODE_T * p)
+void
+genie_set_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8716,7 +9041,8 @@ void genie_set_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_reidf_possible (NODE_T * p)
+void
+genie_reidf_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8732,7 +9058,8 @@ void genie_reidf_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_reset_possible (NODE_T * p)
+void
+genie_reset_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8748,7 +9075,8 @@ void genie_reset_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_compressible (NODE_T * p)
+void
+genie_compressible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8764,7 +9092,8 @@ void genie_compressible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_draw_possible (NODE_T * p)
+void
+genie_draw_possible (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8780,7 +9109,8 @@ void genie_draw_possible (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_open (NODE_T * p)
+void
+genie_open (NODE_T * p)
 {
   A68_CHANNEL channel;
   A68_REF ref_iden, ref_file;
@@ -8836,7 +9166,8 @@ void genie_open (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_establish (NODE_T * p)
+void
+genie_establish (NODE_T * p)
 {
   A68_CHANNEL channel;
   A68_REF ref_iden, ref_file;
@@ -8888,7 +9219,8 @@ void genie_establish (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_create (NODE_T * p)
+void
+genie_create (NODE_T * p)
 {
   A68_CHANNEL channel;
   A68_REF ref_file;
@@ -8930,7 +9262,8 @@ void genie_create (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_associate (NODE_T * p)
+void
+genie_associate (NODE_T * p)
 {
   A68_REF ref_string, ref_file;
   A68_FILE *file;
@@ -8981,7 +9314,8 @@ void genie_associate (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_close (NODE_T * p)
+void
+genie_close (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -8995,7 +9329,7 @@ void genie_close (NODE_T * p)
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
 #if defined HAVE_GNU_PLOTUTILS
   if (DEVICE_OPENED (&DEVICE (file))) {
-    ASSERT(close_device (p, file) == A68_TRUE);
+    ASSERT (close_device (p, file) == A68_TRUE);
     STREAM (&DEVICE (file)) = NO_STREAM;
     return;
   }
@@ -9012,7 +9346,8 @@ void genie_close (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_lock (NODE_T * p)
+void
+genie_lock (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9026,7 +9361,7 @@ void genie_lock (NODE_T * p)
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
 #if defined HAVE_GNU_PLOTUTILS
   if (DEVICE_OPENED (&DEVICE (file))) {
-    ASSERT(close_device (p, file) == A68_TRUE);
+    ASSERT (close_device (p, file) == A68_TRUE);
     STREAM (&DEVICE (file)) = NO_STREAM;
     return;
   }
@@ -9052,7 +9387,8 @@ void genie_lock (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_erase (NODE_T * p)
+void
+genie_erase (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9066,7 +9402,7 @@ void genie_erase (NODE_T * p)
   DEVICE_MADE (&DEVICE (file)) = A68_FALSE;
 #if defined HAVE_GNU_PLOTUTILS
   if (DEVICE_OPENED (&DEVICE (file))) {
-    ASSERT(close_device (p, file) == A68_TRUE);
+    ASSERT (close_device (p, file) == A68_TRUE);
     STREAM (&DEVICE (file)) = NO_STREAM;
     return;
   }
@@ -9098,7 +9434,8 @@ void genie_erase (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_backspace (NODE_T * p)
+void
+genie_backspace (NODE_T * p)
 {
   ADDR_T pop_sp = stack_pointer;
   PUSH_PRIMITIVE (p, -1, A68_INT);
@@ -9111,7 +9448,8 @@ void genie_backspace (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_set (NODE_T * p)
+void
+genie_set (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9130,7 +9468,7 @@ void genie_set (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!IS_NIL (STRING (file))) {
-    A68_REF z = * DEREF (A68_REF, &STRING (file));
+    A68_REF z = *DEREF (A68_REF, &STRING (file));
     A68_ARRAY *a;
     A68_TUPLE *t;
     int size;
@@ -9194,7 +9532,8 @@ void genie_set (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_reset (NODE_T * p)
+void
+genie_reset (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9228,7 +9567,8 @@ void genie_reset (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_file_end (NODE_T * p)
+void
+genie_on_file_end (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9246,7 +9586,8 @@ void genie_on_file_end (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_page_end (NODE_T * p)
+void
+genie_on_page_end (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9264,7 +9605,8 @@ void genie_on_page_end (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_line_end (NODE_T * p)
+void
+genie_on_line_end (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9282,7 +9624,8 @@ void genie_on_line_end (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_format_end (NODE_T * p)
+void
+genie_on_format_end (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9300,7 +9643,8 @@ void genie_on_format_end (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_format_error (NODE_T * p)
+void
+genie_on_format_error (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9318,7 +9662,8 @@ void genie_on_format_error (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_value_error (NODE_T * p)
+void
+genie_on_value_error (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9336,7 +9681,8 @@ void genie_on_value_error (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_open_error (NODE_T * p)
+void
+genie_on_open_error (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9354,7 +9700,8 @@ void genie_on_open_error (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_on_transput_error (NODE_T * p)
+void
+genie_on_transput_error (NODE_T * p)
 {
   A68_PROCEDURE z;
   A68_REF ref_file;
@@ -9374,7 +9721,8 @@ void genie_on_transput_error (NODE_T * p)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void on_event_handler (NODE_T * p, A68_PROCEDURE z, A68_REF ref_file)
+void
+on_event_handler (NODE_T * p, A68_PROCEDURE z, A68_REF ref_file)
 {
   if (NODE (&(BODY (&z))) == NO_NODE) {
 /* Default procedure */
@@ -9392,7 +9740,8 @@ void on_event_handler (NODE_T * p, A68_PROCEDURE z, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void end_of_file_error (NODE_T * p, A68_REF ref_file)
+void
+end_of_file_error (NODE_T * p, A68_REF ref_file)
 {
   A68_BOOL z;
   on_event_handler (p, FILE_END_MENDED (FILE_DEREF (&ref_file)), ref_file);
@@ -9410,7 +9759,8 @@ void end_of_file_error (NODE_T * p, A68_REF ref_file)
 @param mode Mode for opening.
 **/
 
-void open_error (NODE_T * p, A68_REF ref_file, char *mode)
+void
+open_error (NODE_T * p, A68_REF ref_file, char *mode)
 {
   A68_BOOL z;
   on_event_handler (p, OPEN_ERROR_MENDED (FILE_DEREF (&ref_file)), ref_file);
@@ -9438,7 +9788,8 @@ void open_error (NODE_T * p, A68_REF ref_file, char *mode)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void value_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
+void
+value_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   if (END_OF_FILE (f)) {
@@ -9461,7 +9812,8 @@ void value_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void value_sign_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
+void
+value_sign_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   if (END_OF_FILE (f)) {
@@ -9484,7 +9836,8 @@ void value_sign_error (NODE_T * p, MOID_T * m, A68_REF ref_file)
 @param m Mode of object read or written.
 **/
 
-void transput_error (NODE_T * p, A68_REF ref_file, MOID_T * m)
+void
+transput_error (NODE_T * p, A68_REF ref_file, MOID_T * m)
 {
   A68_BOOL z;
   on_event_handler (p, TRANSPUT_ERROR_MENDED (FILE_DEREF (&ref_file)), ref_file);
@@ -9503,7 +9856,8 @@ void transput_error (NODE_T * p, A68_REF ref_file, MOID_T * m)
 @return See brief description.
 **/
 
-int char_scanner (A68_FILE * f)
+int
+char_scanner (A68_FILE * f)
 {
   if (get_transput_buffer_index (TRANSPUT_BUFFER (f)) > 0) {
 /* There are buffered characters */
@@ -9526,7 +9880,7 @@ int char_scanner (A68_FILE * f)
 File is associated with a STRING. Give next CHAR. 
 When we're outside the STRING give EOF_CHAR. 
 */
-    A68_REF z = * DEREF (A68_REF, &STRING (f));
+    A68_REF z = *DEREF (A68_REF, &STRING (f));
     A68_ARRAY *a;
     A68_TUPLE *t;
     BYTE_T *base;
@@ -9553,7 +9907,8 @@ When we're outside the STRING give EOF_CHAR.
 @param ch Character to push.
 **/
 
-void unchar_scanner (NODE_T * p, A68_FILE * f, char ch)
+void
+unchar_scanner (NODE_T * p, A68_FILE * f, char ch)
 {
   END_OF_FILE (f) = A68_FALSE;
   add_char_transput_buffer (p, TRANSPUT_BUFFER (f), ch);
@@ -9564,7 +9919,8 @@ void unchar_scanner (NODE_T * p, A68_FILE * f, char ch)
 @param p Node in syntax tree.
 **/
 
-void genie_eof (NODE_T * p)
+void
+genie_eof (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9598,7 +9954,8 @@ void genie_eof (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_eoln (NODE_T * p)
+void
+genie_eoln (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9635,7 +9992,8 @@ void genie_eoln (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_new_line (NODE_T * p)
+void
+genie_new_line (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9679,7 +10037,8 @@ void genie_new_line (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_new_page (NODE_T * p)
+void
+genie_new_page (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9723,7 +10082,8 @@ void genie_new_page (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_space (NODE_T * p)
+void
+genie_space (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -9760,7 +10120,8 @@ void genie_space (NODE_T * p)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void skip_nl_ff (NODE_T * p, int *ch, A68_REF ref_file)
+void
+skip_nl_ff (NODE_T * p, int *ch, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   while ((*ch) != EOF_CHAR && IS_NL_FF (*ch)) {
@@ -9792,7 +10153,8 @@ void skip_nl_ff (NODE_T * p, int *ch, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void scan_integer (NODE_T * p, A68_REF ref_file)
+void
+scan_integer (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int ch;
@@ -9824,7 +10186,8 @@ void scan_integer (NODE_T * p, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void scan_real (NODE_T * p, A68_REF ref_file)
+void
+scan_real (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   char x_e = EXPONENT_CHAR;
@@ -9886,7 +10249,8 @@ salida:if (ch != EOF_CHAR) {
 @param ref_file Fat pointer to A68 file.
 **/
 
-void scan_bits (NODE_T * p, A68_REF ref_file)
+void
+scan_bits (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int ch, flip = FLIP_CHAR, flop = FLOP_CHAR;
@@ -9914,7 +10278,8 @@ void scan_bits (NODE_T * p, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void scan_char (NODE_T * p, A68_REF ref_file)
+void
+scan_char (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int ch;
@@ -9933,14 +10298,16 @@ void scan_char (NODE_T * p, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void scan_string (NODE_T * p, char *term, A68_REF ref_file)
+void
+scan_string (NODE_T * p, char *term, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   if (END_OF_FILE (f)) {
     reset_transput_buffer (INPUT_BUFFER);
     end_of_file_error (p, ref_file);
   } else {
-    BOOL_T go_on; int ch;
+    BOOL_T go_on;
+    int ch;
     reset_transput_buffer (INPUT_BUFFER);
     ch = char_scanner (f);
     go_on = A68_TRUE;
@@ -9979,7 +10346,8 @@ void scan_string (NODE_T * p, char *term, A68_REF ref_file)
 @return Whether file is good for use.
 **/
 
-BOOL_T a68g_mkstemp (char *fn, int flags, mode_t permissions)
+BOOL_T
+a68g_mkstemp (char *fn, int flags, mode_t permissions)
 {
 /* "tmpnam" is not safe, "mkstemp" is Unix, so a68g brings its own tmpnam  */
 #define TMP_SIZE 32
@@ -9997,7 +10365,7 @@ First we try /tmp, and if that won't go, the current dir.
     "./a68g_",
     NO_TEXT
   };
-  for (i = 0; prefix[i] != NO_TEXT; i ++) {
+  for (i = 0; prefix[i] != NO_TEXT; i++) {
     for (k = 0; k < TRIALS && good_file == A68_FALSE; k++) {
       int j, cindex;
       FILE_T fd;
@@ -10039,7 +10407,8 @@ First we try /tmp, and if that won't go, the current dir.
 @return File number.
 **/
 
-FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permissions)
+FILE_T
+open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permissions)
 {
   A68_FILE *file;
   A68_REF ref_filename;
@@ -10052,11 +10421,11 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
   CHECK_INIT (p, INITIALISED (file), MODE (FILE));
   if (!IS_NIL (STRING (file))) {
     if (writing) {
-      A68_REF z = * DEREF (A68_REF, &STRING (file));
+      A68_REF z = *DEREF (A68_REF, &STRING (file));
       A68_ARRAY *a;
       A68_TUPLE *t;
       GET_DESCRIPTOR (a, t, &z);
-      UPB (t) = LWB (t) - 1; 
+      UPB (t) = LWB (t) - 1;
     }
 /* Associated file */
     TRANSPUT_BUFFER (file) = get_unblocked_transput_buffer (p);
@@ -10115,7 +10484,8 @@ FILE_T open_physical_file (NODE_T * p, A68_REF ref_file, int flags, mode_t permi
 @param z A68 routine to call
 **/
 
-void genie_call_proc_ref_file_void (NODE_T * p, A68_REF ref_file, A68_PROCEDURE z)
+void
+genie_call_proc_ref_file_void (NODE_T * p, A68_REF ref_file, A68_PROCEDURE z)
 {
   ADDR_T pop_sp = stack_pointer, pop_fp = frame_pointer;
   MOID_T *u = MODE (PROC_REF_FILE_VOID);
@@ -10132,7 +10502,8 @@ void genie_call_proc_ref_file_void (NODE_T * p, A68_REF ref_file, A68_PROCEDURE 
 @return See brief description.
 **/
 
-static int char_value (int ch)
+static int
+char_value (int ch)
 {
   switch (ch) {
   case '0':
@@ -10220,7 +10591,8 @@ static int char_value (int ch)
 @return Value of denotation in str.
 **/
 
-unsigned a68g_strtoul (char *str, char **end, int base)
+unsigned
+a68g_strtoul (char *str, char **end, int base)
 {
   if (str == NO_TEXT || str[0] == NULL_CHAR) {
     (*end) = NO_TEXT;
@@ -10276,7 +10648,8 @@ unsigned a68g_strtoul (char *str, char **end, int base)
 @return See brief description.
 **/
 
-static unsigned bits_to_int (NODE_T * p, char *str)
+static unsigned
+bits_to_int (NODE_T * p, char *str)
 {
   int base = 0;
   unsigned bits = 0;
@@ -10306,7 +10679,8 @@ static unsigned bits_to_int (NODE_T * p, char *str)
 @param m Mode of 'z'.
 **/
 
-static void long_bits_to_long_int (NODE_T * p, MP_T * z, char *str, MOID_T * m)
+static void
+long_bits_to_long_int (NODE_T * p, MP_T * z, char *str, MOID_T * m)
 {
   int base = 0;
   char *radix = NO_TEXT;
@@ -10357,7 +10731,8 @@ static void long_bits_to_long_int (NODE_T * p, MP_T * z, char *str, MOID_T * m)
 @return Whether conversion is successful.
 **/
 
-BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T * item)
+BOOL_T
+genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T * item)
 {
   RESET_ERRNO;
 /* strto.. does not mind empty strings */
@@ -10491,12 +10866,13 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
 @param ref_file Fat pointer to A68 file.
 **/
 
-void genie_string_to_value (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void
+genie_string_to_value (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   char *str = get_transput_buffer (INPUT_BUFFER);
   RESET_ERRNO;
 /* end string, just in case */
-  add_char_transput_buffer (p, INPUT_BUFFER, NULL_CHAR);        
+  add_char_transput_buffer (p, INPUT_BUFFER, NULL_CHAR);
   if (mode == MODE (INT)) {
     if (genie_string_to_value_internal (p, mode, str, item) == A68_FALSE) {
       value_error (p, mode, ref_file);
@@ -10560,7 +10936,8 @@ void genie_string_to_value (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
 @param ref_file Fat pointer to A68 file.
 **/
 
-void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void
+genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   RESET_ERRNO;
@@ -10636,7 +11013,8 @@ void genie_read_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_
 @param p Node in syntax tree.
 **/
 
-void genie_read (NODE_T * p)
+void
+genie_read (NODE_T * p)
 {
   A68_REF row;
   POP_REF (p, &row);
@@ -10651,7 +11029,8 @@ void genie_read (NODE_T * p)
 @param ref_file File to open.
 **/
 
-void open_for_reading (NODE_T * p, A68_REF ref_file)
+void
+open_for_reading (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *file = FILE_DEREF (&ref_file);
   if (!OPENED (file)) {
@@ -10694,7 +11073,8 @@ void open_for_reading (NODE_T * p, A68_REF ref_file)
 @param p Node in syntax tree.
 **/
 
-void genie_read_file (NODE_T * p)
+void
+genie_read_file (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -10735,7 +11115,8 @@ void genie_read_file (NODE_T * p)
 @param mod Format modifier.
 **/
 
-void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
+void
+genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
 {
   if (moid == MODE (INT)) {
     A68_INT *z = (A68_INT *) item;
@@ -10865,7 +11246,8 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
 @param ref_file Fat pointer to A68 file.
 **/
 
-void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void
+genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   RESET_ERRNO;
   if (mode == MODE (PROC_REF_FILE_VOID)) {
@@ -10936,7 +11318,8 @@ void genie_write_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref
 @param p Node in syntax tree.
 **/
 
-void genie_write (NODE_T * p)
+void
+genie_write (NODE_T * p)
 {
   A68_REF row;
   POP_REF (p, &row);
@@ -10951,7 +11334,8 @@ void genie_write (NODE_T * p)
 @param ref_file File to open.
 **/
 
-void open_for_writing (NODE_T * p, A68_REF ref_file)
+void
+open_for_writing (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *file = FILE_DEREF (&ref_file);
   if (!OPENED (file)) {
@@ -10994,7 +11378,8 @@ void open_for_writing (NODE_T * p, A68_REF ref_file)
 @param p Node in syntax tree.
 **/
 
-void genie_write_file (NODE_T * p)
+void
+genie_write_file (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -11037,7 +11422,8 @@ void genie_write_file (NODE_T * p)
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_FILE *f;
   CHECK_REF (p, ref_file, MODE (REF_FILE));
@@ -11138,7 +11524,8 @@ static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A
 @param p Node in syntax tree.
 **/
 
-void genie_read_bin (NODE_T * p)
+void
+genie_read_bin (NODE_T * p)
 {
   A68_REF row;
   POP_REF (p, &row);
@@ -11152,7 +11539,8 @@ void genie_read_bin (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_read_bin_file (NODE_T * p)
+void
+genie_read_bin_file (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -11226,7 +11614,8 @@ void genie_read_bin_file (NODE_T * p)
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_FILE *f;
   CHECK_REF (p, ref_file, MODE (REF_FILE));
@@ -11302,7 +11691,8 @@ static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, 
 @param p Node in syntax tree.
 **/
 
-void genie_write_bin (NODE_T * p)
+void
+genie_write_bin (NODE_T * p)
 {
   A68_REF row;
   POP_REF (p, &row);
@@ -11316,7 +11706,8 @@ void genie_write_bin (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_write_bin_file (NODE_T * p)
+void
+genie_write_bin_file (NODE_T * p)
 {
   A68_REF ref_file, row;
   A68_FILE *file;
@@ -11397,7 +11788,8 @@ stack corrupted when called directly.
 @return See brief description.
 **/
 
-char *error_chars (char *s, int n)
+char *
+error_chars (char *s, int n)
 {
   int k = (n != 0 ? ABS (n) : 1);
   s[k] = NULL_CHAR;
@@ -11414,7 +11806,8 @@ char *error_chars (char *s, int n)
 @return See brief description.
 **/
 
-A68_REF tmp_to_a68_string (NODE_T * p, char *temp_string)
+A68_REF
+tmp_to_a68_string (NODE_T * p, char *temp_string)
 {
   A68_REF z;
 /* no compaction allowed since temp_string might be up for garbage collecting .. */
@@ -11429,7 +11822,8 @@ A68_REF tmp_to_a68_string (NODE_T * p, char *temp_string)
 @return String.
 **/
 
-static char *plusto (char c, char *str)
+static char *
+plusto (char c, char *str)
 {
   MOVE (&str[1], &str[0], (unsigned) (strlen (str) + 1));
   str[0] = c;
@@ -11444,7 +11838,8 @@ static char *plusto (char c, char *str)
 @return String.
 **/
 
-char *string_plusab_char (char *str, char c, int strwid)
+char *
+string_plusab_char (char *str, char c, int strwid)
 {
   char z[2];
   z[0] = c;
@@ -11460,7 +11855,8 @@ char *string_plusab_char (char *str, char c, int strwid)
 @return String.
 **/
 
-static char *leading_spaces (char *str, int width)
+static char *
+leading_spaces (char *str, int width)
 {
   int j = width - (int) strlen (str);
   while (--j >= 0) {
@@ -11475,7 +11871,8 @@ static char *leading_spaces (char *str, int width)
 @return Character.
 **/
 
-static char digchar (int k)
+static char
+digchar (int k)
 {
   char *s = "0123456789abcdef";
   if (k >= 0 && k < (int) strlen (s)) {
@@ -11494,7 +11891,8 @@ static char digchar (int k)
 @return See brief description.
 **/
 
-char *long_sub_whole (NODE_T * p, MP_T * m, int digits, int width)
+char *
+long_sub_whole (NODE_T * p, MP_T * m, int digits, int width)
 {
   ADDR_T pop_sp;
   char *s;
@@ -11529,7 +11927,8 @@ char *long_sub_whole (NODE_T * p, MP_T * m, int digits, int width)
 @return See brief description.
 **/
 
-char *sub_whole (NODE_T * p, int n, int width)
+char *
+sub_whole (NODE_T * p, int n, int width)
 {
   char *s = stack_string (p, 8 + width);
   int len = 0;
@@ -11553,7 +11952,8 @@ char *sub_whole (NODE_T * p, int n, int width)
 @return String.
 **/
 
-char *whole (NODE_T * p)
+char *
+whole (NODE_T * p)
 {
   int arg_sp;
   A68_INT width;
@@ -11653,7 +12053,8 @@ char *whole (NODE_T * p)
 @return Next digit.
 **/
 
-static char long_choose_dig (NODE_T * p, MP_T * y, int digits)
+static char
+long_choose_dig (NODE_T * p, MP_T * y, int digits)
 {
 /* Assuming positive "y" */
   int pop_sp = stack_pointer, c;
@@ -11681,7 +12082,8 @@ static char long_choose_dig (NODE_T * p, MP_T * y, int digits)
 @return See brief description.
 **/
 
-char *long_sub_fixed (NODE_T * p, MP_T * x, int digits, int width, int after)
+char *
+long_sub_fixed (NODE_T * p, MP_T * x, int digits, int width, int after)
 {
   int strwid = 8 + width;
   char *str = stack_string (p, strwid);
@@ -11734,7 +12136,8 @@ char *long_sub_fixed (NODE_T * p, MP_T * x, int digits, int width, int after)
 @return Next digit.
 **/
 
-static char choose_dig (double *y)
+static char
+choose_dig (double *y)
 {
 /* Assuming positive "y" */
   int c = (int) (*y *= 10);
@@ -11754,7 +12157,8 @@ static char choose_dig (double *y)
 @return String.
 **/
 
-char *sub_fixed (NODE_T * p, double x, int width, int after)
+char *
+sub_fixed (NODE_T * p, double x, int width, int after)
 {
   int strwid = 8 + width;
   char *str = stack_string (p, strwid);
@@ -11808,7 +12212,8 @@ char *sub_fixed (NODE_T * p, double x, int width, int after)
 @return String.
 **/
 
-char *fixed (NODE_T * p)
+char *
+fixed (NODE_T * p)
 {
   A68_INT width, after;
   MOID_T *mode;
@@ -11953,7 +12358,8 @@ char *fixed (NODE_T * p)
 @param q Int multiplier.
 **/
 
-void long_standardise (NODE_T * p, MP_T * y, int digits, int before, int after, int *q)
+void
+long_standardise (NODE_T * p, MP_T * y, int digits, int before, int after, int *q)
 {
   int j, pop_sp = stack_pointer;
   MP_T *f;
@@ -12011,7 +12417,8 @@ void long_standardise (NODE_T * p, MP_T * y, int digits, int before, int after, 
 @param p Int multiplier.
 **/
 
-void standardise (double *y, int before, int after, int *p)
+void
+standardise (double *y, int before, int after, int *p)
 {
   int j;
   double f, g = 1.0, h;
@@ -12045,7 +12452,8 @@ void standardise (double *y, int before, int after, int *p)
 @return String.
 **/
 
-char *real (NODE_T * p)
+char *
+real (NODE_T * p)
 {
   int pop_sp, arg_sp;
   A68_INT width, after, expo, frmt;
@@ -12244,7 +12652,8 @@ char *real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_whole (NODE_T * p)
+void
+genie_whole (NODE_T * p)
 {
   int pop_sp = stack_pointer;
   A68_REF ref;
@@ -12259,7 +12668,8 @@ void genie_whole (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_fixed (NODE_T * p)
+void
+genie_fixed (NODE_T * p)
 {
   int pop_sp = stack_pointer;
   A68_REF ref;
@@ -12274,7 +12684,8 @@ void genie_fixed (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_real (NODE_T * p)
+void
+genie_real (NODE_T * p)
 {
   int pop_sp = stack_pointer;
   A68_REF ref;
@@ -12289,7 +12700,8 @@ void genie_real (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_float (NODE_T * p)
+void
+genie_float (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, 1, A68_INT);
   genie_real (p);
@@ -12352,9 +12764,7 @@ A68C_TRANSPUT (longlong_bits, LONGLONG_BITS)
 A68C_TRANSPUT (bool, BOOL)
 A68C_TRANSPUT (char, CHAR)
 A68C_TRANSPUT (string, STRING)
-
 #undef A68C_TRANSPUT
-
 #define A68C_TRANSPUT(n, s, m)\
  void genie_get_##n (NODE_T * p) {\
     A68_REF ref_file;\
@@ -12383,28 +12793,24 @@ A68C_TRANSPUT (string, STRING)
     genie_write_standard (p, MODE (m), STACK_OFFSET (-size), stand_out);\
     write_purge_buffer (p, stand_out, UNFORMATTED_BUFFER);\
     DECREMENT_STACK_POINTER (p, size);}
-
-A68C_TRANSPUT(complex, real, COMPLEX)
-A68C_TRANSPUT(long_complex, long_real, LONG_COMPLEX)
-A68C_TRANSPUT(longlong_complex, longlong_real, LONGLONG_COMPLEX)
-
+A68C_TRANSPUT (complex, real, COMPLEX)
+A68C_TRANSPUT (long_complex, long_real, LONG_COMPLEX)
+A68C_TRANSPUT (longlong_complex, longlong_real, LONGLONG_COMPLEX)
 #undef A68C_TRANSPUT
-
 /**
 @brief PROC STRING read line
 @param p Node in syntax tree.
 **/
-
-void genie_read_line (NODE_T * p)
+     void genie_read_line (NODE_T * p)
 {
 #if defined HAVE_READLINE
-  char * line = readline (""); 
+  char *line = readline ("");
   if (line != NO_TEXT && (int) strlen (line) > 0) {
     add_history (line);
   }
   PUSH_REF (p, c_to_a_string (p, line, DEFAULT_WIDTH));
   free (line);
-#else 
+#else
   genie_read_string (p);
   genie_stand_in (p);
   genie_new_line (p);
@@ -12431,7 +12837,8 @@ format text is at in the syntax tree.
 @param diag Diagnostic text.
 **/
 
-void format_error (NODE_T * p, A68_REF ref_file, char *diag)
+void
+format_error (NODE_T * p, A68_REF ref_file, char *diag)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   A68_BOOL z;
@@ -12448,7 +12855,8 @@ void format_error (NODE_T * p, A68_REF ref_file, char *diag)
 @param p Node in syntax tree.
 **/
 
-static void initialise_collitems (NODE_T * p)
+static void
+initialise_collitems (NODE_T * p)
 {
 
 /*
@@ -12478,7 +12886,8 @@ of times it can still be used.
 @param init Whether to initialise collitems.
 **/
 
-static void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, BOOL_T embedded, BOOL_T init)
+static void
+open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, BOOL_T embedded, BOOL_T init)
 {
 /* Open a new frame for the format text and save for return to embedding one */
   A68_FILE *file = FILE_DEREF (&ref_file);
@@ -12509,7 +12918,8 @@ static void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, B
 @return Whether format is embedded.
 **/
 
-int end_of_format (NODE_T * p, A68_REF ref_file)
+int
+end_of_format (NODE_T * p, A68_REF ref_file)
 {
 /*
 Format-items return immediately to the embedding format text. The outermost
@@ -12545,7 +12955,8 @@ format text calls "on format end".
 @return See brief description.
 **/
 
-int get_replicator_value (NODE_T * p, BOOL_T check)
+int
+get_replicator_value (NODE_T * p, BOOL_T check)
 {
   int z = 0;
   if (IS (p, STATIC_REPLICATOR)) {
@@ -12582,7 +12993,8 @@ int get_replicator_value (NODE_T * p, BOOL_T check)
 @return See brief description.
 **/
 
-static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
+static NODE_T *
+scan_format_pattern (NODE_T * p, A68_REF ref_file)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PICTURE_LIST)) {
@@ -12596,7 +13008,7 @@ static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
       A68_COLLITEM *collitem = (A68_COLLITEM *) FRAME_LOCAL (frame_pointer, OFFSET (TAX (p)));
       if (COUNT (collitem) != 0) {
         if (IS (picture, A68_PATTERN)) {
-          COUNT (collitem) = 0;  /* This pattern is now done */
+          COUNT (collitem) = 0; /* This pattern is now done */
           picture = SUB (picture);
           if (ATTRIBUTE (picture) != FORMAT_PATTERN) {
             return (picture);
@@ -12623,7 +13035,7 @@ static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
           } else {
             ABEND (A68_TRUE, "undetermined mood for insertion", NO_TEXT);
           }
-          COUNT (collitem) = 0;  /* This insertion is now done */
+          COUNT (collitem) = 0; /* This insertion is now done */
         } else if (IS (picture, REPLICATOR) || IS (picture, COLLECTION)) {
           BOOL_T go_on = A68_TRUE;
           NODE_T *a68g_select = NO_NODE;
@@ -12668,7 +13080,8 @@ static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
 @return See brief description.
 **/
 
-NODE_T *get_next_format_pattern (NODE_T * p, A68_REF ref_file, BOOL_T mood)
+NODE_T *
+get_next_format_pattern (NODE_T * p, A68_REF ref_file, BOOL_T mood)
 {
 /*
 "mood" can be WANT_PATTERN: pattern needed by caller, so perform end-of-format
@@ -12705,7 +13118,8 @@ if needed or SKIP_PATTERN: just emptying current pattern/collection/format.
 @param att Attribute.
 **/
 
-void pattern_error (NODE_T * p, MOID_T * mode, int att)
+void
+pattern_error (NODE_T * p, MOID_T * mode, int att)
 {
   diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_FORMAT_CANNOT_TRANSPUT, mode, att);
   exit_genie (p, A68_RUNTIME_ERROR);
@@ -12718,7 +13132,8 @@ void pattern_error (NODE_T * p, MOID_T * mode, int att)
 @param item Pointer to value.
 **/
 
-static void unite_to_number (NODE_T * p, MOID_T * mode, BYTE_T * item)
+static void
+unite_to_number (NODE_T * p, MOID_T * mode, BYTE_T * item)
 {
   ADDR_T sp = stack_pointer;
   PUSH_UNION (p, mode);
@@ -12733,7 +13148,8 @@ static void unite_to_number (NODE_T * p, MOID_T * mode, BYTE_T * item)
 @param mood Mode of operation in case of error.
 **/
 
-void write_insertion (NODE_T * p, A68_REF ref_file, unsigned mood)
+void
+write_insertion (NODE_T * p, A68_REF ref_file, unsigned mood)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     write_insertion (SUB (p), ref_file, mood);
@@ -12784,7 +13200,8 @@ void write_insertion (NODE_T * p, A68_REF ref_file, unsigned mood)
 @return Whether conversion is successful.
 **/
 
-static BOOL_T convert_radix (NODE_T * p, unsigned z, int radix, int width)
+static BOOL_T
+convert_radix (NODE_T * p, unsigned z, int radix, int width)
 {
   static char *images = "0123456789abcdef";
   if (width > 0 && (radix >= 2 && radix <= 16)) {
@@ -12809,7 +13226,8 @@ static BOOL_T convert_radix (NODE_T * p, unsigned z, int radix, int width)
 @return Whether conversion is successful.
 **/
 
-static BOOL_T convert_radix_mp (NODE_T * p, MP_T * u, int radix, int width, MOID_T * m, MP_T * v, MP_T * w)
+static BOOL_T
+convert_radix_mp (NODE_T * p, MP_T * u, int radix, int width, MOID_T * m, MP_T * v, MP_T * w)
 {
   static char *images = "0123456789abcdef";
   if (width > 0 && (radix >= 2 && radix <= 16)) {
@@ -12836,7 +13254,8 @@ static BOOL_T convert_radix_mp (NODE_T * p, MP_T * u, int radix, int width, MOID
 @param str String to write.
 **/
 
-static void write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, char **str)
+static void
+write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, char **str)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -12877,16 +13296,17 @@ static void write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, c
 @param letter Conform C place holder.
 **/
 
-void scan_c_pattern (NODE_T * p, BOOL_T * right_align, BOOL_T * sign, int *width, int *after, int *letter)
+void
+scan_c_pattern (NODE_T * p, BOOL_T * right_align, BOOL_T * sign, int *width, int *after, int *letter)
 {
   if (IS (p, FORMAT_ITEM_ESCAPE)) {
     FORWARD (p);
   }
   if (IS (p, FORMAT_ITEM_MINUS)) {
-    *right_align = A68_FALSE;
+    *right_align = A68_TRUE;
     FORWARD (p);
   } else {
-    *right_align = A68_TRUE;
+    *right_align = A68_FALSE;
   }
   if (IS (p, FORMAT_ITEM_PLUS)) {
     *sign = A68_TRUE;
@@ -12915,7 +13335,8 @@ void scan_c_pattern (NODE_T * p, BOOL_T * right_align, BOOL_T * sign, int *width
 @param count Count to reach.
 **/
 
-static void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
+static void
+write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     write_choice_pattern (SUB (p), ref_file, count);
@@ -12935,7 +13356,8 @@ static void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
 @param z BOOL value
 **/
 
-static void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
+static void
+write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
 {
   int k = (z ? 1 : 2);
   write_choice_pattern (p, ref_file, &k);
@@ -12949,7 +13371,8 @@ static void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
 @param mod Format modifier.
 **/
 
-static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int mod)
+static void
+write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int mod)
 {
   A68_REF row;
   A68_ARRAY *arr;
@@ -13077,9 +13500,10 @@ static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int 
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
-  BOOL_T right_align, sign;
+  BOOL_T right_align, sign, invalid;
   int width, after, letter;
   ADDR_T pop_sp = stack_pointer;
   char *str = NO_TEXT;
@@ -13207,7 +13631,12 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
     }
   }
 /* Did the conversion succeed? */
-  if (a68g_strchr (str, ERROR_CHAR) != NO_TEXT) {
+  if (IS (p, CHAR_C_PATTERN) || IS (p, STRING_C_PATTERN)) {
+    invalid = A68_FALSE;
+  } else {
+    invalid = (a68g_strchr (str, ERROR_CHAR) != NO_TEXT);
+  }
+  if (invalid) {
     value_error (p, mode, ref_file);
     (void) error_chars (get_transput_buffer (FORMATTED_BUFFER), width);
   } else {
@@ -13253,7 +13682,8 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
 @return See brief description.
 **/
 
-static char read_single_char (NODE_T * p, A68_REF ref_file)
+static char
+read_single_char (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *file = FILE_DEREF (&ref_file);
   int ch = char_scanner (file);
@@ -13271,7 +13701,8 @@ static char read_single_char (NODE_T * p, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
+static void
+scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
 {
   int k;
   (void) m;
@@ -13289,7 +13720,8 @@ static void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   BOOL_T right_align, sign;
   int width, after, letter;
@@ -13397,7 +13829,8 @@ static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
 @param z Counting integer.
 **/
 
-static void count_zd_frames (NODE_T * p, int *z)
+static void
+count_zd_frames (NODE_T * p, int *z)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_ITEM_D) || IS (p, FORMAT_ITEM_Z)) {
@@ -13420,7 +13853,8 @@ static void count_zd_frames (NODE_T * p, int *z)
 @return Position of sign in tree or NULL.
 **/
 
-static NODE_T *get_sign (NODE_T * p)
+static NODE_T *
+get_sign (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     NODE_T *q = get_sign (SUB (p));
@@ -13439,7 +13873,8 @@ static NODE_T *get_sign (NODE_T * p)
 @param q String to propagate sign through.
 **/
 
-static void shift_sign (NODE_T * p, char **q)
+static void
+shift_sign (NODE_T * p, char **q)
 {
   for (; p != NO_NODE && (*q) != NO_TEXT; FORWARD (p)) {
     shift_sign (SUB (p), q);
@@ -13468,7 +13903,8 @@ static void shift_sign (NODE_T * p, char **q)
 @param n Number of zeroes to pad.
 **/
 
-static void put_zeroes_to_integral (NODE_T * p, int n)
+static void
+put_zeroes_to_integral (NODE_T * p, int n)
 {
   for (; n > 0; n--) {
     add_char_transput_buffer (p, EDIT_BUFFER, '0');
@@ -13481,7 +13917,8 @@ static void put_zeroes_to_integral (NODE_T * p, int n)
 @param sign Sign.
 **/
 
-static void put_sign_to_integral (NODE_T * p, int sign)
+static void
+put_sign_to_integral (NODE_T * p, int sign)
 {
   NODE_T *sign_node = get_sign (SUB (p));
   if (IS (sign_node, FORMAT_ITEM_PLUS)) {
@@ -13499,7 +13936,8 @@ static void put_sign_to_integral (NODE_T * p, int sign)
 @param sym Symbol to print when matched.
 **/
 
-static void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
+static void
+write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -13521,7 +13959,8 @@ static void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
 @param q String to write.
 **/
 
-static void write_mould_put_sign (NODE_T * p, char **q)
+static void
+write_mould_put_sign (NODE_T * p, char **q)
 {
   if ((*q)[0] == '+' || (*q)[0] == '-' || (*q)[0] == BLANK_CHAR) {
     add_char_transput_buffer (p, FORMATTED_BUFFER, (*q)[0]);
@@ -13536,7 +13975,8 @@ static void write_mould_put_sign (NODE_T * p, char **q)
 @param q Pointer in mould.
 **/
 
-static void add_char_mould (NODE_T *p, char ch, char **q)
+static void
+add_char_mould (NODE_T * p, char ch, char **q)
 {
   if (ch != NULL_CHAR) {
     add_char_transput_buffer (p, FORMATTED_BUFFER, ch);
@@ -13553,7 +13993,8 @@ static void add_char_mould (NODE_T *p, char ch, char **q)
 @param mood Mode of operation.
 **/
 
-static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsigned *mood)
+static void
+write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsigned *mood)
 {
   for (; p != NO_NODE; FORWARD (p)) {
 /* Insertions are inserted straight away. Note that we can suppress them using "mood", which is not standard A68 */
@@ -13616,7 +14057,8 @@ static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, unsig
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
+static void
+write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
 {
   RESET_ERRNO;
   if (!(mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT))) {
@@ -13665,7 +14107,7 @@ static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BY
       write_mould (SUB (p), ref_file, SIGN_MOULD, &str, &mood);
       FORWARD (p);
     }
-    if (IS (p, INTEGRAL_MOULD)) {  /* This *should* be the case */
+    if (IS (p, INTEGRAL_MOULD)) {       /* This *should* be the case */
       write_mould (SUB (p), ref_file, INTEGRAL_MOULD, &str, &mood);
     }
     stack_pointer = old_stack_pointer;
@@ -13681,7 +14123,8 @@ static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BY
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
+static void
+write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
 {
   RESET_ERRNO;
   if (!(mode == MODE (REAL) || mode == MODE (LONG_REAL) || mode == MODE (LONGLONG_REAL) || mode == MODE (INT) || mode == MODE (LONG_INT) || mode == MODE (LONGLONG_INT))) {
@@ -13851,7 +14294,8 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
+static void
+write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
 {
   NODE_T *reel, *plus_i_times, *imag;
   RESET_ERRNO;
@@ -13873,7 +14317,8 @@ static void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYT
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   if (mode == MODE (BITS)) {
     int width = 0, radix;
@@ -13935,7 +14380,8 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
+static void
+genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_value_to_string (p, MODE (REAL), item, ATTRIBUTE (SUB (p)));
@@ -13963,7 +14409,8 @@ static void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
+static void
+genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_value_to_string (p, MODE (LONG_REAL), item, ATTRIBUTE (SUB (p)));
@@ -13994,7 +14441,8 @@ static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
+static void
+genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_value_to_string (p, MODE (LONGLONG_REAL), item, ATTRIBUTE (SUB (p)));
@@ -14024,7 +14472,8 @@ static void genie_write_longlong_real_format (NODE_T * p, BYTE_T * item, A68_REF
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void purge_format_write (NODE_T * p, A68_REF ref_file)
+static void
+purge_format_write (NODE_T * p, A68_REF ref_file)
 {
 /* Problem here is shutting down embedded formats */
   BOOL_T go_on;
@@ -14055,7 +14504,8 @@ static void purge_format_write (NODE_T * p, A68_REF ref_file)
 @param formats Format counter.
 **/
 
-static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
+static void
+genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
 {
   RESET_ERRNO;
   if (mode == MODE (FORMAT)) {
@@ -14248,7 +14698,12 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
         value_error (p, mode, ref_file);
       }
     } else if (IS (pat, STRING_C_PATTERN)) {
-      write_c_pattern (pat, mode, (BYTE_T *) z, ref_file);
+      A68_REF row;
+      char zz[2];
+      zz[0] = VALUE (z);
+      zz[1] = '\0';
+      row = c_to_a_string (pat, zz, 1);
+      write_c_pattern (pat, mode, (BYTE_T *) zz, ref_file);
     } else {
       pattern_error (p, mode, ATTRIBUTE (pat));
     }
@@ -14319,7 +14774,8 @@ static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * ite
 @param p Node in syntax tree.
 **/
 
-void genie_write_format (NODE_T * p)
+void
+genie_write_format (NODE_T * p)
 {
   A68_REF row;
   POP_REF (p, &row);
@@ -14333,7 +14789,8 @@ void genie_write_format (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_write_file_format (NODE_T * p)
+void
+genie_write_file_format (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -14428,7 +14885,8 @@ void genie_write_file_format (NODE_T * p)
 @return Whether character is expected.
 **/
 
-static BOOL_T expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *items, char ch)
+static BOOL_T
+expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *items, char ch)
 {
   if (a68g_strchr ((char *) items, ch) == NO_TEXT) {
     value_error (p, m, ref_file);
@@ -14444,7 +14902,8 @@ static BOOL_T expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *item
 @param ref_file Fat pointer to A68 file.
 **/
 
-void read_insertion (NODE_T * p, A68_REF ref_file)
+void
+read_insertion (NODE_T * p, A68_REF ref_file)
 {
 
 /*
@@ -14496,7 +14955,7 @@ put, which is non-standard Algol68, but convenient.
           }
         }
       }
-      return; /* Don't delete this! */
+      return;                   /* Don't delete this! */
     }
   }
 }
@@ -14508,7 +14967,8 @@ put, which is non-standard Algol68, but convenient.
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
+static void
+read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -14541,7 +15001,8 @@ static void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
 @param full_match Whether match is complete (beyond 'len').
 **/
 
-static void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count, int *matches, int *first_match, BOOL_T * full_match)
+static void
+traverse_choice_pattern (NODE_T * p, char *str, int len, int *count, int *matches, int *first_match, BOOL_T * full_match)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     traverse_choice_pattern (SUB (p), str, len, count, matches, first_match, full_match);
@@ -14565,7 +15026,8 @@ static void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count,
 @return Length of longest match.
 **/
 
-static int read_choice_pattern (NODE_T * p, A68_REF ref_file)
+static int
+read_choice_pattern (NODE_T * p, A68_REF ref_file)
 {
 
 /*
@@ -14618,7 +15080,8 @@ matching literal must be first, in case of non-unique first chars.
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_REF row;
   EXECUTE_UNIT (NEXT_SUB (p));
@@ -14637,7 +15100,8 @@ static void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_R
 @param sign Value of sign (-1, 0, 1).
 **/
 
-static void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign)
+static void
+read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -14702,7 +15166,8 @@ static void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
+static void
+read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -14745,7 +15210,8 @@ static void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
+static void
+read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
 {
   NODE_T *q = SUB (p);
   if (q != NO_NODE && IS (q, SIGN_MOULD)) {
@@ -14773,7 +15239,8 @@ static void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_RE
 @param ch Representation of 'item'.
 **/
 
-static void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, int item, char ch)
+static void
+read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, int item, char ch)
 {
 /* Widen ch to a stringlet */
   char sym[3];
@@ -14809,7 +15276,8 @@ static void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, i
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
+static void
+read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
 {
 /* Dive into pattern */
   NODE_T *q = (IS (p, REAL_PATTERN)) ? SUB (p) : p;
@@ -14866,7 +15334,8 @@ static void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
+static void
+read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
 {
   NODE_T *reel, *plus_i_times, *imag;
 /* Dissect pattern */
@@ -14889,7 +15358,8 @@ static void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T 
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
+static void
+read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
 {
   int radix;
   char *z;
@@ -14913,7 +15383,8 @@ static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+static void
+genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_read_standard (p, mode, item, ref_file);
@@ -14934,7 +15405,8 @@ static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A6
 @param ref_file Fat pointer to A68 file.
 **/
 
-static void purge_format_read (NODE_T * p, A68_REF ref_file)
+static void
+purge_format_read (NODE_T * p, A68_REF ref_file)
 {
   BOOL_T go_on;
   do {
@@ -14969,7 +15441,8 @@ static void purge_format_read (NODE_T * p, A68_REF ref_file)
 @param formats Format counter.
 **/
 
-static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
+static void
+genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
 {
   RESET_ERRNO;
   reset_transput_buffer (INPUT_BUFFER);
@@ -15146,7 +15619,8 @@ static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item
 @param p Node in syntax tree.
 **/
 
-void genie_read_format (NODE_T * p)
+void
+genie_read_format (NODE_T * p)
 {
   A68_REF row;
   POP_REF (p, &row);
@@ -15160,7 +15634,8 @@ void genie_read_format (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_read_file_format (NODE_T * p)
+void
+genie_read_file_format (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -15260,7 +15735,8 @@ perform runtime checks. These functions are not mangled to fit below routines.
 @return See brief description.
 **/
 
-double a68g_hypot (double x, double y)
+double
+a68g_hypot (double x, double y)
 {
   double xabs = ABS (x), yabs = ABS (y);
   double min, max;
@@ -15285,7 +15761,8 @@ double a68g_hypot (double x, double y)
 @return See brief description.
 **/
 
-double a68g_log1p (double x)
+double
+a68g_log1p (double x)
 {
   volatile double y;
   y = 1 + x;
@@ -15296,7 +15773,8 @@ double a68g_log1p (double x)
 @brief OP ROUND = (REAL) INT
 **/
 
-int a68g_round (double x)
+int
+a68g_round (double x)
 {
   if (x >= 0) {
     return ((int) (x + 0.5));
@@ -15309,7 +15787,8 @@ int a68g_round (double x)
 PROC exp = (REAL) REAL
 **/
 
-double a68g_exp (double x)
+double
+a68g_exp (double x)
 {
   if (x < log (DBL_MIN)) {
     return (0.0);
@@ -15322,7 +15801,8 @@ double a68g_exp (double x)
 @brief PROC atan2 (REAL, REAL) REAL
 **/
 
-double a68g_atan2 (double x, double y)
+double
+a68g_atan2 (double x, double y)
 {
   if (x == 0.0 && y == 0.0) {
     errno = EDOM;
@@ -15352,7 +15832,8 @@ double a68g_atan2 (double x, double y)
 @brief PROC asinh = (REAL) REAL
 **/
 
-double a68g_asinh (double x)
+double
+a68g_asinh (double x)
 {
   double a = ABS (x), s = (x < 0.0 ? -1.0 : 1.0);
   if (a > 1.0 / sqrt (DBL_EPSILON)) {
@@ -15371,7 +15852,8 @@ double a68g_asinh (double x)
 @brief PROC acosh = (REAL) REAL
 **/
 
-double a68g_acosh (double x)
+double
+a68g_acosh (double x)
 {
   if (x > 1.0 / sqrt (DBL_EPSILON)) {
     return (log (x) + log (2.0));
@@ -15392,7 +15874,8 @@ double a68g_acosh (double x)
 @brief PROC atanh = (REAL) REAL
 **/
 
-double a68g_atanh (double x)
+double
+a68g_atanh (double x)
 {
   double a = ABS (x);
   double s = (double) (x < 0 ? -1 : 1);
@@ -15412,7 +15895,8 @@ double a68g_atanh (double x)
 @brief OP ** = (REAL, REAL) REAL
 **/
 
-double a68g_pow_real (double x, double y)
+double
+a68g_pow_real (double x, double y)
 {
   return (exp (y * log (x)));
 }
@@ -15421,15 +15905,27 @@ double a68g_pow_real (double x, double y)
 @brief OP ** = (REAL, INT) REAL 
 **/
 
-double a68g_pow_real_int (double x, int n)
+double
+a68g_pow_real_int (double x, int n)
 {
   switch (n) {
-    case 2: return (x * x);
-    case 3: return (x * x * x);
-    case 4: {double y = x * x; return (y * y);}
-    case 5: {double y = x * x; return (x * y * y);}
-    case 6: {double y = x * x * x; return (y * y);}
-    default: {
+  case 2:
+    return (x * x);
+  case 3:
+    return (x * x * x);
+  case 4:{
+      double y = x * x;
+      return (y * y);
+    }
+  case 5:{
+      double y = x * x;
+      return (x * y * y);
+    }
+  case 6:{
+      double y = x * x * x;
+      return (y * y);
+    }
+  default:{
       int expo = 1, m = (int) labs (n);
       BOOL_T cont = (m > 0);
       double mult = x, prod = 1;
@@ -15452,13 +15948,14 @@ double a68g_pow_real_int (double x, int n)
 @brief OP / = (COMPLEX, COMPLEX) COMPLEX
 **/
 
-void a68g_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
+void
+a68g_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
 {
   if (RE (y) == 0 && IM (y) == 0) {
     RE (z) = 0.0;
     IM (z) = 0.0;
     errno = EDOM;
-  } else  if (fabs (RE (y)) >= fabs (IM (y))) {
+  } else if (fabs (RE (y)) >= fabs (IM (y))) {
     double r = IM (y) / RE (y), den = RE (y) + r * IM (y);
     STATUS_RE (z) = INIT_MASK;
     STATUS_IM (z) = INIT_MASK;
@@ -15477,7 +15974,8 @@ void a68g_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
 @brief PROC csqrt = (COMPLEX) COMPLEX
 **/
 
-void a68g_sqrt_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_sqrt_complex (A68_REAL * z, A68_REAL * x)
 {
   STATUS_RE (z) = INIT_MASK;
   STATUS_IM (z) = INIT_MASK;
@@ -15509,7 +16007,8 @@ void a68g_sqrt_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC cexp = (COMPLEX) COMPLEX
 **/
 
-void a68g_exp_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_exp_complex (A68_REAL * z, A68_REAL * x)
 {
   double r = exp (RE (x));
   STATUS_RE (z) = INIT_MASK;
@@ -15522,7 +16021,8 @@ void a68g_exp_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC cln = (COMPLEX) COMPLEX
 **/
 
-void a68g_ln_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_ln_complex (A68_REAL * z, A68_REAL * x)
 {
   STATUS_RE (z) = INIT_MASK;
   STATUS_IM (z) = INIT_MASK;
@@ -15535,7 +16035,8 @@ void a68g_ln_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC csin = (COMPLEX) COMPLEX
 **/
 
-void a68g_sin_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_sin_complex (A68_REAL * z, A68_REAL * x)
 {
   STATUS_RE (z) = INIT_MASK;
   STATUS_IM (z) = INIT_MASK;
@@ -15552,7 +16053,8 @@ void a68g_sin_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC ccos = (COMPLEX) COMPLEX
 **/
 
-void a68g_cos_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_cos_complex (A68_REAL * z, A68_REAL * x)
 {
   STATUS_RE (z) = INIT_MASK;
   STATUS_IM (z) = INIT_MASK;
@@ -15569,7 +16071,8 @@ void a68g_cos_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC ctan = (COMPLEX) COMPLEX
 **/
 
-void a68g_tan_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_tan_complex (A68_REAL * z, A68_REAL * x)
 {
   A68_COMPLEX u, v;
   STATUS_RE (u) = INIT_MASK;
@@ -15594,7 +16097,8 @@ void a68g_tan_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC casin = (COMPLEX) COMPLEX
 **/
 
-void a68g_arcsin_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_arcsin_complex (A68_REAL * z, A68_REAL * x)
 {
   double r = RE (x), i = IM (x);
   if (i == 0) {
@@ -15613,7 +16117,8 @@ void a68g_arcsin_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC cacos = (COMPLEX) COMPLEX
 **/
 
-void a68g_arccos_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_arccos_complex (A68_REAL * z, A68_REAL * x)
 {
   double r = RE (x), i = IM (x);
   if (i == 0) {
@@ -15632,7 +16137,8 @@ void a68g_arccos_complex (A68_REAL * z, A68_REAL * x)
 @brief PROC catan = (COMPLEX) COMPLEX
 **/
 
-void a68g_arctan_complex (A68_REAL * z, A68_REAL * x)
+void
+a68g_arctan_complex (A68_REAL * z, A68_REAL * x)
 {
   double r = RE (x), i = IM (x);
   if (i == 0) {
@@ -15652,7 +16158,8 @@ void a68g_arctan_complex (A68_REAL * z, A68_REAL * x)
 @param p Position in syntax tree.
 **/
 
-void genie_monad_elems (NODE_T * p)
+void
+genie_monad_elems (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *x;
@@ -15670,7 +16177,8 @@ void genie_monad_elems (NODE_T * p)
 @param p Position in syntax tree.
 **/
 
-void genie_monad_lwb (NODE_T * p)
+void
+genie_monad_lwb (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *x;
@@ -15688,7 +16196,8 @@ void genie_monad_lwb (NODE_T * p)
 @param p Position in syntax tree.
 **/
 
-void genie_monad_upb (NODE_T * p)
+void
+genie_monad_upb (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *x;
@@ -15706,7 +16215,8 @@ void genie_monad_upb (NODE_T * p)
 @param p Position in syntax tree.
 **/
 
-void genie_dyad_elems (NODE_T * p)
+void
+genie_dyad_elems (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *x;
@@ -15731,7 +16241,8 @@ void genie_dyad_elems (NODE_T * p)
 @param p Position in syntax tree.
 **/
 
-void genie_dyad_lwb (NODE_T * p)
+void
+genie_dyad_lwb (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *x;
@@ -15755,7 +16266,8 @@ void genie_dyad_lwb (NODE_T * p)
 @param p Position in syntax tree.
 **/
 
-void genie_dyad_upb (NODE_T * p)
+void
+genie_dyad_upb (NODE_T * p)
 {
   A68_REF z;
   A68_ARRAY *x;
@@ -15841,7 +16353,8 @@ static unsigned pow256[] = { 1, 256, 65536, 16777216 };
 @param bps Bits per second.
 **/
 
-static void test_bits_per_sample (NODE_T * p, unsigned bps)
+static void
+test_bits_per_sample (NODE_T * p, unsigned bps)
 {
   if (bps <= 0 || bps > 24) {
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, MODE (SOUND), "unsupported number of bits per sample");
@@ -15856,7 +16369,8 @@ static void test_bits_per_sample (NODE_T * p, unsigned bps)
 @param n Chars to code.
 **/
 
-static unsigned code_string (NODE_T * p, char *s, int n)
+static unsigned
+code_string (NODE_T * p, char *s, int n)
 {
   unsigned v;
   int k, m;
@@ -15875,7 +16389,8 @@ static unsigned code_string (NODE_T * p, char *s, int n)
 @param n Value to code.
 **/
 
-static char *code_unsigned (NODE_T * p, unsigned n)
+static char *
+code_unsigned (NODE_T * p, unsigned n)
 {
   static char text[MAX_BYTES + 1];
   int k;
@@ -15899,7 +16414,8 @@ static char *code_unsigned (NODE_T * p, unsigned n)
 @param n Category number.
 **/
 
-static char *format_category (unsigned n)
+static char *
+format_category (unsigned n)
 {
   switch (n) {
   case WAVE_FORMAT_UNKNOWN:
@@ -16109,7 +16625,8 @@ static char *format_category (unsigned n)
 @param little Whether little-endian.
 **/
 
-static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
+static unsigned
+read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
 {
   unsigned v, z;
   int k, m, r;
@@ -16148,7 +16665,8 @@ static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
 @param w Sound object.
 **/
 
-void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
+void
+read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int r;
@@ -16227,8 +16745,8 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
     }
   }
   (void) blockalign;
-  (void) byterate; 
-  (void) chunksize; 
+  (void) byterate;
+  (void) chunksize;
   (void) subchunk2size;
   STATUS (w) = INIT_MASK;
 }
@@ -16242,7 +16760,8 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 @param little Whether little endian.
 **/
 
-void write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
+void
+write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
 {
   int k, r;
   unsigned char y[MAX_BYTES];
@@ -16276,7 +16795,8 @@ void write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
 @param w Sound object.
 **/
 
-void write_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
+void
+write_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int r;
@@ -16313,7 +16833,8 @@ void write_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 @param p Node in syntax tree.
 **/
 
-void genie_new_sound (NODE_T * p)
+void
+genie_new_sound (NODE_T * p)
 {
   A68_INT num_channels, sample_rate, bits_per_sample, num_samples;
   A68_SOUND w;
@@ -16337,7 +16858,8 @@ void genie_new_sound (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_get_sound (NODE_T * p)
+void
+genie_get_sound (NODE_T * p)
 {
   A68_INT channel, sample;
   A68_SOUND w;
@@ -16375,7 +16897,8 @@ void genie_get_sound (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_set_sound (NODE_T * p)
+void
+genie_set_sound (NODE_T * p)
 {
   A68_INT channel, sample, value;
   int addr, k, n, z;
@@ -16413,7 +16936,8 @@ void genie_set_sound (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sound_samples (NODE_T * p)
+void
+genie_sound_samples (NODE_T * p)
 {
   A68_SOUND w;
   POP_OBJECT (p, &w, A68_SOUND);
@@ -16425,7 +16949,8 @@ void genie_sound_samples (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sound_rate (NODE_T * p)
+void
+genie_sound_rate (NODE_T * p)
 {
   A68_SOUND w;
   POP_OBJECT (p, &w, A68_SOUND);
@@ -16437,7 +16962,8 @@ void genie_sound_rate (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sound_channels (NODE_T * p)
+void
+genie_sound_channels (NODE_T * p)
 {
   A68_SOUND w;
   POP_OBJECT (p, &w, A68_SOUND);
@@ -16449,7 +16975,8 @@ void genie_sound_channels (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_sound_resolution (NODE_T * p)
+void
+genie_sound_resolution (NODE_T * p)
 {
   A68_SOUND w;
   POP_OBJECT (p, &w, A68_SOUND);
@@ -16471,7 +16998,8 @@ char output_line[BUFFER_SIZE], edit_line[BUFFER_SIZE], input_line[BUFFER_SIZE];
 @brief Initialise output to STDOUT.
 **/
 
-void init_tty (void)
+void
+init_tty (void)
 {
   chars_in_tty_line = 0;
   halt_typing = A68_FALSE;
@@ -16482,7 +17010,8 @@ void init_tty (void)
 @brief Terminate current line on STDOUT.
 **/
 
-void io_close_tty_line (void)
+void
+io_close_tty_line (void)
 {
   if (chars_in_tty_line > 0) {
     io_write_string (STDOUT_FILENO, NEWLINE_STRING);
@@ -16494,7 +17023,8 @@ void io_close_tty_line (void)
 @return See brief description.
 **/
 
-char get_stdin_char (void)
+char
+get_stdin_char (void)
 {
   ssize_t j;
   char ch[4];
@@ -16510,10 +17040,11 @@ char get_stdin_char (void)
 @return Input line buffer.
 **/
 
-char *read_string_from_tty (char *prompt)
+char *
+read_string_from_tty (char *prompt)
 {
 #if defined HAVE_READLINE
-  char * line = readline (prompt); 
+  char *line = readline (prompt);
   if (line != NO_TEXT && (int) strlen (line) > 0) {
     add_history (line);
   }
@@ -16553,7 +17084,8 @@ char *read_string_from_tty (char *prompt)
 @param z String to write.
 **/
 
-void io_write_string (FILE_T f, const char *z)
+void
+io_write_string (FILE_T f, const char *z)
 {
   ssize_t j;
   RESET_ERRNO;
@@ -16599,7 +17131,8 @@ void io_write_string (FILE_T f, const char *z)
 @return Number of bytes read or -1 in case of error.
 **/
 
-ssize_t io_read (FILE_T fd, void *buf, size_t n)
+ssize_t
+io_read (FILE_T fd, void *buf, size_t n)
 {
   size_t to_do = n;
   int restarts = 0;
@@ -16640,7 +17173,8 @@ ssize_t io_read (FILE_T fd, void *buf, size_t n)
 @return N or -1 in case of error.
 **/
 
-ssize_t io_write (FILE_T fd, const void *buf, size_t n)
+ssize_t
+io_write (FILE_T fd, const void *buf, size_t n)
 {
   size_t to_do = n;
   int restarts = 0;
@@ -16675,7 +17209,8 @@ ssize_t io_write (FILE_T fd, const void *buf, size_t n)
 @return Number of bytes read or -1 in case of error.
 **/
 
-ssize_t io_read_conv (FILE_T fd, void *buf, size_t n)
+ssize_t
+io_read_conv (FILE_T fd, void *buf, size_t n)
 {
   size_t to_do = n;
   int restarts = 0;
@@ -16716,7 +17251,8 @@ ssize_t io_read_conv (FILE_T fd, void *buf, size_t n)
 @return N or -1 in case of error.
 **/
 
-ssize_t io_write_conv (FILE_T fd, const void *buf, size_t n)
+ssize_t
+io_write_conv (FILE_T fd, const void *buf, size_t n)
 {
   size_t to_do = n;
   int restarts = 0;
@@ -16763,7 +17299,8 @@ extern A68_CHANNEL stand_in_channel, stand_out_channel, stand_draw_channel, stan
 @param p Node in syntax tree.
 **/
 
-void genie_directory (NODE_T * p)
+void
+genie_directory (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -16843,7 +17380,8 @@ void genie_directory (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_utctime (NODE_T * p)
+void
+genie_utctime (NODE_T * p)
 {
   time_t dt;
   if (time (&dt) == (time_t) - 1) {
@@ -16871,7 +17409,8 @@ void genie_utctime (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_localtime (NODE_T * p)
+void
+genie_localtime (NODE_T * p)
 {
   time_t dt;
   if (time (&dt) == (time_t) - 1) {
@@ -16899,7 +17438,8 @@ void genie_localtime (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_rows (NODE_T * p)
+void
+genie_rows (NODE_T * p)
 {
   RESET_ERRNO;
   PUSH_PRIMITIVE (p, term_heigth, A68_INT);
@@ -16910,7 +17450,8 @@ void genie_rows (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_columns (NODE_T * p)
+void
+genie_columns (NODE_T * p)
 {
   RESET_ERRNO;
   PUSH_PRIMITIVE (p, term_width, A68_INT);
@@ -16921,7 +17462,8 @@ void genie_columns (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_argc (NODE_T * p)
+void
+genie_argc (NODE_T * p)
 {
   RESET_ERRNO;
   PUSH_PRIMITIVE (p, global_argc, A68_INT);
@@ -16932,7 +17474,8 @@ void genie_argc (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_argv (NODE_T * p)
+void
+genie_argv (NODE_T * p)
 {
   A68_INT a68g_index;
   RESET_ERRNO;
@@ -16941,7 +17484,7 @@ void genie_argv (NODE_T * p)
     char *q = global_argv[VALUE (&a68g_index) - 1];
     int n = (int) strlen (q);
 /* Allow for spaces ending in # to have A68 comment syntax with '#!' */
-    while (n > 0 && (IS_SPACE(q[n - 1]) || q[n - 1] == '#')) {
+    while (n > 0 && (IS_SPACE (q[n - 1]) || q[n - 1] == '#')) {
       q[--n] = NULL_CHAR;
     }
     PUSH_REF (p, c_to_a_string (p, q, DEFAULT_WIDTH));
@@ -16955,7 +17498,8 @@ void genie_argv (NODE_T * p)
 @param k
 **/
 
-int find_good_arg(void)
+int
+find_good_arg (void)
 {
   int i;
   for (i = 0; i < global_argc; i++) {
@@ -16981,10 +17525,11 @@ int find_good_arg(void)
 @param p Node in syntax tree.
 **/
 
-void genie_a68g_argc (NODE_T * p)
+void
+genie_a68g_argc (NODE_T * p)
 {
   RESET_ERRNO;
-  PUSH_PRIMITIVE (p, global_argc - find_good_arg(), A68_INT);
+  PUSH_PRIMITIVE (p, global_argc - find_good_arg (), A68_INT);
 }
 
 /**
@@ -16992,21 +17537,22 @@ void genie_a68g_argc (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_a68g_argv (NODE_T * p)
+void
+genie_a68g_argv (NODE_T * p)
 {
   A68_INT a68g_index;
   int k;
   RESET_ERRNO;
   POP_OBJECT (p, &a68g_index, A68_INT);
-  k = VALUE(&a68g_index);
+  k = VALUE (&a68g_index);
   if (k > 1) {
-    k += find_good_arg();
+    k += find_good_arg ();
   }
   if (k >= 1 && k <= global_argc) {
     char *q = global_argv[k - 1];
     int n = (int) strlen (q);
 /* Allow for spaces ending in # to have A68 comment syntax with '#!' */
-    while (n > 0 && (IS_SPACE(q[n - 1]) || q[n - 1] == '#')) {
+    while (n > 0 && (IS_SPACE (q[n - 1]) || q[n - 1] == '#')) {
       q[--n] = NULL_CHAR;
     }
     PUSH_REF (p, c_to_a_string (p, q, DEFAULT_WIDTH));
@@ -17020,7 +17566,8 @@ void genie_a68g_argv (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pwd (NODE_T * p)
+void
+genie_pwd (NODE_T * p)
 {
   size_t size = BUFFER_SIZE;
   char *buffer = NO_TEXT;
@@ -17053,7 +17600,8 @@ void genie_pwd (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_cd (NODE_T * p)
+void
+genie_cd (NODE_T * p)
 {
   A68_REF dir;
   char *buffer;
@@ -17081,7 +17629,8 @@ void genie_cd (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_mode (NODE_T * p)
+void
+genie_file_mode (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17108,7 +17657,8 @@ void genie_file_mode (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_is_block_device (NODE_T * p)
+void
+genie_file_is_block_device (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17135,7 +17685,8 @@ void genie_file_is_block_device (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_is_char_device (NODE_T * p)
+void
+genie_file_is_char_device (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17162,7 +17713,8 @@ void genie_file_is_char_device (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_is_directory (NODE_T * p)
+void
+genie_file_is_directory (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17189,7 +17741,8 @@ void genie_file_is_directory (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_is_regular (NODE_T * p)
+void
+genie_file_is_regular (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17218,7 +17771,8 @@ void genie_file_is_regular (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_is_fifo (NODE_T * p)
+void
+genie_file_is_fifo (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17249,7 +17803,8 @@ void genie_file_is_fifo (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_file_is_link (NODE_T * p)
+void
+genie_file_is_link (NODE_T * p)
 {
   A68_REF name;
   char *buffer;
@@ -17280,7 +17835,8 @@ void genie_file_is_link (NODE_T * p)
 @param row [] STRING
 **/
 
-static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
+static void
+convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
 {
   BYTE_T *z = ADDRESS (&row);
   A68_ARRAY *arr = (A68_ARRAY *) & z[0];
@@ -17316,7 +17872,8 @@ static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
 @param vec String vector.
 **/
 
-static void free_vector (char *vec[])
+static void
+free_vector (char *vec[])
 {
   int k = 0;
   while (vec[k] != NO_TEXT) {
@@ -17330,7 +17887,8 @@ static void free_vector (char *vec[])
 @param p Node in syntax tree.
 **/
 
-void genie_reset_errno (NODE_T * p)
+void
+genie_reset_errno (NODE_T * p)
 {
   (void) *p;
   RESET_ERRNO;
@@ -17341,7 +17899,8 @@ void genie_reset_errno (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_errno (NODE_T * p)
+void
+genie_errno (NODE_T * p)
 {
   PUSH_PRIMITIVE (p, errno, A68_INT);
 }
@@ -17351,7 +17910,8 @@ void genie_errno (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_strerror (NODE_T * p)
+void
+genie_strerror (NODE_T * p)
 {
   A68_INT i;
   POP_OBJECT (p, &i, A68_INT);
@@ -17369,7 +17929,8 @@ void genie_strerror (NODE_T * p)
 @param pid Pid.
 **/
 
-static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL_T r_mood, BOOL_T w_mood, int pid)
+static void
+set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL_T r_mood, BOOL_T w_mood, int pid)
 {
   A68_FILE *f;
   *z = heap_generator (p, MODE (REF_FILE), SIZE (MODE (FILE)));
@@ -17401,7 +17962,8 @@ static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL
 @param pid Pid.
 **/
 
-static void genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
+static void
+genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
 {
   A68_REF r, w;
   RESET_ERRNO;
@@ -17419,7 +17981,8 @@ static void genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
 @param p Node in syntax tree.
 **/
 
-void genie_getenv (NODE_T * p)
+void
+genie_getenv (NODE_T * p)
 {
   A68_REF a_env;
   char *val, *z, *z_env;
@@ -17442,7 +18005,8 @@ void genie_getenv (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_fork (NODE_T * p)
+void
+genie_fork (NODE_T * p)
 {
 #if defined HAVE_WIN32
   PUSH_PRIMITIVE (p, -1, A68_INT);
@@ -17459,7 +18023,8 @@ void genie_fork (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_execve (NODE_T * p)
+void
+genie_execve (NODE_T * p)
 {
   int ret;
   A68_REF a_prog, a_args, a_env;
@@ -17479,7 +18044,7 @@ void genie_execve (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
 #if defined HAVE_WIN32
-  ret = execve (prog, (const char * const *) argv, (const char * const *) envp);
+  ret = execve (prog, (const char *const *) argv, (const char *const *) envp);
 #else
   ret = execve (prog, argv, envp);
 #endif
@@ -17495,7 +18060,8 @@ void genie_execve (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_execve_child (NODE_T * p)
+void
+genie_execve_child (NODE_T * p)
 {
   int pid;
   A68_REF a_prog, a_args, a_env;
@@ -17541,7 +18107,8 @@ void genie_execve_child (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_execve_child_pipe (NODE_T * p)
+void
+genie_execve_child_pipe (NODE_T * p)
 {
 /*
 Child redirects STDIN and STDOUT.
@@ -17616,7 +18183,8 @@ Return a PIPE that contains the descriptors for the parent.
 @param p Node in syntax tree.
 **/
 
-void genie_execve_output (NODE_T * p)
+void
+genie_execve_output (NODE_T * p)
 {
 /*
 Child redirects STDIN and STDOUT.
@@ -17697,9 +18265,7 @@ Child redirects STDIN and STDOUT.
       status = -1;
     }
     if (!IS_NIL (dest)) {
-      * DEREF (A68_REF, &dest) =
-        c_to_a_string (p, get_transput_buffer (INPUT_BUFFER),
-                          get_transput_buffer_index (INPUT_BUFFER));
+      *DEREF (A68_REF, &dest) = c_to_a_string (p, get_transput_buffer (INPUT_BUFFER), get_transput_buffer_index (INPUT_BUFFER));
     }
     ASSERT (close (ptoc_fd[FD_WRITE]) == 0);
     ASSERT (close (ctop_fd[FD_READ]) == 0);
@@ -17713,7 +18279,8 @@ Child redirects STDIN and STDOUT.
 @param p Node in syntax tree.
 **/
 
-void genie_create_pipe (NODE_T * p)
+void
+genie_create_pipe (NODE_T * p)
 {
   RESET_ERRNO;
   genie_stand_in (p);
@@ -17726,7 +18293,8 @@ void genie_create_pipe (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_waitpid (NODE_T * p)
+void
+genie_waitpid (NODE_T * p)
 {
   A68_INT k;
   RESET_ERRNO;
@@ -17756,7 +18324,8 @@ BOOL_T a68g_curses_mode = A68_FALSE;
 @brief Clean_curses.
 **/
 
-void clean_curses (void)
+void
+clean_curses (void)
 {
   if (a68g_curses_mode == A68_TRUE) {
     (void) wattrset (stdscr, A_NORMAL);
@@ -17769,10 +18338,11 @@ void clean_curses (void)
 @brief Init_curses.
 **/
 
-void init_curses (void)
+void
+init_curses (void)
 {
   (void) initscr ();
-  (void) cbreak (); /* raw () would cut off ctrl-c */
+  (void) cbreak ();             /* raw () would cut off ctrl-c */
   (void) noecho ();
   (void) nonl ();
   (void) curs_set (0);
@@ -17786,7 +18356,8 @@ void init_curses (void)
 @return Character read.
 **/
 
-int rgetchar (void)
+int
+rgetchar (void)
 {
 #if defined HAVE_WIN32
   if (kbhit ()) {
@@ -17817,7 +18388,8 @@ int rgetchar (void)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_start (NODE_T * p)
+void
+genie_curses_start (NODE_T * p)
 {
   (void) p;
   init_curses ();
@@ -17829,7 +18401,8 @@ void genie_curses_start (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_end (NODE_T * p)
+void
+genie_curses_end (NODE_T * p)
 {
   (void) p;
   clean_curses ();
@@ -17840,7 +18413,8 @@ void genie_curses_end (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_clear (NODE_T * p)
+void
+genie_curses_clear (NODE_T * p)
 {
   if (a68g_curses_mode == A68_FALSE) {
     genie_curses_start (p);
@@ -17853,7 +18427,8 @@ void genie_curses_clear (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_refresh (NODE_T * p)
+void
+genie_curses_refresh (NODE_T * p)
 {
   if (a68g_curses_mode == A68_FALSE) {
     genie_curses_start (p);
@@ -17866,7 +18441,8 @@ void genie_curses_refresh (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_lines (NODE_T * p)
+void
+genie_curses_lines (NODE_T * p)
 {
   if (a68g_curses_mode == A68_FALSE) {
     genie_curses_start (p);
@@ -17879,7 +18455,8 @@ void genie_curses_lines (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_columns (NODE_T * p)
+void
+genie_curses_columns (NODE_T * p)
 {
   if (a68g_curses_mode == A68_FALSE) {
     genie_curses_start (p);
@@ -17892,7 +18469,8 @@ void genie_curses_columns (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_getchar (NODE_T * p)
+void
+genie_curses_getchar (NODE_T * p)
 {
   if (a68g_curses_mode == A68_FALSE) {
     genie_curses_start (p);
@@ -17923,33 +18501,33 @@ void f##_inverse (NODE_T *p) {\
 }
 
 GENIE_COLOUR (genie_curses_blue, 1, COLOR_BLUE, COLOR_BLACK)
-GENIE_COLOUR (genie_curses_cyan, 2, COLOR_CYAN, COLOR_BLACK)
-GENIE_COLOUR (genie_curses_green, 3, COLOR_GREEN, COLOR_BLACK)
-GENIE_COLOUR (genie_curses_magenta, 4, COLOR_MAGENTA, COLOR_BLACK)
-GENIE_COLOUR (genie_curses_red, 5, COLOR_RED, COLOR_BLACK)
-GENIE_COLOUR (genie_curses_white, 6, COLOR_WHITE, COLOR_BLACK)
-GENIE_COLOUR (genie_curses_yellow, 7, COLOR_YELLOW, COLOR_BLACK)
+  GENIE_COLOUR (genie_curses_cyan, 2, COLOR_CYAN, COLOR_BLACK)
+  GENIE_COLOUR (genie_curses_green, 3, COLOR_GREEN, COLOR_BLACK)
+  GENIE_COLOUR (genie_curses_magenta, 4, COLOR_MAGENTA, COLOR_BLACK)
+  GENIE_COLOUR (genie_curses_red, 5, COLOR_RED, COLOR_BLACK)
+  GENIE_COLOUR (genie_curses_white, 6, COLOR_WHITE, COLOR_BLACK)
+  GENIE_COLOUR (genie_curses_yellow, 7, COLOR_YELLOW, COLOR_BLACK)
 
 /**
 @brief PROC curses delchar = (CHAR) BOOL
 @param p Node in syntax tree.
 **/
-
-void genie_curses_del_char (NODE_T * p) {
+     void genie_curses_del_char (NODE_T * p)
+{
   A68_CHAR ch;
   int v;
   POP_OBJECT (p, &ch, A68_CHAR);
   v = (int) VALUE (&ch);
-  PUSH_PRIMITIVE (p, 
-    (BOOL_T) (v == 8 || v == 127 || v == KEY_BACKSPACE), A68_BOOL);
-  }
+  PUSH_PRIMITIVE (p, (BOOL_T) (v == 8 || v == 127 || v == KEY_BACKSPACE), A68_BOOL);
+}
 
 /**
 @brief PROC curses putchar = (CHAR) VOID
 @param p Node in syntax tree.
 **/
 
-void genie_curses_putchar (NODE_T * p)
+void
+genie_curses_putchar (NODE_T * p)
 {
   A68_CHAR ch;
   if (a68g_curses_mode == A68_FALSE) {
@@ -17970,7 +18548,8 @@ void genie_curses_putchar (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_curses_move (NODE_T * p)
+void
+genie_curses_move (NODE_T * p)
 {
   A68_INT i, j;
   if (a68g_curses_mode == A68_FALSE) {
@@ -17986,7 +18565,7 @@ void genie_curses_move (NODE_T * p)
     diagnostic_node (A68_RUNTIME_ERROR, p, ERROR_CURSES_OFF_SCREEN);
     exit_genie (p, A68_RUNTIME_ERROR);
   }
-  CHECK_CURSES_RETVAL(move (VALUE (&i), VALUE (&j)) != ERR);
+  CHECK_CURSES_RETVAL (move (VALUE (&i), VALUE (&j)) != ERR);
 }
 
 #endif /* HAVE_CURSES */
@@ -17999,7 +18578,8 @@ void genie_curses_move (NODE_T * p)
 @return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
-void push_grep_rc (NODE_T * p, int rc)
+void
+push_grep_rc (NODE_T * p, int rc)
 {
   switch (rc) {
   case 0:
@@ -18031,7 +18611,8 @@ void push_grep_rc (NODE_T * p, int rc)
 @return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
-void genie_grep_in_string (NODE_T * p)
+void
+genie_grep_in_string (NODE_T * p)
 {
   A68_REF ref_pat, ref_beg, ref_end, ref_str, row;
   A68_ARRAY *arr;
@@ -18103,7 +18684,8 @@ void genie_grep_in_string (NODE_T * p)
 @return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
-void genie_grep_in_substring (NODE_T * p)
+void
+genie_grep_in_substring (NODE_T * p)
 {
   A68_REF ref_pat, ref_beg, ref_end, ref_str, row;
   A68_ARRAY *arr;
@@ -18175,7 +18757,8 @@ void genie_grep_in_substring (NODE_T * p)
 @return 0: match, 1: no match, 2: no core, 3: other error
 **/
 
-void genie_sub_in_string (NODE_T * p)
+void
+genie_sub_in_string (NODE_T * p)
 {
   A68_REF ref_pat, ref_rep, ref_str;
   int rc, nmatch, k, max_k, widest, begin, end;
@@ -18237,10 +18820,9 @@ void genie_sub_in_string (NODE_T * p)
   for (k = end; k < get_transput_buffer_size (STRING_BUFFER); k++) {
     add_char_transput_buffer (p, REPLACE_BUFFER, txt[k]);
   }
-  * DEREF (A68_REF, &ref_str) = c_to_a_string (p, get_transput_buffer (REPLACE_BUFFER), DEFAULT_WIDTH);
+  *DEREF (A68_REF, &ref_str) = c_to_a_string (p, get_transput_buffer (REPLACE_BUFFER), DEFAULT_WIDTH);
   free (matches);
   push_grep_rc (p, 0);
 }
 
 #endif /* HAVE_REGEX_H */
-

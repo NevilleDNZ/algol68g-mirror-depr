@@ -520,6 +520,9 @@ enum
   A68_PATTERN,
   ACCO_SYMBOL,
   ACTUAL_DECLARER_MARK,
+  ALIF_IF_PART,
+  ALIF_PART,
+  ALIF_SYMBOL,
   ALT_DO_PART,
   ALT_DO_SYMBOL,
   ALT_EQUALS_SYMBOL,
@@ -694,6 +697,8 @@ enum
   GENERIC_ARGUMENT_LIST,
   GOTO_SYMBOL,
   GO_SYMBOL,
+  GUARDED_CONDITIONAL_CLAUSE,
+  GUARDED_LOOP_CLAUSE,
   HEAP_SYMBOL,
   IDENTIFIER,
   IDENTITY_DECLARATION,
@@ -3645,6 +3650,7 @@ extern GPROC genie_sin_real;
 extern GPROC genie_sinh_complex;
 extern GPROC genie_sinh_long_mp;
 extern GPROC genie_sinh_real;
+extern GPROC genie_sleep;
 extern GPROC genie_small_real;
 extern GPROC genie_sort_row_string;
 extern GPROC genie_sound_channels;
@@ -3674,6 +3680,7 @@ extern GPROC genie_sub_long_int;
 extern GPROC genie_sub_long_mp;
 extern GPROC genie_sub_real;
 extern GPROC genie_system;
+extern GPROC genie_system_heap_pointer;
 extern GPROC genie_system_stack_pointer;
 extern GPROC genie_system_stack_size;
 extern GPROC genie_tab_char;

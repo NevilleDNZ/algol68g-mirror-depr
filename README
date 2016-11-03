@@ -76,45 +76,6 @@ tar -xzvf algol68g-VERSION.tgz
 cd algol68g-VERSION
 ./configure
 make
-make check
 [su]
 make install
 
-
-TEST SET
-
-The Algol 68 Genie distribution has circa 200 programs in the 'test-set' directory.
-This test set is very similar to the test set used in the 1980's to validate the 
-ALGOL68RS compilers [Algol Bulletin 49.2]. 
-The test set contains programs from the 
-   "Revised Mathematisch Centrum Algol 68 Test Set" [1979] 
-and synthetic programs from the 
-   "Rennes test set" [1975].
-
-The "Rennes test-set" programs are automatically generated from the Algol 68 grammar 
-using a formalism from Bernard Houssais (Universite de Rennes). 
-Especially the "Rennes test set" has proven very effective in exposing problems in 
-Algol 68 implementations.
-
-The "Revised Mathematisch Centrum test set" programs are not synthetic like those in 
-the "Rennes test set", but are selected programmer-made applications that are 
-distributed with Algol 68 Genie with kind permission of the author of this test set, 
-Dick Grune.
-
-All programs are converted to upper-stropping and reformatted for lay-out.
-Some programs have minor modifications to make them run as batch jobs.
-
-Note that circa one-third of the programs in this test set will fail; most due to 
-intentional (syntactic or runtime) errors and a few due to differences between 
-Algol 68 Genie and revised Algol 68. 
-
-These test sets are available from:
-
-   www.dickgrune.com/CS/Algol68
-
-or from the Vrije Universiteit Amsterdam:
-
-   ftp://ftp.cs.vu.nl/pub/dick/Algol68
-
-The complete test set for regression-testing Algol 68 Genie comprises circa
-1300 programs.

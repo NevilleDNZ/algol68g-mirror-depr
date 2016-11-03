@@ -51,7 +51,8 @@ Error codes:
 @param p Node in syntax tree.
 **/
 
-void genie_pq_connectdb (NODE_T * p)
+void
+genie_pq_connectdb (NODE_T * p)
 {
   A68_REF ref_string, ref_file, ref_z, conninfo;
   A68_FILE *file;
@@ -119,7 +120,8 @@ void genie_pq_connectdb (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_finish (NODE_T * p)
+void
+genie_pq_finish (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -145,7 +147,8 @@ void genie_pq_finish (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_reset (NODE_T * p)
+void
+genie_pq_reset (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -169,7 +172,8 @@ void genie_pq_reset (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_exec (NODE_T * p)
+void
+genie_pq_exec (NODE_T * p)
 {
   A68_REF ref_z, query;
   A68_REF ref_file;
@@ -201,7 +205,8 @@ void genie_pq_exec (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_parameterstatus (NODE_T * p)
+void
+genie_pq_parameterstatus (NODE_T * p)
 {
   A68_REF ref_z, parameter;
   A68_REF ref_file;
@@ -217,7 +222,7 @@ void genie_pq_parameterstatus (NODE_T * p)
   }
   ref_z = heap_generator (p, MODE (C_STRING), 1 + a68_string_size (p, parameter));
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, (char *) PQparameterStatus (CONNECTION (file), a_to_c_string (p, DEREF (char, &ref_z), parameter)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, (char *) PQparameterStatus (CONNECTION (file), a_to_c_string (p, DEREF (char, &ref_z), parameter)), DEFAULT_WIDTH);
     PUSH_PRIMAL (p, 0, INT);
   } else {
     PUSH_PRIMAL (p, -3, INT);
@@ -229,7 +234,8 @@ void genie_pq_parameterstatus (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_cmdstatus (NODE_T * p)
+void
+genie_pq_cmdstatus (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -246,7 +252,7 @@ void genie_pq_cmdstatus (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQcmdStatus (RESULT (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQcmdStatus (RESULT (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -259,7 +265,8 @@ void genie_pq_cmdstatus (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_cmdtuples (NODE_T * p)
+void
+genie_pq_cmdtuples (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -276,7 +283,7 @@ void genie_pq_cmdtuples (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQcmdTuples (RESULT (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQcmdTuples (RESULT (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -289,7 +296,8 @@ void genie_pq_cmdtuples (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_ntuples (NODE_T * p)
+void
+genie_pq_ntuples (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -313,7 +321,8 @@ void genie_pq_ntuples (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_nfields (NODE_T * p)
+void
+genie_pq_nfields (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -337,7 +346,8 @@ void genie_pq_nfields (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_fname (NODE_T * p)
+void
+genie_pq_fname (NODE_T * p)
 {
   A68_INT a68g_index;
   int upb;
@@ -363,7 +373,7 @@ void genie_pq_fname (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQfname (RESULT (file), VALUE (&a68g_index) - 1), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQfname (RESULT (file), VALUE (&a68g_index) - 1), DEFAULT_WIDTH);
     STRPOS (file) = 0;
   }
   PUSH_PRIMAL (p, 0, INT);
@@ -374,7 +384,8 @@ void genie_pq_fname (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_fnumber (NODE_T * p)
+void
+genie_pq_fnumber (NODE_T * p)
 {
   A68_REF ref_z, name;
   A68_REF ref_file;
@@ -407,7 +418,8 @@ void genie_pq_fnumber (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_fformat (NODE_T * p)
+void
+genie_pq_fformat (NODE_T * p)
 {
   A68_INT a68g_index;
   int upb;
@@ -440,7 +452,8 @@ void genie_pq_fformat (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_getvalue (NODE_T * p)
+void
+genie_pq_getvalue (NODE_T * p)
 {
   A68_INT row, column;
   char *str;
@@ -479,7 +492,7 @@ void genie_pq_getvalue (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -492,7 +505,8 @@ void genie_pq_getvalue (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_getisnull (NODE_T * p)
+void
+genie_pq_getisnull (NODE_T * p)
 {
   A68_INT row, column;
   int upb;
@@ -532,7 +546,8 @@ void genie_pq_getisnull (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static char *pq_edit (char *str)
+static char *
+pq_edit (char *str)
 {
   if (str == NULL) {
     return ("");
@@ -587,7 +602,8 @@ static char *pq_edit (char *str)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_errormessage (NODE_T * p)
+void
+genie_pq_errormessage (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -611,7 +627,7 @@ void genie_pq_errormessage (NODE_T * p)
     } else {
       bufcpy (str, "no error message available", BUFFER_SIZE);
     }
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -624,7 +640,8 @@ void genie_pq_errormessage (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_resulterrormessage (NODE_T * p)
+void
+genie_pq_resulterrormessage (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -652,7 +669,7 @@ void genie_pq_resulterrormessage (NODE_T * p)
     } else {
       bufcpy (str, "no error message available", BUFFER_SIZE);
     }
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, str, DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -665,7 +682,8 @@ void genie_pq_resulterrormessage (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_db (NODE_T * p)
+void
+genie_pq_db (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -678,7 +696,7 @@ void genie_pq_db (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQdb (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQdb (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -691,7 +709,8 @@ void genie_pq_db (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_user (NODE_T * p)
+void
+genie_pq_user (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -704,7 +723,7 @@ void genie_pq_user (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQuser (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQuser (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -717,7 +736,8 @@ void genie_pq_user (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_pass (NODE_T * p)
+void
+genie_pq_pass (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -730,7 +750,7 @@ void genie_pq_pass (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQpass (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQpass (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -743,7 +763,8 @@ void genie_pq_pass (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_host (NODE_T * p)
+void
+genie_pq_host (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -756,7 +777,7 @@ void genie_pq_host (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQhost (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQhost (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -769,7 +790,8 @@ void genie_pq_host (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_port (NODE_T * p)
+void
+genie_pq_port (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -782,7 +804,7 @@ void genie_pq_port (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQport (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQport (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -795,7 +817,8 @@ void genie_pq_port (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_tty (NODE_T * p)
+void
+genie_pq_tty (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -808,7 +831,7 @@ void genie_pq_tty (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQtty (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQtty (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -821,7 +844,8 @@ void genie_pq_tty (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_options (NODE_T * p)
+void
+genie_pq_options (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -834,7 +858,7 @@ void genie_pq_options (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    * DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQoptions (CONNECTION (file)), DEFAULT_WIDTH);
+    *DEREF (A68_REF, &STRING (file)) = c_to_a_string (p, PQoptions (CONNECTION (file)), DEFAULT_WIDTH);
     STRPOS (file) = 0;
     PUSH_PRIMAL (p, 0, INT);
   } else {
@@ -847,7 +871,8 @@ void genie_pq_options (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_protocolversion (NODE_T * p)
+void
+genie_pq_protocolversion (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -871,7 +896,8 @@ void genie_pq_protocolversion (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_serverversion (NODE_T * p)
+void
+genie_pq_serverversion (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -895,7 +921,8 @@ void genie_pq_serverversion (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_socket (NODE_T * p)
+void
+genie_pq_socket (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;
@@ -919,7 +946,8 @@ void genie_pq_socket (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-void genie_pq_backendpid (NODE_T * p)
+void
+genie_pq_backendpid (NODE_T * p)
 {
   A68_REF ref_file;
   A68_FILE *file;

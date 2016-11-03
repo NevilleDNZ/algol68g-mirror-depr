@@ -122,7 +122,8 @@ static void indent (FILE_T, char *);
 static void indentf (FILE_T, int);
 
 /* The phases we go through */
-enum {L_NONE = 0, L_DECLARE = 1, L_INITIALISE, L_EXECUTE, L_EXECUTE_2, L_YIELD, L_PUSH};
+enum
+{ L_NONE = 0, L_DECLARE = 1, L_INITIALISE, L_EXECUTE, L_EXECUTE_2, L_YIELD, L_PUSH };
 
 /*********************************************************/
 /* TRANSLATION tabulates translations for genie actions. */
@@ -130,7 +131,11 @@ enum {L_NONE = 0, L_DECLARE = 1, L_INITIALISE, L_EXECUTE, L_EXECUTE_2, L_YIELD, 
 /*********************************************************/
 
 typedef int LEVEL_T;
-typedef struct {GPROC * procedure; char * code;} TRANSLATION;
+typedef struct
+{
+  GPROC *procedure;
+  char *code;
+} TRANSLATION;
 
 static TRANSLATION monadics[] = {
   {genie_minus_int, "-"},
@@ -339,198 +344,198 @@ static TRANSLATION constants[] = {
   {genie_cgs_dyne, "GSL_CONST_CGSM_DYNE"},
   {genie_cgs_electron_charge, "GSL_CONST_CGSM_ELECTRON_CHARGE"},
   {genie_cgs_electron_magnetic_moment, "GSL_CONST_CGSM_ELECTRON_MAGNETIC_MOMENT"},
-  {genie_cgs_electron_volt, "GSL_CONST_CGSM_ELECTRON_VOLT"}, 
+  {genie_cgs_electron_volt, "GSL_CONST_CGSM_ELECTRON_VOLT"},
   {genie_cgs_erg, "GSL_CONST_CGSM_ERG"},
-  {genie_cgs_faraday, "GSL_CONST_CGSM_FARADAY"}, 
+  {genie_cgs_faraday, "GSL_CONST_CGSM_FARADAY"},
   {genie_cgs_fathom, "GSL_CONST_CGSM_FATHOM"},
-  {genie_cgs_fluid_ounce, "GSL_CONST_CGSM_FLUID_OUNCE"}, 
+  {genie_cgs_fluid_ounce, "GSL_CONST_CGSM_FLUID_OUNCE"},
   {genie_cgs_foot, "GSL_CONST_CGSM_FOOT"},
-  {genie_cgs_footcandle, "GSL_CONST_CGSM_FOOTCANDLE"}, 
+  {genie_cgs_footcandle, "GSL_CONST_CGSM_FOOTCANDLE"},
   {genie_cgs_footlambert, "GSL_CONST_CGSM_FOOTLAMBERT"},
-  {genie_cgs_gauss, "GSL_CONST_CGSM_GAUSS"}, 
+  {genie_cgs_gauss, "GSL_CONST_CGSM_GAUSS"},
   {genie_cgs_gram_force, "GSL_CONST_CGSM_GRAM_FORCE"},
   {genie_cgs_grav_accel, "GSL_CONST_CGSM_GRAV_ACCEL"},
   {genie_cgs_gravitational_constant, "GSL_CONST_CGSM_GRAVITATIONAL_CONSTANT"},
-  {genie_cgs_hectare, "GSL_CONST_CGSM_HECTARE"}, 
+  {genie_cgs_hectare, "GSL_CONST_CGSM_HECTARE"},
   {genie_cgs_horsepower, "GSL_CONST_CGSM_HORSEPOWER"},
-  {genie_cgs_hour, "GSL_CONST_CGSM_HOUR"}, 
+  {genie_cgs_hour, "GSL_CONST_CGSM_HOUR"},
   {genie_cgs_inch, "GSL_CONST_CGSM_INCH"},
   {genie_cgs_inch_of_mercury, "GSL_CONST_CGSM_INCH_OF_MERCURY"},
-  {genie_cgs_inch_of_water, "GSL_CONST_CGSM_INCH_OF_WATER"}, 
+  {genie_cgs_inch_of_water, "GSL_CONST_CGSM_INCH_OF_WATER"},
   {genie_cgs_joule, "GSL_CONST_CGSM_JOULE"},
   {genie_cgs_kilometers_per_hour, "GSL_CONST_CGSM_KILOMETERS_PER_HOUR"},
-  {genie_cgs_kilopound_force, "GSL_CONST_CGSM_KILOPOUND_FORCE"}, 
+  {genie_cgs_kilopound_force, "GSL_CONST_CGSM_KILOPOUND_FORCE"},
   {genie_cgs_knot, "GSL_CONST_CGSM_KNOT"},
-  {genie_cgs_lambert, "GSL_CONST_CGSM_LAMBERT"}, 
+  {genie_cgs_lambert, "GSL_CONST_CGSM_LAMBERT"},
   {genie_cgs_light_year, "GSL_CONST_CGSM_LIGHT_YEAR"},
-  {genie_cgs_liter, "GSL_CONST_CGSM_LITER"}, 
+  {genie_cgs_liter, "GSL_CONST_CGSM_LITER"},
   {genie_cgs_lumen, "GSL_CONST_CGSM_LUMEN"},
-  {genie_cgs_lux, "GSL_CONST_CGSM_LUX"}, 
+  {genie_cgs_lux, "GSL_CONST_CGSM_LUX"},
   {genie_cgs_mass_electron, "GSL_CONST_CGSM_MASS_ELECTRON"},
-  {genie_cgs_mass_muon, "GSL_CONST_CGSM_MASS_MUON"}, 
+  {genie_cgs_mass_muon, "GSL_CONST_CGSM_MASS_MUON"},
   {genie_cgs_mass_neutron, "GSL_CONST_CGSM_MASS_NEUTRON"},
   {genie_cgs_mass_proton, "GSL_CONST_CGSM_MASS_PROTON"},
   {genie_cgs_meter_of_mercury, "GSL_CONST_CGSM_METER_OF_MERCURY"},
-  {genie_cgs_metric_ton, "GSL_CONST_CGSM_METRIC_TON"}, 
+  {genie_cgs_metric_ton, "GSL_CONST_CGSM_METRIC_TON"},
   {genie_cgs_micron, "GSL_CONST_CGSM_MICRON"},
-  {genie_cgs_mil, "GSL_CONST_CGSM_MIL"}, 
+  {genie_cgs_mil, "GSL_CONST_CGSM_MIL"},
   {genie_cgs_mile, "GSL_CONST_CGSM_MILE"},
-  {genie_cgs_miles_per_hour, "GSL_CONST_CGSM_MILES_PER_HOUR"}, 
+  {genie_cgs_miles_per_hour, "GSL_CONST_CGSM_MILES_PER_HOUR"},
   {genie_cgs_minute, "GSL_CONST_CGSM_MINUTE"},
-  {genie_cgs_molar_gas, "GSL_CONST_CGSM_MOLAR_GAS"}, 
+  {genie_cgs_molar_gas, "GSL_CONST_CGSM_MOLAR_GAS"},
   {genie_cgs_nautical_mile, "GSL_CONST_CGSM_NAUTICAL_MILE"},
-  {genie_cgs_newton, "GSL_CONST_CGSM_NEWTON"}, 
+  {genie_cgs_newton, "GSL_CONST_CGSM_NEWTON"},
   {genie_cgs_nuclear_magneton, "GSL_CONST_CGSM_NUCLEAR_MAGNETON"},
-  {genie_cgs_ounce_mass, "GSL_CONST_CGSM_OUNCE_MASS"}, 
+  {genie_cgs_ounce_mass, "GSL_CONST_CGSM_OUNCE_MASS"},
   {genie_cgs_parsec, "GSL_CONST_CGSM_PARSEC"},
-  {genie_cgs_phot, "GSL_CONST_CGSM_PHOT"}, 
+  {genie_cgs_phot, "GSL_CONST_CGSM_PHOT"},
   {genie_cgs_pint, "GSL_CONST_CGSM_PINT"},
-  {genie_cgs_planck_constant_h, "6.6260693e-27"}, 
+  {genie_cgs_planck_constant_h, "6.6260693e-27"},
   {genie_cgs_planck_constant_hbar, "1.0545717e-27"},
-  {genie_cgs_point, "GSL_CONST_CGSM_POINT"}, 
+  {genie_cgs_point, "GSL_CONST_CGSM_POINT"},
   {genie_cgs_poise, "GSL_CONST_CGSM_POISE"},
-  {genie_cgs_pound_force, "GSL_CONST_CGSM_POUND_FORCE"}, 
+  {genie_cgs_pound_force, "GSL_CONST_CGSM_POUND_FORCE"},
   {genie_cgs_pound_mass, "GSL_CONST_CGSM_POUND_MASS"},
   {genie_cgs_poundal, "GSL_CONST_CGSM_POUNDAL"},
   {genie_cgs_proton_magnetic_moment, "GSL_CONST_CGSM_PROTON_MAGNETIC_MOMENT"},
-  {genie_cgs_psi, "GSL_CONST_CGSM_PSI"}, 
+  {genie_cgs_psi, "GSL_CONST_CGSM_PSI"},
   {genie_cgs_quart, "GSL_CONST_CGSM_QUART"},
-  {genie_cgs_rad, "GSL_CONST_CGSM_RAD"}, 
+  {genie_cgs_rad, "GSL_CONST_CGSM_RAD"},
   {genie_cgs_roentgen, "GSL_CONST_CGSM_ROENTGEN"},
-  {genie_cgs_rydberg, "GSL_CONST_CGSM_RYDBERG"}, 
+  {genie_cgs_rydberg, "GSL_CONST_CGSM_RYDBERG"},
   {genie_cgs_solar_mass, "GSL_CONST_CGSM_SOLAR_MASS"},
   {genie_cgs_speed_of_light, "GSL_CONST_CGSM_SPEED_OF_LIGHT"},
   {genie_cgs_standard_gas_volume, "GSL_CONST_CGSM_STANDARD_GAS_VOLUME"},
-  {genie_cgs_std_atmosphere, "GSL_CONST_CGSM_STD_ATMOSPHERE"}, 
+  {genie_cgs_std_atmosphere, "GSL_CONST_CGSM_STD_ATMOSPHERE"},
   {genie_cgs_stilb, "GSL_CONST_CGSM_STILB"},
-  {genie_cgs_stokes, "GSL_CONST_CGSM_STOKES"}, 
+  {genie_cgs_stokes, "GSL_CONST_CGSM_STOKES"},
   {genie_cgs_tablespoon, "GSL_CONST_CGSM_TABLESPOON"},
-  {genie_cgs_teaspoon, "GSL_CONST_CGSM_TEASPOON"}, 
+  {genie_cgs_teaspoon, "GSL_CONST_CGSM_TEASPOON"},
   {genie_cgs_texpoint, "GSL_CONST_CGSM_TEXPOINT"},
-  {genie_cgs_therm, "GSL_CONST_CGSM_THERM"}, 
+  {genie_cgs_therm, "GSL_CONST_CGSM_THERM"},
   {genie_cgs_ton, "GSL_CONST_CGSM_TON"},
-  {genie_cgs_torr, "GSL_CONST_CGSM_TORR"}, 
+  {genie_cgs_torr, "GSL_CONST_CGSM_TORR"},
   {genie_cgs_troy_ounce, "GSL_CONST_CGSM_TROY_OUNCE"},
-  {genie_cgs_uk_gallon, "GSL_CONST_CGSM_UK_GALLON"}, 
+  {genie_cgs_uk_gallon, "GSL_CONST_CGSM_UK_GALLON"},
   {genie_cgs_uk_ton, "GSL_CONST_CGSM_UK_TON"},
   {genie_cgs_unified_atomic_mass, "GSL_CONST_CGSM_UNIFIED_ATOMIC_MASS"},
-  {genie_cgs_us_gallon, "GSL_CONST_CGSM_US_GALLON"}, 
+  {genie_cgs_us_gallon, "GSL_CONST_CGSM_US_GALLON"},
   {genie_cgs_week, "GSL_CONST_CGSM_WEEK"},
-  {genie_cgs_yard, "GSL_CONST_CGSM_YARD"}, 
+  {genie_cgs_yard, "GSL_CONST_CGSM_YARD"},
   {genie_mks_acre, "GSL_CONST_MKS_ACRE"},
   {genie_mks_angstrom, "GSL_CONST_MKS_ANGSTROM"},
-  {genie_mks_astronomical_unit, "GSL_CONST_MKS_ASTRONOMICAL_UNIT"}, 
+  {genie_mks_astronomical_unit, "GSL_CONST_MKS_ASTRONOMICAL_UNIT"},
   {genie_mks_bar, "GSL_CONST_MKS_BAR"},
-  {genie_mks_barn, "GSL_CONST_MKS_BARN"}, 
+  {genie_mks_barn, "GSL_CONST_MKS_BARN"},
   {genie_mks_bohr_magneton, "GSL_CONST_MKS_BOHR_MAGNETON"},
-  {genie_mks_bohr_radius, "GSL_CONST_MKS_BOHR_RADIUS"}, 
+  {genie_mks_bohr_radius, "GSL_CONST_MKS_BOHR_RADIUS"},
   {genie_mks_boltzmann, "GSL_CONST_MKS_BOLTZMANN"},
-  {genie_mks_btu, "GSL_CONST_MKS_BTU"}, 
+  {genie_mks_btu, "GSL_CONST_MKS_BTU"},
   {genie_mks_calorie, "GSL_CONST_MKS_CALORIE"},
-  {genie_mks_canadian_gallon, "GSL_CONST_MKS_CANADIAN_GALLON"}, 
+  {genie_mks_canadian_gallon, "GSL_CONST_MKS_CANADIAN_GALLON"},
   {genie_mks_carat, "GSL_CONST_MKS_CARAT"},
-  {genie_mks_cup, "GSL_CONST_MKS_CUP"}, 
+  {genie_mks_cup, "GSL_CONST_MKS_CUP"},
   {genie_mks_curie, "GSL_CONST_MKS_CURIE"},
-  {genie_mks_day, "GSL_CONST_MKS_DAY"}, 
+  {genie_mks_day, "GSL_CONST_MKS_DAY"},
   {genie_mks_dyne, "GSL_CONST_MKS_DYNE"},
   {genie_mks_electron_charge, "GSL_CONST_MKS_ELECTRON_CHARGE"},
   {genie_mks_electron_magnetic_moment, "GSL_CONST_MKS_ELECTRON_MAGNETIC_MOMENT"},
-  {genie_mks_electron_volt, "GSL_CONST_MKS_ELECTRON_VOLT"}, 
+  {genie_mks_electron_volt, "GSL_CONST_MKS_ELECTRON_VOLT"},
   {genie_mks_erg, "GSL_CONST_MKS_ERG"},
-  {genie_mks_faraday, "GSL_CONST_MKS_FARADAY"}, 
+  {genie_mks_faraday, "GSL_CONST_MKS_FARADAY"},
   {genie_mks_fathom, "GSL_CONST_MKS_FATHOM"},
-  {genie_mks_fluid_ounce, "GSL_CONST_MKS_FLUID_OUNCE"}, 
+  {genie_mks_fluid_ounce, "GSL_CONST_MKS_FLUID_OUNCE"},
   {genie_mks_foot, "GSL_CONST_MKS_FOOT"},
-  {genie_mks_footcandle, "GSL_CONST_MKS_FOOTCANDLE"}, 
+  {genie_mks_footcandle, "GSL_CONST_MKS_FOOTCANDLE"},
   {genie_mks_footlambert, "GSL_CONST_MKS_FOOTLAMBERT"},
-  {genie_mks_gauss, "GSL_CONST_MKS_GAUSS"}, 
+  {genie_mks_gauss, "GSL_CONST_MKS_GAUSS"},
   {genie_mks_gram_force, "GSL_CONST_MKS_GRAM_FORCE"},
   {genie_mks_grav_accel, "GSL_CONST_MKS_GRAV_ACCEL"},
   {genie_mks_gravitational_constant, "GSL_CONST_MKS_GRAVITATIONAL_CONSTANT"},
-  {genie_mks_hectare, "GSL_CONST_MKS_HECTARE"}, 
+  {genie_mks_hectare, "GSL_CONST_MKS_HECTARE"},
   {genie_mks_horsepower, "GSL_CONST_MKS_HORSEPOWER"},
-  {genie_mks_hour, "GSL_CONST_MKS_HOUR"}, 
+  {genie_mks_hour, "GSL_CONST_MKS_HOUR"},
   {genie_mks_inch, "GSL_CONST_MKS_INCH"},
   {genie_mks_inch_of_mercury, "GSL_CONST_MKS_INCH_OF_MERCURY"},
-  {genie_mks_inch_of_water, "GSL_CONST_MKS_INCH_OF_WATER"}, 
+  {genie_mks_inch_of_water, "GSL_CONST_MKS_INCH_OF_WATER"},
   {genie_mks_joule, "GSL_CONST_MKS_JOULE"},
   {genie_mks_kilometers_per_hour, "GSL_CONST_MKS_KILOMETERS_PER_HOUR"},
-  {genie_mks_kilopound_force, "GSL_CONST_MKS_KILOPOUND_FORCE"}, 
+  {genie_mks_kilopound_force, "GSL_CONST_MKS_KILOPOUND_FORCE"},
   {genie_mks_knot, "GSL_CONST_MKS_KNOT"},
-  {genie_mks_lambert, "GSL_CONST_MKS_LAMBERT"}, 
+  {genie_mks_lambert, "GSL_CONST_MKS_LAMBERT"},
   {genie_mks_light_year, "GSL_CONST_MKS_LIGHT_YEAR"},
-  {genie_mks_liter, "GSL_CONST_MKS_LITER"}, 
+  {genie_mks_liter, "GSL_CONST_MKS_LITER"},
   {genie_mks_lumen, "GSL_CONST_MKS_LUMEN"},
-  {genie_mks_lux, "GSL_CONST_MKS_LUX"}, 
+  {genie_mks_lux, "GSL_CONST_MKS_LUX"},
   {genie_mks_mass_electron, "GSL_CONST_MKS_MASS_ELECTRON"},
-  {genie_mks_mass_muon, "GSL_CONST_MKS_MASS_MUON"}, 
+  {genie_mks_mass_muon, "GSL_CONST_MKS_MASS_MUON"},
   {genie_mks_mass_neutron, "GSL_CONST_MKS_MASS_NEUTRON"},
   {genie_mks_mass_proton, "GSL_CONST_MKS_MASS_PROTON"},
   {genie_mks_meter_of_mercury, "GSL_CONST_MKS_METER_OF_MERCURY"},
-  {genie_mks_metric_ton, "GSL_CONST_MKS_METRIC_TON"}, 
+  {genie_mks_metric_ton, "GSL_CONST_MKS_METRIC_TON"},
   {genie_mks_micron, "GSL_CONST_MKS_MICRON"},
-  {genie_mks_mil, "GSL_CONST_MKS_MIL"}, 
+  {genie_mks_mil, "GSL_CONST_MKS_MIL"},
   {genie_mks_mile, "GSL_CONST_MKS_MILE"},
-  {genie_mks_miles_per_hour, "GSL_CONST_MKS_MILES_PER_HOUR"}, 
+  {genie_mks_miles_per_hour, "GSL_CONST_MKS_MILES_PER_HOUR"},
   {genie_mks_minute, "GSL_CONST_MKS_MINUTE"},
-  {genie_mks_molar_gas, "GSL_CONST_MKS_MOLAR_GAS"}, 
+  {genie_mks_molar_gas, "GSL_CONST_MKS_MOLAR_GAS"},
   {genie_mks_nautical_mile, "GSL_CONST_MKS_NAUTICAL_MILE"},
-  {genie_mks_newton, "GSL_CONST_MKS_NEWTON"}, 
+  {genie_mks_newton, "GSL_CONST_MKS_NEWTON"},
   {genie_mks_nuclear_magneton, "GSL_CONST_MKS_NUCLEAR_MAGNETON"},
-  {genie_mks_ounce_mass, "GSL_CONST_MKS_OUNCE_MASS"}, 
+  {genie_mks_ounce_mass, "GSL_CONST_MKS_OUNCE_MASS"},
   {genie_mks_parsec, "GSL_CONST_MKS_PARSEC"},
-  {genie_mks_phot, "GSL_CONST_MKS_PHOT"}, 
+  {genie_mks_phot, "GSL_CONST_MKS_PHOT"},
   {genie_mks_pint, "GSL_CONST_MKS_PINT"},
-  {genie_mks_planck_constant_h, "6.6260693e-34"}, 
+  {genie_mks_planck_constant_h, "6.6260693e-34"},
   {genie_mks_planck_constant_hbar, "1.0545717e-34"},
-  {genie_mks_point, "GSL_CONST_MKS_POINT"}, 
+  {genie_mks_point, "GSL_CONST_MKS_POINT"},
   {genie_mks_poise, "GSL_CONST_MKS_POISE"},
-  {genie_mks_pound_force, "GSL_CONST_MKS_POUND_FORCE"}, 
+  {genie_mks_pound_force, "GSL_CONST_MKS_POUND_FORCE"},
   {genie_mks_pound_mass, "GSL_CONST_MKS_POUND_MASS"},
   {genie_mks_poundal, "GSL_CONST_MKS_POUNDAL"},
   {genie_mks_proton_magnetic_moment, "GSL_CONST_MKS_PROTON_MAGNETIC_MOMENT"},
-  {genie_mks_psi, "GSL_CONST_MKS_PSI"}, 
+  {genie_mks_psi, "GSL_CONST_MKS_PSI"},
   {genie_mks_quart, "GSL_CONST_MKS_QUART"},
-  {genie_mks_rad, "GSL_CONST_MKS_RAD"}, 
+  {genie_mks_rad, "GSL_CONST_MKS_RAD"},
   {genie_mks_roentgen, "GSL_CONST_MKS_ROENTGEN"},
-  {genie_mks_rydberg, "GSL_CONST_MKS_RYDBERG"}, 
+  {genie_mks_rydberg, "GSL_CONST_MKS_RYDBERG"},
   {genie_mks_solar_mass, "GSL_CONST_MKS_SOLAR_MASS"},
   {genie_mks_speed_of_light, "GSL_CONST_MKS_SPEED_OF_LIGHT"},
   {genie_mks_standard_gas_volume, "GSL_CONST_MKS_STANDARD_GAS_VOLUME"},
-  {genie_mks_std_atmosphere, "GSL_CONST_MKS_STD_ATMOSPHERE"}, 
+  {genie_mks_std_atmosphere, "GSL_CONST_MKS_STD_ATMOSPHERE"},
   {genie_mks_stilb, "GSL_CONST_MKS_STILB"},
-  {genie_mks_stokes, "GSL_CONST_MKS_STOKES"}, 
+  {genie_mks_stokes, "GSL_CONST_MKS_STOKES"},
   {genie_mks_tablespoon, "GSL_CONST_MKS_TABLESPOON"},
-  {genie_mks_teaspoon, "GSL_CONST_MKS_TEASPOON"}, 
+  {genie_mks_teaspoon, "GSL_CONST_MKS_TEASPOON"},
   {genie_mks_texpoint, "GSL_CONST_MKS_TEXPOINT"},
-  {genie_mks_therm, "GSL_CONST_MKS_THERM"}, 
+  {genie_mks_therm, "GSL_CONST_MKS_THERM"},
   {genie_mks_ton, "GSL_CONST_MKS_TON"},
-  {genie_mks_torr, "GSL_CONST_MKS_TORR"}, 
+  {genie_mks_torr, "GSL_CONST_MKS_TORR"},
   {genie_mks_troy_ounce, "GSL_CONST_MKS_TROY_OUNCE"},
-  {genie_mks_uk_gallon, "GSL_CONST_MKS_UK_GALLON"}, 
+  {genie_mks_uk_gallon, "GSL_CONST_MKS_UK_GALLON"},
   {genie_mks_uk_ton, "GSL_CONST_MKS_UK_TON"},
   {genie_mks_unified_atomic_mass, "GSL_CONST_MKS_UNIFIED_ATOMIC_MASS"},
   {genie_mks_us_gallon, "GSL_CONST_MKS_US_GALLON"},
   {genie_mks_vacuum_permeability, "GSL_CONST_MKS_VACUUM_PERMEABILITY"},
-  {genie_mks_vacuum_permittivity, "GSL_CONST_MKS_VACUUM_PERMITTIVITY"}, 
+  {genie_mks_vacuum_permittivity, "GSL_CONST_MKS_VACUUM_PERMITTIVITY"},
   {genie_mks_week, "GSL_CONST_MKS_WEEK"},
-  {genie_mks_yard, "GSL_CONST_MKS_YARD"}, 
+  {genie_mks_yard, "GSL_CONST_MKS_YARD"},
   {genie_num_atto, "GSL_CONST_NUM_ATTO"},
-  {genie_num_avogadro, "GSL_CONST_NUM_AVOGADRO"}, 
+  {genie_num_avogadro, "GSL_CONST_NUM_AVOGADRO"},
   {genie_num_exa, "GSL_CONST_NUM_EXA"},
-  {genie_num_femto, "GSL_CONST_NUM_FEMTO"}, 
+  {genie_num_femto, "GSL_CONST_NUM_FEMTO"},
   {genie_num_fine_structure, "GSL_CONST_NUM_FINE_STRUCTURE"},
-  {genie_num_giga, "GSL_CONST_NUM_GIGA"}, 
+  {genie_num_giga, "GSL_CONST_NUM_GIGA"},
   {genie_num_kilo, "GSL_CONST_NUM_KILO"},
-  {genie_num_mega, "GSL_CONST_NUM_MEGA"}, 
+  {genie_num_mega, "GSL_CONST_NUM_MEGA"},
   {genie_num_micro, "GSL_CONST_NUM_MICRO"},
-  {genie_num_milli, "GSL_CONST_NUM_MILLI"}, 
+  {genie_num_milli, "GSL_CONST_NUM_MILLI"},
   {genie_num_nano, "GSL_CONST_NUM_NANO"},
-  {genie_num_peta, "GSL_CONST_NUM_PETA"}, 
+  {genie_num_peta, "GSL_CONST_NUM_PETA"},
   {genie_num_pico, "GSL_CONST_NUM_PICO"},
-  {genie_num_tera, "GSL_CONST_NUM_TERA"}, 
+  {genie_num_tera, "GSL_CONST_NUM_TERA"},
   {genie_num_yocto, "GSL_CONST_NUM_YOCTO"},
-  {genie_num_yotta, "GSL_CONST_NUM_YOTTA"}, 
+  {genie_num_yotta, "GSL_CONST_NUM_YOTTA"},
   {genie_num_zepto, "GSL_CONST_NUM_ZEPTO"},
   {genie_num_zetta, "GSL_CONST_NUM_ZETTA"},
   {NO_GPROC, NO_TEXT}
@@ -546,13 +551,14 @@ static TRANSLATION constants[] = {
 @param str Text.
 **/
 
-static void indent (FILE_T out, char *str)
+static void
+indent (FILE_T out, char *str)
 {
   int j = indentation;
   if (out == 0) {
     return;
   }
-  while (j -- > 0) {
+  while (j-- > 0) {
     WRITE (out, "  ");
   }
   WRITE (out, str);
@@ -564,7 +570,8 @@ static void indent (FILE_T out, char *str)
 @param str Text.
 **/
 
-static void undent (FILE_T out, char *str)
+static void
+undent (FILE_T out, char *str)
 {
   if (out == 0) {
     return;
@@ -578,7 +585,8 @@ static void undent (FILE_T out, char *str)
 @param ret Bytes written by snprintf.
 **/
 
-static void indentf (FILE_T out, int ret)
+static void
+indentf (FILE_T out, int ret)
 {
   if (out == 0) {
     return;
@@ -586,7 +594,7 @@ static void indentf (FILE_T out, int ret)
   if (ret >= 0) {
     indent (out, line);
   } else {
-    ABEND(A68_TRUE, "Return value failure", error_specification ());
+    ABEND (A68_TRUE, "Return value failure", error_specification ());
   }
 }
 
@@ -596,7 +604,8 @@ static void indentf (FILE_T out, int ret)
 @param ret Bytes written by snprintf.
 **/
 
-static void undentf (FILE_T out, int ret)
+static void
+undentf (FILE_T out, int ret)
 {
   if (out == 0) {
     return;
@@ -604,7 +613,7 @@ static void undentf (FILE_T out, int ret)
   if (ret >= 0) {
     WRITE (out, line);
   } else {
-    ABEND(A68_TRUE, "Return value failure", error_specification ());
+    ABEND (A68_TRUE, "Return value failure", error_specification ());
   }
 }
 
@@ -622,7 +631,8 @@ static void undentf (FILE_T out, int ret)
 
 typedef struct DEC_T DEC_T;
 
-struct DEC_T {
+struct DEC_T
+{
   char *text;
   int level;
   DEC_T *sub, *less, *more;
@@ -638,7 +648,8 @@ static DEC_T *root_idf = NO_DEC;
 @return New entry.
 **/
 
-DEC_T *add_identifier (DEC_T ** p, int level, char *idf)
+DEC_T *
+add_identifier (DEC_T ** p, int level, char *idf)
 {
   char *z = new_temp_string (idf);
   while (*p != NO_DEC) {
@@ -648,7 +659,7 @@ DEC_T *add_identifier (DEC_T ** p, int level, char *idf)
     } else if (k > 0) {
       p = &MORE (*p);
     } else {
-      ABEND(A68_TRUE, "duplicate declaration", z);
+      ABEND (A68_TRUE, "duplicate declaration", z);
       return (*p);
     }
   }
@@ -668,7 +679,8 @@ DEC_T *add_identifier (DEC_T ** p, int level, char *idf)
 @return New entry.
 **/
 
-DEC_T *add_declaration (DEC_T ** p, char *mode, int level, char *idf)
+DEC_T *
+add_declaration (DEC_T ** p, char *mode, int level, char *idf)
 {
   char *z = new_temp_string (mode);
   while (*p != NO_DEC) {
@@ -678,7 +690,7 @@ DEC_T *add_declaration (DEC_T ** p, char *mode, int level, char *idf)
     } else if (k > 0) {
       p = &MORE (*p);
     } else {
-      (void) add_identifier (&SUB(*p), level, idf);
+      (void) add_identifier (&SUB (*p), level, idf);
       return (*p);
     }
   }
@@ -686,7 +698,7 @@ DEC_T *add_declaration (DEC_T ** p, char *mode, int level, char *idf)
   TEXT (*p) = z;
   LEVEL (*p) = -1;
   SUB (*p) = LESS (*p) = MORE (*p) = NO_DEC;
-  (void) add_identifier(&SUB(*p), level, idf);
+  (void) add_identifier (&SUB (*p), level, idf);
   return (*p);
 }
 
@@ -698,7 +710,8 @@ static BOOL_T put_idf_comma = A68_TRUE;
 @param p Top token.
 **/
 
-void print_identifiers (FILE_T out, DEC_T *p)
+void
+print_identifiers (FILE_T out, DEC_T * p)
 {
   if (p != NO_DEC) {
     print_identifiers (out, LESS (p));
@@ -725,7 +738,8 @@ void print_identifiers (FILE_T out, DEC_T *p)
 @param p Top token.
 **/
 
-void print_declarations (FILE_T out, DEC_T *p)
+void
+print_declarations (FILE_T out, DEC_T * p)
 {
   if (p != NO_DEC) {
     print_declarations (out, LESS (p));
@@ -734,7 +748,7 @@ void print_declarations (FILE_T out, DEC_T *p)
     put_idf_comma = A68_FALSE;
     print_identifiers (out, SUB (p));
     WRITELN (out, ";\n")
-    print_declarations (out, MORE (p));
+      print_declarations (out, MORE (p));
   }
 }
 
@@ -743,14 +757,16 @@ void print_declarations (FILE_T out, DEC_T *p)
 /* BOOK keeps track of already seen (temporary) variables and denotations. */
 /***************************************************************************/
 
-typedef struct {
+typedef struct
+{
   int action, phase;
-  char * idf;
-  void * info;
+  char *idf;
+  void *info;
   int number;
-  } BOOK_T;
+} BOOK_T;
 
-enum {BOOK_NONE = 0, BOOK_DECL, BOOK_INIT, BOOK_DEREF, BOOK_ARRAY, BOOK_COMPILE};
+enum
+{ BOOK_NONE = 0, BOOK_DECL, BOOK_INIT, BOOK_DEREF, BOOK_ARRAY, BOOK_COMPILE };
 
 #define MAX_BOOK 1024
 
@@ -766,7 +782,8 @@ int temp_book_pointer;
 @param number Unique identifying number.
 **/
 
-static void sign_in (int action, int phase, char * idf, void * info, int number)
+static void
+sign_in (int action, int phase, char *idf, void *info, int number)
 {
   if (temp_book_pointer < MAX_BOOK) {
     ACTION (&temp_book[temp_book_pointer]) = action;
@@ -774,7 +791,7 @@ static void sign_in (int action, int phase, char * idf, void * info, int number)
     IDF (&temp_book[temp_book_pointer]) = idf;
     INFO (&temp_book[temp_book_pointer]) = info;
     NUMBER (&temp_book[temp_book_pointer]) = number;
-    temp_book_pointer ++;
+    temp_book_pointer++;
   }
 }
 
@@ -786,12 +803,13 @@ static void sign_in (int action, int phase, char * idf, void * info, int number)
 @return Number given to it.
 **/
 
-static BOOK_T * signed_in (int action, int phase, char * idf)
+static BOOK_T *
+signed_in (int action, int phase, char *idf)
 {
   int k;
-  for (k = 0; k < temp_book_pointer; k ++) {
+  for (k = 0; k < temp_book_pointer; k++) {
     if (IDF (&temp_book[k]) == idf && ACTION (&temp_book[k]) == action && PHASE (&temp_book[k]) >= phase) {
-      return (& (temp_book[k]));
+      return (&(temp_book[k]));
     }
   }
   return (NO_BOOK);
@@ -806,7 +824,8 @@ static BOOK_T * signed_in (int action, int phase, char * idf)
 @return Output buffer.
 **/
 
-static char * make_name (char * buf, char * name, char * tag, int n)
+static char *
+make_name (char *buf, char *name, char *tag, int n)
 {
   if (strlen (tag) > 0) {
     ASSERT (snprintf (buf, NAME_SIZE, "%s_%s_%d", name, tag, n) >= 0);
@@ -824,7 +843,8 @@ static char * make_name (char * buf, char * name, char * tag, int n)
 @return See brief description.
 **/
 
-static BOOL_T same_tree (NODE_T * l, NODE_T *r)
+static BOOL_T
+same_tree (NODE_T * l, NODE_T * r)
 {
   if (l == NO_NODE) {
     return ((BOOL_T) (r == NO_NODE));
@@ -848,7 +868,8 @@ static BOOL_T same_tree (NODE_T * l, NODE_T *r)
 @return See brief description.
 **/
 
-static BOOL_T primitive_mode (MOID_T * m)
+static BOOL_T
+primitive_mode (MOID_T * m)
 {
   if (m == MODE (INT)) {
     return (A68_TRUE);
@@ -871,7 +892,8 @@ static BOOL_T primitive_mode (MOID_T * m)
 @return See brief description.
 **/
 
-static BOOL_T denotation_mode (MOID_T * m)
+static BOOL_T
+denotation_mode (MOID_T * m)
 {
   if (primitive_mode (m)) {
     return (A68_TRUE);
@@ -888,7 +910,8 @@ static BOOL_T denotation_mode (MOID_T * m)
 @return See brief description.
 **/
 
-BOOL_T folder_mode (MOID_T * m)
+BOOL_T
+folder_mode (MOID_T * m)
 {
   if (primitive_mode (m)) {
     return (A68_TRUE);
@@ -907,7 +930,8 @@ BOOL_T folder_mode (MOID_T * m)
 @return See brief description.
 **/
 
-static BOOL_T basic_mode (MOID_T * m)
+static BOOL_T
+basic_mode (MOID_T * m)
 {
   if (denotation_mode (m)) {
     return (A68_TRUE);
@@ -944,7 +968,8 @@ static BOOL_T basic_mode (MOID_T * m)
 @return See brief description.
 **/
 
-static BOOL_T basic_mode_non_row (MOID_T * m)
+static BOOL_T
+basic_mode_non_row (MOID_T * m)
 {
   if (denotation_mode (m)) {
     return (A68_TRUE);
@@ -974,7 +999,8 @@ static BOOL_T basic_mode_non_row (MOID_T * m)
 @return See brief description.
 **/
 
-static NODE_T * locate (NODE_T * p, int att)
+static NODE_T *
+locate (NODE_T * p, int att)
 {
   if (IS (p, VOIDING)) {
     return (locate (SUB (p), att));
@@ -1004,7 +1030,8 @@ static NODE_T * locate (NODE_T * p, int att)
 @return See brief description.
 **/
 
-static BOOL_T basic_collateral (NODE_T * p)
+static BOOL_T
+basic_collateral (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -1023,16 +1050,17 @@ static BOOL_T basic_collateral (NODE_T * p)
 @return See brief description.
 **/
 
-static void count_basic_units (NODE_T * p, int * total, int * good)
+static void
+count_basic_units (NODE_T * p, int *total, int *good)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
-      (* total) ++;
+      (*total)++;
       if (basic_unit (p)) {
-        (* good) ++;
+        (*good)++;
       }
     } else if (IS (p, DECLARATION_LIST)) {
-      (* total) ++;
+      (*total)++;
     } else {
       count_basic_units (SUB (p), total, good);
     }
@@ -1046,7 +1074,8 @@ static void count_basic_units (NODE_T * p, int * total, int * good)
 @return See brief description.
 **/
 
-static BOOL_T basic_serial (NODE_T * p, int want)
+static BOOL_T
+basic_serial (NODE_T * p, int want)
 {
   int total = 0, good = 0;
   count_basic_units (p, &total, &good);
@@ -1063,7 +1092,8 @@ static BOOL_T basic_serial (NODE_T * p, int want)
 @return See brief description.
 **/
 
-static BOOL_T basic_indexer (NODE_T * p)
+static BOOL_T
+basic_indexer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -1082,13 +1112,14 @@ static BOOL_T basic_indexer (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_slice (NODE_T * p)
+static BOOL_T
+basic_slice (NODE_T * p)
 {
   if (IS (p, SLICE)) {
-    NODE_T * prim = SUB (p);
-    NODE_T * idf = locate (prim, IDENTIFIER);
+    NODE_T *prim = SUB (p);
+    NODE_T *idf = locate (prim, IDENTIFIER);
     if (idf != NO_NODE) {
-      NODE_T * indx = NEXT (prim);
+      NODE_T *indx = NEXT (prim);
       return (basic_indexer (indx));
     }
   }
@@ -1101,7 +1132,8 @@ static BOOL_T basic_slice (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_argument (NODE_T * p)
+static BOOL_T
+basic_argument (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -1118,18 +1150,19 @@ static BOOL_T basic_argument (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_call (NODE_T * p)
+static BOOL_T
+basic_call (NODE_T * p)
 {
   if (IS (p, CALL)) {
-    NODE_T * prim = SUB (p);
-    NODE_T * idf = locate (prim, IDENTIFIER);
+    NODE_T *prim = SUB (p);
+    NODE_T *idf = locate (prim, IDENTIFIER);
     if (idf == NO_NODE) {
       return (A68_FALSE);
-    } else if (SUB_MOID (idf) == MOID (p)) { /* Prevent partial parametrisation */
+    } else if (SUB_MOID (idf) == MOID (p)) {    /* Prevent partial parametrisation */
       int k;
-      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (idf)) == PROCEDURE (&functions[k])) {
-          NODE_T * args = NEXT (prim);
+          NODE_T *args = NEXT (prim);
           return (basic_argument (args));
         }
       }
@@ -1144,14 +1177,15 @@ static BOOL_T basic_call (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_monadic_formula (NODE_T * p)
+static BOOL_T
+basic_monadic_formula (NODE_T * p)
 {
   if (IS (p, MONADIC_FORMULA)) {
-    NODE_T * op = SUB (p);
+    NODE_T *op = SUB (p);
     int k;
-    for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
+    for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k++) {
       if (PROCEDURE (TAX (op)) == PROCEDURE (&monadics[k])) {
-        NODE_T * rhs = NEXT (op);
+        NODE_T *rhs = NEXT (op);
         return (basic_unit (rhs));
       }
     }
@@ -1165,18 +1199,19 @@ static BOOL_T basic_monadic_formula (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_formula (NODE_T * p)
+static BOOL_T
+basic_formula (NODE_T * p)
 {
   if (IS (p, FORMULA)) {
-    NODE_T * lhs = SUB (p);
-    NODE_T * op = NEXT (lhs);
+    NODE_T *lhs = SUB (p);
+    NODE_T *op = NEXT (lhs);
     if (op == NO_NODE) {
       return (basic_monadic_formula (lhs));
     } else {
       int k;
-      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&dyadics[k])) {
-          NODE_T * rhs = NEXT (op);
+          NODE_T *rhs = NEXT (op);
           return ((BOOL_T) (basic_unit (lhs) && basic_unit (rhs)));
         }
       }
@@ -1191,19 +1226,20 @@ static BOOL_T basic_formula (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_conditional (NODE_T * p)
+static BOOL_T
+basic_conditional (NODE_T * p)
 {
-  if (! (IS (p, IF_PART) || IS (p, OPEN_PART))) {
+  if (!(IS (p, IF_PART) || IS (p, OPEN_PART))) {
     return (A68_FALSE);
   }
-  if (! basic_serial (NEXT_SUB (p), 1)) {
+  if (!basic_serial (NEXT_SUB (p), 1)) {
     return (A68_FALSE);
   }
   FORWARD (p);
-  if (! (IS (p, THEN_PART) || IS (p, CHOICE))) {
+  if (!(IS (p, THEN_PART) || IS (p, CHOICE))) {
     return (A68_FALSE);
   }
-  if (! basic_serial (NEXT_SUB (p), 1)) {
+  if (!basic_serial (NEXT_SUB (p), 1)) {
     return (A68_FALSE);
   }
   FORWARD (p);
@@ -1222,7 +1258,8 @@ static BOOL_T basic_conditional (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T basic_unit (NODE_T * p)
+static BOOL_T
+basic_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
@@ -1243,24 +1280,24 @@ static BOOL_T basic_unit (NODE_T * p)
   } else if (IS (p, CONDITIONAL_CLAUSE)) {
     return (basic_mode (MOID (p)) && basic_conditional (SUB (p)));
   } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), IDENTIFIER) != NO_NODE) {
-    NODE_T * dst = SUB_SUB (p);
-    NODE_T * src = NEXT_NEXT (dst);
+    NODE_T *dst = SUB_SUB (p);
+    NODE_T *src = NEXT_NEXT (dst);
     return ((BOOL_T) basic_unit (src) && basic_mode_non_row (MOID (src)));
   } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SLICE) != NO_NODE) {
-    NODE_T * dst = SUB_SUB (p);
-    NODE_T * src = NEXT_NEXT (dst);
-    NODE_T * slice = locate (dst, SLICE);
+    NODE_T *dst = SUB_SUB (p);
+    NODE_T *src = NEXT_NEXT (dst);
+    NODE_T *slice = locate (dst, SLICE);
     return ((BOOL_T) (IS (MOID (slice), REF_SYMBOL) && basic_slice (slice) && basic_unit (src) && basic_mode_non_row (MOID (src))));
   } else if (IS (p, VOIDING) && IS (SUB (p), ASSIGNATION) && locate (SUB_SUB (p), SELECTION) != NO_NODE) {
-    NODE_T * dst = SUB_SUB (p);
-    NODE_T * src = NEXT_NEXT (dst);
+    NODE_T *dst = SUB_SUB (p);
+    NODE_T *src = NEXT_NEXT (dst);
     return ((BOOL_T) (locate (NEXT_SUB (locate (dst, SELECTION)), IDENTIFIER) != NO_NODE && basic_unit (src) && basic_mode_non_row (MOID (dst))));
   } else if (IS (p, VOIDING)) {
     return (basic_unit (SUB (p)));
   } else if (IS (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && BASIC (SUB (p), IDENTIFIER)));
   } else if (IS (p, DEREFERENCING) && locate (SUB (p), SLICE)) {
-    NODE_T * slice = locate (SUB (p), SLICE);
+    NODE_T *slice = locate (SUB (p), SLICE);
     return ((BOOL_T) (basic_mode (MOID (p)) && IS (MOID (SUB (slice)), REF_SYMBOL) && basic_slice (slice)));
   } else if (IS (p, DEREFERENCING) && locate (SUB (p), SELECTION)) {
     return ((BOOL_T) (primitive_mode (MOID (p)) && BASIC (SUB (p), SELECTION)));
@@ -1281,7 +1318,7 @@ static BOOL_T basic_unit (NODE_T * p)
   } else if (IS (p, IDENTIFIER)) {
     if (A68G_STANDENV_PROC (TAX (p))) {
       int k;
-      for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (p)) == PROCEDURE (&constants[k])) {
           return (A68_TRUE);
         }
@@ -1303,7 +1340,7 @@ static BOOL_T basic_unit (NODE_T * p)
   } else if (IS (p, SLICE)) {
     return ((BOOL_T) (basic_mode (MOID (p)) && basic_slice (p)));
   } else if (IS (p, SELECTION)) {
-    NODE_T * sec = locate (NEXT_SUB (p), IDENTIFIER);
+    NODE_T *sec = locate (NEXT_SUB (p), IDENTIFIER);
     if (sec == NO_NODE) {
       return (A68_FALSE);
     } else {
@@ -1311,8 +1348,8 @@ static BOOL_T basic_unit (NODE_T * p)
     }
   } else if (IS (p, IDENTITY_RELATION)) {
 #define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && IS (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
-    NODE_T * lhs = SUB (p);
-    NODE_T * rhs = NEXT_NEXT (lhs);
+    NODE_T *lhs = SUB (p);
+    NODE_T *rhs = NEXT_NEXT (lhs);
     if (GOOD (lhs) && GOOD (rhs)) {
       return (A68_TRUE);
     } else if (GOOD (lhs) && locate (rhs, NIHIL) != NO_NODE) {
@@ -1327,7 +1364,7 @@ static BOOL_T basic_unit (NODE_T * p)
 }
 
 /*******************************************************************/
-/* Constant folder                                                 */ 
+/* Constant folder                                                 */
 /* Uses interpreter routines to calculate compile-time expressions */
 /*******************************************************************/
 
@@ -1341,7 +1378,8 @@ static BOOL_T basic_unit (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T constant_collateral (NODE_T * p)
+static BOOL_T
+constant_collateral (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -1360,13 +1398,14 @@ static BOOL_T constant_collateral (NODE_T * p)
 @return See brief description.
 **/
 
-static void count_constant_units (NODE_T * p, int * total, int * good)
+static void
+count_constant_units (NODE_T * p, int *total, int *good)
 {
   if (p != NO_NODE) {
     if (IS (p, UNIT)) {
-      (* total) ++;
+      (*total)++;
       if (constant_unit (p)) {
-        (* good) ++;
+        (*good)++;
       }
       count_constant_units (NEXT (p), total, good);
     } else {
@@ -1383,7 +1422,8 @@ static void count_constant_units (NODE_T * p, int * total, int * good)
 @return See brief description.
 **/
 
-static BOOL_T constant_serial (NODE_T * p, int want)
+static BOOL_T
+constant_serial (NODE_T * p, int want)
 {
   int total = 0, good = 0;
   count_constant_units (p, &total, &good);
@@ -1400,7 +1440,8 @@ static BOOL_T constant_serial (NODE_T * p, int want)
 @return See brief description.
 **/
 
-static BOOL_T constant_argument (NODE_T * p)
+static BOOL_T
+constant_argument (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_TRUE);
@@ -1417,16 +1458,17 @@ static BOOL_T constant_argument (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T constant_call (NODE_T * p)
+static BOOL_T
+constant_call (NODE_T * p)
 {
   if (IS (p, CALL)) {
-    NODE_T * prim = SUB (p);
-    NODE_T * idf = locate (prim, IDENTIFIER);
+    NODE_T *prim = SUB (p);
+    NODE_T *idf = locate (prim, IDENTIFIER);
     if (idf != NO_NODE) {
       int k;
-      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (idf)) == PROCEDURE (&functions[k])) {
-          NODE_T * args = NEXT (prim);
+          NODE_T *args = NEXT (prim);
           return (constant_argument (args));
         }
       }
@@ -1441,14 +1483,15 @@ static BOOL_T constant_call (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T constant_monadic_formula (NODE_T * p)
+static BOOL_T
+constant_monadic_formula (NODE_T * p)
 {
   if (IS (p, MONADIC_FORMULA)) {
-    NODE_T * op = SUB (p);
+    NODE_T *op = SUB (p);
     int k;
-    for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
+    for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k++) {
       if (PROCEDURE (TAX (op)) == PROCEDURE (&monadics[k])) {
-        NODE_T * rhs = NEXT (op);
+        NODE_T *rhs = NEXT (op);
         return (constant_unit (rhs));
       }
     }
@@ -1462,18 +1505,19 @@ static BOOL_T constant_monadic_formula (NODE_T * p)
 @return See brief description.
 **/
 
-static BOOL_T constant_formula (NODE_T * p)
+static BOOL_T
+constant_formula (NODE_T * p)
 {
   if (IS (p, FORMULA)) {
-    NODE_T * lhs = SUB (p);
-    NODE_T * op = NEXT (lhs);
+    NODE_T *lhs = SUB (p);
+    NODE_T *op = NEXT (lhs);
     if (op == NO_NODE) {
       return (constant_monadic_formula (lhs));
     } else {
       int k;
-      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&dyadics[k])) {
-          NODE_T * rhs = NEXT (op);
+          NODE_T *rhs = NEXT (op);
           return ((BOOL_T) (constant_unit (lhs) && constant_unit (rhs)));
         }
       }
@@ -1488,7 +1532,8 @@ static BOOL_T constant_formula (NODE_T * p)
 @return See brief description.
 **/
 
-BOOL_T constant_unit (NODE_T * p)
+BOOL_T
+constant_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
@@ -1523,7 +1568,7 @@ BOOL_T constant_unit (NODE_T * p)
   } else if (IS (p, IDENTIFIER)) {
     if (A68G_STANDENV_PROC (TAX (p))) {
       int k;
-      for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (p)) == PROCEDURE (&constants[k])) {
           return (A68_TRUE);
         }
@@ -1531,7 +1576,7 @@ BOOL_T constant_unit (NODE_T * p)
       return (A68_FALSE);
     } else {
 /* Possible constant folding */
-      NODE_T * def = NODE (TAX (p));
+      NODE_T *def = NODE (TAX (p));
       BOOL_T ret = A68_FALSE;
       if (STATUS (p) & COOKIE_MASK) {
         diagnostic_node (A68_WARNING, p, WARNING_UNINITIALISED);
@@ -1568,7 +1613,8 @@ BOOL_T constant_unit (NODE_T * p)
 @param p Node in syntax tree.
 **/
 
-static void push_denotation (NODE_T * p)
+static void
+push_denotation (NODE_T * p)
 {
 #define PUSH_DENOTATION(mode, decl) {\
   decl z;\
@@ -1577,7 +1623,7 @@ static void push_denotation (NODE_T * p)
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (mode));\
   }\
   PUSH_PRIMITIVE (p, VALUE (&z), decl);}
-/**/
+   /**/
 #define PUSH_LONG_DENOTATION(mode, decl) {\
   decl z;\
   NODE_T *s = (IS (SUB (p), LONGETY) ? NEXT_SUB (p) : SUB (p));\
@@ -1585,8 +1631,7 @@ static void push_denotation (NODE_T * p)
     diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (mode));\
   }\
   PUSH (p, &z, SIZE (MODE (mode)));}
-/**/
-  if (MOID (p) == MODE (INT)) {
+     /**/ if (MOID (p) == MODE (INT)) {
     PUSH_DENOTATION (INT, A68_INT);
   } else if (MOID (p) == MODE (REAL)) {
     PUSH_DENOTATION (REAL, A68_REAL);
@@ -1614,7 +1659,8 @@ static void push_denotation (NODE_T * p)
 @param p Starting node.
 **/
 
-static void push_widening (NODE_T * p)
+static void
+push_widening (NODE_T * p)
 {
   push_unit (SUB (p));
   if (WIDEN_TO (p, INT, REAL)) {
@@ -1624,11 +1670,11 @@ static void push_widening (NODE_T * p)
   } else if (WIDEN_TO (p, REAL, COMPLEX)) {
     PUSH_PRIMITIVE (p, 0.0, A68_REAL);
   } else if (WIDEN_TO (p, INT, LONG_INT)) {
-    genie_lengthen_int_to_long_mp (p);    
+    genie_lengthen_int_to_long_mp (p);
   } else if (WIDEN_TO (p, REAL, LONG_REAL)) {
-    genie_lengthen_real_to_long_mp (p);    
+    genie_lengthen_real_to_long_mp (p);
   } else if (WIDEN_TO (p, LONG_INT, LONG_REAL)) {
-    /* 1:1 mapping */;
+    /* 1:1 mapping */ ;
   }
 }
 
@@ -1637,7 +1683,8 @@ static void push_widening (NODE_T * p)
 @param p Starting node.
 **/
 
-static void push_collateral_units (NODE_T * p)
+static void
+push_collateral_units (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1654,7 +1701,8 @@ static void push_collateral_units (NODE_T * p)
 @param p Starting node.
 **/
 
-static void push_argument (NODE_T * p)
+static void
+push_argument (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -1670,7 +1718,8 @@ static void push_argument (NODE_T * p)
 @param p Starting node.
 **/
 
-void push_unit (NODE_T * p)
+void
+push_unit (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1695,32 +1744,32 @@ void push_unit (NODE_T * p)
     if (A68G_STANDENV_PROC (TAX (p))) {
       (void) (*(PROCEDURE (TAX (p)))) (p);
     } else {
-    /* Possible constant folding */
-      NODE_T * def = NODE (TAX (p));
+      /* Possible constant folding */
+      NODE_T *def = NODE (TAX (p));
       push_unit (NEXT_NEXT (def));
     }
   } else if (IS (p, DENOTATION)) {
     push_denotation (p);
   } else if (IS (p, MONADIC_FORMULA)) {
-    NODE_T * op = SUB (p);
-    NODE_T * rhs = NEXT (op);
+    NODE_T *op = SUB (p);
+    NODE_T *rhs = NEXT (op);
     push_unit (rhs);
     (*(PROCEDURE (TAX (op)))) (op);
   } else if (IS (p, FORMULA)) {
-    NODE_T * lhs = SUB (p);
-    NODE_T * op = NEXT (lhs);
+    NODE_T *lhs = SUB (p);
+    NODE_T *op = NEXT (lhs);
     if (op == NO_NODE) {
       push_unit (lhs);
     } else {
-      NODE_T * rhs = NEXT (op);
+      NODE_T *rhs = NEXT (op);
       push_unit (lhs);
       push_unit (rhs);
       (*(PROCEDURE (TAX (op)))) (op);
     }
   } else if (IS (p, CALL)) {
-    NODE_T * prim = SUB (p);
-    NODE_T * args = NEXT (prim);
-    NODE_T * idf = locate (prim, IDENTIFIER);
+    NODE_T *prim = SUB (p);
+    NODE_T *args = NEXT (prim);
+    NODE_T *idf = locate (prim, IDENTIFIER);
     push_argument (args);
     (void) (*(PROCEDURE (TAX (idf)))) (p);
   } else if (IS (p, CAST)) {
@@ -1735,7 +1784,8 @@ void push_unit (NODE_T * p)
 @param phase Phase of code generation.
 **/
 
-static void constant_folder (NODE_T * p, FILE_T out, int phase)
+static void
+constant_folder (NODE_T * p, FILE_T out, int phase)
 {
   if (phase == L_DECLARE) {
     if (MOID (p) == MODE (COMPLEX)) {
@@ -1760,9 +1810,9 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
       push_unit (p);
       POP (p, &z, SIZE (MOID (p)));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INIT_MASK, %.0f", acc, z[1]));
-      for (k = 1; k <= LONG_MP_DIGITS; k ++) {
+      for (k = 1; k <= LONG_MP_DIGITS; k++) {
         undentf (out, snprintf (line, SNPRINTF_SIZE, ", %.0f", z[k + 1]));
-      } 
+      }
       undent (out, "};\n");
       ABEND (stack_pointer > 0, "stack not empty", NO_TEXT);
     }
@@ -1872,7 +1922,8 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
 @param p Node in syntax tree.
 **/
 
-static BOOL_T need_initialise_frame (NODE_T * p)
+static BOOL_T
+need_initialise_frame (NODE_T * p)
 {
   TAG_T *tag;
   int count;
@@ -1900,7 +1951,8 @@ static BOOL_T need_initialise_frame (NODE_T * p)
 @param max_print Maximum items to print.
 **/
 
-static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_print)
+static void
+comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_print)
 {
 /* Take care not to generate nested comments */
 #define UNDENT(out, p) {\
@@ -1919,8 +1971,7 @@ static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_prin
       undent (out, w);\
     }\
   }}
-/**/
-  for (; p != NO_NODE && (*max_print) >= 0; FORWARD (p)) {
+   /**/ for (; p != NO_NODE && (*max_print) >= 0; FORWARD (p)) {
     if (IS (p, ROW_CHAR_DENOTATION)) {
       if (*want_space != 0) {
         UNDENT (out, " ");
@@ -1931,19 +1982,19 @@ static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_prin
       *want_space = 2;
     } else if (SUB (p) != NO_NODE) {
       comment_tree (SUB (p), out, want_space, max_print);
-    } else  if (NSYMBOL (p)[0] == '(' || NSYMBOL (p)[0] == '[' || NSYMBOL (p)[0] == '{') {
+    } else if (NSYMBOL (p)[0] == '(' || NSYMBOL (p)[0] == '[' || NSYMBOL (p)[0] == '{') {
       if (*want_space == 2) {
         UNDENT (out, " ");
       }
       UNDENT (out, NSYMBOL (p));
       *want_space = 0;
-    } else  if (NSYMBOL (p)[0] == ')' || NSYMBOL (p)[0] == ']' || NSYMBOL (p)[0] == '}') {
+    } else if (NSYMBOL (p)[0] == ')' || NSYMBOL (p)[0] == ']' || NSYMBOL (p)[0] == '}') {
       UNDENT (out, NSYMBOL (p));
       *want_space = 1;
-    } else  if (NSYMBOL (p)[0] == ';' || NSYMBOL (p)[0] == ',') {
+    } else if (NSYMBOL (p)[0] == ';' || NSYMBOL (p)[0] == ',') {
       UNDENT (out, NSYMBOL (p));
       *want_space = 2;
-    } else  if (strlen (NSYMBOL (p)) == 1 && (NSYMBOL (p)[0] == '.' || NSYMBOL (p)[0] == ':')) {
+    } else if (strlen (NSYMBOL (p)) == 1 && (NSYMBOL (p)[0] == '.' || NSYMBOL (p)[0] == ':')) {
       UNDENT (out, NSYMBOL (p));
       *want_space = 2;
     } else {
@@ -1961,7 +2012,7 @@ static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_prin
       (*max_print)--;
       if (IS_UPPER (NSYMBOL (p)[0])) {
         *want_space = 2;
-      } else if (! IS_ALNUM (NSYMBOL (p)[0])) {
+      } else if (!IS_ALNUM (NSYMBOL (p)[0])) {
         *want_space = 2;
       } else {
         *want_space = 1;
@@ -1977,7 +2028,8 @@ static void comment_tree (NODE_T * p, FILE_T out, int *want_space, int *max_prin
 @param out Output file descriptor.
 **/
 
-static void comment_source (NODE_T * p, FILE_T out)
+static void
+comment_source (NODE_T * p, FILE_T out)
 {
   int want_space = 0, max_print = 16;
   undentf (out, snprintf (line, SNPRINTF_SIZE, "/* %s: %d: ", FILENAME (LINE (INFO (p))), LINE_NUMBER (p)));
@@ -1991,7 +2043,8 @@ static void comment_source (NODE_T * p, FILE_T out)
 @param out Output file descriptor.
 **/
 
-static void inline_comment_source (NODE_T * p, FILE_T out)
+static void
+inline_comment_source (NODE_T * p, FILE_T out)
 {
   int want_space = 0, max_print = 8;
   undent (out, " /* ");
@@ -2004,7 +2057,8 @@ static void inline_comment_source (NODE_T * p, FILE_T out)
 @param out Output file descriptor.
 **/
 
-static void write_prelude (FILE_T out)
+static void
+write_prelude (FILE_T out)
 {
   indentf (out, snprintf (line, SNPRINTF_SIZE, "/* \"%s\" %s */\n\n", FILE_OBJECT_NAME (&program), PACKAGE_STRING));
   if (OPTION_LOCAL (&program)) {
@@ -2030,7 +2084,8 @@ static void write_prelude (FILE_T out)
 @brief Write initialisation of frame.
 **/
 
-static void init_static_frame (FILE_T out, NODE_T * p)
+static void
+init_static_frame (FILE_T out, NODE_T * p)
 {
   if (AP_INCREMENT (TABLE (p)) > 0) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "FRAME_CLEAR (%d);\n", AP_INCREMENT (TABLE (p))));
@@ -2055,7 +2110,8 @@ static void init_static_frame (FILE_T out, NODE_T * p)
 @param cast Mode to cast to.
 **/
 
-static void get_stack (NODE_T * p, FILE_T out, char * dst, char * cast) 
+static void
+get_stack (NODE_T * p, FILE_T out, char *dst, char *cast)
 {
   if (DEBUG_LEVEL >= 4) {
     if (LEVEL (GINFO (p)) == global_level) {
@@ -2065,7 +2121,7 @@ static void get_stack (NODE_T * p, FILE_T out, char * dst, char * cast)
     }
   } else {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_FRAME (%s, %s, %d, %d);\n", dst, cast, LEVEL (GINFO (p)), OFFSET (TAX (p))));
-  } 
+  }
 }
 
 /**
@@ -2075,11 +2131,12 @@ static void get_stack (NODE_T * p, FILE_T out, char * dst, char * cast)
 @param fn Function name.
 **/
 
-static void write_fun_prelude (NODE_T * p, FILE_T out, char * fn)
+static void
+write_fun_prelude (NODE_T * p, FILE_T out, char *fn)
 {
   (void) p;
   indentf (out, snprintf (line, SNPRINTF_SIZE, "_CODE_ (%s)\n", fn));
-  indentation ++;
+  indentation++;
   temp_book_pointer = 0;
 }
 
@@ -2090,10 +2147,11 @@ static void write_fun_prelude (NODE_T * p, FILE_T out, char * fn)
 @param fn Function name.
 **/
 
-static void write_fun_postlude (NODE_T * p, FILE_T out, char * fn)
+static void
+write_fun_postlude (NODE_T * p, FILE_T out, char *fn)
 {
   (void) p;
-  indentation --;
+  indentation--;
   indentf (out, snprintf (line, SNPRINTF_SIZE, "_EDOC_ (%s, _N_ (%d))\n\n", fn, NUMBER (p)));
   temp_book_pointer = 0;
 }
@@ -2104,7 +2162,8 @@ static void write_fun_postlude (NODE_T * p, FILE_T out, char * fn)
 @return See brief description.
 **/
 
-static char *internal_mode (MOID_T * m)
+static char *
+internal_mode (MOID_T * m)
 {
   if (m == MODE (INT)) {
     return ("MODE (INT)");
@@ -2127,7 +2186,8 @@ static char *internal_mode (MOID_T * m)
 @return Internal identifier for mode.
 **/
 
-static char * inline_mode (MOID_T * m)
+static char *
+inline_mode (MOID_T * m)
 {
   if (m == MODE (INT)) {
     return ("A68_INT");
@@ -2163,7 +2223,8 @@ static char * inline_mode (MOID_T * m)
 @param phase Phase of code generation.
 **/
 
-static void inline_denotation (NODE_T * p, FILE_T out, int phase)
+static void
+inline_denotation (NODE_T * p, FILE_T out, int phase)
 {
   if (phase == L_DECLARE && LONG_MODE (MOID (p))) {
     char acc[NAME_SIZE];
@@ -2175,9 +2236,9 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
       diagnostic_node (A68_SYNTAX_ERROR, p, ERROR_IN_DENOTATION, MODE (INT));
     }
     indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_LONG %s = {INIT_MASK, %.0f", acc, z[1]));
-    for (k = 1; k <= LONG_MP_DIGITS; k ++) {
+    for (k = 1; k <= LONG_MP_DIGITS; k++) {
       undentf (out, snprintf (line, SNPRINTF_SIZE, ", %.0f", z[k + 1]));
-    } 
+    }
     undent (out, "};\n");
   }
   if (phase == L_YIELD) {
@@ -2237,7 +2298,8 @@ static void inline_denotation (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_widening (NODE_T * p, FILE_T out, int phase)
+static void
+inline_widening (NODE_T * p, FILE_T out, int phase)
 {
   if (WIDEN_TO (p, INT, REAL)) {
     if (phase == L_DECLARE) {
@@ -2306,9 +2368,10 @@ static void inline_widening (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
+static void
+inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * q = locate (SUB (p), IDENTIFIER);
+  NODE_T *q = locate (SUB (p), IDENTIFIER);
   ABEND (q == NO_NODE, "not dereferencing an identifier", NO_TEXT);
   if (phase == L_DECLARE) {
     if (signed_in (BOOK_DEREF, L_DECLARE, NSYMBOL (q)) != NO_BOOK) {
@@ -2365,12 +2428,13 @@ static void inline_dereference_identifier (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_identifier (NODE_T * p, FILE_T out, int phase)
+static void
+inline_identifier (NODE_T * p, FILE_T out, int phase)
 {
 /* Possible constant folding */
-  NODE_T * def = NODE (TAX (p));
+  NODE_T *def = NODE (TAX (p));
   if (primitive_mode (MOID (p)) && def != NO_NODE && NEXT (def) != NO_NODE && IS (NEXT (def), EQUALS_SYMBOL)) {
-    NODE_T * src = locate (NEXT_NEXT (def), DENOTATION);
+    NODE_T *src = locate (NEXT_NEXT (def), DENOTATION);
     if (src != NO_NODE) {
       inline_denotation (src, out, phase);
       return;
@@ -2402,7 +2466,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
   } else if (phase == L_YIELD) {
     if (A68G_STANDENV_PROC (TAX (p))) {
       int k;
-      for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&constants[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (p)) == PROCEDURE (&constants[k])) {
           undent (out, CODE (&constants[k]));
           return;
@@ -2410,7 +2474,7 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
       }
     } else {
       char idf[NAME_SIZE];
-      BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (p));
+      BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (p));
       if (entry != NO_BOOK) {
         (void) make_name (idf, NSYMBOL (p), "", NUMBER (entry));
       } else {
@@ -2438,7 +2502,8 @@ static void inline_identifier (NODE_T * p, FILE_T out, int phase)
 @param tup Tuple pointer.
 **/
 
-static void inline_indexer (NODE_T * p, FILE_T out, int phase, int * k, char * tup)
+static void
+inline_indexer (NODE_T * p, FILE_T out, int phase, int *k, char *tup)
 {
   if (p == NO_NODE) {
     return;
@@ -2454,7 +2519,7 @@ static void inline_indexer (NODE_T * p, FILE_T out, int phase, int * k, char * t
       inline_unit (p, out, L_YIELD);
       undentf (out, snprintf (line, SNPRINTF_SIZE, ") - SHIFT (&%s[%d]))", tup, (*k)));
     }
-    (*k) ++;
+    (*k)++;
   } else {
     inline_indexer (SUB (p), out, phase, k, tup);
     inline_indexer (NEXT (p), out, phase, k, tup);
@@ -2468,17 +2533,18 @@ static void inline_indexer (NODE_T * p, FILE_T out, int phase, int * k, char * t
 @param phase Phase of code generation.
 **/
 
-static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
+static void
+inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * prim = SUB (p);
-  NODE_T * indx = NEXT (prim);
-  MOID_T * row_mode = DEFLEX (MOID (prim));
-  MOID_T * mode = SUB_SUB (row_mode);
-  char * symbol = NSYMBOL (SUB (prim));
+  NODE_T *prim = SUB (p);
+  NODE_T *indx = NEXT (prim);
+  MOID_T *row_mode = DEFLEX (MOID (prim));
+  MOID_T *mode = SUB_SUB (row_mode);
+  char *symbol = NSYMBOL (SUB (prim));
   char drf[NAME_SIZE], idf[NAME_SIZE], arr[NAME_SIZE], tup[NAME_SIZE], elm[NAME_SIZE];
   int k;
   if (phase == L_DECLARE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_DECLARE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_DECLARE, symbol);
     if (entry == NO_BOOK) {
       (void) make_name (idf, symbol, "", NUMBER (prim));
       (void) make_name (arr, ARR, "", NUMBER (prim));
@@ -2500,8 +2566,8 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
     k = 0;
     inline_indexer (indx, out, L_DECLARE, &k, NO_TEXT);
   } else if (phase == L_EXECUTE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
-    NODE_T * pidf = locate (prim, IDENTIFIER);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
+    NODE_T *pidf = locate (prim, IDENTIFIER);
     if (entry == NO_BOOK) {
       (void) make_name (idf, symbol, "", NUMBER (prim));
       (void) make_name (arr, ARR, "", NUMBER (prim));
@@ -2532,7 +2598,7 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
   } else if (phase == L_YIELD) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry != NO_BOOK && same_tree (indx, (NODE_T *) (INFO (entry))) == A68_TRUE) {
       (void) make_name (drf, DRF, "", NUMBER (entry));
     } else {
@@ -2559,24 +2625,25 @@ static void inline_dereference_slice (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
+static void
+inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * prim = SUB (p);
-  NODE_T * indx = NEXT (prim);
-  MOID_T * mode = SUB_MOID (p);
-  MOID_T * row_mode = DEFLEX (MOID (prim));
-  char * symbol = NSYMBOL (SUB (prim));
+  NODE_T *prim = SUB (p);
+  NODE_T *indx = NEXT (prim);
+  MOID_T *mode = SUB_MOID (p);
+  MOID_T *row_mode = DEFLEX (MOID (prim));
+  char *symbol = NSYMBOL (SUB (prim));
   char idf[NAME_SIZE], arr[NAME_SIZE], tup[NAME_SIZE], elm[NAME_SIZE], drf[NAME_SIZE];
   int k;
   if (phase == L_DECLARE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_DECLARE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_DECLARE, symbol);
     if (entry == NO_BOOK) {
       (void) make_name (idf, symbol, "", NUMBER (prim));
       (void) make_name (arr, ARR, "", NUMBER (prim));
       (void) make_name (tup, TUP, "", NUMBER (prim));
       (void) make_name (elm, ELM, "", NUMBER (prim));
       (void) make_name (drf, DRF, "", NUMBER (prim));
-      /*indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_REF * %s, %s; %s * %s; A68_ARRAY * %s; A68_TUPLE * %s;\n", idf, elm, inline_mode (mode), drf, arr, tup));*/
+      /*indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_REF * %s, %s; %s * %s; A68_ARRAY * %s; A68_TUPLE * %s;\n", idf, elm, inline_mode (mode), drf, arr, tup)); */
       (void) add_declaration (&root_idf, "A68_REF", 1, idf);
       (void) add_declaration (&root_idf, "A68_REF", 0, elm);
       (void) add_declaration (&root_idf, "A68_ARRAY", 1, arr);
@@ -2586,16 +2653,16 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
     } else if (same_tree (indx, (NODE_T *) (INFO (entry))) == A68_FALSE) {
       (void) make_name (elm, ELM, "", NUMBER (prim));
       (void) make_name (drf, DRF, "", NUMBER (prim));
-      /*indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_REF %s; %s * %s;\n", elm, inline_mode (mode), drf));*/
+      /*indentf (out, snprintf (line, SNPRINTF_SIZE, "A68_REF %s; %s * %s;\n", elm, inline_mode (mode), drf)); */
       (void) add_declaration (&root_idf, "A68_REF", 0, elm);
       (void) add_declaration (&root_idf, inline_mode (mode), 1, drf);
     }
     k = 0;
     inline_indexer (indx, out, L_DECLARE, &k, NO_TEXT);
   } else if (phase == L_EXECUTE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry == NO_BOOK) {
-      NODE_T * pidf = locate (prim, IDENTIFIER);
+      NODE_T *pidf = locate (prim, IDENTIFIER);
       (void) make_name (idf, symbol, "", NUMBER (prim));
       (void) make_name (arr, ARR, "", NUMBER (prim));
       (void) make_name (tup, TUP, "", NUMBER (prim));
@@ -2625,7 +2692,7 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
   } else if (phase == L_YIELD) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry != NO_BOOK && same_tree (indx, (NODE_T *) (INFO (entry))) == A68_TRUE) {
       (void) make_name (elm, ELM, "", NUMBER (entry));
     } else {
@@ -2642,17 +2709,18 @@ static void inline_slice_ref_to_ref (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_slice (NODE_T * p, FILE_T out, int phase)
+static void
+inline_slice (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * prim = SUB (p);
-  NODE_T * indx = NEXT (prim);
-  MOID_T * mode = MOID (p);
-  MOID_T * row_mode = DEFLEX (MOID (prim));
-  char * symbol = NSYMBOL (SUB (prim));
+  NODE_T *prim = SUB (p);
+  NODE_T *indx = NEXT (prim);
+  MOID_T *mode = MOID (p);
+  MOID_T *row_mode = DEFLEX (MOID (prim));
+  char *symbol = NSYMBOL (SUB (prim));
   char drf[NAME_SIZE], idf[NAME_SIZE], arr[NAME_SIZE], tup[NAME_SIZE], elm[NAME_SIZE];
   int k;
   if (phase == L_DECLARE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_DECLARE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_DECLARE, symbol);
     if (entry == NO_BOOK) {
       (void) make_name (idf, symbol, "", NUMBER (prim));
       (void) make_name (arr, ARR, "", NUMBER (prim));
@@ -2669,9 +2737,9 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
     k = 0;
     inline_indexer (indx, out, L_DECLARE, &k, NO_TEXT);
   } else if (phase == L_EXECUTE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry == NO_BOOK) {
-      NODE_T * pidf = locate (prim, IDENTIFIER);
+      NODE_T *pidf = locate (prim, IDENTIFIER);
       (void) make_name (idf, symbol, "", NUMBER (prim));
       (void) make_name (arr, ARR, "", NUMBER (prim));
       (void) make_name (tup, TUP, "", NUMBER (prim));
@@ -2701,7 +2769,7 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
     undentf (out, snprintf (line, SNPRINTF_SIZE, ");\n"));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = DEREF (%s, & %s);\n", drf, inline_mode (mode), elm));
   } else if (phase == L_YIELD) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, symbol);
     if (entry != NO_BOOK && same_tree (indx, (NODE_T *) (INFO (entry))) == A68_TRUE) {
       (void) make_name (drf, DRF, "", NUMBER (entry));
     } else {
@@ -2728,10 +2796,11 @@ static void inline_slice (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
+static void
+inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
 {
   NODE_T *op = SUB (p);
-  NODE_T * rhs = NEXT (op);
+  NODE_T *rhs = NEXT (op);
   if (IS (p, MONADIC_FORMULA) && MOID (p) == MODE (COMPLEX)) {
     char acc[NAME_SIZE];
     (void) make_name (acc, TMP, "", NUMBER (p));
@@ -2741,7 +2810,7 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_EXECUTE) {
       int k;
       inline_unit (rhs, out, L_EXECUTE);
-      for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&monadics[k])) {
           indentf (out, snprintf (line, SNPRINTF_SIZE, "%s (%s, ", CODE (&monadics[k]), acc));
           inline_unit (rhs, out, L_YIELD);
@@ -2760,7 +2829,7 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_EXECUTE) {
       int k;
       inline_unit (rhs, out, L_EXECUTE);
-      for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&monadics[k])) {
           if (LONG_MODE (MOID (p))) {
             indentf (out, snprintf (line, SNPRINTF_SIZE, "%s (_N_ (%d), %s, ", CODE (&monadics[k]), NUMBER (op), acc));
@@ -2779,7 +2848,7 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
       inline_unit (rhs, out, phase);
     } else {
       int k;
-      for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&monadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&monadics[k])) {
           if (IS_ALNUM ((CODE (&monadics[k]))[0])) {
             undent (out, CODE (&monadics[k]));
@@ -2805,10 +2874,11 @@ static void inline_monadic_formula (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_formula (NODE_T * p, FILE_T out, int phase)
+static void
+inline_formula (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * lhs = SUB (p), *rhs;
-  NODE_T * op = NEXT (lhs);
+  NODE_T *lhs = SUB (p), *rhs;
+  NODE_T *op = NEXT (lhs);
   if (IS (p, FORMULA) && op == NO_NODE) {
     inline_monadic_formula (lhs, out, phase);
     return;
@@ -2829,7 +2899,7 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
       (void) make_name (acc, TMP, "", NUMBER (p));
       inline_unit (lhs, out, L_EXECUTE);
       inline_unit (rhs, out, L_EXECUTE);
-      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&dyadics[k])) {
           if (MOID (p) == MODE (COMPLEX)) {
             indentf (out, snprintf (line, SNPRINTF_SIZE, "%s (%s, ", CODE (&dyadics[k]), acc));
@@ -2862,7 +2932,7 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
       int k;
       inline_unit (lhs, out, L_EXECUTE);
       inline_unit (rhs, out, L_EXECUTE);
-      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&dyadics[k])) {
           if (LONG_MODE (MOID (p))) {
             indentf (out, snprintf (line, SNPRINTF_SIZE, "%s (_N_ (%d), %s, ", CODE (&dyadics[k]), NUMBER (op), acc));
@@ -2888,7 +2958,7 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
       inline_unit (rhs, out, phase);
     } else {
       int k;
-      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&dyadics[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (op)) == PROCEDURE (&dyadics[k])) {
           if (IS_ALNUM ((CODE (&dyadics[k]))[0])) {
             undent (out, CODE (&dyadics[k]));
@@ -2920,7 +2990,8 @@ static void inline_formula (NODE_T * p, FILE_T out, int phase)
 @return See brief description.
 **/
 
-static void inline_single_argument (NODE_T * p, FILE_T out, int phase)
+static void
+inline_single_argument (NODE_T * p, FILE_T out, int phase)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ARGUMENT_LIST) || IS (p, ARGUMENT)) {
@@ -2941,11 +3012,12 @@ static void inline_single_argument (NODE_T * p, FILE_T out, int phase)
 @return See brief description.
 **/
 
-static void inline_call (NODE_T * p, FILE_T out, int phase)
+static void
+inline_call (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * prim = SUB (p);
-  NODE_T * args = NEXT (prim);
-  NODE_T * idf = locate (prim, IDENTIFIER);
+  NODE_T *prim = SUB (p);
+  NODE_T *args = NEXT (prim);
+  NODE_T *idf = locate (prim, IDENTIFIER);
   if (MOID (p) == MODE (COMPLEX)) {
     char acc[NAME_SIZE];
     (void) make_name (acc, TMP, "", NUMBER (p));
@@ -2955,7 +3027,7 @@ static void inline_call (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_EXECUTE) {
       int k;
       inline_single_argument (args, out, L_EXECUTE);
-      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (idf)) == PROCEDURE (&functions[k])) {
           indentf (out, snprintf (line, SNPRINTF_SIZE, "%s (%s, ", CODE (&functions[k]), acc));
           inline_single_argument (args, out, L_YIELD);
@@ -2974,7 +3046,7 @@ static void inline_call (NODE_T * p, FILE_T out, int phase)
     } else if (phase == L_EXECUTE) {
       int k;
       inline_single_argument (args, out, L_EXECUTE);
-      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (idf)) == PROCEDURE (&functions[k])) {
           indentf (out, snprintf (line, SNPRINTF_SIZE, "%s (_N_ (%d), %s, ", CODE (&functions[k]), NUMBER (idf), acc));
           inline_single_argument (args, out, L_YIELD);
@@ -2989,7 +3061,7 @@ static void inline_call (NODE_T * p, FILE_T out, int phase)
       inline_single_argument (args, out, phase);
     } else {
       int k;
-      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k ++) {
+      for (k = 0; PROCEDURE (&functions[k]) != NO_GPROC; k++) {
         if (PROCEDURE (TAX (idf)) == PROCEDURE (&functions[k])) {
           undent (out, CODE (&functions[k]));
           undent (out, " (");
@@ -3008,7 +3080,8 @@ static void inline_call (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of compilation.
 **/
 
-static void inline_collateral_units (NODE_T * p, FILE_T out, int phase)
+static void
+inline_collateral_units (NODE_T * p, FILE_T out, int phase)
 {
   if (p == NO_NODE) {
     return;
@@ -3035,7 +3108,8 @@ static void inline_collateral_units (NODE_T * p, FILE_T out, int phase)
 @param phase Compilation phase.
 **/
 
-static void inline_collateral (NODE_T * p, FILE_T out, int phase)
+static void
+inline_collateral (NODE_T * p, FILE_T out, int phase)
 {
   char dsp[NAME_SIZE];
   (void) make_name (dsp, DSP, "", NUMBER (p));
@@ -3068,7 +3142,8 @@ static void inline_collateral (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_closed (NODE_T * p, FILE_T out, int phase)
+static void
+inline_closed (NODE_T * p, FILE_T out, int phase)
 {
   if (p == NO_NODE) {
     return;
@@ -3088,9 +3163,10 @@ static void inline_closed (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_conditional (NODE_T * p, FILE_T out, int phase)
+static void
+inline_conditional (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * if_part = NO_NODE, * then_part = NO_NODE, * else_part = NO_NODE;
+  NODE_T *if_part = NO_NODE, *then_part = NO_NODE, *else_part = NO_NODE;
   p = SUB (p);
   if (IS (p, IF_PART) || IS (p, OPEN_PART)) {
     if_part = p;
@@ -3144,15 +3220,16 @@ mode required.
 @param phase Phase of code generation.
 **/
 
-static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
+static void
+inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * field = SUB (p);
-  NODE_T * sec = NEXT (field);
-  NODE_T * idf = locate (sec, IDENTIFIER);
+  NODE_T *field = SUB (p);
+  NODE_T *sec = NEXT (field);
+  NODE_T *idf = locate (sec, IDENTIFIER);
   char ref[NAME_SIZE], sel[NAME_SIZE];
-  char * field_idf = NSYMBOL (SUB (field));
+  char *field_idf = NSYMBOL (SUB (field));
   if (phase == L_DECLARE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_DECLARE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_DECLARE, NSYMBOL (idf));
     if (entry == NO_BOOK) {
       (void) make_name (ref, NSYMBOL (idf), "", NUMBER (field));
       (void) add_declaration (&root_idf, "A68_REF", 1, ref);
@@ -3165,7 +3242,7 @@ static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
     }
     inline_unit (sec, out, L_DECLARE);
   } else if (phase == L_EXECUTE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
     if (entry == NO_BOOK) {
       (void) make_name (ref, NSYMBOL (idf), "", NUMBER (field));
       get_stack (idf, out, ref, "A68_REF");
@@ -3184,7 +3261,7 @@ static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
     }
     inline_unit (sec, out, L_EXECUTE);
   } else if (phase == L_YIELD) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
     if (entry != NO_BOOK && (char *) (INFO (entry)) == field_idf) {
       (void) make_name (sel, SEL, "", NUMBER (entry));
     } else {
@@ -3211,15 +3288,16 @@ static void inline_dereference_selection (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_selection (NODE_T * p, FILE_T out, int phase)
+static void
+inline_selection (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * field = SUB (p);
-  NODE_T * sec = NEXT (field);
-  NODE_T * idf = locate (sec, IDENTIFIER);
+  NODE_T *field = SUB (p);
+  NODE_T *sec = NEXT (field);
+  NODE_T *idf = locate (sec, IDENTIFIER);
   char ref[NAME_SIZE], sel[NAME_SIZE];
-  char * field_idf = NSYMBOL (SUB (field));
+  char *field_idf = NSYMBOL (SUB (field));
   if (phase == L_DECLARE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_DECLARE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_DECLARE, NSYMBOL (idf));
     if (entry == NO_BOOK) {
       (void) make_name (ref, NSYMBOL (idf), "", NUMBER (field));
       (void) add_declaration (&root_idf, "A68_STRUCT", 0, ref);
@@ -3232,7 +3310,7 @@ static void inline_selection (NODE_T * p, FILE_T out, int phase)
     }
     inline_unit (sec, out, L_DECLARE);
   } else if (phase == L_EXECUTE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
     if (entry == NO_BOOK) {
       (void) make_name (ref, NSYMBOL (idf), "", NUMBER (field));
       get_stack (idf, out, ref, "BYTE_T");
@@ -3247,7 +3325,7 @@ static void inline_selection (NODE_T * p, FILE_T out, int phase)
     }
     inline_unit (sec, out, L_EXECUTE);
   } else if (phase == L_YIELD) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
     if (entry != NO_BOOK && (char *) (INFO (entry)) == field_idf) {
       (void) make_name (sel, SEL, "", NUMBER (entry));
     } else {
@@ -3268,15 +3346,16 @@ static void inline_selection (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
+static void
+inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
 {
-  NODE_T * field = SUB (p);
-  NODE_T * sec = NEXT (field);
-  NODE_T * idf = locate (sec, IDENTIFIER);
+  NODE_T *field = SUB (p);
+  NODE_T *sec = NEXT (field);
+  NODE_T *idf = locate (sec, IDENTIFIER);
   char ref[NAME_SIZE], sel[NAME_SIZE];
-  char * field_idf = NSYMBOL (SUB (field));
+  char *field_idf = NSYMBOL (SUB (field));
   if (phase == L_DECLARE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_DECLARE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_DECLARE, NSYMBOL (idf));
     if (entry == NO_BOOK) {
       (void) make_name (ref, NSYMBOL (idf), "", NUMBER (field));
       (void) add_declaration (&root_idf, "A68_REF", 1, ref);
@@ -3289,7 +3368,7 @@ static void inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
     }
     inline_unit (sec, out, L_DECLARE);
   } else if (phase == L_EXECUTE) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE_2, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE_2, NSYMBOL (idf));
     if (entry == NO_BOOK) {
       (void) make_name (ref, NSYMBOL (idf), "", NUMBER (field));
       get_stack (idf, out, ref, "A68_REF");
@@ -3304,7 +3383,7 @@ static void inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "OFFSET (&%s) += %d;\n", sel, OFFSET_OFF (field)));
     inline_unit (sec, out, L_EXECUTE);
   } else if (phase == L_YIELD) {
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (idf));
     if (entry != NO_BOOK && (char *) (INFO (entry)) == field_idf) {
       (void) make_name (sel, SEL, "", NUMBER (entry));
     } else {
@@ -3325,7 +3404,8 @@ static void inline_selection_ref_to_ref (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
+static void
+inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
 {
 /* No folding - consider identifier */
   if (phase == L_DECLARE) {
@@ -3348,7 +3428,7 @@ static void inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
     }
   } else if (phase == L_YIELD) {
     char idf[NAME_SIZE];
-    BOOK_T * entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (p));
+    BOOK_T *entry = signed_in (BOOK_DECL, L_EXECUTE, NSYMBOL (p));
     if (entry != NO_BOOK) {
       (void) make_name (idf, NSYMBOL (p), "", NUMBER (entry));
     } else {
@@ -3365,26 +3445,27 @@ static void inline_ref_identifier (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
+static void
+inline_identity_relation (NODE_T * p, FILE_T out, int phase)
 {
 #define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && IS (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
-  NODE_T * lhs = SUB (p);
-  NODE_T * op = NEXT (lhs);
-  NODE_T * rhs = NEXT (op);
+  NODE_T *lhs = SUB (p);
+  NODE_T *op = NEXT (lhs);
+  NODE_T *rhs = NEXT (op);
   if (GOOD (lhs) && GOOD (rhs)) {
     if (phase == L_DECLARE) {
-      NODE_T * lidf = locate (lhs, IDENTIFIER);
-      NODE_T * ridf = locate (rhs, IDENTIFIER);
+      NODE_T *lidf = locate (lhs, IDENTIFIER);
+      NODE_T *ridf = locate (rhs, IDENTIFIER);
       inline_ref_identifier (lidf, out, L_DECLARE);
       inline_ref_identifier (ridf, out, L_DECLARE);
     } else if (phase == L_EXECUTE) {
-      NODE_T * lidf = locate (lhs, IDENTIFIER);
-      NODE_T * ridf = locate (rhs, IDENTIFIER);
+      NODE_T *lidf = locate (lhs, IDENTIFIER);
+      NODE_T *ridf = locate (rhs, IDENTIFIER);
       inline_ref_identifier (lidf, out, L_EXECUTE);
       inline_ref_identifier (ridf, out, L_EXECUTE);
     } else if (phase == L_YIELD) {
-      NODE_T * lidf = locate (lhs, IDENTIFIER);
-      NODE_T * ridf = locate (rhs, IDENTIFIER);
+      NODE_T *lidf = locate (lhs, IDENTIFIER);
+      NODE_T *ridf = locate (rhs, IDENTIFIER);
       if (IS (op, IS_SYMBOL)) {
         undentf (out, snprintf (line, SNPRINTF_SIZE, "ADDRESS ("));
         inline_ref_identifier (lidf, out, L_YIELD);
@@ -3401,13 +3482,13 @@ static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
     }
   } else if (GOOD (lhs) && locate (rhs, NIHIL) != NO_NODE) {
     if (phase == L_DECLARE) {
-      NODE_T * lidf = locate (lhs, IDENTIFIER);
+      NODE_T *lidf = locate (lhs, IDENTIFIER);
       inline_ref_identifier (lidf, out, L_DECLARE);
     } else if (phase == L_EXECUTE) {
-      NODE_T * lidf = locate (lhs, IDENTIFIER);
+      NODE_T *lidf = locate (lhs, IDENTIFIER);
       inline_ref_identifier (lidf, out, L_EXECUTE);
     } else if (phase == L_YIELD) {
-      NODE_T * lidf = locate (lhs, IDENTIFIER);
+      NODE_T *lidf = locate (lhs, IDENTIFIER);
       if (IS (op, IS_SYMBOL)) {
         indentf (out, snprintf (line, SNPRINTF_SIZE, "IS_NIL (*"));
         inline_ref_identifier (lidf, out, L_YIELD);
@@ -3429,7 +3510,8 @@ static void inline_identity_relation (NODE_T * p, FILE_T out, int phase)
 @param phase Phase of code generation.
 **/
 
-static void inline_unit (NODE_T * p, FILE_T out, int phase)
+static void
+inline_unit (NODE_T * p, FILE_T out, int phase)
 {
   if (p == NO_NODE) {
     return;
@@ -3458,9 +3540,9 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
   } else if (IS (p, DEREFERENCING) && locate (SUB (p), IDENTIFIER) != NO_NODE) {
     inline_dereference_identifier (p, out, phase);
   } else if (IS (p, SLICE)) {
-    NODE_T * prim = SUB (p);
-    MOID_T * mode = MOID (p);
-    MOID_T * row_mode = DEFLEX (MOID (prim));
+    NODE_T *prim = SUB (p);
+    MOID_T *mode = MOID (p);
+    MOID_T *row_mode = DEFLEX (MOID (prim));
     if (mode == SUB (row_mode)) {
       inline_slice (p, out, phase);
     } else if (IS (mode, REF_SYMBOL) && IS (row_mode, REF_SYMBOL) && SUB (mode) == SUB_SUB (row_mode)) {
@@ -3473,9 +3555,9 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
   } else if (IS (p, DEREFERENCING) && locate (SUB (p), SELECTION) != NO_NODE) {
     inline_dereference_selection (SUB (p), out, phase);
   } else if (IS (p, SELECTION)) {
-    NODE_T * sec = NEXT_SUB (p);
-    MOID_T * mode = MOID (p);
-    MOID_T * struct_mode = MOID (sec);
+    NODE_T *sec = NEXT_SUB (p);
+    MOID_T *mode = MOID (p);
+    MOID_T *struct_mode = MOID (sec);
     if (IS (struct_mode, REF_SYMBOL) && IS (mode, REF_SYMBOL)) {
       inline_selection_ref_to_ref (p, out, phase);
     } else if (IS (struct_mode, STRUCT_SYMBOL) && primitive_mode (mode)) {
@@ -3509,7 +3591,8 @@ static void inline_unit (NODE_T * p, FILE_T out, int phase)
 @return Function name or NO_NODE.
 **/
 
-static void embed_code_clause (NODE_T * p, FILE_T out)
+static void
+embed_code_clause (NODE_T * p, FILE_T out)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ROW_CHAR_DENOTATION)) {
@@ -3525,7 +3608,9 @@ static void embed_code_clause (NODE_T * p, FILE_T out)
 @param out Output file descriptor.
 **/
 
-static void compile_push (NODE_T * p, FILE_T out) {
+static void
+compile_push (NODE_T * p, FILE_T out)
+{
   if (primitive_mode (MOID (p))) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "PUSH_PRIMITIVE (p, "));
     inline_unit (p, out, L_YIELD);
@@ -3547,7 +3632,9 @@ static void compile_push (NODE_T * p, FILE_T out) {
 @param dst String denoting destination.
 **/
 
-static void compile_assign (NODE_T * p, FILE_T out, char * dst) {
+static void
+compile_assign (NODE_T * p, FILE_T out, char *dst)
+{
   if (primitive_mode (MOID (p))) {
     indentf (out, snprintf (line, SNPRINTF_SIZE, "_S_ (%s) = INIT_MASK;\n", dst));
     indentf (out, snprintf (line, SNPRINTF_SIZE, "_V_ (%s) = ", dst));
@@ -3574,7 +3661,8 @@ static void compile_assign (NODE_T * p, FILE_T out, char * dst) {
 @return Function name.
 **/
 
-static char * compile_denotation (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_denotation (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (denotation_mode (MOID (p))) {
     static char fn[NAME_SIZE];
@@ -3614,7 +3702,8 @@ static char * compile_denotation (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_cast (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_cast (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3646,7 +3735,8 @@ static char * compile_cast (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_identifier (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_identifier (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_mode (MOID (p)) && basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3678,7 +3768,8 @@ static char * compile_identifier (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_dereference_identifier (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_dereference_identifier (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_mode (MOID (p)) && basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3710,7 +3801,8 @@ static char * compile_dereference_identifier (NODE_T * p, FILE_T out, int compos
 @return Function name.
 **/
 
-static char * compile_slice (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_slice (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_mode (MOID (p)) && basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3742,7 +3834,8 @@ static char * compile_slice (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_dereference_slice (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_dereference_slice (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_mode (MOID (p)) && basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3774,7 +3867,8 @@ static char * compile_dereference_slice (NODE_T * p, FILE_T out, int compose_fun
 @return Function name.
 **/
 
-static char * compile_selection (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_selection (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_mode (MOID (p)) && basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3806,7 +3900,8 @@ static char * compile_selection (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_dereference_selection (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_dereference_selection (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_mode (MOID (p)) && basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3838,7 +3933,8 @@ static char * compile_dereference_selection (NODE_T * p, FILE_T out, int compose
 @return Function name.
 **/
 
-static char * compile_formula (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_formula (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3870,7 +3966,8 @@ static char * compile_formula (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_voiding_formula (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_voiding_formula (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_unit (p)) {
     static char fn[NAME_SIZE];
@@ -3909,7 +4006,8 @@ static char * compile_voiding_formula (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
 {
   MOID_T *u = MOID (p), *v = MOID (SUB (p));
   NODE_T *q = SUB (p);
@@ -3948,7 +4046,8 @@ static char * compile_uniting (NODE_T * p, FILE_T out, int compose_fun)
 @param size Position in frame stack.
 **/
 
-static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
+static void
+inline_arguments (NODE_T * p, FILE_T out, int phase, int *size)
 {
   if (p == NO_NODE) {
     return;
@@ -3990,12 +4089,13 @@ static void inline_arguments (NODE_T * p, FILE_T out, int phase, int * size)
 @return Function name or NO_NODE.
 **/
 
-static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * idf = locate (SUB (p), IDENTIFIER);
+  NODE_T *idf = locate (SUB (p), IDENTIFIER);
   if (idf == NO_NODE) {
     return (NO_TEXT);
-  } else if (! (SUB_MOID (idf) == MODE (VOID) || basic_mode (SUB_MOID (idf)))) {
+  } else if (!(SUB_MOID (idf) == MODE (VOID) || basic_mode (SUB_MOID (idf)))) {
     return (NO_TEXT);
   } else if (!(CODEX (TAX (idf)) & PROC_DECLARATION_MASK)) {
     return (NO_TEXT);
@@ -4023,9 +4123,9 @@ static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
 /* Execute procedure */
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT (body));\n");
     indent (out, "if (frame_pointer == finish_frame_pointer) {\n");
-    indentation ++;
+    indentation++;
     indentf (out, snprintf (line, SNPRINTF_SIZE, "change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
-    indentation --;
+    indentation--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
     if (GC_MODE (SUB_MOID (idf))) {
@@ -4046,17 +4146,18 @@ static char * compile_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * idf = locate (SUB_SUB (p), IDENTIFIER);
+  NODE_T *idf = locate (SUB_SUB (p), IDENTIFIER);
   if (idf == NO_NODE) {
     return (NO_TEXT);
-  } else if (! (SUB_MOID (idf) == MODE (VOID) || basic_mode (SUB_MOID (idf)))) {
+  } else if (!(SUB_MOID (idf) == MODE (VOID) || basic_mode (SUB_MOID (idf)))) {
     return (NO_TEXT);
   } else if (!(CODEX (TAX (idf)) & PROC_DECLARATION_MASK)) {
     return (NO_TEXT);
   } else {
-    static char fn[NAME_SIZE]; 
+    static char fn[NAME_SIZE];
     char fun[NAME_SIZE], pop[NAME_SIZE];
     (void) make_name (fun, FUN, "", NUMBER (idf));
     (void) make_name (pop, PUP, "", NUMBER (p));
@@ -4082,9 +4183,9 @@ static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose
 /* Execute procedure */
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT (body));\n");
     indent (out, "if (frame_pointer == finish_frame_pointer) {\n");
-    indentation ++;
+    indentation++;
     indentf (out, snprintf (line, SNPRINTF_SIZE, "change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
-    indentation --;
+    indentation--;
     indent (out, "}\n");
     indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
     indent (out, "CLOSE_FRAME;\n");
@@ -4104,14 +4205,15 @@ static char * compile_voiding_deproceduring (NODE_T * p, FILE_T out, int compose
 @return Function name.
 **/
 
-static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_call (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * proc = SUB (p);
-  NODE_T * args = NEXT (proc);
-  NODE_T * idf = locate (proc, IDENTIFIER);
+  NODE_T *proc = SUB (p);
+  NODE_T *args = NEXT (proc);
+  NODE_T *idf = locate (proc, IDENTIFIER);
   if (idf == NO_NODE) {
     return (NO_TEXT);
-  } else if (! (SUB_MOID (proc) == MODE (VOID) || basic_mode (SUB_MOID (proc)))) {
+  } else if (!(SUB_MOID (proc) == MODE (VOID) || basic_mode (SUB_MOID (proc)))) {
     return (NO_TEXT);
   } else if (DIM (MOID (proc)) == 0) {
     return (NO_TEXT);
@@ -4145,7 +4247,7 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
   } else if (!basic_argument (args)) {
     return (NO_TEXT);
   } else {
-    static char fn[NAME_SIZE]; 
+    static char fn[NAME_SIZE];
     char fun[NAME_SIZE], pop[NAME_SIZE];
     int size;
 /* Declare */
@@ -4181,9 +4283,9 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT_NEXT (body));\n");
     indent (out, "if (frame_pointer == finish_frame_pointer) {\n");
-    indentation ++;
+    indentation++;
     indentf (out, snprintf (line, SNPRINTF_SIZE, "change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
-    indentation --;
+    indentation--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
     if (GC_MODE (SUB_MOID (proc))) {
@@ -4204,14 +4306,15 @@ static char * compile_call (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * proc = SUB (locate (p, CALL));
-  NODE_T * args = NEXT (proc);
-  NODE_T * idf = locate (proc, IDENTIFIER);
+  NODE_T *proc = SUB (locate (p, CALL));
+  NODE_T *args = NEXT (proc);
+  NODE_T *idf = locate (proc, IDENTIFIER);
   if (idf == NO_NODE) {
     return (NO_TEXT);
-  } else if (! (SUB_MOID (proc) == MODE (VOID) || basic_mode (SUB_MOID (proc)))) {
+  } else if (!(SUB_MOID (proc) == MODE (VOID) || basic_mode (SUB_MOID (proc)))) {
     return (NO_TEXT);
   } else if (DIM (MOID (proc)) == 0) {
     return (NO_TEXT);
@@ -4260,9 +4363,9 @@ static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
     indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT_NEXT (body));\n");
     indent (out, "if (frame_pointer == finish_frame_pointer) {\n");
-    indentation ++;
+    indentation++;
     indentf (out, snprintf (line, SNPRINTF_SIZE, "change_masks (TOP_NODE (&program), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
-    indentation --;
+    indentation--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
     indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
@@ -4282,16 +4385,17 @@ static char * compile_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_voiding_assignation_selection (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_voiding_assignation_selection (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * dst = SUB (locate (p, ASSIGNATION));
-  NODE_T * src = NEXT_NEXT (dst);
+  NODE_T *dst = SUB (locate (p, ASSIGNATION));
+  NODE_T *src = NEXT_NEXT (dst);
   if (BASIC (dst, SELECTION) && basic_unit (src) && basic_mode_non_row (MOID (dst))) {
-    NODE_T * field = SUB (locate (dst, SELECTION));
-    NODE_T * sec = NEXT (field);
-    NODE_T * idf = locate (sec, IDENTIFIER);
-    char sel[NAME_SIZE], ref[NAME_SIZE], pop[NAME_SIZE]; 
-    char * field_idf = NSYMBOL (SUB (field));
+    NODE_T *field = SUB (locate (dst, SELECTION));
+    NODE_T *sec = NEXT (field);
+    NODE_T *idf = locate (sec, IDENTIFIER);
+    char sel[NAME_SIZE], ref[NAME_SIZE], pop[NAME_SIZE];
+    char *field_idf = NSYMBOL (SUB (field));
     static char fn[NAME_SIZE];
     comment_source (p, out);
     (void) make_name (pop, PUP, "", NUMBER (p));
@@ -4344,17 +4448,18 @@ static char * compile_voiding_assignation_selection (NODE_T * p, FILE_T out, int
 @return Function name.
 **/
 
-static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * dst = SUB (locate (p, ASSIGNATION));
-  NODE_T * src = NEXT_NEXT (dst);
-  NODE_T * slice = locate (SUB (dst), SLICE);
-  NODE_T * prim = SUB (slice);
-  MOID_T * mode = SUB_MOID (dst);
-  MOID_T * row_mode = DEFLEX (MOID (prim));
+  NODE_T *dst = SUB (locate (p, ASSIGNATION));
+  NODE_T *src = NEXT_NEXT (dst);
+  NODE_T *slice = locate (SUB (dst), SLICE);
+  NODE_T *prim = SUB (slice);
+  MOID_T *mode = SUB_MOID (dst);
+  MOID_T *row_mode = DEFLEX (MOID (prim));
   if (IS (row_mode, REF_SYMBOL) && basic_slice (slice) && basic_unit (src) && basic_mode_non_row (MOID (src))) {
-    NODE_T * indx = NEXT (prim);
-    char * symbol = NSYMBOL (SUB (prim));
+    NODE_T *indx = NEXT (prim);
+    char *symbol = NSYMBOL (SUB (prim));
     char drf[NAME_SIZE], idf[NAME_SIZE], arr[NAME_SIZE], tup[NAME_SIZE], elm[NAME_SIZE], pop[NAME_SIZE];
     static char fn[NAME_SIZE];
     int k;
@@ -4394,7 +4499,7 @@ static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int com
 /* Initialise */
     indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = stack_pointer;\n", pop));
     if (signed_in (BOOK_DECL, L_EXECUTE, symbol) == NO_BOOK) {
-      NODE_T * pidf = locate (prim, IDENTIFIER);
+      NODE_T *pidf = locate (prim, IDENTIFIER);
       get_stack (pidf, out, idf, "A68_REF");
       indentf (out, snprintf (line, SNPRINTF_SIZE, "GET_DESCRIPTOR (%s, %s, DEREF (A68_ROW, %s));\n", arr, tup, idf));
       indentf (out, snprintf (line, SNPRINTF_SIZE, "%s = ARRAY (%s);\n", elm, arr));
@@ -4429,14 +4534,15 @@ static char * compile_voiding_assignation_slice (NODE_T * p, FILE_T out, int com
 @return Function name.
 **/
 
-static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T * dst = SUB (locate (p, ASSIGNATION));
-  NODE_T * src = NEXT_NEXT (dst);
+  NODE_T *dst = SUB (locate (p, ASSIGNATION));
+  NODE_T *src = NEXT_NEXT (dst);
   if (BASIC (dst, IDENTIFIER) && basic_unit (src) && basic_mode_non_row (MOID (src))) {
     static char fn[NAME_SIZE];
     char idf[NAME_SIZE], pop[NAME_SIZE];
-    NODE_T * q = locate (dst, IDENTIFIER);
+    NODE_T *q = locate (dst, IDENTIFIER);
 /* Declare */
     (void) make_name (pop, PUP, "", NUMBER (p));
     comment_source (p, out);
@@ -4493,12 +4599,13 @@ static char * compile_voiding_assignation_identifier (NODE_T * p, FILE_T out, in
 @return Function name.
 **/
 
-static char * compile_identity_relation (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_identity_relation (NODE_T * p, FILE_T out, int compose_fun)
 {
 #define GOOD(p) (locate (p, IDENTIFIER) != NO_NODE && IS (MOID (locate ((p), IDENTIFIER)), REF_SYMBOL))
-  NODE_T * lhs = SUB (p);
-  NODE_T * op = NEXT (lhs);
-  NODE_T * rhs = NEXT (op);
+  NODE_T *lhs = SUB (p);
+  NODE_T *op = NEXT (lhs);
+  NODE_T *rhs = NEXT (op);
   if (GOOD (lhs) && GOOD (rhs)) {
     static char fn[NAME_SIZE];
     comment_source (p, out);
@@ -4551,9 +4658,10 @@ static char * compile_identity_relation (NODE_T * p, FILE_T out, int compose_fun
 @param p Starting node.
 **/
 
-static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char * pop)
+static void
+compile_declaration_list (NODE_T * p, FILE_T out, int *decs, char *pop)
 {
-  for (; p  != NO_NODE; FORWARD (p)) {
+  for (; p != NO_NODE; FORWARD (p)) {
     switch (ATTRIBUTE (p)) {
     case MODE_DECLARATION:
     case PROCEDURE_DECLARATION:
@@ -4561,7 +4669,7 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
     case PRIORITY_DECLARATION:
       {
 /* No action needed */
-        (* decs) ++;
+        (*decs)++;
         return;
       }
     case OPERATOR_DECLARATION:
@@ -4569,7 +4677,7 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
         indentf (out, snprintf (line, SNPRINTF_SIZE, "genie_operator_dec (_N_ (%d));", NUMBER (SUB (p))));
         inline_comment_source (p, out);
         undent (out, NEWLINE_STRING);
-        (* decs) ++;
+        (*decs)++;
         break;
       }
     case IDENTITY_DECLARATION:
@@ -4577,7 +4685,7 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
         indentf (out, snprintf (line, SNPRINTF_SIZE, "genie_identity_dec (_N_ (%d));", NUMBER (SUB (p))));
         inline_comment_source (p, out);
         undent (out, NEWLINE_STRING);
-        (* decs) ++;
+        (*decs)++;
         break;
       }
     case VARIABLE_DECLARATION:
@@ -4587,13 +4695,13 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
         indent (out, "{");
         inline_comment_source (p, out);
         undent (out, NEWLINE_STRING);
-        indentation ++;
+        indentation++;
         indentf (out, snprintf (line, SNPRINTF_SIZE, "NODE_T *%s = NO_NODE;\n", declarer));
         indentf (out, snprintf (line, SNPRINTF_SIZE, "genie_variable_dec (_N_ (%d), &%s, stack_pointer);\n", NUMBER (SUB (p)), declarer));
         indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
-        indentation --;
+        indentation--;
         indent (out, "}\n");
-        (* decs) ++;
+        (*decs)++;
         break;
       }
     case PROCEDURE_VARIABLE_DECLARATION:
@@ -4602,7 +4710,7 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
         inline_comment_source (p, out);
         undent (out, NEWLINE_STRING);
         indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
-        (* decs) ++;
+        (*decs)++;
         break;
       }
     default:
@@ -4625,15 +4733,16 @@ static void compile_declaration_list (NODE_T * p, FILE_T out, int * decs, char *
 @param compose_fun Whether to compose a function.
 **/
 
-static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int * units, int * decs, char * pop, int compose_fun)
+static void
+compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *units, int *decs, char *pop, int compose_fun)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (compose_fun == A68_MAKE_OTHERS) {
       if (IS (p, UNIT)) {
-        (* units) ++;
+        (*units)++;
       }
       if (IS (p, DECLARATION_LIST)) {
-        (* decs) ++;
+        (*decs)++;
       }
       if (IS (p, UNIT) || IS (p, DECLARATION_LIST)) {
         if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
@@ -4650,21 +4759,22 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
       } else {
         compile_serial_clause (SUB (p), out, last, units, decs, pop, compose_fun);
       }
-    } else switch (ATTRIBUTE (p)) {
+    } else
+      switch (ATTRIBUTE (p)) {
       case UNIT:
         {
-          (* last) = p;
+          (*last) = p;
           CODE_EXECUTE (p);
           inline_comment_source (p, out);
           undent (out, NEWLINE_STRING);
-          (* units) ++;
+          (*units)++;
           return;
         }
       case SEMI_SYMBOL:
         {
-          if (IS (* last, UNIT) && MOID (* last) == MODE (VOID)) {
+          if (IS (*last, UNIT) && MOID (*last) == MODE (VOID)) {
             break;
-          } else if (IS (* last, DECLARATION_LIST)) {
+          } else if (IS (*last, DECLARATION_LIST)) {
             break;
           } else {
             indentf (out, snprintf (line, SNPRINTF_SIZE, "stack_pointer = %s;\n", pop));
@@ -4673,7 +4783,7 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
         }
       case DECLARATION_LIST:
         {
-          (* last) = p;
+          (*last) = p;
           compile_declaration_list (SUB (p), out, decs, pop);
           break;
         }
@@ -4682,7 +4792,7 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
           compile_serial_clause (SUB (p), out, last, units, decs, pop, compose_fun);
           break;
         }
-    }
+      }
   }
 }
 
@@ -4693,10 +4803,11 @@ static void compile_serial_clause (NODE_T * p, FILE_T out, NODE_T ** last, int *
 @param pop Value to restore stack pointer to. 
 */
 
-static void embed_serial_clause (NODE_T * p, FILE_T out, char * pop) 
+static void
+embed_serial_clause (NODE_T * p, FILE_T out, char *pop)
 {
-  NODE_T * last = NO_NODE;
-  int units = 0, decs = 0; 
+  NODE_T *last = NO_NODE;
+  int units = 0, decs = 0;
   indentf (out, snprintf (line, SNPRINTF_SIZE, "OPEN_STATIC_FRAME (_N_ (%d));\n", NUMBER (p)));
   init_static_frame (out, p);
   compile_serial_clause (p, out, &last, &units, &decs, pop, A68_MAKE_FUNCTION);
@@ -4711,7 +4822,8 @@ static void embed_serial_clause (NODE_T * p, FILE_T out, char * pop)
 @return Function name.
 **/
 
-static char * compile_code_clause (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_code_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
   static char fn[NAME_SIZE];
   comment_source (p, out);
@@ -4735,14 +4847,15 @@ static char * compile_code_clause (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
   NODE_T *sc = NEXT_SUB (p);
   if (MOID (p) == MODE (VOID) && LABELS (TABLE (sc)) == NO_TAG) {
     static char fn[NAME_SIZE];
     char pop[NAME_SIZE];
     int units = 0, decs = 0;
-    NODE_T * last = NO_NODE;
+    NODE_T *last = NO_NODE;
     compile_serial_clause (sc, out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
     (void) make_name (pop, PUP, "", NUMBER (p));
     comment_source (p, out);
@@ -4773,7 +4886,8 @@ static char * compile_closed_clause (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_collateral_clause (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_collateral_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
   if (basic_unit (p) && IS (MOID (p), STRUCT_SYMBOL)) {
     static char fn[NAME_SIZE];
@@ -4805,11 +4919,12 @@ static char * compile_collateral_clause (NODE_T * p, FILE_T out, int compose_fun
 @return Function name.
 **/
 
-static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun)
 {
   static char fn[NAME_SIZE];
-  NODE_T * q = SUB (p);
-  if (! (basic_mode (MOID (p)) || MOID (p) == MODE (VOID))) {
+  NODE_T *q = SUB (p);
+  if (!(basic_mode (MOID (p)) || MOID (p) == MODE (VOID))) {
     return (NO_TEXT);
   }
   p = q;
@@ -4830,7 +4945,7 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
     indent (out, "if (");
     inline_unit (SUB (NEXT_SUB (p)), out, L_YIELD);
     undent (out, ") {\n");
-    indentation ++;
+    indentation++;
   } else {
     ABEND (A68_TRUE, "if-part expected", NO_TEXT);
   }
@@ -4838,7 +4953,7 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
   if (IS (p, THEN_PART) || IS (p, CHOICE)) {
     int pop = temp_book_pointer;
     (void) compile_unit (SUB (NEXT_SUB (p)), out, A68_MAKE_NOTHING);
-    indentation --;
+    indentation--;
     temp_book_pointer = pop;
   } else {
     ABEND (A68_TRUE, "then-part expected", NO_TEXT);
@@ -4847,9 +4962,9 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
   if (IS (p, ELSE_PART) || IS (p, CHOICE)) {
     int pop = temp_book_pointer;
     indent (out, "} else {\n");
-    indentation ++;
+    indentation++;
     (void) compile_unit (SUB (NEXT_SUB (p)), out, A68_MAKE_NOTHING);
-    indentation --;
+    indentation--;
     temp_book_pointer = pop;
   }
 /* Done */
@@ -4869,12 +4984,13 @@ static char * compile_basic_conditional (NODE_T * p, FILE_T out, int compose_fun
 @return Function name.
 **/
 
-static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
   static char fn[NAME_SIZE];
   char pop[NAME_SIZE];
   int units = 0, decs = 0;
-  NODE_T * q, * last;
+  NODE_T *q, *last;
 /* We only compile IF basic unit or ELIF basic unit, so we save on opening frames */
 /* Check worthiness of the clause */
   if (MOID (p) != MODE (VOID)) {
@@ -4882,7 +4998,7 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   }
   q = SUB (p);
   while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
-    if (! basic_serial (NEXT_SUB (q), 1)) {
+    if (!basic_serial (NEXT_SUB (q), 1)) {
       return (NO_TEXT);
     }
     FORWARD (q);
@@ -4903,7 +5019,8 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     FORWARD (q);
     while (q != NO_NODE && (IS (q, THEN_PART) || IS (q, ELSE_PART) || IS (q, CHOICE))) {
-      last = NO_NODE; units = decs = 0;
+      last = NO_NODE;
+      units = decs = 0;
       compile_serial_clause (NEXT_SUB (q), out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
       FORWARD (q);
     }
@@ -4954,7 +5071,7 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
   q = SUB (p);
   while (q != NO_NODE && is_one_of (q, IF_PART, OPEN_PART, ELIF_IF_PART, ELSE_OPEN_PART, STOP)) {
     BOOL_T else_part = A68_FALSE;
-    if (is_one_of (q, IF_PART, OPEN_PART, STOP) ) {
+    if (is_one_of (q, IF_PART, OPEN_PART, STOP)) {
       indent (out, "if (");
     } else {
       indent (out, "} else if (");
@@ -4966,9 +5083,9 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
       if (else_part) {
         indent (out, "} else {\n");
       }
-      indentation ++;
+      indentation++;
       embed_serial_clause (NEXT_SUB (q), out, pop);
-      indentation --;
+      indentation--;
       else_part = A68_TRUE;
       FORWARD (q);
     }
@@ -4997,23 +5114,24 @@ static char * compile_conditional_clause (NODE_T * p, FILE_T out, int compose_fu
 @return Whether a unit was compiled.
 **/
 
-BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int * count, int compose_fun)
+BOOL_T
+compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int *count, int compose_fun)
 {
   if (p == NO_NODE) {
     return (A68_FALSE);
   } else {
     if (IS (p, UNIT)) {
-      if (k == * count) {
+      if (k == *count) {
         if (compose_fun == A68_MAKE_FUNCTION) {
           indentf (out, snprintf (line, SNPRINTF_SIZE, "case %d: {\n", k));
-          indentation ++;
+          indentation++;
           indentf (out, snprintf (line, SNPRINTF_SIZE, "OPEN_STATIC_FRAME (_N_ (%d));\n", NUMBER (sym)));
           CODE_EXECUTE (p);
           inline_comment_source (p, out);
           undent (out, NEWLINE_STRING);
           indent (out, "CLOSE_FRAME;\n");
           indent (out, "break;\n");
-          indentation --;
+          indentation--;
           indent (out, "}\n");
         } else if (compose_fun == A68_MAKE_OTHERS) {
           if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
@@ -5029,7 +5147,7 @@ BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int 
         }
         return (A68_TRUE);
       } else {
-        (* count)++;
+        (*count)++;
         return (A68_FALSE);
       }
     } else {
@@ -5049,12 +5167,13 @@ BOOL_T compile_int_case_units (NODE_T * p, FILE_T out, NODE_T * sym, int k, int 
 @param compose_fun Whether to compose a function.
 **/
 
-static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
   static char fn[NAME_SIZE];
   char pop[NAME_SIZE];
   int units = 0, decs = 0, k = 0, count = 0;
-  NODE_T * q, * last;
+  NODE_T *q, *last;
 /* We only compile CASE basic unit */
 /* Check worthiness of the clause */
   if (MOID (p) != MODE (VOID)) {
@@ -5062,7 +5181,7 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
   q = SUB (p);
   if (q != NO_NODE && is_one_of (q, CASE_PART, OPEN_PART, STOP)) {
-    if (! basic_serial (NEXT_SUB (q), 1)) {
+    if (!basic_serial (NEXT_SUB (q), 1)) {
       return (NO_TEXT);
     }
     FORWARD (q);
@@ -5085,16 +5204,18 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   if (q != NO_NODE && is_one_of (q, CASE_PART, OPEN_PART, STOP)) {
     FORWARD (q);
     if (q != NO_NODE && is_one_of (q, CASE_IN_PART, CHOICE, STOP)) {
-      last = NO_NODE; units = decs = 0;
+      last = NO_NODE;
+      units = decs = 0;
       k = 0;
       do {
         count = 1;
-        k ++;
-      } while (compile_int_case_units (NEXT_SUB (q), out, NO_NODE, k, & count, A68_MAKE_OTHERS)); 
+        k++;
+      } while (compile_int_case_units (NEXT_SUB (q), out, NO_NODE, k, &count, A68_MAKE_OTHERS));
       FORWARD (q);
     }
     if (q != NO_NODE && is_one_of (q, OUT_PART, CHOICE, STOP)) {
-      last = NO_NODE; units = decs = 0;
+      last = NO_NODE;
+      units = decs = 0;
       compile_serial_clause (NEXT_SUB (q), out, &last, &units, &decs, pop, A68_MAKE_OTHERS);
       FORWARD (q);
     }
@@ -5118,23 +5239,23 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
   indent (out, "switch (");
   inline_unit (SUB (NEXT_SUB (q)), out, L_YIELD);
   undent (out, ") {\n");
-  indentation ++;
+  indentation++;
   FORWARD (q);
   k = 0;
   do {
     count = 1;
-    k ++;
-  } while (compile_int_case_units (NEXT_SUB (q), out, SUB (q), k, & count, A68_MAKE_FUNCTION)); 
+    k++;
+  } while (compile_int_case_units (NEXT_SUB (q), out, SUB (q), k, &count, A68_MAKE_FUNCTION));
   FORWARD (q);
   if (q != NO_NODE && is_one_of (q, OUT_PART, CHOICE, STOP)) {
     indent (out, "default: {\n");
-    indentation ++;
+    indentation++;
     embed_serial_clause (NEXT_SUB (q), out, pop);
     indent (out, "break;\n");
-    indentation --;
+    indentation--;
     indent (out, "}\n");
   }
-  indentation --;
+  indentation--;
   indent (out, "}\n");
   if (compose_fun == A68_MAKE_FUNCTION) {
     (void) make_name (fn, "_case", "", NUMBER (p));
@@ -5151,12 +5272,13 @@ static char * compile_int_case_clause (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
+static char *
+compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
 {
-  NODE_T *for_part = NO_NODE, *from_part = NO_NODE, *by_part = NO_NODE, *to_part = NO_NODE, * downto_part = NO_NODE, * while_part = NO_NODE, * sc;
+  NODE_T *for_part = NO_NODE, *from_part = NO_NODE, *by_part = NO_NODE, *to_part = NO_NODE, *downto_part = NO_NODE, *while_part = NO_NODE, *sc;
   static char fn[NAME_SIZE];
   char idf[NAME_SIZE], z[NAME_SIZE], pop[NAME_SIZE];
-  NODE_T * q = SUB (p), * last = NO_NODE;
+  NODE_T *q = SUB (p), *last = NO_NODE;
   int units, decs;
   BOOL_T gc, need_reinit;
 /* FOR identifier */
@@ -5167,7 +5289,7 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
 /* FROM unit */
   if (IS (p, FROM_PART)) {
     from_part = NEXT_SUB (q);
-    if (! basic_unit (from_part)) {
+    if (!basic_unit (from_part)) {
       return (NO_TEXT);
     }
     FORWARD (q);
@@ -5175,7 +5297,7 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
 /* BY unit */
   if (IS (q, BY_PART)) {
     by_part = NEXT_SUB (q);
-    if (! basic_unit (by_part)) {
+    if (!basic_unit (by_part)) {
       return (NO_TEXT);
     }
     FORWARD (q);
@@ -5184,12 +5306,12 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   if (IS (q, TO_PART)) {
     if (IS (SUB (q), TO_SYMBOL)) {
       to_part = NEXT_SUB (q);
-      if (! basic_unit (to_part)) {
+      if (!basic_unit (to_part)) {
         return (NO_TEXT);
       }
     } else if (IS (SUB (q), DOWNTO_SYMBOL)) {
       downto_part = NEXT_SUB (q);
-      if (! basic_unit (downto_part)) {
+      if (!basic_unit (downto_part)) {
         return (NO_TEXT);
       }
     }
@@ -5224,12 +5346,12 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
     write_fun_prelude (p, out, fn);
   }
   root_idf = NO_DEC;
-    (void) make_name (idf, "k", "", NUMBER (p));
-    (void) add_declaration (&root_idf, "int", 0, idf);
-    if (for_part != NO_NODE) {
-      (void) make_name (z, "z", "", NUMBER (p));
-      (void) add_declaration (&root_idf, "A68_INT", 1, z);
-    }
+  (void) make_name (idf, "k", "", NUMBER (p));
+  (void) add_declaration (&root_idf, "int", 0, idf);
+  if (for_part != NO_NODE) {
+    (void) make_name (z, "z", "", NUMBER (p));
+    (void) add_declaration (&root_idf, "A68_INT", 1, z);
+  }
   if (from_part != NO_NODE) {
     inline_unit (from_part, out, L_DECLARE);
   }
@@ -5271,48 +5393,48 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
   }
 /* The loop in C */
 /* Initialisation */
-    indentf (out, snprintf (line, SNPRINTF_SIZE, "for (%s = ", idf));
-    if (from_part == NO_NODE) {
-      undent (out, "1");
-    } else {
-      inline_unit (from_part, out, L_YIELD);
-    }
-    undent (out, "; ");
+  indentf (out, snprintf (line, SNPRINTF_SIZE, "for (%s = ", idf));
+  if (from_part == NO_NODE) {
+    undent (out, "1");
+  } else {
+    inline_unit (from_part, out, L_YIELD);
+  }
+  undent (out, "; ");
 /* Condition */
-    if (to_part == NO_NODE && downto_part == NO_NODE && while_part == NO_NODE) {
-      undent (out, "A68_TRUE");
-    } else {
-      undent (out, idf);
-      if (to_part != NO_NODE) {
-        undent (out, " <= ");
-      } else if (downto_part != NO_NODE) {
-        undent (out, " >= ");
-      }
-      inline_unit (to_part, out, L_YIELD);
+  if (to_part == NO_NODE && downto_part == NO_NODE && while_part == NO_NODE) {
+    undent (out, "A68_TRUE");
+  } else {
+    undent (out, idf);
+    if (to_part != NO_NODE) {
+      undent (out, " <= ");
+    } else if (downto_part != NO_NODE) {
+      undent (out, " >= ");
     }
-    undent (out, "; ");
+    inline_unit (to_part, out, L_YIELD);
+  }
+  undent (out, "; ");
 /* Increment */
-    if (by_part == NO_NODE) {
-      undent (out, idf);
-      if (to_part != NO_NODE) {
-        undent (out, " ++");
-      } else if (downto_part != NO_NODE) {
-        undent (out, " --");
-      } else {
-        undent (out, " ++");
-      }
+  if (by_part == NO_NODE) {
+    undent (out, idf);
+    if (to_part != NO_NODE) {
+      undent (out, " ++");
+    } else if (downto_part != NO_NODE) {
+      undent (out, " --");
     } else {
-      undent (out, idf);
-      if (to_part != NO_NODE) {
-        undent (out, " += ");
-      } else if (downto_part != NO_NODE) {
-        undent (out, " -= ");
-      } else {
-        undent (out, " += ");
-      }
-      inline_unit (by_part, out, L_YIELD);
+      undent (out, " ++");
     }
-    undent (out, ") {\n");
+  } else {
+    undent (out, idf);
+    if (to_part != NO_NODE) {
+      undent (out, " += ");
+    } else if (downto_part != NO_NODE) {
+      undent (out, " -= ");
+    } else {
+      undent (out, " += ");
+    }
+    inline_unit (by_part, out, L_YIELD);
+  }
+  undent (out, ") {\n");
   indentation++;
   if (gc) {
     indent (out, "/* PREEMPTIVE_GC; */\n");
@@ -5369,9 +5491,10 @@ static char * compile_loop_clause (NODE_T * p, FILE_T out, int compose_fun)
 @return Function name.
 **/
 
-static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
+static char *
+compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
 {
-/**/
+   /**/
 #define COMPILE(p, out, fun, compose_fun) {\
   char * fn = (fun) (p, out, compose_fun);\
   if (compose_fun == A68_MAKE_FUNCTION && fn != NO_TEXT) {\
@@ -5388,13 +5511,12 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
     COMPILE_NODE (GINFO (p)) = 0;\
     return (NO_TEXT);\
   }}
-/**/
-  LOW_SYSTEM_STACK_ALERT (p);
+     /**/ LOW_SYSTEM_STACK_ALERT (p);
   if (p == NO_NODE) {
     return (NO_TEXT);
   } else if (is_one_of (p, UNIT, TERTIARY, SECONDARY, PRIMARY, ENCLOSED_CLAUSE, STOP)) {
     COMPILE (SUB (p), out, compile_unit, compose_fun);
-  } 
+  }
   if (DEBUG_LEVEL >= 3) {
 /* Control structure */
     if (IS (p, CLOSED_CLAUSE)) {
@@ -5402,7 +5524,7 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
     } else if (IS (p, COLLATERAL_CLAUSE)) {
       COMPILE (p, out, compile_collateral_clause, compose_fun);
     } else if (IS (p, CONDITIONAL_CLAUSE)) {
-      char * fn2 = compile_basic_conditional (p, out, compose_fun);
+      char *fn2 = compile_basic_conditional (p, out, compose_fun);
       if (compose_fun == A68_MAKE_FUNCTION && fn2 != NO_TEXT) {
         ABEND (strlen (fn2) > 32, ERROR_INTERNAL_CONSISTENCY, NO_TEXT);
         COMPILE_NAME (GINFO (p)) = new_string (fn2, NO_TEXT);
@@ -5484,9 +5606,10 @@ static char * compile_unit (NODE_T * p, FILE_T out, BOOL_T compose_fun)
 @param out Output file descriptor.
 **/
 
-void compile_units (NODE_T * p, FILE_T out)
+void
+compile_units (NODE_T * p, FILE_T out)
 {
-  ADDR_T pop_temp_heap_pointer = temp_heap_pointer; /* At the end we discard temporary declarations */
+  ADDR_T pop_temp_heap_pointer = temp_heap_pointer;     /* At the end we discard temporary declarations */
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT) || IS (p, CODE_CLAUSE)) {
       if (compile_unit (p, out, A68_MAKE_FUNCTION) == NO_TEXT) {
@@ -5507,7 +5630,8 @@ void compile_units (NODE_T * p, FILE_T out)
 @param out Output file descriptor.
 **/
 
-void compiler (FILE_T out)
+void
+compiler (FILE_T out)
 {
   if (OPTION_OPTIMISE (&program) == A68_FALSE) {
     return;
@@ -5519,7 +5643,7 @@ void compiler (FILE_T out)
   global_pointer = 0;
   get_global_level (SUB (TOP_NODE (&program)));
   max_lex_lvl = 0;
-  genie_preprocess (TOP_NODE (&program), & max_lex_lvl, NULL);
+  genie_preprocess (TOP_NODE (&program), &max_lex_lvl, NULL);
   write_prelude (out);
   get_global_level (TOP_NODE (&program));
   stack_pointer = stack_start;
@@ -5527,4 +5651,3 @@ void compiler (FILE_T out)
   compile_units (TOP_NODE (&program), out);
   ABEND (indentation != 0, "indentation error", NO_TEXT);
 }
-
