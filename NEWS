@@ -1,3 +1,11 @@
+Version 3.0.0, December 2021
+* On platforms that support them: 64 bit INT/BITS and 128-bit LONG INT, LONG BITS and LONG REAL.
+  These platforms include amd64, x86_64 and i386 with GCC.
+* More bindings for routines from the GNU Scientific Library.
+* Adds a generalized incomplete gamma function.
+* Builds with R mathlib bindings, if available.
+* Fixes several minor bugs.
+
 Version 2.8.4, November 2016
 * Fixes several minor bugs.
 

@@ -1,3 +1,6 @@
+This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
+Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
 ALGOL68G - ALGOL 68 GENIE
 
 Algol68G is an implementation of Algol 68 as defined by the Revised Report.
@@ -47,15 +50,16 @@ Algol 68 Genie offers for example:
 * native support for arbitrary precision arithmetic including 
   complex numbers, 
 * syntactic constructions to support linear algebra,
+* optionally, many procedures from R mathlib or the 
+  GNU Scientific Library,
 * a gdb-style debugger and a pretty-printer to 
   beautify source code,
-* optional linkage to GNU plotutils, the GNU scientific library or 
-  PostgreSQL, 
+* optional linkage to GNU MPFR, GNU plotutils or PostgreSQL, 
 * extensions as UNIX pipes, regular expression matching, and 
   web page content fetching.
 
 Author of Algol68G is Marcel van der Veer <algol68g@xs4all.nl>.
-Web pages for Algol68G are at <http://jmvdveer.home.xs4all.nl/>.
+Web pages for Algol68G are at <https://jmvdveer.home.xs4all.nl/>.
 Documentation is available from the web pages for Algol68G.
 
 
@@ -64,7 +68,7 @@ INSTALLATION
 1) WIN32 BINARY PACKAGE
 
 Unpack the distribution and start command shell cmd.exe. 
-From this shell, enter algol68g-VERSION's directory and start a68g.exe. 
+From this shell, go to algol68g-VERSION's directory and start bin\a68g.exe. 
 
 2) LINUX, UNIX, BSD, MACOS X
 
@@ -76,6 +80,15 @@ tar -xzvf algol68g-VERSION.tgz
 cd algol68g-VERSION
 ./configure
 make
-[su]
-make install
+make check
+[sudo] make install
 
+Algol 68 Genie can link to the GNU Scientific Library, plotlib from
+GNU plotutils, R mathlib, GNU MPFR and libpq from PostgreSQL. 
+Libraries not available on your platform are graciously ignored.
+
+For BSD platforms that do not support the GNU build system, a sample
+Makefile.bsd has been provided, with which a68g can be built:
+
+make -f Makefile.bsd
+[sudo] make install

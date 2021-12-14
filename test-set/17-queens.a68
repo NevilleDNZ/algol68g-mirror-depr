@@ -1,0 +1,49 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+CO n queens in classic backtracker CO
+
+BEGIN
+
+   INT rank = 8;
+   printf (($"Rank="g(0)l$, rank));
+   [1 : rank] CCOL column, INT sols found := 0;
+
+   PROC place from  = (CROW this row) VOID:
+        IF this row > rank
+        THEN sols found +:= 1;
+             FOR row TO rank
+             DO print(("abcdefghijklmnopqrstuvwxyz"[row], whole(column[row], 0), " "))
+             OD;
+             print ((sols found MOD 4 = 0 | new line | "  "))
+        ELSE FOR i TO rank
+             DO IF BOOL safe := TRUE;
+                   FOR j TO this row - 1 
+                   WHILE safe
+                   DO safe := safe AND NOT (column[j] = i ORF (column[j] - i = this row - j ORF column[j] - i = j - this row))
+                   OD;
+                   safe
+                THEN column[this row] := i;
+                     place from (this row + 1)
+                FI
+             OD
+        FI;
+             
+   place from (1);
+
+   MODE CROW = INT, CCOL = INT;
+
+   SKIP
+
+END

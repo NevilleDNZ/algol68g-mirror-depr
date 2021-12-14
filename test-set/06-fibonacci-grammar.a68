@@ -1,0 +1,45 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+COMMENT
+This example computes Fibonacci numbers by counting the number of derivations of the 
+"Fibonacci grammar":
+
+  fib: "a"; 
+       "a", fib; 
+       "aa", fib.
+
+The purpose is to illustrate the use of procedure closures which we call continuations.
+We use this to generate a recursive descent with backup parser following a simple translation 
+from grammar rules to procedures.
+This program was contributed by Eric Voss and simplified/modified by Erwin Koning and 
+Marcel van der Veer.
+COMMENT
+
+PROC grammar fib = (INT i, STRING s, CONT q) VOID:
+     BEGIN terminal (i, "a", s, q);
+           terminal (i, "a", s, (INT j) VOID: grammar fib (j,  s, q));
+           terminal (i, "aa", s, (INT j) VOID: grammar fib (j,  s, q))
+     END;
+
+PROC terminal = (INT i, STRING a, s, CONT q) VOID: (INT u = i + UPB a; u <= UPB s | q (u));
+
+MODE CONT = PROC (INT) VOID;
+
+FOR k TO 10
+DO STRING sentence = k * "a";
+   INT nr derivations := 0;
+   grammar fib (0, sentence, (INT j) VOID: (j = UPB sentence | nr derivations +:= 1));
+   print (("Fibonacci number ", UPB sentence,  " = ", nr derivations, new line))
+OD

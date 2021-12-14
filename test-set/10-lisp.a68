@@ -1,0 +1,181 @@
+# Commands for this miniature LISP interpreter
+1 2 3 4
+append ( 1 2 ) ( 3 4 )
++ 1 ( * 2 3 )
+quit
+#
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+# Data structure to represent a list #
+   
+   MODE NUMBER = LONG INT,
+        VALUE = UNION (ATOM, LIST),
+        ATOM  = STRING,
+        LIST  = REF NODE,
+        NODE  = STRUCT (VALUE car, cdr);
+   
+   LIST nil = NIL;
+
+   PROC error = (STRING t) VOID: print ((new line, "error: ", t));
+   
+   PROC is atom = (VALUE v) BOOL: (v | (ATOM): TRUE | FALSE);
+
+   PROC is nil = (VALUE v) BOOL: (v | (LIST l): l :=: nil | FALSE);
+   
+   PROC value to number = (VALUE v) NUMBER:
+        CASE v
+        IN (ATOM a): BEGIN NUMBER sum := 0, weight := 1;
+                           FOR i FROM UPB a BY -1 TO LWB a
+                           DO sum +:= weight * (ABS a[i] - ABS "0");
+                              weight *:= 10
+                           OD;
+                           sum
+                     END,
+           (LIST l): (is nil (l) | error ("numeral of nil"); 0 | value to number (CAR l))
+        ESAC;
+   
+   PROC number to atom = (NUMBER n) ATOM: whole (n, 0);
+   
+   OP CONS = (VALUE v, w) VALUE: HEAP NODE := (v, w);
+   PRIO CONS = 9;
+   
+   OP + = (VALUE v, w) VALUE:
+      CASE v
+      IN (ATOM a): v CONS (w | (ATOM): w, (LIST): CAR w),
+         (LIST k): IF is nil (k)
+                   THEN w
+                   ELIF is nil (CDR k)
+                   THEN CAR k CONS (w | (ATOM): w, (LIST): CAR w)
+                   ELSE CAR k CONS (CDR k + w)
+                   FI
+      ESAC;
+   
+   OP CAR = (VALUE v) VALUE:
+      CASE v
+      IN (ATOM): (error ("car of atom"); nil),
+         (LIST l): (l :=: nil | error ("car of nil"); nil | car OF l)
+      ESAC;
+   
+   OP CDR = (VALUE v) VALUE:
+      CASE v
+      IN (ATOM): (error ("cdr of atom"); nil),
+         (LIST l): (l :=: nil | error ("cdr of nil"); nil | cdr OF l)
+      ESAC;
+   
+   OP EQ = (VALUE v, w) BOOL:
+      CASE v
+      IN (ATOM a): (w | (ATOM b): a = b | FALSE),
+         (LIST l): (w | (LIST k): l :=: k | FALSE)
+      ESAC;
+   
+   PROC print list = (LIST l) VOID:
+        CASE print value (CAR l);
+             CDR l
+        IN (ATOM a): (print (blank); print value (a)),
+           (LIST k): (~ is nil (k) | print (blank); print list (k))
+        ESAC;
+   
+   PROC print value = (VALUE v) VOID:
+        CASE v
+        IN (ATOM a): print (a),
+           (LIST l): (is nil (l) | print ("nil") | (print ("("); print list (l); print (")")))
+        ESAC;
+   
+   PROC interpreter = (ATOM cmd, VALUE args) VALUE:
+        IF cmd = "'"
+        THEN CAR args
+        ELIF cmd = "+"
+        THEN number to atom (value to number (evaluate (CAR args)) + value to number (evaluate (CDR args)))
+        ELIF cmd = "-"
+        THEN number to atom (value to number (evaluate (CAR args)) - value to number (evaluate (CDR args)))
+        ELIF cmd = "*"
+        THEN number to atom (value to number (evaluate (CAR args)) * value to number (evaluate (CDR args)))
+        ELIF cmd = "/"
+        THEN number to atom (value to number (evaluate (CAR args)) OVER value to number (evaluate (CDR args)))
+        ELIF cmd = "append"
+        THEN CAR args + CDR args
+        ELIF cmd = "evaluate"
+        THEN evaluate (args)
+        ELIF cmd = "quit"
+        THEN stop
+        ELSE cmd CONS args
+        FI;
+   
+   PROC evaluate = (VALUE v) VALUE:
+        CASE v
+        IN (ATOM a): a,
+           (LIST k): IF is nil (k)
+                     THEN nil
+                     ELSE CASE CAR k
+                          IN (ATOM a): interpreter (a, CDR k),
+                             (LIST l): evaluate (CAR k) CONS evaluate (CDR k)
+                          ESAC
+                     FI
+        ESAC;
+   
+# Construct a list #
+   
+   MODE STACK = STRUCT (STRING elem, REF STACK next);
+   REF STACK stack := NIL;
+   
+   PROC pop = VOID: stack := next OF stack;
+   PROC push = (STRING s) VOID: stack := HEAP STACK := (s, stack);
+   PROC top = STRING: elem OF stack;
+   
+   PROC parse stack = VALUE:
+        IF stack :=: REF STACK (NIL)
+        THEN nil
+        ELIF top = "("
+        THEN pop;
+             VALUE left value := parse stack;
+             left value CONS parse stack
+        ELIF top = ")"
+        THEN pop;
+             nil
+        ELSE VALUE left value := HEAP ATOM := top;
+             pop;
+             left value CONS parse stack
+        FI;
+   
+# In this case we parse from a string #
+   
+   PROC parse string = (STRING s) VALUE:
+        BEGIN stack := NIL;
+              INT i := UPB s;
+              WHILE i > LWB s
+              DO WHILE i > LWB s ANDF s[i] = " " DO i -:= 1 OD;
+                 INT j = i;
+                 WHILE i > LWB s ANDF s[i] ~= " " DO i -:= 1 OD;
+                 IF i + 1 <= j
+                 THEN push (s[i + 1 .. j])
+                 FI
+              OD;
+              parse stack
+        END;
+   
+# A test program #
+   
+   FILE f;
+   VOID (open (f, program idf, standin channel));
+   get (f, new line);
+   DO STRING s;
+      get (f, (s, new line));
+      VALUE l := parse string (blank + s);
+      print (">");
+      print value (l);
+      new line (stand out);
+      print value (evaluate (l));
+      new line (stand out)
+   OD

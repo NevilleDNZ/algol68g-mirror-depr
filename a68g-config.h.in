@@ -1,10 +1,31 @@
-/* source/a68g-config.h.in.  Generated from configure.ac by autoheader.  */
+/* a68g-config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define this if OpenBSD was detected */
+#undef BUILD_BSD
+
+/* Define this if HAIKU was detected */
+#undef BUILD_HAIKU
+
+/* Define this if LINUX was detected */
+#undef BUILD_LINUX
+
+/* Define this if a good pthread installation was detected */
+#undef BUILD_PARALLEL_CLAUSE
 
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 #undef GWINSZ_IN_SYS_IOCTL
 
+/* Define to 1 if you have the `aligned_alloc' function. */
+#undef HAVE_ALIGNED_ALLOC
+
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the <complex.h> header file. */
+#undef HAVE_COMPLEX_H
+
+/* Define to 1 if you have the `csqrt' function. */
+#undef HAVE_CSQRT
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
@@ -37,6 +58,12 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the <fenv.h> header file. */
+#undef HAVE_FENV_H
+
+/* Define to 1 if you have the `finite' function. */
+#undef HAVE_FINITE
+
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
@@ -46,17 +73,17 @@
 /* Define to 1 if you have the `free' function. */
 #undef HAVE_FREE
 
-/* Define this if FreeBSD was detected */
-#undef HAVE_FREEBSD
-
 /* Define this if GCC was detected */
 #undef HAVE_GCC
 
-/* Define this if a good GNU GSL installation was detected */
-#undef HAVE_GNU_GSL
+/* Define this if a recent GNU MPFR installation was detected */
+#undef HAVE_GNU_MPFR
 
 /* Define this if a good GNU plotutils installation was detected */
 #undef HAVE_GNU_PLOTUTILS
+
+/* Define this if a good GNU GSL installation was detected */
+#undef HAVE_GSL
 
 /* Define to 1 if you have the <gsl/gsl_blas.h> header file. */
 #undef HAVE_GSL_GSL_BLAS_H
@@ -94,14 +121,29 @@
 /* Define to 1 if you have the <gsl/gsl_vector.h> header file. */
 #undef HAVE_GSL_GSL_VECTOR_H
 
+/* Define to 1 if you have the <gsl/gsl_version.h> header file. */
+#undef HAVE_GSL_GSL_VERSION_H
+
 /* Define this if IEEE_754 compliant */
 #undef HAVE_IEEE_754
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `isfinite' function. */
+#undef HAVE_ISFINITE
+
+/* Define to 1 if you have the `isinf' function. */
+#undef HAVE_ISINF
+
+/* Define to 1 if you have the `isnan' function. */
+#undef HAVE_ISNAN
+
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
+
+/* Define to 1 if you have the `gmp' library (-lgmp). */
+#undef HAVE_LIBGMP
 
 /* Define to 1 if you have the `gsl' library (-lgsl). */
 #undef HAVE_LIBGSL
@@ -111,6 +153,9 @@
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
+
+/* Define to 1 if you have the `mpfr' library (-lmpfr). */
+#undef HAVE_LIBMPFR
 
 /* Define to 1 if you have the `ncurses' library (-lncurses). */
 #undef HAVE_LIBNCURSES
@@ -127,23 +172,38 @@
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
+/* Define to 1 if you have the `quadmath' library (-lquadmath). */
+#undef HAVE_LIBQUADMATH
+
 /* Define to 1 if you have the `readline' library (-lreadline). */
 #undef HAVE_LIBREADLINE
+
+/* Define to 1 if you have the `Rmath' library (-lRmath). */
+#undef HAVE_LIBRMATH
+
+/* Define to 1 if you have the `root' library (-lroot). */
+#undef HAVE_LIBROOT
+
+/* Define to 1 if you have the `tic' library (-ltic). */
+#undef HAVE_LIBTIC
+
+/* Define to 1 if you have the `tinfo' library (-ltinfo). */
+#undef HAVE_LIBTINFO
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
-/* Define this if LINUX was detected */
-#undef HAVE_LINUX
-
 /* Define to 1 if you have the `longjmp' function. */
 #undef HAVE_LONGJMP
 
-/* Define this if DARWIN was detected */
-#undef HAVE_MAC_OS_X
+/* Define this if a good INT*8/REAL*10/REAL*16 installation was detected */
+#undef HAVE_LONG_TYPES
 
 /* Define to 1 if you have the `malloc' function. */
 #undef HAVE_MALLOC
+
+/* Define this if a good mathlib installation was detected */
+#undef HAVE_MATHLIB
 
 /* Define to 1 if you have the <math.h> header file. */
 #undef HAVE_MATH_H
@@ -160,14 +220,14 @@
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
+/* Define to 1 if you have the <mpfr.h> header file. */
+#undef HAVE_MPFR_H
+
 /* Define to 1 if you have the <ncurses/curses.h> header file. */
 #undef HAVE_NCURSES_CURSES_H
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
-
-/* Define this if NetBSD was detected */
-#undef HAVE_NETBSD
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
@@ -175,14 +235,8 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
-/* Define this if OpenBSD was detected */
-#undef HAVE_OPENBSD
-
 /* Define this if /opt/local/pgsql/include was detected */
 #undef HAVE_OPT_LOCAL_PGSQL_INCLUDE
-
-/* Define this if a good pthread installation was detected */
-#undef HAVE_PARALLEL_CLAUSE
 
 /* Define this as PIC option */
 #undef HAVE_PIC
@@ -199,6 +253,12 @@
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
+/* Define this if a good quadmath installation was detected */
+#undef HAVE_QUADMATH
+
+/* Define to 1 if you have the <quadmath.h> header file. */
+#undef HAVE_QUADMATH_H
+
 /* Define this if readline was detected */
 #undef HAVE_READLINE
 
@@ -210,6 +270,9 @@
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
+
+/* Define to 1 if you have the <Rmath.h> header file. */
+#undef HAVE_RMATH_H
 
 /* Define to 1 if you have the `setjmp' function. */
 #undef HAVE_SETJMP
@@ -225,6 +288,9 @@
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the `sqrt' function. */
+#undef HAVE_SQRT
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
@@ -351,7 +417,7 @@
 #undef __off_t
 
 /* Define this if we have no __pid_t */
-#undef a68g_pid_t
+#undef a68_pid_t
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t

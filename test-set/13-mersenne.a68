@@ -1,0 +1,32 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+CO Lucas-Lehmer Test: For p a prime, the Mersenne number 2**p-1 is prime
+   iff 2**p-1 divides S(p-1) where S(n+1) = S(n)**2-2, and S(1)=4.
+CO
+
+PR precision=6800 timelimit=120 PR
+
+PR echo "This test will take a long time ... " PR
+
+
+INT k = 11213; CO Mersenne prime #23 CO
+
+LONG LONG INT cand = LONG LONG 2 ** k - 1, LONG LONG INT s := 4;
+FROM 3 TO k
+DO s := (s * s - 2) MOD cand
+OD;
+IF s = 0
+THEN printf (($"M_"g(0)" is prime"l$, k))
+FI

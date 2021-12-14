@@ -1,0 +1,469 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+COMMENT 
+  
+Synthetic benchmark following Curnow & Wichmann.
+Follows Algol 60 code.
+  
+Some (REAL*8) A60 results (MWHIPS):
+  
+  IBM 3090  	Algol 60 Compiler	5.0
+  Sun 3/60 	Nase Algol Interpreter	0.01	68020/68881 20 MHz
+  		Nase Algol2C		0.4
+  Sparc 2 	Nase Algol Interpreter	0.06 	40 MHz
+  		Nase Algol2C		4.2
+  
+Some (REAL*8) A68G results (MWHIPS):
+  
+  PowerPC 750     233 MHz A68G		2	Interpreter
+  
+  Pentium III     1.2 GHZ A68G		18	Interpreter
+  
+  Xeon E5420      2.5 GHz A68G          39      Interpreter
+  Xeon E5420      2.5 GHz A68G          334     Unit compiler
+  
+  Core i5-5300U   2.3 GHz A68G		68	Interpreter
+  Core i5-5300U   2.3 GHz A68G		530	Unit compiler
+  
+COMMENT
+
+BEGIN [1 : 4] REAL e1;
+      REAL t, t1, t2, cpu1, time, x1, x2, x3, x4, x, y, z;
+      INT j, k, l, i, ii;
+          
+      PROC pa = (REF [] REAL e) VOID:
+           TO 6
+           DO e[1] := (e[1] + e[2] + e[3] - e[4]) * t;
+              e[2] := (e[1] + e[2] - e[3] + e[4]) * t;
+              e[3] := (e[1] - e[2] + e[3] + e[4]) * t;
+              e[4] := (- e[1] + e[2] + e[3] + e[4]) / t2
+           OD;
+      
+      PROC po = VOID:
+           BEGIN e1[j] := e1[k]; 
+                 e1[k] := e1[l]; 
+                 e1[l] := e1[j]    
+           END;
+      
+      PROC p3 = (REF REAL x, y, z) VOID:
+           BEGIN x := t * (x + y); 
+                 y := t * (x + y); 
+                 z := (x + y) / t2 
+           END;
+        
+      INT max = 5;
+      
+      PROC test = VOID:
+      TO max
+      DO # Initialise constants #
+        
+         t := 0.499975; 
+         t1 := 0.50025; 
+         t2 := 2.0;
+        
+         # If i = 10 we have 1e6 whetstone instructions per loop #
+      
+         i := 100;
+         ii := i; 
+         INT n2 = 12 * i, n3 = 14 * i, n4 = 345 * i, 
+             n6 = 210 * i, n7 = 32 * i, n8 = 899 * i, n9 = 616 * i,
+             n11 = 93 * i;
+      
+         # MODULE 1. Simple identifiers #
+      
+         x1 := 1.0; 
+         x2 := x3 := x4 := -1.0;
+        
+         # MODULE 2. Array elements #
+      
+         e1[1] := 1.0; 
+         e1[2] := e1[3] := e1[4] := -1.0;
+      
+         TO n2
+         DO e1[1] := (e1[1] + e1[2] + e1[3] - e1[4]) * t;
+            e1[2] := (e1[1] + e1[2] - e1[3] + e1[4]) * t;
+            e1[3] := (e1[1] - e1[2] + e1[3] + e1[4]) * t;
+            e1[4] := (- e1[1] + e1[2] + e1[3] + e1[4]) * t
+         OD;
+          
+         # MODULE 3. Array parameters #
+      
+         TO n3 
+         DO pa(e1)
+         OD;
+      
+         # MODULE 4. Conditional jumps #
+        
+         j := 1;
+         TO n4 
+         DO IF j = 1
+            THEN j := 2
+            ELSE j := 3
+            FI;
+      
+            IF j > 2
+            THEN j := 0
+            ELSE j := 1
+            FI;
+      
+            IF j < 1
+            THEN j := 1
+            ELSE j := 0
+            FI
+         OD;
+              
+         # MODULE 5. Omitted #
+         # MODULE 6. Integers #
+           
+         j := 1; k := 2; l := 3;
+         TO n6
+         DO j := j * (k - j) * (l - k);
+            k := l * k - (l - j) * k;
+            l := (l - k) * (k + j);
+            e1[l - 1] := j + k + l;
+            e1[k - 1] := j * k * l
+         OD;
+      
+         # MODULE 7. Trigonometry #
+      
+         x := y := 0.5;
+      
+         TO n7
+         DO x := t * arctan(t2 * sin(x) * cos(x) / (cos (x + y) + cos(x - y) - 1.0));
+            y := t * arctan(t2 * sin(y) * cos(y) / (cos (x + y) + cos(x - y) - 1.0))
+         OD;
+      
+         # MODULE 8. Calls #
+          
+         x := y := z := 1.0;
+      
+         TO n8 
+         DO p3(x, y, z)
+         OD;
+           
+         # MODULE 9. Array references #
+      
+         j := 1; 
+         k := 2; 
+         l := 3;
+      
+         e1[1] := 1.0; 
+         e1[2] := 2.0; 
+         e1[3] := 3.0;
+      
+         TO n9 
+         DO po
+         OD;
+          
+         # MODULE 11. Standard functions #
+      
+         x := 0.75;
+      
+         TO n11 
+         DO x := sqrt(exp(ln(x) / t1))
+         OD
+      OD;
+      
+      cpu1 := seconds;
+      test;
+      time := (seconds - cpu1) / max;
+      printf (($zzdx, "digits ", zzdx, " samples ", xz-d.2dx, " seconds ", xzz-d.dx, "MWhets", xzzdx, "collections"l$, real width, max, time, 1 / (time / (ii / 10)), collections))
+END;
+      
+BEGIN [1 : 4] LONG REAL e1;
+      LONG REAL t, t1, t2, cpu1, time, x1, x2, x3, x4, x, y, z;
+      INT j, k, l, i, ii;
+          
+      PROC pa = (REF [] LONG REAL e) VOID:
+           TO 6
+           DO e[1] := (e[1] + e[2] + e[3] - e[4]) * t;
+              e[2] := (e[1] + e[2] - e[3] + e[4]) * t;
+              e[3] := (e[1] - e[2] + e[3] + e[4]) * t;
+              e[4] := (- e[1] + e[2] + e[3] + e[4]) / t2
+           OD;
+      
+      PROC po = VOID:
+           BEGIN e1[j] := e1[k]; 
+                 e1[k] := e1[l]; 
+                 e1[l] := e1[j]    
+           END;
+      
+      PROC p3 = (REF LONG REAL x, y, z) VOID:
+           BEGIN x := t * (x + y); 
+                 y := t * (x + y); 
+                 z := (x + y) / t2 
+           END;
+        
+      INT max = 5;
+      
+      PROC test = VOID:
+      TO max
+      DO # Initialise constants #
+        
+         t := 0.499975; 
+         t1 := 0.50025; 
+         t2 := 2.0;
+        
+         # If i = 10 we have 1e6 whetstone instructions per loop #
+      
+         i := 100;
+         ii := i; 
+         INT n2 = 12 * i, n3 = 14 * i, n4 = 345 * i, 
+             n6 = 210 * i, n7 = 32 * i, n8 = 899 * i, n9 = 616 * i,
+             n11 = 93 * i;
+      
+         # MODULE 1. Simple identifiers #
+      
+         x1 := 1.0; 
+         x2 := x3 := x4 := -1.0;
+        
+         # MODULE 2. Array elements #
+      
+         e1[1] := 1.0; 
+         e1[2] := e1[3] := e1[4] := -1.0;
+      
+         TO n2
+         DO e1[1] := (e1[1] + e1[2] + e1[3] - e1[4]) * t;
+            e1[2] := (e1[1] + e1[2] - e1[3] + e1[4]) * t;
+            e1[3] := (e1[1] - e1[2] + e1[3] + e1[4]) * t;
+            e1[4] := (- e1[1] + e1[2] + e1[3] + e1[4]) * t
+         OD;
+          
+         # MODULE 3. Array parameters #
+      
+         TO n3 
+         DO pa(e1)
+         OD;
+      
+         # MODULE 4. Conditional jumps #
+        
+         j := 1;
+         TO n4 
+         DO IF j = 1
+            THEN j := 2
+            ELSE j := 3
+            FI;
+      
+            IF j > 2
+            THEN j := 0
+            ELSE j := 1
+            FI;
+      
+            IF j < 1
+            THEN j := 1
+            ELSE j := 0
+            FI
+         OD;
+              
+         # MODULE 5. Omitted #
+         # MODULE 6. Integers #
+           
+         j := 1; k := 2; l := 3;
+         TO n6
+         DO j := j * (k - j) * (l - k);
+            k := l * k - (l - j) * k;
+            l := (l - k) * (k + j);
+            e1[l - 1] := j + k + l;
+            e1[k - 1] := j * k * l
+         OD;
+      
+         # MODULE 7. Trigonometry #
+      
+         x := y := 0.5;
+      
+         TO n7
+         DO x := t * long arctan(t2 * long sin(x) * long cos(x) / (long cos (x + y) + long cos(x - y) - 1.0));
+            y := t * long arctan(t2 * long sin(y) * long cos(y) / (long cos (x + y) + long cos(x - y) - 1.0))
+         OD;
+      
+         # MODULE 8. Calls #
+          
+         x := y := z := 1.0;
+      
+         TO n8 
+         DO p3(x, y, z)
+         OD;
+           
+         # MODULE 9. Array references #
+      
+         j := 1; 
+         k := 2; 
+         l := 3;
+      
+         e1[1] := 1.0; 
+         e1[2] := 2.0; 
+         e1[3] := 3.0;
+      
+         TO n9 
+         DO po
+         OD;
+          
+         # MODULE 11. Standard functions #
+      
+         x := 0.75;
+      
+         TO n11 
+         DO x := long sqrt(long exp(long ln(x) / t1))
+         OD
+      OD;
+      
+      cpu1 := seconds;
+      test;
+      time := (seconds - cpu1) / max;
+      printf (($zzdx, "digits ", zzdx, " samples ", xz-d.2dx, " seconds ", xzz-d.dx, "MWhets", xzzdx, "collections"l$, long real width, max, time, 1 / (time / (ii / 10)), collections))
+END;
+      
+BEGIN [1 : 4] LONG LONG REAL e1;
+      LONG LONG REAL t, t1, t2, cpu1, time, x1, x2, x3, x4, x, y, z;
+      INT j, k, l, i, ii;
+          
+      PROC pa = (REF [] LONG LONG REAL e) VOID:
+           TO 6
+           DO e[1] := (e[1] + e[2] + e[3] - e[4]) * t;
+              e[2] := (e[1] + e[2] - e[3] + e[4]) * t;
+              e[3] := (e[1] - e[2] + e[3] + e[4]) * t;
+              e[4] := (- e[1] + e[2] + e[3] + e[4]) / t2
+           OD;
+      
+      PROC po = VOID:
+           BEGIN e1[j] := e1[k]; 
+                 e1[k] := e1[l]; 
+                 e1[l] := e1[j]    
+           END;
+      
+      PROC p3 = (REF LONG LONG REAL x, y, z) VOID:
+           BEGIN x := t * (x + y); 
+                 y := t * (x + y); 
+                 z := (x + y) / t2 
+           END;
+        
+      INT max = 5;
+      
+      PROC test = VOID:
+      TO max
+      DO # Initialise constants #
+        
+         t := 0.499975; 
+         t1 := 0.50025; 
+         t2 := 2.0;
+        
+         # If i = 10 we have 1e6 whetstone instructions per loop #
+      
+         i := 100;
+         ii := i; 
+         INT n2 = 12 * i, n3 = 14 * i, n4 = 345 * i, 
+             n6 = 210 * i, n7 = 32 * i, n8 = 899 * i, n9 = 616 * i,
+             n11 = 93 * i;
+      
+         # MODULE 1. Simple identifiers #
+      
+         x1 := 1.0; 
+         x2 := x3 := x4 := -1.0;
+        
+         # MODULE 2. Array elements #
+      
+         e1[1] := 1.0; 
+         e1[2] := e1[3] := e1[4] := -1.0;
+      
+         TO n2
+         DO e1[1] := (e1[1] + e1[2] + e1[3] - e1[4]) * t;
+            e1[2] := (e1[1] + e1[2] - e1[3] + e1[4]) * t;
+            e1[3] := (e1[1] - e1[2] + e1[3] + e1[4]) * t;
+            e1[4] := (- e1[1] + e1[2] + e1[3] + e1[4]) * t
+         OD;
+          
+         # MODULE 3. Array parameters #
+      
+         TO n3 
+         DO pa(e1)
+         OD;
+      
+         # MODULE 4. Conditional jumps #
+        
+         j := 1;
+         TO n4 
+         DO IF j = 1
+            THEN j := 2
+            ELSE j := 3
+            FI;
+      
+            IF j > 2
+            THEN j := 0
+            ELSE j := 1
+            FI;
+      
+            IF j < 1
+            THEN j := 1
+            ELSE j := 0
+            FI
+         OD;
+              
+         # MODULE 5. Omitted #
+         # MODULE 6. Integers #
+           
+         j := 1; k := 2; l := 3;
+         TO n6
+         DO j := j * (k - j) * (l - k);
+            k := l * k - (l - j) * k;
+            l := (l - k) * (k + j);
+            e1[l - 1] := j + k + l;
+            e1[k - 1] := j * k * l
+         OD;
+      
+         # MODULE 7. Trigonometry #
+      
+         x := y := 0.5;
+      
+         TO n7
+         DO x := t * long long arctan(t2 * long long sin(x) * long long cos(x) / (long long cos (x + y) + long long cos(x - y) - 1.0));
+            y := t * long long arctan(t2 * long long sin(y) * long long cos(y) / (long long cos (x + y) + long long cos(x - y) - 1.0))
+         OD;
+      
+         # MODULE 8. Calls #
+          
+         x := y := z := 1.0;
+      
+         TO n8 
+         DO p3(x, y, z)
+         OD;
+           
+         # MODULE 9. Array references #
+      
+         j := 1; 
+         k := 2; 
+         l := 3;
+      
+         e1[1] := 1.0; 
+         e1[2] := 2.0; 
+         e1[3] := 3.0;
+      
+         TO n9 
+         DO po
+         OD;
+          
+         # MODULE 11. Standard functions #
+      
+         x := 0.75;
+      
+         TO n11 
+         DO x := long long sqrt(long long exp(long long ln(x) / t1))
+         OD
+      OD;
+      
+      cpu1 := seconds;
+      test;
+      time := (seconds - cpu1) / max;
+      printf (($zzdx, "digits ", zzdx, " samples ", xz-d.2dx, " seconds ", xzz-d.dx, "MWhets", xzzdx, "collections"l$, long long real width, max, time, 1 / (time / (ii / 10)), collections))
+END

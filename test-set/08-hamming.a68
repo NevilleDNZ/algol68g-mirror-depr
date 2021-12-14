@@ -1,0 +1,68 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+COMMENT
+After the program published on rosettacode.org by Marcel van der Veer.
+COMMENT
+
+PR precision=100 PR
+ 
+MODE SERIES = FLEX [1 : 0] UNT, # Initially, no elements #
+     UNT = LONG LONG INT; # A 100-digit unsigned integer #
+ 
+PROC hamming number = (INT n) UNT: # The n-th Hamming number #
+     CASE n
+     IN 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 # First 10 in a table #
+     OUT # Additional operators #
+         OP MIN = (INT i, j) INT: (i < j | i | j), MIN = (UNT i, j) UNT: (i < j | i | j);
+         PRIO MIN = 9;
+         OP LAST = (SERIES h) UNT: h[UPB h]; # Last element of a series #
+         OP +:= = (REF SERIES s, UNT elem) VOID:
+            # Extend a series by one element, only keep the elements you need #
+            (INT lwb = (i MIN j) MIN k, upb = UPB s;
+             sweep heap; # If the GC is botched, a68g will sigsegv #
+             REF SERIES new s = HEAP FLEX [lwb : upb + 1] UNT;
+             (new s[lwb : upb] := s[lwb : upb], new s[upb + 1] := elem);
+             s := new s
+            );
+         # Determine the n-th hamming number iteratively #
+         SERIES h := 1, # Series, initially one element #
+         UNT m2 := 2, m3 := 3, m5 := 5, # Multipliers #
+         INT i := 1, j := 1, k := 1; # Counters #
+         TO n - 1
+         DO h +:= (m2 MIN m3) MIN m5;
+            (LAST h = m2 | m2 := 2 * h[i +:= 1]);
+            (LAST h = m3 | m3 := 3 * h[j +:= 1]);
+            (LAST h = m5 | m5 := 5 * h[k +:= 1])
+         OD;
+         LAST h
+     ESAC;
+ 
+FOR k FROM 10 BY 10 TO 90
+DO print ((whole (k, 0), " = ", whole (hamming number (k), 0), new line))
+OD;
+
+CO Only for machines with ample RAM!
+
+  FOR k FROM 100 BY 100 TO 900
+  DO print ((whole (k, 0), " = ", whole (hamming number (k), 0), new line))
+  OD;
+
+  FOR k FROM 1000 BY 1000 TO 3000
+  DO sweep heap;
+     print ((whole (k, 0), " = ", whole (hamming number (k), 0), new line))
+  OD;
+CO
+
+printf (($l"collections=", %-d, " refused=", %-d, " garbage=", %-d$, garbage collections, garbage refused, garbage freed))

@@ -1,0 +1,63 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+PROC fft = (REF () LONG COMPLEX f, INT dir) VOID:
+
+     IF COMMENT 
+           Unnormalised Fast Fourier Transform in recursive form:
+              F (k) = F even (k) + exp (2 pi i k / n) * F odd (k).
+           Parameter dir = +- 1 determines direction of the transform. 
+           Assume that the lower bound of f is zero, and that its 
+           length is a power of 2.
+        COMMENT
+     
+        INT length = UPB f + 1;
+        length > 1
+     THEN INT middle = length % 2;
+          # Calculate transforms at sublevels #
+          (0 .. middle - 1) LONG COMPLEX f even, f odd;
+          FOR i FROM 0 TO middle - 1
+          DO f even (i) := f (2 * i); 
+             f odd (i) := f (2 * i + 1)
+          OD;
+          (fft (f even, dir), fft (f odd, dir));
+          # Calculate transform at this level #
+          FOR k FROM 0 TO middle - 1
+          DO LONG REAL phi = dir * 2 * long pi * k / length;
+             LONG COMPLEX factor = long cos (phi) I long sin (phi) * f odd (k);
+             f (k) := f even (k) + factor; 
+             f (k + middle) := f even (k) - factor
+          OD
+     FI;
+
+# A trivial application for `fft' - calculate power spectrum #
+
+INT n = 32;
+(0 : n - 1) LONG COMPLEX f, (0 : n % 2 - 1) LONG REAL power;
+
+FOR i FROM 0 TO n - 1
+DO f (i) := 0;
+   FOR j BY 2 TO n % 2 - 1
+   DO f (i) +:= long sin (2 * long pi * i * j / n) / j
+   OD
+OD;
+
+fft (f, 1);
+
+FOR i FROM 0 TO n % 2 - 1
+DO power (i) := ABS f (i) / (n % 2)
+OD;
+
+printf (($lg$, power));
+new line (stand out)

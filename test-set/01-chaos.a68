@@ -1,0 +1,44 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+# May's population chaos #
+
+INT width = 80;
+
+FOR n TO 100
+DO REAL r = 4 * n / 100, REAL x := 0.01;
+
+   OP NEXT = (REF REAL x) REAL: 
+      x := r * x * (1 - x);
+
+   # Warm up #
+   TO 1000
+   DO x := NEXT (x); 
+      (x > 1 | print ((new line, r, x)))
+   OD;
+
+   # Print chaos, or not #
+   IF x > 1e-10
+   THEN [1 : width] CHAR line;
+        FOR k TO width
+        DO line[k] := " " 
+        OD;
+        TO 1000
+        DO x := NEXT (x);
+           line [1 + ENTIER ((width - 1) * x)] := "*"
+        OD;
+        print ((new line, fixed (r, 0, 2), blank, line))
+   FI
+OD;
+new line (stand out)

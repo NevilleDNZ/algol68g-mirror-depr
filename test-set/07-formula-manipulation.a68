@@ -1,0 +1,277 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+# Based on example 11.10 in the Revised Report on Algol 68 #
+
+# Data structure #
+
+MODE FORMULA = UNION (REF CONST, REF VAR, REF DYADIC, REF MONADIC, REF CALL),
+     DYADIC = STRUCT (FORMULA lhs, INT operator, FORMULA rhs),
+     MONADIC = STRUCT (INT operator, FORMULA rhs),
+     CALL = STRUCT (REF FUNCTION name, FORMULA parameter),
+     FUNCTION = STRUCT (REF VAR bound var, FORMULA body),
+     VAR = STRUCT (STRING name, NUMBER value),
+     CONST = STRUCT (NUMBER value),
+     NUMBER = LONG LONG REAL;
+
+# Access operators #
+
+OP VALUE = (REF CONST c) REF NUMBER: value OF c,
+   VALUE = (REF VAR v) REF NUMBER: value OF v,
+   NAME = (REF VAR v) REF STRING: name OF v,
+   NAME = (REF CALL c) REF FUNCTION: name OF c,
+   PARAMETER = (REF CALL c) REF FORMULA: parameter OF c,
+   LHS = (REF DYADIC t) REF FORMULA: lhs OF t,
+   RHS = (REF DYADIC t) REF FORMULA: rhs OF t,
+   RHS = (REF MONADIC t) REF FORMULA: rhs OF t,
+   OPERATOR = (REF DYADIC t) REF INT: operator OF t,
+   OPERATOR = (REF MONADIC t) REF INT: operator OF t,
+   BOUND = (REF FUNCTION f) REF REF VAR: bound var OF f,
+   BODY = (REF FUNCTION f) REF FORMULA: body OF f;
+
+# Generate objects #
+
+PROC make dyadic = (FORMULA u, INT op, FORMULA v) REF DYADIC:
+     NEW DYADIC := (u, op, v);
+
+PROC make monadic = (INT op, FORMULA v) REF MONADIC:
+     NEW MONADIC := (op, v); 
+
+PROC make call = (REF FUNCTION name, FORMULA parameter) REF CALL:
+     NEW CALL := (name, parameter);
+
+PROC make function = (REF VAR bound var, FORMULA body) REF FUNCTION:
+     NEW FUNCTION := (bound var, body);
+
+PROC make var = (STRING name, NUMBER value) REF VAR: NEW VAR := (name, value);
+
+PROC make const = (NUMBER x) REF CONST: (NEW CONST c; VALUE c := x; c); 
+
+PROC zero = REF CONST: make const (0), 
+     one = REF CONST: make const (1),
+     two = REF CONST: make const (2),
+     three = REF CONST: make const (3);
+
+# Basic routines and operators #
+
+PROC is var = (FORMULA f) BOOL: (f | (REF VAR): TRUE | FALSE);
+
+PROC is const = (FORMULA f) BOOL: (f | (REF CONST): TRUE | FALSE);
+
+PROC const value = (FORMULA f) NUMBER: (f | (REF CONST v): VALUE v);
+
+PROC var name = (FORMULA f) STRING: (f | (REF VAR v): NAME v);
+
+INT plus = 1, minus = 2, times = 3, divide = 4, up = 5;
+
+OP COPY = (FORMULA u) FORMULA:
+   CASE u
+   IN (REF CONST v): make const (VALUE v),
+      (REF VAR v): make var (NAME v, VALUE v),
+      (REF DYADIC v): make dyadic (COPY LHS v, OPERATOR v, COPY RHS v),
+      (REF MONADIC v): make monadic (OPERATOR v, COPY RHS v),
+      (REF CALL v): make call (NAME v, PARAMETER v) 
+   ESAC;
+
+OP = = (REF FUNCTION u, v) BOOL: BOUND u = BOUND v AND BODY u = BODY v;
+
+OP = = (FORMULA a, b) BOOL:
+   CASE a
+   IN (REF CONST u): (b | (REF CONST v): VALUE u = VALUE v | FALSE),
+      (REF VAR u): (b | (REF VAR v): NAME u = NAME v | FALSE), 
+      (REF DYADIC u): 
+         (b | (REF DYADIC v): LHS u = LHS v AND RHS u = RHS v AND OPERATOR u = OPERATOR v | FALSE),
+      (REF MONADIC u): 
+         (b | (REF MONADIC v): RHS u = RHS v AND OPERATOR u = OPERATOR v | FALSE),
+      (REF CALL u):
+         (b | (REF CALL v): NAME u = NAME v AND PARAMETER u = PARAMETER v | FALSE) 
+   OUT FALSE
+   ESAC;
+
+OP /= = (FORMULA a, b) BOOL: NOT (a = b);
+
+# Basic math #
+
+OP + = (FORMULA a) FORMULA: a;
+
+OP - = (FORMULA a) FORMULA: 
+   (a = zero | a | make monadic (minus, a));
+
+OP + = (FORMULA a, b) FORMULA: 
+   (a = zero | b |: b = zero | a | make dyadic (a, plus, b));
+
+OP - = (FORMULA a, b) FORMULA: 
+   (b = zero | a | make dyadic (a, minus, b));
+
+OP * = (FORMULA a, b) FORMULA:
+   IF a = zero OR b = zero
+   THEN zero
+   ELSE (a = one | b |: b = one | a | make dyadic (a, times, b))
+   FI;
+
+OP / = (FORMULA a, b) FORMULA:
+   IF a = zero AND NOT (b = zero)
+   THEN zero
+   ELSE (b = one | a | make dyadic (a, divide, b))
+   FI;
+
+OP ^ = (FORMULA a, REF CONST b) FORMULA:
+   IF a = one OR (b IS zero)
+   THEN one
+   ELSE (b IS one | a | make dyadic (a, up, b))
+   FI;
+
+# Applications of above definitions: derivative, evaluation, simplification #
+
+PROC derivative = (FORMULA e, # with respect to # REF VAR x) FORMULA:
+     # derivative a formula #
+     CASE e
+     IN (REF CONST): zero,
+        (REF VAR v): (v = x | one | zero),
+        (REF DYADIC f):
+           CASE FORMULA u = LHS f, v = RHS f;
+                FORMULA deriv u = derivative (u, x), 
+                        deriv v = derivative (v, x);
+                OPERATOR f
+           IN deriv u + deriv v,
+              deriv u - deriv v,
+              u * deriv v + deriv u * v,
+              (deriv u - f * deriv v) / v,
+              (v | (REF CONST c): v * u ^ make const (VALUE c - 1) * deriv u)
+           ESAC,
+        (REF MONADIC f):
+           CASE FORMULA v = RHS f;
+                FORMULA deriv v = derivative (v, x);
+                OPERATOR f
+           IN + deriv v,
+              - deriv v
+           ESAC,
+        (REF CALL c):
+           BEGIN
+              REF FUNCTION f = NAME c;
+              FORMULA g = PARAMETER c;
+              REF VAR y = BOUND f;
+              REF FUNCTION deriv f = make function (y, derivative (BODY f, y));
+              (make call (deriv f, g)) * derivative (g, x)
+           END
+     ESAC;
+
+PROC evaluate = (FORMULA e) NUMBER:
+     # Value of a formula #
+     CASE e
+     IN (REF CONST c): VALUE c,
+        (REF VAR v): VALUE v,
+        (REF DYADIC f):
+           CASE NUMBER u = evaluate (LHS f), v = evaluate (RHS f);
+                OPERATOR f
+           IN u + v, u - v, u * v, u / v, u ^ SHORTEN SHORTEN ROUND v
+           ESAC,
+        (REF MONADIC f):
+           CASE NUMBER v = evaluate (RHS f);
+                OPERATOR f
+           IN v, - v
+           ESAC,
+        (REF CALL c):
+           BEGIN
+              REF FUNCTION f = NAME c;
+              VALUE BOUND f := evaluate (PARAMETER c);
+              evaluate (BODY f)
+           END
+     ESAC;
+
+OP SIMPLIFY = (FORMULA u) FORMULA:
+   # Example simplifications - extend as you see fit #
+   CASE u
+   IN (REF CONST v): make const (VALUE v),
+      (REF VAR v): make var (NAME v, VALUE v),
+      (REF DYADIC v):
+         IF FORMULA f = SIMPLIFY LHS v, g = SIMPLIFY RHS v;
+            is const (f) THEF is const (g)
+         THEN make const (evaluate (make dyadic (f, OPERATOR v, g)))
+         ELIF OPERATOR v = plus
+         THEN (f = g | make dyadic (two, times, f) | make dyadic (f, plus, g))
+         ELIF OPERATOR v = minus
+         THEN IF is const (f) THEF const value (f) = 0
+              THEN make monadic (minus, g)
+              ELSE (f = g | zero | make dyadic (f, minus, g))
+              FI
+         ELIF OPERATOR v = times
+         THEN (is const (g) | make dyadic (g, times, f) |: f = g | make dyadic (f, up, two) | make dyadic (f, times, g))
+         ELSE make dyadic (f, OPERATOR v, g)
+         FI,
+      (REF MONADIC v):
+         IF FORMULA g = SIMPLIFY RHS v;
+            is const (g)
+         THEN make const (evaluate (make monadic (OPERATOR v, g)))
+         ELSE make monadic (OPERATOR v, g)
+         FI,
+      (REF CALL v): make call (NAME v, PARAMETER v) 
+   ESAC;
+
+# A small demonstration #
+
+OP FMT = (NUMBER x) STRING:
+   (x = ENTIER x | whole (x, 0) | fixed (x, 0, 4));
+
+PROC write = (FORMULA e) VOID:
+     CASE e
+     IN (REF CONST c): print (FMT VALUE c),
+        (REF VAR v): print (NAME v),
+        (REF DYADIC f):
+           BEGIN
+              print ("(");
+              write (LHS f);
+              print ((OPERATOR f | " + ", " - ", " * ", " / ", " ^ "));
+              write (RHS f);
+              print (")")
+           END,
+        (REF MONADIC f):  
+           BEGIN
+              print (("(", (OPERATOR f | "+ ", "- ")));
+              write (RHS f);
+              print (")")
+           END
+     ESAC;
+
+PROC print and simplify = (FORMULA f) VOID:
+     IF write (f);
+        FORMULA g = SIMPLIFY f;
+        f /= g
+     THEN print (" = ");
+          print and simplify (g)
+     ELIF ~ is const (f)
+     THEN print (" = ");
+          print (FMT evaluate (f)) 
+     FI;
+
+PROC demo = (FORMULA f, REF VAR z) VOID:
+     BEGIN print ((new line, "f(x, y) = "));
+           print and simplify (f);
+           FORMULA df := derivative (f, z);
+           print ((new line, "  df/d", NAME z, " = "));
+           print and simplify (df)
+     END;
+
+REF VAR x = make var ("x", -1), y = make var ("y", 1);
+
+printf (($"x = ", g, ", y = ", g$, FMT VALUE x, FMT VALUE y));
+demo (one + two * three, y);
+demo (x + x + zero * y, x);
+demo (x * two, x);
+demo (x * x * x + y * y, x);
+demo (x * x + two * x * y + y * y, x);
+demo (x + y / x, x);
+demo (x + y / x, y);
+new line (standout)
+

@@ -1,0 +1,45 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+PR quiet regression PR
+
+PR need mpfr PR
+
+MODE NUM = LONG LONG REAL;
+
+REAL f, g, max dev := 0;
+
+(f := 1e-1, g := 1e-1);
+FOR k TO 100
+DO NUM s = f + next random * g, x = f + next random * g;
+   NUM a68g = qgammainc(s, x), mpfr = mpfr qgammainc(s, x);
+   print ((a68g, blank, mpfr, newline));
+   IF REAL dev = SHORTEN SHORTEN ((a68g - mpfr) / mpfr);
+      dev > max dev
+   THEN max dev := dev
+   FI
+OD;
+
+(f := 1e-1, g := 1e3);
+TO 100
+DO NUM s = f + next random * g, x = f + next random * g;
+   NUM a68g = qgammainc(s, x), mpfr = mpfr qgammainc(s, x);
+   print ((a68g, blank, mpfr, newline));
+   IF REAL dev = SHORTEN SHORTEN ((a68g - mpfr) / mpfr);
+      dev > max dev
+   THEN max dev := dev
+   FI
+OD;
+
+print (("max dev = ", max dev, new line));
