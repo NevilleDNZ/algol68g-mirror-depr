@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -80,13 +80,13 @@ typedef unsigned STATUS_MASK_T, BOOL_T;
 
 #include "a68g-stddef.h"
 
+#define ALIGNED __attribute__((aligned (sizeof (A68_ALIGN_T))))
+
 #if (A68_LEVEL >= 3)
 #  include "a68g-level-3.h"
 #else // Vintage Algol 68 Genie (versions 1 and 2).
 #  include "a68g-generic.h"
 #endif
-
-#define ALIGNED __attribute__((aligned (sizeof (A68_ALIGN_T))))
 
 #define MP_REAL_RADIX ((MP_REAL_T) MP_RADIX)
 

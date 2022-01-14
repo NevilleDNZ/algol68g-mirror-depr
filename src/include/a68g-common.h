@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -103,8 +103,8 @@ struct UNIC_T
 
 //
 
-
 #define A68(z)         (common.z)
+#define A68_JOB        A68 (job)
 #define A68_STANDENV   A68 (standenv)
 #define A68_MCACHE(z)  A68 (mode_cache.z)
 

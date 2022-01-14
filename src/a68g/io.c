@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -28,7 +28,7 @@ void init_tty (void)
 {
   A68 (chars_in_tty_line) = 0;
   A68 (halt_typing) = A68_FALSE;
-  change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
+  change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
 }
 
 //! @brief Terminate current line on STDOUT.

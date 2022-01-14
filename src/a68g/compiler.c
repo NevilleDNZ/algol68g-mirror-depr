@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -122,7 +122,7 @@ enum
 
 char *optimisation_option (void)
 {
-  switch (OPTION_OPT_LEVEL (&(A68 (job)))) {
+  switch (OPTION_OPT_LEVEL (&A68_JOB)) {
   case OPTIMISE_0:{
       return "-Og";
     }
@@ -1361,8 +1361,8 @@ static void inline_comment_source (NODE_T * p, FILE_T out)
 
 static void write_prelude (FILE_T out)
 {
-  indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "// \"%s\" %s\n", FILE_OBJECT_NAME (&(A68 (job))), PACKAGE_STRING));
-  indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "// optimiser_level=%d code_level=%d\n", OPTION_OPT_LEVEL (&(A68 (job))), A68_OPT (OPTION_CODE_LEVEL)));
+  indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "// \"%s\" %s\n", FILE_OBJECT_NAME (&A68_JOB), PACKAGE_STRING));
+  indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "// optimiser_level=%d code_level=%d\n", OPTION_OPT_LEVEL (&A68_JOB), A68_OPT (OPTION_CODE_LEVEL)));
   indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "// %s %s\n", __DATE__, __TIME__));
   indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "\n#include <%s/a68g-config.h>\n", PACKAGE));
   indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "#include <%s/a68g.h>\n", PACKAGE));
@@ -1396,7 +1396,7 @@ static void init_static_frame (FILE_T out, NODE_T * p)
 
 static void optimise_check_init (NODE_T * p, FILE_T out, char *idf)
 {
-  if (OPTION_COMPILE_CHECK (&(A68 (job))) && folder_mode (MOID (p))) {
+  if (OPTION_COMPILE_CHECK (&A68_JOB) && folder_mode (MOID (p))) {
     if (MOID (p) == M_COMPLEX) {
       indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "if (!(INITIALISED (&(*%s)[0]) && INITIALISED (&(*%s)[1]))) {\n", idf, idf));
       A68_OPT (indentation)++;
@@ -2867,14 +2867,14 @@ static char *optimise_formula (NODE_T * p, FILE_T out, int compose_fun)
     A68_OPT (root_idf) = NO_DEC;
     inline_unit (p, out, L_DECLARE);
     print_declarations (out, A68_OPT (root_idf));
-    if (OPTION_COMPILE_CHECK (&(A68 (job))) && !constant_unit (p)) {
+    if (OPTION_COMPILE_CHECK (&A68_JOB) && !constant_unit (p)) {
       if (MOID (p) == M_REAL || MOID (p) == M_COMPLEX) {
         indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "errno = 0;\n"));
       }
     }
     inline_unit (p, out, L_EXECUTE);
     optimise_push (p, out);
-    if (OPTION_COMPILE_CHECK (&(A68 (job))) && !constant_unit (p)) {
+    if (OPTION_COMPILE_CHECK (&A68_JOB) && !constant_unit (p)) {
       if (MOID (p) == M_REAL) {
         indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "MATH_RTE (p, errno != 0, M_REAL, NO_TEXT);\n"));
       }
@@ -3026,7 +3026,7 @@ static char *optimise_deproceduring (NODE_T * p, FILE_T out, int compose_fun)
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT (body));\n");
     indent (out, "if (A68_FP == A68_MON (finish_frame_pointer)) {\n");
     A68_OPT (indentation)++;
-    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
+    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
     A68_OPT (indentation)--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
@@ -3076,7 +3076,7 @@ static char *optimise_voiding_deproceduring (NODE_T * p, FILE_T out, int compose
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT (body));\n");
     indent (out, "if (A68_FP == A68_MON (finish_frame_pointer)) {\n");
     A68_OPT (indentation)++;
-    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
+    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
     A68_OPT (indentation)--;
     indent (out, "}\n");
     indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "A68_SP = %s;\n", pop));
@@ -3163,7 +3163,7 @@ static char *optimise_call (NODE_T * p, FILE_T out, int compose_fun)
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT_NEXT (body));\n");
     indent (out, "if (A68_FP == A68_MON (finish_frame_pointer)) {\n");
     A68_OPT (indentation)++;
-    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
+    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
     A68_OPT (indentation)--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
@@ -3231,7 +3231,7 @@ static char *optimise_voiding_call (NODE_T * p, FILE_T out, int compose_fun)
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT_NEXT (body));\n");
     indent (out, "if (A68_FP == A68_MON (finish_frame_pointer)) {\n");
     A68_OPT (indentation)++;
-    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
+    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
     A68_OPT (indentation)--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
@@ -4421,7 +4421,7 @@ static char *compile_formula (NODE_T * p, FILE_T out)
     comment_source (p, out);
     (void) make_name (fn, moid_with_name ("", MOID (p), "_formula"), "", NUMBER (p));
     write_fun_prelude (p, out, fn);
-    if (OPTION_COMPILE_CHECK (&(A68 (job))) && !constant_unit (p)) {
+    if (OPTION_COMPILE_CHECK (&A68_JOB) && !constant_unit (p)) {
       if (MOID (p) == M_REAL || MOID (p) == M_COMPLEX) {
         indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "A68_REAL * _st_ = (A68_REAL *) STACK_TOP;\n"));
       }
@@ -4429,14 +4429,14 @@ static char *compile_formula (NODE_T * p, FILE_T out)
     A68_OPT (root_idf) = NO_DEC;
     inline_unit (p, out, L_DECLARE);
     print_declarations (out, A68_OPT (root_idf));
-    if (OPTION_COMPILE_CHECK (&(A68 (job))) && !constant_unit (p)) {
+    if (OPTION_COMPILE_CHECK (&A68_JOB) && !constant_unit (p)) {
       if (folder_mode (MOID (p))) {
         indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "errno = 0;\n"));
       }
     }
     inline_unit (p, out, L_EXECUTE);
     optimise_push (p, out);
-    if (OPTION_COMPILE_CHECK (&(A68 (job))) && !constant_unit (p)) {
+    if (OPTION_COMPILE_CHECK (&A68_JOB) && !constant_unit (p)) {
       if (MOID (p) == M_INT) {
         indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "MATH_RTE (p, errno != 0, M_INT, NO_TEXT);\n"));
       }
@@ -4529,7 +4529,7 @@ static char *compile_call (NODE_T * p, FILE_T out)
     indent (out, "EXECUTE_UNIT_TRACE (NEXT_NEXT_NEXT (body));\n");
     indent (out, "if (A68_FP == A68_MON (finish_frame_pointer)) {\n");
     A68_OPT (indentation)++;
-    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
+    indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);\n"));
     A68_OPT (indentation)--;
     indent (out, "}\n");
     indent (out, "CLOSE_FRAME;\n");
@@ -4746,7 +4746,7 @@ void optimise_basics (NODE_T * p, FILE_T out)
 void compiler (FILE_T out)
 {
   ADDR_T pop_temp_heap_pointer = A68 (temp_heap_pointer);
-  if (OPTION_OPT_LEVEL (&(A68 (job))) == NO_OPTIMISE) {
+  if (OPTION_OPT_LEVEL (&A68_JOB) == NO_OPTIMISE) {
     return;
   }
   A68_OPT (indentation) = 0;
@@ -4757,13 +4757,13 @@ void compiler (FILE_T out)
   A68_OPT (root_idf) = NO_DEC;
   A68 (global_level) = INT_MAX;
   A68_GLOBALS = 0;
-  get_global_level (SUB (TOP_NODE (&(A68 (job)))));
+  get_global_level (SUB (TOP_NODE (&A68_JOB)));
   A68 (max_lex_lvl) = 0;
-  genie_preprocess (TOP_NODE (&(A68 (job))), &A68 (max_lex_lvl), NULL);
-  get_global_level (TOP_NODE (&(A68 (job))));
+  genie_preprocess (TOP_NODE (&A68_JOB), &A68 (max_lex_lvl), NULL);
+  get_global_level (TOP_NODE (&A68_JOB));
   A68_SP = A68 (stack_start);
   A68 (expr_stack_limit) = A68 (stack_end) - A68 (storage_overhead);
-  if (OPTION_COMPILE_CHECK (&(A68 (job)))) {
+  if (OPTION_COMPILE_CHECK (&A68_JOB)) {
     monadics = monadics_check;
     dyadics = dyadics_check;
     functions = functions_check;
@@ -4772,21 +4772,21 @@ void compiler (FILE_T out)
     dyadics = dyadics_nocheck;
     functions = functions_nocheck;
   }
-  if (OPTION_OPT_LEVEL (&(A68 (job))) == OPTIMISE_0) {
+  if (OPTION_OPT_LEVEL (&A68_JOB) == OPTIMISE_0) {
 // Allow basic optimisation only.
     A68_OPT (OPTION_CODE_LEVEL) = 1;
     write_prelude (out);
-    optimise_basics (TOP_NODE (&(A68 (job))), out);
+    optimise_basics (TOP_NODE (&A68_JOB), out);
   } else {
 // Allow all optimisations.
     A68_OPT (OPTION_CODE_LEVEL) = 9;
     write_prelude (out);
-    optimise_units (TOP_NODE (&(A68 (job))), out);
+    optimise_units (TOP_NODE (&A68_JOB), out);
   }
   ABEND (A68_OPT (indentation) != 0, ERROR_INTERNAL_CONSISTENCY, __func__);
 // At the end we discard temporary declarations.
   A68 (temp_heap_pointer) = pop_temp_heap_pointer;
-  if (OPTION_VERBOSE (&(A68 (job)))) {
+  if (OPTION_VERBOSE (&A68_JOB)) {
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s: A68_OPT (procedures)=%d unique-names=%d", A68 (a68_cmd_name), A68_OPT (procedures), A68_OPT (unic_pointer)) >= 0);
     io_close_tty_line ();
     WRITE (STDOUT_FILENO, A68 (output_line));

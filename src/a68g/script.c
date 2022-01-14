@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -40,12 +40,12 @@ void build_script (void)
   return;
 #endif
   announce_phase ("script builder");
-  ABEND (OPTION_OPT_LEVEL (&(A68 (job))) == 0, ERROR_ACTION, __func__);
+  ABEND (OPTION_OPT_LEVEL (&A68_JOB) == 0, ERROR_ACTION, __func__);
 // Flatten the source file.
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&A68_JOB)) >= 0);
   source = open (cmd, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
   ABEND (source == -1, ERROR_ACTION, cmd);
-  for (sl = TOP_LINE (&(A68 (job))); sl != NO_LINE; FORWARD (sl)) {
+  for (sl = TOP_LINE (&A68_JOB); sl != NO_LINE; FORWARD (sl)) {
     if (strlen (STRING (sl)) == 0 || (STRING (sl))[strlen (STRING (sl)) - 1] != NEWLINE_CHAR) {
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s\n%d\n%s\n", FILENAME (sl), NUMBER (sl), STRING (sl)) >= 0);
     } else {
@@ -55,45 +55,45 @@ void build_script (void)
   }
   ASSERT (close (source) == 0);
 // Compress source and library.
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cp %s %s.%s", FILE_LIBRARY_NAME (&(A68 (job))), HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cp %s %s.%s", FILE_LIBRARY_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "tar czf %s.%s.tgz %s.%s %s.%s", HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&(A68 (job))), HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&(A68 (job))), HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "tar czf %s.%s.tgz %s.%s %s.%s", HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
 // Compose script.
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&A68_JOB)) >= 0);
   script = open (cmd, O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
   ABEND (script == -1, ERROR_ACTION, cmd);
   strop = "";
-  if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+  if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
     strop = "--run-quote-script";
   } else {
     strop = "--run-script";
   }
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "#! %s/a68g %s\n", BINDIR, strop) >= 0);
   WRITE (script, A68 (output_line));
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s\n%s --verify \"%s\"\n", FILE_GENERIC_NAME (&(A68 (job))), optimisation_option (), PACKAGE_STRING) >= 0);
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s\n%s --verify \"%s\"\n", FILE_GENERIC_NAME (&A68_JOB), optimisation_option (), PACKAGE_STRING) >= 0);
   WRITE (script, A68 (output_line));
   ASSERT (close (script) == 0);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cat %s.%s %s.%s.tgz > %s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&(A68 (job))), HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&(A68 (job))), FILE_SCRIPT_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cat %s.%s %s.%s.tgz > %s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&A68_JOB), FILE_SCRIPT_NAME (&A68_JOB)) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s", FILE_SCRIPT_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s", FILE_SCRIPT_NAME (&A68_JOB)) >= 0);
   ret = chmod (cmd, (__mode_t) (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH));  // -rwx-r-xr-x
   ABEND (ret != 0, ERROR_ACTION, cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
 // Clean up.
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s.tgz", HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s.tgz", HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&A68_JOB)) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&A68_JOB)) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&A68_JOB)) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
 }
@@ -110,10 +110,10 @@ void load_script (void)
 #endif
   announce_phase ("script loader");
 // Decompress the archive.
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "sed '1,3d' < %s | tar xzf -", FILE_INITIAL_NAME (&(A68 (job)))) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "sed '1,3d' < %s | tar xzf -", FILE_INITIAL_NAME (&A68_JOB)) >= 0);
   ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
 // Reread the header.
-  script = open (FILE_INITIAL_NAME (&(A68 (job))), O_RDONLY);
+  script = open (FILE_INITIAL_NAME (&A68_JOB), O_RDONLY);
   ABEND (script == -1, ERROR_ACTION, cmd);
 // Skip the #! a68g line.
   ASSERT (io_read (script, &ch, 1) == 1);
@@ -130,7 +130,7 @@ void load_script (void)
   }
   A68 (input_line)[k] = NULL_CHAR;
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, A68 (input_line)) >= 0);
-  FILE_INITIAL_NAME (&(A68 (job))) = new_string (cmd, NO_TEXT);
+  FILE_INITIAL_NAME (&A68_JOB) = new_string (cmd, NO_TEXT);
 // Read options.
   A68 (input_line)[0] = NULL_CHAR;
   k = 0;
@@ -140,7 +140,7 @@ void load_script (void)
     ASSERT (io_read (script, &ch, 1) == 1);
   }
   isolate_options (A68 (input_line), NO_LINE);
-  (void) set_options (OPTION_LIST (&(A68 (job))), A68_FALSE);
+  (void) set_options (OPTION_LIST (&A68_JOB), A68_FALSE);
   ASSERT (close (script) == 0);
 }
 
@@ -151,10 +151,10 @@ void rewrite_script_source (void)
   LINE_T *ref_l = NO_LINE;
   FILE_T source;
 // Rebuild the source file.
-  ASSERT (remove (FILE_SOURCE_NAME (&(A68 (job)))) == 0);
-  source = open (FILE_SOURCE_NAME (&(A68 (job))), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
-  ABEND (source == -1, ERROR_ACTION, FILE_SOURCE_NAME (&(A68 (job))));
-  for (ref_l = TOP_LINE (&(A68 (job))); ref_l != NO_LINE; FORWARD (ref_l)) {
+  ASSERT (remove (FILE_SOURCE_NAME (&A68_JOB)) == 0);
+  source = open (FILE_SOURCE_NAME (&A68_JOB), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
+  ABEND (source == -1, ERROR_ACTION, FILE_SOURCE_NAME (&A68_JOB));
+  for (ref_l = TOP_LINE (&A68_JOB); ref_l != NO_LINE; FORWARD (ref_l)) {
     WRITE (source, STRING (ref_l));
     if (strlen (STRING (ref_l)) == 0 || (STRING (ref_l))[strlen (STRING (ref_l) - 1)] != NEWLINE_CHAR) {
       WRITE (source, NEWLINE_STRING);

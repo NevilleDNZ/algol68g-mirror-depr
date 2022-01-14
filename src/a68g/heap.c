@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -152,12 +152,12 @@ void genie_init_heap (NODE_T * p)
   int k, max;
   (void) p;
   if (A68_HEAP == NO_BYTE) {
-    diagnostic (A68_RUNTIME_ERROR, TOP_NODE (&(A68 (job))), ERROR_OUT_OF_CORE);
-    exit_genie (TOP_NODE (&(A68 (job))), A68_RUNTIME_ERROR);
+    diagnostic (A68_RUNTIME_ERROR, TOP_NODE (&A68_JOB), ERROR_OUT_OF_CORE);
+    exit_genie (TOP_NODE (&A68_JOB), A68_RUNTIME_ERROR);
   }
   if (A68_HANDLES == NO_BYTE) {
-    diagnostic (A68_RUNTIME_ERROR, TOP_NODE (&(A68 (job))), ERROR_OUT_OF_CORE);
-    exit_genie (TOP_NODE (&(A68 (job))), A68_RUNTIME_ERROR);
+    diagnostic (A68_RUNTIME_ERROR, TOP_NODE (&A68_JOB), ERROR_OUT_OF_CORE);
+    exit_genie (TOP_NODE (&A68_JOB), A68_RUNTIME_ERROR);
   }
   A68_GC (seconds) = 0;
   A68_GC (total) = 0;

@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -166,7 +166,7 @@ void extract_indicants (NODE_T * p)
 // Store in the symbol table, but also in the moid list.
 // Position of definition (q) connects to this lexical level! 
           ASSERT (add_tag (TABLE (p), INDICANT, q, NO_MOID, STOP) != NO_TAG);
-          ASSERT (add_mode (&TOP_MOID (&(A68 (job))), INDICANT, 0, q, NO_MOID, NO_PACK) != NO_MOID);
+          ASSERT (add_mode (&TOP_MOID (&A68_JOB), INDICANT, 0, q, NO_MOID, NO_PACK) != NO_MOID);
           ATTRIBUTE (q) = DEFINING_INDICANT;
           FORWARD (q);
           ATTRIBUTE (q) = ALT_EQUALS_SYMBOL;

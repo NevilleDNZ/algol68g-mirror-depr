@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -886,7 +886,7 @@ static BOOL_T indent_folder (NODE_T * p)
     A68_SP = 0;
     push_unit (p);
     POP_OBJECT (p, &k, A68_INT);
-    if (ERROR_COUNT (&(A68 (job))) == 0) {
+    if (ERROR_COUNT (&A68_JOB) == 0) {
       ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, A68_LD, VALUE (&k)) >= 0);
       put_str (A68 (output_line));
       return A68_TRUE;
@@ -900,7 +900,7 @@ static BOOL_T indent_folder (NODE_T * p)
     push_unit (p);
     POP_OBJECT (p, &x, A68_REAL);
 // Mind overflowing or underflowing values.
-    if (ERROR_COUNT (&(A68 (job))) != 0) {
+    if (ERROR_COUNT (&A68_JOB) != 0) {
       return A68_FALSE;
     } else if (VALUE (&x) == REAL_MAX) {
       return A68_FALSE;
@@ -928,7 +928,7 @@ static BOOL_T indent_folder (NODE_T * p)
     A68_SP = 0;
     push_unit (p);
     POP_OBJECT (p, &b, A68_BOOL);
-    if (ERROR_COUNT (&(A68 (job))) != 0) {
+    if (ERROR_COUNT (&A68_JOB) != 0) {
       return A68_FALSE;
     } else {
       ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s", (VALUE (&b) ? "TRUE" : "FALSE")) >= 0);
@@ -940,7 +940,7 @@ static BOOL_T indent_folder (NODE_T * p)
     A68_SP = 0;
     push_unit (p);
     POP_OBJECT (p, &c, A68_CHAR);
-    if (ERROR_COUNT (&(A68 (job))) == 0) {
+    if (ERROR_COUNT (&A68_JOB) == 0) {
       return A68_FALSE;
     } else if (VALUE (&c) == '\"') {
       put_str ("\"\"\"\"");

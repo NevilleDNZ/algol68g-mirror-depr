@@ -22,6 +22,164 @@ BEGIN
 
 # Data structure. #
 
+      MODE FRAC = STRUCT (LINT n, d), LINT = LONG INT;
+
+      OP NOM = (FRAC u) LINT: n OF u,
+         DEN = (FRAC u) LINT: d OF u;
+
+      PR precision 101 PR # Now LINT holds a googol. #
+ 
+# Basic operations. #
+ 
+      OP RECIPROCAL = (LINT i) FRAC: IF i >= 0 THEN (1, i) ELSE (-1, -i) FI;
+  
+      OP - = (FRAC u) FRAC: (-NOM u, DEN u);
+  
+      OP + = (FRAC u, FRAC v) FRAC:
+         BEGIN LINT k = DEN u GCD DEN v;
+               LINT du = DEN u OVER k, dv = DEN v OVER k;
+               LINT n = NOM u * dv + NOM v * du;
+               LINT l = n GCD k, d = dv * du;
+               (n OVER l, k OVER l * d)
+         END;
+
+      OP +:= = (REF FRAC u, FRAC v) REF FRAC: u := u + v;
+  
+      OP - = (FRAC u, FRAC v) FRAC:
+         BEGIN LINT k = DEN u GCD DEN v;
+               LINT du = DEN u OVER k, dv = DEN v OVER k;
+               LINT n = NOM u * dv - NOM v * du;
+               LINT l = n GCD k, d = dv * du;
+               (n OVER l, k OVER l * d)
+         END;
+
+      OP -:= = (REF FRAC u, FRAC v) REF FRAC: u := u - v;
+  
+      OP * = (FRAC u, v) FRAC:
+         BEGIN LINT i = NOM u GCD DEN v, j = NOM v GCD DEN u;
+               ((NOM u OVER i) * (NOM v OVER j), (DEN u OVER j) * (DEN v OVER i))
+         END;
+
+      OP *:= = (REF FRAC u, FRAC v) REF FRAC: u := u * v;
+  
+      OP / = (FRAC u, FRAC v) FRAC:
+         IF LINT i = NOM u GCD NOM v, j = DEN v GCD DEN u;
+            NOM v >= 0
+         THEN ((NOM u OVER i) * (DEN v OVER j), (DEN u OVER j) * (NOM v OVER i))
+         ELSE (- (NOM u OVER i) * (DEN v OVER j), - (DEN u OVER j) * (NOM v OVER i))
+         FI;
+
+      OP /:= = (REF FRAC u, FRAC v) REF FRAC: u := u / v;
+  
+# Comparing rationals with integrals. #
+  
+      OP = = (FRAC u, LINT i) BOOL: NOM u = i ANDF DEN u = 1;
+  
+      OP /= = (FRAC u, LINT i) BOOL: NOT (u = i);
+  
+# Matrix algebra. #
+
+      OP INNER = ([] FRAC u, v) FRAC:
+         # Innerproduct of two arrays of rationals #
+         BEGIN FRAC s := (0, 1);
+               FOR i TO UPB u
+               DO s +:= u[i] * v[i]
+               OD;
+               s
+         END;
+
+      PRIO INNER = 8;
+  
+      PROC lu decomposition = (REF [, ] FRAC a, REF [] INT p) VOID:
+           # LU-decomposition cf. Crout, of a matrix of rationals. #
+           BEGIN INT n = 1 UPB a;
+                 FOR k TO n
+                 DO FRAC piv := (0, 1), INT k1 := k - 1;
+                    REF INT pk = p[k];
+                    REF [] FRAC aik = a[, k], aki = a[k,];
+                    FOR i FROM k TO n
+                    DO aik[i] -:= a[i, 1 : k1] INNER aik[1 : k1];
+                       IF piv = LINT (0) AND aik[i] /= LINT (0)
+                       THEN piv := aik[i]; 
+                            pk := i
+                       FI
+                    OD;
+                    IF piv = LINT (0)
+                    THEN print((newline, newline, "Singular matrix"));
+                         stop
+                    FI;
+                    IF pk /= k
+                    THEN FOR i TO n
+                         DO FRAC r = aki[i];
+                            aki[i] := a[pk, i]; 
+                            a[pk, i] := -r
+                         OD
+                    FI;
+                    FOR i FROM k + 1 TO n
+                    DO aki[i] -:= aki[1 : k1] INNER a[1 : k1, i] /:= piv
+                    OD 
+                 OD
+           END;
+  
+      PROC determinant = ([,] FRAC a) FRAC:
+           # Determinant of a decomposed matrix is its trace. #
+           BEGIN FRAC d := (1, 1);
+                 FOR i TO 1 UPB a
+                 DO d *:= a[i, i]
+                 OD;
+                 d
+           END;
+
+# Recursive definition of greatest common divisor. #
+
+      OP GCD = (LINT a, b) LINT:
+         IF b = 0 
+         THEN ABS a
+         ELSE b GCD (a MOD b)
+         FI;
+  
+      PRIO GCD = 8;
+
+# Table of required results. #  
+  
+      [] LINT table = BEGIN
+         LONG 1,
+         LONG 12,
+         LONG 2160,
+         LONG 6048000,
+         LONG 266716800000,
+         LONG 186313420339200000, 
+         LONG 2067909047925770649600000,
+         LONG 365356847125734485878112256000000 
+      END;
+
+# Compute determinant of Hilbert matrix of increasing rank. #
+   
+      printf(($"Determinant of the Hilbert matrix - LONG INT"$));
+      FOR n TO UPB table
+      DO [1 : n, 1 : n] FRAC a;
+         FOR i TO n
+         DO a[i,i] := RECIPROCAL LINT (i * 2 - 1);
+            FOR j FROM i + 1 TO n
+            DO a[i, j] := a[j, i] := RECIPROCAL LINT (i + j - 1)
+            OD
+         OD;
+         lu decomposition(a, LOC [1 : n] INT);
+         FORMAT small int = $2z-d$,
+                huge int = $z","3z","3z","3z","3z","3z","3z","3z","3z","3z","3z","
+                                3z","3z","3z","3z","3z","3z","3z","2z-d$;
+         FRAC det = determinant (a);
+         printf(($2l"Order : "$, small int, n));
+         printf(($l "Result: "$, small int, NOM det, $" / "$, huge int, DEN det));
+         printf(($l "Table : "$, small int, 1, $" / "$, huge int, table[n]))
+     OD;
+     new line (standout)
+END;
+
+BEGIN
+
+# Data structure. #
+
       MODE FRAC = STRUCT (LINT n, d), LINT = LONG LONG INT;
 
       OP NOM = (FRAC u) LINT: n OF u,
@@ -157,7 +315,7 @@ BEGIN
 
 # Compute determinant of Hilbert matrix of increasing rank. #
    
-      printf(($"Determinant of the Hilbert matrix"$));
+      printf(($"Determinant of the Hilbert matrix - LONG LONG INT"$));
       FOR n TO UPB table
       DO [1 : n, 1 : n] FRAC a;
          FOR i TO n

@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -86,7 +86,7 @@ static void add_a68_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID_
 
 MOID_T *a68_proc (MOID_T * m, ...)
 {
-  MOID_T *y, **z = &TOP_MOID (&(A68 (job)));
+  MOID_T *y, **z = &TOP_MOID (&A68_JOB);
   PACK_T *p = NO_PACK, *q = NO_PACK;
   va_list attribute;
   va_start (attribute, m);
@@ -117,7 +117,7 @@ void a68_idf (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
 
 void a68_mode (int p, char *t, MOID_T ** m)
 {
-  (*m) = add_mode (&TOP_MOID (&(A68 (job))), STANDARD, p, some_node (TEXT (find_keyword (A68 (top_keyword), t))), NO_MOID, NO_PACK);
+  (*m) = add_mode (&TOP_MOID (&A68_JOB), STANDARD, p, some_node (TEXT (find_keyword (A68 (top_keyword), t))), NO_MOID, NO_PACK);
 }
 
 //! @brief Enter a priority in standenv.
@@ -174,138 +174,138 @@ static void stand_moids (void)
   HAS_ROWS (M_SOUND) = A68_TRUE;
   PORTABLE (M_SOUND) = A68_FALSE;
 // ROWS.
-  M_ROWS = add_mode (&TOP_MOID (&(A68 (job))), ROWS_SYMBOL, 0, NO_NODE, NO_MOID, NO_PACK);
+  M_ROWS = add_mode (&TOP_MOID (&A68_JOB), ROWS_SYMBOL, 0, NO_NODE, NO_MOID, NO_PACK);
 // REFs.
-  M_REF_INT = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_INT, NO_PACK);
-  M_REF_REAL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_REAL, NO_PACK);
-  M_REF_COMPLEX = M_REF_COMPL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_COMPLEX, NO_PACK);
-  M_REF_BITS = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_BITS, NO_PACK);
-  M_REF_BYTES = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_BYTES, NO_PACK);
-  M_REF_FORMAT = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_FORMAT, NO_PACK);
-  M_REF_PIPE = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_PIPE, NO_PACK);
+  M_REF_INT = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_INT, NO_PACK);
+  M_REF_REAL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_REAL, NO_PACK);
+  M_REF_COMPLEX = M_REF_COMPL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_COMPLEX, NO_PACK);
+  M_REF_BITS = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_BITS, NO_PACK);
+  M_REF_BYTES = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_BYTES, NO_PACK);
+  M_REF_FORMAT = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_FORMAT, NO_PACK);
+  M_REF_PIPE = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_PIPE, NO_PACK);
 // Multiple precision.
-  M_REF_LONG_INT = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_INT, NO_PACK);
-  M_REF_LONG_REAL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_REAL, NO_PACK);
-  M_REF_LONG_COMPLEX = M_REF_LONG_COMPL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_COMPLEX, NO_PACK);
-  M_REF_LONG_LONG_INT = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_INT, NO_PACK);
-  M_REF_LONG_LONG_REAL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_REAL, NO_PACK);
-  M_REF_LONG_LONG_COMPLEX = M_REF_LONG_LONG_COMPL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_COMPLEX, NO_PACK);
-  M_REF_LONG_BITS = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_BITS, NO_PACK);
-  M_REF_LONG_BYTES = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_BYTES, NO_PACK);
+  M_REF_LONG_INT = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_INT, NO_PACK);
+  M_REF_LONG_REAL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_REAL, NO_PACK);
+  M_REF_LONG_COMPLEX = M_REF_LONG_COMPL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_COMPLEX, NO_PACK);
+  M_REF_LONG_LONG_INT = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_INT, NO_PACK);
+  M_REF_LONG_LONG_REAL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_REAL, NO_PACK);
+  M_REF_LONG_LONG_COMPLEX = M_REF_LONG_LONG_COMPL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_COMPLEX, NO_PACK);
+  M_REF_LONG_BITS = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_BITS, NO_PACK);
+  M_REF_LONG_BYTES = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_BYTES, NO_PACK);
 // Other.
-  M_REF_BOOL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_BOOL, NO_PACK);
-  M_REF_CHAR = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_CHAR, NO_PACK);
-  M_REF_FILE = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_FILE, NO_PACK);
-  M_REF_REF_FILE = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_REF_FILE, NO_PACK);
-  M_REF_SOUND = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_SOUND, NO_PACK);
+  M_REF_BOOL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_BOOL, NO_PACK);
+  M_REF_CHAR = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_CHAR, NO_PACK);
+  M_REF_FILE = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_FILE, NO_PACK);
+  M_REF_REF_FILE = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_REF_FILE, NO_PACK);
+  M_REF_SOUND = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_SOUND, NO_PACK);
 // [] INT.
-  M_ROW_INT = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_INT, NO_PACK);
+  M_ROW_INT = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_INT, NO_PACK);
   HAS_ROWS (M_ROW_INT) = A68_TRUE;
   SLICE (M_ROW_INT) = M_INT;
-  M_REF_ROW_INT = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_ROW_INT, NO_PACK);
+  M_REF_ROW_INT = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_ROW_INT, NO_PACK);
   NAME (M_REF_ROW_INT) = M_REF_INT;
 // [] REAL.
-  M_ROW_REAL = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_REAL, NO_PACK);
+  M_ROW_REAL = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_REAL, NO_PACK);
   HAS_ROWS (M_ROW_REAL) = A68_TRUE;
   SLICE (M_ROW_REAL) = M_REAL;
-  M_REF_ROW_REAL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_ROW_REAL, NO_PACK);
+  M_REF_ROW_REAL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_ROW_REAL, NO_PACK);
   NAME (M_REF_ROW_REAL) = M_REF_REAL;
 // [,] REAL.
-  M_ROW_ROW_REAL = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 2, NO_NODE, M_REAL, NO_PACK);
+  M_ROW_ROW_REAL = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 2, NO_NODE, M_REAL, NO_PACK);
   HAS_ROWS (M_ROW_ROW_REAL) = A68_TRUE;
   SLICE (M_ROW_ROW_REAL) = M_ROW_REAL;
-  M_REF_ROW_ROW_REAL = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_ROW_ROW_REAL, NO_PACK);
+  M_REF_ROW_ROW_REAL = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_ROW_ROW_REAL, NO_PACK);
   NAME (M_REF_ROW_ROW_REAL) = M_REF_ROW_REAL;
 // [] COMPLEX.
-  M_ROW_COMPLEX = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_COMPLEX, NO_PACK);
+  M_ROW_COMPLEX = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_COMPLEX, NO_PACK);
   HAS_ROWS (M_ROW_COMPLEX) = A68_TRUE;
   SLICE (M_ROW_COMPLEX) = M_COMPLEX;
-  M_REF_ROW_COMPLEX = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_ROW_COMPLEX, NO_PACK);
+  M_REF_ROW_COMPLEX = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_ROW_COMPLEX, NO_PACK);
   NAME (M_REF_ROW_COMPLEX) = M_REF_COMPLEX;
 // [,] COMPLEX.
-  M_ROW_ROW_COMPLEX = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 2, NO_NODE, M_COMPLEX, NO_PACK);
+  M_ROW_ROW_COMPLEX = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 2, NO_NODE, M_COMPLEX, NO_PACK);
   HAS_ROWS (M_ROW_ROW_COMPLEX) = A68_TRUE;
   SLICE (M_ROW_ROW_COMPLEX) = M_ROW_COMPLEX;
-  M_REF_ROW_ROW_COMPLEX = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_ROW_ROW_COMPLEX, NO_PACK);
+  M_REF_ROW_ROW_COMPLEX = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_ROW_ROW_COMPLEX, NO_PACK);
   NAME (M_REF_ROW_ROW_COMPLEX) = M_REF_ROW_COMPLEX;
 // [] BOOL.
-  M_ROW_BOOL = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_BOOL, NO_PACK);
+  M_ROW_BOOL = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_BOOL, NO_PACK);
   HAS_ROWS (M_ROW_BOOL) = A68_TRUE;
   SLICE (M_ROW_BOOL) = M_BOOL;
 // FLEX [] BOOL.
-  m = add_mode (&TOP_MOID (&(A68 (job))), FLEX_SYMBOL, 0, NO_NODE, M_ROW_BOOL, NO_PACK);
+  m = add_mode (&TOP_MOID (&A68_JOB), FLEX_SYMBOL, 0, NO_NODE, M_ROW_BOOL, NO_PACK);
   HAS_ROWS (m) = A68_TRUE;
   M_FLEX_ROW_BOOL = m;
 // [] BITS.
-  M_ROW_BITS = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_BITS, NO_PACK);
+  M_ROW_BITS = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_BITS, NO_PACK);
   HAS_ROWS (M_ROW_BITS) = A68_TRUE;
   SLICE (M_ROW_BITS) = M_BITS;
 // [] LONG BITS.
-  M_ROW_LONG_BITS = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_LONG_BITS, NO_PACK);
+  M_ROW_LONG_BITS = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_LONG_BITS, NO_PACK);
   HAS_ROWS (M_ROW_LONG_BITS) = A68_TRUE;
   SLICE (M_ROW_LONG_BITS) = M_LONG_BITS;
 // [] CHAR.
-  M_ROW_CHAR = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_CHAR, NO_PACK);
+  M_ROW_CHAR = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_CHAR, NO_PACK);
   HAS_ROWS (M_ROW_CHAR) = A68_TRUE;
   SLICE (M_ROW_CHAR) = M_CHAR;
 // [][] CHAR.
-  M_ROW_ROW_CHAR = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_ROW_CHAR, NO_PACK);
+  M_ROW_ROW_CHAR = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_ROW_CHAR, NO_PACK);
   HAS_ROWS (M_ROW_ROW_CHAR) = A68_TRUE;
   SLICE (M_ROW_ROW_CHAR) = M_ROW_CHAR;
 // MODE STRING = FLEX [] CHAR.
-  m = add_mode (&TOP_MOID (&(A68 (job))), FLEX_SYMBOL, 0, NO_NODE, M_ROW_CHAR, NO_PACK);
+  m = add_mode (&TOP_MOID (&A68_JOB), FLEX_SYMBOL, 0, NO_NODE, M_ROW_CHAR, NO_PACK);
   HAS_ROWS (m) = A68_TRUE;
   M_FLEX_ROW_CHAR = m;
   EQUIVALENT (M_STRING) = m;
 // REF [] CHAR.
-  M_REF_ROW_CHAR = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_ROW_CHAR, NO_PACK);
+  M_REF_ROW_CHAR = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_ROW_CHAR, NO_PACK);
   NAME (M_REF_ROW_CHAR) = M_REF_CHAR;
 // PROC [] CHAR.
-  M_PROC_ROW_CHAR = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, 0, NO_NODE, M_ROW_CHAR, NO_PACK);
+  M_PROC_ROW_CHAR = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, 0, NO_NODE, M_ROW_CHAR, NO_PACK);
 // REF STRING = REF FLEX [] CHAR.
-  M_REF_STRING = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, EQUIVALENT (M_STRING), NO_PACK);
+  M_REF_STRING = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, EQUIVALENT (M_STRING), NO_PACK);
   NAME (M_REF_STRING) = M_REF_CHAR;
   DEFLEXED (M_REF_STRING) = M_REF_ROW_CHAR;
 // [] STRING.
-  M_ROW_STRING = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_STRING, NO_PACK);
+  M_ROW_STRING = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_STRING, NO_PACK);
   HAS_ROWS (M_ROW_STRING) = A68_TRUE;
   SLICE (M_ROW_STRING) = M_STRING;
   DEFLEXED (M_ROW_STRING) = M_ROW_ROW_CHAR;
 // PROC STRING.
-  M_PROC_STRING = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, 0, NO_NODE, M_STRING, NO_PACK);
+  M_PROC_STRING = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, 0, NO_NODE, M_STRING, NO_PACK);
   DEFLEXED (M_PROC_STRING) = M_PROC_ROW_CHAR;
 // COMPLEX.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REAL, TEXT (add_token (&A68 (top_token), "im")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REAL, TEXT (add_token (&A68 (top_token), "re")), NO_NODE);
-  m = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  m = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   EQUIVALENT (M_COMPLEX) = EQUIVALENT (M_COMPL) = m;
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_REAL, TEXT (add_token (&A68 (top_token), "im")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_REAL, TEXT (add_token (&A68 (top_token), "re")), NO_NODE);
-  m = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  m = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   NAME (M_REF_COMPLEX) = NAME (M_REF_COMPL) = m;
 // LONG COMPLEX.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_LONG_REAL, TEXT (add_token (&A68 (top_token), "im")), NO_NODE);
   (void) add_mode_to_pack (&z, M_LONG_REAL, TEXT (add_token (&A68 (top_token), "re")), NO_NODE);
-  m = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  m = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   EQUIVALENT (M_LONG_COMPLEX) = EQUIVALENT (M_LONG_COMPL) = m;
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_LONG_REAL, TEXT (add_token (&A68 (top_token), "im")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_LONG_REAL, TEXT (add_token (&A68 (top_token), "re")), NO_NODE);
-  m = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  m = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   NAME (M_REF_LONG_COMPLEX) = NAME (M_REF_LONG_COMPL) = m;
 // LONG_LONG COMPLEX.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_LONG_LONG_REAL, TEXT (add_token (&A68 (top_token), "im")), NO_NODE);
   (void) add_mode_to_pack (&z, M_LONG_LONG_REAL, TEXT (add_token (&A68 (top_token), "re")), NO_NODE);
-  m = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  m = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   EQUIVALENT (M_LONG_LONG_COMPLEX) = EQUIVALENT (M_LONG_LONG_COMPL) = m;
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_LONG_LONG_REAL, TEXT (add_token (&A68 (top_token), "im")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_LONG_LONG_REAL, TEXT (add_token (&A68 (top_token), "re")), NO_NODE);
-  m = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  m = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   NAME (M_REF_LONG_LONG_COMPLEX) = NAME (M_REF_LONG_LONG_COMPL) = m;
 // NUMBER.
   z = NO_PACK;
@@ -315,7 +315,7 @@ static void stand_moids (void)
   (void) add_mode_to_pack (&z, M_REAL, NO_TEXT, NO_NODE);
   (void) add_mode_to_pack (&z, M_LONG_REAL, NO_TEXT, NO_NODE);
   (void) add_mode_to_pack (&z, M_LONG_LONG_REAL, NO_TEXT, NO_NODE);
-  M_NUMBER = add_mode (&TOP_MOID (&(A68 (job))), UNION_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  M_NUMBER = add_mode (&TOP_MOID (&A68_JOB), UNION_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
 // HEX_NUMBER.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_BOOL, NO_TEXT, NO_NODE);
@@ -326,48 +326,48 @@ static void stand_moids (void)
   (void) add_mode_to_pack (&z, M_LONG_REAL, NO_TEXT, NO_NODE);
   (void) add_mode_to_pack (&z, M_BITS, NO_TEXT, NO_NODE);
   (void) add_mode_to_pack (&z, M_LONG_BITS, NO_TEXT, NO_NODE);
-  M_HEX_NUMBER = add_mode (&TOP_MOID (&(A68 (job))), UNION_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  M_HEX_NUMBER = add_mode (&TOP_MOID (&A68_JOB), UNION_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
 // SEMA.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_INT, NO_TEXT, NO_NODE);
-  EQUIVALENT (M_SEMA) = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  EQUIVALENT (M_SEMA) = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
 // PROC VOID.
   z = NO_PACK;
-  M_PROC_VOID = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_VOID, z);
+  M_PROC_VOID = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_VOID, z);
 // PROC (REAL) REAL.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REAL, NO_TEXT, NO_NODE);
-  M_PROC_REAL_REAL = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_REAL, z);
+  M_PROC_REAL_REAL = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_REAL, z);
 // PROC (LONG_REAL) LONG_REAL.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_LONG_REAL, NO_TEXT, NO_NODE);
-  M_PROC_LONG_REAL_LONG_REAL = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_LONG_REAL, z);
+  M_PROC_LONG_REAL_LONG_REAL = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_LONG_REAL, z);
 // IO: PROC (REF FILE) BOOL.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_FILE, NO_TEXT, NO_NODE);
-  M_PROC_REF_FILE_BOOL = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_BOOL, z);
+  M_PROC_REF_FILE_BOOL = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_BOOL, z);
 // IO: PROC (REF FILE) VOID.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_FILE, NO_TEXT, NO_NODE);
-  M_PROC_REF_FILE_VOID = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_VOID, z);
+  M_PROC_REF_FILE_VOID = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (z), NO_NODE, M_VOID, z);
 // IO: SIMPLIN and SIMPLOUT.
-  M_SIMPLIN = add_mode (&TOP_MOID (&(A68 (job))), IN_TYPE_MODE, 0, NO_NODE, NO_MOID, NO_PACK);
-  M_ROW_SIMPLIN = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_SIMPLIN, NO_PACK);
+  M_SIMPLIN = add_mode (&TOP_MOID (&A68_JOB), IN_TYPE_MODE, 0, NO_NODE, NO_MOID, NO_PACK);
+  M_ROW_SIMPLIN = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_SIMPLIN, NO_PACK);
   SLICE (M_ROW_SIMPLIN) = M_SIMPLIN;
-  M_SIMPLOUT = add_mode (&TOP_MOID (&(A68 (job))), OUT_TYPE_MODE, 0, NO_NODE, NO_MOID, NO_PACK);
-  M_ROW_SIMPLOUT = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_SIMPLOUT, NO_PACK);
+  M_SIMPLOUT = add_mode (&TOP_MOID (&A68_JOB), OUT_TYPE_MODE, 0, NO_NODE, NO_MOID, NO_PACK);
+  M_ROW_SIMPLOUT = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_SIMPLOUT, NO_PACK);
   SLICE (M_ROW_SIMPLOUT) = M_SIMPLOUT;
 // PIPE.
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_INT, TEXT (add_token (&A68 (top_token), "pid")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_FILE, TEXT (add_token (&A68 (top_token), "write")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_FILE, TEXT (add_token (&A68 (top_token), "read")), NO_NODE);
-  EQUIVALENT (M_PIPE) = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  EQUIVALENT (M_PIPE) = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
   z = NO_PACK;
   (void) add_mode_to_pack (&z, M_REF_INT, TEXT (add_token (&A68 (top_token), "pid")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_REF_FILE, TEXT (add_token (&A68 (top_token), "write")), NO_NODE);
   (void) add_mode_to_pack (&z, M_REF_REF_FILE, TEXT (add_token (&A68 (top_token), "read")), NO_NODE);
-  NAME (M_REF_PIPE) = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
+  NAME (M_REF_PIPE) = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (z), NO_NODE, NO_MOID, z);
 }
 
 //! @brief Set up standenv - general RR but not transput.

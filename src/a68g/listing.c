@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -377,7 +377,7 @@ void moid_listing (FILE_T f, MOID_T * m)
 
 static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
 {
-  if (p != NO_NODE && CROSS_REFERENCE_SAFE (&(A68 (job)))) {
+  if (p != NO_NODE && CROSS_REFERENCE_SAFE (&A68_JOB)) {
     for (; p != NO_NODE; FORWARD (p)) {
       if (is_new_lexical_level (p) && l == LINE (INFO (p))) {
         TABLE_T *c = TABLE (SUB (p));
@@ -540,18 +540,18 @@ void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
 // Print source line.
   write_source_line (f, line, NO_NODE, A68_ALL_DIAGNOSTICS);
 // Cross reference for lexical levels starting at this line.
-  if (OPTION_CROSS_REFERENCE (&(A68 (job)))) {
-    cross_reference (f, TOP_NODE (&(A68 (job))), line);
+  if (OPTION_CROSS_REFERENCE (&A68_JOB)) {
+    cross_reference (f, TOP_NODE (&A68_JOB), line);
   }
 // Syntax tree listing connected with this line.
-  if (tree && OPTION_TREE_LISTING (&(A68 (job)))) {
-    if (TREE_LISTING_SAFE (&(A68 (job))) && leaves_to_print (TOP_NODE (&(A68 (job))), line)) {
+  if (tree && OPTION_TREE_LISTING (&A68_JOB)) {
+    if (TREE_LISTING_SAFE (&A68_JOB) && leaves_to_print (TOP_NODE (&A68_JOB), line)) {
       int ld = -1, k2;
       WRITE (f, "\n\nSyntax tree");
       for (k2 = 0; k2 < BUFFER_SIZE; k2++) {
         A68 (marker)[k2] = " ";
       }
-      tree_listing (f, TOP_NODE (&(A68 (job))), 1, line, &ld, A68_FALSE);
+      tree_listing (f, TOP_NODE (&A68_JOB), 1, line, &ld, A68_FALSE);
       WRITE (f, "\n");
     }
   }
@@ -561,14 +561,14 @@ void list_source_line (FILE_T f, LINE_T * line, BOOL_T tree)
 
 void write_source_listing (void)
 {
-  LINE_T *line = TOP_LINE (&(A68 (job)));
-  FILE_T f = FILE_LISTING_FD (&(A68 (job)));
+  LINE_T *line = TOP_LINE (&A68_JOB);
+  FILE_T f = FILE_LISTING_FD (&A68_JOB);
   int listed = 0;
-  WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-  WRITE (FILE_LISTING_FD (&(A68 (job))), "\nSource listing");
-  WRITE (FILE_LISTING_FD (&(A68 (job))), "\n------ -------");
-  WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-  if (FILE_LISTING_OPENED (&(A68 (job))) == 0) {
+  WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+  WRITE (FILE_LISTING_FD (&A68_JOB), "\nSource listing");
+  WRITE (FILE_LISTING_FD (&A68_JOB), "\n------ -------");
+  WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+  if (FILE_LISTING_OPENED (&A68_JOB) == 0) {
     diagnostic (A68_ERROR, NO_NODE, ERROR_CANNOT_WRITE_LISTING);
     return;
   }
@@ -589,14 +589,14 @@ void write_source_listing (void)
 
 void write_tree_listing (void)
 {
-  LINE_T *line = TOP_LINE (&(A68 (job)));
-  FILE_T f = FILE_LISTING_FD (&(A68 (job)));
+  LINE_T *line = TOP_LINE (&A68_JOB);
+  FILE_T f = FILE_LISTING_FD (&A68_JOB);
   int listed = 0;
-  WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-  WRITE (FILE_LISTING_FD (&(A68 (job))), "\nSyntax tree listing");
-  WRITE (FILE_LISTING_FD (&(A68 (job))), "\n------ ---- -------");
-  WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-  if (FILE_LISTING_OPENED (&(A68 (job))) == 0) {
+  WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+  WRITE (FILE_LISTING_FD (&A68_JOB), "\nSyntax tree listing");
+  WRITE (FILE_LISTING_FD (&A68_JOB), "\n------ ---- -------");
+  WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+  if (FILE_LISTING_OPENED (&A68_JOB) == 0) {
     diagnostic (A68_ERROR, NO_NODE, ERROR_CANNOT_WRITE_LISTING);
     return;
   }
@@ -617,12 +617,12 @@ void write_tree_listing (void)
 
 void write_object_listing (void)
 {
-  if (OPTION_OBJECT_LISTING (&(A68 (job)))) {
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\nObject listing");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\n------ -------");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    compiler (FILE_LISTING_FD (&(A68 (job))));
+  if (OPTION_OBJECT_LISTING (&A68_JOB)) {
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\nObject listing");
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\n------ -------");
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    compiler (FILE_LISTING_FD (&A68_JOB));
   }
 }
 
@@ -630,27 +630,27 @@ void write_object_listing (void)
 
 void write_listing (void)
 {
-  FILE_T f = FILE_LISTING_FD (&(A68 (job)));
-  if (OPTION_MOID_LISTING (&(A68 (job)))) {
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\nMode listing");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\n---- -------");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    moid_listing (f, TOP_MOID (&(A68 (job))));
+  FILE_T f = FILE_LISTING_FD (&A68_JOB);
+  if (OPTION_MOID_LISTING (&A68_JOB)) {
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\nMode listing");
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\n---- -------");
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    moid_listing (f, TOP_MOID (&A68_JOB));
   }
-  if (OPTION_STANDARD_PRELUDE_LISTING (&(A68 (job))) && A68_STANDENV != NO_TABLE) {
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\nStandard prelude listing");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\n-------- ------- -------");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
+  if (OPTION_STANDARD_PRELUDE_LISTING (&A68_JOB) && A68_STANDENV != NO_TABLE) {
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\nStandard prelude listing");
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\n-------- ------- -------");
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
     xref_decs (f, A68_STANDENV);
   }
-  if (TOP_REFINEMENT (&(A68 (job))) != NO_REFINEMENT) {
-    REFINEMENT_T *x = TOP_REFINEMENT (&(A68 (job)));
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\nRefinement listing");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\n---------- -------");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
+  if (TOP_REFINEMENT (&A68_JOB) != NO_REFINEMENT) {
+    REFINEMENT_T *x = TOP_REFINEMENT (&A68_JOB);
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\nRefinement listing");
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\n---------- -------");
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
     while (x != NO_REFINEMENT) {
       ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\n  \"%s\"", NAME (x)) >= 0);
       WRITE (f, A68 (output_line));
@@ -683,14 +683,14 @@ void write_listing (void)
       FORWARD (x);
     }
   }
-  if (OPTION_LIST (&(A68 (job))) != NO_OPTION_LIST) {
+  if (OPTION_LIST (&A68_JOB) != NO_OPTION_LIST) {
     OPTION_LIST_T *i;
     int k = 1;
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\nPragmat listing");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), "\n------- -------");
-    WRITE (FILE_LISTING_FD (&(A68 (job))), NEWLINE_STRING);
-    for (i = OPTION_LIST (&(A68 (job))); i != NO_OPTION_LIST; FORWARD (i)) {
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\nPragmat listing");
+    WRITE (FILE_LISTING_FD (&A68_JOB), "\n------- -------");
+    WRITE (FILE_LISTING_FD (&A68_JOB), NEWLINE_STRING);
+    for (i = OPTION_LIST (&A68_JOB); i != NO_OPTION_LIST; FORWARD (i)) {
       ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\n%d: %s", k++, STR (i)) >= 0);
       WRITE (f, A68 (output_line));
     }
@@ -701,17 +701,17 @@ void write_listing (void)
 
 void write_listing_header (void)
 {
-  FILE_T f = FILE_LISTING_FD (&(A68 (job)));
+  FILE_T f = FILE_LISTING_FD (&A68_JOB);
   LINE_T *z;
-  state_version (FILE_LISTING_FD (&(A68 (job))));
-  WRITE (FILE_LISTING_FD (&(A68 (job))), "\nFile \"");
-  WRITE (FILE_LISTING_FD (&(A68 (job))), FILE_SOURCE_NAME (&(A68 (job))));
-  WRITE (FILE_LISTING_FD (&(A68 (job))), "\"");
-  if (OPTION_STATISTICS_LISTING (&(A68 (job)))) {
-    if (ERROR_COUNT (&(A68 (job))) + WARNING_COUNT (&(A68 (job))) > 0) {
-      ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\nDiagnostics: %d error(s), %d warning(s)", ERROR_COUNT (&(A68 (job))), WARNING_COUNT (&(A68 (job)))) >= 0);
+  state_version (FILE_LISTING_FD (&A68_JOB));
+  WRITE (FILE_LISTING_FD (&A68_JOB), "\nFile \"");
+  WRITE (FILE_LISTING_FD (&A68_JOB), FILE_SOURCE_NAME (&A68_JOB));
+  WRITE (FILE_LISTING_FD (&A68_JOB), "\"");
+  if (OPTION_STATISTICS_LISTING (&A68_JOB)) {
+    if (ERROR_COUNT (&A68_JOB) + WARNING_COUNT (&A68_JOB) > 0) {
+      ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\nDiagnostics: %d error(s), %d warning(s)", ERROR_COUNT (&A68_JOB), WARNING_COUNT (&A68_JOB)) >= 0);
       WRITE (f, A68 (output_line));
-      for (z = TOP_LINE (&(A68 (job))); z != NO_LINE; FORWARD (z)) {
+      for (z = TOP_LINE (&A68_JOB); z != NO_LINE; FORWARD (z)) {
         if (DIAGNOSTICS (z) != NO_DIAGNOSTIC) {
           write_source_line (f, z, NO_NODE, A68_TRUE);
         }

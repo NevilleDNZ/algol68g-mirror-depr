@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -30,6 +30,9 @@
 // -3   Other error
 
 #include "a68g.h"
+#include "a68g-prelude.h"
+#include "a68g-genie.h"
+#include "a68g-transput.h"
 
 #if defined (HAVE_POSTGRESQL)
 
@@ -67,7 +70,7 @@ void genie_pq_connectdb (NODE_T * p)
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   STATUS (file) = INIT_MASK;
-  CHANNEL (file) = associate_channel;
+  CHANNEL (file) = A68 (associate_channel);
   OPENED (file) = A68_TRUE;
   OPEN_EXCLUSIVE (file) = A68_FALSE;
   READ_MOOD (file) = A68_FALSE;

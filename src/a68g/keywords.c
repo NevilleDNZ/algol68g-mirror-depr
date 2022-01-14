@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -110,7 +110,7 @@ static void add_keyword (KEYWORD_T ** p, int a, char *t)
 void set_up_tables (void)
 {
 // Entries are randomised to balance the tree.
-  if (OPTION_STRICT (&(A68 (job))) == A68_FALSE) {
+  if (OPTION_STRICT (&A68_JOB) == A68_FALSE) {
     add_keyword (&A68 (top_keyword), ENVIRON_SYMBOL, "ENVIRON");
     add_keyword (&A68 (top_keyword), DOWNTO_SYMBOL, "DOWNTO");
     add_keyword (&A68 (top_keyword), UNTIL_SYMBOL, "UNTIL");

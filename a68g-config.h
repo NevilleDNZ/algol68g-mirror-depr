@@ -165,10 +165,10 @@
 #define HAVE_LIBPLOT 1
 
 /* Define to 1 if you have the `pq' library (-lpq). */
-/* #undef HAVE_LIBPQ */
+#define HAVE_LIBPQ 1
 
 /* Define to 1 if you have the <libpq-fe.h> header file. */
-/* #undef HAVE_LIBPQ_FE_H */
+#define HAVE_LIBPQ_FE_H 1
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
@@ -246,7 +246,7 @@
 #define HAVE_PLOT_H 1
 
 /* Define this if a good PostgreSQL installation was detected */
-/* #undef HAVE_POSTGRESQL */
+#define HAVE_POSTGRESQL 1
 
 /* Define to 1 if you have the `printf' function. */
 #define HAVE_PRINTF 1
@@ -368,7 +368,7 @@
 /* #undef HAVE_UNTESTED */
 
 /* Define this if /usr/include/postgresql was detected */
-/* #undef HAVE_USR_INCLUDE_POSTGRESQL */
+#define HAVE_USR_INCLUDE_POSTGRESQL 1
 
 /* Define this if /usr/local/pgsql/include was detected */
 /* #undef HAVE_USR_LOCAL_PGSQL_INCLUDE */
@@ -389,7 +389,7 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 3.0.0"
+#define PACKAGE_STRING "algol68g 3.0.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
@@ -398,13 +398,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0.0"
+#define PACKAGE_VERSION "3.0.1"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.0.0"
+#define VERSION "3.0.1"
 
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__

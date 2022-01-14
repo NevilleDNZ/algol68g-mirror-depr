@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -387,7 +387,7 @@ static void deref (NODE_T * p, int k, int context)
 static MOID_T *search_mode (int refs, int leng, char *indy)
 {
   MOID_T *m = NO_MOID, *z = NO_MOID;
-  for (m = TOP_MOID (&(A68 (job))); m != NO_MOID; FORWARD (m)) {
+  for (m = TOP_MOID (&A68_JOB); m != NO_MOID; FORWARD (m)) {
     if (NODE (m) != NO_NODE) {
       if (indy == NSYMBOL (NODE (m)) && leng == DIM (m)) {
         z = m;
@@ -401,7 +401,7 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
     monitor_error ("unknown indicant", indy);
     return NO_MOID;
   }
-  for (m = TOP_MOID (&(A68 (job))); m != NO_MOID; FORWARD (m)) {
+  for (m = TOP_MOID (&A68_JOB); m != NO_MOID; FORWARD (m)) {
     int k = 0;
     while (IS_REF (m)) {
       k++;
@@ -1543,14 +1543,14 @@ static void list (FILE_T f, NODE_T * p, int n, int m)
   if (p != NO_NODE) {
     if (m == 0) {
       LINE_T *r = LINE (INFO (p));
-      LINE_T *l = TOP_LINE (&(A68 (job)));
+      LINE_T *l = TOP_LINE (&A68_JOB);
       for (; l != NO_LINE; FORWARD (l)) {
         if (NUMBER (l) > 0 && abs (NUMBER (r) - NUMBER (l)) <= n) {
           write_source_line (f, l, NO_NODE, A68_TRUE);
         }
       }
     } else {
-      LINE_T *l = TOP_LINE (&(A68 (job)));
+      LINE_T *l = TOP_LINE (&A68_JOB);
       for (; l != NO_LINE; FORWARD (l)) {
         if (NUMBER (l) > 0 && NUMBER (l) >= n && NUMBER (l) <= m) {
           write_source_line (f, l, NO_NODE, A68_TRUE);
@@ -1856,7 +1856,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     SKIP_ONE_SYMBOL (sym);
     if (sym[0] == NULL_CHAR) {
       int listed = 0;
-      list_breakpoints (TOP_NODE (&(A68 (job))), &listed);
+      list_breakpoints (TOP_NODE (&A68_JOB), &listed);
       if (listed == 0) {
         WRITELN (STDOUT_FILENO, "No breakpoints set");
       }
@@ -1873,7 +1873,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
       SKIP_SPACE (mod);
       if (mod[0] == NULL_CHAR) {
         BOOL_T set = A68_FALSE;
-        change_breakpoints (TOP_NODE (&(A68 (job))), BREAKPOINT_MASK, k, &set, NULL);
+        change_breakpoints (TOP_NODE (&A68_JOB), BREAKPOINT_MASK, k, &set, NULL);
         if (set == A68_FALSE) {
           monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         }
@@ -1881,18 +1881,18 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         char *cexpr = mod;
         BOOL_T set = A68_FALSE;
         SKIP_ONE_SYMBOL (cexpr);
-        change_breakpoints (TOP_NODE (&(A68 (job))), BREAKPOINT_MASK, k, &set, new_string (cexpr, NO_TEXT));
+        change_breakpoints (TOP_NODE (&A68_JOB), BREAKPOINT_MASK, k, &set, new_string (cexpr, NO_TEXT));
         if (set == A68_FALSE) {
           monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         }
       } else if (match_string (mod, "Clear", NULL_CHAR)) {
-        change_breakpoints (TOP_NODE (&(A68 (job))), NULL_MASK, k, NULL, NULL);
+        change_breakpoints (TOP_NODE (&A68_JOB), NULL_MASK, k, NULL, NULL);
       } else {
         monitor_error ("invalid breakpoint command", NO_TEXT);
       }
     } else if (match_string (sym, "List", NULL_CHAR)) {
       int listed = 0;
-      list_breakpoints (TOP_NODE (&(A68 (job))), &listed);
+      list_breakpoints (TOP_NODE (&A68_JOB), &listed);
       if (listed == 0) {
         WRITELN (STDOUT_FILENO, "No breakpoints set");
       }
@@ -1911,32 +1911,32 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
         A68_MON (watchpoint_expression) = NO_TEXT;
       }
       A68_MON (watchpoint_expression) = new_string (cexpr, NO_TEXT);
-      change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_WATCH_MASK, A68_TRUE);
+      change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_WATCH_MASK, A68_TRUE);
     } else if (match_string (sym, "Clear", BLANK_CHAR)) {
       char *mod = sym;
       SKIP_ONE_SYMBOL (mod);
       if (mod[0] == NULL_CHAR) {
-        change_breakpoints (TOP_NODE (&(A68 (job))), NULL_MASK, 0, NULL, NULL);
+        change_breakpoints (TOP_NODE (&A68_JOB), NULL_MASK, 0, NULL, NULL);
         if (A68_MON (watchpoint_expression) != NO_TEXT) {
           a68_free (A68_MON (watchpoint_expression));
           A68_MON (watchpoint_expression) = NO_TEXT;
         }
-        change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_WATCH_MASK, A68_FALSE);
+        change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_WATCH_MASK, A68_FALSE);
       } else if (match_string (mod, "ALL", NULL_CHAR)) {
-        change_breakpoints (TOP_NODE (&(A68 (job))), NULL_MASK, 0, NULL, NULL);
+        change_breakpoints (TOP_NODE (&A68_JOB), NULL_MASK, 0, NULL, NULL);
         if (A68_MON (watchpoint_expression) != NO_TEXT) {
           a68_free (A68_MON (watchpoint_expression));
           A68_MON (watchpoint_expression) = NO_TEXT;
         }
-        change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_WATCH_MASK, A68_FALSE);
+        change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_WATCH_MASK, A68_FALSE);
       } else if (match_string (mod, "Breakpoints", NULL_CHAR)) {
-        change_breakpoints (TOP_NODE (&(A68 (job))), NULL_MASK, 0, NULL, NULL);
+        change_breakpoints (TOP_NODE (&A68_JOB), NULL_MASK, 0, NULL, NULL);
       } else if (match_string (mod, "Watchpoint", NULL_CHAR)) {
         if (A68_MON (watchpoint_expression) != NO_TEXT) {
           a68_free (A68_MON (watchpoint_expression));
           A68_MON (watchpoint_expression) = NO_TEXT;
         }
-        change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_WATCH_MASK, A68_FALSE);
+        change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_WATCH_MASK, A68_FALSE);
       } else {
         monitor_error ("invalid breakpoint command", NO_TEXT);
       }
@@ -1978,12 +1978,12 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     return A68_FALSE;
   } else if (match_string (cmd, "RESET", NULL_CHAR)) {
     if (confirm_exit ()) {
-      change_breakpoints (TOP_NODE (&(A68 (job))), NULL_MASK, 0, NULL, NULL);
+      change_breakpoints (TOP_NODE (&A68_JOB), NULL_MASK, 0, NULL, NULL);
       if (A68_MON (watchpoint_expression) != NO_TEXT) {
         a68_free (A68_MON (watchpoint_expression));
         A68_MON (watchpoint_expression) = NO_TEXT;
       }
-      change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_WATCH_MASK, A68_FALSE);
+      change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_WATCH_MASK, A68_FALSE);
       exit_genie (p, A68_RERUN);
     }
     return A68_FALSE;
@@ -2006,12 +2006,12 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return A68_FALSE;
   } else if (match_string (cmd, "Next", NULL_CHAR)) {
-    change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
+    change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
     A68 (do_confirm_exit) = A68_FALSE;
     A68_MON (break_proc_level) = PROCEDURE_LEVEL (INFO (p));
     return A68_TRUE;
   } else if (match_string (cmd, "STEp", NULL_CHAR)) {
-    change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
+    change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
     A68 (do_confirm_exit) = A68_FALSE;
     return A68_TRUE;
   } else if (match_string (cmd, "FINish", NULL_CHAR) || match_string (cmd, "OUT", NULL_CHAR)) {
@@ -2022,7 +2022,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     int k = get_num_arg (cmd, NO_VAR);
     if (k > 0) {
       BOOL_T set = A68_FALSE;
-      change_breakpoints (TOP_NODE (&(A68 (job))), BREAKPOINT_TEMPORARY_MASK, k, &set, NULL);
+      change_breakpoints (TOP_NODE (&A68_JOB), BREAKPOINT_TEMPORARY_MASK, k, &set, NULL);
       if (set == A68_FALSE) {
         monitor_error ("cannot set breakpoint in that line", NO_TEXT);
         return A68_FALSE;
@@ -2051,7 +2051,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     return A68_FALSE;
   } else if (match_string (cmd, "XRef", NULL_CHAR)) {
     int k = LINE_NUMBER (p);
-    LINE_T *line = TOP_LINE (&(A68 (job)));
+    LINE_T *line = TOP_LINE (&A68_JOB);
     for (; line != NO_LINE; FORWARD (line)) {
       if (NUMBER (line) > 0 && NUMBER (line) == k) {
         list_source_line (STDOUT_FILENO, line, A68_TRUE);
@@ -2059,7 +2059,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     }
     return A68_FALSE;
   } else if (match_string (cmd, "XRef", BLANK_CHAR)) {
-    LINE_T *line = TOP_LINE (&(A68 (job)));
+    LINE_T *line = TOP_LINE (&A68_JOB);
     int k = get_num_arg (cmd, NO_VAR);
     if (k == NOT_A_NUM) {
       monitor_error ("line number expected", NO_TEXT);
@@ -2189,7 +2189,7 @@ void single_step (NODE_T * p, unsigned mask)
     if (A68_MON (break_proc_level) != 0 && PROCEDURE_LEVEL (INFO (p)) > A68_MON (break_proc_level)) {
       return;
     }
-    change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_TEMPORARY_MASK, A68_FALSE);
+    change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_TEMPORARY_MASK, A68_FALSE);
     WRITELN (STDOUT_FILENO, "Temporary breakpoint (now removed)");
     WIS (p);
   } else if ((mask & BREAKPOINT_WATCH_MASK) != 0) {
@@ -2229,8 +2229,8 @@ void single_step (NODE_T * p, unsigned mask)
   }
   A68_MON (in_monitor) = A68_TRUE;
   A68_MON (break_proc_level) = 0;
-  change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
-  STATUS_CLEAR (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK);
+  change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
+  STATUS_CLEAR (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK);
   while (do_cmd) {
     char *cmd;
     A68_SP = top_sp;
@@ -2268,7 +2268,7 @@ void genie_debug (NODE_T * p)
 void genie_break (NODE_T * p)
 {
   (void) p;
-  change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
+  change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
 }
 
 //! @brief PROC evaluate = (STRING) STRING

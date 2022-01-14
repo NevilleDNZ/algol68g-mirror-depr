@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -666,7 +666,7 @@ void genie_stand_error_channel (NODE_T * p)
 
 void genie_program_idf (NODE_T * p)
 {
-  PUSH_REF (p, c_to_a_string (p, FILE_SOURCE_NAME (&(A68 (job))), DEFAULT_WIDTH));
+  PUSH_REF (p, c_to_a_string (p, FILE_SOURCE_NAME (&A68_JOB), DEFAULT_WIDTH));
 }
 
 // FILE and CHANNEL initialisations.

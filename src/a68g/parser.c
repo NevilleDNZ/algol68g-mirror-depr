@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -119,13 +119,13 @@ void init_before_tokeniser (void)
   init_heap ();
   A68 (top_keyword) = NO_KEYWORD;
   A68 (top_token) = NO_TOKEN;
-  TOP_NODE (&(A68 (job))) = NO_NODE;
-  TOP_MOID (&(A68 (job))) = NO_MOID;
-  TOP_LINE (&(A68 (job))) = NO_LINE;
-  STANDENV_MOID (&(A68 (job))) = NO_MOID;
+  TOP_NODE (&A68_JOB) = NO_NODE;
+  TOP_MOID (&A68_JOB) = NO_MOID;
+  TOP_LINE (&A68_JOB) = NO_LINE;
+  STANDENV_MOID (&A68_JOB) = NO_MOID;
   set_up_tables ();
 // Various initialisations.
-  ERROR_COUNT (&(A68 (job))) = WARNING_COUNT (&(A68 (job))) = 0;
+  ERROR_COUNT (&A68_JOB) = WARNING_COUNT (&A68_JOB) = 0;
   ABEND (errno != 0, ERROR_ALLOCATION, __func__);
   errno = 0;
 }
@@ -444,11 +444,11 @@ void a68_parser (void)
 {
 // Tokeniser.
   int renum;
-  FILE_SOURCE_OPENED (&(A68 (job))) = A68_TRUE;
+  FILE_SOURCE_OPENED (&A68_JOB) = A68_TRUE;
   announce_phase ("initialiser");
   A68_PARSER (error_tag) = (TAG_T *) new_tag ();
   init_parser ();
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     int frame_stack_size_2 = A68 (frame_stack_size);
     int expr_stack_size_2 = A68 (expr_stack_size);
     int heap_size_2 = A68 (heap_size);
@@ -457,41 +457,41 @@ void a68_parser (void)
     announce_phase ("tokeniser");
     ok = lexical_analyser ();
     if (!ok || errno != 0) {
-      diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_ALL_DIAGNOSTICS);
+      diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_ALL_DIAGNOSTICS);
       return;
     }
 // Maybe the program asks for more memory through a PRAGMAT. We restart.
     if (frame_stack_size_2 != A68 (frame_stack_size) || expr_stack_size_2 != A68 (expr_stack_size) || heap_size_2 != A68 (heap_size) || handle_pool_size_2 != A68 (handle_pool_size)) {
       announce_phase ("tokeniser");
-      free_syntax_tree (TOP_NODE (&(A68 (job))));
+      free_syntax_tree (TOP_NODE (&A68_JOB));
       discard_heap ();
       init_before_tokeniser ();
-      SOURCE_SCAN (&(A68 (job)))++;
+      SOURCE_SCAN (&A68_JOB)++;
       ok = lexical_analyser ();
       verbosity ();
     }
     if (!ok || errno != 0) {
-      diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_ALL_DIAGNOSTICS);
+      diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_ALL_DIAGNOSTICS);
       return;
     }
-    ASSERT (close (FILE_SOURCE_FD (&(A68 (job)))) == 0);
-    FILE_SOURCE_OPENED (&(A68 (job))) = A68_FALSE;
-    prune_echoes (OPTION_LIST (&(A68 (job))));
-    TREE_LISTING_SAFE (&(A68 (job))) = A68_TRUE;
+    ASSERT (close (FILE_SOURCE_FD (&A68_JOB)) == 0);
+    FILE_SOURCE_OPENED (&A68_JOB) = A68_FALSE;
+    prune_echoes (OPTION_LIST (&A68_JOB));
+    TREE_LISTING_SAFE (&A68_JOB) = A68_TRUE;
     renum = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &renum);
+    renumber_nodes (TOP_NODE (&A68_JOB), &renum);
   }
 // Now the default precision of LONG LONG modes is fixed.
   if (long_mp_digits () == 0) {
     set_long_mp_digits (LONG_LONG_MP_DIGITS);
   }
 // Final initialisations.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
-    if (OPTION_REGRESSION_TEST (&(A68 (job)))) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
+    if (OPTION_REGRESSION_TEST (&A68_JOB)) {
       bufcpy (A68 (a68_cmd_name), "a68g", BUFFER_SIZE);
       io_close_tty_line ();
       WRITE (STDERR_FILENO, "[");
-      WRITE (STDERR_FILENO, FILE_INITIAL_NAME (&(A68 (job))));
+      WRITE (STDERR_FILENO, FILE_INITIAL_NAME (&A68_JOB));
       WRITE (STDERR_FILENO, "]\n");
     }
     A68_STANDENV = NO_TABLE;
@@ -506,122 +506,122 @@ void a68_parser (void)
     make_special_mode (&M_SOUND_DATA, A68 (mode_count)++);
   }
 // Refinement preprocessor.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("preprocessor");
     get_refinements ();
-    if (ERROR_COUNT (&(A68 (job))) == 0) {
+    if (ERROR_COUNT (&A68_JOB) == 0) {
       put_refinements ();
     }
     renum = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &renum);
+    renumber_nodes (TOP_NODE (&A68_JOB), &renum);
     verbosity ();
   }
 // Top-down parser.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("parser phase 1");
-    check_parenthesis (TOP_NODE (&(A68 (job))));
-    if (ERROR_COUNT (&(A68 (job))) == 0) {
-      if (OPTION_BRACKETS (&(A68 (job)))) {
-        substitute_brackets (TOP_NODE (&(A68 (job))));
+    check_parenthesis (TOP_NODE (&A68_JOB));
+    if (ERROR_COUNT (&A68_JOB) == 0) {
+      if (OPTION_BRACKETS (&A68_JOB)) {
+        substitute_brackets (TOP_NODE (&A68_JOB));
       }
       A68 (symbol_table_count) = 0;
       A68_STANDENV = new_symbol_table (NO_TABLE);
       LEVEL (A68_STANDENV) = 0;
-      top_down_parser (TOP_NODE (&(A68 (job))));
+      top_down_parser (TOP_NODE (&A68_JOB));
     }
     renum = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &renum);
+    renumber_nodes (TOP_NODE (&A68_JOB), &renum);
     verbosity ();
   }
 // Standard environment builder.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("standard environ builder");
-    TABLE (TOP_NODE (&(A68 (job)))) = new_symbol_table (A68_STANDENV);
+    TABLE (TOP_NODE (&A68_JOB)) = new_symbol_table (A68_STANDENV);
     make_standard_environ ();
-    STANDENV_MOID (&(A68 (job))) = TOP_MOID (&(A68 (job)));
+    STANDENV_MOID (&A68_JOB) = TOP_MOID (&A68_JOB);
     verbosity ();
   }
 // Bottom-up parser.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("parser phase 2");
-    preliminary_symbol_table_setup (TOP_NODE (&(A68 (job))));
-    bottom_up_parser (TOP_NODE (&(A68 (job))));
+    preliminary_symbol_table_setup (TOP_NODE (&A68_JOB));
+    bottom_up_parser (TOP_NODE (&A68_JOB));
     renum = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &renum);
+    renumber_nodes (TOP_NODE (&A68_JOB), &renum);
     verbosity ();
   }
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("parser phase 3");
-    bottom_up_error_check (TOP_NODE (&(A68 (job))));
-    victal_checker (TOP_NODE (&(A68 (job))));
-    if (ERROR_COUNT (&(A68 (job))) == 0) {
-      finalise_symbol_table_setup (TOP_NODE (&(A68 (job))), 2);
-      NEST (TABLE (TOP_NODE (&(A68 (job))))) = A68 (symbol_table_count) = 3;
-      reset_symbol_table_nest_count (TOP_NODE (&(A68 (job))));
-      fill_symbol_table_outer (TOP_NODE (&(A68 (job))), TABLE (TOP_NODE (&(A68 (job)))));
-      set_nest (TOP_NODE (&(A68 (job))), NO_NODE);
-      set_proc_level (TOP_NODE (&(A68 (job))), 1);
+    bottom_up_error_check (TOP_NODE (&A68_JOB));
+    victal_checker (TOP_NODE (&A68_JOB));
+    if (ERROR_COUNT (&A68_JOB) == 0) {
+      finalise_symbol_table_setup (TOP_NODE (&A68_JOB), 2);
+      NEST (TABLE (TOP_NODE (&A68_JOB))) = A68 (symbol_table_count) = 3;
+      reset_symbol_table_nest_count (TOP_NODE (&A68_JOB));
+      fill_symbol_table_outer (TOP_NODE (&A68_JOB), TABLE (TOP_NODE (&A68_JOB)));
+      set_nest (TOP_NODE (&A68_JOB), NO_NODE);
+      set_proc_level (TOP_NODE (&A68_JOB), 1);
     }
     renum = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &renum);
+    renumber_nodes (TOP_NODE (&A68_JOB), &renum);
     verbosity ();
   }
 // Mode table builder.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("mode table builder");
-    make_moid_list (&(A68 (job)));
+    make_moid_list (&A68_JOB);
     verbosity ();
   }
-  CROSS_REFERENCE_SAFE (&(A68 (job))) = A68_TRUE;
+  CROSS_REFERENCE_SAFE (&A68_JOB) = A68_TRUE;
 // Symbol table builder.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("symbol table builder");
-    collect_taxes (TOP_NODE (&(A68 (job))));
+    collect_taxes (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 // Post parser.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("parser phase 4");
-    rearrange_goto_less_jumps (TOP_NODE (&(A68 (job))));
+    rearrange_goto_less_jumps (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 // Mode checker.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("mode checker");
-    mode_checker (TOP_NODE (&(A68 (job))));
+    mode_checker (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 // Coercion inserter.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("coercion enforcer");
-    coercion_inserter (TOP_NODE (&(A68 (job))));
-    widen_denotation (TOP_NODE (&(A68 (job))));
-    get_max_simplout_size (TOP_NODE (&(A68 (job))));
-    set_moid_sizes (TOP_MOID (&(A68 (job))));
+    coercion_inserter (TOP_NODE (&A68_JOB));
+    widen_denotation (TOP_NODE (&A68_JOB));
+    get_max_simplout_size (TOP_NODE (&A68_JOB));
+    set_moid_sizes (TOP_MOID (&A68_JOB));
     assign_offsets_table (A68_STANDENV);
-    assign_offsets (TOP_NODE (&(A68 (job))));
-    assign_offsets_packs (TOP_MOID (&(A68 (job))));
+    assign_offsets (TOP_NODE (&A68_JOB));
+    assign_offsets_packs (TOP_MOID (&A68_JOB));
     renum = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &renum);
+    renumber_nodes (TOP_NODE (&A68_JOB), &renum);
     verbosity ();
   }
 // Application checker.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("application checker");
-    mark_moids (TOP_NODE (&(A68 (job))));
-    mark_auxilliary (TOP_NODE (&(A68 (job))));
-    jumps_from_procs (TOP_NODE (&(A68 (job))));
-    warn_for_unused_tags (TOP_NODE (&(A68 (job))));
+    mark_moids (TOP_NODE (&A68_JOB));
+    mark_auxilliary (TOP_NODE (&A68_JOB));
+    jumps_from_procs (TOP_NODE (&A68_JOB));
+    warn_for_unused_tags (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 // Scope checker.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("static scope checker");
-    tie_label_to_serial (TOP_NODE (&(A68 (job))));
-    tie_label_to_unit (TOP_NODE (&(A68 (job))));
-    bind_routine_tags_to_tree (TOP_NODE (&(A68 (job))));
-    bind_format_tags_to_tree (TOP_NODE (&(A68 (job))));
-    scope_checker (TOP_NODE (&(A68 (job))));
+    tie_label_to_serial (TOP_NODE (&A68_JOB));
+    tie_label_to_unit (TOP_NODE (&A68_JOB));
+    bind_routine_tags_to_tree (TOP_NODE (&A68_JOB));
+    bind_format_tags_to_tree (TOP_NODE (&A68_JOB));
+    scope_checker (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 }

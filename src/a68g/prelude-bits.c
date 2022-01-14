@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -40,9 +40,9 @@ void stand_longlong_bits (void)
 // LONG LONG BITS in software, vintage
   a68_mode (2, "BITS", &M_LONG_LONG_BITS);
 // REF LONG LONG BITS
-  MODE (REF_LONG_LONG_BITS) = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_BITS, NO_PACK);
+  MODE (REF_LONG_LONG_BITS) = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, M_LONG_LONG_BITS, NO_PACK);
 // [] LONG LONG BITS
-  M_ROW_LONG_LONG_BITS = add_mode (&TOP_MOID (&(A68 (job))), ROW_SYMBOL, 1, NO_NODE, M_LONG_LONG_BITS, NO_PACK);
+  M_ROW_LONG_LONG_BITS = add_mode (&TOP_MOID (&A68_JOB), ROW_SYMBOL, 1, NO_NODE, M_LONG_LONG_BITS, NO_PACK);
   HAS_ROWS (M_ROW_LONG_LONG_BITS) = A68_TRUE;
   SLICE (M_ROW_LONG_LONG_BITS) = M_LONG_LONG_BITS;
 //

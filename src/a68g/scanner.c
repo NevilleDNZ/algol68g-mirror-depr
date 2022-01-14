@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -48,18 +48,18 @@
 
 static void save_state (LINE_T * ref_l, char *ref_s, char ch)
 {
-  SCAN_STATE_L (&(A68 (job))) = ref_l;
-  SCAN_STATE_S (&(A68 (job))) = ref_s;
-  SCAN_STATE_C (&(A68 (job))) = ch;
+  SCAN_STATE_L (&A68_JOB) = ref_l;
+  SCAN_STATE_S (&A68_JOB) = ref_s;
+  SCAN_STATE_C (&A68_JOB) = ch;
 }
 
 //! @brief Restore scanner state, for character look-ahead.
 
 static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 {
-  *ref_l = SCAN_STATE_L (&(A68 (job)));
-  *ref_s = SCAN_STATE_S (&(A68 (job)));
-  *ch = SCAN_STATE_C (&(A68 (job)));
+  *ref_l = SCAN_STATE_L (&A68_JOB);
+  *ref_s = SCAN_STATE_S (&A68_JOB);
+  *ch = SCAN_STATE_C (&A68_JOB);
 }
 
 // Scanner, tokenises the source code.
@@ -105,7 +105,7 @@ static void concatenate_lines (LINE_T * top)
 static BOOL_T is_bold (char *u, char *v)
 {
   unsigned len = (unsigned) strlen (v);
-  if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+  if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
     if (u[0] == '\'') {
       return (BOOL_T) (strncmp (++u, v, len) == 0 && u[len] == '\'');
     } else {
@@ -498,8 +498,8 @@ void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char *filena
   DIAGNOSTICS (z) = NO_DIAGNOSTIC;
   NEXT (z) = NO_LINE;
   PREVIOUS (z) = *ref_l;
-  if (TOP_LINE (&(A68 (job))) == NO_LINE) {
-    TOP_LINE (&(A68 (job))) = z;
+  if (TOP_LINE (&A68_JOB) == NO_LINE) {
+    TOP_LINE (&A68_JOB) = z;
   }
   if (*ref_l != NO_LINE) {
     NEXT (*ref_l) = z;
@@ -511,7 +511,7 @@ void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char *filena
 
 int get_source_size (void)
 {
-  FILE_T f = FILE_SOURCE_FD (&(A68 (job)));
+  FILE_T f = FILE_SOURCE_FD (&A68_JOB);
 // This is why WIN32 must open as "read binary".
   return (int) lseek (f, 0, SEEK_END);
 }
@@ -539,7 +539,7 @@ BOOL_T read_script_file (void)
   char filename[BUFFER_SIZE], linenum[BUFFER_SIZE];
   char ch, *fn, *line;
   char *buffer = (char *) get_temp_heap_space ((unsigned) (8 + A68_PARSER (source_file_size)));
-  FILE_T source = FILE_SOURCE_FD (&(A68 (job)));
+  FILE_T source = FILE_SOURCE_FD (&A68_JOB);
   ABEND (source == -1, ERROR_ACTION, __func__);
   buffer[0] = NULL_CHAR;
   n = 0;
@@ -593,13 +593,13 @@ BOOL_T read_source_file (void)
   LINE_T *ref_l = NO_LINE;
   int line_num = 0, k, bytes_read;
   ssize_t l;
-  FILE_T f = FILE_SOURCE_FD (&(A68 (job)));
+  FILE_T f = FILE_SOURCE_FD (&A68_JOB);
   char **prelude_start, **postlude, *buffer;
 // Prelude.
-  if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+  if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
     prelude_start = bold_prelude_start;
     postlude = bold_postlude;
-  } else if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+  } else if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
     prelude_start = quote_prelude_start;
     postlude = quote_postlude;
   } else {
@@ -634,15 +634,15 @@ BOOL_T read_source_file (void)
     if (k < A68_PARSER (source_file_size)) {
       k++;
     }
-    append_source_line (A68_PARSER (scan_buf), &ref_l, &line_num, FILE_SOURCE_NAME (&(A68 (job))));
+    append_source_line (A68_PARSER (scan_buf), &ref_l, &line_num, FILE_SOURCE_NAME (&A68_JOB));
     SCAN_ERROR (l != (ssize_t) strlen (A68_PARSER (scan_buf)), NO_LINE, NO_TEXT, ERROR_FILE_SOURCE_CTRL);
   }
 // Postlude.
   append_environ (postlude, &ref_l, &line_num, "postlude");
 // Concatenate lines.
-  concatenate_lines (TOP_LINE (&(A68 (job))));
+  concatenate_lines (TOP_LINE (&A68_JOB));
 // Include files.
-  include_files (TOP_LINE (&(A68 (job))));
+  include_files (TOP_LINE (&A68_JOB));
   return A68_TRUE;
 }
 
@@ -659,7 +659,7 @@ char next_char (LINE_T ** ref_l, char **ref_s, BOOL_T allow_typo)
   if (*ref_l == NO_LINE) {
     return STOP_CHAR;
   } else {
-    LIST (*ref_l) = (BOOL_T) (OPTION_NODEMASK (&(A68 (job))) & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+    LIST (*ref_l) = (BOOL_T) (OPTION_NODEMASK (&A68_JOB) & SOURCE_MASK ? A68_TRUE : A68_FALSE);
 // Take new line?.
     if ((*ref_s)[0] == NEWLINE_CHAR || (*ref_s)[0] == NULL_CHAR) {
       *ref_l = NEXT (*ref_l);
@@ -685,7 +685,7 @@ void get_good_char (char *ref_c, LINE_T ** ref_l, char **ref_s)
 {
   while (*ref_c != STOP_CHAR && (IS_SPACE (*ref_c) || (*ref_c == NULL_CHAR))) {
     if (*ref_l != NO_LINE) {
-      LIST (*ref_l) = (BOOL_T) (OPTION_NODEMASK (&(A68 (job))) & SOURCE_MASK ? A68_TRUE : A68_FALSE);
+      LIST (*ref_l) = (BOOL_T) (OPTION_NODEMASK (&A68_JOB) & SOURCE_MASK ? A68_TRUE : A68_FALSE);
     }
     *ref_c = next_char (ref_l, ref_s, A68_FALSE);
   }
@@ -703,7 +703,7 @@ char *pragment (int type, LINE_T ** ref_l, char **ref_c)
   int term_s_length, chars_in_buf;
   BOOL_T stop, pragmat = A68_FALSE;
 // Set terminator.
-  if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+  if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
       term_s = "CO";
     } else if (type == STYLE_II_COMMENT_SYMBOL) {
@@ -717,7 +717,7 @@ char *pragment (int type, LINE_T ** ref_l, char **ref_c)
       term_s = "PRAGMAT";
       pragmat = A68_TRUE;
     }
-  } else if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+  } else if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
     if (type == STYLE_I_COMMENT_SYMBOL) {
       term_s = "'CO'";
     } else if (type == STYLE_II_COMMENT_SYMBOL) {
@@ -739,7 +739,7 @@ char *pragment (int type, LINE_T ** ref_l, char **ref_c)
   while (stop == A68_FALSE) {
     SCAN_ERROR (c == STOP_CHAR, start_l, start_c, ERROR_UNTERMINATED_PRAGMENT);
 // A ".." or '..' delimited string in a PRAGMAT.
-    if (pragmat && (c == QUOTE_CHAR || (c == '\'' && OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING))) {
+    if (pragmat && (c == QUOTE_CHAR || (c == '\'' && OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING))) {
       char delim = c;
       BOOL_T eos = A68_FALSE;
       ADD_ONE_CHAR (c);
@@ -892,7 +892,7 @@ BOOL_T is_exp_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   char exp_syms[3];
-  if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+  if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
     exp_syms[0] = EXPONENT_CHAR;
     exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
     exp_syms[2] = NULL_CHAR;
@@ -916,7 +916,7 @@ BOOL_T is_radix_char (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   BOOL_T ret = A68_FALSE;
   save_state (*ref_l, *ref_s, *ch);
-  if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+  if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
     if (*ch == TO_UPPER (RADIX_CHAR)) {
       *ch = next_char (ref_l, ref_s, A68_TRUE);
       ret = (BOOL_T) (strchr ("0123456789ABCDEF", *ch) != NO_TEXT);
@@ -939,7 +939,7 @@ BOOL_T is_decimal_point (LINE_T ** ref_l, char **ref_s, char *ch)
   save_state (*ref_l, *ref_s, *ch);
   if (*ch == POINT_CHAR) {
     char exp_syms[3];
-    if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+    if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
       exp_syms[0] = EXPONENT_CHAR;
       exp_syms[1] = (char) TO_UPPER (EXPONENT_CHAR);
       exp_syms[2] = NULL_CHAR;
@@ -978,9 +978,9 @@ void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** 
 // In a format.
   if (in_format) {
     char *format_items;
-    if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+    if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
       format_items = "/%\\+-.abcdefghijklmnopqrstuvwxyz";
-    } else if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+    } else if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
       format_items = "/%\\+-.ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     } else {
       format_items = "/%\\+-.abcdefghijklmnopqrstuvwxyz";
@@ -1003,7 +1003,7 @@ void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** 
   }
 // Not in a format.
   if (IS_UPPER (c)) {
-    if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+    if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
 // Upper case word - bold tag.
       while (IS_UPPER (c) || c == '_') {
         (sym++)[0] = c;
@@ -1011,7 +1011,7 @@ void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** 
       }
       sym[0] = NULL_CHAR;
       *att = BOLD_TAG;
-    } else if (OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+    } else if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
       while (IS_UPPER (c) || IS_DIGIT (c) || c == '_') {
         (sym++)[0] = c;
         c = next_char (ref_l, ref_s, A68_TRUE);
@@ -1092,7 +1092,7 @@ void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** 
     } else if (is_radix_char (ref_l, ref_s, &c)) {
       (sym++)[0] = c;
       c = next_char (ref_l, ref_s, A68_TRUE);
-      if (OPTION_STROPPING (&(A68 (job))) == UPPER_STROPPING) {
+      if (OPTION_STROPPING (&A68_JOB) == UPPER_STROPPING) {
         while (IS_DIGIT (c) || strchr ("abcdef", c) != NO_TEXT) {
           (sym++)[0] = c;
           c = next_char (ref_l, ref_s, A68_TRUE);
@@ -1144,7 +1144,7 @@ void get_next_token (BOOL_T in_format, LINE_T ** ref_l, char **ref_s, LINE_T ** 
     }
     sym[0] = NULL_CHAR;
     *att = 0;
-  } else if (c == '!' && OPTION_STROPPING (&(A68 (job))) == QUOTE_STROPPING) {
+  } else if (c == '!' && OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
 // Bar, will be replaced with modern variant.
 // For this reason ! is not a MONAD with quote-stropping.
     (sym++)[0] = '|';
@@ -1384,7 +1384,7 @@ void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, 
             }
             lprt = att;
             if (!A68_PARSER (stop_scanner)) {
-              (void) set_options (OPTION_LIST (&(A68 (job))), A68_FALSE);
+              (void) set_options (OPTION_LIST (&A68_JOB), A68_FALSE);
               make_node = A68_FALSE;
             }
           }
@@ -1416,7 +1416,7 @@ void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, 
             break;
           }
         }
-        STATUS (q) = OPTION_NODEMASK (&(A68 (job)));
+        STATUS (q) = OPTION_NODEMASK (&A68_JOB);
         LINE (INFO (q)) = *start_l;
         CHAR_IN_LINE (INFO (q)) = *start_c;
         PRIO (INFO (q)) = 0;
@@ -1437,8 +1437,8 @@ void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, 
         if (*root != NO_NODE) {
           NEXT (*root) = q;
         }
-        if (TOP_NODE (&(A68 (job))) == NO_NODE) {
-          TOP_NODE (&(A68 (job))) = q;
+        if (TOP_NODE (&A68_JOB) == NO_NODE) {
+          TOP_NODE (&A68_JOB) = q;
         }
         *root = q;
         if (trailing != NO_TEXT) {
@@ -1457,9 +1457,9 @@ void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, 
           tokenise_source (root, level, A68_FALSE, l, s, start_l, start_c);
         } else if (att == OPEN_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
-        } else if (OPTION_BRACKETS (&(A68 (job))) && att == SUB_SYMBOL) {
+        } else if (OPTION_BRACKETS (&A68_JOB) && att == SUB_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
-        } else if (OPTION_BRACKETS (&(A68 (job))) && att == ACCO_SYMBOL) {
+        } else if (OPTION_BRACKETS (&A68_JOB) && att == ACCO_SYMBOL) {
           ATTRIBUTE (*root) = FORMAT_OPEN_SYMBOL;
         }
       } else if (!in_format && level > 0 && open_nested_clause (att)) {
@@ -1468,9 +1468,9 @@ void tokenise_source (NODE_T ** root, int level, BOOL_T in_format, LINE_T ** l, 
         return;
       } else if (in_format && att == CLOSE_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
-      } else if (OPTION_BRACKETS (&(A68 (job))) && in_format && att == BUS_SYMBOL) {
+      } else if (OPTION_BRACKETS (&A68_JOB) && in_format && att == BUS_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
-      } else if (OPTION_BRACKETS (&(A68 (job))) && in_format && att == OCCA_SYMBOL) {
+      } else if (OPTION_BRACKETS (&A68_JOB) && in_format && att == OCCA_SYMBOL) {
         ATTRIBUTE (*root) = FORMAT_CLOSE_SYMBOL;
       }
     }
@@ -1490,7 +1490,7 @@ BOOL_T lexical_analyser (void)
   if (A68_PARSER (max_scan_buf_length) == 0) {
     return A68_FALSE;
   }
-  if (OPTION_RUN_SCRIPT (&(A68 (job)))) {
+  if (OPTION_RUN_SCRIPT (&A68_JOB)) {
     A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unsigned) (8 + A68_PARSER (max_scan_buf_length)));
     if (!read_script_file ()) {
       return A68_FALSE;
@@ -1506,7 +1506,7 @@ BOOL_T lexical_analyser (void)
 // Start tokenising.
   A68_PARSER (read_error) = A68_FALSE;
   A68_PARSER (stop_scanner) = A68_FALSE;
-  if ((l = TOP_LINE (&(A68 (job)))) != NO_LINE) {
+  if ((l = TOP_LINE (&A68_JOB)) != NO_LINE) {
     s = STRING (l);
   }
   tokenise_source (&root, 0, A68_FALSE, &l, &s, &start_l, &start_c);

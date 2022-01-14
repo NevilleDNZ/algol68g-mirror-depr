@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -123,11 +123,11 @@ static void sigsegv_handler (int i)
   (void) i;
 // write () is asynchronous-safe and may be called here.
   write (2, "\nFatal", 1 + strlen ("\nFatal"));
-  if (FILE_INITIAL_NAME (&(A68 (job))) != NO_TEXT) {
+  if (FILE_INITIAL_NAME (&A68_JOB) != NO_TEXT) {
     write (2, ": ", 1 + strlen (": "));
-    write (2, FILE_INITIAL_NAME (&(A68 (job))), 1 + strlen (FILE_INITIAL_NAME (&(A68 (job)))));
+    write (2, FILE_INITIAL_NAME (&A68_JOB), 1 + strlen (FILE_INITIAL_NAME (&A68_JOB)));
   }
-  write (2, ": memory access violation\n", 1 + strlen ("Fatal: memory access violation\n"));
+  write (2, ": memory access violation\n", 1 + strlen (": memory access violation\n"));
   exit (EXIT_FAILURE);
   return;
 }
@@ -138,9 +138,9 @@ static void sigint_handler (int i)
 {
   (void) i;
   ABEND (signal (SIGINT, sigint_handler) == SIG_ERR, ERROR_ACTION, __func__);
-  if (!(STATUS_TEST (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK) || A68 (in_monitor))) {
-    STATUS_SET (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK);
-    genie_break (TOP_NODE (&(A68 (job))));
+  if (!(STATUS_TEST (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK) || A68 (in_monitor))) {
+    STATUS_SET (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK);
+    genie_break (TOP_NODE (&A68_JOB));
   }
 }
 
@@ -168,7 +168,7 @@ static void sigalrm_handler (int i)
 {
   (void) i;
   if (A68 (in_execution) && !A68 (in_monitor)) {
-    REAL_T _m_t = (REAL_T) OPTION_TIME_LIMIT (&(A68 (job)));
+    REAL_T _m_t = (REAL_T) OPTION_TIME_LIMIT (&A68_JOB);
     if (_m_t > 0 && (seconds () - A68 (cputime_0)) > _m_t) {
       diagnostic (A68_RUNTIME_ERROR, (NODE_T *) A68 (f_entry), ERROR_TIME_LIMIT_EXCEEDED);
       exit_genie ((NODE_T *) A68 (f_entry), A68_RUNTIME_ERROR);

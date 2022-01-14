@@ -1,3 +1,6 @@
+Version 3.0.1, January 2022
+* Several bug fixes.
+
 Version 3.0.0, December 2021
 * On platforms that support them: 64 bit INT/BITS and 128-bit LONG INT, LONG BITS and LONG REAL.
   These platforms include amd64, x86_64 and i386 with GCC.

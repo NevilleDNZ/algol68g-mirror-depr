@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -72,7 +72,7 @@ void state_license (FILE_T f)
   }
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
   WRITE (f, A68 (output_line));
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Copyright 2001-2021 %s.\n", PACKAGE_BUGREPORT) >= 0);
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Copyright 2001-2022 %s.\n", PACKAGE_BUGREPORT) >= 0);
   WRITE (f, A68 (output_line));
   PR ("");
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "This is free software covered by the GNU General Public License.\n") >= 0);
@@ -147,7 +147,7 @@ void state_version (FILE_T f)
   WRITE (f, A68 (output_line));
 #endif
 #if defined (HAVE_POSTGRESQL)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "PostgreSQL is supported.\n") >= 0);
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With PostgreSQL support\n") >= 0);
   WRITE (f, A68 (output_line));
 #endif
 #if defined (_CS_GNU_LIBC_VERSION) && defined (BUILD_UNIX)
@@ -183,7 +183,7 @@ void online_help (FILE_T f)
 
 void announce_phase (char *t)
 {
-  if (OPTION_VERBOSE (&(A68 (job)))) {
+  if (OPTION_VERBOSE (&A68_JOB)) {
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s: %s", A68 (a68_cmd_name), t) >= 0);
     io_close_tty_line ();
     WRITE (STDOUT_FILENO, A68 (output_line));
@@ -197,13 +197,13 @@ static BOOL_T strip_extension (char *ext)
   if (ext == NO_TEXT) {
     return A68_FALSE;
   }
-  int nlen = (int) strlen (FILE_SOURCE_NAME (&(A68 (job)))), xlen = (int) strlen (ext);
-  if (nlen > xlen && strcmp (&(FILE_SOURCE_NAME (&(A68 (job)))[nlen - xlen]), ext) == 0) {
+  int nlen = (int) strlen (FILE_SOURCE_NAME (&A68_JOB)), xlen = (int) strlen (ext);
+  if (nlen > xlen && strcmp (&(FILE_SOURCE_NAME (&A68_JOB)[nlen - xlen]), ext) == 0) {
     char *fn = (char *) get_heap_space ((size_t) (nlen + 1));
-    bufcpy (fn, FILE_SOURCE_NAME (&(A68 (job))), nlen);
+    bufcpy (fn, FILE_SOURCE_NAME (&A68_JOB), nlen);
     fn[nlen - xlen] = NULL_CHAR;
-    a68_free (FILE_GENERIC_NAME (&(A68 (job))));
-    FILE_GENERIC_NAME (&(A68 (job))) = new_string (fn, NO_TEXT);
+    a68_free (FILE_GENERIC_NAME (&A68_JOB));
+    FILE_GENERIC_NAME (&A68_JOB) = new_string (fn, NO_TEXT);
     a68_free (fn);
     return A68_TRUE;
   } else {
@@ -216,28 +216,28 @@ static BOOL_T strip_extension (char *ext)
 static void open_with_extensions (void)
 {
   int k;
-  FILE_SOURCE_FD (&(A68 (job))) = -1;
-  for (k = 0; k < EXTENSIONS && FILE_SOURCE_FD (&(A68 (job))) == -1; k++) {
+  FILE_SOURCE_FD (&A68_JOB) = -1;
+  for (k = 0; k < EXTENSIONS && FILE_SOURCE_FD (&A68_JOB) == -1; k++) {
     int len;
     char *fn = NULL;
     if (extensions[k] == NO_TEXT) {
-      len = (int) strlen (FILE_INITIAL_NAME (&(A68 (job)))) + 1;
+      len = (int) strlen (FILE_INITIAL_NAME (&A68_JOB)) + 1;
       fn = (char *) get_heap_space ((size_t) len);
-      bufcpy (fn, FILE_INITIAL_NAME (&(A68 (job))), len);
+      bufcpy (fn, FILE_INITIAL_NAME (&A68_JOB), len);
     } else {
-      len = (int) strlen (FILE_INITIAL_NAME (&(A68 (job)))) + (int) strlen (extensions[k]) + 1;
+      len = (int) strlen (FILE_INITIAL_NAME (&A68_JOB)) + (int) strlen (extensions[k]) + 1;
       fn = (char *) get_heap_space ((size_t) len);
-      bufcpy (fn, FILE_INITIAL_NAME (&(A68 (job))), len);
+      bufcpy (fn, FILE_INITIAL_NAME (&A68_JOB), len);
       bufcat (fn, extensions[k], len);
     }
-    FILE_SOURCE_FD (&(A68 (job))) = open (fn, O_RDONLY | O_BINARY);
-    if (FILE_SOURCE_FD (&(A68 (job))) != -1) {
+    FILE_SOURCE_FD (&A68_JOB) = open (fn, O_RDONLY | O_BINARY);
+    if (FILE_SOURCE_FD (&A68_JOB) != -1) {
       int l;
       BOOL_T cont = A68_TRUE;
-      a68_free (FILE_SOURCE_NAME (&(A68 (job))));
-      a68_free (FILE_GENERIC_NAME (&(A68 (job))));
-      FILE_SOURCE_NAME (&(A68 (job))) = new_string (fn, NO_TEXT);
-      FILE_GENERIC_NAME (&(A68 (job))) = new_string (fn, NO_TEXT);
+      a68_free (FILE_SOURCE_NAME (&A68_JOB));
+      a68_free (FILE_GENERIC_NAME (&A68_JOB));
+      FILE_SOURCE_NAME (&A68_JOB) = new_string (fn, NO_TEXT);
+      FILE_GENERIC_NAME (&A68_JOB) = new_string (fn, NO_TEXT);
       for (l = 0; l < EXTENSIONS && cont; l++) {
         if (strip_extension (extensions[l])) {
           cont = A68_FALSE;
@@ -255,7 +255,7 @@ void a68_rm (char *fn)
   struct stat path_stat;
   if (stat (fn, &path_stat) == 0) {
     if (S_ISREG (path_stat.st_mode)) {
-      ABEND (remove (fn) != 0, ERROR_ACTION, FILE_OBJECT_NAME (&(A68 (job))));
+      ABEND (remove (fn) != 0, ERROR_ACTION, FILE_OBJECT_NAME (&A68_JOB));
     }
   }
 }
@@ -269,8 +269,8 @@ static void compiler_interpreter (void)
 #if defined (BUILD_A68_COMPILER)
   BOOL_T emitted = A68_FALSE;
 #endif
-  TREE_LISTING_SAFE (&(A68 (job))) = A68_FALSE;
-  CROSS_REFERENCE_SAFE (&(A68 (job))) = A68_FALSE;
+  TREE_LISTING_SAFE (&A68_JOB) = A68_FALSE;
+  CROSS_REFERENCE_SAFE (&A68_JOB) = A68_FALSE;
   A68 (in_execution) = A68_FALSE;
   A68 (new_nodes) = 0;
   A68 (new_modes) = 0;
@@ -300,109 +300,109 @@ static void compiler_interpreter (void)
   A68_MP (mp_one_size) = -1;
   A68_MP (mp_pi_size) = -1;
 // File set-up.
-  SCAN_ERROR (FILE_INITIAL_NAME (&(A68 (job))) == NO_TEXT, NO_LINE, NO_TEXT, ERROR_NO_SOURCE_FILE);
-  FILE_BINARY_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_BINARY_WRITEMOOD (&(A68 (job))) = A68_TRUE;
-  FILE_LIBRARY_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_LIBRARY_WRITEMOOD (&(A68 (job))) = A68_TRUE;
-  FILE_LISTING_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_LISTING_WRITEMOOD (&(A68 (job))) = A68_TRUE;
-  FILE_OBJECT_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_OBJECT_WRITEMOOD (&(A68 (job))) = A68_TRUE;
-  FILE_PRETTY_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_SCRIPT_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_SCRIPT_WRITEMOOD (&(A68 (job))) = A68_FALSE;
-  FILE_SOURCE_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_SOURCE_WRITEMOOD (&(A68 (job))) = A68_FALSE;
-  FILE_DIAGS_OPENED (&(A68 (job))) = A68_FALSE;
-  FILE_DIAGS_WRITEMOOD (&(A68 (job))) = A68_TRUE;
+  SCAN_ERROR (FILE_INITIAL_NAME (&A68_JOB) == NO_TEXT, NO_LINE, NO_TEXT, ERROR_NO_SOURCE_FILE);
+  FILE_BINARY_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_BINARY_WRITEMOOD (&A68_JOB) = A68_TRUE;
+  FILE_LIBRARY_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_LIBRARY_WRITEMOOD (&A68_JOB) = A68_TRUE;
+  FILE_LISTING_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_LISTING_WRITEMOOD (&A68_JOB) = A68_TRUE;
+  FILE_OBJECT_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_OBJECT_WRITEMOOD (&A68_JOB) = A68_TRUE;
+  FILE_PRETTY_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_SCRIPT_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_SCRIPT_WRITEMOOD (&A68_JOB) = A68_FALSE;
+  FILE_SOURCE_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_SOURCE_WRITEMOOD (&A68_JOB) = A68_FALSE;
+  FILE_DIAGS_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_DIAGS_WRITEMOOD (&A68_JOB) = A68_TRUE;
 // Open the source file. 
 // Open it for binary reading for systems that require so (Win32).
 // Accept various silent extensions.
   errno = 0;
-  FILE_SOURCE_NAME (&(A68 (job))) = NO_TEXT;
-  FILE_GENERIC_NAME (&(A68 (job))) = NO_TEXT;
+  FILE_SOURCE_NAME (&A68_JOB) = NO_TEXT;
+  FILE_GENERIC_NAME (&A68_JOB) = NO_TEXT;
   open_with_extensions ();
-  if (FILE_SOURCE_NAME (&(A68 (job))) == NO_TEXT) {
+  if (FILE_SOURCE_NAME (&A68_JOB) == NO_TEXT) {
     errno = ENOENT;
     SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, ERROR_SOURCE_FILE_OPEN);
   } else {
     struct stat path_stat;
     errno = 0;
-    SCAN_ERROR (stat (FILE_SOURCE_NAME (&(A68 (job))), &path_stat) != 0, NO_LINE, NO_TEXT, ERROR_SOURCE_FILE_OPEN);
+    SCAN_ERROR (stat (FILE_SOURCE_NAME (&A68_JOB), &path_stat) != 0, NO_LINE, NO_TEXT, ERROR_SOURCE_FILE_OPEN);
     SCAN_ERROR (S_ISDIR (path_stat.st_mode), NO_LINE, NO_TEXT, ERROR_IS_DIRECTORY);
     SCAN_ERROR (!S_ISREG (path_stat.st_mode), NO_LINE, NO_TEXT, ERROR_NO_REGULAR_FILE);
   }
-  if (FILE_SOURCE_FD (&(A68 (job))) == -1) {
+  if (FILE_SOURCE_FD (&A68_JOB) == -1) {
     scan_error (NO_LINE, NO_TEXT, ERROR_SOURCE_FILE_OPEN);
   }
-  ABEND (FILE_SOURCE_NAME (&(A68 (job))) == NO_TEXT, ERROR_INTERNAL_CONSISTENCY, __func__);
-  ABEND (FILE_GENERIC_NAME (&(A68 (job))) == NO_TEXT, ERROR_INTERNAL_CONSISTENCY, __func__);
+  ABEND (FILE_SOURCE_NAME (&A68_JOB) == NO_TEXT, ERROR_INTERNAL_CONSISTENCY, __func__);
+  ABEND (FILE_GENERIC_NAME (&A68_JOB) == NO_TEXT, ERROR_INTERNAL_CONSISTENCY, __func__);
 // Isolate the path name.
-  FILE_PATH (&(A68 (job))) = new_string (FILE_GENERIC_NAME (&(A68 (job))), NO_TEXT);
+  FILE_PATH (&A68_JOB) = new_string (FILE_GENERIC_NAME (&A68_JOB), NO_TEXT);
   path_set = A68_FALSE;
-  for (k = (int) strlen (FILE_PATH (&(A68 (job)))); k >= 0 && path_set == A68_FALSE; k--) {
+  for (k = (int) strlen (FILE_PATH (&A68_JOB)); k >= 0 && path_set == A68_FALSE; k--) {
 #if defined (BUILD_WIN32)
     char delim = '\\';
 #else
     char delim = '/';
 #endif
-    if (FILE_PATH (&(A68 (job)))[k] == delim) {
-      FILE_PATH (&(A68 (job)))[k + 1] = NULL_CHAR;
+    if (FILE_PATH (&A68_JOB)[k] == delim) {
+      FILE_PATH (&A68_JOB)[k + 1] = NULL_CHAR;
       path_set = A68_TRUE;
     }
   }
   if (path_set == A68_FALSE) {
-    FILE_PATH (&(A68 (job)))[0] = NULL_CHAR;
+    FILE_PATH (&A68_JOB)[0] = NULL_CHAR;
   }
 // Object file.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&(A68 (job)))) + (int) strlen (OBJECT_EXTENSION);
-  FILE_OBJECT_NAME (&(A68 (job))) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_OBJECT_NAME (&(A68 (job))), FILE_GENERIC_NAME (&(A68 (job))), len);
-  bufcat (FILE_OBJECT_NAME (&(A68 (job))), OBJECT_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (OBJECT_EXTENSION);
+  FILE_OBJECT_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_OBJECT_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_OBJECT_NAME (&A68_JOB), OBJECT_EXTENSION, len);
 // Binary.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&(A68 (job)))) + (int) strlen (LIBRARY_EXTENSION);
-  FILE_BINARY_NAME (&(A68 (job))) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_BINARY_NAME (&(A68 (job))), FILE_GENERIC_NAME (&(A68 (job))), len);
-  bufcat (FILE_BINARY_NAME (&(A68 (job))), BINARY_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (LIBRARY_EXTENSION);
+  FILE_BINARY_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_BINARY_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_BINARY_NAME (&A68_JOB), BINARY_EXTENSION, len);
 // Library file.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&(A68 (job)))) + (int) strlen (LIBRARY_EXTENSION);
-  FILE_LIBRARY_NAME (&(A68 (job))) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_LIBRARY_NAME (&(A68 (job))), FILE_GENERIC_NAME (&(A68 (job))), len);
-  bufcat (FILE_LIBRARY_NAME (&(A68 (job))), LIBRARY_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (LIBRARY_EXTENSION);
+  FILE_LIBRARY_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_LIBRARY_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_LIBRARY_NAME (&A68_JOB), LIBRARY_EXTENSION, len);
 // Listing file.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&(A68 (job)))) + (int) strlen (LISTING_EXTENSION);
-  FILE_LISTING_NAME (&(A68 (job))) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_LISTING_NAME (&(A68 (job))), FILE_GENERIC_NAME (&(A68 (job))), len);
-  bufcat (FILE_LISTING_NAME (&(A68 (job))), LISTING_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (LISTING_EXTENSION);
+  FILE_LISTING_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_LISTING_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_LISTING_NAME (&A68_JOB), LISTING_EXTENSION, len);
 // Pretty file.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&(A68 (job)))) + (int) strlen (PRETTY_EXTENSION);
-  FILE_PRETTY_NAME (&(A68 (job))) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_PRETTY_NAME (&(A68 (job))), FILE_GENERIC_NAME (&(A68 (job))), len);
-  bufcat (FILE_PRETTY_NAME (&(A68 (job))), PRETTY_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (PRETTY_EXTENSION);
+  FILE_PRETTY_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_PRETTY_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_PRETTY_NAME (&A68_JOB), PRETTY_EXTENSION, len);
 // Script file.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&(A68 (job)))) + (int) strlen (SCRIPT_EXTENSION);
-  FILE_SCRIPT_NAME (&(A68 (job))) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_SCRIPT_NAME (&(A68 (job))), FILE_GENERIC_NAME (&(A68 (job))), len);
-  bufcat (FILE_SCRIPT_NAME (&(A68 (job))), SCRIPT_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (SCRIPT_EXTENSION);
+  FILE_SCRIPT_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_SCRIPT_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_SCRIPT_NAME (&A68_JOB), SCRIPT_EXTENSION, len);
 // Parser.
   a68_parser ();
-  if (TOP_NODE (&(A68 (job))) == NO_NODE) {
+  if (TOP_NODE (&A68_JOB) == NO_NODE) {
     errno = ECANCELED;
     ABEND (A68_TRUE, ERROR_SOURCE_FILE_EMPTY, NO_TEXT);
   }
 // Portability checker.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     announce_phase ("portability checker");
-    portcheck (TOP_NODE (&(A68 (job))));
+    portcheck (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 // Finalise syntax tree.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
+  if (ERROR_COUNT (&A68_JOB) == 0) {
     num = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &num);
-    NEST (TABLE (TOP_NODE (&(A68 (job))))) = A68 (symbol_table_count) = 3;
-    reset_symbol_table_nest_count (TOP_NODE (&(A68 (job))));
+    renumber_nodes (TOP_NODE (&A68_JOB), &num);
+    NEST (TABLE (TOP_NODE (&A68_JOB))) = A68 (symbol_table_count) = 3;
+    reset_symbol_table_nest_count (TOP_NODE (&A68_JOB));
     verbosity ();
   }
 //
@@ -410,28 +410,28 @@ static void compiler_interpreter (void)
     diagnostic (A68_WARNING, NO_NODE, WARNING_PRECISION, NO_LINE, 0, A68_MP (varying_mp_digits) * LOG_MP_RADIX);
   }
 // Compiler.
-  if (ERROR_COUNT (&(A68 (job))) == 0 && OPTION_OPT_LEVEL (&(A68 (job))) > NO_OPTIMISE) {
+  if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_OPT_LEVEL (&A68_JOB) > NO_OPTIMISE) {
     announce_phase ("optimiser (code generator)");
     num = 0;
-    renumber_nodes (TOP_NODE (&(A68 (job))), &num);
+    renumber_nodes (TOP_NODE (&A68_JOB), &num);
     A68 (node_register) = (NODE_T **) get_heap_space ((size_t) num * sizeof (NODE_T));
     ABEND (A68 (node_register) == NO_VAR, ERROR_ACTION, __func__);
-    register_nodes (TOP_NODE (&(A68 (job))));
-    FILE_OBJECT_FD (&(A68 (job))) = open (FILE_OBJECT_NAME (&(A68 (job))), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
-    ABEND (FILE_OBJECT_FD (&(A68 (job))) == -1, ERROR_ACTION, FILE_OBJECT_NAME (&(A68 (job))));
-    FILE_OBJECT_OPENED (&(A68 (job))) = A68_TRUE;
-    compiler (FILE_OBJECT_FD (&(A68 (job))));
-    ASSERT (close (FILE_OBJECT_FD (&(A68 (job)))) == 0);
-    FILE_OBJECT_OPENED (&(A68 (job))) = A68_FALSE;
+    register_nodes (TOP_NODE (&A68_JOB));
+    FILE_OBJECT_FD (&A68_JOB) = open (FILE_OBJECT_NAME (&A68_JOB), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
+    ABEND (FILE_OBJECT_FD (&A68_JOB) == -1, ERROR_ACTION, FILE_OBJECT_NAME (&A68_JOB));
+    FILE_OBJECT_OPENED (&A68_JOB) = A68_TRUE;
+    compiler (FILE_OBJECT_FD (&A68_JOB));
+    ASSERT (close (FILE_OBJECT_FD (&A68_JOB)) == 0);
+    FILE_OBJECT_OPENED (&A68_JOB) = A68_FALSE;
 #if defined (BUILD_A68_COMPILER)
     emitted = A68_TRUE;
 #endif
   }
 #if defined (BUILD_A68_COMPILER)
 // Only compile C if the A68 compiler found no errors (constant folder for instance).
-  if (ERROR_COUNT (&(A68 (job))) == 0 && OPTION_OPT_LEVEL (&(A68 (job))) > 0 && !OPTION_RUN_SCRIPT (&(A68 (job)))) {
+  if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_OPT_LEVEL (&A68_JOB) > 0 && !OPTION_RUN_SCRIPT (&A68_JOB)) {
     char cmd[BUFFER_SIZE], options[BUFFER_SIZE];
-    if (OPTION_RERUN (&(A68 (job))) == A68_FALSE) {
+    if (OPTION_RERUN (&A68_JOB) == A68_FALSE) {
       announce_phase ("optimiser (code compiler)");
       errno = 0;
 // Build shared library using gcc.
@@ -442,58 +442,58 @@ static void compiler_interpreter (void)
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
 #endif
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&(A68 (job))), FILE_OBJECT_NAME (&(A68 (job)))) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&A68_JOB), FILE_OBJECT_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", FILE_LIBRARY_NAME (&(A68 (job))), FILE_BINARY_NAME (&(A68 (job)))) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", FILE_LIBRARY_NAME (&A68_JOB), FILE_BINARY_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
-      a68_rm (FILE_BINARY_NAME (&(A68 (job))));
+      a68_rm (FILE_BINARY_NAME (&A68_JOB));
     }
     verbosity ();
   }
 #else
-  if (OPTION_OPT_LEVEL (&(A68 (job))) > 0) {
-    diagnostic (A68_WARNING | A68_FORCE_DIAGNOSTICS, TOP_NODE (&(A68 (job))), WARNING_OPTIMISATION);
+  if (OPTION_OPT_LEVEL (&A68_JOB) > 0) {
+    diagnostic (A68_WARNING | A68_FORCE_DIAGNOSTICS, TOP_NODE (&A68_JOB), WARNING_OPTIMISATION);
   }
 #endif
 // Indenter.
-  if (ERROR_COUNT (&(A68 (job))) == 0 && OPTION_PRETTY (&(A68 (job)))) {
+  if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_PRETTY (&A68_JOB)) {
     announce_phase ("indenter");
-    indenter (&(A68 (job)));
+    indenter (&A68_JOB);
     verbosity ();
   }
 // Interpreter.
-  diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_ALL_DIAGNOSTICS);
+  diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_ALL_DIAGNOSTICS);
 // Restore seed for rng.
   GetRNGstate ();
-  A68 (f_entry) = TOP_NODE (&A68 (job));
+  A68 (f_entry) = TOP_NODE (&A68_JOB);
 //
-  if (ERROR_COUNT (&(A68 (job))) == 0 && OPTION_COMPILE (&(A68 (job))) == A68_FALSE && (OPTION_CHECK_ONLY (&(A68 (job))) ? OPTION_RUN (&(A68 (job))) : A68_TRUE)) {
+  if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_COMPILE (&A68_JOB) == A68_FALSE && (OPTION_CHECK_ONLY (&A68_JOB) ? OPTION_RUN (&A68_JOB) : A68_TRUE)) {
 #if defined (BUILD_A68_COMPILER)
     void *compile_lib;
 #endif
     A68 (close_tty_on_exit) = A68_FALSE;        // Assuming no runtime errors a priori
 #if defined (BUILD_A68_COMPILER)
-    if (OPTION_RUN_SCRIPT (&(A68 (job)))) {
+    if (OPTION_RUN_SCRIPT (&A68_JOB)) {
       rewrite_script_source ();
     }
 #endif
-    if (OPTION_DEBUG (&(A68 (job)))) {
+    if (OPTION_DEBUG (&A68_JOB)) {
       state_license (STDOUT_FILENO);
     }
 #if defined (BUILD_A68_COMPILER)
-    if (OPTION_OPT_LEVEL (&(A68 (job))) > 0) {
+    if (OPTION_OPT_LEVEL (&A68_JOB) > 0) {
       char libname[BUFFER_SIZE];
       void *a68_lib;
       struct stat srcstat, objstat;
       int ret;
       announce_phase ("dynamic linker");
-      ASSERT (snprintf (libname, SNPRINTF_SIZE, "./%s", FILE_LIBRARY_NAME (&(A68 (job)))) >= 0);
+      ASSERT (snprintf (libname, SNPRINTF_SIZE, "./%s", FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
 // Check whether we are doing something rash.
-      ret = stat (FILE_SOURCE_NAME (&(A68 (job))), &srcstat);
-      ABEND (ret != 0, ERROR_ACTION, FILE_SOURCE_NAME (&(A68 (job))));
+      ret = stat (FILE_SOURCE_NAME (&A68_JOB), &srcstat);
+      ABEND (ret != 0, ERROR_ACTION, FILE_SOURCE_NAME (&A68_JOB));
       ret = stat (libname, &objstat);
       ABEND (ret != 0, ERROR_ACTION, libname);
-      if (OPTION_RERUN (&(A68 (job)))) {
+      if (OPTION_RERUN (&A68_JOB)) {
         ABEND (ST_MTIME (&srcstat) > ST_MTIME (&objstat), "library outdates source", "cannot RERUN");
       }
 // First load a68g itself so compiler code can resolve a68g symbols.
@@ -508,7 +508,7 @@ static void compiler_interpreter (void)
     announce_phase ("genie");
     genie (compile_lib);
 // Unload compiler library.
-    if (OPTION_OPT_LEVEL (&(A68 (job))) > 0) {
+    if (OPTION_OPT_LEVEL (&A68_JOB) > 0) {
       int ret = dlclose (compile_lib);
       ABEND (ret != 0, ERROR_ACTION, dlerror ());
     }
@@ -517,13 +517,13 @@ static void compiler_interpreter (void)
     genie (NO_NODE);
 #endif
 // Free heap allocated by genie.
-    genie_free (TOP_NODE (&(A68 (job))));
+    genie_free (TOP_NODE (&A68_JOB));
 // Store seed for rng.
     announce_phase ("store rng state");
     PutRNGstate ();
 // Normal end of program.
-    diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_RUNTIME_ERROR);
-    if (OPTION_DEBUG (&(A68 (job))) || OPTION_TRACE (&(A68 (job))) || OPTION_CLOCK (&(A68 (job)))) {
+    diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_RUNTIME_ERROR);
+    if (OPTION_DEBUG (&A68_JOB) || OPTION_TRACE (&A68_JOB) || OPTION_CLOCK (&A68_JOB)) {
       ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\nGenie finished in %.2f seconds\n", seconds () - A68 (cputime_0)) >= 0);
       WRITE (STDOUT_FILENO, A68 (output_line));
     }
@@ -531,62 +531,62 @@ static void compiler_interpreter (void)
   }
 // Setting up listing file.
   announce_phase ("write listing");
-  if (OPTION_MOID_LISTING (&(A68 (job))) || OPTION_TREE_LISTING (&(A68 (job))) || OPTION_SOURCE_LISTING (&(A68 (job))) || OPTION_OBJECT_LISTING (&(A68 (job))) || OPTION_STATISTICS_LISTING (&(A68 (job)))) {
-    FILE_LISTING_FD (&(A68 (job))) = open (FILE_LISTING_NAME (&(A68 (job))), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
-    ABEND (FILE_LISTING_FD (&(A68 (job))) == -1, ERROR_ACTION, __func__);
-    FILE_LISTING_OPENED (&(A68 (job))) = A68_TRUE;
+  if (OPTION_MOID_LISTING (&A68_JOB) || OPTION_TREE_LISTING (&A68_JOB) || OPTION_SOURCE_LISTING (&A68_JOB) || OPTION_OBJECT_LISTING (&A68_JOB) || OPTION_STATISTICS_LISTING (&A68_JOB)) {
+    FILE_LISTING_FD (&A68_JOB) = open (FILE_LISTING_NAME (&A68_JOB), O_WRONLY | O_CREAT | O_TRUNC, A68_PROTECTION);
+    ABEND (FILE_LISTING_FD (&A68_JOB) == -1, ERROR_ACTION, __func__);
+    FILE_LISTING_OPENED (&A68_JOB) = A68_TRUE;
   } else {
-    FILE_LISTING_OPENED (&(A68 (job))) = A68_FALSE;
+    FILE_LISTING_OPENED (&A68_JOB) = A68_FALSE;
   }
 // Write listing.
-  if (FILE_LISTING_OPENED (&(A68 (job)))) {
+  if (FILE_LISTING_OPENED (&A68_JOB)) {
     A68 (heap_is_fluid) = A68_TRUE;
     write_listing_header ();
     write_source_listing ();
     write_tree_listing ();
-    if (ERROR_COUNT (&(A68 (job))) == 0 && OPTION_OPT_LEVEL (&(A68 (job))) > 0) {
+    if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_OPT_LEVEL (&A68_JOB) > 0) {
       write_object_listing ();
     }
     write_listing ();
-    ASSERT (close (FILE_LISTING_FD (&(A68 (job)))) == 0);
-    FILE_LISTING_OPENED (&(A68 (job))) = A68_FALSE;
+    ASSERT (close (FILE_LISTING_FD (&A68_JOB)) == 0);
+    FILE_LISTING_OPENED (&A68_JOB) = A68_FALSE;
     verbosity ();
   }
 // Cleaning up the intermediate files.
 #if defined (BUILD_A68_COMPILER)
   announce_phase ("clean up intermediate files");
-  if (OPTION_OPT_LEVEL (&(A68 (job))) >= OPTIMISE_0 && OPTION_REGRESSION_TEST (&(A68 (job))) && !OPTION_KEEP (&(A68 (job)))) {
+  if (OPTION_OPT_LEVEL (&A68_JOB) >= OPTIMISE_0 && OPTION_REGRESSION_TEST (&A68_JOB) && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
-      a68_rm (FILE_OBJECT_NAME (&(A68 (job))));
+      a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
-    a68_rm (FILE_LIBRARY_NAME (&(A68 (job))));
+    a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
   }
-  if (OPTION_RUN_SCRIPT (&(A68 (job))) && !OPTION_KEEP (&(A68 (job)))) {
+  if (OPTION_RUN_SCRIPT (&A68_JOB) && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
-      a68_rm (FILE_OBJECT_NAME (&(A68 (job))));
+      a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
-    a68_rm (FILE_SOURCE_NAME (&(A68 (job))));
-    a68_rm (FILE_LIBRARY_NAME (&(A68 (job))));
-  } else if (OPTION_COMPILE (&(A68 (job)))) {
+    a68_rm (FILE_SOURCE_NAME (&A68_JOB));
+    a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
+  } else if (OPTION_COMPILE (&A68_JOB)) {
     build_script ();
-    if (!OPTION_KEEP (&(A68 (job)))) {
+    if (!OPTION_KEEP (&A68_JOB)) {
       if (emitted) {
-        a68_rm (FILE_OBJECT_NAME (&(A68 (job))));
+        a68_rm (FILE_OBJECT_NAME (&A68_JOB));
       }
-      a68_rm (FILE_LIBRARY_NAME (&(A68 (job))));
+      a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
     }
-  } else if (OPTION_OPT_LEVEL (&(A68 (job))) == OPTIMISE_0 && !OPTION_KEEP (&(A68 (job)))) {
+  } else if (OPTION_OPT_LEVEL (&A68_JOB) == OPTIMISE_0 && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
-      a68_rm (FILE_OBJECT_NAME (&(A68 (job))));
+      a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
-    a68_rm (FILE_LIBRARY_NAME (&(A68 (job))));
-  } else if (OPTION_OPT_LEVEL (&(A68 (job))) > OPTIMISE_0 && !OPTION_KEEP (&(A68 (job)))) {
+    a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
+  } else if (OPTION_OPT_LEVEL (&A68_JOB) > OPTIMISE_0 && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
-      a68_rm (FILE_OBJECT_NAME (&(A68 (job))));
+      a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
-  } else if (OPTION_RERUN (&(A68 (job))) && !OPTION_KEEP (&(A68 (job)))) {
+  } else if (OPTION_RERUN (&A68_JOB) && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
-      a68_rm (FILE_OBJECT_NAME (&(A68 (job))));
+      a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
   }
 #endif
@@ -603,9 +603,9 @@ void a68_exit (int code)
 // Close unclosed files, remove temp files.
   free_file_entries ();
 // Close the terminal.
-  if (A68 (close_tty_on_exit) || OPTION_REGRESSION_TEST (&(A68 (job)))) {
+  if (A68 (close_tty_on_exit) || OPTION_REGRESSION_TEST (&A68_JOB)) {
     io_close_tty_line ();
-  } else if (OPTION_VERBOSE (&(A68 (job)))) {
+  } else if (OPTION_VERBOSE (&A68_JOB)) {
     io_close_tty_line ();
   }
 #if defined (HAVE_CURSES)
@@ -615,24 +615,24 @@ void a68_exit (int code)
   genie_curses_end (NO_NODE);
 #endif
 // Clean up stale things.
-  free_syntax_tree (TOP_NODE (&(A68 (job))));
-  free_option_list (OPTION_LIST (&(A68 (job))));
+  free_syntax_tree (TOP_NODE (&A68_JOB));
+  free_option_list (OPTION_LIST (&A68_JOB));
   a68_free (A68 (node_register));
   a68_free (A68 (options));
 //
   discard_heap ();
 //
-  a68_free (FILE_PATH (&(A68 (job))));
-  a68_free (FILE_INITIAL_NAME (&(A68 (job))));
-  a68_free (FILE_GENERIC_NAME (&(A68 (job))));
-  a68_free (FILE_SOURCE_NAME (&(A68 (job))));
-  a68_free (FILE_LISTING_NAME (&(A68 (job))));
-  a68_free (FILE_OBJECT_NAME (&(A68 (job))));
-  a68_free (FILE_LIBRARY_NAME (&(A68 (job))));
-  a68_free (FILE_BINARY_NAME (&(A68 (job))));
-  a68_free (FILE_PRETTY_NAME (&(A68 (job))));
-  a68_free (FILE_SCRIPT_NAME (&(A68 (job))));
-  a68_free (FILE_DIAGS_NAME (&(A68 (job))));
+  a68_free (FILE_PATH (&A68_JOB));
+  a68_free (FILE_INITIAL_NAME (&A68_JOB));
+  a68_free (FILE_GENERIC_NAME (&A68_JOB));
+  a68_free (FILE_SOURCE_NAME (&A68_JOB));
+  a68_free (FILE_LISTING_NAME (&A68_JOB));
+  a68_free (FILE_OBJECT_NAME (&A68_JOB));
+  a68_free (FILE_LIBRARY_NAME (&A68_JOB));
+  a68_free (FILE_BINARY_NAME (&A68_JOB));
+  a68_free (FILE_PRETTY_NAME (&A68_JOB));
+  a68_free (FILE_SCRIPT_NAME (&A68_JOB));
+  a68_free (FILE_DIAGS_NAME (&A68_JOB));
 //
   a68_free (A68_MP (mp_one));
   a68_free (A68_MP (mp_pi));
@@ -655,7 +655,7 @@ int main (int argc, char *argv[])
   A68 (argc) = argc;
   A68 (argv) = argv;
   A68 (close_tty_on_exit) = A68_TRUE;
-  FILE_DIAGS_FD (&(A68 (job))) = -1;
+  FILE_DIAGS_FD (&A68_JOB) = -1;
 // Get command name and discard path.
   bufcpy (A68 (a68_cmd_name), argv[0], BUFFER_SIZE);
   int k;
@@ -688,12 +688,12 @@ int main (int argc, char *argv[])
   A68 (heap_is_fluid) = A68_TRUE;
   A68 (system_stack_offset) = &stack_offset;
   init_file_entries ();
-  if (!setjmp (RENDEZ_VOUS (&(A68 (job))))) {
+  if (!setjmp (RENDEZ_VOUS (&A68_JOB))) {
     init_tty ();
 // Initialise option handling.
     init_options ();
-    SOURCE_SCAN (&(A68 (job))) = 1;
-    default_options (&(A68 (job)));
+    SOURCE_SCAN (&A68_JOB) = 1;
+    default_options (&A68_JOB);
     default_mem_sizes (1);
 // Initialise core.
     A68_STACK = NO_BYTE;
@@ -701,17 +701,17 @@ int main (int argc, char *argv[])
     A68_HANDLES = NO_BYTE;
     get_stack_size ();
 // Well, let's start.
-    TOP_REFINEMENT (&(A68 (job))) = NO_REFINEMENT;
-    FILE_INITIAL_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_GENERIC_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_SOURCE_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_LISTING_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_OBJECT_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_LIBRARY_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_BINARY_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_PRETTY_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_SCRIPT_NAME (&(A68 (job))) = NO_TEXT;
-    FILE_DIAGS_NAME (&(A68 (job))) = NO_TEXT;
+    TOP_REFINEMENT (&A68_JOB) = NO_REFINEMENT;
+    FILE_INITIAL_NAME (&A68_JOB) = NO_TEXT;
+    FILE_GENERIC_NAME (&A68_JOB) = NO_TEXT;
+    FILE_SOURCE_NAME (&A68_JOB) = NO_TEXT;
+    FILE_LISTING_NAME (&A68_JOB) = NO_TEXT;
+    FILE_OBJECT_NAME (&A68_JOB) = NO_TEXT;
+    FILE_LIBRARY_NAME (&A68_JOB) = NO_TEXT;
+    FILE_BINARY_NAME (&A68_JOB) = NO_TEXT;
+    FILE_PRETTY_NAME (&A68_JOB) = NO_TEXT;
+    FILE_SCRIPT_NAME (&A68_JOB) = NO_TEXT;
+    FILE_DIAGS_NAME (&A68_JOB) = NO_TEXT;
 // Options are processed here.
     read_rc_options ();
     read_env_options ();
@@ -722,37 +722,37 @@ int main (int argc, char *argv[])
     }
     int argcc;
     for (argcc = 1; argcc < argc; argcc++) {
-      add_option_list (&(OPTION_LIST (&(A68 (job)))), argv[argcc], NO_LINE);
+      add_option_list (&(OPTION_LIST (&A68_JOB)), argv[argcc], NO_LINE);
     }
-    if (!set_options (OPTION_LIST (&(A68 (job))), A68_TRUE)) {
+    if (!set_options (OPTION_LIST (&A68_JOB), A68_TRUE)) {
       a68_exit (EXIT_FAILURE);
     }
 // State license.
-    if (OPTION_LICENSE (&(A68 (job)))) {
+    if (OPTION_LICENSE (&A68_JOB)) {
       state_license (STDOUT_FILENO);
     }
 // State version.
-    if (OPTION_VERSION (&(A68 (job)))) {
+    if (OPTION_VERSION (&A68_JOB)) {
       state_version (STDOUT_FILENO);
     }
 // Start the UI.
     init_before_tokeniser ();
 // Running a script.
 #if defined (BUILD_A68_COMPILER)
-    if (OPTION_RUN_SCRIPT (&(A68 (job)))) {
+    if (OPTION_RUN_SCRIPT (&A68_JOB)) {
       load_script ();
     }
 #endif
 // We translate the program.
-    if (FILE_INITIAL_NAME (&(A68 (job))) == NO_TEXT || strlen (FILE_INITIAL_NAME (&(A68 (job)))) == 0) {
-      SCAN_ERROR (!(OPTION_LICENSE (&(A68 (job))) || OPTION_VERSION (&(A68 (job)))), NO_LINE, NO_TEXT, ERROR_NO_SOURCE_FILE);
+    if (FILE_INITIAL_NAME (&A68_JOB) == NO_TEXT || strlen (FILE_INITIAL_NAME (&A68_JOB)) == 0) {
+      SCAN_ERROR (!(OPTION_LICENSE (&A68_JOB) || OPTION_VERSION (&A68_JOB)), NO_LINE, NO_TEXT, ERROR_NO_SOURCE_FILE);
     } else {
       compiler_interpreter ();
     }
-    a68_exit (ERROR_COUNT (&(A68 (job))) == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+    a68_exit (ERROR_COUNT (&A68_JOB) == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     return EXIT_SUCCESS;
   } else {
-    diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_ALL_DIAGNOSTICS);
+    diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_ALL_DIAGNOSTICS);
     a68_exit (EXIT_FAILURE);
     return EXIT_FAILURE;
   }

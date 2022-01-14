@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -121,7 +121,7 @@ static MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
   add_mode_to_pack (&(PACK (x)), v, NO_TEXT, NODE (v));
   absorb_series_pack (&x);
   DIM (x) = count_pack_members (PACK (x));
-  (void) register_extra_mode (&TOP_MOID (&(A68 (job))), x);
+  (void) register_extra_mode (&TOP_MOID (&A68_JOB), x);
   if (DIM (x) == 1) {
     return MOID (PACK (x));
   } else {
@@ -219,7 +219,7 @@ MOID_T *make_united_mode (MOID_T * m)
   if (DIM (u) == 1) {
     return MOID (PACK (u));
   } else {
-    return register_extra_mode (&TOP_MOID (&(A68 (job))), u);
+    return register_extra_mode (&TOP_MOID (&A68_JOB), u);
   }
 }
 
@@ -464,7 +464,7 @@ static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
     *p = t;
     p = &NEXT (t);
   }
-  (void) register_extra_mode (&TOP_MOID (&(A68 (job))), x);
+  (void) register_extra_mode (&TOP_MOID (&A68_JOB), x);
   return x;
 }
 
@@ -2573,7 +2573,7 @@ static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK
         make_soid (&z, STRONG, NO_MOID, 0);
       }
       add_to_soid_list (r, p, &z);
-    } else if (IS (p, SUB_SYMBOL) && !OPTION_BRACKETS (&(A68 (job)))) {
+    } else if (IS (p, SUB_SYMBOL) && !OPTION_BRACKETS (&A68_JOB)) {
       diagnostic (A68_SYNTAX_ERROR, p, ERROR_SYNTAX, CALL);
     }
   }
@@ -2655,8 +2655,8 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
   mode_check_argument_list_2 (NEXT (p), PACK (n), &d, &PACK (PARTIAL_LOCALE (GINFO (p))), &PACK (PARTIAL_PROC (GINFO (p))));
   DIM (PARTIAL_PROC (GINFO (p))) = count_pack_members (PACK (PARTIAL_PROC (GINFO (p))));
   DIM (PARTIAL_LOCALE (GINFO (p))) = count_pack_members (PACK (PARTIAL_LOCALE (GINFO (p))));
-  PARTIAL_PROC (GINFO (p)) = register_extra_mode (&TOP_MOID (&(A68 (job))), PARTIAL_PROC (GINFO (p)));
-  PARTIAL_LOCALE (GINFO (p)) = register_extra_mode (&TOP_MOID (&(A68 (job))), PARTIAL_LOCALE (GINFO (p)));
+  PARTIAL_PROC (GINFO (p)) = register_extra_mode (&TOP_MOID (&A68_JOB), PARTIAL_PROC (GINFO (p)));
+  PARTIAL_LOCALE (GINFO (p)) = register_extra_mode (&TOP_MOID (&A68_JOB), PARTIAL_LOCALE (GINFO (p)));
   if (DIM (MOID (&d)) != DIM (n)) {
     diagnostic (A68_ERROR, p, ERROR_ARGUMENT_NUMBER, n);
     make_soid (y, SORT (x), SUB (n), 0);
@@ -2668,7 +2668,7 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
     if (DIM (PARTIAL_PROC (GINFO (p))) == 0) {
       make_soid (y, SORT (x), SUB (n), 0);
     } else {
-      if (OPTION_PORTCHECK (&(A68 (job)))) {
+      if (OPTION_PORTCHECK (&A68_JOB)) {
         diagnostic (A68_WARNING | A68_FORCE_DIAGNOSTICS, NEXT (p), WARNING_EXTENSION);
       }
       make_soid (y, SORT (x), PARTIAL_PROC (GINFO (p)), 0);
@@ -3927,7 +3927,7 @@ void widen_denotation (NODE_T * p)
   STATUS_SET (q, OPTIMAL_MASK);\
   }
 #define WARN_WIDENING\
-  if (OPTION_PORTCHECK (&(A68 (job))) && !(STATUS_TEST (SUB (q), OPTIMAL_MASK))) {\
+  if (OPTION_PORTCHECK (&A68_JOB) && !(STATUS_TEST (SUB (q), OPTIMAL_MASK))) {\
     diagnostic (A68_WARNING | A68_FORCE_DIAGNOSTICS, q, WARNING_WIDENING_NOT_PORTABLE);\
   }
   NODE_T *q;

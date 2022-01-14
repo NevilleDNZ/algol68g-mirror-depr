@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -379,7 +379,7 @@ void scan_error (LINE_T * u, char *v, char *txt)
   } else {
     diagnostic (A68_SUPPRESS_SEVERITY, NO_NODE, txt, u, v, ERROR_UNSPECIFIED);
   }
-  longjmp (RENDEZ_VOUS (&(A68 (job))), 1);
+  longjmp (RENDEZ_VOUS (&A68_JOB), 1);
 }
 
 //! @brief Get severity text.
@@ -496,7 +496,7 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
     }
   }
   if (severity == NO_TEXT) {
-    if (FILENAME (line) != NO_TEXT && strcmp (FILE_SOURCE_NAME (&(A68 (job))), FILENAME (line)) == 0) {
+    if (FILENAME (line) != NO_TEXT && strcmp (FILE_SOURCE_NAME (&A68_JOB), FILENAME (line)) == 0) {
       ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", A68 (a68_cmd_name), (unsigned) k, b) >= 0);
     } else if (FILENAME (line) != NO_TEXT) {
       ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), FILENAME (line), (unsigned) k, b) >= 0);
@@ -505,7 +505,7 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
     }
   } else {
     bufcpy (st, get_severity (sev), SMALL_BUFFER_SIZE);
-    if (FILENAME (line) != NO_TEXT && strcmp (FILE_SOURCE_NAME (&(A68 (job))), FILENAME (line)) == 0) {
+    if (FILENAME (line) != NO_TEXT && strcmp (FILE_SOURCE_NAME (&A68_JOB), FILENAME (line)) == 0) {
       ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), st, (unsigned) k, b) >= 0);
     } else if (FILENAME (line) != NO_TEXT) {
       ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %s: %x: %s", A68 (a68_cmd_name), FILENAME (line), st, (unsigned) k, b) >= 0);
@@ -549,38 +549,38 @@ void diagnostic (STATUS_MASK_T sev, NODE_T * p, char *loc_str, ...)
     pos = va_arg (args, char *);
   }
 // No warnings?
-  if (!force && sev == A68_WARNING && OPTION_NO_WARNINGS (&(A68 (job)))) {
+  if (!force && sev == A68_WARNING && OPTION_NO_WARNINGS (&A68_JOB)) {
     va_end (args);
     return;
   }
-  if (!force && sev == A68_MATH_WARNING && OPTION_NO_WARNINGS (&(A68 (job)))) {
+  if (!force && sev == A68_MATH_WARNING && OPTION_NO_WARNINGS (&A68_JOB)) {
     va_end (args);
     return;
   }
-  if (sev == A68_WARNING && OPTION_QUIET (&(A68 (job)))) {
+  if (sev == A68_WARNING && OPTION_QUIET (&A68_JOB)) {
     va_end (args);
     return;
   }
-  if (sev == A68_MATH_WARNING && OPTION_QUIET (&(A68 (job)))) {
+  if (sev == A68_MATH_WARNING && OPTION_QUIET (&A68_JOB)) {
     va_end (args);
     return;
   }
 // Suppressed?.
   if (sev == A68_ERROR || sev == A68_SYNTAX_ERROR) {
-    if (ERROR_COUNT (&(A68 (job))) == MAX_ERRORS) {
+    if (ERROR_COUNT (&A68_JOB) == MAX_ERRORS) {
       bufcpy (b, "further diagnostics suppressed", BUFFER_SIZE);
       compose = A68_FALSE;
       sev = A68_ERROR;
-    } else if (ERROR_COUNT (&(A68 (job))) > MAX_ERRORS) {
-      ERROR_COUNT (&(A68 (job)))++;
+    } else if (ERROR_COUNT (&A68_JOB) > MAX_ERRORS) {
+      ERROR_COUNT (&A68_JOB)++;
       compose = issue = A68_FALSE;
     }
   } else if (sev == A68_WARNING || sev == A68_MATH_WARNING) {
-    if (WARNING_COUNT (&(A68 (job))) == MAX_ERRORS) {
+    if (WARNING_COUNT (&A68_JOB) == MAX_ERRORS) {
       bufcpy (b, "further diagnostics suppressed", BUFFER_SIZE);
       compose = A68_FALSE;
-    } else if (WARNING_COUNT (&(A68 (job))) > MAX_ERRORS) {
-      WARNING_COUNT (&(A68 (job)))++;
+    } else if (WARNING_COUNT (&A68_JOB) > MAX_ERRORS) {
+      WARNING_COUNT (&A68_JOB)++;
       compose = issue = A68_FALSE;
     }
   }
@@ -784,9 +784,9 @@ void diagnostic (STATUS_MASK_T sev, NODE_T * p, char *loc_str, ...)
 // Construct a diagnostic message.
   if (issue) {
     if (sev == A68_WARNING) {
-      WARNING_COUNT (&(A68 (job)))++;
+      WARNING_COUNT (&A68_JOB)++;
     } else {
-      ERROR_COUNT (&(A68 (job)))++;
+      ERROR_COUNT (&A68_JOB)++;
     }
     if (p == NO_NODE) {
       if (line == NO_LINE) {

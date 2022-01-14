@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -50,8 +50,8 @@ static BOOL_T is_refinement_terminator (NODE_T * p)
 
 void get_refinements (void)
 {
-  NODE_T *p = TOP_NODE (&(A68 (job)));
-  TOP_REFINEMENT (&(A68 (job))) = NO_REFINEMENT;
+  NODE_T *p = TOP_NODE (&A68_JOB);
+  TOP_REFINEMENT (&A68_JOB) = NO_REFINEMENT;
 // First look where the prelude ends.
   while (p != NO_NODE && IN_PRELUDE (p)) {
     FORWARD (p);
@@ -97,7 +97,7 @@ void get_refinements (void)
       FORWARD (p);
     }
 // Do we already have one by this name.
-    x = TOP_REFINEMENT (&(A68 (job)));
+    x = TOP_REFINEMENT (&A68_JOB);
     exists = A68_FALSE;
     while (x != NO_REFINEMENT && !exists) {
       if (NAME (x) == NAME (new_one)) {
@@ -108,8 +108,8 @@ void get_refinements (void)
     }
 // Straight insertion in chain.
     if (!exists) {
-      NEXT (new_one) = TOP_REFINEMENT (&(A68 (job)));
-      TOP_REFINEMENT (&(A68 (job))) = new_one;
+      NEXT (new_one) = TOP_REFINEMENT (&A68_JOB);
+      TOP_REFINEMENT (&A68_JOB) = new_one;
     }
   }
   if (p != NO_NODE && !IN_PRELUDE (p)) {
@@ -124,17 +124,17 @@ void put_refinements (void)
   REFINEMENT_T *x;
   NODE_T *p, *point;
 // If there are no refinements, there's little to do.
-  if (TOP_REFINEMENT (&(A68 (job))) == NO_REFINEMENT) {
+  if (TOP_REFINEMENT (&A68_JOB) == NO_REFINEMENT) {
     return;
   }
 // Initialisation.
-  x = TOP_REFINEMENT (&(A68 (job)));
+  x = TOP_REFINEMENT (&A68_JOB);
   while (x != NO_REFINEMENT) {
     APPLICATIONS (x) = 0;
     FORWARD (x);
   }
 // Before we introduce infinite loops, find where closing-prelude starts.
-  p = TOP_NODE (&(A68 (job)));
+  p = TOP_NODE (&A68_JOB);
   while (p != NO_NODE && IN_PRELUDE (p)) {
     FORWARD (p);
   }
@@ -144,12 +144,12 @@ void put_refinements (void)
   ABEND (p == NO_NODE, ERROR_INTERNAL_CONSISTENCY, __func__);
   point = p;
 // We need to substitute until the first point.
-  p = TOP_NODE (&(A68 (job)));
+  p = TOP_NODE (&A68_JOB);
   while (p != NO_NODE && ATTRIBUTE (p) != POINT_SYMBOL) {
     if (IS (p, IDENTIFIER)) {
 // See if we can find its definition.
       REFINEMENT_T *y = NO_REFINEMENT;
-      x = TOP_REFINEMENT (&(A68 (job)));
+      x = TOP_REFINEMENT (&A68_JOB);
       while (x != NO_REFINEMENT && y == NO_REFINEMENT) {
         if (NAME (x) == NSYMBOL (p)) {
           y = x;
@@ -199,8 +199,8 @@ void put_refinements (void)
     diagnostic (A68_SYNTAX_ERROR, p, ERROR_SYNTAX_EXPECTED, POINT_SYMBOL);
   }
 // Has the programmer done it well?.
-  if (ERROR_COUNT (&(A68 (job))) == 0) {
-    x = TOP_REFINEMENT (&(A68 (job)));
+  if (ERROR_COUNT (&A68_JOB) == 0) {
+    x = TOP_REFINEMENT (&A68_JOB);
     while (x != NO_REFINEMENT) {
       if (APPLICATIONS (x) == 0) {
         diagnostic (A68_SYNTAX_ERROR, NODE_DEFINED (x), ERROR_REFINEMENT_NOT_APPLIED);

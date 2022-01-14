@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -172,8 +172,8 @@ void exit_genie (NODE_T * p, int ret)
   }
   if (ret == A68_RUNTIME_ERROR && A68 (in_monitor)) {
     return;
-  } else if (ret == A68_RUNTIME_ERROR && OPTION_DEBUG (&(A68 (job)))) {
-    diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_RUNTIME_ERROR);
+  } else if (ret == A68_RUNTIME_ERROR && OPTION_DEBUG (&A68_JOB)) {
+    diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_RUNTIME_ERROR);
     single_step (p, (unsigned) BREAKPOINT_ERROR_MASK);
     A68 (in_execution) = A68_FALSE;
     A68 (ret_line_number) = LINE_NUMBER (p);
@@ -207,9 +207,7 @@ void genie_init_rng (void)
 {
   time_t t;
   if (time (&t) != -1) {
-    struct tm *u = localtime (&t);
-    int seed = TM_SEC (u) + 60 * (TM_MIN (u) + 60 * TM_HOUR (u));
-    init_rng ((long unsigned) seed);
+    init_rng ((unsigned) t);
   }
 }
 
@@ -341,7 +339,7 @@ void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
       UNIT (&GPROP (p)) = genie_unit;
       SOURCE (&GPROP (p)) = p;
 #if defined (BUILD_A68_COMPILER)
-      if (OPTION_OPT_LEVEL (&(A68 (job))) > 0 && COMPILE_NAME (GINFO (p)) != NO_TEXT && compile_lib != NULL) {
+      if (OPTION_OPT_LEVEL (&A68_JOB) > 0 && COMPILE_NAME (GINFO (p)) != NO_TEXT && compile_lib != NULL) {
         if (COMPILE_NAME (GINFO (p)) == last_compile_name) {
 // We copy.
           UNIT (&GPROP (p)) = last_compile_unit;
@@ -428,26 +426,26 @@ void genie (void *compile_lib)
 {
   MOID_T *m;
 // Fill in final info for modes.
-  for (m = TOP_MOID (&(A68 (job))); m != NO_MOID; FORWARD (m)) {
+  for (m = TOP_MOID (&A68_JOB); m != NO_MOID; FORWARD (m)) {
     SIZE (m) = moid_size (m);
     DIGITS (m) = moid_digits (m);
     SHORT_ID (m) = mode_attribute (m);
   }
 // Preprocessing.
   A68 (max_lex_lvl) = 0;
-//  genie_lex_levels (TOP_NODE (&(A68 (job))), 1);.
-  genie_preprocess (TOP_NODE (&(A68 (job))), &A68 (max_lex_lvl), compile_lib);
-  change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
+//  genie_lex_levels (TOP_NODE (&A68_JOB), 1);.
+  genie_preprocess (TOP_NODE (&A68_JOB), &A68 (max_lex_lvl), compile_lib);
+  change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
   A68_MON (watchpoint_expression) = NO_TEXT;
   A68 (frame_stack_limit) = A68 (frame_end) - A68 (storage_overhead);
   A68 (expr_stack_limit) = A68 (stack_end) - A68 (storage_overhead);
-  if (OPTION_REGRESSION_TEST (&(A68 (job)))) {
+  if (OPTION_REGRESSION_TEST (&A68_JOB)) {
     init_rng (1);
   } else {
     genie_init_rng ();
   }
   io_close_tty_line ();
-  if (OPTION_TRACE (&(A68 (job)))) {
+  if (OPTION_TRACE (&A68_JOB)) {
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "genie: frame stack " A68_LU "k, expression stack " A68_LU "k, heap " A68_LU "k, handles " A68_LU "k\n", A68 (frame_stack_size) / KILOBYTE, A68 (expr_stack_size) / KILOBYTE, A68 (heap_size) / KILOBYTE, A68 (handle_pool_size) / KILOBYTE) >= 0);
     WRITE (STDOUT_FILENO, A68 (output_line));
   }
@@ -459,10 +457,10 @@ void genie (void *compile_lib)
 #endif
 // Dive into the program.
   if (setjmp (A68 (genie_exit_label)) == 0) {
-    NODE_T *p = SUB (TOP_NODE (&(A68 (job))));
+    NODE_T *p = SUB (TOP_NODE (&A68_JOB));
 // If we are to stop in the monitor, set a breakpoint on the first unit.
-    if (OPTION_DEBUG (&(A68 (job)))) {
-      change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
+    if (OPTION_DEBUG (&A68_JOB)) {
+      change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_TEMPORARY_MASK, A68_TRUE);
       WRITE (STDOUT_FILENO, "Execution begins ...");
     }
     errno = 0;
@@ -482,39 +480,39 @@ void genie (void *compile_lib)
     FRAME_PARAMETERS (A68_FP) = A68_FP;
     initialise_frame (p);
     genie_init_heap (p);
-    genie_init_transput (TOP_NODE (&(A68 (job))));
+    genie_init_transput (TOP_NODE (&A68_JOB));
     A68 (cputime_0) = seconds ();
 // Here we go ...
     A68 (in_execution) = A68_TRUE;
-    A68 (f_entry) = TOP_NODE (&(A68 (job)));
+    A68 (f_entry) = TOP_NODE (&A68_JOB);
 #if defined (BUILD_UNIX)
     (void) alarm (1);
 #endif
-    if (OPTION_TRACE (&(A68 (job)))) {
-      WIS (TOP_NODE (&(A68 (job))));
+    if (OPTION_TRACE (&A68_JOB)) {
+      WIS (TOP_NODE (&A68_JOB));
     }
-    (void) genie_enclosed (TOP_NODE (&(A68 (job))));
+    (void) genie_enclosed (TOP_NODE (&A68_JOB));
   } else {
 // Here we have jumped out of the interpreter. What happened?.
-    if (OPTION_DEBUG (&(A68 (job)))) {
+    if (OPTION_DEBUG (&A68_JOB)) {
       WRITE (STDOUT_FILENO, "Execution discontinued");
     }
     if (A68 (ret_code) == A68_RERUN) {
-      diagnostics_to_terminal (TOP_LINE (&(A68 (job))), A68_RUNTIME_ERROR);
+      diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_RUNTIME_ERROR);
       genie (compile_lib);
     } else if (A68 (ret_code) == A68_RUNTIME_ERROR) {
-      if (OPTION_BACKTRACE (&(A68 (job)))) {
+      if (OPTION_BACKTRACE (&A68_JOB)) {
         int printed = 0;
         ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\nStack backtrace") >= 0);
         WRITE (STDOUT_FILENO, A68 (output_line));
         stack_dump (STDOUT_FILENO, A68_FP, 16, &printed);
         WRITE (STDOUT_FILENO, NEWLINE_STRING);
       }
-      if (FILE_LISTING_OPENED (&(A68 (job)))) {
+      if (FILE_LISTING_OPENED (&A68_JOB)) {
         int printed = 0;
         ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\nStack backtrace") >= 0);
-        WRITE (FILE_LISTING_FD (&(A68 (job))), A68 (output_line));
-        stack_dump (FILE_LISTING_FD (&(A68 (job))), A68_FP, 32, &printed);
+        WRITE (FILE_LISTING_FD (&A68_JOB), A68 (output_line));
+        stack_dump (FILE_LISTING_FD (&A68_JOB), A68_FP, 32, &printed);
       }
     }
   }
@@ -1403,7 +1401,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
       }
       EXECUTE_UNIT_TRACE (entry);
       if (A68_FP == A68_MON (finish_frame_pointer)) {
-        change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
+        change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
       }
       CLOSE_FRAME;
       STACK_DNS (p, SUB (pr_mode), A68_FP);
@@ -1413,7 +1411,7 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
       FRAME_DNS (A68_FP) = pop_fp;
       EXECUTE_UNIT_TRACE (body);
       if (A68_FP == A68_MON (finish_frame_pointer)) {
-        change_masks (TOP_NODE (&(A68 (job))), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
+        change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_TRUE);
       }
       CLOSE_FRAME;
       STACK_DNS (p, SUB (pr_mode), A68_FP);
@@ -2728,152 +2726,152 @@ static void genie_jump (NODE_T * p)
 static PROP_T genie_unit (NODE_T * p)
 {
   if (IS_COERCION (GINFO (p))) {
-    GLOBAL_PROP (&(A68 (job))) = genie_coercion (p);
+    GLOBAL_PROP (&A68_JOB) = genie_coercion (p);
   } else {
     switch (ATTRIBUTE (p)) {
     case DECLARATION_LIST:
       {
         genie_declaration (SUB (p));
-        UNIT (&GLOBAL_PROP (&(A68 (job)))) = genie_unit;
-        SOURCE (&GLOBAL_PROP (&(A68 (job)))) = p;
+        UNIT (&GLOBAL_PROP (&A68_JOB)) = genie_unit;
+        SOURCE (&GLOBAL_PROP (&A68_JOB)) = p;
         break;
       }
     case UNIT:
       {
-        EXECUTE_UNIT_2 (SUB (p), GLOBAL_PROP (&(A68 (job))));
+        EXECUTE_UNIT_2 (SUB (p), GLOBAL_PROP (&A68_JOB));
         break;
       }
     case TERTIARY:
     case SECONDARY:
     case PRIMARY:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_unit (SUB (p));
+        GLOBAL_PROP (&A68_JOB) = genie_unit (SUB (p));
         break;
       }
 // Ex primary.
     case ENCLOSED_CLAUSE:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_enclosed ((volatile NODE_T *) p);
+        GLOBAL_PROP (&A68_JOB) = genie_enclosed ((volatile NODE_T *) p);
         break;
       }
     case IDENTIFIER:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_identifier (p);
+        GLOBAL_PROP (&A68_JOB) = genie_identifier (p);
         break;
       }
     case CALL:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_call (p);
+        GLOBAL_PROP (&A68_JOB) = genie_call (p);
         break;
       }
     case SLICE:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_slice (p);
+        GLOBAL_PROP (&A68_JOB) = genie_slice (p);
         break;
       }
     case DENOTATION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_denotation (p);
+        GLOBAL_PROP (&A68_JOB) = genie_denotation (p);
         break;
       }
     case CAST:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_cast (p);
+        GLOBAL_PROP (&A68_JOB) = genie_cast (p);
         break;
       }
     case FORMAT_TEXT:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_format_text (p);
+        GLOBAL_PROP (&A68_JOB) = genie_format_text (p);
         break;
       }
 // Ex secondary.
     case GENERATOR:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_generator (p);
+        GLOBAL_PROP (&A68_JOB) = genie_generator (p);
         break;
       }
     case SELECTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_selection (p);
+        GLOBAL_PROP (&A68_JOB) = genie_selection (p);
         break;
       }
 // Ex tertiary.
     case FORMULA:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_formula (p);
+        GLOBAL_PROP (&A68_JOB) = genie_formula (p);
         break;
       }
     case MONADIC_FORMULA:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_monadic (p);
+        GLOBAL_PROP (&A68_JOB) = genie_monadic (p);
         break;
       }
     case NIHIL:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_nihil (p);
+        GLOBAL_PROP (&A68_JOB) = genie_nihil (p);
         break;
       }
     case DIAGONAL_FUNCTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_diagonal_function (p);
+        GLOBAL_PROP (&A68_JOB) = genie_diagonal_function (p);
         break;
       }
     case TRANSPOSE_FUNCTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_transpose_function (p);
+        GLOBAL_PROP (&A68_JOB) = genie_transpose_function (p);
         break;
       }
     case ROW_FUNCTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_row_function (p);
+        GLOBAL_PROP (&A68_JOB) = genie_row_function (p);
         break;
       }
     case COLUMN_FUNCTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_column_function (p);
+        GLOBAL_PROP (&A68_JOB) = genie_column_function (p);
         break;
       }
 // Ex unit.
     case ASSIGNATION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_assignation (p);
+        GLOBAL_PROP (&A68_JOB) = genie_assignation (p);
         break;
       }
     case IDENTITY_RELATION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_identity_relation (p);
+        GLOBAL_PROP (&A68_JOB) = genie_identity_relation (p);
         break;
       }
     case ROUTINE_TEXT:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_routine_text (p);
+        GLOBAL_PROP (&A68_JOB) = genie_routine_text (p);
         break;
       }
     case SKIP:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_skip (p);
+        GLOBAL_PROP (&A68_JOB) = genie_skip (p);
         break;
       }
     case JUMP:
       {
-        UNIT (&GLOBAL_PROP (&(A68 (job)))) = genie_unit;
-        SOURCE (&GLOBAL_PROP (&(A68 (job)))) = p;
+        UNIT (&GLOBAL_PROP (&A68_JOB)) = genie_unit;
+        SOURCE (&GLOBAL_PROP (&A68_JOB)) = p;
         genie_jump (p);
         break;
       }
     case AND_FUNCTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_and_function (p);
+        GLOBAL_PROP (&A68_JOB) = genie_and_function (p);
         break;
       }
     case OR_FUNCTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_or_function (p);
+        GLOBAL_PROP (&A68_JOB) = genie_or_function (p);
         break;
       }
     case ASSERTION:
       {
-        GLOBAL_PROP (&(A68 (job))) = genie_assertion (p);
+        GLOBAL_PROP (&A68_JOB) = genie_assertion (p);
         break;
       }
     case CODE_CLAUSE:
@@ -2884,7 +2882,7 @@ static PROP_T genie_unit (NODE_T * p)
       }
     }
   }
-  return GPROP (p) = GLOBAL_PROP (&(A68 (job)));
+  return GPROP (p) = GLOBAL_PROP (&A68_JOB);
 }
 
 //! @brief Execution of serial clause without labels.

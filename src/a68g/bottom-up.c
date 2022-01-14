@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -92,7 +92,7 @@ void pad_node (NODE_T * p, int a)
 
 void a68_extension (NODE_T * p)
 {
-  if (OPTION_PORTCHECK (&(A68 (job)))) {
+  if (OPTION_PORTCHECK (&A68_JOB)) {
     diagnostic (A68_WARNING | A68_FORCE_DIAGNOSTICS, p, WARNING_EXTENSION);
   } else {
     diagnostic (A68_WARNING, p, WARNING_EXTENSION);
@@ -166,7 +166,7 @@ void reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
     }
   }
 // Print parser reductions.
-  if (head != NO_NODE && OPTION_REDUCTIONS (&(A68 (job))) && LINE_NUMBER (head) > 0) {
+  if (head != NO_NODE && OPTION_REDUCTIONS (&A68_JOB) && LINE_NUMBER (head) > 0) {
     NODE_T *q;
     int count = 0;
     A68_PARSER (reductions)++;
@@ -229,7 +229,7 @@ void bottom_up_parser (NODE_T * p)
   if (p != NO_NODE) {
     if (!setjmp (A68_PARSER (bottom_up_crash_exit))) {
       NODE_T *q;
-      int error_count_0 = ERROR_COUNT (&(A68 (job)));
+      int error_count_0 = ERROR_COUNT (&A68_JOB);
       ignore_superfluous_semicolons (p);
 // A program is "label sequence; particular program".
       extract_labels (p, SERIAL_CLAUSE);
@@ -265,7 +265,7 @@ void bottom_up_parser (NODE_T * p)
       reduce (q, NO_NOTE, NO_TICK, PARTICULAR_PROGRAM, LABEL, ENCLOSED_CLAUSE, STOP);
       reduce (q, NO_NOTE, NO_TICK, PARTICULAR_PROGRAM, ENCLOSED_CLAUSE, STOP);
       if (SUB (p) == NO_NODE || NEXT (p) != NO_NODE) {
-        recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((ERROR_COUNT (&(A68 (job))) - error_count_0) > MAX_ERRORS));
+        recover_from_error (p, PARTICULAR_PROGRAM, (BOOL_T) ((ERROR_COUNT (&A68_JOB) - error_count_0) > MAX_ERRORS));
       }
     }
   }
@@ -296,7 +296,7 @@ void reduce_branch (NODE_T * q, int expect)
 // as the parser can repair some faults. This gives less spurious diagnostics.
   if (q != NO_NODE && SUB (q) != NO_NODE) {
     NODE_T *p = SUB (q), *u = NO_NODE;
-    int error_count_0 = ERROR_COUNT (&(A68 (job))), error_count_02;
+    int error_count_0 = ERROR_COUNT (&A68_JOB), error_count_02;
     BOOL_T declarer_pack = A68_FALSE, no_error;
     switch (expect) {
     case STRUCTURE_PACK:
@@ -317,9 +317,9 @@ void reduce_branch (NODE_T * q, int expect)
       extract_priorities (p);
       extract_operators (p);
     }
-    error_count_02 = ERROR_COUNT (&(A68 (job)));
+    error_count_02 = ERROR_COUNT (&A68_JOB);
     elaborate_bold_tags (p);
-    if ((ERROR_COUNT (&(A68 (job))) - error_count_02) > 0) {
+    if ((ERROR_COUNT (&A68_JOB) - error_count_02) > 0) {
       longjmp (A68_PARSER (bottom_up_crash_exit), 1);
     }
 // Now we can reduce declarers, knowing which bold tags are indicants.
@@ -328,9 +328,9 @@ void reduce_branch (NODE_T * q, int expect)
     if (expect == CODE_CLAUSE) {
       reduce_code_clause (p);
     } else if (declarer_pack == A68_FALSE) {
-      error_count_02 = ERROR_COUNT (&(A68 (job)));
+      error_count_02 = ERROR_COUNT (&A68_JOB);
       extract_declarations (p);
-      if ((ERROR_COUNT (&(A68 (job))) - error_count_02) > 0) {
+      if ((ERROR_COUNT (&A68_JOB) - error_count_02) > 0) {
         longjmp (A68_PARSER (bottom_up_crash_exit), 1);
       }
       extract_labels (p, expect);
@@ -417,7 +417,7 @@ void reduce_branch (NODE_T * q, int expect)
     }
 // Do something if parsing failed.
     if (SUB (p) == NO_NODE || NEXT (p) != NO_NODE) {
-      recover_from_error (p, expect, (BOOL_T) ((ERROR_COUNT (&(A68 (job))) - error_count_0) > MAX_ERRORS));
+      recover_from_error (p, expect, (BOOL_T) ((ERROR_COUNT (&A68_JOB) - error_count_0) > MAX_ERRORS));
       no_error = A68_FALSE;
     } else {
       no_error = A68_TRUE;
@@ -1865,13 +1865,13 @@ void recover_from_error (NODE_T * p, int expect, BOOL_T suppress)
     NODE_T *w = p;
     char *seq = phrase_to_text (p, &w);
     if (strlen (seq) == 0) {
-      if (ERROR_COUNT (&(A68 (job))) == 0) {
+      if (ERROR_COUNT (&A68_JOB) == 0) {
         diagnostic (A68_SYNTAX_ERROR, w, ERROR_SYNTAX_EXPECTED, expect);
       }
     } else {
       diagnostic (A68_SYNTAX_ERROR, w, ERROR_INVALID_SEQUENCE, seq, expect);
     }
-    if (ERROR_COUNT (&(A68 (job))) >= MAX_ERRORS) {
+    if (ERROR_COUNT (&A68_JOB) >= MAX_ERRORS) {
       longjmp (A68_PARSER (bottom_up_crash_exit), 1);
     }
   }

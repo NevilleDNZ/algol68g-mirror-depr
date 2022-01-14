@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -70,7 +70,7 @@ void read_rc_options (void)
       }
     }
     ASSERT (fclose (f) == 0);
-    (void) set_options (OPTION_LIST (&(A68 (job))), A68_FALSE);
+    (void) set_options (OPTION_LIST (&A68_JOB), A68_FALSE);
   } else {
     errno = 0;
   }
@@ -82,7 +82,7 @@ void read_env_options (void)
 {
   if (getenv ("A68G_OPTIONS") != NULL) {
     isolate_options (getenv ("A68G_OPTIONS"), NO_LINE);
-    (void) set_options (OPTION_LIST (&(A68 (job))), A68_FALSE);
+    (void) set_options (OPTION_LIST (&A68_JOB), A68_FALSE);
     errno = 0;
   }
 }
@@ -133,7 +133,7 @@ void isolate_options (char *p, LINE_T * line)
         }
       }
 // 'q' points to first significant char in item, and 'p' points after item.
-      add_option_list (&(OPTION_LIST (&(A68 (job)))), q, line);
+      add_option_list (&(OPTION_LIST (&A68_JOB)), q, line);
     }
   }
 }
@@ -210,7 +210,7 @@ void add_option_list (OPTION_LIST_T ** l, char *str, LINE_T * line)
 {
   if (*l == NO_OPTION_LIST) {
     *l = (OPTION_LIST_T *) get_heap_space ((size_t) SIZE_ALIGNED (OPTION_LIST_T));
-    SCAN (*l) = SOURCE_SCAN (&(A68 (job)));
+    SCAN (*l) = SOURCE_SCAN (&A68_JOB);
     STR (*l) = new_string (str, NO_TEXT);
     PROCESSED (*l) = A68_FALSE;
     LINE (*l) = line;
@@ -236,7 +236,7 @@ void free_option_list (OPTION_LIST_T * l)
 void init_options (void)
 {
   A68 (options) = (OPTIONS_T *) a68_alloc ((size_t) SIZE_ALIGNED (OPTIONS_T), __func__, __LINE__);
-  OPTION_LIST (&(A68 (job))) = NO_OPTION_LIST;
+  OPTION_LIST (&A68_JOB) = NO_OPTION_LIST;
 }
 
 //! @brief Test equality of p and q, upper case letters in q are mandatory.
@@ -244,7 +244,7 @@ void init_options (void)
 static BOOL_T eq (char *p, char *q)
 {
 // Upper case letters in 'q' are mandatory, lower case must match.
-  if (OPTION_PRAGMAT_SEMA (&(A68 (job)))) {
+  if (OPTION_PRAGMAT_SEMA (&A68_JOB)) {
     return match_string (p, q, '=');
   } else {
     return A68_FALSE;
@@ -256,7 +256,7 @@ static BOOL_T eq (char *p, char *q)
 void prune_echoes (OPTION_LIST_T * i)
 {
   while (i != NO_OPTION_LIST) {
-    if (SCAN (i) == SOURCE_SCAN (&(A68 (job)))) {
+    if (SCAN (i) == SOURCE_SCAN (&A68_JOB)) {
       char *p = strip_sign (STR (i));
 // ECHO echoes a string.
       if (eq (p, "ECHO")) {
@@ -406,7 +406,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (!minus_sign && cmd_line) {
 // Item without '-'s is a filename.
           if (!name_set) {
-            FILE_INITIAL_NAME (&(A68 (job))) = new_string (p, NO_TEXT);
+            FILE_INITIAL_NAME (&A68_JOB) = new_string (p, NO_TEXT);
             name_set = A68_TRUE;
           } else {
             option_error (NO_LINE, start_c, "multiple source file names at");
@@ -471,7 +471,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&(A68 (job))) = new_string (STR (i), NO_TEXT);
+              FILE_INITIAL_NAME (&A68_JOB) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -586,7 +586,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           FORWARD (i);
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&(A68 (job))) = new_string (STR (i), NO_TEXT);
+              FILE_INITIAL_NAME (&A68_JOB) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -657,7 +657,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
                 fprintf (f, "(print (((%s), new line)))\n", STR (i));
               }
               ASSERT (fclose (f) == 0);
-              FILE_INITIAL_NAME (&(A68 (job))) = new_string (new_name, NO_TEXT);
+              FILE_INITIAL_NAME (&A68_JOB) = new_string (new_name, NO_TEXT);
             } else {
               option_error (start_l, start_c, "unit required by");
             }
@@ -702,46 +702,46 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 // COMPILE and NOCOMPILE switch on/off compilation.
         else if (eq (p, "Compile")) {
 #if defined (BUILD_LINUX)
-          OPTION_COMPILE (&(A68 (job))) = A68_TRUE;
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_TRUE;
-          if (OPTION_OPT_LEVEL (&(A68 (job))) < OPTIMISE_1) {
-            OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_1;
+          OPTION_COMPILE (&A68_JOB) = A68_TRUE;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_TRUE;
+          if (OPTION_OPT_LEVEL (&A68_JOB) < OPTIMISE_1) {
+            OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_1;
           }
-          OPTION_RUN_SCRIPT (&(A68 (job))) = A68_FALSE;
+          OPTION_RUN_SCRIPT (&A68_JOB) = A68_FALSE;
 #else
           option_error (start_l, start_c, "linux-only option");
 #endif
         } else if (eq (p, "NOCompile") || eq (p, "NO-Compile")) {
-          OPTION_COMPILE (&(A68 (job))) = A68_FALSE;
-          OPTION_RUN_SCRIPT (&(A68 (job))) = A68_FALSE;
+          OPTION_COMPILE (&A68_JOB) = A68_FALSE;
+          OPTION_RUN_SCRIPT (&A68_JOB) = A68_FALSE;
         }
 // OPTIMISE and NOOPTIMISE switch on/off optimisation.
         else if (eq (p, "NOOptimize") || eq (p, "NO-Optimize")) {
-          OPTION_OPT_LEVEL (&(A68 (job))) = NO_OPTIMISE;
+          OPTION_OPT_LEVEL (&A68_JOB) = NO_OPTIMISE;
         } else if (eq (p, "O0")) {
-          OPTION_OPT_LEVEL (&(A68 (job))) = NO_OPTIMISE;
+          OPTION_OPT_LEVEL (&A68_JOB) = NO_OPTIMISE;
         } else if (eq (p, "OG")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_TRUE;
-          OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_0;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_TRUE;
+          OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_0;
         } else if (eq (p, "OPTimise") || eq (p, "OPTimize")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_TRUE;
-          OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_1;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_TRUE;
+          OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_1;
         } else if (eq (p, "O") || eq (p, "O1")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_TRUE;
-          OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_1;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_TRUE;
+          OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_1;
         } else if (eq (p, "O2")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_FALSE;
-          OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_2;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_FALSE;
+          OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_2;
         } else if (eq (p, "O3")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_FALSE;
-          OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_3;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_FALSE;
+          OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_3;
         } else if (eq (p, "Ofast")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_FALSE;
-          OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_FAST;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_FALSE;
+          OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_FAST;
         }
 // ERROR-CHECK generates (some) runtime checks for O2, O3, Ofast.
         else if (eq (p, "ERRor-check")) {
-          OPTION_COMPILE_CHECK (&(A68 (job))) = A68_TRUE;
+          OPTION_COMPILE_CHECK (&A68_JOB) = A68_TRUE;
         }
 // RUN-SCRIPT runs a compiled .sh script.
         else if (eq (p, "RUN-SCRIPT")) {
@@ -749,7 +749,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           FORWARD (i);
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&(A68 (job))) = new_string (STR (i), NO_TEXT);
+              FILE_INITIAL_NAME (&A68_JOB) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -758,8 +758,8 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, "missing argument in");
           }
           skip = A68_TRUE;
-          OPTION_RUN_SCRIPT (&(A68 (job))) = A68_TRUE;
-          OPTION_COMPILE (&(A68 (job))) = A68_FALSE;
+          OPTION_RUN_SCRIPT (&A68_JOB) = A68_TRUE;
+          OPTION_COMPILE (&A68_JOB) = A68_FALSE;
 #else
           option_error (start_l, start_c, "linux-only option");
 #endif
@@ -770,7 +770,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           FORWARD (i);
           if (i != NO_OPTION_LIST) {
             if (!name_set) {
-              FILE_INITIAL_NAME (&(A68 (job))) = new_string (STR (i), NO_TEXT);
+              FILE_INITIAL_NAME (&A68_JOB) = new_string (STR (i), NO_TEXT);
               name_set = A68_TRUE;
             } else {
               option_error (start_l, start_c, "multiple source file names at");
@@ -779,238 +779,238 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
             option_error (start_l, start_c, "missing argument in");
           }
           skip = A68_TRUE;
-          OPTION_RUN_SCRIPT (&(A68 (job))) = A68_TRUE;
-          OPTION_STROPPING (&(A68 (job))) = QUOTE_STROPPING;
-          OPTION_COMPILE (&(A68 (job))) = A68_FALSE;
+          OPTION_RUN_SCRIPT (&A68_JOB) = A68_TRUE;
+          OPTION_STROPPING (&A68_JOB) = QUOTE_STROPPING;
+          OPTION_COMPILE (&A68_JOB) = A68_FALSE;
 #else
           option_error (start_l, start_c, "linux-only option");
 #endif
         }
 // RERUN re-uses an existing .so file.
         else if (eq (p, "RERUN")) {
-          OPTION_COMPILE (&(A68 (job))) = A68_FALSE;
-          OPTION_RERUN (&(A68 (job))) = A68_TRUE;
-          if (OPTION_OPT_LEVEL (&(A68 (job))) < OPTIMISE_1) {
-            OPTION_OPT_LEVEL (&(A68 (job))) = OPTIMISE_1;
+          OPTION_COMPILE (&A68_JOB) = A68_FALSE;
+          OPTION_RERUN (&A68_JOB) = A68_TRUE;
+          if (OPTION_OPT_LEVEL (&A68_JOB) < OPTIMISE_1) {
+            OPTION_OPT_LEVEL (&A68_JOB) = OPTIMISE_1;
           }
         }
 // KEEP and NOKEEP switch off/on object file deletion.
         else if (eq (p, "KEEP")) {
-          OPTION_KEEP (&(A68 (job))) = A68_TRUE;
+          OPTION_KEEP (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "NOKEEP")) {
-          OPTION_KEEP (&(A68 (job))) = A68_FALSE;
+          OPTION_KEEP (&A68_JOB) = A68_FALSE;
         } else if (eq (p, "NO-KEEP")) {
-          OPTION_KEEP (&(A68 (job))) = A68_FALSE;
+          OPTION_KEEP (&A68_JOB) = A68_FALSE;
         }
 // BRACKETS extends Algol 68 syntax for brackets.
         else if (eq (p, "BRackets")) {
-          OPTION_BRACKETS (&(A68 (job))) = A68_TRUE;
+          OPTION_BRACKETS (&A68_JOB) = A68_TRUE;
         }
 // PRETTY and INDENT perform basic pretty printing.
 // This is meant for synthetic code.
         else if (eq (p, "PRETty-print")) {
-          OPTION_PRETTY (&(A68 (job))) = A68_TRUE;
-          OPTION_CHECK_ONLY (&(A68 (job))) = A68_TRUE;
+          OPTION_PRETTY (&A68_JOB) = A68_TRUE;
+          OPTION_CHECK_ONLY (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "INDENT")) {
-          OPTION_PRETTY (&(A68 (job))) = A68_TRUE;
-          OPTION_CHECK_ONLY (&(A68 (job))) = A68_TRUE;
+          OPTION_PRETTY (&A68_JOB) = A68_TRUE;
+          OPTION_CHECK_ONLY (&A68_JOB) = A68_TRUE;
         }
 // FOLD performs constant folding in basic lay-out formatting..
         else if (eq (p, "FOLD")) {
-          OPTION_INDENT (&(A68 (job))) = A68_TRUE;
-          OPTION_FOLD (&(A68 (job))) = A68_TRUE;
-          OPTION_CHECK_ONLY (&(A68 (job))) = A68_TRUE;
+          OPTION_INDENT (&A68_JOB) = A68_TRUE;
+          OPTION_FOLD (&A68_JOB) = A68_TRUE;
+          OPTION_CHECK_ONLY (&A68_JOB) = A68_TRUE;
         }
 // REDUCTIONS gives parser reductions.
         else if (eq (p, "REDuctions")) {
-          OPTION_REDUCTIONS (&(A68 (job))) = A68_TRUE;
+          OPTION_REDUCTIONS (&A68_JOB) = A68_TRUE;
         }
 // QUOTESTROPPING sets stropping to quote stropping.
         else if (eq (p, "QUOTEstropping")) {
-          OPTION_STROPPING (&(A68 (job))) = QUOTE_STROPPING;
+          OPTION_STROPPING (&A68_JOB) = QUOTE_STROPPING;
         } else if (eq (p, "QUOTE-stropping")) {
-          OPTION_STROPPING (&(A68 (job))) = QUOTE_STROPPING;
+          OPTION_STROPPING (&A68_JOB) = QUOTE_STROPPING;
         }
 // UPPERSTROPPING sets stropping to upper stropping, which is nowadays the expected default.
         else if (eq (p, "UPPERstropping")) {
-          OPTION_STROPPING (&(A68 (job))) = UPPER_STROPPING;
+          OPTION_STROPPING (&A68_JOB) = UPPER_STROPPING;
         } else if (eq (p, "UPPER-stropping")) {
-          OPTION_STROPPING (&(A68 (job))) = UPPER_STROPPING;
+          OPTION_STROPPING (&A68_JOB) = UPPER_STROPPING;
         }
 // CHECK and NORUN just check for syntax.
         else if (eq (p, "CHeck") || eq (p, "NORun") || eq (p, "NO-Run")) {
-          OPTION_CHECK_ONLY (&(A68 (job))) = A68_TRUE;
+          OPTION_CHECK_ONLY (&A68_JOB) = A68_TRUE;
         }
 // CLOCK times program execution.
         else if (eq (p, "CLock")) {
-          OPTION_CLOCK (&(A68 (job))) = A68_TRUE;
+          OPTION_CLOCK (&A68_JOB) = A68_TRUE;
         }
 // RUN overrides NORUN.
         else if (eq (p, "RUN")) {
-          OPTION_RUN (&(A68 (job))) = A68_TRUE;
+          OPTION_RUN (&A68_JOB) = A68_TRUE;
         }
 // MONITOR or DEBUG invokes the debugger at runtime errors.
         else if (eq (p, "MONitor") || eq (p, "DEBUG")) {
-          OPTION_DEBUG (&(A68 (job))) = A68_TRUE;
+          OPTION_DEBUG (&A68_JOB) = A68_TRUE;
         }
 // REGRESSION is an option that sets preferences when running the test suite - undocumented option.
         else if (eq (p, "REGRESSION")) {
-          OPTION_NO_WARNINGS (&(A68 (job))) = A68_FALSE;
-          OPTION_PORTCHECK (&(A68 (job))) = A68_TRUE;
-          OPTION_REGRESSION_TEST (&(A68 (job))) = A68_TRUE;
-          OPTION_TIME_LIMIT (&(A68 (job))) = 300;
-          OPTION_KEEP (&(A68 (job))) = A68_TRUE;
+          OPTION_NO_WARNINGS (&A68_JOB) = A68_FALSE;
+          OPTION_PORTCHECK (&A68_JOB) = A68_TRUE;
+          OPTION_REGRESSION_TEST (&A68_JOB) = A68_TRUE;
+          OPTION_TIME_LIMIT (&A68_JOB) = 300;
+          OPTION_KEEP (&A68_JOB) = A68_TRUE;
           A68 (term_width) = MAX_TERM_WIDTH;
         }
 // LICense states the license
         else if (eq (p, "LICense")) {
-          OPTION_LICENSE (&(A68 (job))) = A68_TRUE;
+          OPTION_LICENSE (&A68_JOB) = A68_TRUE;
         }
 // NOWARNINGS switches unsuppressible warnings off.
         else if (eq (p, "NOWarnings")) {
-          OPTION_NO_WARNINGS (&(A68 (job))) = A68_TRUE;
+          OPTION_NO_WARNINGS (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "NO-Warnings")) {
-          OPTION_NO_WARNINGS (&(A68 (job))) = A68_TRUE;
+          OPTION_NO_WARNINGS (&A68_JOB) = A68_TRUE;
         }
 // QUIET switches all warnings off.
         else if (eq (p, "Quiet")) {
-          OPTION_QUIET (&(A68 (job))) = A68_TRUE;
+          OPTION_QUIET (&A68_JOB) = A68_TRUE;
         }
 // WARNINGS switches warnings on.
         else if (eq (p, "Warnings")) {
-          OPTION_NO_WARNINGS (&(A68 (job))) = A68_FALSE;
+          OPTION_NO_WARNINGS (&A68_JOB) = A68_FALSE;
         }
 // NOPORTCHECK switches portcheck off.
         else if (eq (p, "NOPORTcheck")) {
-          OPTION_PORTCHECK (&(A68 (job))) = A68_FALSE;
+          OPTION_PORTCHECK (&A68_JOB) = A68_FALSE;
         } else if (eq (p, "NO-PORTcheck")) {
-          OPTION_PORTCHECK (&(A68 (job))) = A68_FALSE;
+          OPTION_PORTCHECK (&A68_JOB) = A68_FALSE;
         }
 // PORTCHECK switches portcheck on.
         else if (eq (p, "PORTcheck")) {
-          OPTION_PORTCHECK (&(A68 (job))) = A68_TRUE;
+          OPTION_PORTCHECK (&A68_JOB) = A68_TRUE;
         }
 // PEDANTIC switches portcheck and warnings on.
         else if (eq (p, "PEDANTIC")) {
-          OPTION_PORTCHECK (&(A68 (job))) = A68_TRUE;
-          OPTION_NO_WARNINGS (&(A68 (job))) = A68_FALSE;
+          OPTION_PORTCHECK (&A68_JOB) = A68_TRUE;
+          OPTION_NO_WARNINGS (&A68_JOB) = A68_FALSE;
         }
 // PRAGMATS and NOPRAGMATS switch on/off pragmat processing.
         else if (eq (p, "PRagmats")) {
-          OPTION_PRAGMAT_SEMA (&(A68 (job))) = A68_TRUE;
+          OPTION_PRAGMAT_SEMA (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "NOPRagmats")) {
-          OPTION_PRAGMAT_SEMA (&(A68 (job))) = A68_FALSE;
+          OPTION_PRAGMAT_SEMA (&A68_JOB) = A68_FALSE;
         } else if (eq (p, "NO-PRagmats")) {
-          OPTION_PRAGMAT_SEMA (&(A68 (job))) = A68_FALSE;
+          OPTION_PRAGMAT_SEMA (&A68_JOB) = A68_FALSE;
         }
 // STRICT ignores A68G extensions to A68 syntax.
         else if (eq (p, "STRict")) {
-          OPTION_STRICT (&(A68 (job))) = A68_TRUE;
-          OPTION_PORTCHECK (&(A68 (job))) = A68_TRUE;
+          OPTION_STRICT (&A68_JOB) = A68_TRUE;
+          OPTION_PORTCHECK (&A68_JOB) = A68_TRUE;
         }
 // VERBOSE in case you want to know what Algol68G is doing.
         else if (eq (p, "VERBose")) {
-          OPTION_VERBOSE (&(A68 (job))) = A68_TRUE;
+          OPTION_VERBOSE (&A68_JOB) = A68_TRUE;
         }
 // VERSION lists the current version at an appropriate time in the future.
         else if (eq (p, "Version")) {
-          OPTION_VERSION (&(A68 (job))) = A68_TRUE;
+          OPTION_VERSION (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "MODular-arithmetic")) {
-          OPTION_NODEMASK (&(A68 (job))) |= MODULAR_MASK;
+          OPTION_NODEMASK (&A68_JOB) |= MODULAR_MASK;
         } else if (eq (p, "NOMODular-arithmetic")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~MODULAR_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~MODULAR_MASK;
         } else if (eq (p, "NO-MODular-arithmetic")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~MODULAR_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~MODULAR_MASK;
         }
 // XREF and NOXREF switch on/off a cross reference.
         else if (eq (p, "XREF")) {
-          OPTION_SOURCE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_CROSS_REFERENCE (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= (CROSS_REFERENCE_MASK | SOURCE_MASK);
+          OPTION_SOURCE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_CROSS_REFERENCE (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= (CROSS_REFERENCE_MASK | SOURCE_MASK);
         } else if (eq (p, "NOXREF")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
+          OPTION_NODEMASK (&A68_JOB) &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
         } else if (eq (p, "NO-Xref")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
+          OPTION_NODEMASK (&A68_JOB) &= ~(CROSS_REFERENCE_MASK | SOURCE_MASK);
         }
 // PRELUDELISTING cross references preludes, if they ever get implemented ...
         else if (eq (p, "PRELUDElisting")) {
-          OPTION_SOURCE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_CROSS_REFERENCE (&(A68 (job))) = A68_TRUE;
-          OPTION_STATISTICS_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
-          OPTION_STANDARD_PRELUDE_LISTING (&(A68 (job))) = A68_TRUE;
+          OPTION_SOURCE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_CROSS_REFERENCE (&A68_JOB) = A68_TRUE;
+          OPTION_STATISTICS_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
+          OPTION_STANDARD_PRELUDE_LISTING (&A68_JOB) = A68_TRUE;
         }
 // STATISTICS prints process statistics.
         else if (eq (p, "STatistics")) {
-          OPTION_STATISTICS_LISTING (&(A68 (job))) = A68_TRUE;
+          OPTION_STATISTICS_LISTING (&A68_JOB) = A68_TRUE;
         }
 // TREE and NOTREE switch on/off printing of the syntax tree. This gets bulky!.
         else if (eq (p, "TREE")) {
-          OPTION_SOURCE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_TREE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= (TREE_MASK | SOURCE_MASK);
+          OPTION_SOURCE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_TREE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= (TREE_MASK | SOURCE_MASK);
         } else if (eq (p, "NOTREE")) {
-          OPTION_NODEMASK (&(A68 (job))) ^= (TREE_MASK | SOURCE_MASK);
+          OPTION_NODEMASK (&A68_JOB) ^= (TREE_MASK | SOURCE_MASK);
         } else if (eq (p, "NO-TREE")) {
-          OPTION_NODEMASK (&(A68 (job))) ^= (TREE_MASK | SOURCE_MASK);
+          OPTION_NODEMASK (&A68_JOB) ^= (TREE_MASK | SOURCE_MASK);
         }
 // UNUSED indicates unused tags.
         else if (eq (p, "UNUSED")) {
-          OPTION_UNUSED (&(A68 (job))) = A68_TRUE;
+          OPTION_UNUSED (&A68_JOB) = A68_TRUE;
         }
 // EXTENSIVE set of options for an extensive listing.
         else if (eq (p, "EXTensive")) {
-          OPTION_SOURCE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_OBJECT_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_TREE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_CROSS_REFERENCE (&(A68 (job))) = A68_TRUE;
-          OPTION_MOID_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_STANDARD_PRELUDE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_STATISTICS_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_UNUSED (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= (CROSS_REFERENCE_MASK | TREE_MASK | CODE_MASK | SOURCE_MASK);
+          OPTION_SOURCE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_OBJECT_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_TREE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_CROSS_REFERENCE (&A68_JOB) = A68_TRUE;
+          OPTION_MOID_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_STANDARD_PRELUDE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_STATISTICS_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_UNUSED (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= (CROSS_REFERENCE_MASK | TREE_MASK | CODE_MASK | SOURCE_MASK);
         }
 // LISTING set of options for a default listing.
         else if (eq (p, "Listing")) {
-          OPTION_SOURCE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_CROSS_REFERENCE (&(A68 (job))) = A68_TRUE;
-          OPTION_STATISTICS_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
+          OPTION_SOURCE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_CROSS_REFERENCE (&A68_JOB) = A68_TRUE;
+          OPTION_STATISTICS_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
         }
 // TTY send listing to standout. Remnant from my mainframe past.
         else if (eq (p, "TTY")) {
-          OPTION_CROSS_REFERENCE (&(A68 (job))) = A68_TRUE;
-          OPTION_STATISTICS_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
+          OPTION_CROSS_REFERENCE (&A68_JOB) = A68_TRUE;
+          OPTION_STATISTICS_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= (SOURCE_MASK | CROSS_REFERENCE_MASK);
         }
 // SOURCE and NOSOURCE print source lines.
         else if (eq (p, "SOURCE")) {
-          OPTION_SOURCE_LISTING (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= SOURCE_MASK;
+          OPTION_SOURCE_LISTING (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= SOURCE_MASK;
         } else if (eq (p, "NOSOURCE")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~SOURCE_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~SOURCE_MASK;
         } else if (eq (p, "NO-SOURCE")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~SOURCE_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~SOURCE_MASK;
         }
 // OBJECT and NOOBJECT print object lines.
         else if (eq (p, "OBJECT")) {
-          OPTION_OBJECT_LISTING (&(A68 (job))) = A68_TRUE;
+          OPTION_OBJECT_LISTING (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "NOOBJECT")) {
-          OPTION_OBJECT_LISTING (&(A68 (job))) = A68_FALSE;
+          OPTION_OBJECT_LISTING (&A68_JOB) = A68_FALSE;
         } else if (eq (p, "NO-OBJECT")) {
-          OPTION_OBJECT_LISTING (&(A68 (job))) = A68_FALSE;
+          OPTION_OBJECT_LISTING (&A68_JOB) = A68_FALSE;
         }
 // MOIDS prints an overview of moids used in the program.
         else if (eq (p, "MOIDS")) {
-          OPTION_MOID_LISTING (&(A68 (job))) = A68_TRUE;
+          OPTION_MOID_LISTING (&A68_JOB) = A68_TRUE;
         }
 // ASSERTIONS and NOASSERTIONS switch on/off the processing of assertions.
         else if (eq (p, "Assertions")) {
-          OPTION_NODEMASK (&(A68 (job))) |= ASSERT_MASK;
+          OPTION_NODEMASK (&A68_JOB) |= ASSERT_MASK;
         } else if (eq (p, "NOAssertions")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~ASSERT_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~ASSERT_MASK;
         } else if (eq (p, "NO-Assertions")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~ASSERT_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~ASSERT_MASK;
         }
 // PRECISION sets the LONG LONG precision.
         else if (eq (p, "PRECision")) {
@@ -1029,28 +1029,28 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         }
 // BACKTRACE and NOBACKTRACE switch on/off stack backtracing.
         else if (eq (p, "BACKtrace")) {
-          OPTION_BACKTRACE (&(A68 (job))) = A68_TRUE;
+          OPTION_BACKTRACE (&A68_JOB) = A68_TRUE;
         } else if (eq (p, "NOBACKtrace")) {
-          OPTION_BACKTRACE (&(A68 (job))) = A68_FALSE;
+          OPTION_BACKTRACE (&A68_JOB) = A68_FALSE;
         } else if (eq (p, "NO-BACKtrace")) {
-          OPTION_BACKTRACE (&(A68 (job))) = A68_FALSE;
+          OPTION_BACKTRACE (&A68_JOB) = A68_FALSE;
         }
 // BREAK and NOBREAK switch on/off tracing of the running program.
         else if (eq (p, "BReakpoint")) {
-          OPTION_NODEMASK (&(A68 (job))) |= BREAKPOINT_MASK;
+          OPTION_NODEMASK (&A68_JOB) |= BREAKPOINT_MASK;
         } else if (eq (p, "NOBReakpoint")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~BREAKPOINT_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~BREAKPOINT_MASK;
         } else if (eq (p, "NO-BReakpoint")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~BREAKPOINT_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~BREAKPOINT_MASK;
         }
 // TRACE and NOTRACE switch on/off tracing of the running program.
         else if (eq (p, "TRace")) {
-          OPTION_TRACE (&(A68 (job))) = A68_TRUE;
-          OPTION_NODEMASK (&(A68 (job))) |= BREAKPOINT_TRACE_MASK;
+          OPTION_TRACE (&A68_JOB) = A68_TRUE;
+          OPTION_NODEMASK (&A68_JOB) |= BREAKPOINT_TRACE_MASK;
         } else if (eq (p, "NOTRace")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~BREAKPOINT_TRACE_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~BREAKPOINT_TRACE_MASK;
         } else if (eq (p, "NO-TRace")) {
-          OPTION_NODEMASK (&(A68 (job))) &= ~BREAKPOINT_TRACE_MASK;
+          OPTION_NODEMASK (&A68_JOB) &= ~BREAKPOINT_TRACE_MASK;
         }
 // TIMELIMIT lets the interpreter stop after so-many seconds.
         else if (eq (p, "TImelimit") || eq (p, "TIME-Limit")) {
@@ -1061,7 +1061,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           } else if (k < 1) {
             option_error (start_l, start_c, "invalid time span in");
           } else {
-            OPTION_TIME_LIMIT (&(A68 (job))) = k;
+            OPTION_TIME_LIMIT (&A68_JOB) = k;
           }
         } else {
 // Unrecognised.

@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -197,7 +197,7 @@ static void save_stacks (pthread_t t)
 
 static void restore_stacks (pthread_t t)
 {
-  if (ERROR_COUNT (&(A68 (job))) > 0 || A68_PAR (abend_all_threads)) {
+  if (ERROR_COUNT (&A68_JOB) > 0 || A68_PAR (abend_all_threads)) {
     genie_abend_thread ();
   } else {
     int k;
@@ -434,7 +434,7 @@ PROP_T genie_parallel (NODE_T * p)
     if (is_main_thread () && A68_PAR (exit_from_threads)) {
       exit_genie (p, A68_PAR (par_return_code));
     }
-    if (is_main_thread () && ERROR_COUNT (&(A68 (job))) > 0) {
+    if (is_main_thread () && ERROR_COUNT (&A68_JOB) > 0) {
       exit_genie (p, A68_RUNTIME_ERROR);
     }
 // See if we jumped out of the parallel clause(s).
@@ -513,7 +513,7 @@ void genie_down_sema (NODE_T * p)
     if (VALUE (k) <= 0) {
       save_stacks (pthread_self ());
       while (VALUE (k) <= 0) {
-        if (ERROR_COUNT (&(A68 (job))) > 0 || A68_PAR (abend_all_threads)) {
+        if (ERROR_COUNT (&A68_JOB) > 0 || A68_PAR (abend_all_threads)) {
           genie_abend_thread ();
         }
         UNLOCK_THREAD;

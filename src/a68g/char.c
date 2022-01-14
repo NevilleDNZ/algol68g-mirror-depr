@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -464,17 +464,20 @@ void n (NODE_T * p) {\
   PUSH_VALUE (p, (BOOL_T) (k OP 0), A68_BOOL);\
 }
 
-A68_CMP_BYTES (genie_eq_bytes, ==)
-  A68_CMP_BYTES (genie_ne_bytes, !=)
-  A68_CMP_BYTES (genie_lt_bytes, <)
-  A68_CMP_BYTES (genie_gt_bytes, >)
-  A68_CMP_BYTES (genie_le_bytes, <=)
-  A68_CMP_BYTES (genie_ge_bytes, >=)
+A68_CMP_BYTES (genie_eq_bytes, ==);
+A68_CMP_BYTES (genie_ne_bytes, !=);
+A68_CMP_BYTES (genie_lt_bytes, <);
+A68_CMP_BYTES (genie_gt_bytes, >);
+A68_CMP_BYTES (genie_le_bytes, <=);
+A68_CMP_BYTES (genie_ge_bytes, >=);
+
 //! @brief OP LENG = (BYTES) LONG BYTES
-     void genie_leng_bytes (NODE_T * p)
+
+void genie_leng_bytes (NODE_T * p)
 {
-  A68_BYTES a;
-  POP_OBJECT (p, &a, A68_BYTES);
+  A68_LONG_BYTES a;
+  memset (VALUE (&a), 0, sizeof (VALUE (&a)));
+  POP_OBJECT (p, (A68_BYTES *) &a, A68_BYTES);
   PUSH_LONG_BYTES (p, VALUE (&a));
 }
 

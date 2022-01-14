@@ -4,7 +4,7 @@
 //! @section Copyright
 //
 // This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2021 J. Marcel van der Veer <algol68g@xs4all.nl>.
+// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
 //
 //! @section License
 //
@@ -106,7 +106,7 @@ void renumber_moids (MOID_T * p, int n)
 
 MOID_T *register_extra_mode (MOID_T ** z, MOID_T * u)
 {
-  MOID_T *head = TOP_MOID (&(A68 (job)));
+  MOID_T *head = TOP_MOID (&A68_JOB);
 // If we already know this mode, return the existing entry; otherwise link it in.
   for (; head != NO_MOID; FORWARD (head)) {
     if (prove_moid_equivalence (head, u)) {
@@ -272,7 +272,7 @@ static void contract_unions (MOID_T * m)
 
 static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
 {
-  MOID_T *p = TOP_MOID (&(A68 (job)));
+  MOID_T *p = TOP_MOID (&A68_JOB);
 // Search standard mode.
   for (; p != NO_MOID; FORWARD (p)) {
     if (IS (p, STANDARD) && DIM (p) == sizety && NSYMBOL (NODE (p)) == NSYMBOL (indicant)) {
@@ -415,36 +415,36 @@ MOID_T *get_mode_from_declarer (NODE_T * p)
           if (y == NO_TAG) {
             diagnostic (A68_ERROR, p, ERROR_UNDECLARED_TAG_2, NSYMBOL (p));
           } else {
-            MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), INDICANT, 0, NODE (y), NO_MOID, NO_PACK);
+            MOID (p) = add_mode (&TOP_MOID (&A68_JOB), INDICANT, 0, NODE (y), NO_MOID, NO_PACK);
           }
         }
         return MOID (p);
       } else if (IS_REF (p)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, p, new_one, NO_PACK);
+        MOID (p) = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, p, new_one, NO_PACK);
         return MOID (p);
       } else if (IS_FLEX (p)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), FLEX_SYMBOL, 0, p, new_one, NO_PACK);
+        MOID (p) = add_mode (&TOP_MOID (&A68_JOB), FLEX_SYMBOL, 0, p, new_one, NO_PACK);
         SLICE (MOID (p)) = SLICE (new_one);
         return MOID (p);
       } else if (IS (p, FORMAL_BOUNDS)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_row (&TOP_MOID (&(A68 (job))), 1 + count_formal_bounds (SUB (p)), new_one, p, A68_FALSE);
+        MOID (p) = add_row (&TOP_MOID (&A68_JOB), 1 + count_formal_bounds (SUB (p)), new_one, p, A68_FALSE);
         return MOID (p);
       } else if (IS (p, BOUNDS)) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_row (&TOP_MOID (&(A68 (job))), count_bounds (SUB (p)), new_one, p, A68_FALSE);
+        MOID (p) = add_row (&TOP_MOID (&A68_JOB), count_bounds (SUB (p)), new_one, p, A68_FALSE);
         return MOID (p);
       } else if (IS (p, STRUCT_SYMBOL)) {
         PACK_T *u = NO_PACK;
         get_mode_from_struct_field (NEXT (p), &u);
-        MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), STRUCT_SYMBOL, count_pack_members (u), p, NO_MOID, u);
+        MOID (p) = add_mode (&TOP_MOID (&A68_JOB), STRUCT_SYMBOL, count_pack_members (u), p, NO_MOID, u);
         return MOID (p);
       } else if (IS (p, UNION_SYMBOL)) {
         PACK_T *u = NO_PACK;
         get_mode_from_union_pack (NEXT (p), &u);
-        MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), UNION_SYMBOL, count_pack_members (u), p, NO_MOID, u);
+        MOID (p) = add_mode (&TOP_MOID (&A68_JOB), UNION_SYMBOL, count_pack_members (u), p, NO_MOID, u);
         return MOID (p);
       } else if (IS (p, PROC_SYMBOL)) {
         NODE_T *save = p;
@@ -455,7 +455,7 @@ MOID_T *get_mode_from_declarer (NODE_T * p)
           FORWARD (p);
         }
         new_one = get_mode_from_declarer (NEXT (p));
-        MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (u), save, new_one, u);
+        MOID (p) = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (u), save, new_one, u);
         MOID (save) = MOID (p);
         return MOID (p);
       } else {
@@ -477,7 +477,7 @@ static MOID_T *get_mode_from_routine_text (NODE_T * p)
     FORWARD (p);
   }
   n = get_mode_from_declarer (p);
-  return add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (u), q, n, u);
+  return add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (u), q, n, u);
 }
 
 //! @brief Collect modes from operator-plan.
@@ -492,7 +492,7 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
     FORWARD (p);
   }
   new_one = get_mode_from_declarer (NEXT (p));
-  MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), PROC_SYMBOL, count_pack_members (u), save, new_one, u);
+  MOID (p) = add_mode (&TOP_MOID (&A68_JOB), PROC_SYMBOL, count_pack_members (u), save, new_one, u);
   return MOID (p);
 }
 
@@ -559,7 +559,7 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
     } else if (IS (q, DECLARER)) {
       if (attribute == VARIABLE_DECLARATION) {
         MOID_T *new_one = get_mode_from_declarer (q);
-        MOID (q) = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
+        MOID (q) = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
       } else {
         MOID (q) = get_mode_from_declarer (q);
       }
@@ -571,7 +571,7 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
       if (attribute == GENERATOR) {
         MOID_T *new_one = get_mode_from_declarer (NEXT (q));
         MOID (NEXT (q)) = new_one;
-        MOID (q) = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
+        MOID (q) = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, NO_NODE, new_one, NO_PACK);
       }
     } else {
       if (attribute == DENOTATION) {
@@ -600,7 +600,7 @@ static void get_mode_from_proc_variables (NODE_T * p)
       get_mode_from_proc_variables (NEXT (p));
     } else if (IS (p, DEFINING_IDENTIFIER)) {
       MOID_T *new_one = MOID (NEXT_NEXT (p));
-      MOID (p) = add_mode (&TOP_MOID (&(A68 (job))), REF_SYMBOL, 0, p, new_one, NO_PACK);
+      MOID (p) = add_mode (&TOP_MOID (&A68_JOB), REF_SYMBOL, 0, p, new_one, NO_PACK);
     }
   }
 }
@@ -941,7 +941,7 @@ static void compute_derived_modes (MODULE_T * mod)
       }
     }
 // See what new known modes we have generated by resolving..
-    for (z = TOP_MOID (mod); z != STANDENV_MOID (&(A68 (job))); FORWARD (z)) {
+    for (z = TOP_MOID (mod); z != STANDENV_MOID (&A68_JOB); FORWARD (z)) {
       MOID_T *v;
       for (v = NEXT (z); v != NO_MOID; FORWARD (v)) {
         if (prove_moid_equivalence (z, v)) {
@@ -1167,7 +1167,7 @@ void portcheck (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     portcheck (SUB (p));
-    if (OPTION_PORTCHECK (&(A68 (job)))) {
+    if (OPTION_PORTCHECK (&A68_JOB)) {
       if (IS (p, INDICANT) && MOID (p) != NO_MOID) {
         PORTCHECK_TAX (p, PORTABLE (MOID (p)));
         PORTABLE (MOID (p)) = A68_TRUE;
