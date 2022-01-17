@@ -121,6 +121,7 @@ void genie_div_int (NODE_T * p)
   A68_INT i, j;
   POP_OBJECT (p, &j, A68_INT);
   POP_OBJECT (p, &i, A68_INT);
+  errno = 0;
   PUSH_VALUE (p, a68_div_int (VALUE (&i), VALUE (&j)), A68_REAL);
   MATH_RTE (p, errno != 0, M_INT, "M division by zero");
 }
@@ -133,6 +134,7 @@ void genie_pow_int (NODE_T * p)
   POP_OBJECT (p, &j, A68_INT);
   PRELUDE_ERROR (VALUE (&j) < 0, p, ERROR_EXPONENT_INVALID, M_INT);
   POP_OBJECT (p, &i, A68_INT);
+  errno = 0;
   PUSH_VALUE (p, a68_m_up_n (VALUE (&i), VALUE (&j)), A68_INT);
   MATH_RTE (p, errno != 0, M_INT, "M overflow");
 }
@@ -1057,6 +1059,7 @@ void genie_beta_inc_cf_real (NODE_T * p)
 {
   A68_REAL *s, *t, *x;
   POP_3_OPERAND_ADDRESSES (p, s, t, x, A68_REAL);
+  errno = 0;
   VALUE (s) = a68_beta_inc (VALUE (s), VALUE (t), VALUE (x));
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
@@ -1563,6 +1566,7 @@ void genie_fact_real (NODE_T * p)
 {
   A68_INT n;
   POP_OBJECT (p, &n, A68_INT);
+  errno = 0;
   PUSH_VALUE (p, a68_fact (VALUE (&n)), A68_REAL);
   MATH_RTE (p, errno != 0, M_INT, NO_TEXT);
 }
@@ -1573,6 +1577,7 @@ void genie_ln_fact_real (NODE_T * p)
 {
   A68_INT n;
   POP_OBJECT (p, &n, A68_INT);
+  errno = 0;
   PUSH_VALUE (p, a68_ln_fact (VALUE (&n)), A68_REAL);
   MATH_RTE (p, errno != 0, M_INT, NO_TEXT);
 }
@@ -1582,6 +1587,7 @@ void genie_choose_real (NODE_T * p)
   A68_INT n, m;
   POP_OBJECT (p, &m, A68_INT);
   POP_OBJECT (p, &n, A68_INT);
+  errno = 0;
   PUSH_VALUE (p, a68_choose (VALUE (&n), VALUE (&m)), A68_REAL);
   MATH_RTE (p, errno != 0, M_INT, NO_TEXT);
 }
@@ -1593,6 +1599,7 @@ void genie_ln_choose_real (NODE_T * p)
   A68_INT n, m;
   POP_OBJECT (p, &m, A68_INT);
   POP_OBJECT (p, &n, A68_INT);
+  errno = 0;
   PUSH_VALUE (p, a68_ln_choose (VALUE (&n), VALUE (&m)), A68_REAL);
   MATH_RTE (p, errno != 0, M_INT, NO_TEXT);
 }

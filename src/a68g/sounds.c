@@ -350,6 +350,7 @@ static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
   if (little) {
     for (k = 0, m = 0, v = 0; k < n; k++, m++) {
       z = 0;
+      errno = 0;
       r = (int) io_read (fd, &z, (size_t) 1);
       if (r != 1 || errno != 0) {
         diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "error while reading file");
@@ -360,6 +361,7 @@ static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
   } else {
     for (k = 0, m = n - 1, v = 0; k < n; k++, m--) {
       z = 0;
+      errno = 0;
       r = (int) io_read (fd, &z, (size_t) 1);
       if (r != 1 || errno != 0) {
         diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "error while reading file");

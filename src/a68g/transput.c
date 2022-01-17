@@ -1287,6 +1287,7 @@ void genie_set (NODE_T * p)
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_FILE_RESET);
     exit_genie (p, A68_RUNTIME_ERROR);
   } else {
+    errno = 0;
     __off_t curpos = lseek (FD (file), 0, SEEK_CUR);
     __off_t maxpos = lseek (FD (file), 0, SEEK_END);
     __off_t res = lseek (FD (file), curpos, SEEK_SET);

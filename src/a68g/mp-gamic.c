@@ -724,6 +724,7 @@ static void Dgamic_wrap_mp (NODE_T *q, MP_T * s, MP_T * rho, MP_T * sigma, MP_T 
 {
   ADDR_T pop_sp = A68_SP;
   int gdigs = GAM_DIGITS (MAX_PRECISION);
+  errno = 0;
   if (digs <= gdigs) {
     gdigs = GAM_DIGITS (digs);
     MP_T *rho_g = len_mp (q, rho, digs, gdigs);
@@ -809,6 +810,7 @@ void genie_gamma_inc_gf_mp (NODE_T *p)
   MP_T *x = (MP_T *) STACK_OFFSET (-size);
   MP_T *s = (MP_T *) STACK_OFFSET (-2 * size);
   int gdigs = GAM_DIGITS (MAX_PRECISION);
+  errno = 0;
   if (digs <= gdigs) {
     gdigs = GAM_DIGITS (digs);
     MP_T *x_g = len_mp (p, x, digs, gdigs);

@@ -192,6 +192,7 @@ void genie_entier_mp (NODE_T * p)
   int digs = DIGITS (MOID (p)), size = SIZE (MOID (p));\
   ADDR_T pop_sp = A68_SP;\
   MP_T *x = (MP_T *) STACK_OFFSET (-size);\
+  errno = 0;\
   PRELUDE_ERROR (f (p, x, x, digs) == NaN_MP || errno != 0, p, ERROR_INVALID_ARGUMENT, MOID (p));\
   MP_STATUS (x) = (MP_T) INIT_MASK;\
   A68_SP = pop_sp;
@@ -1003,6 +1004,7 @@ void genie_abs_mp_complex (NODE_T * p)
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *z = nil_mp (p, digs);
+  errno = 0;
   (void) hypot_mp (p, z, a, b, digs);
   A68_SP = pop_sp;
   DECREMENT_STACK_POINTER (p, size);
@@ -1021,6 +1023,7 @@ void genie_arg_mp_complex (NODE_T * p)
   MP_T *b = (MP_T *) STACK_OFFSET (-size);
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *z = nil_mp (p, digs);
+  errno = 0;
   (void) atan2_mp (p, z, a, b, digs);
   A68_SP = pop_sp;
   DECREMENT_STACK_POINTER (p, size);

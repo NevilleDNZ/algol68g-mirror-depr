@@ -2038,6 +2038,7 @@ void genie_inverf_real_16 (NODE_T * _p_)
   DOUBLE_T y, z;
   A68 (f_entry) = _p_;
   POP_OBJECT (_p_, &x, A68_LONG_REAL);
+  errno = 0;
   y = VALUE (&x).f;
   z = inverf_real_16 (y);
   MATH_RTE (_p_, errno != 0, M_LONG_REAL, NO_TEXT);
@@ -2270,6 +2271,7 @@ void genie_beta_inc_cf_real_16 (NODE_T * p)
   POP_OBJECT (p, &x, A68_LONG_REAL);
   POP_OBJECT (p, &t, A68_LONG_REAL);
   POP_OBJECT (p, &s, A68_LONG_REAL);
+  errno = 0;
   PUSH_VALUE (p, dble (a68_beta_inc_16 (VALUE (&s).f, VALUE (&t).f, VALUE (&x).f)), A68_LONG_REAL);
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
 }
@@ -2279,6 +2281,7 @@ void genie_beta_real_16 (NODE_T * p)
   A68_LONG_REAL a, b;
   POP_OBJECT (p, &b, A68_LONG_REAL);
   POP_OBJECT (p, &a, A68_LONG_REAL);
+  errno = 0;
   PUSH_VALUE (p, dble (expq (lgammaq (VALUE (&a).f) + lgammaq (VALUE (&b).f) - lgammaq (VALUE (&a).f + VALUE (&b).f))), A68_LONG_REAL);
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
 }
@@ -2288,6 +2291,7 @@ void genie_ln_beta_real_16 (NODE_T * p)
   A68_LONG_REAL a, b;
   POP_OBJECT (p, &b, A68_LONG_REAL);
   POP_OBJECT (p, &a, A68_LONG_REAL);
+  errno = 0;
   PUSH_VALUE (p, dble (lgammaq (VALUE (&a).f) + lgammaq (VALUE (&b).f) - lgammaq (VALUE (&a).f + VALUE (&b).f)), A68_LONG_REAL);
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
 }
