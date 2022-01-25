@@ -652,18 +652,19 @@ TESTS = \
 	test-set/08-hamming.a68\
 	test-set/09-hilbert.a68\
 	test-set/10-lisp.a68\
-	test-set/11-mastermind.a68\
-	test-set/12-math.a68\
-	test-set/13-mersenne.a68\
-	test-set/14-procedures.a68\
-	test-set/15-pseudo-switch.a68\
-	test-set/16-qgammainc.a68\
-	test-set/17-queens.a68\
-	test-set/18-quicksort.a68\
-	test-set/19-quicksort-parallel.a68\
-	test-set/20-rationals.a68\
-	test-set/21-tukey.a68\
-	test-set/22-whetstones.a68
+	test-set/11-mandelbrot.a68\
+	test-set/12-mastermind.a68\
+	test-set/13-math.a68\
+	test-set/14-mersenne.a68\
+	test-set/15-procedures.a68\
+	test-set/16-pseudo-switch.a68\
+	test-set/17-qgammainc.a68\
+	test-set/18-queens.a68\
+	test-set/19-quicksort.a68\
+	test-set/20-quicksort-parallel.a68\
+	test-set/21-rationals.a68\
+	test-set/22-tukey.a68\
+	test-set/23-whetstones.a68
 
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
 @EXPORT_DYNAMIC_TRUE@a68g_LDFLAGS = -Wl,--export-dynamic

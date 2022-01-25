@@ -434,10 +434,16 @@ static void compiler_interpreter (void)
     if (OPTION_RERUN (&A68_JOB) == A68_FALSE) {
       announce_phase ("optimiser (code compiler)");
       errno = 0;
+//
 // Build shared library using gcc.
 // TODO: One day this should be all portable between platforms.
 // Compilation on Linux, FreeBSD or NetBSD using gcc
-      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s -ggdb", optimisation_option ()) >= 0);
+//
+// -fno-stack-protector is needed for OS's that enforce -fstack-protector-strong which may give
+// undefined reference to `__stack_chk_fail_local'
+// by ld. Ubuntu is one such.
+//
+      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s -ggdb -fno-stack-protector", optimisation_option ()) >= 0);
 #if defined (HAVE_PIC)
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);

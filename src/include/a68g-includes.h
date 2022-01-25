@@ -83,7 +83,7 @@
 #endif
 
 #if defined (HAVE_LIBPQ_FE_H)
-#include <libpq-fe.h>
+#include <postgresql/libpq-fe.h>
 #endif
 
 #if defined (HAVE_MATH_H)

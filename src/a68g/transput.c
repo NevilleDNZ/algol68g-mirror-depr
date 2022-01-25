@@ -2019,7 +2019,7 @@ BOOL_T a68_mkstemp (char *fn, int flags, mode_t permissions)
       for (j = 0; j < TMP_SIZE; j++) {
         char chars[2];
         do {
-          cindex = (int) (unif_rand () * len);
+          cindex = (int) (a68_unif_rand () * len);
         } while (cindex < 0 || cindex >= len);
         chars[0] = letters[cindex];
         chars[1] = NULL_CHAR;

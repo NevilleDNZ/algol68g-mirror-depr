@@ -1052,6 +1052,10 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     Y_COORD (&DEVICE (f)) = 0;
     return PLOTTER (&DEVICE (f));
   } else if (!strcmp (device_type, "png")) {
+#if defined (X_DISPLAY_MISSING)
+    diagnostic (A68_RUNTIME_ERROR, p, ERROR_INVALID_PARAMETER, "PNG plotter missing", "");
+    exit_genie (p, A68_RUNTIME_ERROR);
+#else
 /*-----------------------------+
 | Supported plotter type - PNG |
 +-----------------------------*/
@@ -1112,6 +1116,7 @@ static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     X_COORD (&DEVICE (f)) = 0;
     Y_COORD (&DEVICE (f)) = 0;
     return PLOTTER (&DEVICE (f));
+#endif
   } else if (!strcmp (device_type, "ps")) {
 #if defined (POSTSCRIPT_MISSING)
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_INVALID_PARAMETER, "postscript plotter missing", "");

@@ -2538,15 +2538,15 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
   } else if (u == M_INT) {
     PUSH_VALUE (p, 1, A68_INT); // Because users write [~] INT !
   } else if (u == M_REAL) {
-    PUSH_VALUE (p, (unif_rand ()), A68_REAL);
+    PUSH_VALUE (p, (a68_unif_rand ()), A68_REAL);
   } else if (u == M_BOOL) {
-    PUSH_VALUE (p, (BOOL_T) (unif_rand () < 0.5), A68_BOOL);
+    PUSH_VALUE (p, (BOOL_T) (a68_unif_rand () < 0.5), A68_BOOL);
   } else if (u == M_CHAR) {
-    PUSH_VALUE (p, (char) (32 + 96 * unif_rand ()), A68_CHAR);
+    PUSH_VALUE (p, (char) (32 + 96 * a68_unif_rand ()), A68_CHAR);
   } else if (u == M_BITS) {
-    PUSH_VALUE (p, (UNSIGNED_T) (unif_rand () * A68_MAX_BITS), A68_BITS);
+    PUSH_VALUE (p, (UNSIGNED_T) (a68_unif_rand () * A68_MAX_BITS), A68_BITS);
   } else if (u == M_COMPLEX) {
-    PUSH_COMPLEX (p, unif_rand (), unif_rand ());
+    PUSH_COMPLEX (p, a68_unif_rand (), a68_unif_rand ());
   } else if (u == M_BYTES) {
     PUSH_BYTES (p, "SKIP");
   } else if (u == M_LONG_BYTES) {

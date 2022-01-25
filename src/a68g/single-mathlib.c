@@ -65,7 +65,7 @@ void genie_R_psigamma_real (NODE_T * p)
   A68_REAL *x, *s;
   POP_OPERAND_ADDRESSES (p, x, s, A68_REAL);
   errno = 0;
-  VALUE (s) = psigamma (VALUE (x), VALUE (s));
+  VALUE (x) = psigamma (VALUE (x), (int) VALUE (s));
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
 

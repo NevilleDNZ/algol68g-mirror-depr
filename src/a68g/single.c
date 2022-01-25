@@ -361,14 +361,14 @@ void genie_first_random (NODE_T * p)
 
 void genie_next_random (NODE_T * p)
 {
-  PUSH_VALUE (p, unif_rand (), A68_REAL);
+  PUSH_VALUE (p, a68_unif_rand (), A68_REAL);
 }
 
 // @brief PROC REAL rnd
 
 void genie_next_rnd (NODE_T * p)
 {
-  PUSH_VALUE (p, 2 * unif_rand () - 1, A68_REAL);
+  PUSH_VALUE (p, 2 * a68_unif_rand () - 1, A68_REAL);
 }
 
 // BITS operations.

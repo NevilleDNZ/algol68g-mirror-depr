@@ -158,7 +158,7 @@ extern void state_version (FILE_T);
 
 extern void GetRNGstate(void);
 extern void PutRNGstate(void);
-extern REAL_T unif_rand(void);
+extern REAL_T a68_unif_rand(void);
 extern REAL_T R_unif_index(REAL_T);
 
 #endif

@@ -190,7 +190,7 @@ void init_rng (unsigned u)
 
 // A68G rng in R mathlib style.
 
-REAL_T unif_rand (void)
+REAL_T a68_unif_rand (void)
 {
 // In [0, 1>
   return taus113_get_double (&rng_state);
