@@ -1,5 +1,5 @@
 #
-# Algol 68 Genie 3.0.4, configure.ac
+# Algol 68 Genie 3.0.5, configure.ac
 #
 # To configure a68g for the widest range of platforms, issue: 
 #   ./configure --enable-generic
@@ -8,7 +8,7 @@
 #   sudo apt install libncurses-dev libreadline-dev libmpfr libgmp libgsl-dev r-mathlib libplot-dev libghc-postgresql-libpq-dev
 #
 
-AC_INIT([algol68g], [3.0.4], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [3.0.5], [Marcel van der Veer <algol68g@xs4all.nl>])
 AC_PREREQ([2.60])
 
 # Check whether compiler supports $1 as a command-line option. 
@@ -334,7 +334,7 @@ else
    AC_MSG_FAILURE([stop -- C compiler does not support __attribute__aligned directive])],
   [])
   AC_MSG_CHECKING([attribute inline supported])
-  AC_RUN_IFELSE([AC_LANG_PROGRAM([], [inline void skip (void) {;}])],
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([static inline void skip (void) {;}], [])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    AC_MSG_FAILURE([stop -- C compiler does not support __attribute__aligned directive])],

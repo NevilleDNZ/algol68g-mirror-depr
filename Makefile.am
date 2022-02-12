@@ -165,10 +165,9 @@ TESTS=\
 	test-set/17-qgammainc.a68\
 	test-set/18-queens.a68\
 	test-set/19-quicksort.a68\
-	test-set/20-quicksort-parallel.a68\
-	test-set/21-rationals.a68\
-	test-set/22-tukey.a68\
-	test-set/23-whetstones.a68
+	test-set/20-rationals.a68\
+	test-set/21-tukey.a68\
+	test-set/22-whetstones.a68
 if EXPORT_DYNAMIC
 a68g_LDFLAGS = -Wl,--export-dynamic
 else
