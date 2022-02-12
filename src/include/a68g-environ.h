@@ -26,9 +26,8 @@
 
 static char *bold_prelude_start[] = {
   "BEGIN MODE DOUBLE = LONG REAL,",
-  "           QUAD = LONG LONG REAL,",
-  "           DEVICE = FILE,",
-  "           TEXT = STRING;" "      start: commence:",
+  "           QUAD = LONG LONG REAL;",
+  "      start: commence:",
   "      BEGIN",
   NO_TEXT
 };
@@ -42,9 +41,7 @@ static char *bold_postlude[] = {
 
 static char *quote_prelude_start[] = {
   "'BEGIN' 'MODE' 'DOUBLE' = 'LONG' 'REAL',",
-  "               'QUAD' = 'LONG' 'LONG' 'REAL',",
-  "               'DEVICE' = 'FILE',",
-  "               'TEXT' = 'STRING';",
+  "               'QUAD' = 'LONG' 'LONG' 'REAL';",
   "        START: COMMENCE:",
   "        'BEGIN'",
   NO_TEXT
