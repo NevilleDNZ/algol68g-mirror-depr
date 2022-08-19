@@ -484,7 +484,7 @@ void genie_pq_getisnull (NODE_T * p)
 
 //! @brief Edit error message sting from libpq.
 
-static char *pq_edit (char *str)
+char *pq_edit (char *str)
 {
   if (str == NULL) {
     return "";

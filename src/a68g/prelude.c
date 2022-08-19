@@ -48,7 +48,7 @@ char *standard_environ_proc_name (GPROC f)
 
 //! @brief Enter tag in standenv symbol table.
 
-static void add_a68_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T * m, int p, GPROC * q)
+void add_a68_standenv (BOOL_T portable, int a, NODE_T * n, char *c, MOID_T * m, int p, GPROC * q)
 {
 #define INSERT_TAG(l, n) {\
   NEXT (n) = *(l);\
@@ -136,7 +136,7 @@ void a68_op (BOOL_T portable, char *n, MOID_T * m, GPROC * q)
 
 //! @brief Enter standard modes in standenv.
 
-static void stand_moids (void)
+void stand_moids (void)
 {
   MOID_T *m;
   PACK_T *z;
@@ -372,7 +372,7 @@ static void stand_moids (void)
 
 //! @brief Set up standenv - general RR but not transput.
 
-static void stand_prelude (void)
+void stand_prelude (void)
 {
   MOID_T *m;
 // Identifiers.
@@ -445,6 +445,7 @@ static void stand_prelude (void)
   a68_idf (A68_EXT, "preemptivegc", A68_MCACHE (proc_void), genie_preemptive_gc_heap);
   a68_idf (A68_EXT, "preemptivesweep", A68_MCACHE (proc_void), genie_preemptive_gc_heap);
   a68_idf (A68_EXT, "preemptivesweepheap", A68_MCACHE (proc_void), genie_preemptive_gc_heap);
+  a68_idf (A68_EXT, "backtrace", A68_MCACHE (proc_void), genie_backtrace);
   a68_idf (A68_EXT, "break", A68_MCACHE (proc_void), genie_break);
   a68_idf (A68_EXT, "debug", A68_MCACHE (proc_void), genie_debug);
   a68_idf (A68_EXT, "monitor", A68_MCACHE (proc_void), genie_debug);
@@ -1248,6 +1249,8 @@ static void stand_prelude (void)
   a68_op (A68_STD, "*", m, genie_times_char_int);
   m = a68_proc (M_CHAR, M_INT, M_ROW_CHAR, NO_MOID);
   a68_op (A68_STD, "ELEM", m, genie_elem_string);
+  m = a68_proc (M_STRING, M_STRING, NO_MOID);
+  a68_idf (A68_EXT, "realpath", m, genie_realpath);
 // SEMA ops.
 #if defined (BUILD_PARALLEL_CLAUSE)
   m = a68_proc (M_SEMA, M_INT, NO_MOID);
@@ -1310,7 +1313,7 @@ static void stand_prelude (void)
 
 //! @brief Set up standenv - transput.
 
-static void stand_mp_level_2 (void)
+void stand_mp_level_2 (void)
 {
 #if (A68_LEVEL <= 2)
   MOID_T *m;
@@ -1621,7 +1624,7 @@ static void stand_mp_level_2 (void)
   m = a68_proc (M_BITS, M_LONG_BITS, NO_MOID);
   a68_op (A68_STD, "SHORTEN", m, genie_shorten_mp_to_bits);
   m = a68_proc (M_LONG_BITS, M_BITS, NO_MOID);
-  a68_op (A68_STD, "LENG", m, genie_lengthen_unsigned_to_mp);
+  a68_op (A68_STD, "LENG", m, genie_lengthen_unt_to_mp);
 
   m = a68_proc (M_LONG_BITS, M_LONG_BITS, NO_MOID);
   a68_op (A68_STD, "NOT", m, genie_not_mp);
@@ -1655,7 +1658,7 @@ static void stand_mp_level_2 (void)
 #endif
 }
 
-static void stand_mp_level_3 (void)
+void stand_mp_level_3 (void)
 {
 #if (A68_LEVEL >= 3)
   MOID_T *m;
@@ -2104,7 +2107,7 @@ static void stand_mp_level_3 (void)
 #endif
 }
 
-static void stand_transput (void)
+void stand_transput (void)
 {
   MOID_T *m;
   a68_idf (A68_EXT, "blankcharacter", M_CHAR, genie_blank_char);
@@ -2244,7 +2247,7 @@ static void stand_transput (void)
 
 //! @brief Set up standenv - extensions.
 
-static void stand_extensions (void)
+void stand_extensions (void)
 {
   MOID_T *m = NO_MOID;
 // UNIX things.
@@ -2317,7 +2320,7 @@ static void stand_extensions (void)
 
 #if defined (HAVE_GNU_PLOTUTILS)
 
-static void stand_plot (void)
+void stand_plot (void)
 {
   MOID_T *m = NO_MOID;
 // Drawing.
@@ -2370,7 +2373,7 @@ static void stand_plot (void)
 
 #if defined (HAVE_CURSES)
 
-static void stand_curses (void)
+void stand_curses (void)
 {
   MOID_T *m;
   a68_idf (A68_EXT, "cursesstart", A68_MCACHE (proc_void), genie_curses_start);
@@ -2408,7 +2411,7 @@ static void stand_curses (void)
 
 #if defined (HAVE_POSTGRESQL)
 
-static void stand_postgresql (void)
+void stand_postgresql (void)
 {
   MOID_T *m = NO_MOID;
   m = a68_proc (M_INT, M_REF_FILE, M_STRING, M_REF_STRING, NO_MOID);
@@ -2448,6 +2451,13 @@ static void stand_postgresql (void)
 
 #endif
 
+#if defined (BUILD_LINUX)
+void stand_linux (void)
+{
+  a68_idf (A68_EXT, "sigsegv", A68_MCACHE (proc_void), genie_sigsegv);
+}
+#endif
+
 //! @brief Build the standard environ symbol table.
 
 void make_standard_environ (void)
@@ -2482,6 +2492,9 @@ void make_standard_environ (void)
   stand_extensions ();
 #if (A68_LEVEL <= 2)
   stand_longlong_bits ();
+#endif
+#if defined (BUILD_LINUX)
+  stand_linux ();
 #endif
 #if defined (HAVE_GSL)
   stand_gsl ();

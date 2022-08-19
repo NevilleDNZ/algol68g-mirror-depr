@@ -360,9 +360,9 @@ MP_T *int_to_mp (NODE_T * p, MP_T * z, INT_T k, int digs)
   return z;
 }
 
-//! @brief Convert unsigned to multi-precison number.
+//! @brief Convert unt to multi-precison number.
 
-MP_T *unsigned_to_mp (NODE_T * p, MP_T * z, UNSIGNED_T k, int digs)
+MP_T *unt_to_mp (NODE_T * p, MP_T * z, UNSIGNED_T k, int digs)
 {
   int m = k, n = 0;
   while ((m /= MP_RADIX) != 0) {
@@ -1194,7 +1194,7 @@ MP_T *pow_mp_int (NODE_T * p, MP_T * z, MP_T * x, INT_T n, int digs)
     n = -n;
   }
   bit = 1;
-  while ((unsigned) bit <= (unsigned) n) {
+  while ((unt) bit <= (unt) n) {
     if (n & bit) {
       (void) mul_mp (p, z_g, z_g, x_g, digs_g);
     }

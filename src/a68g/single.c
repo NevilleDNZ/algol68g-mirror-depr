@@ -354,7 +354,7 @@ void genie_first_random (NODE_T * p)
 {
   A68_INT i;
   POP_OBJECT (p, &i, A68_INT);
-  init_rng ((unsigned) VALUE (&i));
+  init_rng ((unt) VALUE (&i));
 }
 
 // @brief PROC REAL next random

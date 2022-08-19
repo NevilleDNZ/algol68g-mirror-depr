@@ -46,7 +46,7 @@ static char *extensions[EXTENSIONS] = {
   ".algol68g", ".ALGOL68G"
 };
 
-static void compiler_interpreter (void);
+void compiler_interpreter (void);
 
 //! @brief Verbose statistics, only useful when debugging a68g.
 
@@ -196,7 +196,7 @@ void announce_phase (char *t)
 
 //! @brief Test extension and strip.
 
-static BOOL_T strip_extension (char *ext)
+BOOL_T strip_extension (char *ext)
 {
   if (ext == NO_TEXT) {
     return A68_FALSE;
@@ -217,7 +217,7 @@ static BOOL_T strip_extension (char *ext)
 
 //! @brief Try opening with an extension.
 
-static void open_with_extensions (void)
+void open_with_extensions (void)
 {
   int k;
   FILE_SOURCE_FD (&A68_JOB) = -1;
@@ -241,7 +241,8 @@ static void open_with_extensions (void)
       a68_free (FILE_SOURCE_NAME (&A68_JOB));
       a68_free (FILE_GENERIC_NAME (&A68_JOB));
       FILE_SOURCE_NAME (&A68_JOB) = new_string (fn, NO_TEXT);
-      FILE_GENERIC_NAME (&A68_JOB) = new_string (fn, NO_TEXT);
+      FILE_GENERIC_NAME (&A68_JOB) = new_string (a68_basename (fn), NO_TEXT);
+      FILE_PATH (&A68_JOB) = new_string (a68_dirname (fn), NO_TEXT);
       for (l = 0; l < EXTENSIONS && cont; l++) {
         if (strip_extension (extensions[l])) {
           cont = A68_FALSE;
@@ -266,10 +267,9 @@ void a68_rm (char *fn)
 
 //! @brief Drives compilation and interpretation.
 
-static void compiler_interpreter (void)
+void compiler_interpreter (void)
 {
-  int k, len, num;
-  BOOL_T path_set = A68_FALSE;
+  int len, num;
 #if defined (BUILD_A68_COMPILER)
   BOOL_T emitted = A68_FALSE;
 #endif
@@ -342,23 +342,6 @@ static void compiler_interpreter (void)
   }
   ABEND (FILE_SOURCE_NAME (&A68_JOB) == NO_TEXT, ERROR_INTERNAL_CONSISTENCY, __func__);
   ABEND (FILE_GENERIC_NAME (&A68_JOB) == NO_TEXT, ERROR_INTERNAL_CONSISTENCY, __func__);
-// Isolate the path name.
-  FILE_PATH (&A68_JOB) = new_string (FILE_GENERIC_NAME (&A68_JOB), NO_TEXT);
-  path_set = A68_FALSE;
-  for (k = (int) strlen (FILE_PATH (&A68_JOB)); k >= 0 && path_set == A68_FALSE; k--) {
-#if defined (BUILD_WIN32)
-    char delim = '\\';
-#else
-    char delim = '/';
-#endif
-    if (FILE_PATH (&A68_JOB)[k] == delim) {
-      FILE_PATH (&A68_JOB)[k + 1] = NULL_CHAR;
-      path_set = A68_TRUE;
-    }
-  }
-  if (path_set == A68_FALSE) {
-    FILE_PATH (&A68_JOB)[0] = NULL_CHAR;
-  }
 // Object file.
   len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (OBJECT_EXTENSION);
   FILE_OBJECT_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
@@ -439,9 +422,9 @@ static void compiler_interpreter (void)
       announce_phase ("optimiser (code compiler)");
       errno = 0;
 //
-// Build shared library using gcc.
+// Compilation on Linux, BSD.
+// Build shared library using gcc or clang.
 // TODO: One day this should be all portable between platforms.
-// Compilation on Linux, FreeBSD or NetBSD using gcc
 //
 // -fno-stack-protector is needed for OS's that enforce -fstack-protector-strong which may give
 // undefined reference to `__stack_chk_fail_local'
@@ -452,7 +435,7 @@ static void compiler_interpreter (void)
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
 #endif
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s %s %s -c -o \"%s\" \"%s\"", C_COMPILER, INCLUDE_DIR, options, FILE_BINARY_NAME (&A68_JOB), FILE_OBJECT_NAME (&A68_JOB)) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s -I%s %s -c -o \"%s\" \"%s\"", C_COMPILER, INCLUDEDIR, options, FILE_BINARY_NAME (&A68_JOB), FILE_OBJECT_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", FILE_LIBRARY_NAME (&A68_JOB), FILE_BINARY_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
@@ -497,7 +480,7 @@ static void compiler_interpreter (void)
       struct stat srcstat, objstat;
       int ret;
       announce_phase ("dynamic linker");
-      ASSERT (snprintf (libname, SNPRINTF_SIZE, "./%s", FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
+      ASSERT (snprintf (libname, SNPRINTF_SIZE, "%s", FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
 // Check whether we are doing something rash.
       ret = stat (FILE_SOURCE_NAME (&A68_JOB), &srcstat);
       ABEND (ret != 0, ERROR_ACTION, FILE_SOURCE_NAME (&A68_JOB));

@@ -82,7 +82,7 @@ void format_error (NODE_T * p, A68_REF ref_file, char *diag)
 
 //! @brief Initialise processing of pictures.
 
-static void initialise_collitems (NODE_T * p)
+void initialise_collitems (NODE_T * p)
 {
 
 // Every picture has a counter that says whether it has not been used OR the number
@@ -103,7 +103,7 @@ static void initialise_collitems (NODE_T * p)
 
 //! @brief Initialise processing of format text.
 
-static void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, BOOL_T embedded, BOOL_T init)
+void open_format_frame (NODE_T * p, A68_REF ref_file, A68_FORMAT * fmt, BOOL_T embedded, BOOL_T init)
 {
 // Open a new frame for the format text and save for return to embedding one.
   A68_FILE *file = FILE_DEREF (&ref_file);
@@ -189,7 +189,7 @@ int get_replicator_value (NODE_T * p, BOOL_T check)
 
 //! @brief Return first available pattern.
 
-static NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
+NODE_T *scan_format_pattern (NODE_T * p, A68_REF ref_file)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PICTURE_LIST)) {
@@ -307,7 +307,7 @@ void pattern_error (NODE_T * p, MOID_T * mode, int att)
 
 //! @brief Unite value at top of stack to NUMBER.
 
-static void unite_to_number (NODE_T * p, MOID_T * mode, BYTE_T * item)
+void unite_to_number (NODE_T * p, MOID_T * mode, BYTE_T * item)
 {
   ADDR_T sp = A68_SP;
   PUSH_UNION (p, mode);
@@ -361,7 +361,7 @@ void write_insertion (NODE_T * p, A68_REF ref_file, MOOD_T mood)
 
 //! @brief Write string to file following current format.
 
-static void write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, char **str)
+void write_string_pattern (NODE_T * p, MOID_T * mode, A68_REF ref_file, char **str)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -427,7 +427,7 @@ void scan_c_pattern (NODE_T * p, BOOL_T * right_align, BOOL_T * sign, int *width
 
 //! @brief Write appropriate insertion from a choice pattern.
 
-static void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
+void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     write_choice_pattern (SUB (p), ref_file, count);
@@ -442,7 +442,7 @@ static void write_choice_pattern (NODE_T * p, A68_REF ref_file, int *count)
 
 //! @brief Write appropriate insertion from a boolean pattern.
 
-static void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
+void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
 {
   int k = (z ? 1 : 2);
   write_choice_pattern (p, ref_file, &k);
@@ -450,7 +450,7 @@ static void write_boolean_pattern (NODE_T * p, A68_REF ref_file, BOOL_T z)
 
 //! @brief Write value according to a general pattern.
 
-static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int mod)
+void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int mod)
 {
   A68_REF row;
   A68_ARRAY *arr;
@@ -568,7 +568,7 @@ static void write_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, int 
 
 //! @brief Write %[-][+][w][.][d]s/d/i/f/e/b/o/x formats.
 
-static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   BOOL_T right_align, sign, invalid;
   int width = 0, after = 0, letter;
@@ -769,7 +769,7 @@ static void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF r
 
 //! @brief Read one char from file.
 
-static char read_single_char (NODE_T * p, A68_REF ref_file)
+char read_single_char (NODE_T * p, A68_REF ref_file)
 {
   A68_FILE *file = FILE_DEREF (&ref_file);
   int ch = char_scanner (file);
@@ -781,7 +781,7 @@ static char read_single_char (NODE_T * p, A68_REF ref_file)
 
 //! @brief Scan n chars from file to input buffer.
 
-static void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
+void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
 {
   int k;
   (void) m;
@@ -793,7 +793,7 @@ static void scan_n_chars (NODE_T * p, int n, MOID_T * m, A68_REF ref_file)
 
 //! @brief Read %[-][+][w][.][d]s/d/i/f/e/b/o/x formats.
 
-static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   BOOL_T right_align, sign;
   int width, after, letter;
@@ -897,7 +897,7 @@ static void read_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF re
 
 //! @brief Count Z and D frames in a mould.
 
-static void count_zd_frames (NODE_T * p, int *z)
+void count_zd_frames (NODE_T * p, int *z)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_ITEM_D) || IS (p, FORMAT_ITEM_Z)) {
@@ -916,7 +916,7 @@ static void count_zd_frames (NODE_T * p, int *z)
 
 //! @brief Get sign from sign mould.
 
-static NODE_T *get_sign (NODE_T * p)
+NODE_T *get_sign (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     NODE_T *q = get_sign (SUB (p));
@@ -931,7 +931,7 @@ static NODE_T *get_sign (NODE_T * p)
 
 //! @brief Shift sign through Z frames until non-zero digit or D frame.
 
-static void shift_sign (NODE_T * p, char **q)
+void shift_sign (NODE_T * p, char **q)
 {
   for (; p != NO_NODE && (*q) != NO_TEXT; FORWARD (p)) {
     shift_sign (SUB (p), q);
@@ -956,7 +956,7 @@ static void shift_sign (NODE_T * p, char **q)
 
 //! @brief Pad trailing blanks to integral until desired width.
 
-static void put_zeroes_to_integral (NODE_T * p, int n)
+void put_zeroes_to_integral (NODE_T * p, int n)
 {
   for (; n > 0; n--) {
     plusab_transput_buffer (p, EDIT_BUFFER, '0');
@@ -965,7 +965,7 @@ static void put_zeroes_to_integral (NODE_T * p, int n)
 
 //! @brief Pad a sign to integral representation.
 
-static void put_sign_to_integral (NODE_T * p, int sign)
+void put_sign_to_integral (NODE_T * p, int sign)
 {
   NODE_T *sign_node = get_sign (SUB (p));
   if (IS (sign_node, FORMAT_ITEM_PLUS)) {
@@ -977,7 +977,7 @@ static void put_sign_to_integral (NODE_T * p, int sign)
 
 //! @brief Write point, exponent or plus-i-times symbol.
 
-static void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
+void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -995,7 +995,7 @@ static void write_pie_frame (NODE_T * p, A68_REF ref_file, int att, int sym)
 
 //! @brief Write sign when appropriate.
 
-static void write_mould_put_sign (NODE_T * p, char **q)
+void write_mould_put_sign (NODE_T * p, char **q)
 {
   if ((*q)[0] == '+' || (*q)[0] == '-' || (*q)[0] == BLANK_CHAR) {
     plusab_transput_buffer (p, FORMATTED_BUFFER, (*q)[0]);
@@ -1005,7 +1005,7 @@ static void write_mould_put_sign (NODE_T * p, char **q)
 
 //! @brief Write character according to a mould.
 
-static void add_char_mould (NODE_T * p, char ch, char **q)
+void add_char_mould (NODE_T * p, char ch, char **q)
 {
   if (ch != NULL_CHAR) {
     plusab_transput_buffer (p, FORMATTED_BUFFER, ch);
@@ -1015,7 +1015,7 @@ static void add_char_mould (NODE_T * p, char ch, char **q)
 
 //! @brief Write string according to a mould.
 
-static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, MOOD_T * mood)
+void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, MOOD_T * mood)
 {
   for (; p != NO_NODE; FORWARD (p)) {
 // Insertions are inserted straight away. Note that we can suppress them using "mood", which is not standard A68.
@@ -1071,7 +1071,7 @@ static void write_mould (NODE_T * p, A68_REF ref_file, int type, char **q, MOOD_
 
 //! @brief Write INT value using int pattern.
 
-static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
+void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
 {
   errno = 0;
   if (!(mode == M_INT || mode == M_LONG_INT || mode == M_LONG_LONG_INT)) {
@@ -1141,7 +1141,7 @@ static void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BY
 
 //! @brief Write REAL value using real pattern.
 
-static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
+void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item, A68_REF ref_file)
 {
   errno = 0;
   if (!(mode == M_REAL || mode == M_LONG_REAL || mode == M_LONG_LONG_REAL || mode == M_INT || mode == M_LONG_INT || mode == M_LONG_LONG_INT)) {
@@ -1328,7 +1328,7 @@ static void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T
 
 //! @brief Write COMPLEX value using complex pattern.
 
-static void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
+void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
 {
   NODE_T *reel, *plus_i_times, *imag;
   errno = 0;
@@ -1344,7 +1344,7 @@ static void write_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * root, BYT
 
 //! @brief Write BITS value using bits pattern.
 
-static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   MOOD_T mood;
   int width = 0, radix;
@@ -1430,7 +1430,7 @@ static void write_bits_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_RE
 
 //! @brief Write value to file.
 
-static void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
+void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_value_to_string (p, M_REAL, item, ATTRIBUTE (SUB (p)));
@@ -1453,7 +1453,7 @@ static void genie_write_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file
 
 //! @brief Write value to file.
 
-static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
+void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_value_to_string (p, M_LONG_REAL, item, ATTRIBUTE (SUB (p)));
@@ -1487,7 +1487,7 @@ static void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref
 
 //! @brief Write value to file.
 
-static void genie_write_long_mp_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
+void genie_write_long_mp_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_value_to_string (p, M_LONG_LONG_REAL, item, ATTRIBUTE (SUB (p)));
@@ -1511,7 +1511,7 @@ static void genie_write_long_mp_real_format (NODE_T * p, BYTE_T * item, A68_REF 
 
 //! @brief At end of write purge all insertions.
 
-static void purge_format_write (NODE_T * p, A68_REF ref_file)
+void purge_format_write (NODE_T * p, A68_REF ref_file)
 {
 // Problem here is shutting down embedded formats.
   BOOL_T go_on;
@@ -1535,7 +1535,7 @@ static void purge_format_write (NODE_T * p, A68_REF ref_file)
 
 //! @brief Write value to file.
 
-static void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
+void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
 {
   errno = 0;
   ABEND (mode == NO_MOID, ERROR_INTERNAL_CONSISTENCY, __func__);
@@ -1911,7 +1911,7 @@ void genie_write_file_format (NODE_T * p)
 
 //! @brief Give a value error in case a character is not among expected ones.
 
-static BOOL_T expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *items, char ch)
+BOOL_T expect (NODE_T * p, MOID_T * m, A68_REF ref_file, const char *items, char ch)
 {
   if (strchr ((char *) items, ch) == NO_TEXT) {
     value_error (p, m, ref_file);
@@ -1980,7 +1980,7 @@ void read_insertion (NODE_T * p, A68_REF ref_file)
 
 //! @brief Read string from file according current format.
 
-static void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
+void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -2004,7 +2004,7 @@ static void read_string_pattern (NODE_T * p, MOID_T * m, A68_REF ref_file)
 
 //! @brief Traverse choice pattern.
 
-static void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count, int *matches, int *first_match, BOOL_T * full_match)
+void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count, int *matches, int *first_match, BOOL_T * full_match)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     traverse_choice_pattern (SUB (p), str, len, count, matches, first_match, full_match);
@@ -2023,7 +2023,7 @@ static void traverse_choice_pattern (NODE_T * p, char *str, int len, int *count,
 
 //! @brief Read appropriate insertion from a choice pattern.
 
-static int read_choice_pattern (NODE_T * p, A68_REF ref_file)
+int read_choice_pattern (NODE_T * p, A68_REF ref_file)
 {
 
 // This implementation does not have the RR peculiarity that longest
@@ -2068,7 +2068,7 @@ static int read_choice_pattern (NODE_T * p, A68_REF ref_file)
 
 //! @brief Read value according to a general-pattern.
 
-static void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_REF row;
   EXECUTE_UNIT (NEXT_SUB (p));
@@ -2081,7 +2081,7 @@ static void read_number_generic (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_R
 
 //! @brief Read sign-mould according current format.
 
-static void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign)
+void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -2139,7 +2139,7 @@ static void read_sign_mould (NODE_T * p, MOID_T * m, A68_REF ref_file, int *sign
 
 //! @brief Read mould according current format.
 
-static void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
+void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, INSERTION)) {
@@ -2176,7 +2176,7 @@ static void read_integral_mould (NODE_T * p, MOID_T * m, A68_REF ref_file)
 
 //! @brief Read mould according current format.
 
-static void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
+void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
 {
   NODE_T *q = SUB (p);
   if (q != NO_NODE && IS (q, SIGN_MOULD)) {
@@ -2196,7 +2196,7 @@ static void read_integral_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_RE
 
 //! @brief Read point, exponent or i-frame.
 
-static void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, int item, char ch)
+void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, int item, char ch)
 {
 // Widen ch to a stringlet.
   char sym[3];
@@ -2226,7 +2226,7 @@ static void read_pie_frame (NODE_T * p, MOID_T * m, A68_REF ref_file, int att, i
 
 //! @brief Read REAL value using real pattern.
 
-static void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
+void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
 {
 // Dive into pattern.
   NODE_T *q = (IS (p, REAL_PATTERN)) ? SUB (p) : p;
@@ -2275,7 +2275,7 @@ static void read_real_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
 
 //! @brief Read COMPLEX value using complex pattern.
 
-static void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
+void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T * re, BYTE_T * im, A68_REF ref_file)
 {
   NODE_T *reel, *plus_i_times, *imag;
 // Dissect pattern.
@@ -2292,7 +2292,7 @@ static void read_complex_pattern (NODE_T * p, MOID_T * comp, MOID_T * m, BYTE_T 
 
 //! @brief Read BITS value according pattern.
 
-static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
+void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF ref_file)
 {
   int radix;
   char *z;
@@ -2310,7 +2310,7 @@ static void read_bits_pattern (NODE_T * p, MOID_T * m, BYTE_T * item, A68_REF re
 
 //! @brief Read object with from file and store.
 
-static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   if (IS (p, GENERAL_PATTERN) && NEXT_SUB (p) == NO_NODE) {
     genie_read_standard (p, mode, item, ref_file);
@@ -2327,7 +2327,7 @@ static void genie_read_real_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A6
 
 //! @brief At end of read purge all insertions.
 
-static void purge_format_read (NODE_T * p, A68_REF ref_file)
+void purge_format_read (NODE_T * p, A68_REF ref_file)
 {
   BOOL_T go_on;
   do {
@@ -2350,7 +2350,7 @@ static void purge_format_read (NODE_T * p, A68_REF ref_file)
 
 //! @brief Read object with from file and store.
 
-static void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
+void genie_read_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file, int *formats)
 {
   errno = 0;
   reset_transput_buffer (INPUT_BUFFER);

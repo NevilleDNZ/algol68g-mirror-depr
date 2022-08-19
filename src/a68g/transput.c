@@ -86,7 +86,7 @@ int store_file_entry (NODE_T * p, FILE_T fd, char *idf, BOOL_T is_tmp)
 
 //! @brief Close file and delete temp file.
 
-static void close_file_entry (NODE_T * p, int k)
+void close_file_entry (NODE_T * p, int k)
 {
   if (k >= 0 && k < MAX_OPEN_FILES) {
     FILE_ENTRY *fe = &(A68 (file_entries)[k]);
@@ -104,7 +104,7 @@ static void close_file_entry (NODE_T * p, int k)
 
 //! @brief Close file and delete temp file.
 
-static void free_file_entry (NODE_T * p, int k)
+void free_file_entry (NODE_T * p, int k)
 {
   close_file_entry (p, k);
   if (k >= 0 && k < MAX_OPEN_FILES) {
@@ -246,7 +246,7 @@ void genie_string_in_string (NODE_T * p)
 // It is in the heap, but cannot be gc'ed. If it is too small, we give up on
 // it and make a larger one.
 
-static A68_REF ref_transput_buffer[MAX_TRANSPUT_BUFFER];
+A68_REF ref_transput_buffer[MAX_TRANSPUT_BUFFER];
 
 //! @brief Set max number of chars in a transput buffer.
 
@@ -380,7 +380,7 @@ void plusto_transput_buffer (NODE_T * p, char ch, int k)
     enlarge_transput_buffer (p, k, 10 * size);
     plusto_transput_buffer (p, ch, k);
   } else {
-    MOVE (&sb[1], &sb[0], (unsigned) size);
+    MOVE (&sb[1], &sb[0], (unt) size);
     sb[0] = ch;
     sb[n + 1] = NULL_CHAR;
     set_transput_buffer_index (k, n + 1);
@@ -453,7 +453,7 @@ char pop_char_transput_buffer (int k)
 
 //! @brief Add C string to A68 string.
 
-static void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *s)
+void add_c_string_to_a_string (NODE_T * p, A68_REF ref_str, char *s)
 {
   A68_REF a, c, d;
   A68_ARRAY *a_1, *a_3;
@@ -682,7 +682,7 @@ void set_default_event_procedure (A68_PROCEDURE * z)
 
 //! @brief Initialise channel.
 
-static void init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL_T p, BOOL_T b, BOOL_T d)
+void init_channel (A68_CHANNEL * chan, BOOL_T r, BOOL_T s, BOOL_T g, BOOL_T p, BOOL_T b, BOOL_T d)
 {
   STATUS (chan) = INIT_MASK;
   RESET (chan) = r;
@@ -710,7 +710,7 @@ void set_default_event_procedures (A68_FILE * f)
 
 //! @brief Set up a REF FILE object.
 
-static void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, BOOL_T rm, BOOL_T wm, BOOL_T cm, char *env)
+void init_file (NODE_T * p, A68_REF * ref_file, A68_CHANNEL c, FILE_T s, BOOL_T rm, BOOL_T wm, BOOL_T cm, char *env)
 {
   A68_FILE *f;
   char *filename = (env == NO_TEXT ? NO_TEXT : getenv (env));
@@ -2212,7 +2212,7 @@ int char_value (int ch)
 
 //! @brief INT value of BITS denotation
 
-static UNSIGNED_T bits_to_int (NODE_T * p, char *str)
+UNSIGNED_T bits_to_int (NODE_T * p, char *str)
 {
   int base = 0;
   UNSIGNED_T bits = 0;
@@ -2723,10 +2723,10 @@ void genie_value_to_string (NODE_T * p, MOID_T * moid, BYTE_T * item, int mod)
     int pos = bits;
     char *str = stack_string (p, 8 + bits);
     ADDR_T pop_sp = A68_SP;
-    unsigned *row = stack_mp_bits (p, (MP_T *) item, moid);
+    unt *row = stack_mp_bits (p, (MP_T *) item, moid);
     str[pos--] = NULL_CHAR;
     while (pos >= 0) {
-      unsigned bit = 0x1;
+      unt bit = 0x1;
       int j;
       for (j = 0; j < MP_BITS_BITS && pos >= 0; j++) {
         str[pos--] = (char) ((row[word - 1] & bit) ? FLIP_CHAR : FLOP_CHAR);
@@ -2996,7 +2996,7 @@ void genie_write_file (NODE_T * p)
 
 //! @brief Read object binary from file.
 
-static void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void genie_read_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_FILE *f;
   CHECK_REF (p, ref_file, M_REF_FILE);
@@ -3203,7 +3203,7 @@ void genie_read_bin_file (NODE_T * p)
 
 //! @brief Write object binary to file.
 
-static void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
+void genie_write_bin_standard (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file)
 {
   A68_FILE *f;
   CHECK_REF (p, ref_file, M_REF_FILE);
@@ -3401,9 +3401,9 @@ A68_REF tmp_to_a68_string (NODE_T * p, char *temp_string)
 
 //! @brief Add c to str, assuming that "str" is large enough.
 
-static char *plusto (char c, char *str)
+char *plusto (char c, char *str)
 {
-  MOVE (&str[1], &str[0], (unsigned) (strlen (str) + 1));
+  MOVE (&str[1], &str[0], (unt) (strlen (str) + 1));
   str[0] = c;
   return str;
 }
@@ -3421,7 +3421,7 @@ char *string_plusab_char (char *str, char c, int strwid)
 
 //! @brief Add leading spaces to str until length is width.
 
-static char *leading_spaces (char *str, int width)
+char *leading_spaces (char *str, int width)
 {
   int j = width - (int) strlen (str);
   while (--j >= 0) {
@@ -3479,7 +3479,7 @@ char *bits (NODE_T * p)
       INT_T z = VALUE ((A68_INT *) (STACK_OFFSET (A68_UNION_SIZE)));
       rc = convert_radix (p, (UNSIGNED_T) z, radix, length);
     } else if (mode == M_REAL) {
-// A trick to copy a REAL into an unsigned without truncating
+// A trick to copy a REAL into an unt without truncating
       UNSIGNED_T z;
       memcpy (&z, (void *) &VALUE ((A68_REAL *) (STACK_OFFSET (A68_UNION_SIZE))), 8);
       rc = convert_radix (p, z, radix, length);
@@ -3709,7 +3709,7 @@ char *whole (NODE_T * p)
 
 //! @brief Fetch next digit from LONG.
 
-static char long_choose_dig (NODE_T * p, MP_T * y, int digits)
+char long_choose_dig (NODE_T * p, MP_T * y, int digits)
 {
 // Assuming positive "y".
   ADDR_T pop_sp = A68_SP;
@@ -3784,7 +3784,7 @@ char *long_sub_fixed (NODE_T * p, MP_T * x, int digits, int width, int after)
 
 //! @brief Fetch next digit from REAL.
 
-static char choose_dig_double (DOUBLE_T * y)
+char choose_dig_double (DOUBLE_T * y)
 {
 // Assuming positive "y".
   int c = (int) (*y *= 10);
@@ -3858,7 +3858,7 @@ char *sub_fixed (NODE_T * p, REAL_T x, int width, int after)
 
 //! @brief Fetch next digit from REAL.
 
-static char choose_dig (REAL_T * y)
+char choose_dig (REAL_T * y)
 {
 // Assuming positive "y".
   int c = (int) (*y *= 10);

@@ -21,10 +21,10 @@ MODE NUM = LONG LONG REAL;
 REAL f, g, max dev := 0;
 
 (f := 1e-1, g := 1e-1);
-FOR k TO 100
+FOR k TO 1000
 DO NUM s = f + next random * g, x = f + next random * g;
    NUM a68g = qgammainc(s, x), mpfr = mpfr qgammainc(s, x);
-   print ((a68g, blank, mpfr, newline));
+   # print ((a68g, blank, mpfr, newline)); #
    IF REAL dev = SHORTEN SHORTEN ((a68g - mpfr) / mpfr);
       dev > max dev
    THEN max dev := dev
@@ -32,10 +32,10 @@ DO NUM s = f + next random * g, x = f + next random * g;
 OD;
 
 (f := 1e-1, g := 1e3);
-TO 100
+TO 1000
 DO NUM s = f + next random * g, x = f + next random * g;
    NUM a68g = qgammainc(s, x), mpfr = mpfr qgammainc(s, x);
-   print ((a68g, blank, mpfr, newline));
+   # print ((a68g, blank, mpfr, newline)); #
    IF REAL dev = SHORTEN SHORTEN ((a68g - mpfr) / mpfr);
       dev > max dev
    THEN max dev := dev

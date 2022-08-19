@@ -120,7 +120,7 @@ static A68_INFO info_text[] = {
 
 //! @brief Print_info.
 
-static void print_info (FILE_T f, char *prompt, int k)
+void print_info (FILE_T f, char *prompt, int k)
 {
   if (prompt != NO_TEXT) {
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s %s: %s.", prompt, TERM (&info_text[k]), DEF (&info_text[k])) >= 0);

@@ -40,7 +40,7 @@ void fft_error_handler (const char *reason, const char *file, int line, int gsl_
 
 //! @brief Detect math errors.
 
-static void fft_test_error (int rc)
+void fft_test_error (int rc)
 {
   if (rc != 0) {
     fft_error_handler ("math error", "", 0, rc);
@@ -49,7 +49,7 @@ static void fft_test_error (int rc)
 
 //! @brief Pop [] REAL on the stack as complex REAL_T [].
 
-static REAL_T *pop_array_real (NODE_T * p, int *len)
+REAL_T *pop_array_real (NODE_T * p, int *len)
 {
   A68_REF desc;
   A68_ARRAY *arr;
@@ -82,7 +82,7 @@ static REAL_T *pop_array_real (NODE_T * p, int *len)
 
 //! @brief Push REAL_T [] on the stack as [] REAL.
 
-static void push_array_real (NODE_T * p, REAL_T * v, int len)
+void push_array_real (NODE_T * p, REAL_T * v, int len)
 {
   A68_REF desc, row;
   A68_ARRAY arr;
@@ -105,7 +105,7 @@ static void push_array_real (NODE_T * p, REAL_T * v, int len)
 
 //! @brief Pop [] COMPLEX on the stack as REAL_T [].
 
-static REAL_T *pop_array_complex (NODE_T * p, int *len)
+REAL_T *pop_array_complex (NODE_T * p, int *len)
 {
   A68_REF desc;
   A68_ARRAY *arr;
@@ -140,7 +140,7 @@ static REAL_T *pop_array_complex (NODE_T * p, int *len)
 
 //! @brief Push REAL_T [] on the stack as [] COMPLEX.
 
-static void push_array_complex (NODE_T * p, REAL_T * v, int len)
+void push_array_complex (NODE_T * p, REAL_T * v, int len)
 {
   A68_REF desc, row;
   A68_ARRAY arr;

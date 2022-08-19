@@ -23,7 +23,7 @@
 #define __A68G_LEGACY_H__
 
 typedef int INT_T;
-typedef unsigned UNSIGNED_T;
+typedef unt UNSIGNED_T;
 typedef UNSIGNED_T ADDR_T;
 typedef REAL_T A68_LONG_COMPLEX[2];
 typedef REAL_T DOUBLE_T;
@@ -41,7 +41,7 @@ typedef int *A68_ALIGN_T;
 
 typedef REAL_T MP_REAL_T;
 typedef int MP_INT_T;
-typedef unsigned MP_BITS_T;
+typedef unt MP_BITS_T;
 typedef MP_REAL_T MP_T;
 
 #define FLOOR_MP floor

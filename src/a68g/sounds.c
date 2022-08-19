@@ -85,11 +85,11 @@
 #define WAVE_FORMAT_OLIOPR		(0x1004)
 #define WAVE_FORMAT_EXTENSIBLE          (0xfffe)
 
-static unsigned pow256[] = { 1, 256, 65536, 16777216 };
+static unt pow256[] = { 1, 256, 65536, 16777216 };
 
 //! @brief Test bits per sample.
 
-static void test_bits_per_sample (NODE_T * p, unsigned bps)
+void test_bits_per_sample (NODE_T * p, unt bps)
 {
   if (bps <= 0 || bps > 24) {
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "unsupported number of bits per sample");
@@ -97,24 +97,24 @@ static void test_bits_per_sample (NODE_T * p, unsigned bps)
   }
 }
 
-//! @brief Code string into big-endian unsigned.
+//! @brief Code string into big-endian unt.
 
-static unsigned code_string (NODE_T * p, char *s, int n)
+unt code_string (NODE_T * p, char *s, int n)
 {
-  unsigned v;
+  unt v;
   int k, m;
   if (n > MAX_BYTES) {
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "too long word length");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   for (k = 0, m = n - 1, v = 0; k < n; k++, m--) {
-    v += ((unsigned) s[k]) * pow256[m];
+    v += ((unt) s[k]) * pow256[m];
   } return v;
 }
 
-//! @brief Code unsigned into string.
+//! @brief Code unt into string.
 
-static char *code_unsigned (NODE_T * p, unsigned n)
+char *code_unt (NODE_T * p, unt n)
 {
   static char text[MAX_BYTES + 1];
   int k;
@@ -135,7 +135,7 @@ static char *code_unsigned (NODE_T * p, unsigned n)
 
 //! @brief WAVE format category
 
-static char *format_category (unsigned n)
+char *format_category (unt n)
 {
   switch (n) {
   case WAVE_FORMAT_UNKNOWN:
@@ -339,9 +339,9 @@ static char *format_category (unsigned n)
 
 //! @brief Read RIFF item.
 
-static unsigned read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
+unt read_riff_item (NODE_T * p, FILE_T fd, int n, BOOL_T little)
 {
-  unsigned v, z;
+  unt v, z;
   int k, m, r;
   if (n > MAX_BYTES) {
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "too long word length");
@@ -379,8 +379,8 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int r;
-  unsigned fmt_cat;
-  unsigned blockalign, byterate, chunksize, subchunk2size, z;
+  unt fmt_cat;
+  unt blockalign, byterate, chunksize, subchunk2size, z;
   BOOL_T data_read = A68_FALSE;
   if (read_riff_item (p, FD (f), 4, A68_BIG_ENDIAN) != code_string (p, "RIFF", 4)) {
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "file format is not RIFF");
@@ -388,7 +388,7 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
   }
   chunksize = read_riff_item (p, FD (f), 4, A68_LITTLE_ENDIAN);
   if ((z = read_riff_item (p, FD (f), 4, A68_BIG_ENDIAN)) != code_string (p, "WAVE", 4)) {
-    diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL_STRING, M_SOUND, "file format is not \"WAVE\" but", code_unsigned (p, z));
+    diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL_STRING, M_SOUND, "file format is not \"WAVE\" but", code_unt (p, z));
     exit_genie (p, A68_RUNTIME_ERROR);
   }
 // Now read chunks.
@@ -440,7 +440,7 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
     } else if (z == code_string (p, "data", 4)) {
 // Read data chunk.
       subchunk2size = read_riff_item (p, FD (f), 4, A68_LITTLE_ENDIAN);
-      NUM_SAMPLES (w) = subchunk2size / NUM_CHANNELS (w) / (unsigned) A68_SOUND_BYTES (w);
+      NUM_SAMPLES (w) = subchunk2size / NUM_CHANNELS (w) / (unt) A68_SOUND_BYTES (w);
       DATA (w) = heap_generator (p, M_SOUND_DATA, (int) subchunk2size);
       r = (int) io_read (FD (f), ADDRESS (&(DATA (w))), subchunk2size);
       if (r != (int) subchunk2size) {
@@ -449,7 +449,7 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
       }
       data_read = A68_TRUE;
     } else {
-      diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL_STRING, M_SOUND, "chunk is", code_unsigned (p, z));
+      diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL_STRING, M_SOUND, "chunk is", code_unt (p, z));
       exit_genie (p, A68_RUNTIME_ERROR);
     }
   }
@@ -462,16 +462,16 @@ void read_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 
 //! @brief Write RIFF item.
 
-void write_riff_item (NODE_T * p, FILE_T fd, unsigned z, int n, BOOL_T little)
+void write_riff_item (NODE_T * p, FILE_T fd, unt z, int n, BOOL_T little)
 {
   int k, r;
-  unsigned char y[MAX_BYTES];
+  unt char y[MAX_BYTES];
   if (n > MAX_BYTES) {
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_SOUND_INTERNAL, M_SOUND, "too long word length");
     exit_genie (p, A68_RUNTIME_ERROR);
   }
   for (k = 0; k < n; k++) {
-    y[k] = (unsigned char) (z & 0xff);
+    y[k] = (unt char) (z & 0xff);
     z >>= 8;
   }
   if (little) {
@@ -495,10 +495,10 @@ void write_sound (NODE_T * p, A68_REF ref_file, A68_SOUND * w)
 {
   A68_FILE *f = FILE_DEREF (&ref_file);
   int r;
-  unsigned blockalign = NUM_CHANNELS (w) * (unsigned) (A68_SOUND_BYTES (w));
-  unsigned byterate = SAMPLE_RATE (w) * blockalign;
-  unsigned subchunk2size = NUM_SAMPLES (w) * blockalign;
-  unsigned chunksize = 4 + (8 + 16) + (8 + subchunk2size);
+  unt blockalign = NUM_CHANNELS (w) * (unt) (A68_SOUND_BYTES (w));
+  unt byterate = SAMPLE_RATE (w) * blockalign;
+  unt subchunk2size = NUM_SAMPLES (w) * blockalign;
+  unt chunksize = 4 + (8 + 16) + (8 + subchunk2size);
   write_riff_item (p, FD (f), code_string (p, "RIFF", 4), 4, A68_BIG_ENDIAN);
   write_riff_item (p, FD (f), chunksize, 4, A68_LITTLE_ENDIAN);
   write_riff_item (p, FD (f), code_string (p, "WAVE", 4), 4, A68_BIG_ENDIAN);
@@ -533,13 +533,13 @@ void genie_new_sound (NODE_T * p)
   POP_OBJECT (p, &num_channels, A68_INT);
   POP_OBJECT (p, &sample_rate, A68_INT);
   POP_OBJECT (p, &bits_per_sample, A68_INT);
-  NUM_SAMPLES (&w) = (unsigned) (VALUE (&num_samples));
-  NUM_CHANNELS (&w) = (unsigned) (VALUE (&num_channels));
-  SAMPLE_RATE (&w) = (unsigned) (VALUE (&sample_rate));
-  BITS_PER_SAMPLE (&w) = (unsigned) (VALUE (&bits_per_sample));
+  NUM_SAMPLES (&w) = (unt) (VALUE (&num_samples));
+  NUM_CHANNELS (&w) = (unt) (VALUE (&num_channels));
+  SAMPLE_RATE (&w) = (unt) (VALUE (&sample_rate));
+  BITS_PER_SAMPLE (&w) = (unt) (VALUE (&bits_per_sample));
   test_bits_per_sample (p, BITS_PER_SAMPLE (&w));
-  DATA_SIZE (&w) = (unsigned) A68_SOUND_DATA_SIZE (&w);
-  DATA (&w) = heap_generator (p, M_SOUND_DATA, (int) DATA_SIZE (&w));
+  DATA_SIZE (&w) = (unt) A68_SOUND_DATA_SIZE (&w);
+  DATA (&w) = heap_generator (p, M_SOUND_DATA, (int) DATA_SIZE (&w) * sizeof (unt));
   STATUS (&w) = INIT_MASK;
   PUSH_OBJECT (p, w, A68_SOUND);
 }

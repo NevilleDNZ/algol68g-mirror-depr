@@ -28,11 +28,10 @@
 
 void init_heap (void)
 {
-  int heap_a_size = A68_ALIGN (A68 (heap_size));
-  int handle_a_size = A68_ALIGN (A68 (handle_pool_size));
-  int frame_a_size = A68_ALIGN (A68 (frame_stack_size));
-  int expr_a_size = A68_ALIGN (A68 (expr_stack_size));
-  int total_size = A68_ALIGN (heap_a_size + handle_a_size + frame_a_size + 2 * expr_a_size);
+  unt heap_a_size = A68_ALIGN (A68 (heap_size));
+  unt handle_a_size = A68_ALIGN (A68 (handle_pool_size));
+  unt frame_a_size = A68_ALIGN (A68 (frame_stack_size));
+  unt expr_a_size = A68_ALIGN (A68 (expr_stack_size));
   BYTE_T *core;
   A68_HEAP = NO_BYTE;
   A68_HANDLES = NO_BYTE;
@@ -41,6 +40,8 @@ void init_heap (void)
   A68_FP = 0;
   A68_HP = 0;
   A68_GLOBALS = 0;
+  REAL_T /* sic */ total_size = A68_ALIGN (heap_a_size + handle_a_size + frame_a_size + 2 * expr_a_size);
+  ABEND (OVER_2G (total_size), ERROR_OUT_OF_CORE_2G, __func__);
   errno = 0;
   core = (BYTE_T *) (A68_ALIGN_T *) a68_alloc ((size_t) total_size, __func__, __LINE__);
   ABEND (core == NO_BYTE, ERROR_OUT_OF_CORE, __func__);
@@ -57,34 +58,41 @@ void init_heap (void)
 
 //! @brief aligned allocation.
 
-void *a68_alloc (size_t s, const char *f, int line)
+void *a68_alloc (size_t len, const char *f, int line)
 {
 // We need this since malloc aligns to "standard C types".
 // __float128 is not a standard type, apparently ...
-  ABEND (s >= GIGABYTE, ERROR_OUT_OF_CORE, __func__);   // Huge chunks cause trouble!
-  if (s > 0) {
-    const unsigned size = sizeof (A68_ALIGN_T);
-    unsigned words = s / size, bytes = s % size;
-    void *p;
-    LINK_ERRNO;
+// Huge chunks cause trouble!
+  ABEND (len >= 2 * GIGABYTE, ERROR_OUT_OF_CORE, __func__);   
+  if (len > 0) {
+    void *p = NULL;
+    int save = errno;
+    size_t align = sizeof (A68_ALIGN_T);
     errno = 0;
 #if defined (BUILD_WIN32)
-    (void) bytes;
-    p = _aligned_malloc (s, size);
-#elif defined (__APPLE__)
-    p = malloc(size);
-#else
-    if (bytes != 0) {
-      words++;
+    p = _aligned_malloc (len, align);
+#elif defined (HAVE_POSIX_MEMALIGN)
+    errno = posix_memalign (&p, align, len);
+    if (errno != 0) {
+      p = NULL;
     }
-    p = aligned_alloc (size, words * size);
+#elif defined (HAVE_ALIGNED_ALLOC)
+// Glibc version of posix_memalign.
+    if (align < sizeof (void *)) {
+      errno = EINVAL;
+    } else {
+      p = aligned_alloc (align, len);
+    }
+#else
+// Aude audenda.
+    p = malloc (len);
 #endif
     if (p == (void *) NULL || errno != 0) {
       static char msg[BUFFER_SIZE];
-      snprintf (msg, SNPRINTF_SIZE, "cannot allocate %lu=%u*%u bytes; called from function %s, line %d", s, words, size, f, line);
+      snprintf (msg, SNPRINTF_SIZE, "cannot allocate %lu bytes; called from function %s, line %d", (long unt) len, f, line);
       ABEND (A68_TRUE, ERROR_ALLOCATION, msg);
     }
-    UNLINK_ERRNO;
+    errno = save;
     return p;
   } else {
     return (void *) NULL;
@@ -174,7 +182,7 @@ BYTE_T *get_fixed_heap_space (size_t s)
     A68 (fixed_heap_pointer) += A68_ALIGN ((int) s);
 // Allow for extra storage for diagnostics etcetera 
     ABEND (A68 (fixed_heap_pointer) >= (A68 (heap_size) - MIN_MEM_SIZE), ERROR_OUT_OF_CORE, __func__);
-    ABEND (((unsigned) A68 (temp_heap_pointer) - (unsigned) A68 (fixed_heap_pointer)) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, __func__);
+    ABEND (((unt) A68 (temp_heap_pointer) - (unt) A68 (fixed_heap_pointer)) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, __func__);
     return z;
   } else {
     return get_heap_space (s);
@@ -189,7 +197,7 @@ BYTE_T *get_temp_heap_space (size_t s)
   if (A68 (heap_is_fluid)) {
     A68 (temp_heap_pointer) -= A68_ALIGN ((int) s);
 // Allow for extra storage for diagnostics etcetera.
-    ABEND (((unsigned) A68 (temp_heap_pointer) - (unsigned) A68 (fixed_heap_pointer)) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, __func__);
+    ABEND (((unt) A68 (temp_heap_pointer) - (unt) A68 (fixed_heap_pointer)) <= MIN_MEM_SIZE, ERROR_OUT_OF_CORE, __func__);
     z = HEAP_ADDRESS (A68 (temp_heap_pointer));
     return z;
   } else {
@@ -210,7 +218,7 @@ void get_stack_size (void)
   if (!(getrlimit (RLIMIT_STACK, &limits) == 0 && errno == 0)) {
     A68 (stack_size) = MEGABYTE;
   }
-  A68 (stack_size) = (unsigned) (RLIM_CUR (&limits) < RLIM_MAX (&limits) ? RLIM_CUR (&limits) : RLIM_MAX (&limits));
+  A68 (stack_size) = (unt) (RLIM_CUR (&limits) < RLIM_MAX (&limits) ? RLIM_CUR (&limits) : RLIM_MAX (&limits));
 // A heuristic in case getrlimit yields extreme numbers: the frame stack is
 // assumed to fill at a rate comparable to the C stack, so the C stack needs
 // not be larger than the frame stack. This may not be true.

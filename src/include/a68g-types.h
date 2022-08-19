@@ -65,14 +65,14 @@ typedef struct SOID_T SOID_T;
 typedef struct TABLE_T TABLE_T;
 typedef struct TAG_T TAG_T;
 typedef struct TOKEN_T TOKEN_T;
-typedef unsigned FILE_T, MOOD_T;
+typedef unt FILE_T, MOOD_T;
 typedef void GPROC (NODE_T *);
 typedef int CHAR_T;
 typedef PROP_T PROP_PROC (NODE_T *);
 typedef struct A68_REAL A68_REAL;
 typedef MP_T A68_LONG[DEFAULT_DOUBLE_DIGITS + 2];
 
-typedef unsigned char BYTE_T;
+typedef unt char BYTE_T;
 typedef BYTE_T *A68_STRUCT;
 
 struct A68_REAL
@@ -288,14 +288,12 @@ struct TOKEN_T
   TOKEN_T *less, *more;
 };
 
-/**
-@struct A68_HANDLE
-@brief Handle for REF into the HEAP.
-@details
-A REF into the HEAP points at a HANDLE.
-The HANDLE points at the actual object in the HEAP.
-Garbage collection modifies HANDLEs, but not REFs.
-**/
+//! @struct A68_HANDLE
+//! @brief Handle for REF into the HEAP.
+//! @details
+//! A REF into the HEAP points at a HANDLE.
+//! The HANDLE points at the actual object in the HEAP.
+//! Garbage collection modifies HANDLEs, but not REFs.
 
 struct A68_HANDLE
 {
@@ -306,38 +304,34 @@ struct A68_HANDLE
   A68_HANDLE *next, *previous;
 } ALIGNED;
 
-/**
-@struct A68_REF
-@brief Fat A68 pointer.
-**/
+//! @struct A68_REF
+//! @brief Fat A68 pointer.
 
 struct A68_REF
 {
   STATUS_MASK_T status;
   ADDR_T offset;
-  ADDR_T scope; /**< Dynamic scope. **/
+  ADDR_T scope; // Dynamic scope.
   A68_HANDLE *handle;
 } ALIGNED;
 
-/**
-@struct A68_ARRAY
-@brief A68 array descriptor. 
-@details
-A row is an A68_REF to an A68_ARRAY.
-
-An A68_ARRAY is followed by one A68_TUPLE per dimension.
-
-@verbatim
-A68_REF row -> A68_ARRAY ----+   ARRAY: Description of row, ref to elements
-               A68_TUPLE 1   |   TUPLE: Bounds, one for every dimension
-               ...           |
-               A68_TUPLE dim |
-               ...           |
-               ...           |
-               Element 1 <---+   Element: Sequential row elements, in the heap
-               ...                        Not always contiguous - trims!
-@endverbatim
-**/
+//! @struct A68_ARRAY
+//! @brief A68 array descriptor. 
+//! @details
+//! A row is an A68_REF to an A68_ARRAY.
+//! 
+//! An A68_ARRAY is followed by one A68_TUPLE per dimension.
+//! 
+//! @verbatim
+//! A68_REF row -> A68_ARRAY ----+   ARRAY: Description of row, ref to elements
+//!                A68_TUPLE 1   |   TUPLE: Bounds, one for every dimension
+//!                ...           |
+//!                A68_TUPLE dim |
+//!                ...           |
+//!                ...           |
+//!                Element 1 <---+   Element: Sequential row elements, in the heap
+//!                ...                        Not always contiguous - trims!
+//! @endverbatim
 
 struct A68_ARRAY
 {
@@ -389,18 +383,16 @@ struct A68_INT
   INT_T value;
 } ALIGNED;
 
-/**
-@struct A68_FORMAT
-@brief A68 format descriptor.
-@details
-A format behaves very much like a procedure.
-**/
+//! @struct A68_FORMAT
+//! @brief A68 format descriptor.
+//! @details
+//! A format behaves very much like a procedure.
 
 struct A68_FORMAT
 {
   STATUS_MASK_T status;
-  NODE_T *body; /**< Entry point in syntax tree. **/
-  ADDR_T fp_environ; /**< Frame pointer to environ. **/
+  NODE_T *body;      // Entry point in syntax tree.
+  ADDR_T fp_environ; // Frame pointer to environ.
 } ALIGNED;
 
 struct A68_LONG_BYTES
@@ -409,10 +401,8 @@ struct A68_LONG_BYTES
   char value[LONG_BYTES_WIDTH + 1];
 } ALIGNED;
 
-/**
-@struct A68_PROCEDURE
-@brief A68 procedure descriptor.
-**/
+//! @struct A68_PROCEDURE
+//! @brief A68 procedure descriptor.
 
 struct A68_PROCEDURE
 {
@@ -421,19 +411,16 @@ struct A68_PROCEDURE
   {
     NODE_T *node;
     GPROC *procedure;
-  } body;
-  /**< Entry point in syntax tree or precompiled C procedure. **/
-  A68_HANDLE *locale; /**< Locale for partial parametrisation. **/
+  } body;             // Entry point in syntax tree or precompiled C procedure.
+  A68_HANDLE *locale; // Locale for partial parametrisation.
   MOID_T *type;
-  ADDR_T fp_environ; /**< Frame pointer to environ. **/
+  ADDR_T fp_environ;  // Frame pointer to environ.
 } ALIGNED;
 
 typedef A68_REAL A68_COMPLEX[2];
 
-/**
-@struct A68_TUPLE
-@brief A tuple containing bounds etcetera for one dimension.
-**/
+//! @struct A68_TUPLE
+//! @brief A tuple containing bounds etcetera for one dimension.
 
 struct A68_TUPLE
 {
@@ -449,7 +436,7 @@ struct A68_UNION
 struct A68_SOUND
 {
   STATUS_MASK_T status;
-  unsigned num_channels, sample_rate, bits_per_sample, num_samples, data_size;
+  unt num_channels, sample_rate, bits_per_sample, num_samples, data_size;
   A68_REF data;
 };
 

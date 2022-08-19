@@ -29,11 +29,11 @@
 // For example "PROC (REF STRUCT (REF SELF, UNION (INT, VOID))) REF SELF"
 // for a procedure yielding a pointer to an object of its own mode.
 
-static void moid_to_string_2 (char *, MOID_T *, int *, NODE_T *);
+void moid_to_string_2 (char *, MOID_T *, int *, NODE_T *);
 
 //! @brief Add string to MOID text.
 
-static void add_to_moid_text (char *dst, char *str, int *w)
+void add_to_moid_text (char *dst, char *str, int *w)
 {
   bufcat (dst, str, BUFFER_SIZE);
   (*w) -= (int) strlen (str);
@@ -58,7 +58,7 @@ TAG_T *find_indicant_global (TABLE_T * table, MOID_T * mode)
 
 //! @brief Pack to string.
 
-static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * idf)
+void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * idf)
 {
   for (; p != NO_PACK; FORWARD (p)) {
     moid_to_string_2 (b, MOID (p), w, idf);
@@ -76,7 +76,7 @@ static void pack_to_string (char *b, PACK_T * p, int *w, BOOL_T text, NODE_T * i
 
 //! @brief Moid to string 2.
 
-static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
+void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
 {
 // Oops. Should not happen.
   if (n == NO_MOID) {
@@ -102,7 +102,7 @@ static void moid_to_string_2 (char *b, MOID_T * n, int *w, NODE_T * idf)
   } else if (n == M_ERROR) {
     add_to_moid_text (b, "ERROR", w);
   } else if (n == M_UNDEFINED) {
-    add_to_moid_text (b, "unresolved", w);
+    add_to_moid_text (b, "unresolved mode", w);
   } else if (n == M_C_STRING) {
     add_to_moid_text (b, "C-STRING", w);
   } else if (n == M_COMPLEX || n == M_COMPL) {

@@ -122,6 +122,7 @@ struct GC_GLOBALS_T
 {
   A68_HANDLE *available_handles, *busy_handles;
   UNSIGNED_T free_handles, max_handles, sweeps, refused, freed, total;
+  unt preemptive;
   REAL_T seconds;
 };
 
@@ -286,9 +287,9 @@ struct GLOBALS_T
   ADDR_T frame_pointer, stack_pointer, heap_pointer, global_pointer;
   ADDR_T fixed_heap_pointer, temp_heap_pointer;
   ADDR_T frame_start, frame_end, stack_start, stack_end;
-  unsigned frame_stack_size, expr_stack_size, heap_size, handle_pool_size, stack_size;
-  unsigned stack_limit, frame_stack_limit, expr_stack_limit;
-  unsigned storage_overhead;
+  unt frame_stack_size, expr_stack_size, heap_size, handle_pool_size, stack_size;
+  unt stack_limit, frame_stack_limit, expr_stack_limit;
+  unt storage_overhead;
   int global_level, max_lex_lvl;
   int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
   int symbol_table_count, mode_count; 

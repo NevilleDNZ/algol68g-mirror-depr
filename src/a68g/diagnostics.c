@@ -62,14 +62,14 @@ char *ctrl_char (int ch)
   if (IS_CNTRL (ch) && IS_LOWER (ch + 96)) {
     ASSERT (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\^%c", ch + 96) >= 0);
   } else {
-    ASSERT (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\%02x", (unsigned) ch) >= 0);
+    ASSERT (snprintf (loc_str, (size_t) SMALL_BUFFER_SIZE, "\\%02x", (unt) ch) >= 0);
   }
   return loc_str;
 }
 
 //! @brief Widen single char to string.
 
-static char *char_to_str (char ch)
+char *char_to_str (char ch)
 {
   static char loc_str[2];
   loc_str[0] = ch;
@@ -79,7 +79,7 @@ static char *char_to_str (char ch)
 
 //! @brief Pretty-print diagnostic .
 
-static void pretty_diag (FILE_T f, char *p)
+void pretty_diag (FILE_T f, char *p)
 {
   int pos = 1, line_width = (f == STDOUT_FILENO ? A68 (term_width) : MAX_TERM_WIDTH);
   while (p[0] != NULL_CHAR) {
@@ -132,7 +132,7 @@ void abend (char *reason, char *info, char *file, int line)
 
 //! @brief Position in line .
 
-static char *where_pos (LINE_T * p, NODE_T * q)
+char *where_pos (LINE_T * p, NODE_T * q)
 {
   char *pos;
   if (q != NO_NODE && p == LINE (INFO (q))) {
@@ -154,7 +154,7 @@ static char *where_pos (LINE_T * p, NODE_T * q)
 
 //! @brief Position in line where diagnostic points at.
 
-static char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
+char *diag_pos (LINE_T * p, DIAGNOSTIC_T * d)
 {
   char *pos;
   if (WHERE (d) != NO_NODE && p == LINE (INFO (WHERE (d)))) {
@@ -384,7 +384,7 @@ void scan_error (LINE_T * u, char *v, char *txt)
 
 //! @brief Get severity text.
 
-static char *get_severity (int sev)
+char *get_severity (int sev)
 {
   switch (sev) {
   case A68_ERROR:
@@ -424,7 +424,7 @@ static char *get_severity (int sev)
 
 //! @brief Print diagnostic.
 
-static void write_diagnostic (int sev, char *b)
+void write_diagnostic (int sev, char *b)
 {
   char st[SMALL_BUFFER_SIZE];
   char *severity = get_severity (sev);
@@ -440,7 +440,7 @@ static void write_diagnostic (int sev, char *b)
 
 //! @brief Add diagnostic to source line.
 
-static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
+void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
 {
 // Add diagnostic and choose GNU style or non-GNU style.
   DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) SIZE_ALIGNED (DIAGNOSTIC_T));
@@ -497,20 +497,20 @@ static void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char 
   }
   if (severity == NO_TEXT) {
     if (FILENAME (line) != NO_TEXT && strcmp (FILE_SOURCE_NAME (&A68_JOB), FILENAME (line)) == 0) {
-      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", A68 (a68_cmd_name), (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", A68 (a68_cmd_name), (unt) k, b) >= 0);
     } else if (FILENAME (line) != NO_TEXT) {
-      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), FILENAME (line), (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), FILENAME (line), (unt) k, b) >= 0);
     } else {
-      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", A68 (a68_cmd_name), (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %x: %s", A68 (a68_cmd_name), (unt) k, b) >= 0);
     }
   } else {
     bufcpy (st, get_severity (sev), SMALL_BUFFER_SIZE);
     if (FILENAME (line) != NO_TEXT && strcmp (FILE_SOURCE_NAME (&A68_JOB), FILENAME (line)) == 0) {
-      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), st, (unt) k, b) >= 0);
     } else if (FILENAME (line) != NO_TEXT) {
-      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %s: %x: %s", A68 (a68_cmd_name), FILENAME (line), st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %s: %x: %s", A68 (a68_cmd_name), FILENAME (line), st, (unt) k, b) >= 0);
     } else {
-      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), st, (unsigned) k, b) >= 0);
+      ASSERT (snprintf (a, SNPRINTF_SIZE, "%s: %s: %x: %s", A68 (a68_cmd_name), st, (unt) k, b) >= 0);
     }
   }
 // cppcheck might complain here but this memory is not returned, for obvious reasons.

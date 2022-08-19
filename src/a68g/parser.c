@@ -428,7 +428,6 @@ BOOL_T dont_mark_here (NODE_T * p)
   case UNTIL_SYMBOL:
   case VOID_SYMBOL:
   case WHILE_SYMBOL:
-// and than.
   case SERIAL_CLAUSE:
   case ENQUIRY_CLAUSE:
   case INITIALISER_SERIES:

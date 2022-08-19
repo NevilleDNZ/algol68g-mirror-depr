@@ -7,7 +7,12 @@ a68g_SOURCES = \
 ./src/a68g/bottom-up.c \
 ./src/a68g/brackets.c \
 ./src/a68g/char.c \
+./src/a68g/compiler-basic.c \
 ./src/a68g/compiler.c \
+./src/a68g/compiler-folder.c \
+./src/a68g/compiler-gen.c \
+./src/a68g/compiler-inline.c \
+./src/a68g/compiler-tables.c \
 ./src/a68g/conversion.c \
 ./src/a68g/curses.c \
 ./src/a68g/diagnostics.c \
@@ -21,6 +26,8 @@ a68g_SOURCES = \
 ./src/a68g/fft.c \
 ./src/a68g/format.c \
 ./src/a68g/genie.c \
+./src/a68g/genie-coerce.c \
+./src/a68g/genie-stowed.c \
 ./src/a68g/heap.c \
 ./src/a68g/io.c \
 ./src/a68g/keywords.c \
@@ -105,8 +112,7 @@ a68g_SOURCES = \
 ./src/include/a68g-stddef.h \
 ./src/include/a68g-transput.h \
 ./src/include/a68g-types.h
-includedir = /usr/local/include/algol68g
-include_HEADERS = \
+pkginclude_HEADERS = \
 ./a68g-config.h \
 ./src/include/a68g-common.h \
 ./src/include/a68g-compiler.h \
@@ -153,21 +159,23 @@ TESTS=\
 	test-set/05-fft.a68\
 	test-set/06-fibonacci-grammar.a68\
 	test-set/07-formula-manipulation.a68\
-	test-set/08-hamming.a68\
-	test-set/09-hilbert.a68\
-	test-set/10-lisp.a68\
-	test-set/11-mandelbrot.a68\
-	test-set/12-mastermind.a68\
-	test-set/13-math.a68\
-	test-set/14-mersenne.a68\
-	test-set/15-procedures.a68\
-	test-set/16-pseudo-switch.a68\
-	test-set/17-qgammainc.a68\
-	test-set/18-queens.a68\
-	test-set/19-quicksort.a68\
-	test-set/20-rationals.a68\
-	test-set/21-tukey.a68\
-	test-set/22-whetstones.a68
+	test-set/08-guldens.a68\
+	test-set/09-hamming.a68\
+	test-set/10-hilbert.a68\
+	test-set/11-lisp.a68\
+	test-set/12-mandelbrot.a68\
+	test-set/13-mastermind.a68\
+	test-set/14-math.a68\
+	test-set/15-mersenne.a68\
+	test-set/16-procedures.a68\
+	test-set/17-pseudo-switch.a68\
+	test-set/18-qgammainc.a68\
+	test-set/19-queens.a68\
+	test-set/20-quicksort.a68\
+	test-set/21-rationals.a68\
+	test-set/22-semana-santa.a68\
+	test-set/23-tukey.a68\
+	test-set/24-whetstones.a68
 if EXPORT_DYNAMIC
 a68g_LDFLAGS = -Wl,--export-dynamic
 else

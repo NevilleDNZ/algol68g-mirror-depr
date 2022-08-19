@@ -24,11 +24,11 @@
 #include "a68g.h"
 #include "a68g-parser.h"
 
-static BOOL_T victal_check_declarer (NODE_T *, int);
+BOOL_T victal_check_declarer (NODE_T *, int);
 
 //! @brief Check generator.
 
-static void victal_check_generator (NODE_T * p)
+void victal_check_generator (NODE_T * p)
 {
   if (!victal_check_declarer (NEXT (p), ACTUAL_DECLARER_MARK)) {
     diagnostic (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "actual declarer");
@@ -37,7 +37,7 @@ static void victal_check_generator (NODE_T * p)
 
 //! @brief Check formal pack.
 
-static void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
+void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, FORMAL_DECLARERS)) {
@@ -56,7 +56,7 @@ static void victal_check_formal_pack (NODE_T * p, int x, BOOL_T * z)
 
 //! @brief Check operator declaration.
 
-static void victal_check_operator_dec (NODE_T * p)
+void victal_check_operator_dec (NODE_T * p)
 {
   if (IS (NEXT (p), FORMAL_DECLARERS)) {
     BOOL_T z = A68_TRUE;
@@ -73,7 +73,7 @@ static void victal_check_operator_dec (NODE_T * p)
 
 //! @brief Check mode declaration.
 
-static void victal_check_mode_dec (NODE_T * p)
+void victal_check_mode_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, MODE_DECLARATION)) {
@@ -92,7 +92,7 @@ static void victal_check_mode_dec (NODE_T * p)
 
 //! @brief Check variable declaration.
 
-static void victal_check_variable_dec (NODE_T * p)
+void victal_check_variable_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, VARIABLE_DECLARATION)) {
@@ -114,7 +114,7 @@ static void victal_check_variable_dec (NODE_T * p)
 
 //! @brief Check identity declaration.
 
-static void victal_check_identity_dec (NODE_T * p)
+void victal_check_identity_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTITY_DECLARATION)) {
@@ -135,7 +135,7 @@ static void victal_check_identity_dec (NODE_T * p)
 
 //! @brief Check routine pack.
 
-static void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
+void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, PARAMETER_PACK)) {
@@ -153,7 +153,7 @@ static void victal_check_routine_pack (NODE_T * p, int x, BOOL_T * z)
 
 //! @brief Check routine text.
 
-static void victal_check_routine_text (NODE_T * p)
+void victal_check_routine_text (NODE_T * p)
 {
   if (IS (p, PARAMETER_PACK)) {
     BOOL_T z = A68_TRUE;
@@ -171,7 +171,7 @@ static void victal_check_routine_text (NODE_T * p)
 
 //! @brief Check structure pack.
 
-static void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
+void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, STRUCTURE_PACK)) {
@@ -189,7 +189,7 @@ static void victal_check_structure_pack (NODE_T * p, int x, BOOL_T * z)
 
 //! @brief Check union pack.
 
-static void victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
+void victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
 {
   if (p != NO_NODE) {
     if (IS (p, UNION_PACK)) {
@@ -208,7 +208,7 @@ static void victal_check_union_pack (NODE_T * p, int x, BOOL_T * z)
 
 //! @brief Check declarer.
 
-static BOOL_T victal_check_declarer (NODE_T * p, int x)
+BOOL_T victal_check_declarer (NODE_T * p, int x)
 {
   if (p == NO_NODE) {
     return A68_FALSE;
@@ -275,7 +275,7 @@ static BOOL_T victal_check_declarer (NODE_T * p, int x)
 
 //! @brief Check cast.
 
-static void victal_check_cast (NODE_T * p)
+void victal_check_cast (NODE_T * p)
 {
   if (!victal_check_declarer (p, FORMAL_DECLARER_MARK)) {
     diagnostic (A68_SYNTAX_ERROR, p, ERROR_EXPECTED, "formal declarer");

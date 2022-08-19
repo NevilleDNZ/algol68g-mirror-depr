@@ -327,7 +327,7 @@ void genie_timesab_string (NODE_T * p)
 
 //! @brief Difference between two STRINGs in the stack.
 
-static int string_difference (NODE_T * p)
+int string_difference (NODE_T * p)
 {
   A68_REF row1, row2;
   A68_ARRAY *a_1, *a_2;
@@ -448,7 +448,7 @@ void genie_plusto_bytes (NODE_T * p)
 
 //! @brief Difference between BYTE strings.
 
-static int compare_bytes (NODE_T * p)
+int compare_bytes (NODE_T * p)
 {
   A68_BYTES x, y;
   POP_OBJECT (p, &y, A68_BYTES);
@@ -558,7 +558,7 @@ void genie_plusto_long_bytes (NODE_T * p)
 
 //! @brief Difference between LONG BYTE strings.
 
-static int compare_long_bytes (NODE_T * p)
+int compare_long_bytes (NODE_T * p)
 {
   A68_LONG_BYTES x, y;
   POP_OBJECT (p, &y, A68_LONG_BYTES);

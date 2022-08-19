@@ -33,6 +33,61 @@
 #include <Rmath.h>
 #endif
 
+#if defined (BUILD_WIN32)
+#include <windows.h>
+#endif
+
+// libgen selects Posix versions of dirname/basename in stead of GNU versions.
+
+#include <libgen.h> 
+
+#define WRITE_TXT(fn, txt) ASSERT (write ((fn), (txt), 1 + strlen (txt)) != -1)
+
+#if defined (BUILD_LINUX)
+
+#include <execinfo.h>
+
+void genie_sigsegv (NODE_T *p)
+{
+  (void) p;
+  raise (SIGSEGV);
+}
+
+//! @brief Provide a rudimentary backtrace.
+
+void stack_backtrace (void)
+{
+#define DEPTH 16
+  void *array[DEPTH];
+  WRITE_TXT (2, "\n++++ Top of call stack:");
+  int size = backtrace (array, DEPTH);
+  if (size > 0) {
+    WRITE_TXT (2, "\n");
+    backtrace_symbols_fd (array, size, 2);
+  }
+#undef DEPTH
+}
+
+void genie_backtrace (NODE_T *p)
+{
+  (void) p;
+  stack_backtrace ();
+}
+
+#else
+
+void stack_backtrace (void)
+{
+  WRITE_TXT (2, "\n++++ Stack backtrace is linux-only");
+}
+
+void genie_backtrace (NODE_T *p)
+{
+  (void) p;
+  stack_backtrace ();
+}
+#endif
+
 //! @brief Open a file in ~/.a68g, if possible.
 
 FILE *a68_fopen (char *fn, char *mode, char *new_fn)
@@ -107,7 +162,7 @@ void a68_getty (int *h, int *c)
 //! @brief Signal for window resize.
 
 #if defined (SIGWINCH)
-static void sigwinch_handler (int i)
+void sigwinch_handler (int i)
 {
   (void) i;
   ABEND (signal (SIGWINCH, sigwinch_handler) == SIG_ERR, ERROR_ACTION, __func__);
@@ -118,23 +173,24 @@ static void sigwinch_handler (int i)
 
 //! @brief Signal reading for segment violation.
 
-static void sigsegv_handler (int i)
+void sigsegv_handler (int i)
 {
   (void) i;
 // write () is asynchronous-safe and may be called here.
-  (void) write (2, "\nFatal", 1 + strlen ("\nFatal"));
+  WRITE_TXT (2, "\nFatal");
   if (FILE_INITIAL_NAME (&A68_JOB) != NO_TEXT) {
-    (void) write (2, ": ", 1 + strlen (": "));
-    (void) write (2, FILE_INITIAL_NAME (&A68_JOB), 1 + strlen (FILE_INITIAL_NAME (&A68_JOB)));
+    WRITE_TXT (2, ": ");
+    WRITE_TXT (2, FILE_INITIAL_NAME (&A68_JOB));
   }
-  (void) write (2, ": memory access violation\n", 1 + strlen (": memory access violation\n"));
+  WRITE_TXT (2, ": memory access violation\n");
+  stack_backtrace ();
   exit (EXIT_FAILURE);
   return;
 }
 
 //! @brief Raise SYSREQUEST so you get to a monitor.
 
-static void sigint_handler (int i)
+void sigint_handler (int i)
 {
   (void) i;
   ABEND (signal (SIGINT, sigint_handler) == SIG_ERR, ERROR_ACTION, __func__);
@@ -148,7 +204,7 @@ static void sigint_handler (int i)
 
 //! @brief Signal reading from disconnected terminal.
 
-static void sigttin_handler (int i)
+void sigttin_handler (int i)
 {
   (void) i;
   ABEND (A68_TRUE, ERROR_ACTION, __func__);
@@ -156,7 +212,7 @@ static void sigttin_handler (int i)
 
 //! @brief Signal broken pipe.
 
-static void sigpipe_handler (int i)
+void sigpipe_handler (int i)
 {
   (void) i;
   ABEND (A68_TRUE, ERROR_ACTION, __func__);
@@ -164,7 +220,7 @@ static void sigpipe_handler (int i)
 
 //! @brief Signal alarm - time limit check.
 
-static void sigalrm_handler (int i)
+void sigalrm_handler (int i)
 {
   (void) i;
   if (A68 (in_execution) && !A68 (in_monitor)) {
@@ -253,3 +309,128 @@ void bufcpy (char *dst, char *src, int len)
     dst[len - 1] = NULL_CHAR;
   }
 }
+
+//! @brief Safely get dir name from path.
+
+char *a68_dirname (char *src)
+{
+  int len = (int) strlen (src) + 1;
+  char *cpy = (char *) get_fixed_heap_space (len + 1);
+  char *dst = (char *) get_fixed_heap_space (len + 1);
+  ABEND (cpy == NO_TEXT, ERROR_OUT_OF_CORE, __func__);
+  ABEND (dst == NO_TEXT, ERROR_OUT_OF_CORE, __func__);
+  bufcpy (cpy, src, len);
+  bufcpy (dst, dirname (cpy), len);
+  return dst;
+}
+
+//! @brief Safely get basename from path.
+
+char *a68_basename (char *src)
+{
+  int len = (int) strlen (src) + 1;
+  char *cpy = (char *) get_fixed_heap_space (len + 1);
+  char *dst = (char *) get_fixed_heap_space (len + 1);
+  ABEND (cpy == NO_TEXT, ERROR_OUT_OF_CORE, __func__);
+  ABEND (dst == NO_TEXT, ERROR_OUT_OF_CORE, __func__);
+  bufcpy (cpy, src, len);
+  bufcpy (dst, basename (cpy), len);
+  return dst;
+}
+
+//! @brief Compute relative path.
+
+#if defined (BUILD_WIN32)
+
+static char *win32_slash (char *p)
+{
+  char *q = p;
+  while (*p != '\0') {
+    if (*p == '\\') {
+      *p = '/';
+    }
+    p++;
+  }
+  return q;
+}
+
+static char *win32_realpath (char *name, char *resolved)
+{
+  char *res = NO_TEXT;
+  if (name == NO_TEXT || name[0] == '\0') {
+    return NO_TEXT;
+  }
+  if (resolved == NO_TEXT) {
+    res = (char *) get_fixed_heap_space (PATH_MAX + 1);
+    if (res == NO_TEXT) {
+      return NO_TEXT;
+    }
+  } else {
+    res = resolved;
+  }
+  int rc = GetFullPathName (name, PATH_MAX, res, (char **) NO_TEXT);
+  if (rc == 0) {
+    return NO_TEXT;
+  } else {
+    win32_slash (res);
+    struct stat st;
+    if (stat (res, &st) < 0) { // Should be 'lstat', but mingw does not have that.
+      if (resolved == NO_TEXT) {
+        free (res);
+        return NO_TEXT;
+      }
+    }
+  }
+  return res;
+}
+
+#endif
+
+char *a68_relpath (char *p1, char *p2, char *fn)
+{
+  char q[PATH_MAX + 1];
+  bufcpy (q, p1, PATH_MAX);
+  bufcat (q, "/", PATH_MAX);
+  bufcat (q, p2, PATH_MAX);
+  bufcat (q, "/", PATH_MAX);
+  bufcat (q, fn, PATH_MAX);
+// Home directory shortcut ~ is a shell extension.
+  if (strchr (q, '~') != NO_TEXT) {
+    return NO_TEXT;
+  }
+  char *r = (char *) get_fixed_heap_space (PATH_MAX + 1);
+  ABEND (r == NO_TEXT, ERROR_OUT_OF_CORE, __func__);
+// Error handling in the caller!
+#if defined (BUILD_WIN32)
+  r = win32_realpath (q, NO_TEXT);
+#else
+  r = realpath (q, NO_TEXT);
+#endif
+  return r;
+}
+
+//! @brief PROC (STRING) STRING realpath
+
+void genie_realpath (NODE_T * p)
+{
+  A68_REF str;
+  char in[PATH_MAX + 1];
+  char * out;
+  POP_REF (p, &str);
+  if (a_to_c_string (p, in, str) == NO_TEXT) {
+    PUSH_REF (p, empty_string (p));
+  } else {
+// Note that ~ is not resolved since that is the shell, not libc.
+#if defined (BUILD_WIN32)
+    out = win32_realpath (in, NO_TEXT);
+#else
+    out = realpath (in, NO_TEXT);
+#endif
+    if (out == NO_TEXT) {
+      PUSH_REF (p, empty_string (p));
+    } else {
+      PUSH_REF (p, c_to_a_string (p, out, PATH_MAX));
+    }
+  }
+}
+

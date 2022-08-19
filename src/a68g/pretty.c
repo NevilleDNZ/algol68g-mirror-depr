@@ -36,14 +36,14 @@
 #define IS_CLOSE_SYMBOL(p) (IS (p, CLOSE_SYMBOL) || IS (p, BUS_SYMBOL) || IS (p, OCCA_SYMBOL))
 #define IS_IDENTIFIER(p) (IS (p, IDENTIFIER) || IS (p, DEFINING_IDENTIFIER) || IS (p, FIELD_IDENTIFIER))
 
-static void indent_declarer (NODE_T *);
-static void indent_serial (NODE_T *, BOOL_T, NODE_T **);
-static void indent_statement (NODE_T *);
-static void indent_format (NODE_T *);
+void indent_declarer (NODE_T *);
+void indent_serial (NODE_T *, BOOL_T, NODE_T **);
+void indent_statement (NODE_T *);
+void indent_format (NODE_T *);
 
 //! @brief Write newline and indent.
 
-static void put_nl (void)
+void put_nl (void)
 {
   WRITE (A68_INDENT (fd), "\n");
   for (A68_INDENT (col) = 1; A68_INDENT (col) < A68_INDENT (ind); A68_INDENT (col)++) {
@@ -53,7 +53,7 @@ static void put_nl (void)
 
 //! @brief Write a string.
 
-static void put_str (char *txt)
+void put_str (char *txt)
 {
   WRITE (A68_INDENT (fd), txt);
   A68_INDENT (col) += (int) strlen (txt);
@@ -61,7 +61,7 @@ static void put_str (char *txt)
 
 //! @brief Write a character.
 
-static void put_ch (char ch)
+void put_ch (char ch)
 {
   char str[2];
   str[0] = ch;
@@ -71,7 +71,7 @@ static void put_ch (char ch)
 
 //! @brief Write pragment string.
 
-static void put_pragment (NODE_T * p)
+void put_pragment (NODE_T * p)
 {
   char *txt = NPRAGMENT (p);
   for (; txt != NO_TEXT && txt[0] != NULL_CHAR; txt++) {
@@ -85,7 +85,7 @@ static void put_pragment (NODE_T * p)
 
 //! @brief Write pragment string.
 
-static void pragment (NODE_T * p, BOOL_T keyw)
+void pretty_pragment (NODE_T * p, BOOL_T keyw)
 {
   if (NPRAGMENT (p) != NO_TEXT) {
     if (NPRAGMENT_TYPE (p) == BOLD_COMMENT_SYMBOL || NPRAGMENT_TYPE (p) == BOLD_PRAGMAT_SYMBOL) {
@@ -115,12 +115,12 @@ static void pragment (NODE_T * p, BOOL_T keyw)
 
 //! @brief Write with typographic display features.
 
-static void put_sym (NODE_T * p, BOOL_T keyw)
+void put_sym (NODE_T * p, BOOL_T keyw)
 {
   char *txt = NSYMBOL (p);
   char *sym = NCHAR_IN_LINE (p);
   int n = 0, size = (int) strlen (txt);
-  pragment (p, keyw);
+  pretty_pragment (p, keyw);
   if (txt[0] != sym[0] || (int) strlen (sym) - 1 <= size) {
 // Without features..
     put_str (txt);
@@ -139,7 +139,7 @@ static void put_sym (NODE_T * p, BOOL_T keyw)
 
 //! @brief Count units and separators in a sub-tree.
 
-static void count (NODE_T * p, int *units, int *seps)
+void count (NODE_T * p, int *units, int *seps)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -162,7 +162,7 @@ static void count (NODE_T * p, int *units, int *seps)
 
 //! @brief Count units and separators in a sub-tree.
 
-static void count_stowed (NODE_T * p, int *units, int *seps)
+void count_stowed (NODE_T * p, int *units, int *seps)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -183,7 +183,7 @@ static void count_stowed (NODE_T * p, int *units, int *seps)
 
 //! @brief Count enclosed_clauses in a sub-tree.
 
-static void count_enclos (NODE_T * p, int *enclos, int *seps)
+void count_enclos (NODE_T * p, int *enclos, int *seps)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ENCLOSED_CLAUSE)) {
@@ -200,7 +200,7 @@ static void count_enclos (NODE_T * p, int *enclos, int *seps)
 
 //! @brief Indent sizety.
 
-static void indent_sizety (NODE_T * p)
+void indent_sizety (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, LONGETY) || IS (p, SHORTETY)) {
@@ -214,7 +214,7 @@ static void indent_sizety (NODE_T * p)
 
 //! @brief Indent generic list.
 
-static void indent_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
+void indent_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
 {
   for (; p != NULL; FORWARD (p)) {
     if (IS_OPEN_SYMBOL (p)) {
@@ -278,7 +278,7 @@ static void indent_generic_list (NODE_T * p, NODE_T ** what, BOOL_T one_liner)
 
 //! @brief Indent declarer pack.
 
-static void indent_pack (NODE_T * p)
+void indent_pack (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS_OPEN_SYMBOL (p) || IS_CLOSE_SYMBOL (p)) {
@@ -303,7 +303,7 @@ static void indent_pack (NODE_T * p)
 
 //! @brief Indent declarer.
 
-static void indent_declarer (NODE_T * p)
+void indent_declarer (NODE_T * p)
 {
   if (IS (p, DECLARER)) {
     indent_declarer (SUB (p));
@@ -361,7 +361,7 @@ static void indent_declarer (NODE_T * p)
 
 //! @brief Indent conditional.
 
-static void indent_conditional (NODE_T * p)
+void indent_conditional (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IF_PART) || IS (p, ELIF_IF_PART)) {
@@ -421,7 +421,7 @@ static void indent_conditional (NODE_T * p)
 
 //! @brief Indent integer case clause.
 
-static void indent_case (NODE_T * p)
+void indent_case (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, CASE_PART) || IS (p, OUSE_PART)) {
@@ -487,7 +487,7 @@ static void indent_case (NODE_T * p)
 
 //! @brief Indent conformity clause.
 
-static void indent_conformity (NODE_T * p)
+void indent_conformity (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, CASE_PART) || IS (p, OUSE_PART)) {
@@ -553,7 +553,7 @@ static void indent_conformity (NODE_T * p)
 
 //! @brief Indent loop.
 
-static void indent_loop (NODE_T * p)
+void indent_loop (NODE_T * p)
 {
   int parts = 0, pop_ind = A68_INDENT (col);
   for (; p != NO_NODE; FORWARD (p)) {
@@ -620,7 +620,7 @@ static void indent_loop (NODE_T * p)
 
 //! @brief Indent closed clause.
 
-static void indent_closed (NODE_T * p)
+void indent_closed (NODE_T * p)
 {
   int units = 0, seps = 0;
   count (SUB_NEXT (p), &units, &seps);
@@ -660,7 +660,7 @@ static void indent_closed (NODE_T * p)
 
 //! @brief Indent collateral clause.
 
-static void indent_collateral (NODE_T * p)
+void indent_collateral (NODE_T * p)
 {
   int units = 0, seps = 0;
   NODE_T *what = NO_NODE;
@@ -676,7 +676,7 @@ static void indent_collateral (NODE_T * p)
 
 //! @brief Indent enclosed clause.
 
-static void indent_enclosed (NODE_T * p)
+void indent_enclosed (NODE_T * p)
 {
   if (IS (p, ENCLOSED_CLAUSE)) {
     indent_enclosed (SUB (p));
@@ -700,7 +700,7 @@ static void indent_enclosed (NODE_T * p)
 
 //! @brief Indent a literal.
 
-static void indent_literal (char *txt)
+void indent_literal (char *txt)
 {
   put_str ("\"");
   while (txt[0] != NULL_CHAR) {
@@ -716,7 +716,7 @@ static void indent_literal (char *txt)
 
 //! @brief Indent denotation.
 
-static void indent_denotation (NODE_T * p)
+void indent_denotation (NODE_T * p)
 {
   if (IS (p, ROW_CHAR_DENOTATION)) {
     indent_literal (NSYMBOL (p));
@@ -730,7 +730,7 @@ static void indent_denotation (NODE_T * p)
 
 //! @brief Indent label.
 
-static void indent_label (NODE_T * p)
+void indent_label (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NULL) {
@@ -744,7 +744,7 @@ static void indent_label (NODE_T * p)
 
 //! @brief Indent literal list.
 
-static void indent_collection (NODE_T * p)
+void indent_collection (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_OPEN_SYMBOL) || IS (p, FORMAT_CLOSE_SYMBOL)) {
@@ -760,7 +760,7 @@ static void indent_collection (NODE_T * p)
 
 //! @brief Indent format text.
 
-static void indent_format (NODE_T * p)
+void indent_format (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_DELIMITER_SYMBOL)) {
@@ -879,7 +879,7 @@ static void indent_format (NODE_T * p)
 
 //! @brief Constant folder - replace constant statement with value.
 
-static BOOL_T indent_folder (NODE_T * p)
+BOOL_T indent_folder (NODE_T * p)
 {
   if (MOID (p) == M_INT) {
     A68_INT k;
@@ -955,7 +955,7 @@ static BOOL_T indent_folder (NODE_T * p)
 
 //! @brief Indent statement.
 
-static void indent_statement (NODE_T * p)
+void indent_statement (NODE_T * p)
 {
   if (IS (p, LABEL)) {
     int enclos = 0, seps = 0;
@@ -1132,7 +1132,7 @@ static void indent_statement (NODE_T * p)
 
 //! @brief Indent identifier declarations.
 
-static void indent_iddecl (NODE_T * p)
+void indent_iddecl (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IDENTITY_DECLARATION) || IS (p, VARIABLE_DECLARATION)) {
@@ -1165,7 +1165,7 @@ static void indent_iddecl (NODE_T * p)
 
 //! @brief Indent procedure declarations.
 
-static void indent_procdecl (NODE_T * p)
+void indent_procdecl (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PROCEDURE_DECLARATION) || IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
@@ -1194,7 +1194,7 @@ static void indent_procdecl (NODE_T * p)
 
 //! @brief Indent operator declarations.
 
-static void indent_opdecl (NODE_T * p)
+void indent_opdecl (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, OPERATOR_DECLARATION) || IS (p, BRIEF_OPERATOR_DECLARATION)) {
@@ -1227,7 +1227,7 @@ static void indent_opdecl (NODE_T * p)
 
 //! @brief Indent priority declarations.
 
-static void indent_priodecl (NODE_T * p)
+void indent_priodecl (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, PRIORITY_DECLARATION)) {
@@ -1253,7 +1253,7 @@ static void indent_priodecl (NODE_T * p)
 
 //! @brief Indent mode declarations.
 
-static void indent_modedecl (NODE_T * p)
+void indent_modedecl (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, MODE_DECLARATION)) {
@@ -1282,7 +1282,7 @@ static void indent_modedecl (NODE_T * p)
 
 //! @brief Indent declaration list.
 
-static void indent_declist (NODE_T * p, BOOL_T one_liner)
+void indent_declist (NODE_T * p, BOOL_T one_liner)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IDENTITY_DECLARATION) || IS (p, VARIABLE_DECLARATION)) {
@@ -1320,7 +1320,7 @@ static void indent_declist (NODE_T * p, BOOL_T one_liner)
 
 //! @brief Indent serial clause.
 
-static void indent_serial (NODE_T * p, BOOL_T one_liner, NODE_T ** what)
+void indent_serial (NODE_T * p, BOOL_T one_liner, NODE_T ** what)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT) || IS (p, LABELED_UNIT)) {
@@ -1359,11 +1359,11 @@ static void indent_serial (NODE_T * p, BOOL_T one_liner, NODE_T ** what)
 
 //! @brief Do not pretty-print the environ.
 
-static void skip_environ (NODE_T * p)
+void skip_environ (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (LINE_NUMBER (p) == 0) {
-      pragment (p, !KEYWORD);
+      pretty_pragment (p, !KEYWORD);
       skip_environ (SUB (p));
     } else {
       NODE_T *what = NO_NODE;

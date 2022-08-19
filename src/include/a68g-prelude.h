@@ -121,6 +121,7 @@ extern GPROC genie_atanh_complex;
 extern GPROC genie_atanh_real;
 extern GPROC genie_atan_real;
 extern GPROC genie_backspace;
+extern GPROC genie_backtrace;
 extern GPROC genie_beta_inc_cf_real;
 extern GPROC genie_beta_real;
 extern GPROC genie_bin_int;
@@ -442,6 +443,7 @@ extern GPROC genie_read_long_int;
 extern GPROC genie_read_long_real;
 extern GPROC genie_read_real;
 extern GPROC genie_read_string;
+extern GPROC genie_realpath;
 extern GPROC genie_real_lengths;
 extern GPROC genie_real_shorths;
 extern GPROC genie_real_width;
@@ -918,12 +920,12 @@ extern ssize_t io_read_conv (FILE_T, void *, size_t);
 extern ssize_t io_read (FILE_T, void *, size_t);
 extern ssize_t io_write_conv (FILE_T, const void *, size_t);
 extern ssize_t io_write (FILE_T, const void *, size_t);
-extern unsigned heap_available (void);
+extern unt heap_available (void);
 extern void a68_div_complex (A68_REAL *, A68_REAL *, A68_REAL *);
 extern void a68_exit (int);
 extern void a68_exp_complex (A68_REAL *, A68_REAL *);
-extern void change_breakpoints (NODE_T *, unsigned, int, BOOL_T *, char *);
-extern void change_masks (NODE_T *, unsigned, BOOL_T);
+extern void change_breakpoints (NODE_T *, unt, int, BOOL_T *, char *);
+extern void change_masks (NODE_T *, unt, BOOL_T);
 extern void colour_object (BYTE_T *, MOID_T *);
 extern void exit_genie (NODE_T *, int);
 extern void gc_heap (NODE_T *, ADDR_T);
@@ -936,9 +938,13 @@ extern void monitor_error (char *, char *);
 extern void mp_strtou (NODE_T *, MP_T *, char *, MOID_T *);
 extern void print_internal_index (FILE_T, A68_TUPLE *, int);
 extern void print_item (NODE_T *, FILE_T, BYTE_T *, MOID_T *);
-extern void single_step (NODE_T *, unsigned);
+extern void single_step (NODE_T *, unt);
 extern void stack_dump (FILE_T, ADDR_T, int, int *);
 extern void where_in_source (FILE_T, NODE_T *);
 extern A68_REF tmp_to_a68_string (NODE_T *, char *);
+
+#if defined (BUILD_LINUX)
+extern GPROC genie_sigsegv;
+#endif
 
 #endif

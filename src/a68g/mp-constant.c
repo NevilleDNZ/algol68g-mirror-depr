@@ -81,21 +81,21 @@ MP_T *mp_pi (NODE_T * p, MP_T * api, int mod, int digs)
     }
 // Keep the result for future restore.
     (void) shorten_mp (p, api, digs, pi_g, gdigs);
-    A68_MP (mp_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) move_mp (A68_MP (mp_pi), api, digs);
-    A68_MP (mp_half_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_half_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) half_mp (p, A68_MP (mp_half_pi), api, digs);
-    A68_MP (mp_sqrt_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_sqrt_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) sqrt_mp (p, A68_MP (mp_sqrt_pi), api, digs);
-    A68_MP (mp_ln_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_ln_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) ln_mp (p, A68_MP (mp_ln_pi), api, digs);
-    A68_MP (mp_two_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_two_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) mul_mp_digit (p, A68_MP (mp_two_pi), api, (MP_T) 2, digs);
-    A68_MP (mp_sqrt_two_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_sqrt_two_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) sqrt_mp (p, A68_MP (mp_sqrt_two_pi), A68_MP (mp_two_pi), digs);
-    A68_MP (mp_pi_over_180) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_pi_over_180) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) div_mp_digit (p, A68_MP (mp_pi_over_180), api, 180, digs);
-    A68_MP (mp_180_over_pi) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (digs));
+    A68_MP (mp_180_over_pi) = (MP_T *) get_heap_space ((unt) SIZE_MP (digs));
     (void) rec_mp (p, A68_MP (mp_180_over_pi), A68_MP (mp_pi_over_180), digs);
     A68_MP (mp_pi_size) = gdigs;
     A68_SP = pop_sp;

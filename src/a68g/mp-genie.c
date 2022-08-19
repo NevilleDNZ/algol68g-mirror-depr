@@ -1133,7 +1133,7 @@ void genie_pow_mp_complex_int (NODE_T * p)
   if (negative) {
     VALUE (&j) = -VALUE (&j);
   }
-  while ((unsigned) expo <= (unsigned) (VALUE (&j))) {
+  while ((unt) expo <= (unt) (VALUE (&j))) {
     if (expo & VALUE (&j)) {
       (void) mul_mp (p, acc, im_z, im_y, digs);
       (void) mul_mp (p, rea, re_z, re_y, digs);

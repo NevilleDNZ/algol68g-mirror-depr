@@ -89,7 +89,7 @@ KEYWORD_T *find_keyword_from_attribute (KEYWORD_T * p, int a)
 
 //! @brief Add keyword to the tree.
 
-static void add_keyword (KEYWORD_T ** p, int a, char *t)
+void add_keyword (KEYWORD_T ** p, int a, char *t)
 {
   while (*p != NO_KEYWORD) {
     int k = strcmp (t, TEXT (*p));

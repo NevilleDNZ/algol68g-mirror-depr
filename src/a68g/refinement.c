@@ -33,7 +33,7 @@
 
 //! @brief Whether refinement terminator.
 
-static BOOL_T is_refinement_terminator (NODE_T * p)
+BOOL_T is_refinement_terminator (NODE_T * p)
 {
   if (IS (p, POINT_SYMBOL)) {
     if (IN_PRELUDE (NEXT (p))) {

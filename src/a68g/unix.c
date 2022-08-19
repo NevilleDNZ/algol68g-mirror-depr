@@ -295,7 +295,7 @@ void genie_cd (NODE_T * p)
   } else {
     int rc = chdir (a_to_c_string (p, buffer, dir));
     if (rc == 0) {
-      PUSH_VALUE (p, chdir (a_to_c_string (p, buffer, dir)), A68_INT);
+      PUSH_VALUE (p, 0, A68_INT);
     } else {
       diagnostic (A68_RUNTIME_ERROR, p, ERROR_FILE_ACCESS);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -320,7 +320,7 @@ void genie_file_mode (NODE_T * p)
   } else {
     struct stat status;
     if (stat (a_to_c_string (p, buffer, name), &status) == 0) {
-      PUSH_VALUE (p, (unsigned) (ST_MODE (&status)), A68_BITS);
+      PUSH_VALUE (p, (unt) (ST_MODE (&status)), A68_BITS);
     } else {
       PUSH_VALUE (p, 0x0, A68_BITS);
     }
@@ -482,7 +482,7 @@ void genie_file_is_link (NODE_T * p)
 
 //! @brief Convert [] STRING row to char *vec[].
 
-static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
+void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
 {
   BYTE_T *z = ADDRESS (&row);
   A68_ARRAY *arr = (A68_ARRAY *) & z[0];
@@ -515,7 +515,7 @@ static void convert_string_vector (NODE_T * p, char *vec[], A68_REF row)
 
 //! @brief Free char *vec[].
 
-static void free_vector (char *vec[])
+void free_vector (char *vec[])
 {
   int k = 0;
   while (vec[k] != NO_TEXT) {
@@ -550,7 +550,7 @@ void genie_strerror (NODE_T * p)
 
 //! @brief Set up file for usage in pipe.
 
-static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL_T r_mood, BOOL_T w_mood, int pid)
+void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL_T r_mood, BOOL_T w_mood, int pid)
 {
   A68_FILE *f;
   *z = heap_generator (p, M_REF_FILE, SIZE (M_FILE));
@@ -576,7 +576,7 @@ static void set_up_file (NODE_T * p, A68_REF * z, int fd, A68_CHANNEL chan, BOOL
 
 //! @brief Create and push a pipe.
 
-static void genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
+void genie_mkpipe (NODE_T * p, int fd_r, int fd_w, int pid)
 {
   A68_REF r, w;
   errno = 0;

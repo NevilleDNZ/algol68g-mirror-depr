@@ -23,7 +23,7 @@
 #define __A68G_LEVEL_3_H__
 
 typedef long long int INT_T;
-typedef long long unsigned UNSIGNED_T;
+typedef long long unt UNSIGNED_T;
 typedef UNSIGNED_T ADDR_T;
 typedef __float128 DOUBLE_T;
 typedef struct A68_DOUBLE A68_DOUBLE, A68_LONG_INT, A68_LONG_REAL, A68_LONG_BITS;

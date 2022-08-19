@@ -27,7 +27,7 @@
 
 //! @brief Test on |"z"| > 0.001 for argument reduction in "sin" and "exp".
 
-static BOOL_T eps_mp (MP_T * z, int digs)
+static inline BOOL_T eps_mp (MP_T * z, int digs)
 {
   if (MP_DIGIT (z, 1) == 0) {
     return A68_FALSE;
@@ -354,7 +354,7 @@ MP_T *mp_ln_scale (NODE_T * p, MP_T * z, int digs)
 // No luck with the kept value, we generate a longer one.
     (void) set_mp (z_g, (MP_T) 1, 1, gdigs);
     (void) ln_mp (p, z_g, z_g, gdigs);
-    A68_MP (mp_ln_scale) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (gdigs));
+    A68_MP (mp_ln_scale) = (MP_T *) get_heap_space ((unt) SIZE_MP (gdigs));
     (void) move_mp (A68_MP (mp_ln_scale), z_g, gdigs);
     A68_MP (mp_ln_scale_size) = gdigs;
   }
@@ -377,7 +377,7 @@ MP_T *mp_ln_10 (NODE_T * p, MP_T * z, int digs)
 // No luck with the kept value, we generate a longer one.
     (void) set_mp (z_g, (MP_T) 10, 0, gdigs);
     (void) ln_mp (p, z_g, z_g, gdigs);
-    A68_MP (mp_ln_10) = (MP_T *) get_heap_space ((unsigned) SIZE_MP (gdigs));
+    A68_MP (mp_ln_10) = (MP_T *) get_heap_space ((unt) SIZE_MP (gdigs));
     (void) move_mp (A68_MP (mp_ln_10), z_g, gdigs);
     A68_MP (mp_ln_10_size) = gdigs;
   }

@@ -69,16 +69,16 @@
 #include "a68g-parser.h"
 #include "a68g-prelude.h"
 
-static BOOL_T basic_coercions (MOID_T *, MOID_T *, int, int);
-static BOOL_T is_coercible (MOID_T *, MOID_T *, int, int);
-static BOOL_T is_nonproc (MOID_T *);
-static void mode_check_enclosed (NODE_T *, SOID_T *, SOID_T *);
-static void mode_check_unit (NODE_T *, SOID_T *, SOID_T *);
-static void mode_check_formula (NODE_T *, SOID_T *, SOID_T *);
-static void coerce_enclosed (NODE_T *, SOID_T *);
-static void coerce_operand (NODE_T *, SOID_T *);
-static void coerce_formula (NODE_T *, SOID_T *);
-static void coerce_unit (NODE_T *, SOID_T *);
+BOOL_T basic_coercions (MOID_T *, MOID_T *, int, int);
+BOOL_T is_coercible (MOID_T *, MOID_T *, int, int);
+BOOL_T is_nonproc (MOID_T *);
+void mode_check_enclosed (NODE_T *, SOID_T *, SOID_T *);
+void mode_check_unit (NODE_T *, SOID_T *, SOID_T *);
+void mode_check_formula (NODE_T *, SOID_T *, SOID_T *);
+void coerce_enclosed (NODE_T *, SOID_T *);
+void coerce_operand (NODE_T *, SOID_T *);
+void coerce_formula (NODE_T *, SOID_T *);
+void coerce_unit (NODE_T *, SOID_T *);
 
 #define DEPREF A68_TRUE
 #define NO_DEPREF A68_FALSE
@@ -90,7 +90,7 @@ static void coerce_unit (NODE_T *, SOID_T *);
 
 //! @brief Absorb nested series modes recursively.
 
-static void absorb_series_pack (MOID_T ** p)
+void absorb_series_pack (MOID_T ** p)
 {
   BOOL_T go_on;
   do {
@@ -113,7 +113,7 @@ static void absorb_series_pack (MOID_T ** p)
 
 //! @brief Make SERIES (u, v).
 
-static MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
+MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
 {
   MOID_T *x = new_moid ();
   ATTRIBUTE (x) = SERIES_MODE;
@@ -131,7 +131,7 @@ static MOID_T *make_series_from_moids (MOID_T * u, MOID_T * v)
 
 //! @brief Absorb firmly related unions in mode.
 
-static MOID_T *absorb_related_subsets (MOID_T * m)
+MOID_T *absorb_related_subsets (MOID_T * m)
 {
 // For instance invalid UNION (PROC REF UNION (A, B), A, B) -> valid UNION (A, B),
 // which is used in balancing conformity clauses.
@@ -159,7 +159,7 @@ static MOID_T *absorb_related_subsets (MOID_T * m)
 
 //! @brief Absorb nested series and united modes recursively.
 
-static void absorb_series_union_pack (MOID_T ** p)
+void absorb_series_union_pack (MOID_T ** p)
 {
   BOOL_T go_on;
   do {
@@ -225,7 +225,7 @@ MOID_T *make_united_mode (MOID_T * m)
 
 //! @brief Give accurate error message.
 
-static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, int deflex, int depth)
+char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, int deflex, int depth)
 {
 #define TAIL(z) (&(z)[strlen (z)])
   static char txt[BUFFER_SIZE];
@@ -332,7 +332,7 @@ static char *mode_error_text (NODE_T * n, MOID_T * p, MOID_T * q, int context, i
 
 //! @brief Cannot coerce error.
 
-static void cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, int deflex, int att)
+void cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, int deflex, int att)
 {
   char *txt = mode_error_text (p, from, to, context, deflex, 1);
   if (att == STOP) {
@@ -352,7 +352,7 @@ static void cannot_coerce (NODE_T * p, MOID_T * from, MOID_T * to, int context, 
 
 //! @brief Make SOID data structure.
 
-static void make_soid (SOID_T * s, int sort, MOID_T * type, int attribute)
+void make_soid (SOID_T * s, int sort, MOID_T * type, int attribute)
 {
   ATTRIBUTE (s) = attribute;
   SORT (s) = sort;
@@ -386,7 +386,7 @@ void coercion_inserter (NODE_T * p)
 
 //! @brief Whether mode is not well defined.
 
-static BOOL_T is_mode_isnt_well (MOID_T * p)
+BOOL_T is_mode_isnt_well (MOID_T * p)
 {
   if (p == NO_MOID) {
     return A68_TRUE;
@@ -419,7 +419,7 @@ void free_soid_list (SOID_T * root)
 
 //! @brief Add SOID data structure to soid list.
 
-static void add_to_soid_list (SOID_T ** root, NODE_T * where, SOID_T * soid)
+void add_to_soid_list (SOID_T ** root, NODE_T * where, SOID_T * soid)
 {
   if (*root != NO_SOID) {
     add_to_soid_list (&(NEXT (*root)), where, soid);
@@ -440,7 +440,7 @@ static void add_to_soid_list (SOID_T ** root, NODE_T * where, SOID_T * soid)
 
 //! @brief Pack soids in moid, gather resulting moids from terminators in a clause.
 
-static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
+MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
 {
   MOID_T *x = new_moid ();
   PACK_T *t, **p;
@@ -470,7 +470,7 @@ static MOID_T *pack_soids_in_moid (SOID_T * top_sl, int attribute)
 
 //! @brief Whether "p" is compatible with "q".
 
-static BOOL_T is_equal_modes (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_equal_modes (MOID_T * p, MOID_T * q, int deflex)
 {
   if (deflex == FORCE_DEFLEXING) {
     return DEFLEX (p) == DEFLEX (q);
@@ -501,7 +501,7 @@ BOOL_T is_deprefable (MOID_T * p)
 
 //! @brief Depref mode once.
 
-static MOID_T *depref_once (MOID_T * p)
+MOID_T *depref_once (MOID_T * p)
 {
   if (IS_REF_FLEX (p)) {
     return SUB_SUB (p);
@@ -526,7 +526,7 @@ MOID_T *depref_completely (MOID_T * p)
 
 //! @brief Deproc_completely.
 
-static MOID_T *deproc_completely (MOID_T * p)
+MOID_T *deproc_completely (MOID_T * p)
 {
   while (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     p = depref_once (p);
@@ -536,7 +536,7 @@ static MOID_T *deproc_completely (MOID_T * p)
 
 //! @brief Depref rows.
 
-static MOID_T *depref_rows (MOID_T * p, MOID_T * q)
+MOID_T *depref_rows (MOID_T * p, MOID_T * q)
 {
   if (q == M_ROWS) {
     while (is_deprefable (p)) {
@@ -550,7 +550,7 @@ static MOID_T *depref_rows (MOID_T * p, MOID_T * q)
 
 //! @brief Derow mode, strip FLEX and BOUNDS.
 
-static MOID_T *derow (MOID_T * p)
+MOID_T *derow (MOID_T * p)
 {
   if (IS_ROW (p) || IS_FLEX (p)) {
     return derow (SUB (p));
@@ -561,7 +561,7 @@ static MOID_T *derow (MOID_T * p)
 
 //! @brief Whether rows type.
 
-static BOOL_T is_rows_type (MOID_T * p)
+BOOL_T is_rows_type (MOID_T * p)
 {
   switch (ATTRIBUTE (p)) {
   case ROW_SYMBOL:
@@ -588,7 +588,7 @@ static BOOL_T is_rows_type (MOID_T * p)
 
 //! @brief Whether mode is PROC (REF FILE) VOID or FORMAT.
 
-static BOOL_T is_proc_ref_file_void_or_format (MOID_T * p)
+BOOL_T is_proc_ref_file_void_or_format (MOID_T * p)
 {
   if (p == M_PROC_REF_FILE_VOID) {
     return A68_TRUE;
@@ -601,7 +601,7 @@ static BOOL_T is_proc_ref_file_void_or_format (MOID_T * p)
 
 //! @brief Whether mode can be transput.
 
-static BOOL_T is_transput_mode (MOID_T * p, char rw)
+BOOL_T is_transput_mode (MOID_T * p, char rw)
 {
   if (p == M_INT) {
     return A68_TRUE;
@@ -659,7 +659,7 @@ static BOOL_T is_transput_mode (MOID_T * p, char rw)
 
 //! @brief Whether mode is printable.
 
-static BOOL_T is_printable_mode (MOID_T * p)
+BOOL_T is_printable_mode (MOID_T * p)
 {
   if (is_proc_ref_file_void_or_format (p)) {
     return A68_TRUE;
@@ -670,7 +670,7 @@ static BOOL_T is_printable_mode (MOID_T * p)
 
 //! @brief Whether mode is readable.
 
-static BOOL_T is_readable_mode (MOID_T * p)
+BOOL_T is_readable_mode (MOID_T * p)
 {
   if (is_proc_ref_file_void_or_format (p)) {
     return A68_TRUE;
@@ -681,7 +681,7 @@ static BOOL_T is_readable_mode (MOID_T * p)
 
 //! @brief Whether name struct.
 
-static BOOL_T is_name_struct (MOID_T * p)
+BOOL_T is_name_struct (MOID_T * p)
 {
   return (BOOL_T) (NAME (p) != NO_MOID ? IS (DEFLEX (SUB (p)), STRUCT_SYMBOL) : A68_FALSE);
 }
@@ -709,7 +709,7 @@ MOID_T *unites_to (MOID_T * m, MOID_T * u)
 
 //! @brief Whether moid in pack.
 
-static BOOL_T is_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
+BOOL_T is_moid_in_pack (MOID_T * u, PACK_T * v, int deflex)
 {
   for (; v != NO_PACK; FORWARD (v)) {
     if (is_equal_modes (u, MOID (v), deflex)) {
@@ -747,7 +747,7 @@ BOOL_T is_unitable (MOID_T * p, MOID_T * q, int deflex)
 
 //! @brief Whether all or some components of "u" can be firmly coerced to a component mode of "v"..
 
-static void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BOOL_T * some)
+void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BOOL_T * some)
 {
   *all = A68_TRUE;
   *some = A68_FALSE;
@@ -764,7 +764,7 @@ static void investigate_firm_relations (PACK_T * u, PACK_T * v, BOOL_T * all, BO
 
 //! @brief Whether there is a soft path from "p" to "q".
 
-static BOOL_T is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return A68_TRUE;
@@ -777,7 +777,7 @@ static BOOL_T is_softly_coercible (MOID_T * p, MOID_T * q, int deflex)
 
 //! @brief Whether there is a weak path from "p" to "q".
 
-static BOOL_T is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return A68_TRUE;
@@ -790,7 +790,7 @@ static BOOL_T is_weakly_coercible (MOID_T * p, MOID_T * q, int deflex)
 
 //! @brief Whether there is a meek path from "p" to "q".
 
-static BOOL_T is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return A68_TRUE;
@@ -803,7 +803,7 @@ static BOOL_T is_meekly_coercible (MOID_T * p, MOID_T * q, int deflex)
 
 //! @brief Whether there is a firm path from "p" to "q".
 
-static BOOL_T is_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_firmly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return A68_TRUE;
@@ -827,7 +827,7 @@ BOOL_T is_firm (MOID_T * p, MOID_T * q)
 
 //! @brief Whether "p" widens to "q".
 
-static MOID_T *widens_to (MOID_T * p, MOID_T * q)
+MOID_T *widens_to (MOID_T * p, MOID_T * q)
 {
   if (p == M_INT) {
     if (q == M_LONG_INT || q == M_LONG_LONG_INT || q == M_LONG_REAL || q == M_LONG_LONG_REAL || q == M_LONG_COMPLEX || q == M_LONG_LONG_COMPLEX) {
@@ -928,7 +928,7 @@ static MOID_T *widens_to (MOID_T * p, MOID_T * q)
 
 //! @brief Whether "p" widens to "q".
 
-static BOOL_T is_widenable (MOID_T * p, MOID_T * q)
+BOOL_T is_widenable (MOID_T * p, MOID_T * q)
 {
   MOID_T *z = widens_to (p, q);
   if (z != NO_MOID) {
@@ -940,14 +940,14 @@ static BOOL_T is_widenable (MOID_T * p, MOID_T * q)
 
 //! @brief Whether "p" is a REF ROW.
 
-static BOOL_T is_ref_row (MOID_T * p)
+BOOL_T is_ref_row (MOID_T * p)
 {
   return (BOOL_T) (NAME (p) != NO_MOID ? IS_ROW (DEFLEX (SUB (p))) : A68_FALSE);
 }
 
 //! @brief Whether strong name.
 
-static BOOL_T is_strong_name (MOID_T * p, MOID_T * q)
+BOOL_T is_strong_name (MOID_T * p, MOID_T * q)
 {
   if (p == q) {
     return A68_TRUE;
@@ -960,7 +960,7 @@ static BOOL_T is_strong_name (MOID_T * p, MOID_T * q)
 
 //! @brief Whether strong slice.
 
-static BOOL_T is_strong_slice (MOID_T * p, MOID_T * q)
+BOOL_T is_strong_slice (MOID_T * p, MOID_T * q)
 {
   if (p == q || is_widenable (p, q)) {
     return A68_TRUE;
@@ -977,7 +977,7 @@ static BOOL_T is_strong_slice (MOID_T * p, MOID_T * q)
 
 //! @brief Whether strongly coercible.
 
-static BOOL_T is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
+BOOL_T is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
 {
 // Keep this sequence of statements.
   if (is_equal_modes (p, q, deflex)) {
@@ -1010,7 +1010,7 @@ static BOOL_T is_strongly_coercible (MOID_T * p, MOID_T * q, int deflex)
 
 //! @brief Basic coercions.
 
-static BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
+BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (is_equal_modes (p, q, deflex)) {
     return A68_TRUE;
@@ -1033,7 +1033,7 @@ static BOOL_T basic_coercions (MOID_T * p, MOID_T * q, int c, int deflex)
 
 //! @brief Whether coercible stowed.
 
-static BOOL_T is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
+BOOL_T is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (c != STRONG) {
 // Such construct is always in a strong position, is it not?
@@ -1074,7 +1074,7 @@ static BOOL_T is_coercible_stowed (MOID_T * p, MOID_T * q, int c, int deflex)
 
 //! @brief Whether coercible series.
 
-static BOOL_T is_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
+BOOL_T is_coercible_series (MOID_T * p, MOID_T * q, int c, int deflex)
 {
   if (c == NO_SORT) {
     return A68_FALSE;
@@ -1121,7 +1121,7 @@ BOOL_T is_coercible (MOID_T * p, MOID_T * q, int c, int deflex)
 
 //! @brief Whether coercible in context.
 
-static BOOL_T is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
+BOOL_T is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
 {
   if (SORT (p) != SORT (q)) {
     return A68_FALSE;
@@ -1134,7 +1134,7 @@ static BOOL_T is_coercible_in_context (SOID_T * p, SOID_T * q, int deflex)
 
 //! @brief Whether list "y" is balanced.
 
-static BOOL_T is_balanced (NODE_T * n, SOID_T * y, int sort)
+BOOL_T is_balanced (NODE_T * n, SOID_T * y, int sort)
 {
   if (sort == STRONG) {
     return A68_TRUE;
@@ -1205,7 +1205,7 @@ MOID_T *get_balanced_mode (MOID_T * m, int sort, BOOL_T return_depreffed, int de
 
 //! @brief Whether we can search a common mode from a clause or not.
 
-static BOOL_T clause_allows_balancing (int att)
+BOOL_T clause_allows_balancing (int att)
 {
   switch (att) {
   case CLOSED_CLAUSE:
@@ -1222,7 +1222,7 @@ static BOOL_T clause_allows_balancing (int att)
 
 //! @brief A unique mode from "z".
 
-static MOID_T *determine_unique_mode (SOID_T * z, int deflex)
+MOID_T *determine_unique_mode (SOID_T * z, int deflex)
 {
   if (z == NO_SOID) {
     return NO_MOID;
@@ -1242,7 +1242,7 @@ static MOID_T *determine_unique_mode (SOID_T * z, int deflex)
 
 //! @brief Give a warning when a value is silently discarded.
 
-static void warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
+void warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
 {
   (void) c;
   if (CAST (x) == A68_FALSE) {
@@ -1258,7 +1258,7 @@ static void warn_for_voiding (NODE_T * p, SOID_T * x, SOID_T * y, int c)
 
 //! @brief Warn for things that are likely unintended.
 
-static void semantic_pitfall (NODE_T * p, MOID_T * m, int c, int u)
+void semantic_pitfall (NODE_T * p, MOID_T * m, int c, int u)
 {
 // semantic_pitfall: warn for things that are likely unintended, for instance
 //                   REF INT i := LOC INT := 0, which should probably be
@@ -1272,7 +1272,7 @@ static void semantic_pitfall (NODE_T * p, MOID_T * m, int c, int u)
 
 //! @brief Insert coercion "a" in the tree.
 
-static void make_coercion (NODE_T * l, int a, MOID_T * m)
+void make_coercion (NODE_T * l, int a, MOID_T * m)
 {
   make_sub (l, l, a);
   MOID (l) = depref_rows (MOID (l), m);
@@ -1280,7 +1280,7 @@ static void make_coercion (NODE_T * l, int a, MOID_T * m)
 
 //! @brief Make widening coercion.
 
-static void make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+void make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   MOID_T *z = widens_to (p, q);
   make_coercion (n, WIDENING, z);
@@ -1291,7 +1291,7 @@ static void make_widening_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 
 //! @brief Make ref rowing coercion.
 
-static void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) != DEFLEX (q)) {
     if (is_widenable (p, q)) {
@@ -1305,7 +1305,7 @@ static void make_ref_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 
 //! @brief Make rowing coercion.
 
-static void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) != DEFLEX (q)) {
     if (is_widenable (p, q)) {
@@ -1323,7 +1323,7 @@ static void make_rowing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 
 //! @brief Make uniting coercion.
 
-static void make_uniting_coercion (NODE_T * n, MOID_T * q)
+void make_uniting_coercion (NODE_T * n, MOID_T * q)
 {
   make_coercion (n, UNITING, derow (q));
   if (IS_ROW (q) || IS_FLEX (q)) {
@@ -1333,7 +1333,7 @@ static void make_uniting_coercion (NODE_T * n, MOID_T * q)
 
 //! @brief Make depreffing coercion.
 
-static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
+void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (DEFLEX (p) == DEFLEX (q)) {
     return;
@@ -1375,7 +1375,7 @@ static void make_depreffing_coercion (NODE_T * n, MOID_T * p, MOID_T * q)
 
 //! @brief Whether p is a nonproc mode (that is voided directly).
 
-static BOOL_T is_nonproc (MOID_T * p)
+BOOL_T is_nonproc (MOID_T * p)
 {
   if (IS (p, PROC_SYMBOL) && PACK (p) == NO_PACK) {
     return A68_FALSE;
@@ -1388,7 +1388,7 @@ static BOOL_T is_nonproc (MOID_T * p)
 
 //! @brief Make_void: voiden in an appropriate way.
 
-static void make_void (NODE_T * p, MOID_T * q)
+void make_void (NODE_T * p, MOID_T * q)
 {
   switch (ATTRIBUTE (p)) {
   case ASSIGNATION:
@@ -1439,7 +1439,7 @@ static void make_void (NODE_T * p, MOID_T * q)
 
 //! @brief Make strong coercion.
 
-static void make_strong (NODE_T * n, MOID_T * p, MOID_T * q)
+void make_strong (NODE_T * n, MOID_T * p, MOID_T * q)
 {
   if (q == M_VOID && p != M_VOID) {
     make_void (n, p);
@@ -1450,7 +1450,7 @@ static void make_strong (NODE_T * n, MOID_T * p, MOID_T * q)
 
 //! @brief Mode check on bounds.
 
-static void mode_check_bounds (NODE_T * p)
+void mode_check_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1470,7 +1470,7 @@ static void mode_check_bounds (NODE_T * p)
 
 //! @brief Mode check declarer.
 
-static void mode_check_declarer (NODE_T * p)
+void mode_check_declarer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1485,7 +1485,7 @@ static void mode_check_declarer (NODE_T * p)
 
 //! @brief Mode check identity declaration.
 
-static void mode_check_identity_declaration (NODE_T * p)
+void mode_check_identity_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -1520,7 +1520,7 @@ static void mode_check_identity_declaration (NODE_T * p)
 
 //! @brief Mode check variable declaration.
 
-static void mode_check_variable_declaration (NODE_T * p)
+void mode_check_variable_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -1557,7 +1557,7 @@ static void mode_check_variable_declaration (NODE_T * p)
 
 //! @brief Mode check routine text.
 
-static void mode_check_routine_text (NODE_T * p, SOID_T * y)
+void mode_check_routine_text (NODE_T * p, SOID_T * y)
 {
   SOID_T w;
   if (IS (p, PARAMETER_PACK)) {
@@ -1574,7 +1574,7 @@ static void mode_check_routine_text (NODE_T * p, SOID_T * y)
 
 //! @brief Mode check proc declaration.
 
-static void mode_check_proc_declaration (NODE_T * p)
+void mode_check_proc_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1590,7 +1590,7 @@ static void mode_check_proc_declaration (NODE_T * p)
 
 //! @brief Mode check brief op declaration.
 
-static void mode_check_brief_op_declaration (NODE_T * p)
+void mode_check_brief_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1611,7 +1611,7 @@ static void mode_check_brief_op_declaration (NODE_T * p)
 
 //! @brief Mode check op declaration.
 
-static void mode_check_op_declaration (NODE_T * p)
+void mode_check_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -1630,7 +1630,7 @@ static void mode_check_op_declaration (NODE_T * p)
 
 //! @brief Mode check declaration list.
 
-static void mode_check_declaration_list (NODE_T * p)
+void mode_check_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -1677,7 +1677,7 @@ static void mode_check_declaration_list (NODE_T * p)
 
 //! @brief Mode check serial clause.
 
-static void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
+void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
 {
   if (p == NO_NODE) {
     return;
@@ -1722,7 +1722,7 @@ static void mode_check_serial (SOID_T ** r, NODE_T * p, SOID_T * x, BOOL_T k)
 
 //! @brief Mode check serial clause units.
 
-static void mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att)
+void mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att)
 {
   SOID_T *top_sl = NO_SOID;
   (void) att;
@@ -1738,7 +1738,7 @@ static void mode_check_serial_units (NODE_T * p, SOID_T * x, SOID_T * y, int att
 
 //! @brief Mode check unit list.
 
-static void mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
+void mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
 {
   if (p == NO_NODE) {
     return;
@@ -1757,7 +1757,7 @@ static void mode_check_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x)
 
 //! @brief Mode check struct display.
 
-static void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields)
+void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields)
 {
   if (p == NO_NODE) {
     return;
@@ -1782,7 +1782,7 @@ static void mode_check_struct_display (SOID_T ** r, NODE_T * p, PACK_T ** fields
 
 //! @brief Mode check get specified moids.
 
-static void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
+void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
@@ -1796,7 +1796,7 @@ static void mode_check_get_specified_moids (NODE_T * p, MOID_T * u)
 
 //! @brief Mode check specified unit list.
 
-static void mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x, MOID_T * u)
+void mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x, MOID_T * u)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
@@ -1816,7 +1816,7 @@ static void mode_check_specified_unit_list (SOID_T ** r, NODE_T * p, SOID_T * x,
 
 //! @brief Mode check united case parts.
 
-static void mode_check_united_case_parts (SOID_T ** ry, NODE_T * p, SOID_T * x)
+void mode_check_united_case_parts (SOID_T ** ry, NODE_T * p, SOID_T * x)
 {
   SOID_T enq_expct, enq_yield;
   MOID_T *u = NO_MOID, *v = NO_MOID, *w = NO_MOID;
@@ -1873,7 +1873,7 @@ static void mode_check_united_case_parts (SOID_T ** ry, NODE_T * p, SOID_T * x)
 
 //! @brief Mode check united case.
 
-static void mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
@@ -1894,7 +1894,7 @@ static void mode_check_united_case (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check unit list 2.
 
-static void mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   if (MOID (x) != NO_MOID) {
@@ -1921,7 +1921,7 @@ static void mode_check_unit_list_2 (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check closed.
 
-static void mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -1935,7 +1935,7 @@ static void mode_check_closed (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check collateral.
 
-static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -1961,7 +1961,7 @@ static void mode_check_collateral (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check conditional 2.
 
-static void mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
+void mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 {
   SOID_T enq_expct, enq_yield;
   make_soid (&enq_expct, MEEK, M_BOOL, 0);
@@ -1982,7 +1982,7 @@ static void mode_check_conditional_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 
 //! @brief Mode check conditional.
 
-static void mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
@@ -2002,7 +2002,7 @@ static void mode_check_conditional (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check int case 2.
 
-static void mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
+void mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 {
   SOID_T enq_expct, enq_yield;
   make_soid (&enq_expct, MEEK, M_INT, 0);
@@ -2023,7 +2023,7 @@ static void mode_check_int_case_2 (SOID_T ** ry, NODE_T * p, SOID_T * x)
 
 //! @brief Mode check int case.
 
-static void mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T *top_sl = NO_SOID;
   MOID_T *z;
@@ -2043,7 +2043,7 @@ static void mode_check_int_case (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check loop 2.
 
-static void mode_check_loop_2 (NODE_T * p, SOID_T * y)
+void mode_check_loop_2 (NODE_T * p, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -2090,7 +2090,7 @@ static void mode_check_loop_2 (NODE_T * p, SOID_T * y)
 
 //! @brief Mode check loop.
 
-static void mode_check_loop (NODE_T * p, SOID_T * y)
+void mode_check_loop (NODE_T * p, SOID_T * y)
 {
   SOID_T *z = NO_SOID;
   mode_check_loop_2 (p, z);
@@ -2127,7 +2127,7 @@ void mode_check_enclosed (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Search table for operator.
 
-static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T * y)
+TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T * y)
 {
   if (is_mode_isnt_well (x)) {
     return A68_PARSER (error_tag);
@@ -2154,7 +2154,7 @@ static TAG_T *search_table_for_operator (TAG_T * t, char *n, MOID_T * x, MOID_T 
 
 //! @brief Search chain of symbol tables and return matching operator "x n y" or "n x".
 
-static TAG_T *search_table_chain_for_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
+TAG_T *search_table_chain_for_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 {
   if (is_mode_isnt_well (x)) {
     return A68_PARSER (error_tag);
@@ -2173,7 +2173,7 @@ static TAG_T *search_table_chain_for_operator (TABLE_T * s, char *n, MOID_T * x,
 
 //! @brief Return a matching operator "x n y".
 
-static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
+TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 {
 // Coercions to operand modes are FIRM.
   TAG_T *z;
@@ -2308,7 +2308,7 @@ static TAG_T *find_operator (TABLE_T * s, char *n, MOID_T * x, MOID_T * y)
 
 //! @brief Mode check monadic operator.
 
-static void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p != NO_NODE) {
     TAG_T *t;
@@ -2348,7 +2348,7 @@ static void mode_check_monadic_operator (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check monadic formula.
 
-static void mode_check_monadic_formula (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_monadic_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T e;
   make_soid (&e, FIRM, NO_MOID, 0);
@@ -2359,7 +2359,7 @@ static void mode_check_monadic_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check formula.
 
-static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T ls, rs;
   TAG_T *op;
@@ -2419,7 +2419,7 @@ static void mode_check_formula (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check assignation.
 
-static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T name, tmp, value;
   MOID_T *name_moid, *ori;
@@ -2450,7 +2450,7 @@ static void mode_check_assignation (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check identity relation.
 
-static void mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T e, l, r;
   MOID_T *lhs, *rhs, *oril, *orir;
@@ -2489,7 +2489,7 @@ static void mode_check_identity_relation (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check bool functions ANDF and ORF.
 
-static void mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T e, l, r;
   NODE_T *ln = p, *rn = NEXT_NEXT (p);
@@ -2509,7 +2509,7 @@ static void mode_check_bool_function (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check cast.
 
-static void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w;
   mode_check_declarer (p);
@@ -2524,7 +2524,7 @@ static void mode_check_cast (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check assertion.
 
-static void mode_check_assertion (NODE_T * p)
+void mode_check_assertion (NODE_T * p)
 {
   SOID_T w, y;
   make_soid (&w, STRONG, M_BOOL, 0);
@@ -2537,7 +2537,7 @@ static void mode_check_assertion (NODE_T * p)
 
 //! @brief Mode check argument list.
 
-static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK_T ** v, PACK_T ** w)
+void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK_T ** v, PACK_T ** w)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, GENERIC_ARGUMENT_LIST)) {
@@ -2581,7 +2581,7 @@ static void mode_check_argument_list (SOID_T ** r, NODE_T * p, PACK_T ** x, PACK
 
 //! @brief Mode check argument list 2.
 
-static void mode_check_argument_list_2 (NODE_T * p, PACK_T * x, SOID_T * y, PACK_T ** v, PACK_T ** w)
+void mode_check_argument_list_2 (NODE_T * p, PACK_T * x, SOID_T * y, PACK_T ** v, PACK_T ** w)
 {
   SOID_T *top_sl = NO_SOID;
   mode_check_argument_list (&top_sl, SUB (p), &x, v, w);
@@ -2591,7 +2591,7 @@ static void mode_check_argument_list_2 (NODE_T * p, PACK_T * x, SOID_T * y, PACK
 
 //! @brief Mode check meek int.
 
-static void mode_check_meek_int (NODE_T * p)
+void mode_check_meek_int (NODE_T * p)
 {
   SOID_T x, y;
   make_soid (&x, MEEK, M_INT, 0);
@@ -2603,7 +2603,7 @@ static void mode_check_meek_int (NODE_T * p)
 
 //! @brief Mode check trimmer.
 
-static void mode_check_trimmer (NODE_T * p)
+void mode_check_trimmer (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -2619,7 +2619,7 @@ static void mode_check_trimmer (NODE_T * p)
 
 //! @brief Mode check indexer.
 
-static void mode_check_indexer (NODE_T * p, int *subs, int *trims)
+void mode_check_indexer (NODE_T * p, int *subs, int *trims)
 {
   if (p == NO_NODE) {
     return;
@@ -2637,7 +2637,7 @@ static void mode_check_indexer (NODE_T * p, int *subs, int *trims)
 
 //! @brief Mode check call.
 
-static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
+void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
 {
   SOID_T d;
   MOID (p) = n;
@@ -2678,7 +2678,7 @@ static void mode_check_call (NODE_T * p, MOID_T * n, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check slice.
 
-static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
+void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 {
   BOOL_T is_ref;
   int rowdim, subs, trims;
@@ -2737,7 +2737,7 @@ static void mode_check_slice (NODE_T * p, MOID_T * ori, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check specification.
 
-static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
+int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   MOID_T *m, *ori;
@@ -2764,7 +2764,7 @@ static int mode_check_specification (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check selection.
 
-static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   BOOL_T coerce;
@@ -2842,7 +2842,7 @@ static void mode_check_selection (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check diagonal.
 
-static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   NODE_T *tert;
@@ -2902,7 +2902,7 @@ static void mode_check_diagonal (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check transpose.
 
-static void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   NODE_T *tert = NEXT (p);
@@ -2946,7 +2946,7 @@ static void mode_check_transpose (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check row or column function.
 
-static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   SOID_T w, d;
   NODE_T *tert;
@@ -3000,7 +3000,7 @@ static void mode_check_row_column_function (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Mode check format text.
 
-static void mode_check_format_text (NODE_T * p)
+void mode_check_format_text (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     mode_check_format_text (SUB (p));
@@ -3031,7 +3031,7 @@ static void mode_check_format_text (NODE_T * p)
 
 //! @brief Mode check unit.
 
-static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
+void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 {
   if (p == NO_NODE) {
     return;
@@ -3134,7 +3134,7 @@ static void mode_check_unit (NODE_T * p, SOID_T * x, SOID_T * y)
 
 //! @brief Coerce bounds.
 
-static void coerce_bounds (NODE_T * p)
+void coerce_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -3149,7 +3149,7 @@ static void coerce_bounds (NODE_T * p)
 
 //! @brief Coerce declarer.
 
-static void coerce_declarer (NODE_T * p)
+void coerce_declarer (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, BOUNDS)) {
@@ -3162,7 +3162,7 @@ static void coerce_declarer (NODE_T * p)
 
 //! @brief Coerce identity declaration.
 
-static void coerce_identity_declaration (NODE_T * p)
+void coerce_identity_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -3191,7 +3191,7 @@ static void coerce_identity_declaration (NODE_T * p)
 
 //! @brief Coerce variable declaration.
 
-static void coerce_variable_declaration (NODE_T * p)
+void coerce_variable_declaration (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -3222,7 +3222,7 @@ static void coerce_variable_declaration (NODE_T * p)
 
 //! @brief Coerce routine text.
 
-static void coerce_routine_text (NODE_T * p)
+void coerce_routine_text (NODE_T * p)
 {
   SOID_T w;
   if (IS (p, PARAMETER_PACK)) {
@@ -3234,7 +3234,7 @@ static void coerce_routine_text (NODE_T * p)
 
 //! @brief Coerce proc declaration.
 
-static void coerce_proc_declaration (NODE_T * p)
+void coerce_proc_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -3248,7 +3248,7 @@ static void coerce_proc_declaration (NODE_T * p)
 
 //! @brief Coerce_op_declaration.
 
-static void coerce_op_declaration (NODE_T * p)
+void coerce_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -3264,7 +3264,7 @@ static void coerce_op_declaration (NODE_T * p)
 
 //! @brief Coerce brief op declaration.
 
-static void coerce_brief_op_declaration (NODE_T * p)
+void coerce_brief_op_declaration (NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -3278,7 +3278,7 @@ static void coerce_brief_op_declaration (NODE_T * p)
 
 //! @brief Coerce declaration list.
 
-static void coerce_declaration_list (NODE_T * p)
+void coerce_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     switch (ATTRIBUTE (p)) {
@@ -3325,7 +3325,7 @@ static void coerce_declaration_list (NODE_T * p)
 
 //! @brief Coerce serial.
 
-static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
+void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
 {
   if (p == NO_NODE) {
     return;
@@ -3363,7 +3363,7 @@ static void coerce_serial (NODE_T * p, SOID_T * q, BOOL_T k)
 
 //! @brief Coerce closed.
 
-static void coerce_closed (NODE_T * p, SOID_T * q)
+void coerce_closed (NODE_T * p, SOID_T * q)
 {
   if (IS (p, SERIAL_CLAUSE)) {
     coerce_serial (p, q, A68_TRUE);
@@ -3374,7 +3374,7 @@ static void coerce_closed (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce conditional.
 
-static void coerce_conditional (NODE_T * p, SOID_T * q)
+void coerce_conditional (NODE_T * p, SOID_T * q)
 {
   SOID_T w;
   make_soid (&w, MEEK, M_BOOL, 0);
@@ -3392,7 +3392,7 @@ static void coerce_conditional (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce unit list.
 
-static void coerce_unit_list (NODE_T * p, SOID_T * q)
+void coerce_unit_list (NODE_T * p, SOID_T * q)
 {
   if (p == NO_NODE) {
     return;
@@ -3409,7 +3409,7 @@ static void coerce_unit_list (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce int case.
 
-static void coerce_int_case (NODE_T * p, SOID_T * q)
+void coerce_int_case (NODE_T * p, SOID_T * q)
 {
   SOID_T w;
   make_soid (&w, MEEK, M_INT, 0);
@@ -3427,7 +3427,7 @@ static void coerce_int_case (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce spec unit list.
 
-static void coerce_spec_unit_list (NODE_T * p, SOID_T * q)
+void coerce_spec_unit_list (NODE_T * p, SOID_T * q)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, SPECIFIED_UNIT_LIST, SPECIFIED_UNIT, STOP)) {
@@ -3440,7 +3440,7 @@ static void coerce_spec_unit_list (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce united case.
 
-static void coerce_united_case (NODE_T * p, SOID_T * q)
+void coerce_united_case (NODE_T * p, SOID_T * q)
 {
   SOID_T w;
   make_soid (&w, MEEK, MOID (SUB (p)), 0);
@@ -3458,7 +3458,7 @@ static void coerce_united_case (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce loop.
 
-static void coerce_loop (NODE_T * p)
+void coerce_loop (NODE_T * p)
 {
   if (IS (p, FOR_PART)) {
     coerce_loop (NEXT (p));
@@ -3492,7 +3492,7 @@ static void coerce_loop (NODE_T * p)
 
 //! @brief Coerce struct display.
 
-static void coerce_struct_display (PACK_T ** r, NODE_T * p)
+void coerce_struct_display (PACK_T ** r, NODE_T * p)
 {
   if (p == NO_NODE) {
     return;
@@ -3512,7 +3512,7 @@ static void coerce_struct_display (PACK_T ** r, NODE_T * p)
 
 //! @brief Coerce collateral.
 
-static void coerce_collateral (NODE_T * p, SOID_T * q)
+void coerce_collateral (NODE_T * p, SOID_T * q)
 {
   if (!(whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP) || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP))) {
     if (IS (MOID (q), STRUCT_SYMBOL)) {
@@ -3559,7 +3559,7 @@ void coerce_enclosed (NODE_T * p, SOID_T * q)
 
 //! @brief Get monad moid.
 
-static MOID_T *get_monad_moid (NODE_T * p)
+MOID_T *get_monad_moid (NODE_T * p)
 {
   if (TAX (p) != NO_TAG && TAX (p) != A68_PARSER (error_tag)) {
     MOID (p) = MOID (TAX (p));
@@ -3571,7 +3571,7 @@ static MOID_T *get_monad_moid (NODE_T * p)
 
 //! @brief Coerce monad oper.
 
-static void coerce_monad_oper (NODE_T * p, SOID_T * q)
+void coerce_monad_oper (NODE_T * p, SOID_T * q)
 {
   if (p != NO_NODE) {
     SOID_T z;
@@ -3582,7 +3582,7 @@ static void coerce_monad_oper (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce monad formula.
 
-static void coerce_monad_formula (NODE_T * p)
+void coerce_monad_formula (NODE_T * p)
 {
   SOID_T e;
   make_soid (&e, STRONG, get_monad_moid (p), 0);
@@ -3592,7 +3592,7 @@ static void coerce_monad_formula (NODE_T * p)
 
 //! @brief Coerce operand.
 
-static void coerce_operand (NODE_T * p, SOID_T * q)
+void coerce_operand (NODE_T * p, SOID_T * q)
 {
   if (IS (p, MONADIC_FORMULA)) {
     coerce_monad_formula (SUB (p));
@@ -3614,7 +3614,7 @@ static void coerce_operand (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce formula.
 
-static void coerce_formula (NODE_T * p, SOID_T * q)
+void coerce_formula (NODE_T * p, SOID_T * q)
 {
   (void) q;
   if (IS (p, MONADIC_FORMULA) && NEXT (p) == NO_NODE) {
@@ -3635,7 +3635,7 @@ static void coerce_formula (NODE_T * p, SOID_T * q)
 
 //! @brief Coerce assignation.
 
-static void coerce_assignation (NODE_T * p)
+void coerce_assignation (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, SOFT, MOID (p), 0);
@@ -3646,7 +3646,7 @@ static void coerce_assignation (NODE_T * p)
 
 //! @brief Coerce relation.
 
-static void coerce_relation (NODE_T * p)
+void coerce_relation (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, STRONG, MOID (p), 0);
@@ -3657,7 +3657,7 @@ static void coerce_relation (NODE_T * p)
 
 //! @brief Coerce bool function.
 
-static void coerce_bool_function (NODE_T * p)
+void coerce_bool_function (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, STRONG, M_BOOL, 0);
@@ -3667,7 +3667,7 @@ static void coerce_bool_function (NODE_T * p)
 
 //! @brief Coerce assertion.
 
-static void coerce_assertion (NODE_T * p)
+void coerce_assertion (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, MEEK, M_BOOL, 0);
@@ -3676,7 +3676,7 @@ static void coerce_assertion (NODE_T * p)
 
 //! @brief Coerce selection.
 
-static void coerce_selection (NODE_T * p)
+void coerce_selection (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, STRONG, MOID (NEXT (p)), 0);
@@ -3685,7 +3685,7 @@ static void coerce_selection (NODE_T * p)
 
 //! @brief Coerce cast.
 
-static void coerce_cast (NODE_T * p)
+void coerce_cast (NODE_T * p)
 {
   SOID_T w;
   coerce_declarer (p);
@@ -3695,7 +3695,7 @@ static void coerce_cast (NODE_T * p)
 
 //! @brief Coerce argument list.
 
-static void coerce_argument_list (PACK_T ** r, NODE_T * p)
+void coerce_argument_list (PACK_T ** r, NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ARGUMENT_LIST)) {
@@ -3713,7 +3713,7 @@ static void coerce_argument_list (PACK_T ** r, NODE_T * p)
 
 //! @brief Coerce call.
 
-static void coerce_call (NODE_T * p)
+void coerce_call (NODE_T * p)
 {
   MOID_T *proc = MOID (p);
   SOID_T w;
@@ -3727,7 +3727,7 @@ static void coerce_call (NODE_T * p)
 
 //! @brief Coerce meek int.
 
-static void coerce_meek_int (NODE_T * p)
+void coerce_meek_int (NODE_T * p)
 {
   SOID_T x;
   make_soid (&x, MEEK, M_INT, 0);
@@ -3736,7 +3736,7 @@ static void coerce_meek_int (NODE_T * p)
 
 //! @brief Coerce trimmer.
 
-static void coerce_trimmer (NODE_T * p)
+void coerce_trimmer (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, UNIT)) {
@@ -3750,7 +3750,7 @@ static void coerce_trimmer (NODE_T * p)
 
 //! @brief Coerce indexer.
 
-static void coerce_indexer (NODE_T * p)
+void coerce_indexer (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, TRIMMER)) {
@@ -3766,7 +3766,7 @@ static void coerce_indexer (NODE_T * p)
 
 //! @brief Coerce_slice.
 
-static void coerce_slice (NODE_T * p)
+void coerce_slice (NODE_T * p)
 {
   SOID_T w;
   MOID_T *row;
@@ -3778,7 +3778,7 @@ static void coerce_slice (NODE_T * p)
 
 //! @brief Mode coerce diagonal.
 
-static void coerce_diagonal (NODE_T * p)
+void coerce_diagonal (NODE_T * p)
 {
   SOID_T w;
   if (IS (p, TERTIARY)) {
@@ -3792,7 +3792,7 @@ static void coerce_diagonal (NODE_T * p)
 
 //! @brief Mode coerce transpose.
 
-static void coerce_transpose (NODE_T * p)
+void coerce_transpose (NODE_T * p)
 {
   SOID_T w;
   make_soid (&w, STRONG, MOID (NEXT (p)), 0);
@@ -3801,7 +3801,7 @@ static void coerce_transpose (NODE_T * p)
 
 //! @brief Mode coerce row or column function.
 
-static void coerce_row_column_function (NODE_T * p)
+void coerce_row_column_function (NODE_T * p)
 {
   SOID_T w;
   if (IS (p, TERTIARY)) {
@@ -3815,7 +3815,7 @@ static void coerce_row_column_function (NODE_T * p)
 
 //! @brief Coerce format text.
 
-static void coerce_format_text (NODE_T * p)
+void coerce_format_text (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     coerce_format_text (SUB (p));
@@ -3837,7 +3837,7 @@ static void coerce_format_text (NODE_T * p)
 
 //! @brief Coerce unit.
 
-static void coerce_unit (NODE_T * p, SOID_T * q)
+void coerce_unit (NODE_T * p, SOID_T * q)
 {
   if (p == NO_NODE) {
     return;

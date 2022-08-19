@@ -98,7 +98,9 @@ void genie_gc_heap (NODE_T * p)
 
 void genie_preemptive_gc_heap (NODE_T * p)
 {
-  PREEMPTIVE_GC (DEFAULT_PREEMPTIVE);
+  if (A68_GC (preemptive)) {
+    gc_heap ((NODE_T *) (p), A68_FP);
+  }
 }
 
 //! @brief INT blocks
@@ -139,7 +141,7 @@ void genie_garbage_seconds (NODE_T * p)
 
 //! @brief Size available for an object in the heap.
 
-unsigned heap_available (void)
+unt heap_available (void)
 {
   return A68 (heap_size) - A68_HP;
 }
@@ -148,8 +150,6 @@ unsigned heap_available (void)
 
 void genie_init_heap (NODE_T * p)
 {
-  A68_HANDLE *z;
-  int k, max;
   (void) p;
   if (A68_HEAP == NO_BYTE) {
     diagnostic (A68_RUNTIME_ERROR, TOP_NODE (&A68_JOB), ERROR_OUT_OF_CORE);
@@ -163,28 +163,29 @@ void genie_init_heap (NODE_T * p)
   A68_GC (total) = 0;
   A68_GC (sweeps) = 0;
   A68_GC (refused) = 0;
+  A68_GC (preemptive) = A68_FALSE;
   ABEND (A68 (fixed_heap_pointer) >= (A68 (heap_size) - MIN_MEM_SIZE), ERROR_OUT_OF_CORE, __func__);
   A68_HP = A68 (fixed_heap_pointer);
   A68 (heap_is_fluid) = A68_FALSE;
 // Assign handle space.
-  z = (A68_HANDLE *) A68_HANDLES;
+  A68_HANDLE *z = (A68_HANDLE *) A68_HANDLES;
   A68_GC (available_handles) = z;
   A68_GC (busy_handles) = NO_HANDLE;
-  max = (unsigned) A68 (handle_pool_size) / (unsigned) sizeof (A68_HANDLE);
-  A68_GC (free_handles) = max;
-  A68_GC (max_handles) = max;
-  for (k = 0; k < max; k++) {
+  int N = (unt) A68 (handle_pool_size) / SIZE_ALIGNED (A68_HANDLE);
+  A68_GC (free_handles) = N;
+  A68_GC (max_handles) = N;
+  for (int k = 0; k < N; k++) {
     STATUS (&(z[k])) = NULL_MASK;
     POINTER (&(z[k])) = NO_BYTE;
     SIZE (&(z[k])) = 0;
-    NEXT (&z[k]) = (k == max - 1 ? NO_HANDLE : &z[k + 1]);
+    NEXT (&z[k]) = (k == N - 1 ? NO_HANDLE : &z[k + 1]);
     PREVIOUS (&z[k]) = (k == 0 ? NO_HANDLE : &z[k - 1]);
   }
 }
 
 //! @brief Whether mode must be coloured.
 
-static BOOL_T moid_needs_colouring (MOID_T * m)
+BOOL_T moid_needs_colouring (MOID_T * m)
 {
   if (IS_REF (m)) {
     return A68_TRUE;
@@ -207,7 +208,7 @@ static BOOL_T moid_needs_colouring (MOID_T * m)
 
 //! @brief Colour all elements of a row.
 
-static void colour_row_elements (A68_REF * z, MOID_T * m)
+void colour_row_elements (A68_REF * z, MOID_T * m)
 {
   A68_ARRAY *arr;
   A68_TUPLE *tup;
@@ -317,7 +318,7 @@ void colour_object (BYTE_T * item, MOID_T * m)
 
 //! @brief Colour active objects in the heap.
 
-static void colour_heap (ADDR_T fp)
+void colour_heap (ADDR_T fp)
 {
   while (fp != 0) {
     NODE_T *p = FRAME_TREE (fp);
@@ -339,7 +340,7 @@ static void colour_heap (ADDR_T fp)
 
 //! @brief Join all active blocks in the heap.
 
-static void defragment_heap (void)
+void defragment_heap (void)
 {
   A68_HANDLE *z;
 // Free handles.
@@ -381,7 +382,7 @@ static void defragment_heap (void)
   for (; z != NO_HANDLE; BACKWARD (z)) {
     BYTE_T *dst = HEAP_ADDRESS (A68_HP);
     if (dst != POINTER (z)) {
-      MOVE (dst, POINTER (z), (unsigned) SIZE (z));
+      MOVE (dst, POINTER (z), (unt) SIZE (z));
     }
     STATUS_CLEAR (z, (COLOUR_MASK | COOKIE_MASK));
     POINTER (z) = dst;
@@ -411,6 +412,7 @@ void gc_heap (NODE_T * p, ADDR_T fp)
 // Give it a whirl then.
   t0 = seconds ();
 // Unfree handles are subject to inspection.
+// Release them all before colouring.
   for (z = A68_GC (busy_handles); z != NO_HANDLE; FORWARD (z)) {
     STATUS_CLEAR (z, (COLOUR_MASK | COOKIE_MASK));
   }
@@ -422,6 +424,7 @@ void gc_heap (NODE_T * p, ADDR_T fp)
 // Stats and logging.
   A68_GC (total) += A68_GC (freed);
   A68_GC (sweeps)++;
+  A68_GC (preemptive) = A68_FALSE;
   t1 = seconds ();
 // C optimiser can make last digit differ, so next condition is 
 // needed to determine a positive time difference
@@ -436,7 +439,7 @@ void gc_heap (NODE_T * p, ADDR_T fp)
 
 //! @brief Yield a handle that will point to a block in the heap.
 
-static A68_HANDLE *give_handle (NODE_T * p, MOID_T * a68m)
+A68_HANDLE *give_handle (NODE_T * p, MOID_T * a68m)
 {
   if (A68_GC (available_handles) != NO_HANDLE) {
     A68_HANDLE *x = A68_GC (available_handles);
@@ -485,6 +488,11 @@ A68_REF heap_generator (NODE_T * p, MOID_T * mode, int size)
     REF_HANDLE (&z) = x;
     ABEND (((long) ADDRESS (&z)) % A68_ALIGNMENT != 0, ERROR_ALIGNMENT, __func__);
     A68_HP += size;
+    REAL_T _f_ = (REAL_T) A68_HP / (REAL_T) A68 (heap_size);
+    REAL_T _g_ = (REAL_T) (A68_GC (max_handles) - A68_GC (free_handles)) / (REAL_T) A68_GC (max_handles);
+    if (_f_ > DEFAULT_PREEMPTIVE || _g_ > DEFAULT_PREEMPTIVE) {
+      A68_GC (preemptive) = A68_TRUE;
+    }
     return z;
   } else {
 // Do not auto-GC!.
@@ -498,7 +506,7 @@ A68_REF heap_generator (NODE_T * p, MOID_T * mode, int size)
 
 //! @brief Whether a moid needs work in allocation.
 
-static BOOL_T mode_needs_allocation (MOID_T * m)
+BOOL_T mode_needs_allocation (MOID_T * m)
 {
   if (IS_UNION (m)) {
     return A68_FALSE;
@@ -509,7 +517,7 @@ static BOOL_T mode_needs_allocation (MOID_T * m)
 
 //! @brief Prepare bounds.
 
-static void genie_compute_bounds (NODE_T * p)
+void genie_compute_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, BOUNDS_LIST)) {

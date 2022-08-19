@@ -98,7 +98,7 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(include_HEADERS) $(am__DIST_COMMON)
+	$(am__configure_deps) $(pkginclude_HEADERS) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
@@ -106,7 +106,7 @@ CONFIG_HEADER = a68g-config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
-	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(includedir)"
+	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgincludedir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_a68g_OBJECTS = ./src/a68g/a68g-a68g.$(OBJEXT) \
@@ -116,7 +116,12 @@ am_a68g_OBJECTS = ./src/a68g/a68g-a68g.$(OBJEXT) \
 	./src/a68g/a68g-bottom-up.$(OBJEXT) \
 	./src/a68g/a68g-brackets.$(OBJEXT) \
 	./src/a68g/a68g-char.$(OBJEXT) \
+	./src/a68g/a68g-compiler-basic.$(OBJEXT) \
 	./src/a68g/a68g-compiler.$(OBJEXT) \
+	./src/a68g/a68g-compiler-folder.$(OBJEXT) \
+	./src/a68g/a68g-compiler-gen.$(OBJEXT) \
+	./src/a68g/a68g-compiler-inline.$(OBJEXT) \
+	./src/a68g/a68g-compiler-tables.$(OBJEXT) \
 	./src/a68g/a68g-conversion.$(OBJEXT) \
 	./src/a68g/a68g-curses.$(OBJEXT) \
 	./src/a68g/a68g-diagnostics.$(OBJEXT) \
@@ -128,8 +133,10 @@ am_a68g_OBJECTS = ./src/a68g/a68g-a68g.$(OBJEXT) \
 	./src/a68g/a68g-equivalence.$(OBJEXT) \
 	./src/a68g/a68g-extract.$(OBJEXT) \
 	./src/a68g/a68g-fft.$(OBJEXT) ./src/a68g/a68g-format.$(OBJEXT) \
-	./src/a68g/a68g-genie.$(OBJEXT) ./src/a68g/a68g-heap.$(OBJEXT) \
-	./src/a68g/a68g-io.$(OBJEXT) \
+	./src/a68g/a68g-genie.$(OBJEXT) \
+	./src/a68g/a68g-genie-coerce.$(OBJEXT) \
+	./src/a68g/a68g-genie-stowed.$(OBJEXT) \
+	./src/a68g/a68g-heap.$(OBJEXT) ./src/a68g/a68g-io.$(OBJEXT) \
 	./src/a68g/a68g-keywords.$(OBJEXT) \
 	./src/a68g/a68g-laplace.$(OBJEXT) \
 	./src/a68g/a68g-listing.$(OBJEXT) \
@@ -203,6 +210,11 @@ am__depfiles_remade = ./src/a68g/$(DEPDIR)/a68g-a68g.Po \
 	./src/a68g/$(DEPDIR)/a68g-bottom-up.Po \
 	./src/a68g/$(DEPDIR)/a68g-brackets.Po \
 	./src/a68g/$(DEPDIR)/a68g-char.Po \
+	./src/a68g/$(DEPDIR)/a68g-compiler-basic.Po \
+	./src/a68g/$(DEPDIR)/a68g-compiler-folder.Po \
+	./src/a68g/$(DEPDIR)/a68g-compiler-gen.Po \
+	./src/a68g/$(DEPDIR)/a68g-compiler-inline.Po \
+	./src/a68g/$(DEPDIR)/a68g-compiler-tables.Po \
 	./src/a68g/$(DEPDIR)/a68g-compiler.Po \
 	./src/a68g/$(DEPDIR)/a68g-conversion.Po \
 	./src/a68g/$(DEPDIR)/a68g-curses.Po \
@@ -216,6 +228,8 @@ am__depfiles_remade = ./src/a68g/$(DEPDIR)/a68g-a68g.Po \
 	./src/a68g/$(DEPDIR)/a68g-extract.Po \
 	./src/a68g/$(DEPDIR)/a68g-fft.Po \
 	./src/a68g/$(DEPDIR)/a68g-format.Po \
+	./src/a68g/$(DEPDIR)/a68g-genie-coerce.Po \
+	./src/a68g/$(DEPDIR)/a68g-genie-stowed.Po \
 	./src/a68g/$(DEPDIR)/a68g-genie.Po \
 	./src/a68g/$(DEPDIR)/a68g-heap.Po \
 	./src/a68g/$(DEPDIR)/a68g-io.Po \
@@ -323,7 +337,7 @@ man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(man_MANS)
 DATA = $(doc_DATA)
-HEADERS = $(include_HEADERS)
+HEADERS = $(pkginclude_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP) \
 	a68g-config.h.in
 # Read a list of newline-separated strings from the standard input,
@@ -467,7 +481,7 @@ host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
 htmldir = @htmldir@
-includedir = /usr/local/include/algol68g
+includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
@@ -503,7 +517,12 @@ a68g_SOURCES = \
 ./src/a68g/bottom-up.c \
 ./src/a68g/brackets.c \
 ./src/a68g/char.c \
+./src/a68g/compiler-basic.c \
 ./src/a68g/compiler.c \
+./src/a68g/compiler-folder.c \
+./src/a68g/compiler-gen.c \
+./src/a68g/compiler-inline.c \
+./src/a68g/compiler-tables.c \
 ./src/a68g/conversion.c \
 ./src/a68g/curses.c \
 ./src/a68g/diagnostics.c \
@@ -517,6 +536,8 @@ a68g_SOURCES = \
 ./src/a68g/fft.c \
 ./src/a68g/format.c \
 ./src/a68g/genie.c \
+./src/a68g/genie-coerce.c \
+./src/a68g/genie-stowed.c \
 ./src/a68g/heap.c \
 ./src/a68g/io.c \
 ./src/a68g/keywords.c \
@@ -602,7 +623,7 @@ a68g_SOURCES = \
 ./src/include/a68g-transput.h \
 ./src/include/a68g-types.h
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 ./a68g-config.h \
 ./src/include/a68g-common.h \
 ./src/include/a68g-compiler.h \
@@ -649,21 +670,23 @@ TESTS = \
 	test-set/05-fft.a68\
 	test-set/06-fibonacci-grammar.a68\
 	test-set/07-formula-manipulation.a68\
-	test-set/08-hamming.a68\
-	test-set/09-hilbert.a68\
-	test-set/10-lisp.a68\
-	test-set/11-mandelbrot.a68\
-	test-set/12-mastermind.a68\
-	test-set/13-math.a68\
-	test-set/14-mersenne.a68\
-	test-set/15-procedures.a68\
-	test-set/16-pseudo-switch.a68\
-	test-set/17-qgammainc.a68\
-	test-set/18-queens.a68\
-	test-set/19-quicksort.a68\
-	test-set/20-rationals.a68\
-	test-set/21-tukey.a68\
-	test-set/22-whetstones.a68
+	test-set/08-guldens.a68\
+	test-set/09-hamming.a68\
+	test-set/10-hilbert.a68\
+	test-set/11-lisp.a68\
+	test-set/12-mandelbrot.a68\
+	test-set/13-mastermind.a68\
+	test-set/14-math.a68\
+	test-set/15-mersenne.a68\
+	test-set/16-procedures.a68\
+	test-set/17-pseudo-switch.a68\
+	test-set/18-qgammainc.a68\
+	test-set/19-queens.a68\
+	test-set/20-quicksort.a68\
+	test-set/21-rationals.a68\
+	test-set/22-semana-santa.a68\
+	test-set/23-tukey.a68\
+	test-set/24-whetstones.a68
 
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
 @EXPORT_DYNAMIC_TRUE@a68g_LDFLAGS = -Wl,--export-dynamic
@@ -791,7 +814,17 @@ src/a68g/$(DEPDIR)/$(am__dirstamp):
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-char.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-compiler-basic.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-compiler.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-compiler-folder.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-compiler-gen.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-compiler-inline.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-compiler-tables.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-conversion.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
@@ -818,6 +851,10 @@ src/a68g/$(DEPDIR)/$(am__dirstamp):
 ./src/a68g/a68g-format.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-genie.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-genie-coerce.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-genie-stowed.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-heap.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
@@ -941,6 +978,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-bottom-up.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-brackets.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-char.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-compiler-basic.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-compiler-folder.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-compiler-gen.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-compiler-inline.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-compiler-tables.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-compiler.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-conversion.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-curses.Po@am__quote@ # am--include-marker
@@ -954,6 +996,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-extract.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-fft.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-format.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-genie-coerce.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-genie-stowed.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-genie.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-heap.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-io.Po@am__quote@ # am--include-marker
@@ -1141,6 +1185,20 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-char.obj `if test -f './src/a68g/char.c'; then $(CYGPATH_W) './src/a68g/char.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/char.c'; fi`
 
+./src/a68g/a68g-compiler-basic.o: ./src/a68g/compiler-basic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-basic.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Tpo -c -o ./src/a68g/a68g-compiler-basic.o `test -f './src/a68g/compiler-basic.c' || echo '$(srcdir)/'`./src/a68g/compiler-basic.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-basic.c' object='./src/a68g/a68g-compiler-basic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-basic.o `test -f './src/a68g/compiler-basic.c' || echo '$(srcdir)/'`./src/a68g/compiler-basic.c
+
+./src/a68g/a68g-compiler-basic.obj: ./src/a68g/compiler-basic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-basic.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Tpo -c -o ./src/a68g/a68g-compiler-basic.obj `if test -f './src/a68g/compiler-basic.c'; then $(CYGPATH_W) './src/a68g/compiler-basic.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-basic.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-basic.c' object='./src/a68g/a68g-compiler-basic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-basic.obj `if test -f './src/a68g/compiler-basic.c'; then $(CYGPATH_W) './src/a68g/compiler-basic.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-basic.c'; fi`
+
 ./src/a68g/a68g-compiler.o: ./src/a68g/compiler.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler.Tpo -c -o ./src/a68g/a68g-compiler.o `test -f './src/a68g/compiler.c' || echo '$(srcdir)/'`./src/a68g/compiler.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler.Po
@@ -1154,6 +1212,62 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler.c' object='./src/a68g/a68g-compiler.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler.obj `if test -f './src/a68g/compiler.c'; then $(CYGPATH_W) './src/a68g/compiler.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler.c'; fi`
+
+./src/a68g/a68g-compiler-folder.o: ./src/a68g/compiler-folder.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-folder.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Tpo -c -o ./src/a68g/a68g-compiler-folder.o `test -f './src/a68g/compiler-folder.c' || echo '$(srcdir)/'`./src/a68g/compiler-folder.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-folder.c' object='./src/a68g/a68g-compiler-folder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-folder.o `test -f './src/a68g/compiler-folder.c' || echo '$(srcdir)/'`./src/a68g/compiler-folder.c
+
+./src/a68g/a68g-compiler-folder.obj: ./src/a68g/compiler-folder.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-folder.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Tpo -c -o ./src/a68g/a68g-compiler-folder.obj `if test -f './src/a68g/compiler-folder.c'; then $(CYGPATH_W) './src/a68g/compiler-folder.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-folder.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-folder.c' object='./src/a68g/a68g-compiler-folder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-folder.obj `if test -f './src/a68g/compiler-folder.c'; then $(CYGPATH_W) './src/a68g/compiler-folder.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-folder.c'; fi`
+
+./src/a68g/a68g-compiler-gen.o: ./src/a68g/compiler-gen.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-gen.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Tpo -c -o ./src/a68g/a68g-compiler-gen.o `test -f './src/a68g/compiler-gen.c' || echo '$(srcdir)/'`./src/a68g/compiler-gen.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-gen.c' object='./src/a68g/a68g-compiler-gen.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-gen.o `test -f './src/a68g/compiler-gen.c' || echo '$(srcdir)/'`./src/a68g/compiler-gen.c
+
+./src/a68g/a68g-compiler-gen.obj: ./src/a68g/compiler-gen.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-gen.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Tpo -c -o ./src/a68g/a68g-compiler-gen.obj `if test -f './src/a68g/compiler-gen.c'; then $(CYGPATH_W) './src/a68g/compiler-gen.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-gen.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-gen.c' object='./src/a68g/a68g-compiler-gen.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-gen.obj `if test -f './src/a68g/compiler-gen.c'; then $(CYGPATH_W) './src/a68g/compiler-gen.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-gen.c'; fi`
+
+./src/a68g/a68g-compiler-inline.o: ./src/a68g/compiler-inline.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-inline.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Tpo -c -o ./src/a68g/a68g-compiler-inline.o `test -f './src/a68g/compiler-inline.c' || echo '$(srcdir)/'`./src/a68g/compiler-inline.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-inline.c' object='./src/a68g/a68g-compiler-inline.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-inline.o `test -f './src/a68g/compiler-inline.c' || echo '$(srcdir)/'`./src/a68g/compiler-inline.c
+
+./src/a68g/a68g-compiler-inline.obj: ./src/a68g/compiler-inline.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-inline.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Tpo -c -o ./src/a68g/a68g-compiler-inline.obj `if test -f './src/a68g/compiler-inline.c'; then $(CYGPATH_W) './src/a68g/compiler-inline.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-inline.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-inline.c' object='./src/a68g/a68g-compiler-inline.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-inline.obj `if test -f './src/a68g/compiler-inline.c'; then $(CYGPATH_W) './src/a68g/compiler-inline.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-inline.c'; fi`
+
+./src/a68g/a68g-compiler-tables.o: ./src/a68g/compiler-tables.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-tables.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Tpo -c -o ./src/a68g/a68g-compiler-tables.o `test -f './src/a68g/compiler-tables.c' || echo '$(srcdir)/'`./src/a68g/compiler-tables.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-tables.c' object='./src/a68g/a68g-compiler-tables.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-tables.o `test -f './src/a68g/compiler-tables.c' || echo '$(srcdir)/'`./src/a68g/compiler-tables.c
+
+./src/a68g/a68g-compiler-tables.obj: ./src/a68g/compiler-tables.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-compiler-tables.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Tpo -c -o ./src/a68g/a68g-compiler-tables.obj `if test -f './src/a68g/compiler-tables.c'; then $(CYGPATH_W) './src/a68g/compiler-tables.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-tables.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Tpo ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/compiler-tables.c' object='./src/a68g/a68g-compiler-tables.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-compiler-tables.obj `if test -f './src/a68g/compiler-tables.c'; then $(CYGPATH_W) './src/a68g/compiler-tables.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/compiler-tables.c'; fi`
 
 ./src/a68g/a68g-conversion.o: ./src/a68g/conversion.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-conversion.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-conversion.Tpo -c -o ./src/a68g/a68g-conversion.o `test -f './src/a68g/conversion.c' || echo '$(srcdir)/'`./src/a68g/conversion.c
@@ -1336,6 +1450,34 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/genie.c' object='./src/a68g/a68g-genie.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-genie.obj `if test -f './src/a68g/genie.c'; then $(CYGPATH_W) './src/a68g/genie.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/genie.c'; fi`
+
+./src/a68g/a68g-genie-coerce.o: ./src/a68g/genie-coerce.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-genie-coerce.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Tpo -c -o ./src/a68g/a68g-genie-coerce.o `test -f './src/a68g/genie-coerce.c' || echo '$(srcdir)/'`./src/a68g/genie-coerce.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Tpo ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/genie-coerce.c' object='./src/a68g/a68g-genie-coerce.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-genie-coerce.o `test -f './src/a68g/genie-coerce.c' || echo '$(srcdir)/'`./src/a68g/genie-coerce.c
+
+./src/a68g/a68g-genie-coerce.obj: ./src/a68g/genie-coerce.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-genie-coerce.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Tpo -c -o ./src/a68g/a68g-genie-coerce.obj `if test -f './src/a68g/genie-coerce.c'; then $(CYGPATH_W) './src/a68g/genie-coerce.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/genie-coerce.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Tpo ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/genie-coerce.c' object='./src/a68g/a68g-genie-coerce.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-genie-coerce.obj `if test -f './src/a68g/genie-coerce.c'; then $(CYGPATH_W) './src/a68g/genie-coerce.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/genie-coerce.c'; fi`
+
+./src/a68g/a68g-genie-stowed.o: ./src/a68g/genie-stowed.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-genie-stowed.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Tpo -c -o ./src/a68g/a68g-genie-stowed.o `test -f './src/a68g/genie-stowed.c' || echo '$(srcdir)/'`./src/a68g/genie-stowed.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Tpo ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/genie-stowed.c' object='./src/a68g/a68g-genie-stowed.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-genie-stowed.o `test -f './src/a68g/genie-stowed.c' || echo '$(srcdir)/'`./src/a68g/genie-stowed.c
+
+./src/a68g/a68g-genie-stowed.obj: ./src/a68g/genie-stowed.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-genie-stowed.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Tpo -c -o ./src/a68g/a68g-genie-stowed.obj `if test -f './src/a68g/genie-stowed.c'; then $(CYGPATH_W) './src/a68g/genie-stowed.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/genie-stowed.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Tpo ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/genie-stowed.c' object='./src/a68g/a68g-genie-stowed.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-genie-stowed.obj `if test -f './src/a68g/genie-stowed.c'; then $(CYGPATH_W) './src/a68g/genie-stowed.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/genie-stowed.c'; fi`
 
 ./src/a68g/a68g-heap.o: ./src/a68g/heap.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-heap.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-heap.Tpo -c -o ./src/a68g/a68g-heap.o `test -f './src/a68g/heap.c' || echo '$(srcdir)/'`./src/a68g/heap.c
@@ -2114,27 +2256,27 @@ uninstall-docDATA:
 	@list='$(doc_DATA)'; test -n "$(docdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(docdir)'; $(am__uninstall_files_from_dir)
-install-includeHEADERS: $(include_HEADERS)
+install-pkgincludeHEADERS: $(pkginclude_HEADERS)
 	@$(NORMAL_INSTALL)
-	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
+	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
 	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(includedir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(includedir)" || exit 1; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pkgincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pkgincludedir)" || exit 1; \
 	fi; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  echo "$$d$$p"; \
 	done | $(am__base_list) | \
 	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(includedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(includedir)" || exit $$?; \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(pkgincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(pkgincludedir)" || exit $$?; \
 	done
 
-uninstall-includeHEADERS:
+uninstall-pkgincludeHEADERS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
+	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(includedir)'; $(am__uninstall_files_from_dir)
+	dir='$(DESTDIR)$(pkgincludedir)'; $(am__uninstall_files_from_dir)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -2465,7 +2607,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(MANS) $(DATA) $(HEADERS) a68g-config.h
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(includedir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -2514,6 +2656,11 @@ distclean: distclean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-bottom-up.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-brackets.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-char.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-conversion.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-curses.Po
@@ -2527,6 +2674,8 @@ distclean: distclean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-extract.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-fft.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-format.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-genie.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-heap.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-io.Po
@@ -2595,7 +2744,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-docDATA install-includeHEADERS install-man
+install-data-am: install-docDATA install-man install-pkgincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -2634,6 +2783,11 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-bottom-up.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-brackets.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-char.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-basic.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-folder.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-gen.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-inline.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler-tables.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-compiler.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-conversion.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-curses.Po
@@ -2647,6 +2801,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-extract.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-fft.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-format.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-genie-coerce.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-genie-stowed.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-genie.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-heap.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-io.Po
@@ -2714,8 +2870,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-docDATA \
-	uninstall-includeHEADERS uninstall-man
+uninstall-am: uninstall-binPROGRAMS uninstall-docDATA uninstall-man \
+	uninstall-pkgincludeHEADERS
 
 uninstall-man: uninstall-man1
 
@@ -2731,15 +2887,15 @@ uninstall-man: uninstall-man1
 	dvi-am html html-am info info-am install install-am \
 	install-binPROGRAMS install-data install-data-am \
 	install-docDATA install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am \
-	install-includeHEADERS install-info install-info-am \
-	install-man install-man1 install-pdf install-pdf-am install-ps \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-man1 install-pdf \
+	install-pdf-am install-pkgincludeHEADERS install-ps \
 	install-ps-am install-strip installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
 	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-docDATA \
-	uninstall-includeHEADERS uninstall-man uninstall-man1
+	uninstall-binPROGRAMS uninstall-docDATA uninstall-man \
+	uninstall-man1 uninstall-pkgincludeHEADERS
 
 .PRECIOUS: Makefile
 

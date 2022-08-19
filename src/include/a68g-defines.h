@@ -24,7 +24,7 @@
 
 // Constants
 
-#define KILOBYTE ((unsigned) 1024)
+#define KILOBYTE ((unt) 1024)
 #define MEGABYTE (KILOBYTE * KILOBYTE)
 #define GIGABYTE (KILOBYTE * MEGABYTE)
 
@@ -67,10 +67,10 @@
 #define A68_GCC_OPTIONS "-DA68_OPTIMISE -ggdb -fno-stack-protector -Wno-parentheses-equality"
 
 // Formats
-#define DIGIT_BLANK ((unsigned) 0x2)
-#define DIGIT_NORMAL ((unsigned) 0x1)
-#define INSERTION_BLANK ((unsigned) 0x20)
-#define INSERTION_NORMAL ((unsigned) 0x10)
+#define DIGIT_BLANK ((unt) 0x2)
+#define DIGIT_NORMAL ((unt) 0x1)
+#define INSERTION_BLANK ((unt) 0x20)
+#define INSERTION_NORMAL ((unt) 0x10)
 
 #define MAX_RESTART 256
 
@@ -99,6 +99,7 @@
 #define NOMADS "></=*"
 #define NOT_EMBEDDED_FORMAT A68_FALSE
 #define NOT_PRINTED 1
+#define OVER_2G(n) ((REAL_T) (n) > (REAL_T) (2 * GIGABYTE)) 
 #define PRIMAL_SCOPE 0
 #define SKIP_PATTERN A68_FALSE
 #define SMALL_BUFFER_SIZE 128
@@ -162,23 +163,23 @@
   }
 #endif
 
-// Some macros to overcome the ambiguity in having signed or unsigned char 
+// Some macros to overcome the ambiguity in having signed or unt char 
 // on various systems. PDP-11s and IBM 370s are still haunting us with this.
 
-#define IS_ALNUM(c) isalnum ((unsigned char) (c))
-#define IS_ALPHA(c) isalpha ((unsigned char) (c))
-#define IS_CNTRL(c) iscntrl ((unsigned char) (c))
-#define IS_DIGIT(c) isdigit ((unsigned char) (c))
-#define IS_GRAPH(c) isgraph ((unsigned char) (c))
-#define IS_LOWER(c) islower ((unsigned char) (c))
-#define IS_PRINT(c) isprint ((unsigned char) (c))
-#define IS_PUNCT(c) ispunct ((unsigned char) (c))
-#define IS_SPACE(c) isspace ((unsigned char) (c))
-#define IS_UPPER(c) isupper ((unsigned char) (c))
-#define IS_XDIGIT(c) isxdigit ((unsigned char) (c))
-#define TO_LOWER(c) (char) tolower ((unsigned char) (c))
+#define IS_ALNUM(c) isalnum ((unt char) (c))
+#define IS_ALPHA(c) isalpha ((unt char) (c))
+#define IS_CNTRL(c) iscntrl ((unt char) (c))
+#define IS_DIGIT(c) isdigit ((unt char) (c))
+#define IS_GRAPH(c) isgraph ((unt char) (c))
+#define IS_LOWER(c) islower ((unt char) (c))
+#define IS_PRINT(c) isprint ((unt char) (c))
+#define IS_PUNCT(c) ispunct ((unt char) (c))
+#define IS_SPACE(c) isspace ((unt char) (c))
+#define IS_UPPER(c) isupper ((unt char) (c))
+#define IS_XDIGIT(c) isxdigit ((unt char) (c))
+#define TO_LOWER(c) (char) tolower ((unt char) (c))
 #define TO_UCHAR(c) ((c) >= 0 ? (int) (c) : (int) (UCHAR_MAX + (int) (c) + 1))
-#define TO_UPPER(c) (char) toupper ((unsigned char) (c))
+#define TO_UPPER(c) (char) toupper ((unt char) (c))
 
 // Macro's for fat A68 pointers
 
@@ -210,9 +211,6 @@
 #define A68_REF_SIZE (SIZE_ALIGNED (A68_REF))
 #define A68_UNION_SIZE (SIZE_ALIGNED (A68_UNION))
 
-#define LINK_ERRNO int _errnol_ = errno
-#define UNLINK_ERRNO errno = _errnol_
-
 #define A68_SOUND_BYTES(s) ((int) (BITS_PER_SAMPLE (s)) / 8 + (int) (BITS_PER_SAMPLE (s) % 8 == 0 ? 0 : 1))
 #define A68_SOUND_DATA_SIZE(s) ((int) (NUM_SAMPLES (s)) * (int) (NUM_CHANNELS (s)) * (int) (A68_SOUND_BYTES (s)))
 #define ABS(n) ((n) >= 0 ? (n) : -(n))
@@ -226,7 +224,7 @@
 #define SIGN(n) ((n) == 0 ? 0 : ((n) > 0 ? 1 : -1))
 #define STATUS_CLEAR(p, q) {STATUS (p) &= (~(q));}
 #define STATUS_SET(p, q) {STATUS (p) |= (q);}
-#define STATUS_TEST(p, q) ((STATUS (p) & (q)) != (unsigned) 0)
+#define STATUS_TEST(p, q) ((STATUS (p) & (q)) != (unt) 0)
 #define WIS(p) where_in_source (STDOUT_FILENO, (p))
 #define WRITE(f, s) io_write_string ((f), (s));
 #define WRITELN(f, s) {WRITE ((f), "\n"); WRITE ((f), (s));}

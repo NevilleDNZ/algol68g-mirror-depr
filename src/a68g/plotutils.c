@@ -719,7 +719,7 @@ const colour_info A68_COLOURS[COLOUR_NAMES + 1] = {
 
 //! @brief Searches colour in the list.
 
-static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
+BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
 {
   A68_REF z_ref = heap_generator (p, M_C_STRING, (int) (1 + strlen (name)));
   char *z = DEREF (char, &z_ref);
@@ -746,7 +746,7 @@ static BOOL_T string_to_colour (NODE_T * p, char *name, int *iindex)
 
 //! @brief Scans string for an integer.
 
-static BOOL_T scan_int (char **z, int *k)
+BOOL_T scan_int (char **z, int *k)
 {
   char *y = *z;
   while (y[0] != NULL_CHAR && !IS_DIGIT (y[0])) {
@@ -836,7 +836,7 @@ BOOL_T close_device (NODE_T * p, A68_FILE * f)
 
 //! @brief Sets up the plotter prior to using it.
 
-static plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
+plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
 {
   A68_REF ref_filename;
   char *filename, *device_type;

@@ -40,16 +40,20 @@
 
 void default_mem_sizes (int n)
 {
+#define SET_SIZE(m, n) {\
+  ABEND (OVER_2G (n), ERROR_OUT_OF_CORE_2G, __func__);\
+  (m) = (n);\
+}
+
   if (n < 0) {
     n = 1;
-  } else if (n > 16) {
-    n = 16;
   }
-  A68 (frame_stack_size) = 12 * n * MEGABYTE;
-  A68 (expr_stack_size) = 4 * n * MEGABYTE;
-  A68 (heap_size) = 48 * n * MEGABYTE;
-  A68 (handle_pool_size) = 8 * n * MEGABYTE;
-  A68 (storage_overhead) = MIN_MEM_SIZE;
+  SET_SIZE (A68 (frame_stack_size), 12 * n * MEGABYTE);
+  SET_SIZE (A68 (expr_stack_size), 4 * n * MEGABYTE);
+  SET_SIZE (A68 (heap_size), 32 * n * MEGABYTE);
+  SET_SIZE (A68 (handle_pool_size), 16 * n * MEGABYTE);
+  SET_SIZE (A68 (storage_overhead), MIN_MEM_SIZE);
+#undef SET_SIZE
 }
 
 //! @brief Read options from the .rc file.
@@ -183,7 +187,7 @@ void default_options (MODULE_T * p)
 
 //! @brief Error handler for options.
 
-static void option_error (LINE_T * l, char *option, char *info)
+void option_error (LINE_T * l, char *option, char *info)
 {
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s", option) >= 0);
   if (info != NO_TEXT) {
@@ -196,7 +200,7 @@ static void option_error (LINE_T * l, char *option, char *info)
 
 //! @brief Strip minus preceeding a string.
 
-static char *strip_sign (char *p)
+char *strip_sign (char *p)
 {
   while (p[0] == '-' || p[0] == '+') {
     p++;
@@ -241,7 +245,7 @@ void init_options (void)
 
 //! @brief Test equality of p and q, upper case letters in q are mandatory.
 
-static BOOL_T eq (char *p, char *q)
+static inline BOOL_T eq (char *p, char *q)
 {
 // Upper case letters in 'q' are mandatory, lower case must match.
   if (OPTION_PRAGMAT_SEMA (&A68_JOB)) {
@@ -291,7 +295,7 @@ void prune_echoes (OPTION_LIST_T * i)
 
 //! @brief Translate integral option argument.
 
-static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
+int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
 {
   LINE_T *start_l = LINE (*i);
   char *start_c = STR (*i);
@@ -369,9 +373,9 @@ static int fetch_integral (char *p, OPTION_LIST_T ** i, BOOL_T * error)
         }
       }
     }
-    if ((REAL_T) k * (REAL_T) mult > (REAL_T) A68_MAX_INT) {
+    if (OVER_2G ((REAL_T) k * (REAL_T) mult)) {
       errno = ERANGE;
-      option_error (start_l, start_c, "conversion overflow in");
+      option_error (start_l, start_c, ERROR_OVER_2G);
     }
     return k * mult;
   }
@@ -423,34 +427,34 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
         } else if (eq (p, "TECHnicalities")) {
 // TECH prints out some tech stuff.
           state_version (STDOUT_FILENO);
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_REF) = %u", (unsigned) sizeof (A68_REF)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_REF) = %u", (unt) sizeof (A68_REF)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_PROCEDURE) = %u", (unsigned) sizeof (A68_PROCEDURE)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_PROCEDURE) = %u", (unt) sizeof (A68_PROCEDURE)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
 #if (A68_LEVEL >= 3)
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (DOUBLE_T) = %u", (unsigned) sizeof (DOUBLE_T)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (DOUBLE_T) = %u", (unt) sizeof (DOUBLE_T)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (QUAD_WORD_T) = %u", (unsigned) sizeof (QUAD_WORD_T)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (QUAD_WORD_T) = %u", (unt) sizeof (QUAD_WORD_T)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
 #endif
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_INT) = %u", (unsigned) sizeof (A68_INT)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_INT) = %u", (unt) sizeof (A68_INT)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_REAL) = %u", (unsigned) sizeof (A68_REAL)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_REAL) = %u", (unt) sizeof (A68_REAL)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_BOOL) = %u", (unsigned) sizeof (A68_BOOL)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_BOOL) = %u", (unt) sizeof (A68_BOOL)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_CHAR) = %u", (unsigned) sizeof (A68_CHAR)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_CHAR) = %u", (unt) sizeof (A68_CHAR)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_BITS) = %u", (unsigned) sizeof (A68_BITS)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_BITS) = %u", (unt) sizeof (A68_BITS)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
 #if (A68_LEVEL >= 3)
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_LONG_REAL) = %u", (unsigned) sizeof (A68_LONG_REAL)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_LONG_REAL) = %u", (unt) sizeof (A68_LONG_REAL)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
 #else
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_LONG_REAL) = %u", (unsigned) size_mp ()) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_LONG_REAL) = %u", (unt) size_mp ()) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
 #endif
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_LONG_LONG_REAL) = %u", (unsigned) size_long_mp ()) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_LONG_LONG_REAL) = %u", (unt) size_long_mp ()) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
           WRITELN (STDOUT_FILENO, "");
           exit (EXIT_SUCCESS);

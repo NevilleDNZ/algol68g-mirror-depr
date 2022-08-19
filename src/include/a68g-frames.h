@@ -154,10 +154,8 @@
   }
 #endif
 
-/**
-@def OPEN_PROC_FRAME
-@brief Open a stack frame for a procedure.
-**/
+//! @def OPEN_PROC_FRAME
+//! @brief Open a stack frame for a procedure.
 
 #if defined (BUILD_PARALLEL_CLAUSE)
 #define OPEN_PROC_FRAME(p, environ) {\

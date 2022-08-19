@@ -41,9 +41,9 @@
 #define GT(u, v) (HW (u) != HW (v) ? HW (u) > HW (v) : LW (u) > LW (v))
 #define GE(u, v) (HW (u) != HW (v) ? HW (u) >= HW (v) : LW (u) >= LW (v))
 
-static QUAD_WORD_T double_ssub (NODE_T *, QUAD_WORD_T, QUAD_WORD_T);
+QUAD_WORD_T double_ssub (NODE_T *, QUAD_WORD_T, QUAD_WORD_T);
 
-static void m64to128 (QUAD_WORD_T * w, UNSIGNED_T u, UNSIGNED_T v)
+void m64to128 (QUAD_WORD_T * w, UNSIGNED_T u, UNSIGNED_T v)
 {
 // Knuth's 'M' algorithm.
 #define M (0xffffffff)
@@ -64,7 +64,7 @@ static void m64to128 (QUAD_WORD_T * w, UNSIGNED_T u, UNSIGNED_T v)
 #undef N
 }
 
-static void m128to128 (NODE_T * p, MOID_T * m, QUAD_WORD_T * w, QUAD_WORD_T u, QUAD_WORD_T v)
+void m128to128 (NODE_T * p, MOID_T * m, QUAD_WORD_T * w, QUAD_WORD_T u, QUAD_WORD_T v)
 {
 // Knuth's 'M' algorithm.
   QUAD_WORD_T w1, w2, w3;
@@ -188,7 +188,7 @@ QUAD_WORD_T double_udiv (NODE_T * p, MOID_T * m, QUAD_WORD_T n, QUAD_WORD_T d, i
   }
 }
 
-static QUAD_WORD_T double_uadd (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD_T v)
+QUAD_WORD_T double_uadd (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD_T v)
 {
   QUAD_WORD_T w;
   (void) p;
@@ -196,7 +196,7 @@ static QUAD_WORD_T double_uadd (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD
   return w;
 }
 
-static QUAD_WORD_T double_usub (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD_T v)
+QUAD_WORD_T double_usub (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD_T v)
 {
   QUAD_WORD_T w;
   (void) p;
@@ -204,7 +204,7 @@ static QUAD_WORD_T double_usub (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD
   return w;
 }
 
-static QUAD_WORD_T double_umul (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD_T v)
+QUAD_WORD_T double_umul (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD_T v)
 {
   QUAD_WORD_T w;
   m128to128 (p, m, &w, u, v);
@@ -213,7 +213,7 @@ static QUAD_WORD_T double_umul (NODE_T * p, MOID_T * m, QUAD_WORD_T u, QUAD_WORD
 
 // Signed integer.
 
-static QUAD_WORD_T double_sadd (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
+QUAD_WORD_T double_sadd (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
 {
   QUAD_WORD_T w;
   int neg_u = D_NEG (u), neg_v = D_NEG (v);
@@ -237,7 +237,7 @@ static QUAD_WORD_T double_sadd (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
   return w;
 }
 
-static QUAD_WORD_T double_ssub (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
+QUAD_WORD_T double_ssub (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
 {
   QUAD_WORD_T w;
   int neg_u = D_NEG (u), neg_v = D_NEG (v);
@@ -264,7 +264,7 @@ static QUAD_WORD_T double_ssub (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
   return w;
 }
 
-static QUAD_WORD_T double_smul (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
+QUAD_WORD_T double_smul (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
 {
   QUAD_WORD_T w;
   int neg_u = D_NEG (u), neg_v = D_NEG (v);
@@ -281,7 +281,7 @@ static QUAD_WORD_T double_smul (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v)
   return w;
 }
 
-static QUAD_WORD_T double_sdiv (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v, int mode)
+QUAD_WORD_T double_sdiv (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v, int mode)
 {
   QUAD_WORD_T w;
   int neg_u = D_NEG (u), neg_v = D_NEG (v);
@@ -302,7 +302,7 @@ static QUAD_WORD_T double_sdiv (NODE_T * p, QUAD_WORD_T u, QUAD_WORD_T v, int mo
 
 // Infinity.
 
-static DOUBLE_T a68_divq (DOUBLE_T x, DOUBLE_T y)
+DOUBLE_T a68_divq (DOUBLE_T x, DOUBLE_T y)
 {
   return x / y;
 }

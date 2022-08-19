@@ -64,5 +64,3 @@ CO Only for machines with ample RAM!
      print ((whole (k, 0), " = ", whole (hamming number (k), 0), new line))
   OD;
 CO
-
-printf (($l"collections=", %-d, " refused=", %-d, " garbage=", %-d$, garbage collections, garbage refused, garbage freed))

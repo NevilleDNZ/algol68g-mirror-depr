@@ -30,7 +30,7 @@
 
 //! @brief Count bounds in declarer in tree.
 
-static int count_bounds (NODE_T * p)
+int count_bounds (NODE_T * p)
 {
   if (p == NO_NODE) {
     return 0;
@@ -45,7 +45,7 @@ static int count_bounds (NODE_T * p)
 
 //! @brief Count number of SHORTs or LONGs.
 
-static int count_sizety (NODE_T * p)
+int count_sizety (NODE_T * p)
 {
   if (p == NO_NODE) {
     return 0;
@@ -75,7 +75,7 @@ int count_pack_members (PACK_T * u)
 
 //! @brief Replace a mode by its equivalent mode.
 
-static void resolve_equivalent (MOID_T ** m)
+void resolve_equivalent (MOID_T ** m)
 {
   while ((*m) != NO_MOID && EQUIVALENT ((*m)) != NO_MOID && (*m) != EQUIVALENT (*m)) {
     (*m) = EQUIVALENT (*m);
@@ -84,7 +84,7 @@ static void resolve_equivalent (MOID_T ** m)
 
 //! @brief Reset moid.
 
-static void reset_moid_tree (NODE_T * p)
+void reset_moid_tree (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     MOID (p) = NO_MOID;
@@ -192,7 +192,7 @@ PACK_T *absorb_union_pack (PACK_T * u)
 
 //! @brief Add row and its slices to chain, recursively.
 
-static MOID_T *add_row (MOID_T ** p, int dim, MOID_T * sub, NODE_T * n, BOOL_T derivate)
+MOID_T *add_row (MOID_T ** p, int dim, MOID_T * sub, NODE_T * n, BOOL_T derivate)
 {
   MOID_T *q = add_mode (p, ROW_SYMBOL, dim, n, sub, NO_PACK);
   DERIVATE (q) |= derivate;
@@ -243,7 +243,7 @@ void add_mode_to_pack_end (PACK_T ** p, MOID_T * m, char *text, NODE_T * node)
 
 //! @brief Absorb UNION members.
 
-static void absorb_unions (MOID_T * m)
+void absorb_unions (MOID_T * m)
 {
 // UNION (A, UNION (B, C)) = UNION (A, B, C) or
 // UNION (A, UNION (A, B)) = UNION (A, B).
@@ -256,7 +256,7 @@ static void absorb_unions (MOID_T * m)
 
 //! @brief Contract UNIONs .
 
-static void contract_unions (MOID_T * m)
+void contract_unions (MOID_T * m)
 {
 // UNION (A, B, A) -> UNION (A, B).
   for (; m != NO_MOID; FORWARD (m)) {
@@ -270,7 +270,7 @@ static void contract_unions (MOID_T * m)
 
 //! @brief Search standard mode in standard environ.
 
-static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
+MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
 {
   MOID_T *p = TOP_MOID (&A68_JOB);
 // Search standard mode.
@@ -295,7 +295,7 @@ static MOID_T *search_standard_mode (int sizety, NODE_T * indicant)
 
 //! @brief Collect mode from STRUCT field.
 
-static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
+void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTIFIER)) {
@@ -318,7 +318,7 @@ static void get_mode_from_struct_field (NODE_T * p, PACK_T ** u)
 
 //! @brief Collect MODE from formal pack.
 
-static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
+void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, DECLARER)) {
@@ -335,7 +335,7 @@ static void get_mode_from_formal_pack (NODE_T * p, PACK_T ** u)
 
 //! @brief Collect MODE or VOID from formal UNION pack.
 
-static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
+void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, DECLARER) || IS (p, VOID_SYMBOL)) {
@@ -352,7 +352,7 @@ static void get_mode_from_union_pack (NODE_T * p, PACK_T ** u)
 
 //! @brief Collect mode from PROC, OP pack.
 
-static void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
+void get_mode_from_routine_pack (NODE_T * p, PACK_T ** u)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTIFIER)) {
@@ -467,7 +467,7 @@ MOID_T *get_mode_from_declarer (NODE_T * p)
 
 //! @brief Collect MODEs from a routine-text header.
 
-static MOID_T *get_mode_from_routine_text (NODE_T * p)
+MOID_T *get_mode_from_routine_text (NODE_T * p)
 {
   PACK_T *u = NO_PACK;
   MOID_T *n;
@@ -482,7 +482,7 @@ static MOID_T *get_mode_from_routine_text (NODE_T * p)
 
 //! @brief Collect modes from operator-plan.
 
-static MOID_T *get_mode_from_operator (NODE_T * p)
+MOID_T *get_mode_from_operator (NODE_T * p)
 {
   PACK_T *u = NO_PACK;
   MOID_T *new_one;
@@ -498,7 +498,7 @@ static MOID_T *get_mode_from_operator (NODE_T * p)
 
 //! @brief Collect mode from denotation.
 
-static void get_mode_from_denotation (NODE_T * p, int sizety)
+void get_mode_from_denotation (NODE_T * p, int sizety)
 {
   if (p != NO_NODE) {
     if (IS (p, ROW_CHAR_DENOTATION)) {
@@ -550,7 +550,7 @@ static void get_mode_from_denotation (NODE_T * p, int sizety)
 
 //! @brief Collect modes from the syntax tree.
 
-static void get_modes_from_tree (NODE_T * p, int attribute)
+void get_modes_from_tree (NODE_T * p, int attribute)
 {
   NODE_T *q;
   for (q = p; q != NO_NODE; FORWARD (q)) {
@@ -590,7 +590,7 @@ static void get_modes_from_tree (NODE_T * p, int attribute)
 
 //! @brief Collect modes from proc variables.
 
-static void get_mode_from_proc_variables (NODE_T * p)
+void get_mode_from_proc_variables (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
@@ -607,7 +607,7 @@ static void get_mode_from_proc_variables (NODE_T * p)
 
 //! @brief Collect modes from proc variable declarations.
 
-static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
+void get_mode_from_proc_var_declarations_tree (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     get_mode_from_proc_var_declarations_tree (SUB (p));
@@ -621,7 +621,7 @@ static void get_mode_from_proc_var_declarations_tree (NODE_T * p)
 
 //! @brief Whether a mode declaration refers to self or relates to void.
 
-static BOOL_T is_well_formed (MOID_T * def, MOID_T * z, BOOL_T yin, BOOL_T yang, BOOL_T video)
+BOOL_T is_well_formed (MOID_T * def, MOID_T * z, BOOL_T yin, BOOL_T yang, BOOL_T video)
 {
   if (z == NO_MOID) {
     return A68_FALSE;
@@ -684,7 +684,7 @@ static BOOL_T is_well_formed (MOID_T * def, MOID_T * z, BOOL_T yin, BOOL_T yang,
 
 //! @brief Replace a mode by its equivalent mode (walk chain).
 
-static void resolve_eq_members (MOID_T * q)
+void resolve_eq_members (MOID_T * q)
 {
   PACK_T *p;
   resolve_equivalent (&SUB (q));
@@ -701,7 +701,7 @@ static void resolve_eq_members (MOID_T * q)
 
 //! @brief Track equivalent tags.
 
-static void resolve_eq_tags (TAG_T * z)
+void resolve_eq_tags (TAG_T * z)
 {
   for (; z != NO_TAG; FORWARD (z)) {
     if (MOID (z) != NO_MOID) {
@@ -712,7 +712,7 @@ static void resolve_eq_tags (TAG_T * z)
 
 //! @brief Bind modes in syntax tree.
 
-static void bind_modes (NODE_T * p)
+void bind_modes (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     resolve_equivalent (&MOID (p));
@@ -737,7 +737,7 @@ static void bind_modes (NODE_T * p)
 
 //! @brief Make name pack.
 
-static void make_name_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p)
+void make_name_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p)
 {
   if (src != NO_PACK) {
     MOID_T *z;
@@ -749,7 +749,7 @@ static void make_name_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p)
 
 //! @brief Make flex multiple row pack.
 
-static void make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
+void make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
 {
   if (src != NO_PACK) {
     MOID_T *z;
@@ -762,7 +762,7 @@ static void make_flex_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** 
 
 //! @brief Make name struct.
 
-static MOID_T *make_name_struct (MOID_T * m, MOID_T ** p)
+MOID_T *make_name_struct (MOID_T * m, MOID_T ** p)
 {
   PACK_T *u = NO_PACK;
   make_name_pack (PACK (m), &u, p);
@@ -771,7 +771,7 @@ static MOID_T *make_name_struct (MOID_T * m, MOID_T ** p)
 
 //! @brief Make name row.
 
-static MOID_T *make_name_row (MOID_T * m, MOID_T ** p)
+MOID_T *make_name_row (MOID_T * m, MOID_T ** p)
 {
   if (SLICE (m) != NO_MOID) {
     return add_mode (p, REF_SYMBOL, 0, NO_NODE, SLICE (m), NO_PACK);
@@ -784,7 +784,7 @@ static MOID_T *make_name_row (MOID_T * m, MOID_T ** p)
 
 //! @brief Make multiple row pack.
 
-static void make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
+void make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, int dim)
 {
   if (src != NO_PACK) {
     make_multiple_row_pack (NEXT (src), dst, p, dim);
@@ -794,7 +794,7 @@ static void make_multiple_row_pack (PACK_T * src, PACK_T ** dst, MOID_T ** p, in
 
 //! @brief Make flex multiple struct.
 
-static MOID_T *make_flex_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
+MOID_T *make_flex_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 {
   PACK_T *u = NO_PACK;
   make_flex_multiple_row_pack (PACK (m), &u, p, dim);
@@ -803,7 +803,7 @@ static MOID_T *make_flex_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 
 //! @brief Make multiple struct.
 
-static MOID_T *make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
+MOID_T *make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 {
   PACK_T *u = NO_PACK;
   make_multiple_row_pack (PACK (m), &u, p, dim);
@@ -812,7 +812,7 @@ static MOID_T *make_multiple_struct (MOID_T * m, MOID_T ** p, int dim)
 
 //! @brief Whether mode has row.
 
-static BOOL_T is_mode_has_row (MOID_T * m)
+BOOL_T is_mode_has_row (MOID_T * m)
 {
   if (IS (m, STRUCT_SYMBOL) || IS (m, UNION_SYMBOL)) {
     BOOL_T k = A68_FALSE;
@@ -829,7 +829,7 @@ static BOOL_T is_mode_has_row (MOID_T * m)
 
 //! @brief Compute derived modes.
 
-static void compute_derived_modes (MODULE_T * mod)
+void compute_derived_modes (MODULE_T * mod)
 {
   MOID_T *z;
   int k, len = 0, nlen = 1;
@@ -1114,10 +1114,10 @@ void set_nest (NODE_T * p, NODE_T * s)
 
 // Routines that work with tags and symbol tables.
 
-static void tax_tags (NODE_T *);
-static void tax_specifier_list (NODE_T *);
-static void tax_parameter_list (NODE_T *);
-static void tax_format_texts (NODE_T *);
+void tax_tags (NODE_T *);
+void tax_specifier_list (NODE_T *);
+void tax_parameter_list (NODE_T *);
+void tax_format_texts (NODE_T *);
 
 //! @brief Find a tag, searching symbol tables towards the root.
 
@@ -1186,7 +1186,7 @@ void portcheck (NODE_T * p)
 
 //! @brief Whether routine can be "lengthety-mapped".
 
-static BOOL_T is_mappable_routine (char *z)
+BOOL_T is_mappable_routine (char *z)
 {
 #define ACCEPT(u, v) {\
   if (strlen (u) >= strlen (v)) {\
@@ -1251,7 +1251,7 @@ static BOOL_T is_mappable_routine (char *z)
 
 //! @brief Map "short sqrt" onto "sqrt" etcetera.
 
-static TAG_T *bind_lengthety_identifier (char *u)
+TAG_T *bind_lengthety_identifier (char *u)
 {
 #define CAR(u, v) (strncmp (u, v, strlen(v)) == 0)
 // We can only map routines blessed by "is_mappable_routine", so there is no
@@ -1285,7 +1285,7 @@ static TAG_T *bind_lengthety_identifier (char *u)
 
 //! @brief Bind identifier tags to the symbol table.
 
-static void bind_identifier_tag_to_symbol_table (NODE_T * p)
+void bind_identifier_tag_to_symbol_table (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     bind_identifier_tag_to_symbol_table (SUB (p));
@@ -1321,7 +1321,7 @@ static void bind_identifier_tag_to_symbol_table (NODE_T * p)
 
 //! @brief Bind indicant tags to the symbol table.
 
-static void bind_indicant_tag_to_symbol_table (NODE_T * p)
+void bind_indicant_tag_to_symbol_table (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     bind_indicant_tag_to_symbol_table (SUB (p));
@@ -1340,7 +1340,7 @@ static void bind_indicant_tag_to_symbol_table (NODE_T * p)
 
 //! @brief Enter specifier identifiers in the symbol table.
 
-static void tax_specifiers (NODE_T * p)
+void tax_specifiers (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_specifiers (SUB (p));
@@ -1352,7 +1352,7 @@ static void tax_specifiers (NODE_T * p)
 
 //! @brief Enter specifier identifiers in the symbol table.
 
-static void tax_specifier_list (NODE_T * p)
+void tax_specifier_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, OPEN_SYMBOL)) {
@@ -1374,7 +1374,7 @@ static void tax_specifier_list (NODE_T * p)
 
 //! @brief Enter parameter identifiers in the symbol table.
 
-static void tax_parameters (NODE_T * p)
+void tax_parameters (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE) {
@@ -1388,7 +1388,7 @@ static void tax_parameters (NODE_T * p)
 
 //! @brief Enter parameter identifiers in the symbol table.
 
-static void tax_parameter_list (NODE_T * p)
+void tax_parameter_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (is_one_of (p, OPEN_SYMBOL, COMMA_SYMBOL, STOP)) {
@@ -1415,7 +1415,7 @@ static void tax_parameter_list (NODE_T * p)
 
 //! @brief Enter FOR identifiers in the symbol table.
 
-static void tax_for_identifiers (NODE_T * p)
+void tax_for_identifiers (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_for_identifiers (SUB (p));
@@ -1429,7 +1429,7 @@ static void tax_for_identifiers (NODE_T * p)
 
 //! @brief Enter routine texts in the symbol table.
 
-static void tax_routine_texts (NODE_T * p)
+void tax_routine_texts (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_routine_texts (SUB (p));
@@ -1444,7 +1444,7 @@ static void tax_routine_texts (NODE_T * p)
 
 //! @brief Enter format texts in the symbol table.
 
-static void tax_format_texts (NODE_T * p)
+void tax_format_texts (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_format_texts (SUB (p));
@@ -1462,7 +1462,7 @@ static void tax_format_texts (NODE_T * p)
 
 //! @brief Enter FORMAT pictures in the symbol table.
 
-static void tax_pictures (NODE_T * p)
+void tax_pictures (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_pictures (SUB (p));
@@ -1474,7 +1474,7 @@ static void tax_pictures (NODE_T * p)
 
 //! @brief Enter generators in the symbol table.
 
-static void tax_generators (NODE_T * p)
+void tax_generators (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     tax_generators (SUB (p));
@@ -1491,7 +1491,7 @@ static void tax_generators (NODE_T * p)
 
 //! @brief Find a firmly related operator for operands.
 
-static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T * r, TAG_T * self)
+TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T * r, TAG_T * self)
 {
   if (c != NO_TABLE) {
     TAG_T *s = OPERATORS (c);
@@ -1519,7 +1519,7 @@ static TAG_T *find_firmly_related_op (TABLE_T * c, char *n, MOID_T * l, MOID_T *
 
 //! @brief Check for firmly related operators in this range.
 
-static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
+void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
 {
   if (s != NO_TAG) {
     PACK_T *u = PACK (MOID (s));
@@ -1544,7 +1544,7 @@ static void test_firmly_related_ops_local (NODE_T * p, TAG_T * s)
 
 //! @brief Find firmly related operators in this program.
 
-static void test_firmly_related_ops (NODE_T * p)
+void test_firmly_related_ops (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (SUB (p) != NO_NODE && is_new_lexical_level (p)) {
@@ -1577,7 +1577,7 @@ void collect_taxes (NODE_T * p)
 
 //! @brief Whether tag has already been declared in this range.
 
-static void already_declared (NODE_T * n, int a)
+void already_declared (NODE_T * n, int a)
 {
   if (find_tag_local (TABLE (n), a, NSYMBOL (n)) != NO_TAG) {
     diagnostic (A68_ERROR, n, ERROR_MULTIPLE_TAG);
@@ -1586,7 +1586,7 @@ static void already_declared (NODE_T * n, int a)
 
 //! @brief Whether tag has already been declared in this range.
 
-static void already_declared_hidden (NODE_T * n, int a)
+void already_declared_hidden (NODE_T * n, int a)
 {
   TAG_T *s;
   if (find_tag_local (TABLE (n), a, NSYMBOL (n)) != NO_TAG) {
@@ -1753,7 +1753,7 @@ TAG_T *find_tag_local (TABLE_T * table, int a, char *name)
 
 //! @brief Whether context specifies HEAP or LOC for an identifier.
 
-static int tab_qualifier (NODE_T * p)
+int tab_qualifier (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (is_one_of (p, UNIT, ASSIGNATION, TERTIARY, SECONDARY, GENERATOR, STOP)) {
@@ -1770,7 +1770,7 @@ static int tab_qualifier (NODE_T * p)
 
 //! @brief Enter identity declarations in the symbol table.
 
-static void tax_identity_dec (NODE_T * p, MOID_T ** m)
+void tax_identity_dec (NODE_T * p, MOID_T ** m)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTITY_DECLARATION)) {
@@ -1800,7 +1800,7 @@ static void tax_identity_dec (NODE_T * p, MOID_T ** m)
 
 //! @brief Enter variable declarations in the symbol table.
 
-static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
+void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
 {
   if (p != NO_NODE) {
     if (IS (p, VARIABLE_DECLARATION)) {
@@ -1838,7 +1838,7 @@ static void tax_variable_dec (NODE_T * p, int *q, MOID_T ** m)
 
 //! @brief Enter procedure variable declarations in the symbol table.
 
-static void tax_proc_variable_dec (NODE_T * p, int *q)
+void tax_proc_variable_dec (NODE_T * p, int *q)
 {
   if (p != NO_NODE) {
     if (IS (p, PROCEDURE_VARIABLE_DECLARATION)) {
@@ -1871,7 +1871,7 @@ static void tax_proc_variable_dec (NODE_T * p, int *q)
 
 //! @brief Enter procedure declarations in the symbol table.
 
-static void tax_proc_dec (NODE_T * p)
+void tax_proc_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, PROCEDURE_DECLARATION)) {
@@ -1896,7 +1896,7 @@ static void tax_proc_dec (NODE_T * p)
 
 //! @brief Check validity of operator declaration.
 
-static void check_operator_dec (NODE_T * p, MOID_T * u)
+void check_operator_dec (NODE_T * p, MOID_T * u)
 {
   int k = 0;
   if (u == NO_MOID) {
@@ -1921,7 +1921,7 @@ static void check_operator_dec (NODE_T * p, MOID_T * u)
 
 //! @brief Enter operator declarations in the symbol table.
 
-static void tax_op_dec (NODE_T * p, MOID_T ** m)
+void tax_op_dec (NODE_T * p, MOID_T ** m)
 {
   if (p != NO_NODE) {
     if (IS (p, OPERATOR_DECLARATION)) {
@@ -1954,7 +1954,7 @@ static void tax_op_dec (NODE_T * p, MOID_T ** m)
 
 //! @brief Enter brief operator declarations in the symbol table.
 
-static void tax_brief_op_dec (NODE_T * p)
+void tax_brief_op_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, BRIEF_OPERATOR_DECLARATION)) {
@@ -1982,7 +1982,7 @@ static void tax_brief_op_dec (NODE_T * p)
 
 //! @brief Enter priority declarations in the symbol table.
 
-static void tax_prio_dec (NODE_T * p)
+void tax_prio_dec (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, PRIORITY_DECLARATION)) {
@@ -2007,7 +2007,7 @@ static void tax_prio_dec (NODE_T * p)
 
 //! @brief Enter TAXes in the symbol table.
 
-static void tax_tags (NODE_T * p)
+void tax_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     int heap = LOC_SYMBOL;
@@ -2092,7 +2092,7 @@ void fill_symbol_table_outer (NODE_T * p, TABLE_T * s)
 
 //! @brief Flood branch in tree with local symbol table "s".
 
-static void flood_with_symbol_table_restricted (NODE_T * p, TABLE_T * s)
+void flood_with_symbol_table_restricted (NODE_T * p, TABLE_T * s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     TABLE (p) = s;
@@ -2293,7 +2293,7 @@ void preliminary_symbol_table_setup (NODE_T * p)
 
 //! @brief Mark a mode as in use.
 
-static void mark_mode (MOID_T * m)
+void mark_mode (MOID_T * m)
 {
   if (m != NO_MOID && USE (m) == A68_FALSE) {
     PACK_T *p = PACK (m);
@@ -2352,7 +2352,7 @@ void mark_auxilliary (NODE_T * p)
 
 //! @brief Check a single tag.
 
-static void unused (TAG_T * s)
+void unused (TAG_T * s)
 {
   for (; s != NO_TAG; FORWARD (s)) {
     if (LINE_NUMBER (NODE (s)) > 0 && !USE (s)) {
@@ -2409,7 +2409,7 @@ void jumps_from_procs (NODE_T * p)
 
 //! @brief Assign offset tags.
 
-static ADDR_T assign_offset_tags (TAG_T * t, ADDR_T base)
+ADDR_T assign_offset_tags (TAG_T * t, ADDR_T base)
 {
   ADDR_T sum = base;
   for (; t != NO_TAG; FORWARD (t)) {

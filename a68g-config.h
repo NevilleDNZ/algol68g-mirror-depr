@@ -65,7 +65,7 @@
 /* Define to 1 if you have the <fenv.h> header file. */
 #define HAVE_FENV_H 1
 
-/* Define to 1 if you have the `finite' function. */
+/* Define if finite() is available */
 #define HAVE_FINITE 1
 
 /* Define to 1 if you have the <float.h> header file. */
@@ -81,7 +81,7 @@
 #define HAVE_GCC 1
 
 /* Define this if a recent GNU MPFR installation was detected */
-#define HAVE_GNU_MPFR 1
+/* #undef HAVE_GNU_MPFR */
 
 /* Define this if a good GNU plotutils installation was detected */
 #define HAVE_GNU_PLOTUTILS 1
@@ -134,13 +134,13 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
-/* Define to 1 if you have the `isfinite' function. */
-/* #undef HAVE_ISFINITE */
+/* Define if isfinite() is available */
+#define HAVE_ISFINITE 1
 
-/* Define to 1 if you have the `isinf' function. */
+/* Define if isinf() is available */
 #define HAVE_ISINF 1
 
-/* Define to 1 if you have the `isnan' function. */
+/* Define if isnan() is available */
 #define HAVE_ISNAN 1
 
 /* Define to 1 if you have the `gmp' library (-lgmp). */
@@ -244,6 +244,9 @@
 
 /* Define to 1 if you have the <plot.h> header file. */
 #define HAVE_PLOT_H 1
+
+/* Define to 1 if you have the `posix_memalign' function. */
+#define HAVE_POSIX_MEMALIGN 1
 
 /* Define this if a good PostgreSQL installation was detected */
 #define HAVE_POSTGRESQL 1
@@ -368,7 +371,7 @@
 /* #undef HAVE_UNTESTED */
 
 /* Define this if /usr/include/postgresql was detected */
-#define HAVE_USR_INCLUDE_POSTGRESQL 1
+/* #undef HAVE_USR_INCLUDE_POSTGRESQL */
 
 /* Define this if /usr/local/pgsql/include was detected */
 /* #undef HAVE_USR_LOCAL_PGSQL_INCLUDE */
@@ -392,7 +395,7 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 3.0.7"
+#define PACKAGE_STRING "algol68g 3.1.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
@@ -401,13 +404,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0.7"
+#define PACKAGE_VERSION "3.1.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.0.7"
+#define VERSION "3.1.0"
 
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__

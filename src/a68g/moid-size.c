@@ -33,7 +33,7 @@
 
 //! @brief Max unitings to simplout.
 
-static void max_unitings_to_simplout (NODE_T * p, int *max)
+void max_unitings_to_simplout (NODE_T * p, int *max)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNITING) && MOID (p) == M_SIMPLOUT) {
@@ -85,7 +85,7 @@ void set_moid_sizes (MOID_T * z)
 
 //! @brief Moid size 2.
 
-static int moid_size_2 (MOID_T * p)
+int moid_size_2 (MOID_T * p)
 {
   if (p == NO_MOID) {
     return 0;
@@ -223,7 +223,7 @@ static int moid_size_2 (MOID_T * p)
 
 //! @brief Moid digits 2.
 
-static int moid_digits_2 (MOID_T * p)
+int moid_digits_2 (MOID_T * p)
 {
   if (p == NO_MOID) {
     return 0;

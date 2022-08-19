@@ -99,54 +99,46 @@ void genie_minus_infinity_real (NODE_T * p)
   PUSH_VALUE (p, a68_neginf (), A68_REAL);
 }
 
+int a68_finite (REAL_T x)
+{
 #if defined (HAVE_ISFINITE)
-int a68_finite (REAL_T x)
-{
   return isfinite (x);
-}
 #elif defined (HAVE_FINITE)
-int a68_finite (REAL_T x)
-{
   return finite (x);
-}
 #else
-#error "cannot define a68_finite"
+  (void) x;
+  return A68_TRUE;
 #endif
-
-#if defined (HAVE_ISNAN)
-int a68_isnan (REAL_T x)
-{
-  return isnan (x);
 }
-#elif defined (HAVE_IEEE_COMPARISONS)
+
 int a68_isnan (REAL_T x)
 {
+#if defined (HAVE_ISNAN)
+  return isnan (x);
+#elif defined (HAVE_IEEE_COMPARISONS)
   int status = (x != x);
   return status;
-}
 #else
-#error "cannot define a68_isnan"
+  return A68_FALSE;
 #endif
+}
 
-#if defined (HAVE_ISINF)
 int a68_isinf (REAL_T x)
 {
+#if defined (HAVE_ISINF)
   if (isinf (x)) {
     return (x > 0) ? 1 : -1;
   } else {
     return 0;
   }
-}
 #else
-int a68_isinf (REAL_T x)
-{
   if (!a68_finite (x) && !a68_isnan (x)) {
-    return (x > 0 ? +1 : -1);
+    return (x > 0 ? 1 : -1);
   } else {
     return 0;
   }
-}
 #endif
+}
 
 // INT operators
 

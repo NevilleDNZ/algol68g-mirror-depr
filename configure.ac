@@ -1,5 +1,5 @@
 #
-# Algol 68 Genie 3.0.7, configure.ac
+# Algol 68 Genie 3.1.0, configure.ac
 #
 # To configure a68g for the widest range of platforms, issue: 
 #   ./configure --enable-generic
@@ -8,7 +8,7 @@
 #   sudo apt install libncurses-dev libreadline-dev libmpfr libgmp libgsl-dev r-mathlib libplot-dev libghc-postgresql-libpq-dev
 #
 
-AC_INIT([algol68g], [3.0.7], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [3.1.0], [Marcel van der Veer <algol68g@xs4all.nl>])
 AC_PREREQ([2.60])
 
 # Check whether compiler supports $1 as a command-line option. 
@@ -322,8 +322,8 @@ if test "x$GCC" != "xyes"; then
 else
   AC_DEFINE(HAVE_GCC, 1, [Define this if GCC was detected]) 
   AC_DEFINE_UNQUOTED(C_COMPILER, "$CC", [Name of C compiler detected])
-# On rhel8 "rpmbuild" sneaks in -pie and -fPIE, so a68g also needs to pass through
-# On Suse15 the header files for pgsql and R have their own pet directories, a trend?
+# On rhel8 "rpmbuild" sneaks in -pie and -fPIE, so a68g also needs to pass through.
+# On Suse15 the header files for pgsql and R have their own directories.
   COPTFLAGS="-g -O2 -Wall -I /usr/include/pgsql -I /usr/lib64/R/include"
   LDOPTFLAG="-L /usr/lib64/R/lib"
 # from /usr/lib/rpm/redhat/macros
@@ -419,6 +419,7 @@ if test "x$enable_compiler" = "xyes"; then
 fi
 
 AM_PROG_CC_C_O
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_MSG_NOTICE([types...])
 AC_C_CHAR_UNSIGNED
@@ -522,6 +523,7 @@ if test -d /usr/include/postgresql; then
   CXXFLAGS="$CXXFLAGS -I/usr/include/postgresql"
   LDFLAGS="$LDFLAGS -L/usr/lib"
 fi
+
 #
 # Checks for header files.
 #
@@ -547,8 +549,9 @@ AC_CHECK_HEADERS([assert.h complex.h ctype.h errno.h fcntl.h fenv.h float.h limi
 #
 
 AC_MSG_NOTICE([standard functions...])
-AC_CHECK_FUNCS(malloc)
+AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_FUNCS(aligned_alloc)
+AC_CHECK_FUNCS(malloc)
 AC_CHECK_FUNCS(free)
 AC_CHECK_FUNCS(setjmp)
 AC_CHECK_FUNCS(longjmp)
@@ -565,10 +568,42 @@ AC_CHECK_FUNCS(signal)
 AC_CHECK_FUNCS(exit)
 AC_CHECK_FUNCS(sqrt)
 AC_CHECK_FUNCS(csqrt)
-AC_CHECK_FUNCS(isfinite)
-AC_CHECK_FUNCS(finite)
-AC_CHECK_FUNCS(isnan)
-AC_CHECK_FUNCS(isinf)
+
+#
+# Checks for functions / macros.
+#
+
+AC_MSG_CHECKING([for isfinite])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([#include <math.h>], [int a = isfinite(0.0)])],
+    [AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_ISFINITE, 1, [Define if isfinite() is available])], 
+    [AC_MSG_RESULT(no)]
+)
+
+AC_MSG_CHECKING([for finite])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([#include <math.h>], [int a = finite(0.0)])],
+    [AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_FINITE, 1, [Define if finite() is available])], 
+    [AC_MSG_RESULT(no)]
+)
+
+AC_MSG_CHECKING([for isinf])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([#include <math.h>], [int a = isinf(0.0)])],
+    [AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_ISINF, 1, [Define if isinf() is available])], 
+    [AC_MSG_RESULT(no)]
+)
+
+AC_MSG_CHECKING([for isnan])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([#include <math.h>], [int a = isnan(0.0)])],
+    [AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_ISNAN, 1, [Define if isnan() is available])], 
+    [AC_MSG_RESULT(no)]
+)
 
 AC_MSG_NOTICE([optional headers and libraries...])
 
@@ -662,10 +697,11 @@ if test "x$enable_long_types" = "xyes"; then
       AC_CHECK_HEADERS([mpfr.h])
       if test "x$enable_mpfr" = "xyes"; then
         AC_CHECK_LIB([mpfr], [mpfr_gamma], [], [enable_mpfr=no])
+        AC_CHECK_LIB([mpfr], [mpfr_gamma_inc], [], [enable_mpfr=no])
+        AC_CHECK_LIB([mpfr], [mpfr_get_float128], [], [enable_mpfr=no])
+        AC_CHECK_LIB([mpfr], [mpfr_set_float128], [], [enable_mpfr=no])
         if test "x$enable_mpfr" = "xyes"; then
-          AC_CHECK_LIB([mpfr], [mpfr_gamma_inc], [
-            AC_DEFINE(HAVE_GNU_MPFR, 1, [Define this if a recent GNU MPFR installation was detected]) 
-          ], [])
+          AC_DEFINE(HAVE_GNU_MPFR, 1, [Define this if a recent GNU MPFR installation was detected])
         fi
       fi
     fi

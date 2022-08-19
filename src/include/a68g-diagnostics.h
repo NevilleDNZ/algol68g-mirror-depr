@@ -165,6 +165,8 @@ extern void write_source_line (FILE_T, LINE_T *, NODE_T *, int);
 #define ERROR_OPERATOR_RELATED "M Z is firmly related to M Z"
 #define ERROR_OUT_OF_BOUNDS "M value out of bounds"
 #define ERROR_OUT_OF_CORE "insufficient memory"
+#define ERROR_OUT_OF_CORE_2G "insufficient memory - requesting over 2GB"
+#define ERROR_OVER_2G "requesting over 2GB"
 #define ERROR_PAGE_SIZE "error in page size"
 #define ERROR_PARALLEL_JUMP "jump into different thread"
 #define ERROR_PARALLEL_CANNOT_CREATE "cannot create thread"

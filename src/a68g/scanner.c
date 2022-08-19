@@ -46,7 +46,7 @@
 
 //! @brief Save scanner state, for character look-ahead.
 
-static void save_state (LINE_T * ref_l, char *ref_s, char ch)
+void save_state (LINE_T * ref_l, char *ref_s, char ch)
 {
   SCAN_STATE_L (&A68_JOB) = ref_l;
   SCAN_STATE_S (&A68_JOB) = ref_s;
@@ -55,7 +55,7 @@ static void save_state (LINE_T * ref_l, char *ref_s, char ch)
 
 //! @brief Restore scanner state, for character look-ahead.
 
-static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
+void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 {
   *ref_l = SCAN_STATE_L (&A68_JOB);
   *ref_s = SCAN_STATE_S (&A68_JOB);
@@ -66,7 +66,7 @@ static void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
 
 //! @brief Whether ch is unworthy.
 
-static void unworthy (LINE_T * u, char *v, char ch)
+void unworthy (LINE_T * u, char *v, char ch)
 {
   if (IS_PRINT (ch)) {
     ASSERT (snprintf (A68 (edit_line), SNPRINTF_SIZE, "*%s", ERROR_UNWORTHY_CHARACTER) >= 0);
@@ -78,7 +78,7 @@ static void unworthy (LINE_T * u, char *v, char ch)
 
 //! @brief Concatenate lines that terminate in '\' with next line.
 
-static void concatenate_lines (LINE_T * top)
+void concatenate_lines (LINE_T * top)
 {
   LINE_T *q;
 // Work from bottom backwards.
@@ -102,9 +102,9 @@ static void concatenate_lines (LINE_T * top)
 
 //! @brief Whether u is bold tag v, independent of stropping regime.
 
-static BOOL_T is_bold (char *u, char *v)
+BOOL_T is_bold (char *u, char *v)
 {
-  unsigned len = (unsigned) strlen (v);
+  unt len = (unt) strlen (v);
   if (OPTION_STROPPING (&A68_JOB) == QUOTE_STROPPING) {
     if (u[0] == '\'') {
       return (BOOL_T) (strncmp (++u, v, len) == 0 && u[len] == '\'');
@@ -118,7 +118,7 @@ static BOOL_T is_bold (char *u, char *v)
 
 //! @brief Skip string.
 
-static BOOL_T skip_string (LINE_T ** top, char **ch)
+BOOL_T skip_string (LINE_T ** top, char **ch)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -147,7 +147,7 @@ static BOOL_T skip_string (LINE_T ** top, char **ch)
 
 //! @brief Skip comment.
 
-static BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
+BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -182,7 +182,7 @@ static BOOL_T skip_comment (LINE_T ** top, char **ch, int delim)
 
 //! @brief Skip rest of pragmat.
 
-static BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespace)
+BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespace)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -221,7 +221,7 @@ static BOOL_T skip_pragmat (LINE_T ** top, char **ch, int delim, BOOL_T whitespa
 
 //! @brief Return pointer to next token within pragmat.
 
-static char *get_pragmat_item (LINE_T ** top, char **ch)
+char *get_pragmat_item (LINE_T ** top, char **ch)
 {
   LINE_T *u = *top;
   char *v = *ch;
@@ -371,10 +371,8 @@ void include_files (LINE_T * top)
         char *fbuf, delim;
         char fnb[BUFFER_SIZE], *fn;
 // Skip to filename.
-        if (streq (item, "INCLUDE") == 0) {
-          v = &v[strlen ("INCLUDE")];
-        } else {
-          v = &v[strlen ("READ")];
+        while (IS_ALPHA (v[0])) {
+          v++;
         }
         while (IS_SPACE (v[0])) {
           v++;
@@ -405,12 +403,22 @@ void include_files (LINE_T * top)
 // Insist that the pragmat is closed properly.
         v = &v[1];
         SCAN_ERROR (!skip_pragmat (&u, &v, pr_lim, A68_TRUE), start_l, start_c, ERROR_UNTERMINATED_PRAGMAT);
-// Filename valid?.
         SCAN_ERROR (n == 0, start_l, start_c, ERROR_INCORRECT_FILENAME);
+// Make the name relative to the position of the source file (C preprocessor standard).
+        fn = a68_relpath (FILE_PATH (&A68_JOB), a68_dirname (fnb), a68_basename (fnb));
+        if (errno == 0 && fn != NO_TEXT) {
+          bufcpy (fnb, fn, BUFFER_SIZE);
+        } else {
+          char err[PATH_MAX + 1];
+          bufcpy (err, ERROR_SOURCE_FILE_OPEN, PATH_MAX);
+          bufcat (err, " ", PATH_MAX);
+          bufcat (err, fnb, PATH_MAX);
+          SCAN_ERROR (A68_TRUE, NO_LINE, NO_TEXT, err);
+        }
         fnwid = (int) strlen (fnb) + 1;
         fn = (char *) get_fixed_heap_space ((size_t) fnwid);
         bufcpy (fn, fnb, fnwid);
-// Recursive include? Then *ignore* the file.
+// Recursive include? Then ignore the file.
         for (t = top; t != NO_LINE; t = NEXT (t)) {
           if (strcmp (FILENAME (t), fn) == 0) {
             goto search_next_pragmat;   // Eeek!
@@ -421,12 +429,11 @@ void include_files (LINE_T * top)
         fd = open (fn, O_RDONLY | O_BINARY);
         ASSERT (snprintf (A68 (edit_line), SNPRINTF_SIZE, "*%s \"%s\"", ERROR_SOURCE_FILE_OPEN, fn) >= 0);
         SCAN_ERROR (fd == -1, start_l, start_c, A68 (edit_line));
-// Access the file.
         errno = 0;
         fsize = (int) lseek (fd, 0, SEEK_END);
         ASSERT (fsize >= 0);
         SCAN_ERROR (errno != 0, start_l, start_c, ERROR_FILE_READ);
-        fbuf = (char *) get_temp_heap_space ((unsigned) (8 + fsize));
+        fbuf = (char *) get_temp_heap_space ((unt) (8 + fsize));
         errno = 0;
         ASSERT (lseek (fd, 0, SEEK_SET) >= 0);
         SCAN_ERROR (errno != 0, start_l, start_c, ERROR_FILE_READ);
@@ -436,7 +443,7 @@ void include_files (LINE_T * top)
 // Buffer still usable?.
         if (fsize > A68_PARSER (max_scan_buf_length)) {
           A68_PARSER (max_scan_buf_length) = fsize;
-          A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unsigned) (8 + A68_PARSER (max_scan_buf_length)));
+          A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unt) (8 + A68_PARSER (max_scan_buf_length)));
         }
 // Link all lines into the list.
         linum = 1;
@@ -534,16 +541,16 @@ BOOL_T read_script_file (void)
 {
   LINE_T *ref_l = NO_LINE;
   int k, n, num;
-  unsigned len;
+  unt len;
   BOOL_T file_end = A68_FALSE;
   char filename[BUFFER_SIZE], linenum[BUFFER_SIZE];
   char ch, *fn, *line;
-  char *buffer = (char *) get_temp_heap_space ((unsigned) (8 + A68_PARSER (source_file_size)));
+  char *buffer = (char *) get_temp_heap_space ((unt) (8 + A68_PARSER (source_file_size)));
   FILE_T source = FILE_SOURCE_FD (&A68_JOB);
   ABEND (source == -1, ERROR_ACTION, __func__);
   buffer[0] = NULL_CHAR;
   n = 0;
-  len = (unsigned) (8 + A68_PARSER (source_file_size));
+  len = (unt) (8 + A68_PARSER (source_file_size));
   buffer = (char *) get_temp_heap_space (len);
   ASSERT (lseek (source, 0, SEEK_SET) >= 0);
   while (!file_end) {
@@ -577,7 +584,7 @@ BOOL_T read_script_file (void)
     while (ch != NEWLINE_CHAR) {
       buffer[n++] = ch;
       ASSERT (io_read (source, &ch, 1) == 1);
-      ABEND ((unsigned) n >= len, ERROR_ACTION, __func__);
+      ABEND ((unt) n >= len, ERROR_ACTION, __func__);
     }
     buffer[n++] = NEWLINE_CHAR;
     buffer[n] = NULL_CHAR;
@@ -609,7 +616,7 @@ BOOL_T read_source_file (void)
 // Read the file into a single buffer, so we save on system calls.
   line_num = 1;
   errno = 0;
-  buffer = (char *) get_temp_heap_space ((unsigned) (8 + A68_PARSER (source_file_size)));
+  buffer = (char *) get_temp_heap_space ((unt) (8 + A68_PARSER (source_file_size)));
   ABEND (errno != 0 || buffer == NO_TEXT, ERROR_ALLOCATION, __func__);
   ASSERT (lseek (f, 0, SEEK_SET) >= 0);
   ABEND (errno != 0, ERROR_ACTION, __func__);
@@ -1491,13 +1498,13 @@ BOOL_T lexical_analyser (void)
     return A68_FALSE;
   }
   if (OPTION_RUN_SCRIPT (&A68_JOB)) {
-    A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unsigned) (8 + A68_PARSER (max_scan_buf_length)));
+    A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unt) (8 + A68_PARSER (max_scan_buf_length)));
     if (!read_script_file ()) {
       return A68_FALSE;
     }
   } else {
     A68_PARSER (max_scan_buf_length) += KILOBYTE;       // for the environ, more than enough
-    A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unsigned) A68_PARSER (max_scan_buf_length));
+    A68_PARSER (scan_buf) = (char *) get_temp_heap_space ((unt) A68_PARSER (max_scan_buf_length));
 // Errors in file?.
     if (!read_source_file ()) {
       return A68_FALSE;

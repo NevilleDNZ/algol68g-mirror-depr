@@ -44,11 +44,11 @@ struct SCOPE_T
 enum
 { NOT_TRANSIENT = 0, TRANSIENT };
 
-static void gather_scopes_for_youngest (NODE_T *, SCOPE_T **);
-static void scope_statement (NODE_T *, SCOPE_T **);
-static void scope_enclosed_clause (NODE_T *, SCOPE_T **);
-static void scope_formula (NODE_T *, SCOPE_T **);
-static void scope_routine_text (NODE_T *, SCOPE_T **);
+void gather_scopes_for_youngest (NODE_T *, SCOPE_T **);
+void scope_statement (NODE_T *, SCOPE_T **);
+void scope_enclosed_clause (NODE_T *, SCOPE_T **);
+void scope_formula (NODE_T *, SCOPE_T **);
+void scope_routine_text (NODE_T *, SCOPE_T **);
 
 // Static scope checker, at run time we check dynamic scope as well.
 
@@ -58,7 +58,7 @@ static void scope_routine_text (NODE_T *, SCOPE_T **);
 
 //! @brief Scope_make_tuple.
 
-static TUPLE_T scope_make_tuple (int e, int t)
+TUPLE_T scope_make_tuple (int e, int t)
 {
   static TUPLE_T z;
   LEVEL (&z) = e;
@@ -68,10 +68,10 @@ static TUPLE_T scope_make_tuple (int e, int t)
 
 //! @brief Link scope information into the list.
 
-static void scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
+void scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
 {
   if (sl != NO_VAR) {
-    SCOPE_T *ns = (SCOPE_T *) get_temp_heap_space ((unsigned) SIZE_ALIGNED (SCOPE_T));
+    SCOPE_T *ns = (SCOPE_T *) get_temp_heap_space ((unt) SIZE_ALIGNED (SCOPE_T));
     WHERE (ns) = p;
     TUPLE (ns) = tup;
     NEXT (ns) = *sl;
@@ -81,7 +81,7 @@ static void scope_add (SCOPE_T ** sl, NODE_T * p, TUPLE_T tup)
 
 //! @brief Scope_check.
 
-static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
+BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
 {
   SCOPE_T *s;
   int errors = 0;
@@ -113,7 +113,7 @@ static BOOL_T scope_check (SCOPE_T * top, int mask, int dest)
 
 //! @brief Scope_check_multiple.
 
-static BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
+BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
 {
   BOOL_T no_err = A68_TRUE;
   for (; dest != NO_SCOPE; FORWARD (dest)) {
@@ -124,7 +124,7 @@ static BOOL_T scope_check_multiple (SCOPE_T * top, int mask, SCOPE_T * dest)
 
 //! @brief Check_identifier_usage.
 
-static void check_identifier_usage (TAG_T * t, NODE_T * p)
+void check_identifier_usage (TAG_T * t, NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, IDENTIFIER) && TAX (p) == t && ATTRIBUTE (MOID (t)) != PROC_SYMBOL) {
@@ -136,7 +136,7 @@ static void check_identifier_usage (TAG_T * t, NODE_T * p)
 
 //! @brief Scope_find_youngest_outside.
 
-static TUPLE_T scope_find_youngest_outside (SCOPE_T * s, int treshold)
+TUPLE_T scope_find_youngest_outside (SCOPE_T * s, int treshold)
 {
   TUPLE_T z = scope_make_tuple (PRIMAL_SCOPE, NOT_TRANSIENT);
   for (; s != NO_SCOPE; FORWARD (s)) {
@@ -149,7 +149,7 @@ static TUPLE_T scope_find_youngest_outside (SCOPE_T * s, int treshold)
 
 //! @brief Scope_find_youngest.
 
-static TUPLE_T scope_find_youngest (SCOPE_T * s)
+TUPLE_T scope_find_youngest (SCOPE_T * s)
 {
   return scope_find_youngest_outside (s, INT_MAX);
 }
@@ -158,7 +158,7 @@ static TUPLE_T scope_find_youngest (SCOPE_T * s)
 
 //! @brief Get_declarer_elements.
 
-static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
+void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 {
   if (p != NO_NODE) {
     if (IS (p, BOUNDS)) {
@@ -180,7 +180,7 @@ static void get_declarer_elements (NODE_T * p, SCOPE_T ** r, BOOL_T no_ref)
 
 //! @brief Gather_scopes_for_youngest.
 
-static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
+void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if ((is_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) && (YOUNGEST_ENVIRON (TAX (p)) == PRIMAL_SCOPE)) {
@@ -212,7 +212,7 @@ static void gather_scopes_for_youngest (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Get_youngest_environs.
 
-static void get_youngest_environs (NODE_T * p)
+void get_youngest_environs (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, ROUTINE_TEXT, FORMAT_TEXT, STOP)) {
@@ -229,7 +229,7 @@ static void get_youngest_environs (NODE_T * p)
 
 //! @brief Bind_scope_to_tag.
 
-static void bind_scope_to_tag (NODE_T * p)
+void bind_scope_to_tag (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, DEFINING_IDENTIFIER) && MOID (p) == M_FORMAT) {
@@ -252,7 +252,7 @@ static void bind_scope_to_tag (NODE_T * p)
 
 //! @brief Bind_scope_to_tags.
 
-static void bind_scope_to_tags (NODE_T * p)
+void bind_scope_to_tags (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (is_one_of (p, PROCEDURE_DECLARATION, IDENTITY_DECLARATION, STOP)) {
@@ -265,7 +265,7 @@ static void bind_scope_to_tags (NODE_T * p)
 
 //! @brief Scope_bounds.
 
-static void scope_bounds (NODE_T * p)
+void scope_bounds (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -278,7 +278,7 @@ static void scope_bounds (NODE_T * p)
 
 //! @brief Scope_declarer.
 
-static void scope_declarer (NODE_T * p)
+void scope_declarer (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, BOUNDS)) {
@@ -298,7 +298,7 @@ static void scope_declarer (NODE_T * p)
 
 //! @brief Scope_identity_declaration.
 
-static void scope_identity_declaration (NODE_T * p)
+void scope_identity_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_identity_declaration (SUB (p));
@@ -326,7 +326,7 @@ static void scope_identity_declaration (NODE_T * p)
 
 //! @brief Scope_variable_declaration.
 
-static void scope_variable_declaration (NODE_T * p)
+void scope_variable_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_variable_declaration (SUB (p));
@@ -348,7 +348,7 @@ static void scope_variable_declaration (NODE_T * p)
 
 //! @brief Scope_procedure_declaration.
 
-static void scope_procedure_declaration (NODE_T * p)
+void scope_procedure_declaration (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     scope_procedure_declaration (SUB (p));
@@ -365,7 +365,7 @@ static void scope_procedure_declaration (NODE_T * p)
 
 //! @brief Scope_declaration_list.
 
-static void scope_declaration_list (NODE_T * p)
+void scope_declaration_list (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, IDENTITY_DECLARATION)) {
@@ -391,7 +391,7 @@ static void scope_declaration_list (NODE_T * p)
 
 //! @brief Scope_arguments.
 
-static void scope_arguments (NODE_T * p)
+void scope_arguments (NODE_T * p)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -432,7 +432,7 @@ BOOL_T is_coercion (NODE_T * p)
 
 //! @brief Scope_coercion.
 
-static void scope_coercion (NODE_T * p, SCOPE_T ** s)
+void scope_coercion (NODE_T * p, SCOPE_T ** s)
 {
   if (is_coercion (p)) {
     if (IS (p, VOIDING)) {
@@ -475,7 +475,7 @@ static void scope_coercion (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_format_text.
 
-static void scope_format_text (NODE_T * p, SCOPE_T ** s)
+void scope_format_text (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, FORMAT_PATTERN)) {
@@ -492,7 +492,7 @@ static void scope_format_text (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_operand.
 
-static void scope_operand (NODE_T * p, SCOPE_T ** s)
+void scope_operand (NODE_T * p, SCOPE_T ** s)
 {
   if (IS (p, MONADIC_FORMULA)) {
     scope_operand (NEXT_SUB (p), s);
@@ -505,7 +505,7 @@ static void scope_operand (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_formula.
 
-static void scope_formula (NODE_T * p, SCOPE_T ** s)
+void scope_formula (NODE_T * p, SCOPE_T ** s)
 {
   NODE_T *q = SUB (p);
   SCOPE_T *s2 = NO_SCOPE;
@@ -521,7 +521,7 @@ static void scope_formula (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_routine_text.
 
-static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
+void scope_routine_text (NODE_T * p, SCOPE_T ** s)
 {
   NODE_T *q = SUB (p), *routine = (IS (q, PARAMETER_PACK) ? NEXT (q) : q);
   SCOPE_T *x = NO_SCOPE;
@@ -534,7 +534,7 @@ static void scope_routine_text (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_statement.
 
-static void scope_statement (NODE_T * p, SCOPE_T ** s)
+void scope_statement (NODE_T * p, SCOPE_T ** s)
 {
   if (is_coercion (p)) {
     scope_coercion (p, s);
@@ -686,7 +686,7 @@ static void scope_statement (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_statement_list.
 
-static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
+void scope_statement_list (NODE_T * p, SCOPE_T ** s)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -700,7 +700,7 @@ static void scope_statement_list (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_serial_clause.
 
-static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
+void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
 {
   if (p != NO_NODE) {
     if (IS (p, INITIALISER_SERIES)) {
@@ -737,7 +737,7 @@ static void scope_serial_clause (NODE_T * p, SCOPE_T ** s, BOOL_T terminator)
 
 //! @brief Scope_closed_clause.
 
-static void scope_closed_clause (NODE_T * p, SCOPE_T ** s)
+void scope_closed_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (p != NO_NODE) {
     if (IS (p, SERIAL_CLAUSE)) {
@@ -750,7 +750,7 @@ static void scope_closed_clause (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_collateral_clause.
 
-static void scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
+void scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (p != NO_NODE) {
     if (!(whether (p, BEGIN_SYMBOL, END_SYMBOL, STOP) || whether (p, OPEN_SYMBOL, CLOSE_SYMBOL, STOP))) {
@@ -761,7 +761,7 @@ static void scope_collateral_clause (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_conditional_clause.
 
-static void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
+void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
 {
   scope_serial_clause (NEXT_SUB (p), NO_VAR, A68_TRUE);
   FORWARD (p);
@@ -777,7 +777,7 @@ static void scope_conditional_clause (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_case_clause.
 
-static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
+void scope_case_clause (NODE_T * p, SCOPE_T ** s)
 {
   SCOPE_T *n = NO_SCOPE;
   scope_serial_clause (NEXT_SUB (p), &n, A68_TRUE);
@@ -797,7 +797,7 @@ static void scope_case_clause (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Scope_loop_clause.
 
-static void scope_loop_clause (NODE_T * p)
+void scope_loop_clause (NODE_T * p)
 {
   if (p != NO_NODE) {
     if (IS (p, FOR_PART)) {
@@ -825,7 +825,7 @@ static void scope_loop_clause (NODE_T * p)
 
 //! @brief Scope_enclosed_clause.
 
-static void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
+void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
 {
   if (IS (p, ENCLOSED_CLAUSE)) {
     scope_enclosed_clause (SUB (p), s);
@@ -844,7 +844,7 @@ static void scope_enclosed_clause (NODE_T * p, SCOPE_T ** s)
 
 //! @brief Whether a symbol table contains no (anonymous) definition.
 
-static BOOL_T empty_table (TABLE_T * t)
+BOOL_T empty_table (TABLE_T * t)
 {
   if (IDENTIFIERS (t) == NO_TAG) {
     return (BOOL_T) (OPERATORS (t) == NO_TAG && INDICANTS (t) == NO_TAG);
@@ -859,7 +859,7 @@ static BOOL_T empty_table (TABLE_T * t)
 
 //! @brief Indicate non-local environs.
 
-static void get_non_local_environs (NODE_T * p, int max)
+void get_non_local_environs (NODE_T * p, int max)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, ROUTINE_TEXT)) {

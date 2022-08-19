@@ -43,9 +43,9 @@
 #define TOP_MODE (A68_MON (_m_stack)[A68_MON (_m_sp) - 1])
 #define LOGOUT_STRING "exit"
 
-static void parse (FILE_T, NODE_T *, int);
+void parse (FILE_T, NODE_T *, int);
 
-static BOOL_T check_initialisation (NODE_T *, BYTE_T *, MOID_T *, BOOL_T *);
+BOOL_T check_initialisation (NODE_T *, BYTE_T *, MOID_T *, BOOL_T *);
 
 #define SKIP_ONE_SYMBOL(sym) {\
   while (!IS_SPACE ((sym)[0]) && (sym)[0] != NULL_CHAR) {\
@@ -86,7 +86,7 @@ static BOOL_T check_initialisation (NODE_T *, BYTE_T *, MOID_T *, BOOL_T *);
 
 //! @brief Confirm that we really want to quit.
 
-static BOOL_T confirm_exit (void)
+BOOL_T confirm_exit (void)
 {
   char *cmd;
   int k;
@@ -134,7 +134,7 @@ void monitor_error (char *msg, char *info)
 
 //! @brief Scan symbol from input.
 
-static void scan_sym (FILE_T f, NODE_T * p)
+void scan_sym (FILE_T f, NODE_T * p)
 {
   int k = 0;
   (void) f;
@@ -301,7 +301,7 @@ static void scan_sym (FILE_T f, NODE_T * p)
 
 //! @brief Find a tag, searching symbol tables towards the root.
 
-static TAG_T *find_tag (TABLE_T * table, int a, char *name)
+TAG_T *find_tag (TABLE_T * table, int a, char *name)
 {
   if (table != NO_TABLE) {
     TAG_T *s = NO_TAG;
@@ -331,7 +331,7 @@ static TAG_T *find_tag (TABLE_T * table, int a, char *name)
 
 //! @brief Priority for symbol at input.
 
-static int prio (FILE_T f, NODE_T * p)
+int prio (FILE_T f, NODE_T * p)
 {
   TAG_T *s = find_tag (A68_STANDENV, PRIO_SYMBOL, A68_MON (symbol));
   (void) p;
@@ -345,7 +345,7 @@ static int prio (FILE_T f, NODE_T * p)
 
 //! @brief Push a mode on the stack.
 
-static void push_mode (FILE_T f, MOID_T * m)
+void push_mode (FILE_T f, MOID_T * m)
 {
   (void) f;
   if (A68_MON (_m_sp) < MON_STACK_SIZE) {
@@ -357,7 +357,7 @@ static void push_mode (FILE_T f, MOID_T * m)
 
 //! @brief Dereference, WEAK or otherwise.
 
-static BOOL_T deref_condition (int k, int context)
+BOOL_T deref_condition (int k, int context)
 {
   MOID_T *u = A68_MON (_m_stack)[k];
   if (context == WEAK && SUB (u) != NO_MOID) {
@@ -371,7 +371,7 @@ static BOOL_T deref_condition (int k, int context)
 
 //! @brief Weak dereferencing.
 
-static void deref (NODE_T * p, int k, int context)
+void deref (NODE_T * p, int k, int context)
 {
   while (deref_condition (k, context)) {
     A68_REF z;
@@ -384,7 +384,7 @@ static void deref (NODE_T * p, int k, int context)
 
 //! @brief Search moid that matches indicant.
 
-static MOID_T *search_mode (int refs, int leng, char *indy)
+MOID_T *search_mode (int refs, int leng, char *indy)
 {
   MOID_T *m = NO_MOID, *z = NO_MOID;
   for (m = TOP_MOID (&A68_JOB); m != NO_MOID; FORWARD (m)) {
@@ -419,7 +419,7 @@ static MOID_T *search_mode (int refs, int leng, char *indy)
 
 //! @brief Search operator X SYM Y.
 
-static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
+TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
 {
   TAG_T *t;
   for (t = OPERATORS (A68_STANDENV); t != NO_TAG; FORWARD (t)) {
@@ -456,7 +456,7 @@ static TAG_T *search_operator (char *sym, MOID_T * x, MOID_T * y)
 
 //! @brief Search identifier in frame stack and push value.
 
-static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68_link, char *sym)
+void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68_link, char *sym)
 {
   if (a68_link > 0) {
     int dynamic_a68_link = FRAME_DYNAMIC_LINK (a68_link);
@@ -503,7 +503,7 @@ static void search_identifier (FILE_T f, NODE_T * p, ADDR_T a68_link, char *sym)
 
 //! @brief Coerce arguments in a call.
 
-static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int top, int top_sp)
+void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int top, int top_sp)
 {
   int k;
   PACK_T *u;
@@ -538,7 +538,7 @@ static void coerce_arguments (FILE_T f, NODE_T * p, MOID_T * proc, int bot, int 
 
 //! @brief Perform a selection.
 
-static void selection (FILE_T f, NODE_T * p, char *field)
+void selection (FILE_T f, NODE_T * p, char *field)
 {
   BOOL_T name;
   MOID_T *moid;
@@ -573,7 +573,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
         OFFSET (z) += OFFSET (v);
       } else {
         DECREMENT_STACK_POINTER (p, SIZE (moid));
-        MOVE (STACK_TOP, STACK_OFFSET (OFFSET (v)), (unsigned) SIZE (MOID (u)));
+        MOVE (STACK_TOP, STACK_OFFSET (OFFSET (v)), (unt) SIZE (MOID (u)));
         INCREMENT_STACK_POINTER (p, SIZE (MOID (u)));
       }
       push_mode (f, MOID (u));
@@ -585,7 +585,7 @@ static void selection (FILE_T f, NODE_T * p, char *field)
 
 //! @brief Perform a call.
 
-static void call (FILE_T f, NODE_T * p, int depth)
+void call (FILE_T f, NODE_T * p, int depth)
 {
   A68_PROCEDURE z;
   NODE_T q;
@@ -628,7 +628,7 @@ static void call (FILE_T f, NODE_T * p, int depth)
 
 //! @brief Perform a slice.
 
-static void slice (FILE_T f, NODE_T * p, int depth)
+void slice (FILE_T f, NODE_T * p, int depth)
 {
   MOID_T *moid, *res;
   A68_REF z;
@@ -709,7 +709,7 @@ static void slice (FILE_T f, NODE_T * p, int depth)
 
 //! @brief Perform a call or a slice.
 
-static void call_or_slice (FILE_T f, NODE_T * p, int depth)
+void call_or_slice (FILE_T f, NODE_T * p, int depth)
 {
   while (A68_MON (attr) == OPEN_SYMBOL || A68_MON (attr) == SUB_SYMBOL) {
     QUIT_ON_ERROR;
@@ -723,7 +723,7 @@ static void call_or_slice (FILE_T f, NODE_T * p, int depth)
 
 //! @brief Parse expression on input.
 
-static void parse (FILE_T f, NODE_T * p, int depth)
+void parse (FILE_T f, NODE_T * p, int depth)
 {
   LOW_STACK_ALERT (p);
   QUIT_ON_ERROR;
@@ -1003,7 +1003,7 @@ static void parse (FILE_T f, NODE_T * p, int depth)
 
 //! @brief Perform assignment.
 
-static void assign (FILE_T f, NODE_T * p)
+void assign (FILE_T f, NODE_T * p)
 {
   LOW_STACK_ALERT (p);
   PARSE_CHECK (f, p, 0);
@@ -1039,7 +1039,7 @@ static void assign (FILE_T f, NODE_T * p)
 
 //! @brief Evaluate expression on input.
 
-static void evaluate (FILE_T f, NODE_T * p, char *str)
+void evaluate (FILE_T f, NODE_T * p, char *str)
 {
   LOW_STACK_ALERT (p);
   A68_MON (_m_sp) = 0;
@@ -1056,7 +1056,7 @@ static void evaluate (FILE_T f, NODE_T * p, char *str)
 
 //! @brief Convert string to int.
 
-static int get_num_arg (char *num, char **rest)
+int get_num_arg (char *num, char **rest)
 {
   char *end;
   int k;
@@ -1089,7 +1089,7 @@ static int get_num_arg (char *num, char **rest)
 
 //! @brief Whether item at "w" of mode "q" is initialised.
 
-static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T * result)
+BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T * result)
 {
   BOOL_T initialised = A68_FALSE, recognised = A68_FALSE;
   (void) p;
@@ -1159,7 +1159,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONG_BITS:
     {
       MP_T *z = (MP_T *) w;
-      initialised = (BOOL_T) ((unsigned) MP_STATUS (z) & INIT_MASK);
+      initialised = (BOOL_T) ((unt) MP_STATUS (z) & INIT_MASK);
       recognised = A68_TRUE;
       break;
     }
@@ -1169,7 +1169,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
   case MODE_LONG_LONG_BITS:
     {
       MP_T *z = (MP_T *) w;
-      initialised = (BOOL_T) ((unsigned) MP_STATUS (z) & INIT_MASK);
+      initialised = (BOOL_T) ((unt) MP_STATUS (z) & INIT_MASK);
       recognised = A68_TRUE;
       break;
     }
@@ -1177,7 +1177,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
     {
       MP_T *r = (MP_T *) w;
       MP_T *i = (MP_T *) (w + size_mp ());
-      initialised = (BOOL_T) (((unsigned) MP_STATUS (r) & INIT_MASK) && ((unsigned) MP_STATUS (i) & INIT_MASK));
+      initialised = (BOOL_T) (((unt) MP_STATUS (r) & INIT_MASK) && ((unt) MP_STATUS (i) & INIT_MASK));
       recognised = A68_TRUE;
       break;
     }
@@ -1185,7 +1185,7 @@ static BOOL_T check_initialisation (NODE_T * p, BYTE_T * w, MOID_T * q, BOOL_T *
     {
       MP_T *r = (MP_T *) w;
       MP_T *i = (MP_T *) (w + size_mp ());
-      initialised = (BOOL_T) (((unsigned) MP_STATUS (r) & INIT_MASK) && ((unsigned) MP_STATUS (i) & INIT_MASK));
+      initialised = (BOOL_T) (((unt) MP_STATUS (r) & INIT_MASK) && ((unt) MP_STATUS (i) & INIT_MASK));
       recognised = A68_TRUE;
       break;
     }
@@ -1286,7 +1286,7 @@ void print_item (NODE_T * p, FILE_T f, BYTE_T * item, MOID_T * mode)
 
 //! @brief Indented indent_crlf.
 
-static void indent_crlf (FILE_T f)
+void indent_crlf (FILE_T f)
 {
   int k;
   io_close_tty_line ();
@@ -1297,7 +1297,7 @@ static void indent_crlf (FILE_T f)
 
 //! @brief Show value of object.
 
-static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
+void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
 {
   if (item == NO_BYTE || mode == NO_MOID) {
     return;
@@ -1452,7 +1452,7 @@ static void show_item (FILE_T f, NODE_T * p, BYTE_T * item, MOID_T * mode)
 
 //! @brief Overview of frame item.
 
-static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68_link, TAG_T * q, int modif)
+void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68_link, TAG_T * q, int modif)
 {
   ADDR_T addr = a68_link + FRAME_INFO_SIZE + OFFSET (q);
   ADDR_T loc = FRAME_INFO_SIZE + OFFSET (q);
@@ -1483,7 +1483,7 @@ static void show_frame_item (FILE_T f, NODE_T * p, ADDR_T a68_link, TAG_T * q, i
 
 //! @brief Overview of frame items.
 
-static void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68_link, TAG_T * q, int modif)
+void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68_link, TAG_T * q, int modif)
 {
   (void) p;
   for (; q != NO_TAG; FORWARD (q)) {
@@ -1493,7 +1493,7 @@ static void show_frame_items (FILE_T f, NODE_T * p, ADDR_T a68_link, TAG_T * q, 
 
 //! @brief Introduce stack frame.
 
-static void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68_link, int *printed)
+void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68_link, int *printed)
 {
   TABLE_T *q = TABLE (p);
   if (*printed > 0) {
@@ -1507,7 +1507,7 @@ static void intro_frame (FILE_T f, NODE_T * p, ADDR_T a68_link, int *printed)
 
 //! @brief View contents of stack frame.
 
-static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68_link, int *printed)
+void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68_link, int *printed)
 {
 // show the frame starting at frame pointer 'a68_link', using symbol table from p as a map.
   if (p != NO_NODE) {
@@ -1538,7 +1538,7 @@ static void show_stack_frame (FILE_T f, NODE_T * p, ADDR_T a68_link, int *printe
 
 //! @brief Shows lines around the line where 'p' is at.
 
-static void list (FILE_T f, NODE_T * p, int n, int m)
+void list (FILE_T f, NODE_T * p, int n, int m)
 {
   if (p != NO_NODE) {
     if (m == 0) {
@@ -1671,7 +1671,7 @@ void examine_stack (FILE_T f, ADDR_T a68_link, char *sym, int *printed)
 
 //! @brief Set or reset breakpoints.
 
-void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * is_set, char *loc_expr)
+void change_breakpoints (NODE_T * p, unt set, int num, BOOL_T * is_set, char *loc_expr)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     change_breakpoints (SUB (p), set, num, is_set, loc_expr);
@@ -1713,7 +1713,7 @@ void change_breakpoints (NODE_T * p, unsigned set, int num, BOOL_T * is_set, cha
 
 //! @brief List breakpoints.
 
-static void list_breakpoints (NODE_T * p, int *listed)
+void list_breakpoints (NODE_T * p, int *listed)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     list_breakpoints (SUB (p), listed);
@@ -1731,7 +1731,7 @@ static void list_breakpoints (NODE_T * p, int *listed)
 
 //! @brief Execute monitor command.
 
-static BOOL_T single_stepper (NODE_T * p, char *cmd)
+BOOL_T single_stepper (NODE_T * p, char *cmd)
 {
   A68_MON (mon_errors) = 0;
   errno = 0;
@@ -2081,7 +2081,7 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
 
 //! @brief Evaluate conditional breakpoint expression.
 
-static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
+BOOL_T evaluate_breakpoint_expression (NODE_T * p)
 {
   ADDR_T top_sp = A68_SP;
   volatile BOOL_T res = A68_FALSE;
@@ -2115,7 +2115,7 @@ static BOOL_T evaluate_breakpoint_expression (NODE_T * p)
 
 //! @brief Evaluate conditional watchpoint expression.
 
-static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
+BOOL_T evaluate_watchpoint_expression (NODE_T * p)
 {
   ADDR_T top_sp = A68_SP;
   volatile BOOL_T res = A68_FALSE;
@@ -2150,7 +2150,7 @@ static BOOL_T evaluate_watchpoint_expression (NODE_T * p)
 
 //! @brief Execute monitor.
 
-void single_step (NODE_T * p, unsigned mask)
+void single_step (NODE_T * p, unt mask)
 {
   volatile BOOL_T do_cmd = A68_TRUE;
   ADDR_T top_sp = A68_SP;
@@ -2165,7 +2165,7 @@ void single_step (NODE_T * p, unsigned mask)
 #if defined (HAVE_CURSES)
   genie_curses_end (NO_NODE);
 #endif
-  if (mask == (unsigned) BREAKPOINT_ERROR_MASK) {
+  if (mask == (unt) BREAKPOINT_ERROR_MASK) {
     WRITELN (STDOUT_FILENO, "Monitor entered after an error");
     WIS ((p));
   } else if ((mask & BREAKPOINT_INTERRUPT_MASK) != 0) {
@@ -2247,9 +2247,9 @@ void single_step (NODE_T * p, unsigned mask)
   }
   A68_SP = top_sp;
   A68_MON (in_monitor) = A68_FALSE;
-  if (mask == (unsigned) BREAKPOINT_ERROR_MASK) {
+  if (mask == (unt) BREAKPOINT_ERROR_MASK) {
     WRITELN (STDOUT_FILENO, "Continuing from an error might corrupt things");
-    single_step (p, (unsigned) BREAKPOINT_ERROR_MASK);
+    single_step (p, (unt) BREAKPOINT_ERROR_MASK);
   } else {
     WRITELN (STDOUT_FILENO, "Continuing ...");
     WRITELN (STDOUT_FILENO, "");

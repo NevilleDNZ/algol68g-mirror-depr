@@ -39,7 +39,7 @@
 
 #define CHECK_MPFR(p, z) PRELUDE_ERROR (mpfr_number_p (z) == 0, (p), ERROR_MATH, M_LONG_LONG_REAL)
 
-static void zeroin_mpfr (NODE_T *, mpfr_t *, mpfr_t, mpfr_t, mpfr_t, int (*)(mpfr_t, const mpfr_t, mpfr_rnd_t));
+void zeroin_mpfr (NODE_T *, mpfr_t *, mpfr_t, mpfr_t, mpfr_t, int (*)(mpfr_t, const mpfr_t, mpfr_rnd_t));
 
 //! @brief Decimal digits in mpfr significand.
 
@@ -450,7 +450,7 @@ void genie_beta_inc_mpfr (NODE_T * p)
 
 //! @brief zeroin
 
-static void zeroin_mpfr (NODE_T * _p_, mpfr_t * z, mpfr_t a, mpfr_t b, mpfr_t y, int (*f) (mpfr_t, const mpfr_t, mpfr_rnd_t))
+void zeroin_mpfr (NODE_T * _p_, mpfr_t * z, mpfr_t a, mpfr_t b, mpfr_t y, int (*f) (mpfr_t, const mpfr_t, mpfr_rnd_t))
 {
 // 'zeroin'
 // MCA 2310 in 'ALGOL 60 Procedures in Numerical Algebra' by Th.J. Dekker

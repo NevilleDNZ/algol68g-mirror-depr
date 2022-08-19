@@ -89,7 +89,7 @@
 #define TOL_ROMBERG 0.1q        // Tolerance factor used to stop the Romberg iterations
 #define TOL_DIFF 0.2q           // Tolerance factor used for the approximation of I_{x,y}^{mu,p} using differences
 
-// plim: compute plim (x), the limit of the partition of the domain (p,x)
+// double_plim: compute plim (x), the limit of the partition of the domain (p,x)
 // detailed in the paper.
 //
 //            |      x              if   0 < x
@@ -98,7 +98,7 @@
 //            |
 //            | 5.*sqrt (|x|)-5.    otherwise
 
-static DOUBLE_T plim (DOUBLE_T x)
+DOUBLE_T double_plim (DOUBLE_T x)
 {
   return (x >= 0.0q) ? x : ((x >= -9.0q) ? 0.0q : 5.0q * sqrt (-x) - 5.0q);
 }
@@ -108,7 +108,7 @@ static DOUBLE_T plim (DOUBLE_T x)
 // p >= 0
 // x <= p
 
-static void G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
+void double_G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 {
   DOUBLE_T c, d, del, f, an, bn;
   INT_T k, n;
@@ -154,7 +154,7 @@ static void G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 // p > 0, integer
 // x < 0, |x| < max (1,p-1)
 
-static void G_ibp (DOUBLE_T * Gibp, DOUBLE_T p, DOUBLE_T x)
+void double_G_ibp (DOUBLE_T * Gibp, DOUBLE_T p, DOUBLE_T x)
 {
   DOUBLE_T t, tt, c, d, s, del;
   INT_T l;
@@ -187,7 +187,7 @@ static void G_ibp (DOUBLE_T * Gibp, DOUBLE_T p, DOUBLE_T x)
 // p > 0
 // x > p, or x = +infinity
 
-static void G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
+void double_G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 {
   DOUBLE_T c, d, del, f, an, bn;
   INT_T i, n;
@@ -250,20 +250,20 @@ static void G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 //   p > 0
 //   x is a real number or +infinity.
 
-static void G_func (DOUBLE_T * G, DOUBLE_T p, DOUBLE_T x)
+void double_G_func (DOUBLE_T * G, DOUBLE_T p, DOUBLE_T x)
 {
-  if (p >= plim (x)) {
-    G_cfrac_lower (G, p, x);
+  if (p >= double_plim (x)) {
+    double_G_cfrac_lower (G, p, x);
   } else if (x < 0.0q) {
-    G_ibp (G, p, x);
+    double_G_ibp (G, p, x);
   } else {
-    G_cfrac_upper (G, p, x);
+    double_G_cfrac_upper (G, p, x);
   }
 }
 
 //! @brief iteration of the Romberg approximation of I_{x,y}^{mu,p}
 
-static void romberg_iterations (DOUBLE_T * R, DOUBLE_T sigma, INT_T n, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p, DOUBLE_T h, DOUBLE_T pow2)
+void double_romberg_iterations (DOUBLE_T * R, DOUBLE_T sigma, INT_T n, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p, DOUBLE_T h, DOUBLE_T pow2)
 {
   INT_T j, m;
   DOUBLE_T sum, xx;
@@ -284,7 +284,7 @@ static void romberg_iterations (DOUBLE_T * R, DOUBLE_T sigma, INT_T n, DOUBLE_T 
 //! @ compute I_{x,y}^{mu,p} using a Romberg approximation.
 // Compute rho and sigma so I_{x,y}^{mu,p} = rho * exp (sigma)
 
-static void romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p)
+void double_romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p)
 {
   DOUBLE_T *R = (DOUBLE_T *) get_heap_space (((NITERMAX_ROMBERG + 1) * (NITERMAX_ROMBERG + 2)) / 2 * sizeof (DOUBLE_T));
   ASSERT (R != NULL);
@@ -300,7 +300,7 @@ static void romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUB
   if (NITERMAX_ROMBERG >= 1) {
     DOUBLE_T relerr;
     do {
-      romberg_iterations (R, *sigma, n, x, y, mu, p, h, pow2);
+      double_romberg_iterations (R, *sigma, n, x, y, mu, p, h, pow2);
       h /= 2.0q;
       pow2 *= 2.0q;
       adr0 = (n * (n + 1)) / 2;
@@ -347,9 +347,9 @@ void deltagammainc_16 (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y,
     return;
   }
 // Initialization
-  G_func (&mx, p, mu * x);
+  double_G_func (&mx, p, mu * x);
   nx = (isinfq (x) ? a68_dneginf () : -mu * x + p * logq (x));
-  G_func (&my, p, mu * y);
+  double_G_func (&my, p, mu * y);
   ny = (isinfq (y) ? a68_dneginf () : -mu * y + p * logq (y));
 
 // Compute (mA,nA) and (mB,nB) such as I_{x,y}^{mu,p} can be
@@ -364,12 +364,12 @@ void deltagammainc_16 (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y,
     mB = mx;
     nB = nx;
   } else {
-    if (p < plim (mu * x)) {
+    if (p < double_plim (mu * x)) {
       mA = mx;
       nA = nx;
       mB = my;
       nB = ny;
-    } else if (p < plim (mu * y)) {
+    } else if (p < double_plim (mu * y)) {
       mA = 1.0q;
       nA = lgammaq (p) - p * logq (mu);
       nB = fmax (nx, ny);
@@ -386,7 +386,7 @@ void deltagammainc_16 (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y,
   *sigma = nA;
 // If the difference involved a significant loss of precision, compute Romberg estimate.
   if (!isinfq (y) && ((*rho) / mA < TOL_DIFF)) {
-    romberg_estimate (rho, sigma, x, y, mu, p);
+    double_romberg_estimate (rho, sigma, x, y, mu, p);
   }
 }
 
@@ -428,7 +428,7 @@ void genie_gamma_inc_gf_real_16 (NODE_T * q)
   POP_OBJECT (q, &x, A68_LONG_REAL);
   POP_OBJECT (q, &p, A68_LONG_REAL);
   DOUBLE_T G;
-  G_func (&G, VALUE (&p).f, VALUE (&x).f);
+  double_G_func (&G, VALUE (&p).f, VALUE (&x).f);
   PUSH_VALUE (q, dble (G), A68_LONG_REAL);
 }
 

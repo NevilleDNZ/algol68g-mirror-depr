@@ -1,0 +1,36 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+# Op hoeveel manieren is 5 gulden te verdelen in
+rijksdaalders, guldens, kwartjes, dubbeltjes en stuivers?
+#
+
+PR echo "correct: 1441" PR
+
+PROC verdeel en tel = (INT bedrag, max) INT:
+   IF bedrag = 0
+   THEN 1 # Precies goed, combinatie gevonden #
+   ELIF bedrag < 0
+   THEN 0 # Ai, teveel afgetrokken, ongeldig #
+   ELSE [] INT waarden = (5, 10, 25, 100, 250);
+        INT aantal := 0;
+        FOR i TO UPB waarden
+        WHILE waarden[i] <= max
+        DO aantal +:= verdeel en tel (bedrag - waarden[i], waarden[i])
+        OD;
+        aantal
+   FI;
+
+INT waarde = 500;
+print (verdeel en tel (waarde, waarde))

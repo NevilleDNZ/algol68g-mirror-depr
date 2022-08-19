@@ -25,6 +25,9 @@
 // Debugging switch, only useful during development.
 #undef A68_DEBUG
 
+// Early typedef
+#define unt unsigned
+
 // Configuration
 
 #include "a68g-platform.h"
@@ -74,7 +77,7 @@ typedef double REAL_T;
 // Forward type definitions.
 
 typedef struct NODE_T NODE_T;
-typedef unsigned STATUS_MASK_T, BOOL_T;
+typedef unt STATUS_MASK_T, BOOL_T;
 
 // Decide the internal representation of A68 modes.
 
@@ -91,7 +94,7 @@ typedef unsigned STATUS_MASK_T, BOOL_T;
 #define MP_REAL_RADIX ((MP_REAL_T) MP_RADIX)
 
 #if defined (BUILD_WIN32)
-typedef unsigned __off_t;
+typedef unt __off_t;
 #  if defined (__MSVCRT__) && defined (_environ)
 #    undef _environ
 #  endif
@@ -116,6 +119,9 @@ extern BOOL_T a68_mkstemp (char *, int, mode_t);
 extern BYTE_T *get_fixed_heap_space (size_t);
 extern BYTE_T *get_heap_space (size_t);
 extern BYTE_T *get_temp_heap_space (size_t);
+extern char *a68_basename (char *);
+extern char *a68_dirname (char *);
+extern char *a68_relpath (char *, char *, char *);
 extern char *ctrl_char (int);
 extern char *moid_to_string (MOID_T *, int, NODE_T *);
 extern char *new_fixed_string (char *);
@@ -127,12 +133,12 @@ extern char *standard_environ_proc_name (GPROC);
 extern int get_row_size (A68_TUPLE *, int);
 extern int moid_digits (MOID_T *);
 extern int moid_size (MOID_T *);
-extern int snprintf (char *, size_t, const char *, ...);
+extern int (snprintf) (char *, size_t, const char *, ...); // Prevent macro substitution on Darwin.
 extern void *a68_alloc (size_t, const char *, int);
 extern void a68_exit (int);
 extern void a68_free (void *);
 extern void a68_getty (int *, int *);
-extern void * a68_memmove (void *, void *, size_t);
+extern void *a68_memmove (void *, void *, size_t);
 extern void abend (char *, char *, char *, int);
 extern void announce_phase (char *);
 extern void apropos (FILE_T, char *, char *);
@@ -148,7 +154,7 @@ extern void init_curses (void);
 extern void init_file_entries (void);
 extern void init_file_entry (int);
 extern void init_heap (void);
-extern void init_rng (unsigned);
+extern void init_rng (unt);
 extern void init_tty (void);
 extern void install_signal_handlers (void);
 extern void online_help (FILE_T);

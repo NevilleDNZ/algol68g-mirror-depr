@@ -41,8 +41,8 @@
 
 // static pthread_mutex_t unit_sema = PTHREAD_MUTEX_INITIALIZER;
 
-static void save_stacks (pthread_t);
-static void restore_stacks (pthread_t);
+void save_stacks (pthread_t);
+void restore_stacks (pthread_t);
 
 #define SAVE_STACK(stk, st, si) {\
   A68_STACK_DESCRIPTOR *s = (stk);\
@@ -155,7 +155,7 @@ void genie_abend_all_threads (NODE_T * p, jmp_buf * jump_stat, NODE_T * label)
 
 //! @brief Save this thread and try to start another.
 
-static void try_change_thread (NODE_T * p)
+void try_change_thread (NODE_T * p)
 {
   if (is_main_thread ()) {
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_PARALLEL_OUTSIDE);
@@ -172,7 +172,7 @@ static void try_change_thread (NODE_T * p)
 
 //! @brief Store the stacks of threads.
 
-static void save_stacks (pthread_t t)
+void save_stacks (pthread_t t)
 {
   ADDR_T p, q, u, v;
   int k;
@@ -195,7 +195,7 @@ static void save_stacks (pthread_t t)
 
 //! @brief Restore stacks of thread.
 
-static void restore_stacks (pthread_t t)
+void restore_stacks (pthread_t t)
 {
   if (ERROR_COUNT (&A68_JOB) > 0 || A68_PAR (abend_all_threads)) {
     genie_abend_thread ();
@@ -215,7 +215,7 @@ static void restore_stacks (pthread_t t)
 
 //! @brief Check whether parallel units have terminated.
 
-static void check_parallel_units (BOOL_T * active, pthread_t parent)
+void check_parallel_units (BOOL_T * active, pthread_t parent)
 {
   int k;
   for (k = 0; k < A68_PAR (context_index); k++) {
@@ -227,7 +227,7 @@ static void check_parallel_units (BOOL_T * active, pthread_t parent)
 
 //! @brief Execute one unit from a PAR clause.
 
-static void *start_unit (void *arg)
+void *start_unit (void *arg)
 {
   pthread_t t;
   int k;
@@ -247,7 +247,7 @@ static void *start_unit (void *arg)
 
 //! @brief Execute parallel units.
 
-static void start_parallel_units (NODE_T * p, pthread_t parent)
+void start_parallel_units (NODE_T * p, pthread_t parent)
 {
   for (; p != NO_NODE; FORWARD (p)) {
     if (IS (p, UNIT)) {
@@ -310,7 +310,7 @@ static void start_parallel_units (NODE_T * p, pthread_t parent)
 
 //! @brief Execute one unit from a PAR clause.
 
-static void *start_genie_parallel (void *arg)
+void *start_genie_parallel (void *arg)
 {
   pthread_t t;
   int k;

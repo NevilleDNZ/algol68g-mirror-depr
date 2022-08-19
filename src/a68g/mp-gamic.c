@@ -92,7 +92,7 @@
 
 //! @brief compute G(p,x) in the domain x <= p >= 0 using a continued fraction
 
-static MP_T *G_cfrac_lower_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int digs)
+MP_T *G_cfrac_lower_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int digs)
 {
   if (IS_ZERO_MP (x)) {
     SET_MP_ZERO (Gcfrac, digs);
@@ -177,7 +177,7 @@ static MP_T *G_cfrac_lower_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int d
 //
 // 0 < p < x, or x = +infinity
 
-static MP_T *G_cfrac_upper_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int digs)
+MP_T *G_cfrac_upper_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int digs)
 {
   ADDR_T pop_sp = A68_SP;
   if (PLUS_INF_MP (x)) {
@@ -289,7 +289,7 @@ static MP_T *G_cfrac_upper_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int d
 //
 // p > 0, integer; x < 0, |x| < max (1,p-1)
 
-static MP_T *G_ibp_mp (NODE_T *q, MP_T * Gibp, MP_T *p, MP_T *x, int digs)
+MP_T *G_ibp_mp (NODE_T *q, MP_T * Gibp, MP_T *p, MP_T *x, int digs)
 {
   ADDR_T pop_sp = A68_SP;
   MP_T *trm = nil_mp (q, digs), *trn = nil_mp (q, digs);
@@ -373,7 +373,7 @@ static MP_T *G_ibp_mp (NODE_T *q, MP_T * Gibp, MP_T *p, MP_T *x, int digs)
   return Gibp;
 }
 
-static MP_T *plim_mp (NODE_T *p, MP_T *z, MP_T *x, int digs)
+MP_T *plim_mp (NODE_T *p, MP_T *z, MP_T *x, int digs)
 {
   ADDR_T pop_sp = A68_SP;
   if (MP_DIGIT (x, 1) > 0) {
@@ -405,7 +405,7 @@ static MP_T *plim_mp (NODE_T *p, MP_T *z, MP_T *x, int digs)
 //
 //   p > 0; x is a real number or +infinity.
 
-static void G_func_mp (NODE_T *q, MP_T * G, MP_T *p, MP_T *x, int digs)
+void G_func_mp (NODE_T *q, MP_T * G, MP_T *p, MP_T *x, int digs)
 {
   ADDR_T pop_sp = A68_SP;
   MP_T *pl = nil_mp (q, digs);
@@ -434,7 +434,7 @@ static inline int IX (int n, int digs) {
   return offset;
 }
 
-static void romberg_iterations 
+void mp_romberg_iterations 
   (NODE_T *q, MP_T *R, MP_T *sigma, INT_T n, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, MP_T *h, MP_T *pow2, int digs)
 {
   INT_T m;
@@ -485,7 +485,7 @@ static void romberg_iterations
   }
 }
 
-static void romberg_estimate (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, int digs)
+void mp_romberg_estimate (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, int digs)
 {
   ADDR_T pop_sp = A68_SP;
   MP_T *R = (MP_T *) get_heap_space (ROMBERG_N * SIZE_MP (digs));
@@ -524,9 +524,9 @@ static void romberg_estimate (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T
   BOOL_T cont = A68_TRUE;
   while (cont) {
 // while (n <= NITERMAX_ROMBERG && relerr > relneeded);
-//  romberg_iterations (R, *sigma, n, x, y, mu, p, h, pow2);
+//  mp_romberg_iterations (R, *sigma, n, x, y, mu, p, h, pow2);
     ADDR_T pop_sp_2 = A68_SP;
-    romberg_iterations (q, R, sigma, n, x, y, mu, p, h, pow2, digs);
+    mp_romberg_iterations (q, R, sigma, n, x, y, mu, p, h, pow2, digs);
     A68_SP = pop_sp_2;
 //  h /= 2;
     (void) half_mp (q, h, h, digs);
@@ -566,7 +566,7 @@ static void romberg_estimate (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T
 //
 //   p is a real number > 0, p must be an integer when mu < 0.
 
-static void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, int digs)
+void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, int digs)
 {
   ADDR_T pop_sp = A68_SP;
 // Particular cases
@@ -715,12 +715,12 @@ static void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP
   (void) div_mp (q, trm, rho, mA, digs);
   (void) lt_mp (q, &lt, trm, TOL_DIFF (q, digs), digs);
   if (!PLUS_INF_MP (y) && VALUE (&lt)) {
-    romberg_estimate (q, rho, sigma, x, y, mu, p, digs);
+    mp_romberg_estimate (q, rho, sigma, x, y, mu, p, digs);
   }
   A68_SP = pop_sp;
 }
 
-static void Dgamic_wrap_mp (NODE_T *q, MP_T * s, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, int digs)
+void Dgamic_wrap_mp (NODE_T *q, MP_T * s, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, int digs)
 {
   ADDR_T pop_sp = A68_SP;
   int gdigs = GAM_DIGITS (MAX_PRECISION);

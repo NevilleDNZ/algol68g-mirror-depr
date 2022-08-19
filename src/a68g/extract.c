@@ -31,7 +31,7 @@
 
 //! @brief Insert alt equals symbol.
 
-static void insert_alt_equals (NODE_T * p)
+void insert_alt_equals (NODE_T * p)
 {
   NODE_T *q = new_node ();
   *q = *p;

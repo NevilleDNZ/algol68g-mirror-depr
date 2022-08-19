@@ -95,7 +95,7 @@
 //            |
 //            | 5.*sqrt (|x|)-5.    otherwise
 
-static REAL_T plim (REAL_T x)
+REAL_T plim (REAL_T x)
 {
   return (x >= 0) ? x : ((x >= -9) ? 0 : 5 * sqrt (-x) - 5);
 }
@@ -105,7 +105,7 @@ static REAL_T plim (REAL_T x)
 // p >= 0
 // x <= p
 
-static void G_cfrac_lower (REAL_T * Gcfrac, REAL_T p, REAL_T x)
+void G_cfrac_lower (REAL_T * Gcfrac, REAL_T p, REAL_T x)
 {
   REAL_T c, d, del, f, an, bn;
   INT_T k, n;
@@ -151,7 +151,7 @@ static void G_cfrac_lower (REAL_T * Gcfrac, REAL_T p, REAL_T x)
 // p > 0, integer
 // x < 0, |x| < max (1,p-1)
 
-static void G_ibp (REAL_T * Gibp, REAL_T p, REAL_T x)
+void G_ibp (REAL_T * Gibp, REAL_T p, REAL_T x)
 {
   REAL_T t, tt, c, d, s, del;
   INT_T l;
@@ -184,7 +184,7 @@ static void G_ibp (REAL_T * Gibp, REAL_T p, REAL_T x)
 // p > 0
 // x > p, or x = +infinity
 
-static void G_cfrac_upper (REAL_T * Gcfrac, REAL_T p, REAL_T x)
+void G_cfrac_upper (REAL_T * Gcfrac, REAL_T p, REAL_T x)
 {
   REAL_T c, d, del, f, an, bn;
   INT_T i, n;
@@ -247,7 +247,7 @@ static void G_cfrac_upper (REAL_T * Gcfrac, REAL_T p, REAL_T x)
 //   p > 0
 //   x is a real number or +infinity.
 
-static void G_func (REAL_T * G, REAL_T p, REAL_T x)
+void G_func (REAL_T * G, REAL_T p, REAL_T x)
 {
   if (p >= plim (x)) {
     G_cfrac_lower (G, p, x);
@@ -260,7 +260,7 @@ static void G_func (REAL_T * G, REAL_T p, REAL_T x)
 
 //! @brief iteration of the Romberg approximation of I_{x,y}^{mu,p}
 
-static void romberg_iterations (REAL_T * R, REAL_T sigma, INT_T n, REAL_T x, REAL_T y, REAL_T mu, REAL_T p, REAL_T h, REAL_T pow2)
+void romberg_iterations (REAL_T * R, REAL_T sigma, INT_T n, REAL_T x, REAL_T y, REAL_T mu, REAL_T p, REAL_T h, REAL_T pow2)
 {
   INT_T j, m;
   REAL_T sum, xx;
@@ -281,7 +281,7 @@ static void romberg_iterations (REAL_T * R, REAL_T sigma, INT_T n, REAL_T x, REA
 //! @ compute I_{x,y}^{mu,p} using a Romberg approximation.
 // Compute rho and sigma so I_{x,y}^{mu,p} = rho * exp (sigma)
 
-static void romberg_estimate (REAL_T * rho, REAL_T * sigma, REAL_T x, REAL_T y, REAL_T mu, REAL_T p)
+void romberg_estimate (REAL_T * rho, REAL_T * sigma, REAL_T x, REAL_T y, REAL_T mu, REAL_T p)
 {
   REAL_T *R = (REAL_T *) get_heap_space (((NITERMAX_ROMBERG + 1) * (NITERMAX_ROMBERG + 2)) / 2 * sizeof (REAL_T));
   ASSERT (R != NULL);

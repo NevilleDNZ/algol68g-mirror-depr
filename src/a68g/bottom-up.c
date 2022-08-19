@@ -138,23 +138,29 @@ void strange_separator (NODE_T * p)
 void reduce (NODE_T * p, void (*a) (NODE_T *), BOOL_T * z, ...)
 {
   va_list list;
-  int result, arg;
+  int result, expect;
   NODE_T *head = p, *tail = NO_NODE;
   va_start (list, z);
   result = va_arg (list, int);
-  while ((arg = va_arg (list, int)) != STOP)
+  while ((expect = va_arg (list, int)) != STOP)
   {
     BOOL_T keep_matching;
     if (p == NO_NODE) {
       keep_matching = A68_FALSE;
-    } else if (arg == WILDCARD) {
+    } else if (expect == WILDCARD) {
 // WILDCARD matches any Algol68G non terminal, but no keyword.
       keep_matching = (BOOL_T) (non_terminal_string (A68 (edit_line), ATTRIBUTE (p)) != NO_TEXT);
     } else {
-      if (arg >= 0) {
-        keep_matching = (BOOL_T) (arg == ATTRIBUTE (p));
+      if (expect == SKIP) {
+// Stray "~" matches expected SKIP.
+        if (IS (p, OPERATOR) && IS_LITERALLY (p, "~")) {
+          ATTRIBUTE (p) = SKIP;
+        }
+      }
+      if (expect >= 0) {
+        keep_matching = (BOOL_T) (expect == ATTRIBUTE (p));
       } else {
-        keep_matching = (BOOL_T) (arg != ATTRIBUTE (p));
+        keep_matching = (BOOL_T) (expect != ATTRIBUTE (p));
       }
     }
     if (keep_matching) {

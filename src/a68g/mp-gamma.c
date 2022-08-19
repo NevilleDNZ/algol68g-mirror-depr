@@ -190,7 +190,7 @@ MP_T *inverfc_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
 
 //! brief Set up gamma coefficient table
 
-static void mp_gamma_table (NODE_T *p, int digs)
+void mp_gamma_table (NODE_T *p, int digs)
 {
   if (A68_MP (mp_gamma_size) <= 0) {
     int b = 1;
@@ -233,7 +233,7 @@ static void mp_gamma_table (NODE_T *p, int digs)
   }
 }
 
-static MP_T *mp_spouge_sum (NODE_T *p, MP_T *sum, MP_T *x_g, int gdigs)
+MP_T *mp_spouge_sum (NODE_T *p, MP_T *sum, MP_T *x_g, int gdigs)
 {
   ADDR_T pop_sp = A68_SP;
   int a = A68_MP (mp_gamma_size);

@@ -33,7 +33,7 @@
 
 //! @brief a68_print_short_mode.
 
-static void a68_print_short_mode (FILE_T f, MOID_T * z)
+void a68_print_short_mode (FILE_T f, MOID_T * z)
 {
   if (IS (z, STANDARD)) {
     int i = DIM (z);
@@ -100,7 +100,7 @@ void a68_print_flat_mode (FILE_T f, MOID_T * z)
 
 //! @brief Brief_fields_flat.
 
-static void a68_print_short_pack (FILE_T f, PACK_T * pack)
+void a68_print_short_pack (FILE_T f, PACK_T * pack)
 {
   if (pack != NO_PACK) {
     a68_print_short_mode (f, MOID (pack));
@@ -229,7 +229,7 @@ void print_mode_flat (FILE_T f, MOID_T * m)
 
 //! @brief Xref_tags.
 
-static void xref_tags (FILE_T f, TAG_T * s, int a)
+void xref_tags (FILE_T f, TAG_T * s, int a)
 {
   for (; s != NO_TAG; FORWARD (s)) {
     NODE_T *where_tag = NODE (s);
@@ -326,7 +326,7 @@ static void xref_tags (FILE_T f, TAG_T * s, int a)
 
 //! @brief Xref_decs.
 
-static void xref_decs (FILE_T f, TABLE_T * t)
+void xref_decs (FILE_T f, TABLE_T * t)
 {
   if (INDICANTS (t) != NO_TAG) {
     xref_tags (f, INDICANTS (t), INDICANT);
@@ -350,7 +350,7 @@ static void xref_decs (FILE_T f, TABLE_T * t)
 
 //! @brief Xref1_moid.
 
-static void xref1_moid (FILE_T f, MOID_T * p)
+void xref1_moid (FILE_T f, MOID_T * p)
 {
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "\n     #%d ", NUMBER (p)) >= 0);
   WRITE (f, A68 (output_line));
@@ -375,7 +375,7 @@ void moid_listing (FILE_T f, MOID_T * m)
 
 //! @brief Cross_reference.
 
-static void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
+void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
 {
   if (p != NO_NODE && CROSS_REFERENCE_SAFE (&A68_JOB)) {
     for (; p != NO_NODE; FORWARD (p)) {
@@ -476,10 +476,10 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld, BOOL_T comm
         }
         if (!comment) {
           if (TAX (p) != NO_TAG) {
-            ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, ", tag %06u", (unsigned) NUMBER (TAX (p))) >= 0);
+            ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, ", tag %06u", (unt) NUMBER (TAX (p))) >= 0);
             WRITE (f, A68 (output_line));
             if (MOID (TAX (p)) != NO_MOID) {
-              ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, ", mode %06u", (unsigned) NUMBER (MOID (TAX (p)))) >= 0);
+              ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, ", mode %06u", (unt) NUMBER (MOID (TAX (p)))) >= 0);
               WRITE (f, A68 (output_line));
             }
           }
@@ -512,7 +512,7 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld, BOOL_T comm
 
 //! @brief Leaves_to_print.
 
-static int leaves_to_print (NODE_T * p, LINE_T * l)
+int leaves_to_print (NODE_T * p, LINE_T * l)
 {
   int z = 0;
   for (; p != NO_NODE && z == 0; FORWARD (p)) {

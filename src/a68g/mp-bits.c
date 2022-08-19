@@ -150,9 +150,9 @@ MP_T *pack_mp_bits (NODE_T * p, MP_T * u, MP_BITS_T * row, MOID_T * m)
   return u;
 }
 
-//! @brief Convert multi-precision number to unsigned.
+//! @brief Convert multi-precision number to unt.
 
-UNSIGNED_T mp_to_unsigned (NODE_T * p, MP_T * z, int digits)
+UNSIGNED_T mp_to_unt (NODE_T * p, MP_T * z, int digits)
 {
 // This routine looks a lot like "strtol". We do not use "mp_to_real" since int
 // could be wider than 2 ** 52.
@@ -164,11 +164,11 @@ UNSIGNED_T mp_to_unsigned (NODE_T * p, MP_T * z, int digits)
   }
   for (j = 1 + expo; j >= 1; j--) {
     UNSIGNED_T term;
-    if ((unsigned) MP_DIGIT (z, j) > UINT_MAX / weight) {
+    if ((unt) MP_DIGIT (z, j) > UINT_MAX / weight) {
       diagnostic (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, M_BITS);
       exit_genie (p, A68_RUNTIME_ERROR);
     }
-    term = (unsigned) MP_DIGIT (z, j) * weight;
+    term = (unt) MP_DIGIT (z, j) * weight;
     if (sum > UINT_MAX - term) {
       diagnostic (A68_RUNTIME_ERROR, p, ERROR_OUT_OF_BOUNDS, M_BITS);
       exit_genie (p, A68_RUNTIME_ERROR);
@@ -256,13 +256,13 @@ BOOL_T convert_radix_mp (NODE_T * p, MP_T * u, int radix, int width, MOID_T * m,
 
 //! @brief OP LENG = (BITS) LONG BITS
 
-void genie_lengthen_unsigned_to_mp (NODE_T * p)
+void genie_lengthen_unt_to_mp (NODE_T * p)
 {
   int digits = DIGITS (M_LONG_INT);
   A68_BITS k;
   POP_OBJECT (p, &k, A68_BITS);
   MP_T *z = nil_mp (p, digits);
-  (void) unsigned_to_mp (p, z, (UNSIGNED_T) VALUE (&k), digits);
+  (void) unt_to_mp (p, z, (UNSIGNED_T) VALUE (&k), digits);
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
@@ -305,12 +305,12 @@ void genie_shorten_mp_to_bits (NODE_T * p)
   int digits = DIGITS (mode), size = SIZE (mode);
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
   DECREMENT_STACK_POINTER (p, size);
-  PUSH_VALUE (p, mp_to_unsigned (p, z, digits), A68_BITS);
+  PUSH_VALUE (p, mp_to_unt (p, z, digits), A68_BITS);
 }
 
 //! @brief Get bit from LONG BITS.
 
-unsigned elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
+unt elem_long_bits (NODE_T * p, ADDR_T k, MP_T * z, MOID_T * m)
 {
   int n;
   ADDR_T pop_sp = A68_SP;
@@ -357,7 +357,7 @@ void genie_elem_long_mp_bits (NODE_T * p)
 
 //! @brief Set bit in LONG BITS.
 
-static MP_BITS_T *set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, MP_BITS_T bit)
+MP_BITS_T *set_long_bits (NODE_T * p, int k, MP_T * z, MOID_T * m, MP_BITS_T bit)
 {
   int n;
   MP_BITS_T *words = stack_mp_bits (p, z, m), mask = 0x1;

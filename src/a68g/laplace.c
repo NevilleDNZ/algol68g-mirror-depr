@@ -40,7 +40,7 @@ void laplace_error_handler (const char *reason, const char *file, int line, int 
 
 //! @brief Detect math errors.
 
-static void laplace_test_error (int rc)
+void laplace_test_error (int rc)
 {
   if (rc != 0) {
     laplace_error_handler ("math error", "", 0, rc);
