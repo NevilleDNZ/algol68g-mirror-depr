@@ -13,6 +13,9 @@
 /* Define this if a good pthread installation was detected */
 #define BUILD_PARALLEL_CLAUSE 1
 
+/* Name of C compiler detected */
+#define C_COMPILER "gcc"
+
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 #define GWINSZ_IN_SYS_IOCTL 1
 
@@ -139,9 +142,6 @@
 
 /* Define to 1 if you have the `isnan' function. */
 #define HAVE_ISNAN 1
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-#define HAVE_LIBDL 1
 
 /* Define to 1 if you have the `gmp' library (-lgmp). */
 #define HAVE_LIBGMP 1
@@ -376,6 +376,9 @@
 /* Define this if /usr/pkg/pgsql/include was detected */
 /* #undef HAVE_USR_PKG_PGSQL_INCLUDE */
 
+/* Platform dependent */
+#define INCLUDE_DIR ""
+
 /* Define to 1 if assertions should be disabled. */
 /* #undef NDEBUG */
 
@@ -389,7 +392,7 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 3.0.6"
+#define PACKAGE_STRING "algol68g 3.0.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
@@ -398,13 +401,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0.6"
+#define PACKAGE_VERSION "3.0.7"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.0.6"
+#define VERSION "3.0.7"
 
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__
@@ -419,6 +422,12 @@
 
 /* Define this if we have no __pid_t */
 #define a68_pid_t pid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+/* #undef inline */
+#endif
 
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef mode_t */

@@ -122,12 +122,12 @@ static void sigsegv_handler (int i)
 {
   (void) i;
 // write () is asynchronous-safe and may be called here.
-  write (2, "\nFatal", 1 + strlen ("\nFatal"));
+  (void) write (2, "\nFatal", 1 + strlen ("\nFatal"));
   if (FILE_INITIAL_NAME (&A68_JOB) != NO_TEXT) {
-    write (2, ": ", 1 + strlen (": "));
-    write (2, FILE_INITIAL_NAME (&A68_JOB), 1 + strlen (FILE_INITIAL_NAME (&A68_JOB)));
+    (void) write (2, ": ", 1 + strlen (": "));
+    (void) write (2, FILE_INITIAL_NAME (&A68_JOB), 1 + strlen (FILE_INITIAL_NAME (&A68_JOB)));
   }
-  write (2, ": memory access violation\n", 1 + strlen (": memory access violation\n"));
+  (void) write (2, ": memory access violation\n", 1 + strlen (": memory access violation\n"));
   exit (EXIT_FAILURE);
   return;
 }

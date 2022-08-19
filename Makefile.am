@@ -180,7 +180,5 @@ doc_DATA = AUTHORS COPYING NEWS README LICENSE
 EXTRA_DIST = $(man_MANS)\
 	$(TESTS)\
 	./ISSUES\
-	./LICENSE\
-	a68g-config.bsd.h\
-	Makefile.bsd
+	./LICENSE
 

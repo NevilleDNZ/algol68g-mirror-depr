@@ -144,7 +144,8 @@ MP_T *inverf_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
     (void) mp_pi (p, p_g, MP_SQRT_PI, gdigs);
     (void) half_mp (p, p_g, p_g, gdigs);
 // nrdigs prevents end-less iteration
-    for (int nrdigs = 0; nrdigs < digs && go_on; nrdigs++) {
+    int nrdigs;
+    for (nrdigs = 0; nrdigs < digs && go_on; nrdigs++) {
       (void) move_mp (y_g, z_g, gdigs);
       (void) erf_mp (p, f_g, z_g, gdigs);
       (void) sub_mp (p, f_g, f_g, x_g, gdigs);
@@ -214,7 +215,8 @@ static void mp_gamma_table (NODE_T *p, int digs)
     MP_T *hlf = nil_mp (p, gdigs);
     MP_T *fac = lit_mp (p, 1, 0, gdigs);
     SET_MP_HALF (hlf, gdigs);
-    for (int k = 1; k < b; k++) {
+    int k;
+    for (k = 1; k < b; k++) {
       set_mp (dk, k, 0, gdigs);
       (void) sub_mp (p, ak, db, dk, gdigs);
       (void) sub_mp (p, dz, dk, hlf, gdigs);
@@ -239,7 +241,8 @@ static MP_T *mp_spouge_sum (NODE_T *p, MP_T *sum, MP_T *x_g, int gdigs)
   MP_T *dz = nil_mp (p, gdigs);
   (void) move_mp (sum, A68_MP (mp_gam_ck)[0], gdigs);
 // Sum small to large to preserve precision.
-  for (int k = a - 1; k > 0; k--) {
+  int k;
+  for (k = a - 1; k > 0; k--) {
     set_mp (da, k, 0, gdigs);
     (void) add_mp (p, dz, x_g, da, gdigs);
     (void) div_mp (p, dz, A68_MP (mp_gam_ck)[k], dz, gdigs);

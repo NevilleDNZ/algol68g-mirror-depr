@@ -446,7 +446,7 @@ void genie (void *compile_lib)
   }
   io_close_tty_line ();
   if (OPTION_TRACE (&A68_JOB)) {
-    ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "genie: frame stack " A68_LU "k, expression stack " A68_LU "k, heap " A68_LU "k, handles " A68_LU "k\n", A68 (frame_stack_size) / KILOBYTE, A68 (expr_stack_size) / KILOBYTE, A68 (heap_size) / KILOBYTE, A68 (handle_pool_size) / KILOBYTE) >= 0);
+    ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "genie: frame stack %uk, expression stack %uk, heap %uk, handles %uk\n", A68 (frame_stack_size) / KILOBYTE, A68 (expr_stack_size) / KILOBYTE, A68 (heap_size) / KILOBYTE, A68 (handle_pool_size) / KILOBYTE) >= 0);
     WRITE (STDOUT_FILENO, A68 (output_line));
   }
   install_signal_handlers ();

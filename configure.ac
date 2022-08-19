@@ -1,5 +1,5 @@
 #
-# Algol 68 Genie 3.0.6, configure.ac
+# Algol 68 Genie 3.0.7, configure.ac
 #
 # To configure a68g for the widest range of platforms, issue: 
 #   ./configure --enable-generic
@@ -8,7 +8,7 @@
 #   sudo apt install libncurses-dev libreadline-dev libmpfr libgmp libgsl-dev r-mathlib libplot-dev libghc-postgresql-libpq-dev
 #
 
-AC_INIT([algol68g], [3.0.6], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [3.0.7], [Marcel van der Veer <algol68g@xs4all.nl>])
 AC_PREREQ([2.60])
 
 # Check whether compiler supports $1 as a command-line option. 
@@ -46,7 +46,7 @@ AC_ARG_ENABLE(gsltest, [  --disable-gsltest       Do not try to compile and run 
   fi
 
   AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
-  min_gsl_version=ifelse([$1], ,0.2.5,$1)
+  min_gsl_version=ifelse([$1], ,2.5,$1)
   AC_MSG_CHECKING(for GSL version >= $min_gsl_version)
   no_gsl=""
   if test "$GSL_CONFIG" = "no" ; then
@@ -194,6 +194,7 @@ AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
+bsd_include_dirs=no
 enable_haiku=no
 AC_MSG_CHECKING([platform])
 case "$host" in
@@ -201,10 +202,12 @@ case "$host" in
 # Linux.
 #
 # aarch64*-*-linux* is for RaspberryPi-4 on ARM-64 - otherwise http/tcp isnt found
-*86-*-gnu | *86_64-*-gnu | *86-*-linux* | *86_64-*-linux* | arm*-*-linux* | aarch*-*-linux*) 
-  AC_DEFINE(BUILD_LINUX, 1, [Define this if LINUX was detected]) 
-  AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant])
-  AC_MSG_RESULT([linux])
+# Generic *-*-linux-gnu catches for instance s390x-ibm-linux-gnu
+#
+*86-*-gnu | *86_64-*-gnu | *86-*-linux* | *86_64-*-linux* | arm*-*-linux* | aarch*-*-linux* | *-*-linux-gnu)
+   AC_DEFINE(BUILD_LINUX, 1, [Define this if LINUX was detected]) 
+   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant])
+   AC_MSG_RESULT([linux])
   ;;
 #
 # Cygwin.
@@ -245,9 +248,9 @@ case "$host" in
 #
 *86-*-openbsd* | *86_64-*-openbsd*) 
   AC_DEFINE(BUILD_BSD, 1, [Define this if OpenBSD was detected]) 
-  AC_MSG_WARN([configuring interpreter-only])
+  AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant]) 
+  bsd_include_dirs=yes
   AC_MSG_RESULT([openbsd])
-  enable_compiler=no
   ;;
 #
 # Haiku.
@@ -318,7 +321,15 @@ if test "x$GCC" != "xyes"; then
   AC_MSG_WARN([gcc is the preferred C compiler; configuring interpreter-only])
 else
   AC_DEFINE(HAVE_GCC, 1, [Define this if GCC was detected]) 
-  CFLAGS="-g -O2 -Wall"
+  AC_DEFINE_UNQUOTED(C_COMPILER, "$CC", [Name of C compiler detected])
+# On rhel8 "rpmbuild" sneaks in -pie and -fPIE, so a68g also needs to pass through
+# On Suse15 the header files for pgsql and R have their own pet directories, a trend?
+  COPTFLAGS="-g -O2 -Wall -I /usr/include/pgsql -I /usr/lib64/R/include"
+  LDOPTFLAG="-L /usr/lib64/R/lib"
+# from /usr/lib/rpm/redhat/macros
+  CFLAGS="${CFLAGS:-$COPTFLAGS}" ; export CFLAGS
+  LDFLAGS="${LDFLAGS:-$LDOPTFLAGS}" ; export LDFLAGS
+  A68G_AC_PROG_CC_CFLAGS([-Wall])
   A68G_AC_PROG_CC_CFLAGS([-Wshadow])
   A68G_AC_PROG_CC_CFLAGS([-Wunused-variable])
   A68G_AC_PROG_CC_CFLAGS([-Wunused-parameter])
@@ -333,12 +344,15 @@ else
   [AC_MSG_RESULT(no)
    AC_MSG_FAILURE([stop -- C compiler does not support __attribute__aligned directive])],
   [])
-  AC_MSG_CHECKING([attribute inline supported])
-  AC_RUN_IFELSE([AC_LANG_PROGRAM([static inline void skip (void) {;}], [])],
-  [AC_MSG_RESULT(yes)],
-  [AC_MSG_RESULT(no)
-   AC_MSG_FAILURE([stop -- C compiler does not support __attribute__aligned directive])],
-  [])
+  AC_C_INLINE()
+#
+# Set -I/usr/local/include for *BSD
+#
+  if test "x$bsd_include_dirs" = "xyes"; then
+    AC_DEFINE(INCLUDE_DIR, "-I/usr/local/include", [Platform dependent])
+  else
+    AC_DEFINE(INCLUDE_DIR, "", [Platform dependent])
+  fi
 #
 # Check -Wl,--export-dynamic, needed for creating shared objects.
 #
@@ -455,6 +469,15 @@ __mode_t dummy;
 #
 
 AC_MSG_NOTICE([extra include directories...])
+
+# GSL on OpenBSD
+
+if test -d /usr/local/include/gsl; then
+  CFLAGS="$CFLAGS -I/usr/local/include"
+  CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+  CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+  LDFLAGS="$LDFLAGS -L/usr/local/lib"
+fi
 
 # R on Debian
 # 
@@ -739,7 +762,7 @@ if test "x$enable_compiler" = "xyes"; then
   libdl_found=no
   AC_MSG_NOTICE([Dynamic loader via libdl...])
   AC_CHECK_HEADERS([dlfcn.h])
-  AC_CHECK_LIB([dl], [dlopen], [], enable_compiler=no)
+  AC_SEARCH_LIBS([dlopen], [dl], [], enable_compiler=no)
   if test "x$enable_compiler" = "xyes"; then
     AC_DEFINE(HAVE_DL, 1, [Define this if a good DL installation was detected]) 
     libdl_found=yes
@@ -769,6 +792,7 @@ AC_MSG_NOTICE([AC_PACKAGE_NAME-AC_PACKAGE_VERSION by Marcel van der Veer <algol6
 if test "x$a68g_exists" = "xyes"; then
   AC_MSG_NOTICE([AC_PACKAGE_NAME already exists on this system])
 fi
+AC_MSG_NOTICE([])
 if test "x$enable_quadmath" = "xyes"; then
   if test "x$enable_long_types" = "xyes"; then
     AC_MSG_NOTICE([building with hardware support for long modes])
@@ -805,5 +829,11 @@ if test "x$enable_compiler" = "xyes"; then
   AC_MSG_NOTICE([building compiler-interpreter])
 else
   AC_MSG_NOTICE([building interpreter-only])
+fi
+AC_MSG_NOTICE([])
+if test "x$GCC" = "xyes"; then
+  if test "x$enable_quadmath" = "xno"; then
+    AC_MSG_NOTICE([consider installing libquadmath-devel and reconfiguring])
+  fi
 fi
 AC_MSG_NOTICE([now type 'make' optionally followed by 'make check' or 'make install'])

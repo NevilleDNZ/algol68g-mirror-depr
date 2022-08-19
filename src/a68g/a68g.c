@@ -115,6 +115,10 @@ void state_version (FILE_T f)
 #if defined (BUILD_A68_COMPILER)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With compilation support\n") >= 0);
   WRITE (f, A68 (output_line));
+#if defined (C_COMPILER)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "     C compiler is %s\n", C_COMPILER) >= 0);
+  WRITE (f, A68 (output_line));
+#endif
 #endif
 #if defined (BUILD_PARALLEL_CLAUSE)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With parallel-clause support\n") >= 0);
@@ -443,12 +447,12 @@ static void compiler_interpreter (void)
 // undefined reference to `__stack_chk_fail_local'
 // by ld. Ubuntu is one such.
 //
-      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s -ggdb -fno-stack-protector", optimisation_option ()) >= 0);
+      ASSERT (snprintf (options, SNPRINTF_SIZE, "%s %s", optimisation_option (), A68_GCC_OPTIONS) >= 0);
 #if defined (HAVE_PIC)
       bufcat (options, " ", BUFFER_SIZE);
       bufcat (options, HAVE_PIC, BUFFER_SIZE);
 #endif
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "gcc %s -c -o \"%s\" \"%s\"", options, FILE_BINARY_NAME (&A68_JOB), FILE_OBJECT_NAME (&A68_JOB)) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s %s %s -c -o \"%s\" \"%s\"", C_COMPILER, INCLUDE_DIR, options, FILE_BINARY_NAME (&A68_JOB), FILE_OBJECT_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", FILE_LIBRARY_NAME (&A68_JOB), FILE_BINARY_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);

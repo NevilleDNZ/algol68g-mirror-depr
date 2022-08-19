@@ -1219,8 +1219,7 @@ static void constant_folder (NODE_T * p, FILE_T out, int phase)
       } else if (IS_PRINT (VALUE (&c))) {
         undentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "'%c'", (CHAR_T) VALUE (&c)));
       } else {
-        char buf[BUFFER_SIZE];
-        undentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "(CHAR_T) 0x%" A68_LX, VALUE (&c), buf, 16));
+        undentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "(CHAR_T) %d", VALUE (&c)));
       }
       ABEND (A68_SP > 0, ERROR_INTERNAL_CONSISTENCY, __func__);
     } else if (MOID (p) == M_BITS) {
@@ -4792,7 +4791,8 @@ void compiler (FILE_T out)
     WRITE (STDOUT_FILENO, A68 (output_line));
   }
 //
-  for (int k = 0; k < A68_OPT (unic_pointer); k++) {
+  int k;
+  for (k = 0; k < A68_OPT (unic_pointer); k++) {
     a68_free (UNIC_NAME (k));
   }
 }

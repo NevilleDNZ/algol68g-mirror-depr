@@ -837,7 +837,7 @@ void genie_gamma_inc_gf_mp (NODE_T *p)
 
 void genie_gamma_inc_h_mp (NODE_T *p)
 {
-#if defined (HAVE_GNU_MPFR)
+#if defined (HAVE_GNU_MPFR) && (A68_LEVEL >= 3)
   genie_gamma_inc_mpfr (p);
 #else
   genie_gamma_inc_f_mp (p);

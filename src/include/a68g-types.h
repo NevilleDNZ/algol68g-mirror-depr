@@ -478,8 +478,10 @@ struct A68_FILE
   }
   device;
 #if defined (HAVE_POSTGRESQL)
+# if ! defined (A68_OPTIMISE)
   PGconn *connection;
   PGresult *result;
+# endif
 #endif
 };
 

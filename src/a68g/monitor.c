@@ -1566,7 +1566,7 @@ void show_heap (FILE_T f, NODE_T * p, A68_HANDLE * z, int top, int n)
 {
   int k = 0, m = n, sum = 0;
   (void) p;
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "size=" A68_LU " available=" A68_LU " garbage collections=%d", A68 (heap_size), heap_available (), A68_GC (sweeps)) >= 0);
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "size=%u available=%d garbage collections=" A68_LD, A68 (heap_size), heap_available (), A68_GC (sweeps)) >= 0);
   WRITELN (f, A68 (output_line));
   for (; z != NO_HANDLE; FORWARD (z), k++) {
     if (n > 0 && sum <= top) {
@@ -2044,9 +2044,9 @@ static BOOL_T single_stepper (NODE_T * p, char *cmd)
     WRITELN (STDOUT_FILENO, A68 (output_line));
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Expression stack pointer=" A68_LU " available=" A68_LU, A68_SP, (UNSIGNED_T) (A68 (expr_stack_size) - A68_SP)) >= 0);
     WRITELN (STDOUT_FILENO, A68 (output_line));
-    ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Heap size=" A68_LU " available=" A68_LU, A68 (heap_size), heap_available ()) >= 0);
+    ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Heap size=%u available=%u", A68 (heap_size), heap_available ()) >= 0);
     WRITELN (STDOUT_FILENO, A68 (output_line));
-    ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Garbage collections=%d", A68_GC (sweeps)) >= 0);
+    ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Garbage collections=" A68_LD, A68_GC (sweeps)) >= 0);
     WRITELN (STDOUT_FILENO, A68 (output_line));
     return A68_FALSE;
   } else if (match_string (cmd, "XRef", NULL_CHAR)) {

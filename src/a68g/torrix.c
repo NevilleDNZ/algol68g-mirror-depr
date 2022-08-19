@@ -384,7 +384,7 @@ static void push_matrix_complex (NODE_T * p, gsl_matrix_complex * a)
 
 //! @brief Generically perform operation and assign result (+:=, -:=, ...) .
 
-static void op_ab (NODE_T * p, MOID_T * m, MOID_T * n, GPROC * op)
+static void op_ab_torrix (NODE_T * p, MOID_T * m, MOID_T * n, GPROC * op)
 {
   ADDR_T parm_size = SIZE (m) + SIZE (n);
   A68_REF dst, src, *save = (A68_REF *) STACK_OFFSET (-parm_size);
@@ -395,7 +395,11 @@ static void op_ab (NODE_T * p, MOID_T * m, MOID_T * n, GPROC * op)
   STATUS (&src) = (STATUS_MASK_T) (INIT_MASK | IN_STACK_MASK);
   OFFSET (&src) = A68_SP - parm_size;
   (*op) (p);
-  genie_store (p, n, &dst, &src);
+  if (IS_REF (m)) {
+    genie_store (p, SUB (m), &dst, &src);
+  } else {
+    ABEND (A68_TRUE, ERROR_INTERNAL_CONSISTENCY, __func__);
+  }
   *save = dst;
 }
 
@@ -488,14 +492,16 @@ void genie_matrix_minus (NODE_T * p)
 void genie_matrix_transpose (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  gsl_matrix *a;
+  gsl_matrix *a, *t;
   int rc;
   error_node = p;
   a = pop_matrix (p, A68_TRUE);
-  rc = gsl_matrix_transpose (a);
+  t = gsl_matrix_alloc (SIZE2(a), SIZE1(a));
+  rc = gsl_matrix_transpose_memcpy (t, a);
   torrix_test_error (rc);
-  push_matrix (p, a);
+  push_matrix (p, t);
   gsl_matrix_free (a);
+  gsl_matrix_free (t);
   (void) gsl_set_error_handler (save_handler);
 }
 
@@ -504,14 +510,16 @@ void genie_matrix_transpose (NODE_T * p)
 void genie_matrix_complex_transpose (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  gsl_matrix_complex *a;
+  gsl_matrix_complex *a, *t;
   int rc;
   error_node = p;
   a = pop_matrix_complex (p, A68_TRUE);
-  rc = gsl_matrix_complex_transpose (a);
+  t = gsl_matrix_complex_alloc (SIZE2(a), SIZE1(a));
+  rc =  gsl_matrix_complex_transpose_memcpy (t, a);
   torrix_test_error (rc);
   push_matrix_complex (p, a);
   gsl_matrix_complex_free (a);
+  gsl_matrix_complex_free (t);
   (void) gsl_set_error_handler (save_handler);
 }
 
@@ -749,14 +757,14 @@ void genie_vector_ne (NODE_T * p)
 
 void genie_vector_plusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_REAL, M_ROW_REAL, genie_vector_add);
+  op_ab_torrix (p, M_REF_ROW_REAL, M_ROW_REAL, genie_vector_add);
 }
 
 //! @brief OP -:= = (REF [] REAL, [] REAL) REF [] REAL
 
 void genie_vector_minusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_REAL, M_ROW_REAL, genie_vector_sub);
+  op_ab_torrix (p, M_REF_ROW_REAL, M_ROW_REAL, genie_vector_sub);
 }
 
 //! @brief OP + = ([, ] REAL, [, ] REAL) [, ] REAL
@@ -825,14 +833,14 @@ void genie_matrix_ne (NODE_T * p)
 
 void genie_matrix_plusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_REAL, M_ROW_ROW_REAL, genie_matrix_add);
+  op_ab_torrix (p, M_REF_ROW_ROW_REAL, M_ROW_ROW_REAL, genie_matrix_add);
 }
 
 //! @brief OP -:= = (REF [, ] REAL, [, ] REAL) [, ] REAL
 
 void genie_matrix_minusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_REAL, M_ROW_ROW_REAL, genie_matrix_sub);
+  op_ab_torrix (p, M_REF_ROW_ROW_REAL, M_ROW_ROW_REAL, genie_matrix_sub);
 }
 
 //! @brief OP + = ([] COMPLEX, [] COMPLEX) [] COMPLEX
@@ -907,14 +915,14 @@ void genie_vector_complex_ne (NODE_T * p)
 
 void genie_vector_complex_plusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_COMPLEX, M_ROW_COMPLEX, genie_vector_complex_add);
+  op_ab_torrix (p, M_REF_ROW_COMPLEX, M_ROW_COMPLEX, genie_vector_complex_add);
 }
 
 //! @brief OP -:= = (REF [] COMPLEX, [] COMPLEX) [] COMPLEX
 
 void genie_vector_complex_minusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_COMPLEX, M_ROW_COMPLEX, genie_vector_complex_sub);
+  op_ab_torrix (p, M_REF_ROW_COMPLEX, M_ROW_COMPLEX, genie_vector_complex_sub);
 }
 
 //! @brief OP + = ([, ] COMPLEX, [, ] COMPLEX) [, ] COMPLEX
@@ -983,14 +991,14 @@ void genie_matrix_complex_ne (NODE_T * p)
 
 void genie_matrix_complex_plusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_COMPLEX, M_ROW_ROW_COMPLEX, genie_matrix_complex_add);
+  op_ab_torrix (p, M_REF_ROW_ROW_COMPLEX, M_ROW_ROW_COMPLEX, genie_matrix_complex_add);
 }
 
 //! @brief OP -:= = (REF [, ] COMPLEX, [, ] COMPLEX) [, ] COMPLEX
 
 void genie_matrix_complex_minusab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_COMPLEX, M_ROW_ROW_COMPLEX, genie_matrix_complex_sub);
+  op_ab_torrix (p, M_REF_ROW_ROW_COMPLEX, M_ROW_ROW_COMPLEX, genie_matrix_complex_sub);
 }
 
 //! @brief OP * = ([] REAL, REAL) [] REAL
@@ -1149,28 +1157,28 @@ void genie_complex_scale_matrix_complex (NODE_T * p)
 
 void genie_vector_scale_real_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_REAL, M_REAL, genie_vector_scale_real);
+  op_ab_torrix (p, M_REF_ROW_REAL, M_REAL, genie_vector_scale_real);
 }
 
 //! @brief OP *:= (REF [, ] REAL, REAL) REF [, ] REAL
 
 void genie_matrix_scale_real_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_REAL, M_REAL, genie_matrix_scale_real);
+  op_ab_torrix (p, M_REF_ROW_ROW_REAL, M_REAL, genie_matrix_scale_real);
 }
 
 //! @brief OP *:= (REF [] COMPLEX, COMPLEX) REF [] COMPLEX
 
 void genie_vector_complex_scale_complex_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_COMPLEX, M_COMPLEX, genie_vector_complex_scale_complex);
+  op_ab_torrix (p, M_REF_ROW_COMPLEX, M_COMPLEX, genie_vector_complex_scale_complex);
 }
 
 //! @brief OP *:= (REF [, ] COMPLEX, COMPLEX) REF [, ] COMPLEX
 
 void genie_matrix_complex_scale_complex_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_COMPLEX, M_COMPLEX, genie_matrix_complex_scale_complex);
+  op_ab_torrix (p, M_REF_ROW_ROW_COMPLEX, M_COMPLEX, genie_matrix_complex_scale_complex);
 }
 
 //! @brief OP / = ([] REAL, REAL) [] REAL
@@ -1271,28 +1279,28 @@ void genie_matrix_complex_div_complex (NODE_T * p)
 
 void genie_vector_div_real_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_REAL, M_REAL, genie_vector_div_real);
+  op_ab_torrix (p, M_REF_ROW_REAL, M_REAL, genie_vector_div_real);
 }
 
 //! @brief OP /:= (REF [, ] REAL, REAL) REF [, ] REAL
 
 void genie_matrix_div_real_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_REAL, M_REAL, genie_matrix_div_real);
+  op_ab_torrix (p, M_REF_ROW_ROW_REAL, M_REAL, genie_matrix_div_real);
 }
 
 //! @brief OP /:= (REF [] COMPLEX, COMPLEX) REF [] COMPLEX
 
 void genie_vector_complex_div_complex_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_COMPLEX, M_COMPLEX, genie_vector_complex_div_complex);
+  op_ab_torrix (p, M_REF_ROW_COMPLEX, M_COMPLEX, genie_vector_complex_div_complex);
 }
 
 //! @brief OP /:= (REF [, ] COMPLEX, COMPLEX) REF [, ] COMPLEX
 
 void genie_matrix_complex_div_complex_ab (NODE_T * p)
 {
-  op_ab (p, M_REF_ROW_ROW_COMPLEX, M_COMPLEX, genie_matrix_complex_div_complex);
+  op_ab_torrix (p, M_REF_ROW_ROW_COMPLEX, M_COMPLEX, genie_matrix_complex_div_complex);
 }
 
 //! @brief OP * = ([] REAL, [] REAL) REAL

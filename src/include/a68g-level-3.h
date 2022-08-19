@@ -49,15 +49,9 @@ typedef A68_LONG_REAL A68_LONG_COMPLEX[2];
 #define a68_strtoi strtoll
 #define a68_strtou strtoull
 
-#if defined (BUILD_WIN32)
-#  define A68_LD "%I64d"
-#  define A68_LU "%I64u"
-#  define A68_LX "%I64x"
-#else
-#  define A68_LD "%lld"
-#  define A68_LU "%llu"
-#  define A68_LX "%llx"
-#endif
+#define A68_LD "%lld"
+#define A68_LU "%llu"
+#define A68_LX "%llx"
 
 #define A68_FRAME_ALIGN(s) (A68_ALIGN(s))
 #define SIGNQ(n) ((n) == 0.0q ? 0 : ((n) > 0 ? 1 : -1))

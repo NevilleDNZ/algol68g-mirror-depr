@@ -56,6 +56,16 @@
 #define PRETTY_EXTENSION ".f"
 #define SCRIPT_EXTENSION ""
 
+// Static options for GCC.
+// 
+// -fno-stack-protector is needed for Ubuntu etcetera that enforce -fstack-protector-strong 
+// which may give an undefined reference to `__stack_chk_fail_local'.
+// 
+// -Wno-parentheses-equality is needed for OpenBSD.  
+//
+
+#define A68_GCC_OPTIONS "-DA68_OPTIMISE -ggdb -fno-stack-protector -Wno-parentheses-equality"
+
 // Formats
 #define DIGIT_BLANK ((unsigned) 0x2)
 #define DIGIT_NORMAL ((unsigned) 0x1)

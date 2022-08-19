@@ -1,6 +1,7 @@
-Version 3.0.1-6, January/March 2022
-* Several bug fixes, reported for 3.0.0.
-* Updates a68g.exe to GSL 2.7.1 and R mathlib 4.1.2.
+Versions 3.0.1-7, January/August 2022
+* Fix several bugs reported for 3.0.0-6.
+* Apply several OS dependent patches reported for 3.0.0-6.
+* Update a68g.exe to GSL 2.7.1 and R mathlib 4.1.2.
 
 Version 3.0.0, December 2021
 * On platforms that support them: 64 bit INT/BITS and 128-bit LONG INT, LONG BITS and LONG REAL.

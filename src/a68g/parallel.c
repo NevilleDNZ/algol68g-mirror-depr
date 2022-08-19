@@ -519,7 +519,7 @@ void genie_down_sema (NODE_T * p)
         UNLOCK_THREAD;
 // Waiting a bit relaxes overhead.
         int rc = usleep (10);
-        ASSERT (rc == 0 || rc == EINTR);
+        ASSERT (rc == 0 || errno == EINTR);
         LOCK_THREAD;
 // Garbage may be collected, so recalculate 'k'.
         k = DEREF (A68_INT, &s);

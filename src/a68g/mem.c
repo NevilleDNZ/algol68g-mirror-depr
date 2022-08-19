@@ -71,6 +71,8 @@ void *a68_alloc (size_t s, const char *f, int line)
 #if defined (BUILD_WIN32)
     (void) bytes;
     p = _aligned_malloc (s, size);
+#elif defined (__APPLE__)
+    p = malloc(size);
 #else
     if (bytes != 0) {
       words++;
@@ -79,7 +81,7 @@ void *a68_alloc (size_t s, const char *f, int line)
 #endif
     if (p == (void *) NULL || errno != 0) {
       static char msg[BUFFER_SIZE];
-      snprintf (msg, SNPRINTF_SIZE, "cannot allocate %u=%u*%u bytes; called from function %s, line %d", s, words, size, f, line);
+      snprintf (msg, SNPRINTF_SIZE, "cannot allocate %lu=%u*%u bytes; called from function %s, line %d", s, words, size, f, line);
       ABEND (A68_TRUE, ERROR_ALLOCATION, msg);
     }
     UNLINK_ERRNO;

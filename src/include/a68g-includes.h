@@ -83,7 +83,9 @@
 #endif
 
 #if defined (HAVE_LIBPQ_FE_H)
-#include <libpq-fe.h>
+# if ! defined (A68_OPTIMISE)
+#  include <libpq-fe.h>
+# endif
 #endif
 
 #if defined (HAVE_MATH_H)

@@ -22,8 +22,6 @@
 #if !defined __A68G_LIB_H__
 #define __A68G_LIB_H__
 
-#define snprintf a68_snprintf
-
 #define MATH_EPSILON DBL_EPSILON
 
 #define A68_INVALID(c)\

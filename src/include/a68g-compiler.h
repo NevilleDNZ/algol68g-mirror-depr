@@ -23,7 +23,7 @@
 #define __A68G_COMPILER_H__
 
 // TRANSLATION tabulates translations for genie actions.
-// This tells what to call for an A68 action.           .
+// This tells what to call for an A68 action.
 
 typedef int LEVEL_T;
 

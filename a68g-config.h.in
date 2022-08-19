@@ -12,6 +12,9 @@
 /* Define this if a good pthread installation was detected */
 #undef BUILD_PARALLEL_CLAUSE
 
+/* Name of C compiler detected */
+#undef C_COMPILER
+
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 #undef GWINSZ_IN_SYS_IOCTL
 
@@ -138,9 +141,6 @@
 
 /* Define to 1 if you have the `isnan' function. */
 #undef HAVE_ISNAN
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-#undef HAVE_LIBDL
 
 /* Define to 1 if you have the `gmp' library (-lgmp). */
 #undef HAVE_LIBGMP
@@ -375,6 +375,9 @@
 /* Define this if /usr/pkg/pgsql/include was detected */
 #undef HAVE_USR_PKG_PGSQL_INCLUDE
 
+/* Platform dependent */
+#undef INCLUDE_DIR
+
 /* Define to 1 if assertions should be disabled. */
 #undef NDEBUG
 
@@ -418,6 +421,12 @@
 
 /* Define this if we have no __pid_t */
 #undef a68_pid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t

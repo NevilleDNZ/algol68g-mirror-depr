@@ -32,7 +32,7 @@
 
 // Build switches depending on platform.
 
-#if (defined (BUILD_LINUX) && defined (HAVE_GCC) && defined (HAVE_DL))
+#if ((defined (BUILD_LINUX) || defined (BUILD_BSD)) && defined (HAVE_GCC) && defined (HAVE_DL))
 #  define BUILD_A68_COMPILER
 #else
 // Untested, so disabled.

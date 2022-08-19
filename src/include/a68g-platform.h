@@ -24,8 +24,6 @@
 
 #if defined (BUILD_WIN32)
 #include "a68g-config.win32.h"
-#elif defined (BUILD_BSD)
-#include "a68g-config.bsd.h"
 #else
 #include "a68g-config.h"
 #endif

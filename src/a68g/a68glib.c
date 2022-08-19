@@ -36,19 +36,6 @@
 // Based on code from the GCC libiberty library which is covered by 
 // the GNU GPL.
 
-// Some pre-C99 system libraries do not implement snprintf correctly so one 
-// cannot rely on the return value from a system version of this function.
-
-int snprintf (char *s, size_t n, const char *format, ...)
-{
-  va_list ap;
-  va_start (ap, format);
-  int vsnprintf (char *, size_t, const char *, va_list);
-  int result = vsnprintf (s, n, format, ap);
-  va_end (ap);
-  return result;
-}
-
 // @brief own memmove
 
 void *a68_memmove (void *dest, void *src, size_t len)
