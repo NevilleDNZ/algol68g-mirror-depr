@@ -1,23 +1,27 @@
-//! @file plotutils.c
+//! @file rts-plotutils.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Gnuplot's libplot interface. 
 
 // This file contains the Algol68G interface to libplot. Note that Algol68G is not
 // a binding for libplot. When GNU plotutils are not installed then the routines in
@@ -878,9 +882,9 @@ plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_INVALID_PARAMETER, "X plotter missing", "");
     exit_genie (p, A68_RUNTIME_ERROR);
 #else
-/*-----------------------------------------+
-| Supported plotter type - X Window System |
-+-----------------------------------------*/
+//
+// Supported plotter type - X Window System
+//
     char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 // Establish page size.
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
@@ -930,9 +934,9 @@ plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     return PLOTTER (&DEVICE (f));
 #endif
   } else if (!strcmp (device_type, "gif")) {
-/*------------------------------------+
-| Supported plotter type - pseudo GIF |
-+------------------------------------*/
+//
+// Supported plotter type - pseudo GIF
+//
     char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 // Establish page size.
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
@@ -991,9 +995,9 @@ plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     Y_COORD (&DEVICE (f)) = 0;
     return PLOTTER (&DEVICE (f));
   } else if (!strcmp (device_type, "pnm")) {
-/*-----------------------------------------+
-| Supported plotter type - Portable aNyMap |
-+-----------------------------------------*/
+//
+// Supported plotter type - Portable aNyMap
+//
     char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 // Establish page size.
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
@@ -1056,9 +1060,9 @@ plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_INVALID_PARAMETER, "PNG plotter missing", "");
     exit_genie (p, A68_RUNTIME_ERROR);
 #else
-/*-----------------------------+
-| Supported plotter type - PNG |
-+-----------------------------*/
+//
+// Supported plotter type - PNG
+//
     char *z = DEREF (char, &A68_PAGE_SIZE (&DEVICE (f))), size[BUFFER_SIZE];
 // Establish page size.
     if (!scan_int (&z, &(WINDOW_X_SIZE (&DEVICE (f))))) {
@@ -1122,9 +1126,9 @@ plPlotter *set_up_device (NODE_T * p, A68_FILE * f)
     diagnostic (A68_RUNTIME_ERROR, p, ERROR_INVALID_PARAMETER, "postscript plotter missing", "");
     exit_genie (p, A68_RUNTIME_ERROR);
 #else
-/*------------------------------------+
-| Supported plotter type - Postscript |
-+------------------------------------*/
+//
+// Supported plotter type - Postscript
+//
 // Open the output file for drawing.
     CHECK_REF (p, ref_filename, M_ROWS);
     filename = DEREF (char, &ref_filename);

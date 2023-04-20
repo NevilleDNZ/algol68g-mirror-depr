@@ -1,23 +1,27 @@
 //! @file genie.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Interpreter driver.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -250,7 +254,7 @@ int mode_attribute (MOID_T * p)
 
 //! @brief Perform tasks before interpretation.
 
-void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
+void genie_preprocess (NODE_T * p, int *max_lev, void *compile_plugin)
 {
 #if defined (BUILD_A68_COMPILER)
   static char *last_compile_name = NO_TEXT;
@@ -269,14 +273,14 @@ void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
       UNIT (&GPROP (p)) = genie_unit;
       SOURCE (&GPROP (p)) = p;
 #if defined (BUILD_A68_COMPILER)
-      if (OPTION_OPT_LEVEL (&A68_JOB) > 0 && COMPILE_NAME (GINFO (p)) != NO_TEXT && compile_lib != NULL) {
+      if (OPTION_OPT_LEVEL (&A68_JOB) > 0 && COMPILE_NAME (GINFO (p)) != NO_TEXT && compile_plugin != NULL) {
         if (COMPILE_NAME (GINFO (p)) == last_compile_name) {
 // We copy.
           UNIT (&GPROP (p)) = last_compile_unit;
         } else {
 // We look up.
 // Next line may provoke a warning even with this POSIX workaround. Tant pis.
-          *(void **) &(UNIT (&GPROP (p))) = dlsym (compile_lib, COMPILE_NAME (GINFO (p)));
+          *(void **) &(UNIT (&GPROP (p))) = dlsym (compile_plugin, COMPILE_NAME (GINFO (p)));
           ABEND (UNIT (&GPROP (p)) == NULL, ERROR_INTERNAL_CONSISTENCY, dlerror ());
           last_compile_name = COMPILE_NAME (GINFO (p));
           last_compile_unit = UNIT (&GPROP (p));
@@ -331,7 +335,7 @@ void genie_preprocess (NODE_T * p, int *max_lev, void *compile_lib)
       if (GINFO (p) != NO_GINFO) {
         GPARENT (SUB (p)) = p;
       }
-      genie_preprocess (SUB (p), max_lev, compile_lib);
+      genie_preprocess (SUB (p), max_lev, compile_plugin);
     }
   }
 }
@@ -352,7 +356,7 @@ void get_global_level (NODE_T * p)
 
 //! @brief Driver for the interpreter.
 
-void genie (void *compile_lib)
+void genie (void *compile_plugin)
 {
   MOID_T *m;
 // Fill in final info for modes.
@@ -364,7 +368,7 @@ void genie (void *compile_lib)
 // Preprocessing.
   A68 (max_lex_lvl) = 0;
 //  genie_lex_levels (TOP_NODE (&A68_JOB), 1);.
-  genie_preprocess (TOP_NODE (&A68_JOB), &A68 (max_lex_lvl), compile_lib);
+  genie_preprocess (TOP_NODE (&A68_JOB), &A68 (max_lex_lvl), compile_plugin);
   change_masks (TOP_NODE (&A68_JOB), BREAKPOINT_INTERRUPT_MASK, A68_FALSE);
   A68_MON (watchpoint_expression) = NO_TEXT;
   A68 (frame_stack_limit) = A68 (frame_end) - A68 (storage_overhead);
@@ -429,7 +433,7 @@ void genie (void *compile_lib)
     }
     if (A68 (ret_code) == A68_RERUN) {
       diagnostics_to_terminal (TOP_LINE (&A68_JOB), A68_RUNTIME_ERROR);
-      genie (compile_lib);
+      genie (compile_plugin);
     } else if (A68 (ret_code) == A68_RUNTIME_ERROR) {
       if (OPTION_BACKTRACE (&A68_JOB)) {
         int printed = 0;
@@ -1619,7 +1623,7 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
     PUSH_REF (p, empty_string (p));
   } else if (u == M_LONG_INT) {
 #if (A68_LEVEL >= 3)
-    QUAD_WORD_T w;
+    DOUBLE_NUM_T w;
     set_lw (w, 1);
     PUSH_VALUE (p, w, A68_LONG_INT);    // Because users write [~] INT !
 #else
@@ -1627,13 +1631,13 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
 #endif
   } else if (u == M_LONG_REAL) {
 #if (A68_LEVEL >= 3)
-    genie_next_random_real_16 (p);
+    genie_next_random_double_real (p);
 #else
     (void) nil_mp (p, DIGITS (u));
 #endif
   } else if (u == M_LONG_BITS) {
 #if (A68_LEVEL >= 3)
-    QUAD_WORD_T w;
+    DOUBLE_NUM_T w;
     set_lw (w, 1);
     PUSH_VALUE (p, w, A68_LONG_BITS);   // Because users write [~] INT !
 #else
@@ -1647,8 +1651,8 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
     (void) nil_mp (p, DIGITS (u));
   } else if (u == M_LONG_COMPLEX) {
 #if (A68_LEVEL >= 3)
-    genie_next_random_real_16 (p);
-    genie_next_random_real_16 (p);
+    genie_next_random_double_real (p);
+    genie_next_random_double_real (p);
 #else
     (void) nil_mp (p, DIGITSC (u));
     (void) nil_mp (p, DIGITSC (u));

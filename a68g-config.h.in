@@ -3,6 +3,9 @@
 /* Define this if OpenBSD was detected */
 #undef BUILD_BSD
 
+/* Define this if CYGWIN was detected */
+#undef BUILD_CYGWIN
+
 /* Define this if HAIKU was detected */
 #undef BUILD_HAIKU
 
@@ -23,6 +26,9 @@
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the `basename' function. */
+#undef HAVE_BASENAME
 
 /* Define to 1 if you have the <complex.h> header file. */
 #undef HAVE_COMPLEX_H
@@ -97,6 +103,9 @@
 /* Define to 1 if you have the <gsl/gsl_complex_math.h> header file. */
 #undef HAVE_GSL_GSL_COMPLEX_MATH_H
 
+/* Define to 1 if you have the <gsl/gsl_eigen.h> header file. */
+#undef HAVE_GSL_GSL_EIGEN_H
+
 /* Define to 1 if you have the <gsl/gsl_errno.h> header file. */
 #undef HAVE_GSL_GSL_ERRNO_H
 
@@ -121,6 +130,9 @@
 /* Define to 1 if you have the <gsl/gsl_sf.h> header file. */
 #undef HAVE_GSL_GSL_SF_H
 
+/* Define to 1 if you have the <gsl/gsl_statistics.h> header file. */
+#undef HAVE_GSL_GSL_STATISTICS_H
+
 /* Define to 1 if you have the <gsl/gsl_vector.h> header file. */
 #undef HAVE_GSL_GSL_VECTOR_H
 
@@ -141,6 +153,9 @@
 
 /* Define if isnan() is available */
 #undef HAVE_ISNAN
+
+/* Define to 1 if you have the <libgen.h> header file. */
+#undef HAVE_LIBGEN_H
 
 /* Define to 1 if you have the `gmp' library (-lgmp). */
 #undef HAVE_LIBGMP

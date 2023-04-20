@@ -1,23 +1,27 @@
-//! @file script.c
+//! @file plugin-script.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Plugin script builder routines.
 
 #include "a68g.h"
 #include "a68g-prelude.h"
@@ -35,7 +39,8 @@ void build_script (void)
   int ret;
   FILE_T script, source;
   LINE_T *sl;
-  char cmd[BUFFER_SIZE], *strop;
+  BUFFER cmd;
+  char *strop;
 #if !defined (BUILD_A68_COMPILER)
   return;
 #endif
@@ -54,11 +59,11 @@ void build_script (void)
     WRITE (source, cmd);
   }
   ASSERT (close (source) == 0);
-// Compress source and library.
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cp %s %s.%s", FILE_LIBRARY_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
+// Compress source and dynamic library.
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "cp %s %s.%s", FILE_PLUGIN_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_PLUGIN_NAME (&A68_JOB)) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "tar czf %s.%s.tgz %s.%s %s.%s", HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "tar czf %s.%s.tgz %s.%s %s.%s", HIDDEN_TEMP_FILE_NAME, FILE_GENERIC_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&A68_JOB), HIDDEN_TEMP_FILE_NAME, FILE_PLUGIN_NAME (&A68_JOB)) >= 0);
   ret = system (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
 // Compose script.
@@ -90,7 +95,7 @@ void build_script (void)
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SOURCE_NAME (&A68_JOB)) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
-  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
+  ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_PLUGIN_NAME (&A68_JOB)) >= 0);
   ret = remove (cmd);
   ABEND (ret != 0, ERROR_ACTION, cmd);
   ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s.%s", HIDDEN_TEMP_FILE_NAME, FILE_SCRIPT_NAME (&A68_JOB)) >= 0);
@@ -102,9 +107,7 @@ void build_script (void)
 
 void load_script (void)
 {
-  int k;
-  FILE_T script;
-  char cmd[BUFFER_SIZE], ch;
+  int k; FILE_T script; BUFFER cmd; char ch;
 #if !defined (BUILD_A68_COMPILER)
   return;
 #endif

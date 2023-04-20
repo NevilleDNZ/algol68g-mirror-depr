@@ -1,26 +1,30 @@
 //! @file mp-gamic.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! [LONG] LONG REAL generalised incomplete gamma function.
 
 // Generalised incomplete gamma code in this file was downloaded from 
-//   http://helios.mi.parisdescartes.fr/~rabergel/
+//   [http://helios.mi.parisdescartes.fr/~rabergel/]
 // and adapted for Algol 68 Genie.
 //
 // Reference:
@@ -51,7 +55,7 @@
 // details.
 //
 // You should have received a copy of the GNU General Public License along with
-// this program.  If not, see <http://www.gnu.org/licenses/>.
+// this program.  If not, see [http://www.gnu.org/licenses/].
 
 // References
 //
@@ -63,7 +67,7 @@
 //
 //   F. W. J. Olver, D. W. Lozier, R. F. Boisvert, and C. W. Clark
 //   (Eds.). 2010. NIST Handbook of Mathematical Functions. Cambridge University
-//   Press. (see online version at [[http://dlmf.nist.gov/]])
+//   Press. (see online version at [http://dlmf.nist.gov/])
 //
 //   W. H. Press, S. A. Teukolsky, W. T. Vetterling, and
 //   B. P. Flannery. 1992. Numerical recipes in C: the art of scientific
@@ -437,7 +441,6 @@ static inline int IX (int n, int digs) {
 void mp_romberg_iterations 
   (NODE_T *q, MP_T *R, MP_T *sigma, INT_T n, MP_T *x, MP_T *y, MP_T *mu, MP_T *p, MP_T *h, MP_T *pow2, int digs)
 {
-  INT_T m;
   MP_T *trm = nil_mp (q, digs), *trn = nil_mp (q, digs);
   MP_T *sum = nil_mp (q, digs), *xx = nil_mp (q, digs);
   INT_T adr0_prev = ((n - 1) * n) / 2;
@@ -473,7 +476,7 @@ void mp_romberg_iterations
   (void) add_mp (q, &R[IX (adr0, digs)], trm, trn, digs);
 // REAL_T pow4 = 4;
   MP_T *pow4 = lit_mp (q, 4, 0, digs);
-  for (m = 1; m <= n; m++) {
+  for (unt m = 1; m <= n; m++) {
 //  R[adr0 + m] = (pow4 * R[adr0 + (m - 1)] - R[adr0_prev + (m - 1)]) / (pow4 - 1);
     (void) mul_mp (q, trm, pow4, &R[IX (adr0 + m - 1, digs)], digs);
     (void) sub_mp (q, trm, trm, &R[IX (adr0_prev + m - 1, digs)], digs);
@@ -837,9 +840,12 @@ void genie_gamma_inc_gf_mp (NODE_T *p)
 
 void genie_gamma_inc_h_mp (NODE_T *p)
 {
-#if defined (HAVE_GNU_MPFR) && (A68_LEVEL >= 3)
-  genie_gamma_inc_mpfr (p);
-#else
-  genie_gamma_inc_f_mp (p);
-#endif
+//
+// #if defined (HAVE_GNU_MPFR) && (A68_LEVEL >= 3)
+//   genie_gamma_inc_mpfr (p);
+// #else
+//   genie_gamma_inc_f_mp (p);
+// #endif
+//
+   genie_gamma_inc_f_mp (p);
 }

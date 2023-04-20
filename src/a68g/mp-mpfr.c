@@ -1,23 +1,27 @@
 //! @file mp-mpfr.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! [LONG] LONG REAL routines using GNU MPFR.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -80,13 +84,12 @@ void mp_to_mpfr (NODE_T * p, MP_T * z, mpfr_t * x, int digits)
 
 MP_T *mpfr_to_mp (NODE_T * p, MP_T * z, mpfr_t * x, int digits)
 {
-  int j, k, sign_x, sum, W;
   mpfr_t u, v, t;
   SET_MP_ZERO (z, digits);
   if (mpfr_zero_p (*x)) {
     return z;
   }
-  sign_x = mpfr_sgn (*x);
+  int sign_x = mpfr_sgn (*x);
   mpfr_inits2 (MPFR_MP_BITS, t, u, v, NO_MPFR);
 // Scale to [0, 0.1>.
 // a = ABS (x);
@@ -105,8 +108,7 @@ MP_T *mpfr_to_mp (NODE_T * p, MP_T * z, mpfr_t * x, int digits)
     expo++;
   }
 // Transport digits of x to the mantissa of z.
-  sum = 0;
-  W = (MP_RADIX / 10);
+  INT_T sum = 0, W = (MP_RADIX / 10); int j, k;
   for (k = 0, j = 1; j <= digits && k < mpfr_digits (); k++) {
     mpfr_mul_ui (t, u, 10, DEFAULT);
     mpfr_floor (v, t);
@@ -133,7 +135,7 @@ MP_T *mpfr_to_mp (NODE_T * p, MP_T * z, mpfr_t * x, int digits)
   return z;
 }
 
-//! @brief PROC long long mpfr = (LONG LONG REAL) LONG LONG REAL
+//! @brief PROC mpfr_mp = (LONG LONG REAL) LONG LONG REAL
 
 void genie_mpfr_mp (NODE_T * p)
 {
@@ -362,7 +364,7 @@ void genie_gamma_inc_real_mpfr (NODE_T * p)
   mpfr_clears (ss, xx, NO_MPFR);
 }
 
-void genie_gamma_inc_real_16_mpfr (NODE_T * p)
+void genie_gamma_inc_double_real_mpfr (NODE_T * p)
 {
   A68_LONG_REAL x, s;
   mpfr_t xx, ss;

@@ -1,23 +1,23 @@
 //! @file a68g-prelude.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_PRELUDE_H__)
 #define __A68G_PRELUDE_H__
@@ -46,11 +46,6 @@ extern void a68_mode (int, char *, MOID_T **);
 
 #define IS_NL_FF(ch) ((ch) == NEWLINE_CHAR || (ch) == FORMFEED_CHAR)
 
-#define MANT_DIGS(n) ((int) round ((n) * log10 (2.0)))
-#define MANT_BITS(n) ((int) round ((n) / log10 (2.0)))
-#define REAL_DIGITS MANT_DIGS (REAL_MANT_DIG)
-#define DOUBLE_DIGITS MANT_DIGS (FLT128_MANT_DIG)
-
 #define A68_MONAD(n, MODE, OP)\
 void n (NODE_T * p) {\
   MODE *i;\
@@ -59,21 +54,88 @@ void n (NODE_T * p) {\
 }
 
 #if (A68_LEVEL >= 3)
-
 extern GPROC genie_lt_bits;
 extern GPROC genie_gt_bits;
-extern DOUBLE_T mp_to_real_16 (NODE_T *, MP_T *, int);
-extern MP_T *real_16_to_mp (NODE_T *, MP_T *, DOUBLE_T, int);
-
+extern DOUBLE_T mp_to_double_real (NODE_T *, MP_T *, int);
+extern MP_T *double_real_to_mp (NODE_T *, MP_T *, DOUBLE_T, int);
 #endif
 
-// Standard prelude RTS
-
-extern void skip_nl_ff (NODE_T *, int *, A68_REF);
-extern void value_sign_error (NODE_T *, MOID_T *, A68_REF);
-
-extern GPROC initialise_frame;
+extern A68_REF c_string_to_row_char (NODE_T *, char *, int);
+extern A68_REF c_to_a_string (NODE_T *, char *, int);
+extern A68_REF empty_row (NODE_T *, MOID_T *);
+extern A68_REF empty_string (NODE_T *);
+extern A68_REF genie_make_row (NODE_T *, MOID_T *, int, ADDR_T);
+extern A68_REF genie_store (NODE_T *, MOID_T *, A68_REF *, A68_REF *);
+extern A68_REF heap_generator (NODE_T *, MOID_T *, int);
+extern A68_REF tmp_to_a68_string (NODE_T *, char *);
+extern ADDR_T calculate_internal_index (A68_TUPLE *, int);
+extern BOOL_T close_device (NODE_T *, A68_FILE *);
+extern BOOL_T genie_int_case_unit (NODE_T *, int, int *);
+extern BOOL_T increment_internal_index (A68_TUPLE *, int);
+extern char *a_to_c_string (NODE_T *, char *, A68_REF);
+extern char *propagator_name (PROP_PROC * p);
+extern FILE *a68_fopen (char *, char *, char *);
 extern GPROC get_global_level;
+extern GPROC initialise_frame;
+extern int a68_finite (REAL_T);
+extern int a68_isinf (REAL_T);
+extern int a68_isnan (REAL_T);
+extern int a68_string_size (NODE_T *, A68_REF);
+extern int char_value (int);
+extern int grep_in_string (char *, char *, int *, int *);
+extern INT_T a68_round (REAL_T);
+extern PROP_T genie_generator (NODE_T *);
+extern REAL_T seconds (void);
+extern REAL_T ten_up (int);
+extern ssize_t io_read_conv (FILE_T, void *, size_t);
+extern ssize_t io_read (FILE_T, void *, size_t);
+extern ssize_t io_write_conv (FILE_T, const void *, size_t);
+extern ssize_t io_write (FILE_T, const void *, size_t);
+extern unt heap_available (void);
+extern void a68_div_complex (A68_REAL *, A68_REAL *, A68_REAL *);
+extern void a68_exit (int);
+extern void a68_exp_complex (A68_REAL *, A68_REAL *);
+extern void change_breakpoints (NODE_T *, unt, int, BOOL_T *, char *);
+extern void change_masks (NODE_T *, unt, BOOL_T);
+extern void colour_object (BYTE_T *, MOID_T *);
+extern void deltagammainc (REAL_T *, REAL_T *, REAL_T, REAL_T, REAL_T, REAL_T);
+extern void exit_genie (NODE_T *, int);
+extern void gc_heap (NODE_T *, ADDR_T);
+extern void genie_call_event_routine (NODE_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
+extern void genie_call_operator (NODE_T *, ADDR_T);
+extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
+extern void genie_check_initialisation (NODE_T *, BYTE_T *, MOID_T *);
+extern void genie_f_and_becomes (NODE_T *, MOID_T *, GPROC *);
+extern void genie_find_proc_op (NODE_T *, int *);
+extern void genie_free (NODE_T *);
+extern void genie_generator_internal (NODE_T *, MOID_T *, TAG_T *, LEAP_T, ADDR_T);
+extern void genie_generator_stowed (NODE_T *, BYTE_T *, NODE_T **, ADDR_T *);
+extern void genie_init_rng (void);
+extern void genie_preprocess (NODE_T *, int *, void *);
+extern void genie_push_undefined (NODE_T *, MOID_T *);
+extern void genie_read_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
+extern void genie_serial_clause (NODE_T *, jmp_buf *);
+extern void genie_serial_units (NODE_T *, NODE_T **, jmp_buf *, ADDR_T);
+extern void genie_string_to_value (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
+extern void genie_subscript (NODE_T *, A68_TUPLE **, INT_T *, NODE_T **);
+extern void genie_value_to_string (NODE_T *, MOID_T *, BYTE_T *, int);
+extern void genie_variable_dec (NODE_T *, NODE_T **, ADDR_T);
+extern void genie (void *);
+extern void genie_write_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
+extern void initialise_internal_index (A68_TUPLE *, int);
+extern void io_close_tty_line (void);
+extern void io_write_string (FILE_T, const char *);
+extern void monitor_error (char *, char *);
+extern void mp_strtou (NODE_T *, MP_T *, char *, MOID_T *);
+extern void print_internal_index (FILE_T, A68_TUPLE *, int);
+extern void print_item (NODE_T *, FILE_T, BYTE_T *, MOID_T *);
+extern void single_step (NODE_T *, unt);
+extern void skip_nl_ff (NODE_T *, int *, A68_REF);
+extern void stack_dump (FILE_T, ADDR_T, int, int *);
+extern void value_sign_error (NODE_T *, MOID_T *, A68_REF);
+extern void where_in_source (FILE_T, NODE_T *);
+
+// Standard prelude RTS
 
 extern GPROC genie_a68_argc;
 extern GPROC genie_a68_argv;
@@ -98,7 +160,7 @@ extern GPROC genie_add_char;
 extern GPROC genie_add_complex;
 extern GPROC genie_add_int;
 extern GPROC genie_add_long_bytes;
-extern GPROC genie_add_long_int;
+extern GPROC genie_add_mp_int;
 extern GPROC genie_add_real;
 extern GPROC genie_add_string;
 extern GPROC genie_and_bits;
@@ -203,8 +265,8 @@ extern GPROC genie_establish;
 extern GPROC genie_evaluate;
 extern GPROC genie_exec;
 extern GPROC genie_exec_sub;
-extern GPROC genie_exec_sub_pipeline;
 extern GPROC genie_exec_sub_output;
+extern GPROC genie_exec_sub_pipeline;
 extern GPROC genie_exp_char;
 extern GPROC genie_exp_complex;
 extern GPROC genie_exp_real;
@@ -252,6 +314,8 @@ extern GPROC genie_get_possible;
 extern GPROC genie_get_real;
 extern GPROC genie_get_sound;
 extern GPROC genie_get_string;
+extern GPROC genie_grep_in_string;
+extern GPROC genie_grep_in_substring;
 extern GPROC genie_gt_bytes;
 extern GPROC genie_gt_char;
 extern GPROC genie_gt_int;
@@ -333,7 +397,7 @@ extern GPROC genie_max_real;
 extern GPROC genie_min_real;
 extern GPROC genie_minusab_complex;
 extern GPROC genie_minusab_int;
-extern GPROC genie_minusab_long_int;
+extern GPROC genie_minusab_mp_int;
 extern GPROC genie_minusab_real;
 extern GPROC genie_minus_complex;
 extern GPROC genie_minus_infinity_real;
@@ -348,7 +412,7 @@ extern GPROC genie_monad_upb;
 extern GPROC genie_mp_radix;
 extern GPROC genie_mul_complex;
 extern GPROC genie_mul_int;
-extern GPROC genie_mul_long_int;
+extern GPROC genie_mul_mp_int;
 extern GPROC genie_mul_real;
 extern GPROC genie_ne_bits;
 extern GPROC genie_ne_bool;
@@ -390,7 +454,7 @@ extern GPROC genie_plusab_bytes;
 extern GPROC genie_plusab_complex;
 extern GPROC genie_plusab_int;
 extern GPROC genie_plusab_long_bytes;
-extern GPROC genie_plusab_long_int;
+extern GPROC genie_plusab_mp_int;
 extern GPROC genie_plusab_real;
 extern GPROC genie_plusab_string;
 extern GPROC genie_plusto_bytes;
@@ -443,8 +507,8 @@ extern GPROC genie_read_long_int;
 extern GPROC genie_read_long_real;
 extern GPROC genie_read_real;
 extern GPROC genie_read_string;
-extern GPROC genie_realpath;
 extern GPROC genie_real_lengths;
+extern GPROC genie_realpath;
 extern GPROC genie_real_shorths;
 extern GPROC genie_real_width;
 extern GPROC genie_re_complex;
@@ -499,8 +563,9 @@ extern GPROC genie_strerror;
 extern GPROC genie_string_in_string;
 extern GPROC genie_sub_bits;
 extern GPROC genie_sub_complex;
+extern GPROC genie_sub_in_string;
 extern GPROC genie_sub_int;
-extern GPROC genie_sub_long_int;
+extern GPROC genie_sub_mp_int;
 extern GPROC genie_sub_real;
 extern GPROC genie_system;
 extern GPROC genie_system_heap_pointer;
@@ -516,7 +581,7 @@ extern GPROC genie_tan_real;
 extern GPROC genie_term;
 extern GPROC genie_timesab_complex;
 extern GPROC genie_timesab_int;
-extern GPROC genie_timesab_long_int;
+extern GPROC genie_timesab_mp_int;
 extern GPROC genie_timesab_real;
 extern GPROC genie_timesab_string;
 extern GPROC genie_times_bits;
@@ -557,251 +622,6 @@ extern GPROC genie_up_sema;
 #if defined (BUILD_HTTP)
 extern GPROC genie_http_content;
 extern GPROC genie_tcp_request;
-#endif
-
-extern GPROC genie_grep_in_string;
-extern GPROC genie_grep_in_substring;
-extern GPROC genie_sub_in_string;
-
-// Constants ex GSL
-
-extern GPROC genie_cgs_acre;
-extern GPROC genie_cgs_angstrom;
-extern GPROC genie_cgs_astronomical_unit;
-extern GPROC genie_cgs_bar;
-extern GPROC genie_cgs_barn;
-extern GPROC genie_cgs_bohr_magneton;
-extern GPROC genie_cgs_bohr_radius;
-extern GPROC genie_cgs_boltzmann;
-extern GPROC genie_cgs_btu;
-extern GPROC genie_cgs_calorie;
-extern GPROC genie_cgs_canadian_gallon;
-extern GPROC genie_cgs_carat;
-extern GPROC genie_cgs_cup;
-extern GPROC genie_cgs_curie;
-extern GPROC genie_cgs_day;
-extern GPROC genie_cgs_dyne;
-extern GPROC genie_cgs_electron_charge;
-extern GPROC genie_cgs_electron_magnetic_moment;
-extern GPROC genie_cgs_electron_volt;
-extern GPROC genie_cgs_erg;
-extern GPROC genie_cgs_faraday;
-extern GPROC genie_cgs_fathom;
-extern GPROC genie_cgs_fluid_ounce;
-extern GPROC genie_cgs_foot;
-extern GPROC genie_cgs_footcandle;
-extern GPROC genie_cgs_footlambert;
-extern GPROC genie_cgs_gauss;
-extern GPROC genie_cgs_gram_force;
-extern GPROC genie_cgs_grav_accel;
-extern GPROC genie_cgs_gravitational_constant;
-extern GPROC genie_cgs_hectare;
-extern GPROC genie_cgs_horsepower;
-extern GPROC genie_cgs_hour;
-extern GPROC genie_cgs_inch;
-extern GPROC genie_cgs_inch_of_mercury;
-extern GPROC genie_cgs_inch_of_water;
-extern GPROC genie_cgs_joule;
-extern GPROC genie_cgs_kilometers_per_hour;
-extern GPROC genie_cgs_kilopound_force;
-extern GPROC genie_cgs_knot;
-extern GPROC genie_cgs_lambert;
-extern GPROC genie_cgs_light_year;
-extern GPROC genie_cgs_liter;
-extern GPROC genie_cgs_lumen;
-extern GPROC genie_cgs_lux;
-extern GPROC genie_cgs_mass_electron;
-extern GPROC genie_cgs_mass_muon;
-extern GPROC genie_cgs_mass_neutron;
-extern GPROC genie_cgs_mass_proton;
-extern GPROC genie_cgs_meter_of_mercury;
-extern GPROC genie_cgs_metric_ton;
-extern GPROC genie_cgs_micron;
-extern GPROC genie_cgs_mil;
-extern GPROC genie_cgs_mile;
-extern GPROC genie_cgs_miles_per_hour;
-extern GPROC genie_cgs_minute;
-extern GPROC genie_cgs_molar_gas;
-extern GPROC genie_cgs_nautical_mile;
-extern GPROC genie_cgs_newton;
-extern GPROC genie_cgs_nuclear_magneton;
-extern GPROC genie_cgs_ounce_mass;
-extern GPROC genie_cgs_parsec;
-extern GPROC genie_cgs_phot;
-extern GPROC genie_cgs_pint;
-extern GPROC genie_cgs_planck_constant_h;
-extern GPROC genie_cgs_planck_constant_hbar;
-extern GPROC genie_cgs_point;
-extern GPROC genie_cgs_poise;
-extern GPROC genie_cgs_pound_force;
-extern GPROC genie_cgs_pound_mass;
-extern GPROC genie_cgs_poundal;
-extern GPROC genie_cgs_proton_magnetic_moment;
-extern GPROC genie_cgs_psi;
-extern GPROC genie_cgs_quart;
-extern GPROC genie_cgs_rad;
-extern GPROC genie_cgs_roentgen;
-extern GPROC genie_cgs_rydberg;
-extern GPROC genie_cgs_solar_mass;
-extern GPROC genie_cgs_speed_of_light;
-extern GPROC genie_cgs_standard_gas_volume;
-extern GPROC genie_cgs_std_atmosphere;
-extern GPROC genie_cgs_stilb;
-extern GPROC genie_cgs_stokes;
-extern GPROC genie_cgs_tablespoon;
-extern GPROC genie_cgs_teaspoon;
-extern GPROC genie_cgs_texpoint;
-extern GPROC genie_cgs_therm;
-extern GPROC genie_cgs_ton;
-extern GPROC genie_cgs_torr;
-extern GPROC genie_cgs_troy_ounce;
-extern GPROC genie_cgs_uk_gallon;
-extern GPROC genie_cgs_uk_ton;
-extern GPROC genie_cgs_unified_atomic_mass;
-extern GPROC genie_cgs_us_gallon;
-extern GPROC genie_cgs_week;
-extern GPROC genie_cgs_yard;
-extern GPROC genie_mks_acre;
-extern GPROC genie_mks_angstrom;
-extern GPROC genie_mks_astronomical_unit;
-extern GPROC genie_mks_bar;
-extern GPROC genie_mks_barn;
-extern GPROC genie_mks_bohr_magneton;
-extern GPROC genie_mks_bohr_radius;
-extern GPROC genie_mks_boltzmann;
-extern GPROC genie_mks_btu;
-extern GPROC genie_mks_calorie;
-extern GPROC genie_mks_canadian_gallon;
-extern GPROC genie_mks_carat;
-extern GPROC genie_mks_cup;
-extern GPROC genie_mks_curie;
-extern GPROC genie_mks_day;
-extern GPROC genie_mks_dyne;
-extern GPROC genie_mks_electron_charge;
-extern GPROC genie_mks_electron_magnetic_moment;
-extern GPROC genie_mks_electron_volt;
-extern GPROC genie_mks_erg;
-extern GPROC genie_mks_faraday;
-extern GPROC genie_mks_fathom;
-extern GPROC genie_mks_fluid_ounce;
-extern GPROC genie_mks_foot;
-extern GPROC genie_mks_footcandle;
-extern GPROC genie_mks_footlambert;
-extern GPROC genie_mks_gauss;
-extern GPROC genie_mks_gram_force;
-extern GPROC genie_mks_grav_accel;
-extern GPROC genie_mks_gravitational_constant;
-extern GPROC genie_mks_hectare;
-extern GPROC genie_mks_horsepower;
-extern GPROC genie_mks_hour;
-extern GPROC genie_mks_inch;
-extern GPROC genie_mks_inch_of_mercury;
-extern GPROC genie_mks_inch_of_water;
-extern GPROC genie_mks_joule;
-extern GPROC genie_mks_kilometers_per_hour;
-extern GPROC genie_mks_kilopound_force;
-extern GPROC genie_mks_knot;
-extern GPROC genie_mks_lambert;
-extern GPROC genie_mks_light_year;
-extern GPROC genie_mks_liter;
-extern GPROC genie_mks_lumen;
-extern GPROC genie_mks_lux;
-extern GPROC genie_mks_mass_electron;
-extern GPROC genie_mks_mass_muon;
-extern GPROC genie_mks_mass_neutron;
-extern GPROC genie_mks_mass_proton;
-extern GPROC genie_mks_meter_of_mercury;
-extern GPROC genie_mks_metric_ton;
-extern GPROC genie_mks_micron;
-extern GPROC genie_mks_mil;
-extern GPROC genie_mks_mile;
-extern GPROC genie_mks_miles_per_hour;
-extern GPROC genie_mks_minute;
-extern GPROC genie_mks_molar_gas;
-extern GPROC genie_mks_nautical_mile;
-extern GPROC genie_mks_newton;
-extern GPROC genie_mks_nuclear_magneton;
-extern GPROC genie_mks_ounce_mass;
-extern GPROC genie_mks_parsec;
-extern GPROC genie_mks_phot;
-extern GPROC genie_mks_pint;
-extern GPROC genie_mks_planck_constant_h;
-extern GPROC genie_mks_planck_constant_hbar;
-extern GPROC genie_mks_point;
-extern GPROC genie_mks_poise;
-extern GPROC genie_mks_pound_force;
-extern GPROC genie_mks_pound_mass;
-extern GPROC genie_mks_poundal;
-extern GPROC genie_mks_proton_magnetic_moment;
-extern GPROC genie_mks_psi;
-extern GPROC genie_mks_quart;
-extern GPROC genie_mks_rad;
-extern GPROC genie_mks_roentgen;
-extern GPROC genie_mks_rydberg;
-extern GPROC genie_mks_solar_mass;
-extern GPROC genie_mks_speed_of_light;
-extern GPROC genie_mks_standard_gas_volume;
-extern GPROC genie_mks_std_atmosphere;
-extern GPROC genie_mks_stilb;
-extern GPROC genie_mks_stokes;
-extern GPROC genie_mks_tablespoon;
-extern GPROC genie_mks_teaspoon;
-extern GPROC genie_mks_texpoint;
-extern GPROC genie_mks_therm;
-extern GPROC genie_mks_ton;
-extern GPROC genie_mks_torr;
-extern GPROC genie_mks_troy_ounce;
-extern GPROC genie_mks_uk_gallon;
-extern GPROC genie_mks_uk_ton;
-extern GPROC genie_mks_unified_atomic_mass;
-extern GPROC genie_mks_us_gallon;
-extern GPROC genie_mks_vacuum_permeability;
-extern GPROC genie_mks_vacuum_permittivity;
-extern GPROC genie_mks_week;
-extern GPROC genie_mks_yard;
-extern GPROC genie_num_atto;
-extern GPROC genie_num_avogadro;
-extern GPROC genie_num_exa;
-extern GPROC genie_num_femto;
-extern GPROC genie_num_fine_structure;
-extern GPROC genie_num_giga;
-extern GPROC genie_num_kilo;
-extern GPROC genie_num_mega;
-extern GPROC genie_num_micro;
-extern GPROC genie_num_milli;
-extern GPROC genie_num_nano;
-extern GPROC genie_num_peta;
-extern GPROC genie_num_pico;
-extern GPROC genie_num_tera;
-extern GPROC genie_num_yocto;
-extern GPROC genie_num_yotta;
-extern GPROC genie_num_zepto;
-extern GPROC genie_num_zetta;
-
-#if defined (HAVE_GNU_PLOTUTILS)
-extern GPROC genie_draw_aspect;
-extern GPROC genie_draw_atom;
-extern GPROC genie_draw_background_colour;
-extern GPROC genie_draw_background_colour_name;
-extern GPROC genie_draw_circle;
-extern GPROC genie_draw_clear;
-extern GPROC genie_draw_colour;
-extern GPROC genie_draw_colour_name;
-extern GPROC genie_draw_fillstyle;
-extern GPROC genie_draw_fontname;
-extern GPROC genie_draw_fontsize;
-extern GPROC genie_draw_get_colour_name;
-extern GPROC genie_draw_line;
-extern GPROC genie_draw_linestyle;
-extern GPROC genie_draw_linewidth;
-extern GPROC genie_draw_move;
-extern GPROC genie_draw_point;
-extern GPROC genie_draw_rect;
-extern GPROC genie_draw_show;
-extern GPROC genie_draw_star;
-extern GPROC genie_draw_text;
-extern GPROC genie_draw_textangle;
-extern GPROC genie_make_device;
 #endif
 
 #if defined (HAVE_CURSES)
@@ -861,25 +681,31 @@ extern GPROC genie_pq_tty;
 extern GPROC genie_pq_user;
 #endif
 
-extern void genie_call_event_routine (NODE_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
-extern void genie_call_operator (NODE_T *, ADDR_T);
-extern void genie_call_procedure (NODE_T *, MOID_T *, MOID_T *, MOID_T *, A68_PROCEDURE *, ADDR_T, ADDR_T);
-extern void genie_check_initialisation (NODE_T *, BYTE_T *, MOID_T *);
-extern void genie_f_and_becomes (NODE_T *, MOID_T *, GPROC *);
-extern void genie_find_proc_op (NODE_T *, int *);
-extern void genie_generator_internal (NODE_T *, MOID_T *, TAG_T *, LEAP_T, ADDR_T);
-extern void genie_init_rng (void);
-extern void genie_preprocess (NODE_T *, int *, void *);
-extern void genie_push_undefined (NODE_T *, MOID_T *);
-extern void genie_read_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
-extern void genie_serial_clause (NODE_T *, jmp_buf *);
-extern void genie_serial_units (NODE_T *, NODE_T **, jmp_buf *, ADDR_T);
-extern void genie_string_to_value (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
-extern void genie_subscript (NODE_T *, A68_TUPLE **, INT_T *, NODE_T **);
-extern void genie_value_to_string (NODE_T *, MOID_T *, BYTE_T *, int);
-extern void genie_variable_dec (NODE_T *, NODE_T **, ADDR_T);
-extern void genie (void *);
-extern void genie_write_standard (NODE_T *, MOID_T *, BYTE_T *, A68_REF);
+#if defined (HAVE_GNU_PLOTUTILS)
+extern GPROC genie_draw_aspect;
+extern GPROC genie_draw_atom;
+extern GPROC genie_draw_background_colour;
+extern GPROC genie_draw_background_colour_name;
+extern GPROC genie_draw_circle;
+extern GPROC genie_draw_clear;
+extern GPROC genie_draw_colour;
+extern GPROC genie_draw_colour_name;
+extern GPROC genie_draw_fillstyle;
+extern GPROC genie_draw_fontname;
+extern GPROC genie_draw_fontsize;
+extern GPROC genie_draw_get_colour_name;
+extern GPROC genie_draw_line;
+extern GPROC genie_draw_linestyle;
+extern GPROC genie_draw_linewidth;
+extern GPROC genie_draw_move;
+extern GPROC genie_draw_point;
+extern GPROC genie_draw_rect;
+extern GPROC genie_draw_show;
+extern GPROC genie_draw_star;
+extern GPROC genie_draw_text;
+extern GPROC genie_draw_textangle;
+extern GPROC genie_make_device;
+#endif
 
 #if defined (BUILD_PARALLEL_CLAUSE)
 extern PROP_T genie_parallel (NODE_T *);
@@ -889,59 +715,6 @@ extern void genie_set_exit_from_threads (int);
 #define SAME_THREAD(p, q) (pthread_equal((p), (q)) != 0)
 #define OTHER_THREAD(p, q) (pthread_equal((p), (q)) == 0)
 #endif
-
-extern PROP_T genie_generator (NODE_T *);
-
-extern A68_REF c_string_to_row_char (NODE_T *, char *, int);
-extern A68_REF c_to_a_string (NODE_T *, char *, int);
-extern A68_REF empty_row (NODE_T *, MOID_T *);
-extern A68_REF empty_string (NODE_T *);
-extern A68_REF genie_make_row (NODE_T *, MOID_T *, int, ADDR_T);
-extern A68_REF genie_store (NODE_T *, MOID_T *, A68_REF *, A68_REF *);
-extern A68_REF heap_generator (NODE_T *, MOID_T *, int);
-extern ADDR_T calculate_internal_index (A68_TUPLE *, int);
-extern BOOL_T close_device (NODE_T *, A68_FILE *);
-extern BOOL_T genie_int_case_unit (NODE_T *, int, int *);
-extern BOOL_T increment_internal_index (A68_TUPLE *, int);
-extern char *a_to_c_string (NODE_T *, char *, A68_REF);
-extern char *propagator_name (PROP_PROC * p);
-extern FILE *a68_fopen (char *, char *, char *);
-extern int a68_finite (REAL_T);
-extern int a68_isinf (REAL_T);
-extern int a68_isnan (REAL_T);
-extern int a68_string_size (NODE_T *, A68_REF);
-extern int char_value (int);
-extern int grep_in_string (char *, char *, int *, int *);
-extern INT_T a68_round (REAL_T);
-extern REAL_T seconds (void);
-extern REAL_T ten_up (int);
-extern void deltagammainc (REAL_T *, REAL_T *, REAL_T, REAL_T, REAL_T, REAL_T);
-extern ssize_t io_read_conv (FILE_T, void *, size_t);
-extern ssize_t io_read (FILE_T, void *, size_t);
-extern ssize_t io_write_conv (FILE_T, const void *, size_t);
-extern ssize_t io_write (FILE_T, const void *, size_t);
-extern unt heap_available (void);
-extern void a68_div_complex (A68_REAL *, A68_REAL *, A68_REAL *);
-extern void a68_exit (int);
-extern void a68_exp_complex (A68_REAL *, A68_REAL *);
-extern void change_breakpoints (NODE_T *, unt, int, BOOL_T *, char *);
-extern void change_masks (NODE_T *, unt, BOOL_T);
-extern void colour_object (BYTE_T *, MOID_T *);
-extern void exit_genie (NODE_T *, int);
-extern void gc_heap (NODE_T *, ADDR_T);
-extern void genie_free (NODE_T *);
-extern void genie_generator_stowed (NODE_T *, BYTE_T *, NODE_T **, ADDR_T *);
-extern void initialise_internal_index (A68_TUPLE *, int);
-extern void io_close_tty_line (void);
-extern void io_write_string (FILE_T, const char *);
-extern void monitor_error (char *, char *);
-extern void mp_strtou (NODE_T *, MP_T *, char *, MOID_T *);
-extern void print_internal_index (FILE_T, A68_TUPLE *, int);
-extern void print_item (NODE_T *, FILE_T, BYTE_T *, MOID_T *);
-extern void single_step (NODE_T *, unt);
-extern void stack_dump (FILE_T, ADDR_T, int, int *);
-extern void where_in_source (FILE_T, NODE_T *);
-extern A68_REF tmp_to_a68_string (NODE_T *, char *);
 
 #if defined (BUILD_LINUX)
 extern GPROC genie_sigsegv;

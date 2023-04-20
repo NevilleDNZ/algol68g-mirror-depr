@@ -1,25 +1,28 @@
 //! @file monitor.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
-// Gdb-style monitor for the interpreter.
+//! @section Synopsis
+//!
+//! GDB-style monitor for the interpreter.
+
 // This is a basic monitor for Algol68G. It activates when the interpreter
 // receives SIGINT (CTRL-C, for instance) or when PROC VOID break, debug or
 // evaluate is called, or when a runtime error occurs and --debug is selected.
@@ -88,15 +91,13 @@ BOOL_T check_initialisation (NODE_T *, BYTE_T *, MOID_T *, BOOL_T *);
 
 BOOL_T confirm_exit (void)
 {
-  char *cmd;
-  int k;
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Terminate %s (yes|no): ", A68 (a68_cmd_name)) >= 0);
   WRITELN (STDOUT_FILENO, A68 (output_line));
-  cmd = read_string_from_tty (NULL);
+  char *cmd = read_string_from_tty (NULL);
   if (TO_UCHAR (cmd[0]) == TO_UCHAR (EOF_CHAR)) {
     return confirm_exit ();
   }
-  for (k = 0; cmd[k] != NULL_CHAR; k++) {
+  for (int k = 0; cmd[k] != NULL_CHAR; k++) {
     cmd[k] = (char) TO_LOWER (cmd[k]);
   }
   if (strcmp (cmd, "y") == 0) {
@@ -764,7 +765,7 @@ void parse (FILE_T f, NODE_T * p, int depth)
         int args;
         NODE_T q;
         TAG_T *opt;
-        char name[BUFFER_SIZE];
+        BUFFER name;
         bufcpy (name, A68_MON (symbol), BUFFER_SIZE);
         args = A68_MON (_m_sp) - 1;
         ADDR_T top_sp = A68_SP - SIZE (A68_MON (_m_stack)[args]);
@@ -785,7 +786,7 @@ void parse (FILE_T f, NODE_T * p, int depth)
     int args;
     NODE_T q;
     TAG_T *opt;
-    char name[BUFFER_SIZE];
+    BUFFER name;
     bufcpy (name, A68_MON (symbol), BUFFER_SIZE);
     args = A68_MON (_m_sp);
     ADDR_T top_sp = A68_SP;
@@ -967,7 +968,7 @@ void parse (FILE_T f, NODE_T * p, int depth)
     ADDR_T old_sp = A68_SP;
     BOOL_T init;
     MOID_T *moid;
-    char name[BUFFER_SIZE];
+    BUFFER name;
     bufcpy (name, A68_MON (symbol), BUFFER_SIZE);
     SCAN_CHECK (f, p);
     if (A68_MON (attr) == OF_SYMBOL) {

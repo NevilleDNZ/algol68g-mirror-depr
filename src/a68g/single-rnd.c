@@ -1,23 +1,27 @@
 //! @file single-rnd.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! REAL pseudo-random number generator.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -102,21 +106,15 @@ unt taus113_get (void *vstate)
 {
   taus113_state_t *state = (taus113_state_t *) vstate;
   unt long b1, b2, b3, b4;
-
   b1 = ((((state->z1 << 6UL) & MASK) ^ state->z1) >> 13UL);
   state->z1 = ((((state->z1 & 4294967294UL) << 18UL) & MASK) ^ b1);
-
   b2 = ((((state->z2 << 2UL) & MASK) ^ state->z2) >> 27UL);
   state->z2 = ((((state->z2 & 4294967288UL) << 2UL) & MASK) ^ b2);
-
   b3 = ((((state->z3 << 13UL) & MASK) ^ state->z3) >> 21UL);
   state->z3 = ((((state->z3 & 4294967280UL) << 7UL) & MASK) ^ b3);
-
   b4 = ((((state->z4 << 3UL) & MASK) ^ state->z4) >> 12UL);
   state->z4 = ((((state->z4 & 4294967168UL) << 13UL) & MASK) ^ b4);
-
   return (state->z1 ^ state->z2 ^ state->z3 ^ state->z4);
-
 }
 
 double taus113_get_double (void *vstate)
@@ -127,9 +125,8 @@ double taus113_get_double (void *vstate)
 void taus113_set (void *vstate, unt long int s)
 {
   taus113_state_t *state = (taus113_state_t *) vstate;
-
   if (!s) {
-    s = 1UL;                    /* default seed is 1 */
+    s = 1UL; // default seed is 1
   }
   state->z1 = LCG (s);
   if (state->z1 < 2UL) {
@@ -148,7 +145,6 @@ void taus113_set (void *vstate, unt long int s)
     state->z4 += 128UL;
   }
 // Calling RNG ten times to satify recurrence condition
-
   taus113_get (state);
   taus113_get (state);
   taus113_get (state);
@@ -159,27 +155,8 @@ void taus113_set (void *vstate, unt long int s)
   taus113_get (state);
   taus113_get (state);
   taus113_get (state);
-
   return;
 }
-
-/*  Rules for analytic calculations using GNU Emacs Calc:
-    (used to find the values for the test program)
-
-  [ LCG(n) := n * 69069 mod (2^32) ]
-  
-  [ b1(x) := rsh(xor(lsh(x, 6), x), 13),
-  q1(x) := xor(lsh(and(x, 4294967294), 18), b1(x)),
-  b2(x) := rsh(xor(lsh(x, 2), x), 27),
-  q2(x) := xor(lsh(and(x, 4294967288), 2), b2(x)),
-  b3(x) := rsh(xor(lsh(x, 13), x), 21),
-  q3(x) := xor(lsh(and(x, 4294967280), 7), b3(x)),
-  b4(x) := rsh(xor(lsh(x, 3), x), 12),
-  q4(x) := xor(lsh(and(x, 4294967168), 13), b4(x))
-  ]
-  
-  [ S([z1,z2,z3,z4]) := [q1(z1), q2(z2), q3(z3), q4(z4)] ]
-*/
 
 // Initialise rng.
 

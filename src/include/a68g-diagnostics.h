@@ -1,23 +1,23 @@
 //! @file a68g-diagnostics.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (A68G_DIAGNOSTICS_H)
 #define A68G_DIAGNOSTICS_H
@@ -26,6 +26,7 @@ extern char *error_specification (void);
 extern void diagnostic (STATUS_MASK_T, NODE_T *, char *, ...);
 extern void diagnostics_to_terminal (LINE_T *, int);
 extern void scan_error (LINE_T *, char *, char *);
+extern void scan_warning (LINE_T *, char *, char *);
 extern void write_source_line (FILE_T, LINE_T *, NODE_T *, int);
 
 // Error codes
@@ -52,6 +53,7 @@ extern void write_source_line (FILE_T, LINE_T *, NODE_T *, int);
 #define ERROR_ALLOCATION "allocation error"
 #define ERROR_ARGUMENT_NUMBER "incorrect number of arguments for M"
 #define ERROR_ASSERTION "assertion failure"
+#define ERROR_CANNOT_OPEN_PLUGIN "cannot open plugin"
 #define ERROR_CANNOT_OPEN_NAME "cannot open Z"
 #define ERROR_CANNOT_WIDEN "cannot widen M to M"
 #define ERROR_CANNOT_WRITE_LISTING "cannot write listing file"
@@ -208,6 +210,7 @@ extern void write_source_line (FILE_T, LINE_T *, NODE_T *, int);
 #define ERROR_UNDECLARED_TAG "tag S has not been declared properly"
 #define ERROR_UNDECLARED_TAG_2 "tag Z has not been declared properly"
 #define ERROR_UNDEFINED_TRANSPUT "transput of M value by this procedure is not defined"
+#define ERROR_UNDERDETERMINED_SYSTEM "underdetermined system of linear equations"
 #define ERROR_UNIMPLEMENTED "S is either not implemented or not compiled"
 #define ERROR_UNSPECIFIED "unspecified error"
 #define ERROR_UNTERMINATED_COMMENT "unterminated comment"

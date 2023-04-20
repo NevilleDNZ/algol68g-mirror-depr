@@ -1,29 +1,29 @@
 //! @file a68g-transput.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_TRANSPUT_H__)
 #define __A68G_TRANSPUT_H__
 
 #if (A68_LEVEL >= 3)
-extern char *long_sub_whole_double (NODE_T *, QUAD_WORD_T, int);
+extern char *long_sub_whole_double (NODE_T *, DOUBLE_NUM_T, int);
 #endif
 
 extern BOOL_T convert_radix_mp (NODE_T *, MP_T *, int, int, MOID_T *, MP_T *, MP_T *);
@@ -37,6 +37,7 @@ extern char *long_sub_fixed (NODE_T *, MP_T *, int, int, int);
 extern char *long_sub_whole (NODE_T *, MP_T *, int, int);
 extern char pop_char_transput_buffer (int);
 extern char *real (NODE_T *);
+extern char *stack_string (NODE_T *, int);
 extern char *sub_fixed_double (NODE_T *, DOUBLE_T, int, int, int);
 extern char *sub_fixed (NODE_T *, REAL_T, int, int);
 extern char *sub_whole (NODE_T *, INT_T, int);

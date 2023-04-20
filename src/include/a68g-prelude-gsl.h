@@ -1,23 +1,23 @@
 //! @file a68g-prelude-gsl.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_PRELUDE_GSL_H__)
 #define __A68G_PRELUDE_GSL_H__
@@ -177,6 +177,8 @@ extern GPROC genie_log_1plusx_real;
 extern GPROC genie_log_abs_real;
 extern GPROC genie_poch_real;
 extern GPROC genie_pochrel_real;
+extern GPROC genie_print_matrix;
+extern GPROC genie_print_vector;
 extern GPROC genie_psi_1_int_real;
 extern GPROC genie_psi_1piy_real;
 extern GPROC genie_psi_1_real;
@@ -197,19 +199,27 @@ extern GPROC genie_zeta_int_real;
 extern GPROC genie_zetam1_int_real;
 extern GPROC genie_zetam1_real;
 extern GPROC genie_zeta_real;
+extern GPROC genie_poch_real;
+extern GPROC genie_prime_factors;
+extern GPROC genie_beta_inc_real;
+extern GPROC genie_digamma_real;
+extern GPROC genie_gamma_inc_real;
+extern GPROC genie_laplace;
 
-extern GPROC genie_complex_scale_matrix_complex;
-extern GPROC genie_complex_scale_vector_complex;
 extern GPROC genie_fft_backward;
 extern GPROC genie_fft_complex_backward;
 extern GPROC genie_fft_complex_forward;
 extern GPROC genie_fft_complex_inverse;
 extern GPROC genie_fft_forward;
 extern GPROC genie_fft_inverse;
-extern GPROC genie_laplace;
+
+extern GPROC genie_complex_scale_matrix_complex;
+extern GPROC genie_complex_scale_vector_complex;
+extern GPROC genie_left_columns;
 extern GPROC genie_matrix_add;
 extern GPROC genie_matrix_ch;
 extern GPROC genie_matrix_ch_solve;
+extern GPROC genie_matrix_column_mean;
 extern GPROC genie_matrix_complex_add;
 extern GPROC genie_matrix_complex_det;
 extern GPROC genie_matrix_complex_div_complex;
@@ -237,6 +247,7 @@ extern GPROC genie_matrix_div_real;
 extern GPROC genie_matrix_div_real_ab;
 extern GPROC genie_matrix_echo;
 extern GPROC genie_matrix_eq;
+extern GPROC genie_matrix_hcat;
 extern GPROC genie_matrix_inv;
 extern GPROC genie_matrix_lu;
 extern GPROC genie_matrix_lu_det;
@@ -245,6 +256,14 @@ extern GPROC genie_matrix_lu_solve;
 extern GPROC genie_matrix_minus;
 extern GPROC genie_matrix_minusab;
 extern GPROC genie_matrix_ne;
+extern GPROC genie_matrix_norm;
+extern GPROC genie_matrix_pca_cv;
+extern GPROC genie_matrix_pca_svd;
+extern GPROC genie_matrix_pca_svd_full;
+extern GPROC genie_matrix_pinv;
+extern GPROC genie_matrix_pinv_lim;
+extern GPROC genie_matrix_pls1;
+extern GPROC genie_matrix_pls1_lim;
 extern GPROC genie_matrix_plusab;
 extern GPROC genie_matrix_qr;
 extern GPROC genie_matrix_qr_ls_solve;
@@ -258,10 +277,11 @@ extern GPROC genie_matrix_times_matrix;
 extern GPROC genie_matrix_times_vector;
 extern GPROC genie_matrix_trace;
 extern GPROC genie_matrix_transpose;
-extern GPROC genie_prime_factors;
+extern GPROC genie_matrix_vcat;
 extern GPROC genie_real_scale_matrix;
 extern GPROC genie_real_scale_vector;
 extern GPROC genie_vector_add;
+extern GPROC genie_vector_col;
 extern GPROC genie_vector_complex_add;
 extern GPROC genie_vector_complex_div_complex;
 extern GPROC genie_vector_complex_div_complex_ab;
@@ -289,15 +309,226 @@ extern GPROC genie_vector_minusab;
 extern GPROC genie_vector_ne;
 extern GPROC genie_vector_norm;
 extern GPROC genie_vector_plusab;
+extern GPROC genie_vector_row;
 extern GPROC genie_vector_scale_real;
 extern GPROC genie_vector_scale_real_ab;
 extern GPROC genie_vector_sub;
 extern GPROC genie_vector_times_matrix;
-extern GPROC genie_beta_inc_real;
-extern GPROC genie_gamma_inc_real;
-extern GPROC genie_poch_real;
-extern GPROC genie_digamma_real;
 
+// Constants ex GSL
+
+extern GPROC genie_cgs_acre;
+extern GPROC genie_cgs_angstrom;
+extern GPROC genie_cgs_astronomical_unit;
+extern GPROC genie_cgs_bar;
+extern GPROC genie_cgs_barn;
+extern GPROC genie_cgs_bohr_magneton;
+extern GPROC genie_cgs_bohr_radius;
+extern GPROC genie_cgs_boltzmann;
+extern GPROC genie_cgs_btu;
+extern GPROC genie_cgs_calorie;
+extern GPROC genie_cgs_canadian_gallon;
+extern GPROC genie_cgs_carat;
+extern GPROC genie_cgs_cup;
+extern GPROC genie_cgs_curie;
+extern GPROC genie_cgs_day;
+extern GPROC genie_cgs_dyne;
+extern GPROC genie_cgs_electron_charge;
+extern GPROC genie_cgs_electron_magnetic_moment;
+extern GPROC genie_cgs_electron_volt;
+extern GPROC genie_cgs_erg;
+extern GPROC genie_cgs_faraday;
+extern GPROC genie_cgs_fathom;
+extern GPROC genie_cgs_fluid_ounce;
+extern GPROC genie_cgs_foot;
+extern GPROC genie_cgs_footcandle;
+extern GPROC genie_cgs_footlambert;
+extern GPROC genie_cgs_gauss;
+extern GPROC genie_cgs_gram_force;
+extern GPROC genie_cgs_grav_accel;
+extern GPROC genie_cgs_gravitational_constant;
+extern GPROC genie_cgs_hectare;
+extern GPROC genie_cgs_horsepower;
+extern GPROC genie_cgs_hour;
+extern GPROC genie_cgs_inch;
+extern GPROC genie_cgs_inch_of_mercury;
+extern GPROC genie_cgs_inch_of_water;
+extern GPROC genie_cgs_joule;
+extern GPROC genie_cgs_kilometers_per_hour;
+extern GPROC genie_cgs_kilopound_force;
+extern GPROC genie_cgs_knot;
+extern GPROC genie_cgs_lambert;
+extern GPROC genie_cgs_light_year;
+extern GPROC genie_cgs_liter;
+extern GPROC genie_cgs_lumen;
+extern GPROC genie_cgs_lux;
+extern GPROC genie_cgs_mass_electron;
+extern GPROC genie_cgs_mass_muon;
+extern GPROC genie_cgs_mass_neutron;
+extern GPROC genie_cgs_mass_proton;
+extern GPROC genie_cgs_meter_of_mercury;
+extern GPROC genie_cgs_metric_ton;
+extern GPROC genie_cgs_micron;
+extern GPROC genie_cgs_mil;
+extern GPROC genie_cgs_mile;
+extern GPROC genie_cgs_miles_per_hour;
+extern GPROC genie_cgs_minute;
+extern GPROC genie_cgs_molar_gas;
+extern GPROC genie_cgs_nautical_mile;
+extern GPROC genie_cgs_newton;
+extern GPROC genie_cgs_nuclear_magneton;
+extern GPROC genie_cgs_ounce_mass;
+extern GPROC genie_cgs_parsec;
+extern GPROC genie_cgs_phot;
+extern GPROC genie_cgs_pint;
+extern GPROC genie_cgs_planck_constant_h;
+extern GPROC genie_cgs_planck_constant_hbar;
+extern GPROC genie_cgs_point;
+extern GPROC genie_cgs_poise;
+extern GPROC genie_cgs_pound_force;
+extern GPROC genie_cgs_pound_mass;
+extern GPROC genie_cgs_poundal;
+extern GPROC genie_cgs_proton_magnetic_moment;
+extern GPROC genie_cgs_psi;
+extern GPROC genie_cgs_quart;
+extern GPROC genie_cgs_rad;
+extern GPROC genie_cgs_roentgen;
+extern GPROC genie_cgs_rydberg;
+extern GPROC genie_cgs_solar_mass;
+extern GPROC genie_cgs_speed_of_light;
+extern GPROC genie_cgs_standard_gas_volume;
+extern GPROC genie_cgs_std_atmosphere;
+extern GPROC genie_cgs_stilb;
+extern GPROC genie_cgs_stokes;
+extern GPROC genie_cgs_tablespoon;
+extern GPROC genie_cgs_teaspoon;
+extern GPROC genie_cgs_texpoint;
+extern GPROC genie_cgs_therm;
+extern GPROC genie_cgs_ton;
+extern GPROC genie_cgs_torr;
+extern GPROC genie_cgs_troy_ounce;
+extern GPROC genie_cgs_uk_gallon;
+extern GPROC genie_cgs_uk_ton;
+extern GPROC genie_cgs_unified_atomic_mass;
+extern GPROC genie_cgs_us_gallon;
+extern GPROC genie_cgs_week;
+extern GPROC genie_cgs_yard;
+extern GPROC genie_mks_acre;
+extern GPROC genie_mks_angstrom;
+extern GPROC genie_mks_astronomical_unit;
+extern GPROC genie_mks_bar;
+extern GPROC genie_mks_barn;
+extern GPROC genie_mks_bohr_magneton;
+extern GPROC genie_mks_bohr_radius;
+extern GPROC genie_mks_boltzmann;
+extern GPROC genie_mks_btu;
+extern GPROC genie_mks_calorie;
+extern GPROC genie_mks_canadian_gallon;
+extern GPROC genie_mks_carat;
+extern GPROC genie_mks_cup;
+extern GPROC genie_mks_curie;
+extern GPROC genie_mks_day;
+extern GPROC genie_mks_dyne;
+extern GPROC genie_mks_electron_charge;
+extern GPROC genie_mks_electron_magnetic_moment;
+extern GPROC genie_mks_electron_volt;
+extern GPROC genie_mks_erg;
+extern GPROC genie_mks_faraday;
+extern GPROC genie_mks_fathom;
+extern GPROC genie_mks_fluid_ounce;
+extern GPROC genie_mks_foot;
+extern GPROC genie_mks_footcandle;
+extern GPROC genie_mks_footlambert;
+extern GPROC genie_mks_gauss;
+extern GPROC genie_mks_gram_force;
+extern GPROC genie_mks_grav_accel;
+extern GPROC genie_mks_gravitational_constant;
+extern GPROC genie_mks_hectare;
+extern GPROC genie_mks_horsepower;
+extern GPROC genie_mks_hour;
+extern GPROC genie_mks_inch;
+extern GPROC genie_mks_inch_of_mercury;
+extern GPROC genie_mks_inch_of_water;
+extern GPROC genie_mks_joule;
+extern GPROC genie_mks_kilometers_per_hour;
+extern GPROC genie_mks_kilopound_force;
+extern GPROC genie_mks_knot;
+extern GPROC genie_mks_lambert;
+extern GPROC genie_mks_light_year;
+extern GPROC genie_mks_liter;
+extern GPROC genie_mks_lumen;
+extern GPROC genie_mks_lux;
+extern GPROC genie_mks_mass_electron;
+extern GPROC genie_mks_mass_muon;
+extern GPROC genie_mks_mass_neutron;
+extern GPROC genie_mks_mass_proton;
+extern GPROC genie_mks_meter_of_mercury;
+extern GPROC genie_mks_metric_ton;
+extern GPROC genie_mks_micron;
+extern GPROC genie_mks_mil;
+extern GPROC genie_mks_mile;
+extern GPROC genie_mks_miles_per_hour;
+extern GPROC genie_mks_minute;
+extern GPROC genie_mks_molar_gas;
+extern GPROC genie_mks_nautical_mile;
+extern GPROC genie_mks_newton;
+extern GPROC genie_mks_nuclear_magneton;
+extern GPROC genie_mks_ounce_mass;
+extern GPROC genie_mks_parsec;
+extern GPROC genie_mks_phot;
+extern GPROC genie_mks_pint;
+extern GPROC genie_mks_planck_constant_h;
+extern GPROC genie_mks_planck_constant_hbar;
+extern GPROC genie_mks_point;
+extern GPROC genie_mks_poise;
+extern GPROC genie_mks_pound_force;
+extern GPROC genie_mks_pound_mass;
+extern GPROC genie_mks_poundal;
+extern GPROC genie_mks_proton_magnetic_moment;
+extern GPROC genie_mks_psi;
+extern GPROC genie_mks_quart;
+extern GPROC genie_mks_rad;
+extern GPROC genie_mks_roentgen;
+extern GPROC genie_mks_rydberg;
+extern GPROC genie_mks_solar_mass;
+extern GPROC genie_mks_speed_of_light;
+extern GPROC genie_mks_standard_gas_volume;
+extern GPROC genie_mks_std_atmosphere;
+extern GPROC genie_mks_stilb;
+extern GPROC genie_mks_stokes;
+extern GPROC genie_mks_tablespoon;
+extern GPROC genie_mks_teaspoon;
+extern GPROC genie_mks_texpoint;
+extern GPROC genie_mks_therm;
+extern GPROC genie_mks_ton;
+extern GPROC genie_mks_torr;
+extern GPROC genie_mks_troy_ounce;
+extern GPROC genie_mks_uk_gallon;
+extern GPROC genie_mks_uk_ton;
+extern GPROC genie_mks_unified_atomic_mass;
+extern GPROC genie_mks_us_gallon;
+extern GPROC genie_mks_vacuum_permeability;
+extern GPROC genie_mks_vacuum_permittivity;
+extern GPROC genie_mks_week;
+extern GPROC genie_mks_yard;
+extern GPROC genie_num_atto;
+extern GPROC genie_num_avogadro;
+extern GPROC genie_num_exa;
+extern GPROC genie_num_femto;
+extern GPROC genie_num_fine_structure;
+extern GPROC genie_num_giga;
+extern GPROC genie_num_kilo;
+extern GPROC genie_num_mega;
+extern GPROC genie_num_micro;
+extern GPROC genie_num_milli;
+extern GPROC genie_num_nano;
+extern GPROC genie_num_peta;
+extern GPROC genie_num_pico;
+extern GPROC genie_num_tera;
+extern GPROC genie_num_yocto;
+extern GPROC genie_num_yotta;
+extern GPROC genie_num_zepto;
+extern GPROC genie_num_zetta;
 #endif
 
 #endif

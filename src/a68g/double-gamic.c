@@ -1,26 +1,30 @@
 //! @file double-gamic.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! LONG REAL generalised incomplete gamma function.
 
 // Generalised incomplete gamma code in this file was downloaded from 
-//   http://helios.mi.parisdescartes.fr/~rabergel/
+//   [http://helios.mi.parisdescartes.fr/~rabergel/]
 // and adapted for Algol 68 Genie.
 //
 // Reference:
@@ -51,7 +55,7 @@
 // details.
 //
 // You should have received a copy of the GNU General Public License along with
-// this program.  If not, see <http://www.gnu.org/licenses/>.
+// this program.  If not, see [http://www.gnu.org/licenses/].
 
 // References
 //
@@ -63,7 +67,7 @@
 //
 //   F. W. J. Olver, D. W. Lozier, R. F. Boisvert, and C. W. Clark
 //   (Eds.). 2010. NIST Handbook of Mathematical Functions. Cambridge University
-//   Press. (see online version at [[http://dlmf.nist.gov/]])
+//   Press. (see online version at [http://dlmf.nist.gov/])
 //
 //   W. H. Press, S. A. Teukolsky, W. T. Vetterling, and
 //   B. P. Flannery. 1992. Numerical recipes in C: the art of scientific
@@ -76,18 +80,19 @@
 
 #if (A68_LEVEL >= 3)
 
-#include "a68g-genie.h"
-#include "a68g-prelude.h"
-#include "a68g-lib.h"
 #include "a68g-double.h"
+#include "a68g-genie.h"
+#include "a68g-lib.h"
 #include "a68g-mp.h"
+#include "a68g-prelude.h"
+#include "a68g-quad.h"
 
-#define ITMAX 1000000000        // Maximum allowed number of iterations
 #define DPMIN FLT128_MIN        // Number near the smallest representable double-point number
 #define EPS FLT128_EPSILON      // Machine epsilon
+#define ITMAX 1000000000        // Maximum allowed number of iterations
 #define NITERMAX_ROMBERG 15     // Maximum allowed number of Romberg iterations
-#define TOL_ROMBERG 0.1q        // Tolerance factor used to stop the Romberg iterations
 #define TOL_DIFF 0.2q           // Tolerance factor used for the approximation of I_{x,y}^{mu,p} using differences
+#define TOL_ROMBERG 0.1q        // Tolerance factor used to stop the Romberg iterations
 
 // double_plim: compute plim (x), the limit of the partition of the domain (p,x)
 // detailed in the paper.
@@ -110,8 +115,6 @@ DOUBLE_T double_plim (DOUBLE_T x)
 
 void double_G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 {
-  DOUBLE_T c, d, del, f, an, bn;
-  INT_T k, n;
 // deal with special case
   if (x == 0.0q) {
     *Gcfrac = 0.0q;
@@ -120,14 +123,11 @@ void double_G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 // Evaluate the continued fraction using Modified Lentz's method. However,
 // as detailed in the paper, perform manually the first pass (n=1), of the
 // initial Modified Lentz's method.
-  an = 1.0q;
-  bn = p;
-  f = an / bn;
-  c = an / DPMIN;
-  d = 1.0q / bn;
-  n = 2;
+  DOUBLE_T an = 1.0q, bn = p, del;
+  DOUBLE_T f = an / bn, c = an / DPMIN, d = 1.0q / bn;
+  INT_T n = 2;
   do {
-    k = n / 2;
+    INT_T k = n / 2;
     an = (n & 1 ? k : -(p - 1.0q + k)) * x;
     bn++;
     d = an * d + bn;
@@ -156,16 +156,12 @@ void double_G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 
 void double_G_ibp (DOUBLE_T * Gibp, DOUBLE_T p, DOUBLE_T x)
 {
-  DOUBLE_T t, tt, c, d, s, del;
-  INT_T l;
-  BOOL_T odd, stop;
-  t = fabsq (x);
-  tt = 1.0q / (t * t);
-  odd = (INT_T) (p) % 2 != 0;
-  c = 1.0q / t;
-  d = (p - 1.0q);
-  s = c * (t - d);
-  l = 0;
+  BOOL_T odd = (INT_T) (p) % 2 != 0;
+  DOUBLE_T t = fabsq (x), del;
+  DOUBLE_T tt = 1.0q / (t * t), c = 1.0q / t, d = (p - 1.0q);
+  DOUBLE_T s = c * (t - d);
+  INT_T l = 0;
+  BOOL_T stop;
   do {
     c *= d * (d - 1.0q) * tt;
     d -= 2.0q;
@@ -191,7 +187,6 @@ void double_G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 {
   DOUBLE_T c, d, del, f, an, bn;
   INT_T i, n;
-  BOOL_T t;
 // Special case
   if (isinfq (x)) {
     *Gcfrac = 0.0q;
@@ -202,7 +197,7 @@ void double_G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 // initial Modified Lentz's method.
   an = 1.0q;
   bn = x + 1.0q - p;
-  t = bn != 0.0q;
+  BOOL_T t = (bn != 0.0q);
   if (t) {
 // b{1} is non-zero
     f = an / bn;
@@ -265,17 +260,16 @@ void double_G_func (DOUBLE_T * G, DOUBLE_T p, DOUBLE_T x)
 
 void double_romberg_iterations (DOUBLE_T * R, DOUBLE_T sigma, INT_T n, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p, DOUBLE_T h, DOUBLE_T pow2)
 {
-  INT_T j, m;
-  DOUBLE_T sum, xx;
-  INT_T adr0_prev = ((n - 1) * n) / 2;
-  INT_T adr0 = (n * (n + 1)) / 2;
-  for (sum = 0.0q, j = 1; j <= pow2; j++) {
-    xx = x + ((y - x) * (2.0q * j - 1.0q)) / (2.0q * pow2);
-    sum += expq (-mu * xx + (p - 1.0q) * logq (xx) - sigma);
+  INT_T adr0_prev = ((n - 1) * n) / 2, adr0 = (n * (n + 1)) / 2;
+  QUAD_T sum = QUAD_REAL_ZERO;
+  for (INT_T j = 1; j <= pow2; j++) {
+    DOUBLE_T xx = x + ((y - x) * (2.0q * j - 1.0q)) / (2.0q * pow2);
+    QUAD_T f = double_real_to_quad_real (expq (-mu * xx + (p - 1.0q) * logq (xx) - sigma));
+    sum = _add_quad_real_ (sum, f);
   }
-  R[adr0] = 0.5q * R[adr0_prev] + h * sum;
+  R[adr0] = 0.5q * R[adr0_prev] + h * quad_real_to_double_real (sum);
   DOUBLE_T pow4 = 4.0q;
-  for (m = 1; m <= n; m++) {
+  for (INT_T m = 1; m <= n; m++) {
     R[adr0 + m] = (pow4 * R[adr0 + (m - 1)] - R[adr0_prev + (m - 1)]) / (pow4 - 1.0q);
     pow4 *= 4.0q;
   }
@@ -328,7 +322,7 @@ void double_romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUB
 //
 //   p is a real number > 0, p must be an integer when mu < 0.
 
-void deltagammainc_16 (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p)
+void deltagammainc_double_real (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p)
 {
   DOUBLE_T mA, mB, mx, my, nA, nB, nx, ny;
 // Particular cases
@@ -394,7 +388,7 @@ void deltagammainc_16 (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y,
 
 //! @brief PROC long gamma inc g = (LONG REAL p, x, y, mu) LONG REAL
 
-void genie_gamma_inc_g_real_16 (NODE_T * n)
+void genie_gamma_inc_g_double_real (NODE_T * n)
 {
   A68_LONG_REAL x, y, mu, p;
   POP_OBJECT (n, &mu, A68_LONG_REAL);
@@ -402,25 +396,25 @@ void genie_gamma_inc_g_real_16 (NODE_T * n)
   POP_OBJECT (n, &x, A68_LONG_REAL);
   POP_OBJECT (n, &p, A68_LONG_REAL);
   DOUBLE_T rho, sigma;
-  deltagammainc_16 (&rho, &sigma, VALUE (&x).f, VALUE (&y).f, VALUE (&mu).f, VALUE (&p).f);
+  deltagammainc_double_real (&rho, &sigma, VALUE (&x).f, VALUE (&y).f, VALUE (&mu).f, VALUE (&p).f);
   PUSH_VALUE (n, dble (rho * expq (sigma)), A68_LONG_REAL);
 }
 
 //! @brief PROC long gamma inc f = (LONG REAL p, x) LONG REAL
 
-void genie_gamma_inc_f_real_16 (NODE_T * n)
+void genie_gamma_inc_f_double_real (NODE_T * n)
 {
   A68_LONG_REAL x, p;
   POP_OBJECT (n, &x, A68_LONG_REAL);
   POP_OBJECT (n, &p, A68_LONG_REAL);
   DOUBLE_T rho, sigma;
-  deltagammainc_16 (&rho, &sigma, VALUE (&x).f, a68_dposinf (), 1.0q, VALUE (&p).f);
+  deltagammainc_double_real (&rho, &sigma, VALUE (&x).f, a68_dposinf (), 1.0q, VALUE (&p).f);
   PUSH_VALUE (n, dble (rho * expq (sigma)), A68_LONG_REAL);
 }
 
 //! @brief PROC long gamma inc gf = (LONG REAL p, x) LONG REAL
 
-void genie_gamma_inc_gf_real_16 (NODE_T * q)
+void genie_gamma_inc_gf_double_real (NODE_T * q)
 {
 // if x <= p: G(p,x) = exp (x-p*ln (|x|)) * integral over [0,|x|] of s^{p-1} * exp (-sign (x)*s) ds
 // otherwise: G(p,x) = exp (x-p*ln (x)) * integral over [x,inf] of s^{p-1} * exp (-s) ds
@@ -434,12 +428,12 @@ void genie_gamma_inc_gf_real_16 (NODE_T * q)
 
 //! @brief PROC long gamma inc = (LONG REAL p, x) LONG REAL
 
-void genie_gamma_inc_h_real_16 (NODE_T * n)
+void genie_gamma_inc_h_double_real (NODE_T * n)
 {
 #if (A68_LEVEL >= 3) && defined (HAVE_GNU_MPFR)
-  genie_gamma_inc_real_16_mpfr (n);
+  genie_gamma_inc_double_real_mpfr (n);
 #else
-  genie_gamma_inc_f_real_16 (n);
+  genie_gamma_inc_f_double_real (n);
 #endif
 }
 

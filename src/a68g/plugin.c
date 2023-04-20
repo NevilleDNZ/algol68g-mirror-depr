@@ -1,29 +1,33 @@
-//! @file compiler.c
+//! @file plugin.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
-// The compiler generates optimised C routines for many units in an Algol 68 source
+//! @section Synopsis
+//!
+//! Plugin compiler driver.
+
+// The plugin compiler generates optimised C routines for many units in an Algol 68 source
 // program. A68G 1.x contained some general optimised routines. These are
 // decommissioned in A68G 2.x that dynamically generates routines depending
 // on the source code. The generated routines are compiled on the fly into a 
-// dynamic library that is linked by the running interpreter.
+// dynamic library that is linked by the running interpreter, like a plugin.
 
 // To invoke this code generator specify option --optimise.
 // Currently the optimiser only considers units that operate on basic modes that are
@@ -58,7 +62,7 @@
 #include "a68g-listing.h"
 #include "a68g-mp.h"
 #include "a68g-optimiser.h"
-#include "a68g-compiler.h"
+#include "a68g-plugin.h"
 #include "a68g-parser.h"
 #include "a68g-transput.h"
 

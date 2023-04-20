@@ -1,23 +1,23 @@
 //! @file a68g-genie.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_GENIE_H__)
 #define __A68G_GENIE_H__
@@ -119,7 +119,7 @@
   *(A68_TUPLE *) &(((BYTE_T *) (a_p)) [SIZE_ALIGNED (A68_ARRAY) + sizeof (A68_TUPLE)]) = (t2);\
   }
 
-#define ROW_SIZE(t) ((UPB (t) >= LWB (t)) ? (UPB (t) - LWB (t) + 1) : 0)
+#define ROW_SIZE(t) ((LWB (t) <= UPB (t)) ? (UPB (t) - LWB (t) + 1) : 0)
 #define ROW_ELEMENT(a, k) (((ADDR_T) k + SLICE_OFFSET (a)) * ELEM_SIZE (a) + FIELD_OFFSET (a))
 #define INDEX_1_DIM(a, t, k) ROW_ELEMENT (a, (SPAN (t) * (int) (k) - SHIFT (t)))
 
@@ -340,7 +340,7 @@
 
 #define CHECK_DNS2(p, scope, limit, mode)\
   if (scope > limit) {\
-    char txt[BUFFER_SIZE];\
+    BUFFER txt;\
     ASSERT (snprintf (txt, SNPRINTF_SIZE, ERROR_SCOPE_DYNAMIC_1) >= 0);\
     diagnostic (A68_RUNTIME_ERROR, p, txt, mode);\
     exit_genie (p, A68_RUNTIME_ERROR);\

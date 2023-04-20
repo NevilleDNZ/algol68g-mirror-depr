@@ -1,23 +1,27 @@
-//! @file listing.c
+//! @file a68g-listing.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Old-school listing file.
 
 #include "a68g.h"
 #include "a68g-prelude.h"
@@ -407,7 +411,7 @@ void cross_reference (FILE_T f, NODE_T * p, LINE_T * l)
 
 //! @brief Tree listing for source line.
 
-BOOL_T empty_leave (NODE_T * p)
+BOOL_T empty_leaf (NODE_T * p)
 {
 #define TEST_LEAVE(n)\
   if (IS (p, (n)) && NEXT (p) == NO_NODE && PREVIOUS (p) == NO_NODE) {\
@@ -435,7 +439,7 @@ void tree_listing (FILE_T f, NODE_T * q, int x, LINE_T * l, int *ld, BOOL_T comm
         *ld = x;
       }
 // Indent.
-      if (comment && empty_leave (p)) {
+      if (comment && empty_leaf (p)) {
         ;
       } else {
         if (comment) {

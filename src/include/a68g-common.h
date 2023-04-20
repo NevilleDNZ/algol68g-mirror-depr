@@ -1,23 +1,23 @@
 //! @file a68g-common.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_COMMON_H__)
 #define __A68G_COMMON_H__
@@ -27,14 +27,14 @@ struct MODULE_T
 {
   BOOL_T tree_listing_safe, cross_reference_safe;
   FILES_T files;
-  NODE_T *top_node;
+  int error_count, warning_count, source_scan;
+  jmp_buf rendez_vous;
+  LINE_T *top_line;
   MOID_T *top_moid, *standenv_moid;
+  NODE_T *top_node;
   OPTIONS_T options;
   PROP_T global_prop;
   REFINEMENT_T *top_refinement;
-  LINE_T *top_line;
-  int error_count, warning_count, source_scan;
-  jmp_buf rendez_vous;
   struct
   {
     LINE_T *save_l;
@@ -143,12 +143,11 @@ typedef struct MONITOR_GLOBALS_T MONITOR_GLOBALS_T;
 struct MONITOR_GLOBALS_T
 {
   ADDR_T finish_frame_pointer;
-  char *watchpoint_expression;
   BOOL_T in_monitor;
-  int break_proc_level;
-  char symbol[BUFFER_SIZE], error_text[BUFFER_SIZE], expr[BUFFER_SIZE];
-  char prompt[BUFFER_SIZE];
   BOOL_T prompt_set;
+  BUFFER prompt, symbol, error_text, expr;
+  char *watchpoint_expression;
+  int break_proc_level;
   int current_frame;
   int max_row_elems;
   int mon_errors;
@@ -190,16 +189,16 @@ typedef struct OPTIMISER_GLOBALS_T OPTIMISER_GLOBALS_T;
 #define A68_OPT(z)     A68 (optimiser.z)
 struct OPTIMISER_GLOBALS_T
 {
-  int OPTION_CODE_LEVEL;
-  int indentation;
-  int code_errors;
-  int procedures;
   BOOK_T cse_book[MAX_BOOK];
-  int cse_pointer;
-  DEC_T *root_idf;
   BOOL_T put_idf_comma;
-  UNIC_T unic_functions[MAX_UNIC];
+  DEC_T *root_idf;
+  int code_errors;
+  int cse_pointer;
+  int indentation;
+  int OPTION_CODE_LEVEL;
+  int procedures;
   int unic_pointer;
+  UNIC_T unic_functions[MAX_UNIC];
 };
 
 #if defined (BUILD_PARALLEL_CLAUSE)
@@ -216,12 +215,12 @@ struct A68_STACK_DESCRIPTOR
 
 struct A68_THREAD_CONTEXT
 {
-  pthread_t parent, id;
   A68_STACK_DESCRIPTOR stack, frame;
-  NODE_T *unit;
-  int stack_used;
-  BYTE_T *thread_stack_offset;
   BOOL_T active;
+  BYTE_T *thread_stack_offset;
+  int stack_used;
+  NODE_T *unit;
+  pthread_t parent, id;
 };
 
 // Set an upper limit for number of threads.
@@ -248,13 +247,13 @@ typedef struct PARALLEL_GLOBALS_T PARALLEL_GLOBALS_T;
 #define A68_PAR(z)     A68 (parallel.z)
 struct PARALLEL_GLOBALS_T
 {
+  A68_THREAD_CONTEXT context[THREAD_MAX];
   ADDR_T fp0, sp0;
   BOOL_T abend_all_threads, exit_from_threads;
-  A68_THREAD_CONTEXT context[THREAD_MAX];
-  int par_return_code;
   int context_index;
-  NODE_T *jump_label;
+  int par_return_code;
   jmp_buf *jump_buffer;
+  NODE_T *jump_label;
   pthread_mutex_t unit_sema;
   pthread_t main_thread_id;
   pthread_t parent_thread_id;
@@ -279,62 +278,61 @@ typedef struct GLOBALS_T GLOBALS_T;
 
 struct GLOBALS_T
 {
-  MODULE_T job;
-  A68_CHANNEL stand_in_channel, stand_out_channel, stand_back_channel;
   A68_CHANNEL stand_draw_channel, stand_error_channel, associate_channel, skip_channel;
+  A68_CHANNEL stand_in_channel, stand_out_channel, stand_back_channel;
+  A68_PROCEDURE on_gc_event;
   A68_REF stand_in, stand_out, stand_back, stand_error, skip_file;
-  BYTE_T *stack_segment, *heap_segment, *handle_segment;
-  ADDR_T frame_pointer, stack_pointer, heap_pointer, global_pointer;
   ADDR_T fixed_heap_pointer, temp_heap_pointer;
+  ADDR_T frame_pointer, stack_pointer, heap_pointer, global_pointer;
   ADDR_T frame_start, frame_end, stack_start, stack_end;
+  BOOL_T close_tty_on_exit;
+  BOOL_T curses_mode;
+  BOOL_T do_confirm_exit; 
+  BOOL_T halt_typing;
+  BOOL_T heap_is_fluid;
+  BOOL_T in_execution;
+  BOOL_T in_monitor;
+  BOOL_T no_warnings;
+  BYTE_T *stack_segment, *heap_segment, *handle_segment;
+  BYTE_T *system_stack_offset;
+  BUFFER a68_cmd_name;
+  char **argv;
+  char *f_plugin;
+  char *marker[BUFFER_SIZE];
+  BUFFER output_line, edit_line, input_line;
+  clock_t clock_res;
+  FILE_ENTRY file_entries[MAX_OPEN_FILES];
+  GC_GLOBALS_T gc;
+  INDENT_GLOBALS_T indent;
+  int argc;
+  int chars_in_tty_line;
+  int global_level, max_lex_lvl;
+  int max_simplout_size;
+  int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
+  int ret_code, ret_line_number, ret_char_number;
+  int symbol_table_count, mode_count; 
+  int term_heigth, term_width;
+  jmp_buf genie_exit_label;
+  KEYWORD_T *top_keyword;
+  MODE_CACHE_T mode_cache;
+  MODES_T a68_modes;
+  MODULE_T job;
+  MONITOR_GLOBALS_T mon;
+  MP_GLOBALS_T mp;
+  NODE_T *f_entry;
+  NODE_T **node_register;
+  OPTIMISER_GLOBALS_T optimiser;
+  OPTIONS_T *options;
+  PARSER_GLOBALS_T parser;
+  POSTULATE_T *postulates, *top_postulate, *top_postulate_list;
+  REAL_T cputime_0;
+  SOID_T *top_soid_list;
+  TABLE_T *standenv;
+  TAG_T *error_tag;
+  TOKEN_T *top_token;
   unt frame_stack_size, expr_stack_size, heap_size, handle_pool_size, stack_size;
   unt stack_limit, frame_stack_limit, expr_stack_limit;
   unt storage_overhead;
-  int global_level, max_lex_lvl;
-  int new_nodes, new_modes, new_postulates, new_node_infos, new_genie_infos;
-  int symbol_table_count, mode_count; 
-  int term_heigth, term_width;
-  int argc;
-  BOOL_T in_execution;
-  BOOL_T close_tty_on_exit;
-  BYTE_T *system_stack_offset;
-  MODES_T a68_modes;
-  NODE_T **node_register;
-  char a68_cmd_name[BUFFER_SIZE];
-  char **argv;
-  char output_line[BUFFER_SIZE], edit_line[BUFFER_SIZE], input_line[BUFFER_SIZE];
-  char *marker[BUFFER_SIZE];
-  REAL_T cputime_0;
-  clock_t clock_res;
-  BOOL_T halt_typing;
-  BOOL_T heap_is_fluid;
-  BOOL_T in_monitor;
-  BOOL_T do_confirm_exit; 
-  BOOL_T no_warnings;
-  int chars_in_tty_line;
-  POSTULATE_T *postulates, *top_postulate, *top_postulate_list;
-  KEYWORD_T *top_keyword;
-  TOKEN_T *top_token;
-  NODE_T *f_entry;
-  TAG_T *error_tag;
-  int ret_code, ret_line_number, ret_char_number;
-  jmp_buf genie_exit_label;
-  A68_PROCEDURE on_gc_event;
-  TABLE_T *standenv;
-  char *f_library;
-  BOOL_T curses_mode;
-  SOID_T *top_soid_list;
-  int max_simplout_size;
-  OPTIONS_T *options;
-  FILE_ENTRY file_entries[MAX_OPEN_FILES];
-// Private structs
-  MODE_CACHE_T mode_cache;
-  MONITOR_GLOBALS_T mon;
-  GC_GLOBALS_T gc;
-  PARSER_GLOBALS_T parser;
-  OPTIMISER_GLOBALS_T optimiser;
-  MP_GLOBALS_T mp;
-  INDENT_GLOBALS_T indent;
 #if defined (BUILD_PARALLEL_CLAUSE)
   PARALLEL_GLOBALS_T parallel;
 #endif

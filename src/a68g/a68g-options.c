@@ -1,23 +1,27 @@
-//! @file options.c
+//! @file a68g-options.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Algol 68 Genie options.
 
 #include "a68g.h"
 #include "a68g-prelude.h"
@@ -61,7 +65,7 @@ void default_mem_sizes (int n)
 void read_rc_options (void)
 {
   FILE *f;
-  char name[BUFFER_SIZE], new_name[BUFFER_SIZE];
+  BUFFER name, new_name;
   ASSERT (snprintf (name, SNPRINTF_SIZE, ".%src", A68 (a68_cmd_name)) >= 0);
   f = a68_fopen (name, "r", new_name);
   if (f != NO_FILE) {
@@ -434,7 +438,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 #if (A68_LEVEL >= 3)
           ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (DOUBLE_T) = %u", (unt) sizeof (DOUBLE_T)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
-          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (QUAD_WORD_T) = %u", (unt) sizeof (QUAD_WORD_T)) >= 0);
+          ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (DOUBLE_NUM_T) = %u", (unt) sizeof (DOUBLE_NUM_T)) >= 0);
           WRITELN (STDOUT_FILENO, A68 (output_line));
 #endif
           ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "sizeof (A68_INT) = %u", (unt) sizeof (A68_INT)) >= 0);
@@ -647,7 +651,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
               error = (BOOL_T) ((FORWARD (i)) == NO_OPTION_LIST);
             }
             if (!error) {
-              char name[BUFFER_SIZE], new_name[BUFFER_SIZE];
+              BUFFER name, new_name;
               FILE *f;
               int s_errno = errno;
               bufcpy (name, HIDDEN_TEMP_FILE_NAME, BUFFER_SIZE);
@@ -763,6 +767,7 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
           }
           skip = A68_TRUE;
           OPTION_RUN_SCRIPT (&A68_JOB) = A68_TRUE;
+          OPTION_NO_WARNINGS (&A68_JOB) = A68_TRUE;
           OPTION_COMPILE (&A68_JOB) = A68_FALSE;
 #else
           option_error (start_l, start_c, "linux-only option");

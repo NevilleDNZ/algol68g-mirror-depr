@@ -1,23 +1,23 @@
 //! @file a68g-includes.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_INCLUDES_H__)
 #define __A68G_INCLUDES_H__
@@ -52,6 +52,11 @@
 #include <curses.h>
 #elif defined (HAVE_NCURSES_CURSES_H)
 #include <ncurses/curses.h>
+#endif
+
+#if defined (HAVE_LIBGEN_H)
+// libgen selects Posix versions of dirname/basename in stead of GNU versions.
+#include <libgen.h>
 #endif
 
 #if defined (HAVE_READLINE_READLINE_H)
@@ -188,9 +193,7 @@
 #endif
 
 #if defined (HAVE_GNU_MPFR)
-#if defined (HAVE_GNU_MPFR)
 #define MPFR_WANT_FLOAT128
-#endif
 #include <gmp.h>
 #include <mpfr.h>
 #endif
@@ -203,32 +206,12 @@
 #include <gsl/gsl_complex.h>
 #endif
 
-#if defined (HAVE_GSL_GSL_COMPLEX_H)
-#include <gsl/gsl_complex.h>
-#endif
-
-#if defined (HAVE_GSL_GSL_COMPLEX_H)
-#include <gsl/gsl_complex.h>
-#endif
-
 #if defined (HAVE_GSL_GSL_COMPLEX_MATH_H)
 #include <gsl/gsl_complex_math.h>
 #endif
 
-#if defined (HAVE_GSL_GSL_COMPLEX_MATH_H)
-#include <gsl/gsl_complex_math.h>
-#endif
-
-#if defined (HAVE_GSL_GSL_COMPLEX_MATH_H)
-#include <gsl/gsl_complex_math.h>
-#endif
-
-#if defined (HAVE_GSL_GSL_ERRNO_H)
-#include <gsl/gsl_errno.h>
-#endif
-
-#if defined (HAVE_GSL_GSL_ERRNO_H)
-#include <gsl/gsl_errno.h>
+#if defined (HAVE_GSL_GSL_EIGEN_H)
+#include <gsl/gsl_eigen.h>
 #endif
 
 #if defined (HAVE_GSL_GSL_ERRNO_H)
@@ -251,14 +234,6 @@
 #include <gsl/gsl_math.h>
 #endif
 
-#if defined (HAVE_GSL_GSL_MATH_H)
-#include <gsl/gsl_math.h>
-#endif
-
-#if defined (HAVE_GSL_GSL_MATH_H)
-#include <gsl/gsl_math.h>
-#endif
-
 #if defined (HAVE_GSL_GSL_MATRIX_H)
 #include <gsl/gsl_matrix.h>
 #endif
@@ -271,12 +246,8 @@
 #include <gsl/gsl_sf.h>
 #endif
 
-#if defined (HAVE_GSL_GSL_SF_H)
-#include <gsl/gsl_sf.h>
-#endif
-
-#if defined (HAVE_GSL_GSL_SF_H)
-#include <gsl/gsl_sf.h>
+#if defined (HAVE_GSL_GSL_STATISTICS_H)
+#include <gsl/gsl_statistics.h>
 #endif
 
 #if defined (HAVE_GSL_GSL_VECTOR_H)

@@ -1,23 +1,27 @@
-//! @file format.c
+//! @file rts-formatted.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis 
+//!
+//! Formatted transput.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -27,7 +31,7 @@
 #include "a68g-double.h"
 #include "a68g-transput.h"
 
-// Transput library - Formatted transput
+// Transput - Formatted transput.
 // In Algol68G, a value of mode FORMAT looks like a routine text. The value
 // comprises a pointer to its environment in the stack, and a pointer where the
 // format text is at in the syntax tree.
@@ -737,27 +741,29 @@ void write_c_pattern (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_REF ref_file
       add_string_transput_buffer (p, FORMATTED_BUFFER, str);
     } else {
       if (right_align == A68_TRUE) {
+        while (str[0] == BLANK_CHAR) {
+          str++;
+        }
+        int blanks = width - (int) strlen (str);
+        if (blanks >= 0) {
+          add_string_transput_buffer (p, FORMATTED_BUFFER, str);
+          while (blanks--) {
+            plusab_transput_buffer (p, FORMATTED_BUFFER, BLANK_CHAR);
+          }
+        } else {
+          value_error (p, mode, ref_file);
+          (void) error_chars (get_transput_buffer (FORMATTED_BUFFER), width);
+        }
+      } else {
+        while (str[0] == BLANK_CHAR) {
+          str++;
+        }
         int blanks = width - (int) strlen (str);
         if (blanks >= 0) {
           while (blanks--) {
             plusab_transput_buffer (p, FORMATTED_BUFFER, BLANK_CHAR);
           }
           add_string_transput_buffer (p, FORMATTED_BUFFER, str);
-        } else {
-          value_error (p, mode, ref_file);
-          (void) error_chars (get_transput_buffer (FORMATTED_BUFFER), width);
-        }
-      } else {
-        int blanks;
-        while (str[0] == BLANK_CHAR) {
-          str++;
-        }
-        blanks = width - (int) strlen (str);
-        if (blanks >= 0) {
-          add_string_transput_buffer (p, FORMATTED_BUFFER, str);
-          while (blanks--) {
-            plusab_transput_buffer (p, FORMATTED_BUFFER, BLANK_CHAR);
-          }
         } else {
           value_error (p, mode, ref_file);
           (void) error_chars (get_transput_buffer (FORMATTED_BUFFER), width);
@@ -1096,9 +1102,9 @@ void write_integral_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * 
     } else if (mode == M_LONG_INT) {
 #if (A68_LEVEL >= 3)
       A68_LONG_INT *z = (A68_LONG_INT *) item;
-      QUAD_WORD_T w = VALUE (z);
-      sign = sign_int_16 (w);
-      str = long_sub_whole_double (p, abs_int_16 (w), width);
+      DOUBLE_NUM_T w = VALUE (z);
+      sign = sign_double_int (w);
+      str = long_sub_whole_double (p, abs_double_int (w), width);
 #else
       MP_T *z = (MP_T *) item;
       sign = MP_SIGN (z);
@@ -1213,13 +1219,13 @@ void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item
       str = sub_fixed (p, x, mant_length, frac_digits);
     } else if (mode == M_LONG_REAL || mode == M_LONG_INT) {
 #if (A68_LEVEL >= 3)
-      QUAD_WORD_T x = VALUE ((A68_DOUBLE *) item);
+      DOUBLE_NUM_T x = VALUE ((A68_DOUBLE *) item);
       if (mode == M_LONG_INT) {
-        x = int_16_to_real_16 (p, x);
+        x = double_int_to_double_real (p, x);
       }
       CHECK_DOUBLE_REAL (p, x.f);
       exp_value = 0;
-      sign = sign_real_16 (x);
+      sign = sign_double_real (x);
       if (sign_mould != NO_NODE) {
         put_sign_to_integral (sign_mould, sign);
       }
@@ -1468,7 +1474,7 @@ void genie_write_long_real_format (NODE_T * p, BYTE_T * item, A68_REF ref_file)
 #if (A68_LEVEL >= 3)
     ADDR_T pop_sp = A68_SP;
     A68_LONG_REAL *z = (A68_LONG_REAL *) STACK_TOP;
-    QUAD_WORD_T im;
+    DOUBLE_NUM_T im;
     im.f = 0.0q;
     PUSH_VALUE (p, im, A68_LONG_REAL);
     write_complex_pattern (p, M_LONG_REAL, M_LONG_COMPLEX, item, (BYTE_T *) z, ref_file);
@@ -1600,7 +1606,7 @@ void genie_write_standard_format (NODE_T * p, MOID_T * mode, BYTE_T * item, A68_
 #if (A68_LEVEL >= 3)
       ADDR_T pop_sp = A68_SP;
       A68_LONG_REAL *z = (A68_LONG_REAL *) STACK_TOP;
-      QUAD_WORD_T im;
+      DOUBLE_NUM_T im;
       im.f = 0.0q;
       PUSH_VALUE (p, im, A68_LONG_REAL);
       write_complex_pattern (p, M_LONG_REAL, M_LONG_COMPLEX, item, (BYTE_T *) z, ref_file);

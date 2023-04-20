@@ -1,86 +1,100 @@
 a68g_SOURCES = \
+./src/a68g/a68g-apropos.c \
+./src/a68g/a68g-bits.c \
 ./src/a68g/a68g.c \
-./src/a68g/a68glib.c \
-./src/a68g/apropos.c \
-./src/a68g/bits.c \
-./src/a68g/bool.c \
-./src/a68g/bottom-up.c \
-./src/a68g/brackets.c \
-./src/a68g/char.c \
-./src/a68g/compiler-basic.c \
-./src/a68g/compiler.c \
-./src/a68g/compiler-folder.c \
-./src/a68g/compiler-gen.c \
-./src/a68g/compiler-inline.c \
-./src/a68g/compiler-tables.c \
-./src/a68g/conversion.c \
-./src/a68g/curses.c \
-./src/a68g/diagnostics.c \
+./src/a68g/a68g-conversion.c \
+./src/a68g/a68g-diagnostics.c \
+./src/a68g/a68g-io.c \
+./src/a68g/a68g-keywords.c \
+./src/a68g/a68g-listing.c \
+./src/a68g/a68g-mem.c \
+./src/a68g/a68g-non-terminal.c \
+./src/a68g/a68g-options.c \
+./src/a68g/a68g-path.c \
+./src/a68g/a68g-postulates.c \
+./src/a68g/a68g-pretty.c \
 ./src/a68g/double.c \
 ./src/a68g/double-gamic.c \
 ./src/a68g/double-math.c \
-./src/a68g/enquiries.c \
-./src/a68g/environ.c \
-./src/a68g/equivalence.c \
-./src/a68g/extract.c \
-./src/a68g/fft.c \
-./src/a68g/format.c \
 ./src/a68g/genie.c \
 ./src/a68g/genie-coerce.c \
+./src/a68g/genie-misc.c \
+./src/a68g/genie-regex.c \
+./src/a68g/genie-rows.c \
 ./src/a68g/genie-stowed.c \
-./src/a68g/heap.c \
-./src/a68g/io.c \
-./src/a68g/keywords.c \
-./src/a68g/laplace.c \
-./src/a68g/listing.c \
-./src/a68g/mem.c \
-./src/a68g/modes.c \
-./src/a68g/moid-size.c \
-./src/a68g/moid-to-string.c \
-./src/a68g/monitor.c \
+./src/a68g/genie-unix.c \
+./src/a68g/moids-diagnostics.c \
+./src/a68g/moids-misc.c \
+./src/a68g/moids-size.c \
+./src/a68g/moids-to-string.c \
 ./src/a68g/mp-bits.c \
 ./src/a68g/mp.c \
-./src/a68g/mp-constant.c \
+./src/a68g/mp-complex.c \
 ./src/a68g/mp-gamic.c \
 ./src/a68g/mp-gamma.c \
 ./src/a68g/mp-genie.c \
 ./src/a68g/mp-math.c \
 ./src/a68g/mp-mpfr.c \
-./src/a68g/non-terminal.c \
-./src/a68g/options.c \
-./src/a68g/parallel.c \
+./src/a68g/mp-pi.c \
+./src/a68g/mp-quad.c \
+./src/a68g/parser-bottom-up.c \
+./src/a68g/parser-brackets.c \
 ./src/a68g/parser.c \
-./src/a68g/physics.c \
-./src/a68g/plotutils.c \
-./src/a68g/postgresql.c \
-./src/a68g/postulates.c \
+./src/a68g/parser-extract.c \
+./src/a68g/parser-modes.c \
+./src/a68g/parser-moids-check.c \
+./src/a68g/parser-moids-coerce.c \
+./src/a68g/parser-moids-equivalence.c \
+./src/a68g/parser-refinement.c \
+./src/a68g/parser-scanner.c \
+./src/a68g/parser-scope.c \
+./src/a68g/parser-taxes.c \
+./src/a68g/parser-top-down.c \
+./src/a68g/parser-victal.c \
+./src/a68g/plugin-basic.c \
+./src/a68g/plugin.c \
+./src/a68g/plugin-folder.c \
+./src/a68g/plugin-gen.c \
+./src/a68g/plugin-inline.c \
+./src/a68g/plugin-script.c \
+./src/a68g/plugin-tables.c \
 ./src/a68g/prelude-bits.c \
 ./src/a68g/prelude.c \
 ./src/a68g/prelude-gsl.c \
 ./src/a68g/prelude-mathlib.c \
-./src/a68g/pretty.c \
-./src/a68g/refinement.c \
-./src/a68g/regex.c \
-./src/a68g/rows.c \
-./src/a68g/scanner.c \
-./src/a68g/scope.c \
-./src/a68g/script.c \
+./src/a68g/quad.c \
+./src/a68g/quad-conversion.c \
+./src/a68g/rts-bool.c \
+./src/a68g/rts-char.c \
+./src/a68g/rts-curses.c \
+./src/a68g/rts-enquiries.c \
+./src/a68g/rts-formatted.c \
+./src/a68g/rts-heap.c \
+./src/a68g/rts-monitor.c \
+./src/a68g/rts-parallel.c \
+./src/a68g/rts-plotutils.c \
+./src/a68g/rts-postgresql.c \
+./src/a68g/rts-socket.c \
+./src/a68g/rts-sounds.c \
+./src/a68g/rts-transput.c \
+./src/a68g/rts-unformatted.c \
 ./src/a68g/single.c \
+./src/a68g/single-decomposition.c \
+./src/a68g/single-fft.c \
 ./src/a68g/single-gamic.c \
 ./src/a68g/single-gsl.c \
+./src/a68g/single-laplace.c \
 ./src/a68g/single-math.c \
-./src/a68g/single-mathlib.c \
+./src/a68g/single-multivariate.c \
+./src/a68g/single-physics.c \
+./src/a68g/single-python.c \
+./src/a68g/single-r-math.c \
 ./src/a68g/single-rnd.c \
-./src/a68g/socket.c \
-./src/a68g/sounds.c \
-./src/a68g/taxes.c \
-./src/a68g/top-down.c \
-./src/a68g/torrix.c \
-./src/a68g/transput.c \
-./src/a68g/unix.c \
-./src/a68g/victal.c \
+./src/a68g/single-svd.c \
+./src/a68g/single-torrix.c \
+./src/a68g/single-torrix-gsl.c \
 ./src/include/a68g-common.h \
-./src/include/a68g-compiler.h \
+./src/include/a68g-config.win32.h \
 ./src/include/a68g-defines.h \
 ./src/include/a68g-diagnostics.h \
 ./src/include/a68g-double.h \
@@ -96,6 +110,7 @@ a68g_SOURCES = \
 ./src/include/a68g-listing.h \
 ./src/include/a68g-masks.h \
 ./src/include/a68g-math.h \
+./src/include/a68g-moids.h \
 ./src/include/a68g-mp.h \
 ./src/include/a68g-nil.h \
 ./src/include/a68g-numbers.h \
@@ -104,18 +119,21 @@ a68g_SOURCES = \
 ./src/include/a68g-parser.h \
 ./src/include/a68g-physics.h \
 ./src/include/a68g-platform.h \
+./src/include/a68g-plugin.h \
 ./src/include/a68g-postulates.h \
 ./src/include/a68g-prelude-gsl.h \
 ./src/include/a68g-prelude.h \
 ./src/include/a68g-prelude-mathlib.h \
+./src/include/a68g-quad.h \
 ./src/include/a68g-stack.h \
 ./src/include/a68g-stddef.h \
+./src/include/a68g-torrix.h \
 ./src/include/a68g-transput.h \
 ./src/include/a68g-types.h
 pkginclude_HEADERS = \
 ./a68g-config.h \
 ./src/include/a68g-common.h \
-./src/include/a68g-compiler.h \
+./src/include/a68g-config.win32.h \
 ./src/include/a68g-defines.h \
 ./src/include/a68g-diagnostics.h \
 ./src/include/a68g-double.h \
@@ -131,6 +149,7 @@ pkginclude_HEADERS = \
 ./src/include/a68g-listing.h \
 ./src/include/a68g-masks.h \
 ./src/include/a68g-math.h \
+./src/include/a68g-moids.h \
 ./src/include/a68g-mp.h \
 ./src/include/a68g-nil.h \
 ./src/include/a68g-numbers.h \
@@ -139,12 +158,15 @@ pkginclude_HEADERS = \
 ./src/include/a68g-parser.h \
 ./src/include/a68g-physics.h \
 ./src/include/a68g-platform.h \
+./src/include/a68g-plugin.h \
 ./src/include/a68g-postulates.h \
 ./src/include/a68g-prelude-gsl.h \
 ./src/include/a68g-prelude.h \
 ./src/include/a68g-prelude-mathlib.h \
+./src/include/a68g-quad.h \
 ./src/include/a68g-stack.h \
 ./src/include/a68g-stddef.h \
+./src/include/a68g-torrix.h \
 ./src/include/a68g-transput.h \
 ./src/include/a68g-types.h
 bin_PROGRAMS = a68g
@@ -159,17 +181,17 @@ TESTS=\
 	test-set/05-fft.a68\
 	test-set/06-fibonacci-grammar.a68\
 	test-set/07-formula-manipulation.a68\
-	test-set/08-guldens.a68\
-	test-set/09-hamming.a68\
-	test-set/10-hilbert.a68\
-	test-set/11-lisp.a68\
-	test-set/12-mandelbrot.a68\
-	test-set/13-mastermind.a68\
-	test-set/14-math.a68\
-	test-set/15-mersenne.a68\
-	test-set/16-procedures.a68\
-	test-set/17-pseudo-switch.a68\
-	test-set/18-qgammainc.a68\
+	test-set/08-gammainc.a68\
+	test-set/09-guldens.a68\
+	test-set/10-hamming.a68\
+	test-set/11-hilbert.a68\
+	test-set/12-lisp.a68\
+	test-set/13-mandelbrot.a68\
+	test-set/14-mastermind.a68\
+	test-set/15-math.a68\
+	test-set/16-matrix.a68\
+	test-set/17-procedures.a68\
+	test-set/18-pseudo-switch.a68\
 	test-set/19-queens.a68\
 	test-set/20-quicksort.a68\
 	test-set/21-rationals.a68\
@@ -184,9 +206,7 @@ endif
 
 man_MANS = doc/a68g.1
 docdir = @docdir@
-doc_DATA = AUTHORS COPYING NEWS README LICENSE
+doc_DATA = AUTHORS COPYING ChangeLog NEWS README
 EXTRA_DIST = $(man_MANS)\
-	$(TESTS)\
-	./ISSUES\
-	./LICENSE
+	$(TESTS)
 

@@ -1,5 +1,5 @@
 #
-# Algol 68 Genie 3.1.0, configure.ac
+# Algol 68 Genie 3.1.9, configure.ac
 #
 # To configure a68g for the widest range of platforms, issue: 
 #   ./configure --enable-generic
@@ -8,7 +8,7 @@
 #   sudo apt install libncurses-dev libreadline-dev libmpfr libgmp libgsl-dev r-mathlib libplot-dev libghc-postgresql-libpq-dev
 #
 
-AC_INIT([algol68g], [3.1.0], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [3.1.9], [Marcel van der Veer <algol68g@xs4all.nl>])
 AC_PREREQ([2.60])
 
 # Check whether compiler supports $1 as a command-line option. 
@@ -29,12 +29,12 @@ AC_DEFUN([A68G_AC_PROG_CC_CFLAGS],
 
 AC_DEFUN([AX_PATH_GSL],
 [
-AC_ARG_WITH(gsl-prefix,[  --with-gsl-prefix=PFX   Prefix where GSL is installed (optional)],
-            gsl_prefix="$withval", gsl_prefix="")
-AC_ARG_WITH(gsl-exec-prefix,[  --with-gsl-exec-prefix=PFX Exec prefix where GSL is installed (optional)],
-            gsl_exec_prefix="$withval", gsl_exec_prefix="")
-AC_ARG_ENABLE(gsltest, [  --disable-gsltest       Do not try to compile and run a test GSL program],
-		    , enable_gsltest=yes)
+# AC_ARG_WITH(gsl-prefix,[  --with-gsl-prefix=PFX   Prefix where GSL is installed (optional)],
+#            gsl_prefix="$withval", gsl_prefix="")
+# AC_ARG_WITH(gsl-exec-prefix,[  --with-gsl-exec-prefix=PFX Exec prefix where GSL is installed (optional)],
+#            gsl_exec_prefix="$withval", gsl_exec_prefix="")
+# AC_ARG_ENABLE(gsltest, [  --disable-gsltest       Do not try to compile and run a test GSL program],
+#		    , enable_gsltest=yes)
 
   if test "x${GSL_CONFIG+set}" != xset ; then
      if test "x$gsl_prefix" != x ; then
@@ -213,6 +213,7 @@ case "$host" in
 # Cygwin.
 #
 *86-*-cygwin* | *86_64-*-cygwin*) 
+  AC_DEFINE(BUILD_CYGWIN, 1, [Define this if CYGWIN was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant])
   AC_MSG_RESULT([cygwin])
   ;;
@@ -275,8 +276,10 @@ esac
 # Extra options.
 #
 
+AC_ARG_ENABLE(stable, [AS_HELP_STRING([--enable-stable], [conservative build without optional libraries (default is "no")])], , enable_stable=no) 
+AC_ARG_ENABLE(core, [AS_HELP_STRING([--enable-core], [build without optional libraries or plugin compiler (default is "no")])], , enable_core=no) 
 AC_ARG_ENABLE(generic, [AS_HELP_STRING([--enable-generic], [build for legacy 32 bit systems (default is "no")])], , enable_generic=no) 
-AC_ARG_ENABLE(compiler, [AS_HELP_STRING([--enable-compiler], [enable unit compiler (default is "yes")])], , enable_compiler=yes) 
+AC_ARG_ENABLE(compiler, [AS_HELP_STRING([--enable-compiler], [enable plugin compiler (default is "yes")])], , enable_compiler=yes) 
 AC_ARG_ENABLE(quadmath, [AS_HELP_STRING([--enable-quadmath], [if available, enable GCC quadmath library (default is "yes")])], , enable_quadmath=yes) 
 AC_ARG_ENABLE(mathlib, [AS_HELP_STRING([--enable-mathlib], [if available, enable R mathlib library (default is "yes")])], , enable_mathlib=yes) 
 AC_ARG_ENABLE(curses, [AS_HELP_STRING([--enable-curses], [if available, enable curses library (default is "yes")])], , enable_curses=yes) 
@@ -291,9 +294,38 @@ AC_ARG_ENABLE(long-types, [AS_HELP_STRING([--enable-long-types], [if available, 
 AC_ARG_ENABLE(pic, [AS_HELP_STRING([--enable-pic=option], [if using gcc, enable option to generate PIC (default is "-fPIC")])], , enable_pic="-fPIC") 
 AC_ARG_ENABLE(arch, [AS_HELP_STRING([--enable-arch=cpu], [if using gcc, enable emitting architecture-tuned assembly code (default is "no")])], , enable_arch=no) 
 
+if test "x$enable_stable" = "xyes"; then
+  enable_generic=yes
+  enable_core=yes
+fi
+
 if test "x$enable_generic" = "xyes"; then
   enable_standard_types=yes
   enable_long_types=no
+fi
+
+if test "x$enable_core" = "xyes"; then
+  enable_compiler=no
+  enable_gsl=no
+  enable_mathlib=no
+  enable_parallel=no
+  enable_plotutils=no
+  enable_readline=no
+  enable_curses=no
+fi
+
+AC_CHECK_PROG(a68g_exists, a68g, "yes", "no")
+AC_CHECK_PROG(sed_exists, sed, "yes", "no")
+AC_CHECK_PROG(tar_exists, tar, "yes", "no")
+
+if test "x$sed_exists" = "xno"; then
+  AC_MSG_NOTICE([plugin compiler needs sed])
+  enable_compiler=no
+fi
+
+if test "x$tar_exists" = "xno"; then
+  AC_MSG_NOTICE([plugin compiler needs tar])
+  enable_compiler=no
 fi
 
 #
@@ -306,7 +338,6 @@ AC_PREFIX_DEFAULT(/usr/local)
 AC_CONFIG_SRCDIR([src/include/a68g.h])
 AC_CONFIG_HEADERS([a68g-config.h])
 AC_PROG_INSTALL
-AC_CHECK_PROG(a68g_exists, a68g, "yes")
 
 #
 # C compiler.
@@ -315,10 +346,10 @@ AC_CHECK_PROG(a68g_exists, a68g, "yes")
 AC_MSG_NOTICE([C compiler...])
 AC_LANG(C)
 AC_PROG_CC([gcc clang])
-# AC_PROG_CC([clang])
+
 if test "x$GCC" != "xyes"; then
   a68g_ac_compiler=no
-  AC_MSG_WARN([gcc is the preferred C compiler; configuring interpreter-only])
+  AC_MSG_WARN([gcc is the preferred C compiler])
 else
   AC_DEFINE(HAVE_GCC, 1, [Define this if GCC was detected]) 
   AC_DEFINE_UNQUOTED(C_COMPILER, "$CC", [Name of C compiler detected])
@@ -542,32 +573,33 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIOCGWINSZ
 
-AC_CHECK_HEADERS([assert.h complex.h ctype.h errno.h fcntl.h fenv.h float.h limits.h netdb.h netinet/in.h regex.h setjmp.h signal.h stdarg.h stddef.h stdio.h stdlib.h sys/ioctl.h sys/resource.h sys/socket.h sys/time.h termios.h time.h])
+AC_CHECK_HEADERS([assert.h complex.h ctype.h errno.h fcntl.h fenv.h float.h libgen.h limits.h netdb.h netinet/in.h regex.h setjmp.h signal.h stdarg.h stddef.h stdio.h stdlib.h sys/ioctl.h sys/resource.h sys/socket.h sys/time.h termios.h time.h])
 
 #
 # Functions we expect
 #
 
 AC_MSG_NOTICE([standard functions...])
-AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_FUNCS(aligned_alloc)
-AC_CHECK_FUNCS(malloc)
+AC_CHECK_FUNCS(basename)
+AC_CHECK_FUNCS(csqrt)
+AC_CHECK_FUNCS(exit)
+AC_CHECK_FUNCS(fprintf)
 AC_CHECK_FUNCS(free)
-AC_CHECK_FUNCS(setjmp)
 AC_CHECK_FUNCS(longjmp)
+AC_CHECK_FUNCS(malloc)
 AC_CHECK_FUNCS(memcpy)
 AC_CHECK_FUNCS(memmove)
 AC_CHECK_FUNCS(memset)
+AC_CHECK_FUNCS(posix_memalign)
+AC_CHECK_FUNCS(printf)
+AC_CHECK_FUNCS(setjmp)
+AC_CHECK_FUNCS(signal)
+AC_CHECK_FUNCS(snprintf)
+AC_CHECK_FUNCS(sqrt)
 AC_CHECK_FUNCS(strcmp)
 AC_CHECK_FUNCS(strncmp)
 AC_CHECK_FUNCS(strncpy)
-AC_CHECK_FUNCS(printf)
-AC_CHECK_FUNCS(fprintf)
-AC_CHECK_FUNCS(snprintf)
-AC_CHECK_FUNCS(signal)
-AC_CHECK_FUNCS(exit)
-AC_CHECK_FUNCS(sqrt)
-AC_CHECK_FUNCS(csqrt)
 
 #
 # Checks for functions / macros.
@@ -738,7 +770,7 @@ if test "x$enable_gsl" = "xyes"; then
   if test "x$enable_gsl" = "xyes"; then
     AC_CHECK_LIB([gslcblas], [cblas_dgemm], [], [enable_gsl=no])
     AC_CHECK_LIB([gsl], [gsl_blas_ddot], [], [enable_gsl=no])
-    AC_CHECK_HEADERS([gsl/gsl_blas.h gsl/gsl_complex.h gsl/gsl_complex_math.h gsl/gsl_errno.h gsl/gsl_fft_complex.h gsl/gsl_integration.h gsl/gsl_linalg.h gsl/gsl_math.h gsl/gsl_matrix.h gsl/gsl_permutation.h gsl/gsl_sf.h gsl/gsl_vector.h gsl/gsl_version.h], [], [enable_gsl=no], [])
+    AC_CHECK_HEADERS([gsl/gsl_blas.h gsl/gsl_complex.h gsl/gsl_complex_math.h gsl/gsl_eigen.h gsl/gsl_errno.h gsl/gsl_fft_complex.h gsl/gsl_integration.h gsl/gsl_linalg.h gsl/gsl_math.h gsl/gsl_matrix.h gsl/gsl_permutation.h gsl/gsl_sf.h gsl/gsl_statistics.h gsl/gsl_vector.h gsl/gsl_version.h], [], [enable_gsl=no], [])
   fi
   if test "x$enable_gsl" = "xyes"; then
     AC_DEFINE(HAVE_GSL, 1, [Define this if a good GNU GSL installation was detected])
@@ -862,14 +894,14 @@ if test "x$enable_postgresql" = "xyes"; then
   AC_MSG_NOTICE([building with PostgreSQL])
 fi
 if test "x$enable_compiler" = "xyes"; then
-  AC_MSG_NOTICE([building compiler-interpreter])
+  AC_MSG_NOTICE([building plugin compiler])
 else
   AC_MSG_NOTICE([building interpreter-only])
 fi
 AC_MSG_NOTICE([])
-if test "x$GCC" = "xyes"; then
-  if test "x$enable_quadmath" = "xno"; then
-    AC_MSG_NOTICE([consider installing libquadmath-devel and reconfiguring])
-  fi
-fi
+# if test "x$GCC" = "xyes"; then
+#   if test "x$enable_quadmath" = "xno"; then
+#     AC_MSG_NOTICE([consider installing libquadmath-devel and reconfiguring])
+#   fi
+# fi
 AC_MSG_NOTICE([now type 'make' optionally followed by 'make check' or 'make install'])

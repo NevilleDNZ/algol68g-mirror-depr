@@ -1,10 +1,10 @@
 This file is part of Algol 68 Genie - an Algol 68 compiler-interpreter.
-Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
+Copyright 2001-2023 J. Marcel van der Veer <algol68g@xs4all.nl>.
+
 
 ALGOL68G - ALGOL 68 GENIE
 
 Algol68G is an implementation of Algol 68 as defined by the Revised Report.
-It ranks among the most complete implementations of the language.
 
 Algol68G is free software, you can redistribute it and/or modify it under the 
 terms of the GNU General Public License. This software is distributed in the 
@@ -24,7 +24,7 @@ promotes Algol 68 out of educational as well as scientific-historical interest,
 by making available a recent checkout compiler-interpreter written from scratch
 by Marcel van der Veer.
 
-Algol 68 Genie is a fast compiler-interpreter which ranks among the most
+Algol 68 Genie is a fast compiler-interpreter ranking among the most
 complete implementations of the language; it supports for instance 
 
 * partial parametrisation,
@@ -55,8 +55,7 @@ Algol 68 Genie offers for example:
 * a gdb-style debugger and a pretty-printer to 
   beautify source code,
 * optional linkage to GNU MPFR, GNU plotutils or PostgreSQL, 
-* extensions as UNIX pipes, regular expression matching, and 
-  web page content fetching.
+* extensions as UNIX pipes, regular expression matching.
 
 Author of Algol68G is Marcel van der Veer <algol68g@xs4all.nl>.
 Web pages for Algol68G are at <https://jmvdveer.home.xs4all.nl/>.
@@ -86,9 +85,3 @@ make check
 Algol 68 Genie can link to the GNU Scientific Library, plotlib from
 GNU plotutils, R mathlib, GNU MPFR and libpq from PostgreSQL. 
 Libraries not available on your platform are graciously ignored.
-
-For BSD platforms that do not support the GNU build system, a sample
-Makefile.bsd has been provided, with which a68g can be built:
-
-make -f Makefile.bsd
-[sudo] make install

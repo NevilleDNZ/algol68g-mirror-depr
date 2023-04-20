@@ -1,23 +1,27 @@
 //! @file single.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! INT, REAL, COMPLEX and BITS routines.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -1608,9 +1612,9 @@ void genie_ln_choose_real (NODE_T * p)
 
 void a68_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
 {
+  STATUS_RE (z) = INIT_MASK;
+  STATUS_IM (z) = INIT_MASK;
   if (RE (y) == 0 && IM (y) == 0) {
-    STATUS_RE (z) = INIT_MASK;
-    STATUS_IM (z) = INIT_MASK;
     RE (z) = 0.0;
     IM (z) = 0.0;
     errno = EDOM;
@@ -1620,8 +1624,6 @@ void a68_div_complex (A68_REAL * z, A68_REAL * x, A68_REAL * y)
     IM (z) = (IM (x) - r * RE (x)) / den;
   } else {
     REAL_T r = RE (y) / IM (y), den = IM (y) + r * RE (y);
-    STATUS_RE (z) = INIT_MASK;
-    STATUS_IM (z) = INIT_MASK;
     RE (z) = (RE (x) * r + IM (x)) / den;
     IM (z) = (IM (x) * r - RE (x)) / den;
   }

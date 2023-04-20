@@ -1,23 +1,27 @@
-//! @file unix.c
+//! @file genie-unix.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Low-level UNIX routines.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -710,23 +714,20 @@ void genie_exec_sub_pipeline (NODE_T * p)
 //        pipe ctop
 
   int pid;
-#if defined (BUILD_UNIX)
-  int ptoc_fd[2], ctop_fd[2];
-#endif
   A68_REF a_prog, a_args, a_env;
   errno = 0;
-
 // Pop parameters.
   POP_REF (p, &a_env);
   POP_REF (p, &a_args);
   POP_REF (p, &a_prog);
-#if defined (BUILD_WIN32)
+#if !defined (BUILD_UNIX)
   pid = -1;
   (void) pid;
   genie_mkpipe (p, -1, -1, -1);
   return;
 #else
 // Create the pipes and fork.
+  int ptoc_fd[2], ctop_fd[2];
   if ((pipe (ptoc_fd) == -1) || (pipe (ctop_fd) == -1)) {
     genie_mkpipe (p, -1, -1, -1);
     return;
@@ -782,9 +783,6 @@ void genie_exec_sub_output (NODE_T * p)
 //       pipe ctop
 
   int pid;
-#if defined (BUILD_UNIX)
-  int ptoc_fd[2], ctop_fd[2];
-#endif
   A68_REF a_prog, a_args, a_env, dest;
   errno = 0;
 // Pop parameters.
@@ -792,13 +790,14 @@ void genie_exec_sub_output (NODE_T * p)
   POP_REF (p, &a_env);
   POP_REF (p, &a_args);
   POP_REF (p, &a_prog);
-#if defined (BUILD_WIN32)
+#if !defined (BUILD_UNIX)
   pid = -1;
   (void) pid;
   PUSH_VALUE (p, -1, A68_INT);
   return;
 #else
 // Create the pipes and fork.
+  int ptoc_fd[2], ctop_fd[2];
   if ((pipe (ptoc_fd) == -1) || (pipe (ctop_fd) == -1)) {
     PUSH_VALUE (p, -1, A68_INT);
     return;

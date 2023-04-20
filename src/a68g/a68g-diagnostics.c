@@ -1,23 +1,27 @@
-//! @file diagnostics.c
+//! @file a68g-diagnostics.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Error and warning routines.
 
 #include "a68g.h"
 #include "a68g-prelude.h"
@@ -34,7 +38,7 @@
 
 char *error_specification (void)
 {
-  static char txt[BUFFER_SIZE];
+  static BUFFER txt;
   if (errno == 0) {
     ASSERT (snprintf (txt, SNPRINTF_SIZE, "no information") >= 0);
   } else {
@@ -382,6 +386,17 @@ void scan_error (LINE_T * u, char *v, char *txt)
   longjmp (RENDEZ_VOUS (&A68_JOB), 1);
 }
 
+//! @brief Give an intelligible warning.
+
+void scan_warning (LINE_T * u, char *v, char *txt)
+{
+  if (errno != 0) {
+    diagnostic (A68_SUPPRESS_SEVERITY, NO_NODE, txt, u, v, error_specification ());
+  } else {
+    diagnostic (A68_SUPPRESS_SEVERITY, NO_NODE, txt, u, v, ERROR_UNSPECIFIED);
+  }
+}
+
 //! @brief Get severity text.
 
 char *get_severity (int sev)
@@ -445,7 +460,8 @@ void add_diagnostic (LINE_T * line, char *pos, NODE_T * p, int sev, char *b)
 // Add diagnostic and choose GNU style or non-GNU style.
   DIAGNOSTIC_T *msg = (DIAGNOSTIC_T *) get_heap_space ((size_t) SIZE_ALIGNED (DIAGNOSTIC_T));
   DIAGNOSTIC_T **ref_msg;
-  char a[BUFFER_SIZE], st[SMALL_BUFFER_SIZE], nst[BUFFER_SIZE];
+  BUFFER a, nst;
+  char st[SMALL_BUFFER_SIZE];
   char *severity = get_severity (sev);
   int k = 1;
   if (line == NO_LINE && p == NO_NODE) {
@@ -657,7 +673,7 @@ void diagnostic (STATUS_MASK_T sev, NODE_T * p, char *loc_str, ...)
             }
           } else if (t[0] == 'D') {
             int a = va_arg (args, int);
-            char d[BUFFER_SIZE];
+            BUFFER d;
             ASSERT (snprintf (d, SNPRINTF_SIZE, "%d", a) >= 0);
             bufcat (b, d, BUFFER_SIZE);
           } else if (t[0] == 'H') {
@@ -748,7 +764,7 @@ void diagnostic (STATUS_MASK_T sev, NODE_T * p, char *loc_str, ...)
             bufcat (b, PACKAGE_STRING, BUFFER_SIZE);
           } else if (t[0] == 'X') {
             int att = va_arg (args, int);
-            char z[BUFFER_SIZE];
+            BUFFER z;
             (void) non_terminal_string (z, att);
             bufcat (b, new_string (z, NO_TEXT), BUFFER_SIZE);
           } else if (t[0] == 'Y') {

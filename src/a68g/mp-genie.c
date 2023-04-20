@@ -1,23 +1,27 @@
-//! @file mp-genie.c
+//! @file mp-misc.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Multi-precision interpreter routines.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -48,11 +52,10 @@ void genie_minus_infinity_mp (NODE_T *p)
 void genie_long_max_int (NODE_T * p)
 {
   int digs = DIGITS (M_LONG_INT);
-  int k;
   MP_T *z = nil_mp (p, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_EXPONENT (z) = (MP_T) (digs - 1);
-  for (k = 1; k <= digs; k++) {
+  for (unt k = 1; k <= digs; k++) {
     MP_DIGIT (z, k) = (MP_T) (MP_RADIX - 1);
   }
 }
@@ -62,11 +65,10 @@ void genie_long_max_int (NODE_T * p)
 void genie_long_mp_max_int (NODE_T * p)
 {
   int digs = DIGITS (M_LONG_LONG_INT);
-  int k;
   MP_T *z = nil_mp (p, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_EXPONENT (z) = (MP_T) (digs - 1);
-  for (k = 1; k <= digs; k++) {
+  for (unt k = 1; k <= digs; k++) {
     MP_DIGIT (z, k) = (MP_T) (MP_RADIX - 1);
   }
 }
@@ -75,11 +77,11 @@ void genie_long_mp_max_int (NODE_T * p)
 
 void genie_long_max_real (NODE_T * p)
 {
-  int k, digs = DIGITS (M_LONG_REAL);
+  unt digs = DIGITS (M_LONG_REAL);
   MP_T *z = nil_mp (p, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_EXPONENT (z) = (MP_T) (MAX_MP_EXPONENT - 1);
-  for (k = 1; k <= digs; k++) {
+  for (unt k = 1; k <= digs; k++) {
     MP_DIGIT (z, k) = (MP_T) (MP_RADIX - 1);
   }
 }
@@ -88,11 +90,11 @@ void genie_long_max_real (NODE_T * p)
 
 void genie_long_mp_max_real (NODE_T * p)
 {
-  int k, digs = DIGITS (M_LONG_LONG_REAL);
+  unt digs = DIGITS (M_LONG_LONG_REAL);
   MP_T *z = nil_mp (p, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   MP_EXPONENT (z) = (MP_T) (MAX_MP_EXPONENT - 1);
-  for (k = 1; k <= digs; k++) {
+  for (unt k = 1; k <= digs; k++) {
     MP_DIGIT (z, k) = (MP_T) (MP_RADIX - 1);
   }
 }
@@ -667,49 +669,49 @@ void genie_odd_mp (NODE_T * p)
 
 //! @brief Test whether z is a valid LONG INT.
 
-void test_long_int_range (NODE_T * p, MP_T * z, MOID_T * m)
+void test_mp_int_range (NODE_T * p, MP_T * z, MOID_T * m)
 {
   PRELUDE_ERROR (!check_mp_int (z, m), p, ERROR_OUT_OF_BOUNDS, m);
 }
 
 //! @brief OP + = (LONG INT, LONG INT) LONG INT
 
-void genie_add_long_int (NODE_T * p)
+void genie_add_mp_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
   int digs = DIGITS (m), size = SIZE (m);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) add_mp (p, x, x, y, digs);
-  test_long_int_range (p, x, m);
+  test_mp_int_range (p, x, m);
   MP_STATUS (x) = (MP_T) INIT_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
 //! @brief OP - = (LONG INT, LONG INT) LONG INT
 
-void genie_sub_long_int (NODE_T * p)
+void genie_sub_mp_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
   int digs = DIGITS (m), size = SIZE (m);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) sub_mp (p, x, x, y, digs);
-  test_long_int_range (p, x, m);
+  test_mp_int_range (p, x, m);
   MP_STATUS (x) = (MP_T) INIT_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
 
 //! @brief OP * = (LONG INT, LONG INT) LONG INT
 
-void genie_mul_long_int (NODE_T * p)
+void genie_mul_mp_int (NODE_T * p)
 {
   MOID_T *m = RHS_MODE (p);
   int digs = DIGITS (m), size = SIZE (m);
   MP_T *x = (MP_T *) STACK_OFFSET (-2 * size);
   MP_T *y = (MP_T *) STACK_OFFSET (-size);
   (void) mul_mp (p, x, x, y, digs);
-  test_long_int_range (p, x, m);
+  test_mp_int_range (p, x, m);
   MP_STATUS (x) = (MP_T) INIT_MASK;
   DECREMENT_STACK_POINTER (p, size);
 }
@@ -725,32 +727,32 @@ void genie_pow_mp_int_int (NODE_T * p)
   POP_OBJECT (p, &k, A68_INT);
   x = (MP_T *) STACK_OFFSET (-size);
   (void) pow_mp_int (p, x, x, VALUE (&k), digs);
-  test_long_int_range (p, x, m);
+  test_mp_int_range (p, x, m);
   MP_STATUS (x) = (MP_T) INIT_MASK;
 }
 
 //! @brief OP +:= = (REF LONG INT, LONG INT) REF LONG INT
 
-void genie_plusab_long_int (NODE_T * p)
+void genie_plusab_mp_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  genie_f_and_becomes (p, mode, genie_add_long_int);
+  genie_f_and_becomes (p, mode, genie_add_mp_int);
 }
 
 //! @brief OP -:= = (REF LONG INT, LONG INT) REF LONG INT
 
-void genie_minusab_long_int (NODE_T * p)
+void genie_minusab_mp_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  genie_f_and_becomes (p, mode, genie_sub_long_int);
+  genie_f_and_becomes (p, mode, genie_sub_mp_int);
 }
 
 //! @brief OP *:= = (REF LONG INT, LONG INT) REF LONG INT
 
-void genie_timesab_long_int (NODE_T * p)
+void genie_timesab_mp_int (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
-  genie_f_and_becomes (p, mode, genie_mul_long_int);
+  genie_f_and_becomes (p, mode, genie_mul_mp_int);
 }
 
 //! @brief OP ROUND = (LONG REAL) LONG INT
@@ -1133,7 +1135,7 @@ void genie_pow_mp_complex_int (NODE_T * p)
   if (negative) {
     VALUE (&j) = -VALUE (&j);
   }
-  while ((unt) expo <= (unt) (VALUE (&j))) {
+  while ((int) expo <= (int) (VALUE (&j))) {
     if (expo & VALUE (&j)) {
       (void) mul_mp (p, acc, im_z, im_y, digs);
       (void) mul_mp (p, rea, re_z, re_y, digs);

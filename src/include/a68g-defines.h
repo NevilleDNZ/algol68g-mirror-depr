@@ -1,23 +1,23 @@
 //! @file a68g-defines.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_DEFINES_H__)
 #define __A68G_DEFINES_H__
@@ -50,7 +50,7 @@
 
 // File extensions
 #define BINARY_EXTENSION ".o"
-#define LIBRARY_EXTENSION ".so"
+#define PLUGIN_EXTENSION ".so"
 #define LISTING_EXTENSION ".l"
 #define OBJECT_EXTENSION ".c"
 #define PRETTY_EXTENSION ".f"
@@ -107,9 +107,17 @@
 #define TRANSPUT_BUFFER_SIZE BUFFER_SIZE
 #define WANT_PATTERN A68_TRUE
 
+#define MANT_DIGS(n) ((int) round ((n) * log10 (2.0)))
+#define MANT_BITS(n) ((int) round ((n) / log10 (2.0)))
+#define REAL_DIGITS MANT_DIGS (REAL_MANT_DIG)
+
 // Macros
 
 #define _SKIP_ { (void) 0;}
+
+#define BUFCLR(z) {memset ((z), 0, BUFFER_SIZE + 1);}
+
+#define ABS(n) ((n) >= 0 ? (n) : -(n))
 
 #define MAX(u, v) (((u) > (v) ? (u) : (v)))
 #define MAXIMISE(u, v) ((u) = MAX (u, v))
@@ -213,7 +221,6 @@
 
 #define A68_SOUND_BYTES(s) ((int) (BITS_PER_SAMPLE (s)) / 8 + (int) (BITS_PER_SAMPLE (s) % 8 == 0 ? 0 : 1))
 #define A68_SOUND_DATA_SIZE(s) ((int) (NUM_SAMPLES (s)) * (int) (NUM_CHANNELS (s)) * (int) (A68_SOUND_BYTES (s)))
-#define ABS(n) ((n) >= 0 ? (n) : -(n))
 #define BACKWARD(p) (p = PREVIOUS (p))
 #define BITS_WIDTH ((int) (1 + ceil (log ((REAL_T) A68_MAX_INT) / log ((REAL_T) 2))))
 #define DEFLEX(p) (DEFLEXED (p) != NO_MOID ? DEFLEXED(p) : (p))
@@ -317,9 +324,9 @@
 #define FILE_ENTRY(p) ((p)->file_entry)
 #define FILE_GENERIC_NAME(p) (FILES (p).generic_name)
 #define FILE_INITIAL_NAME(p) (FILES (p).initial_name)
-#define FILE_LIBRARY_NAME(p) (FILES (p).library.name)
-#define FILE_LIBRARY_OPENED(p) (FILES (p).library.opened)
-#define FILE_LIBRARY_WRITEMOOD(p) (FILES (p).library.writemood)
+#define FILE_PLUGIN_NAME(p) (FILES (p).plugin.name)
+#define FILE_PLUGIN_OPENED(p) (FILES (p).plugin.opened)
+#define FILE_PLUGIN_WRITEMOOD(p) (FILES (p).plugin.writemood)
 #define FILE_LISTING_FD(p) (FILES (p).listing.fd)
 #define FILE_LISTING_NAME(p) (FILES (p).listing.name)
 #define FILE_LISTING_OPENED(p) (FILES (p).listing.opened)
@@ -545,6 +552,7 @@
 #define SCALE_ROW(p) ((p)->scale_row)
 #define SCAN(p) ((p)->scan)
 #define SCAN_ERROR(c, u, v, txt) if (c) {scan_error (u, v, txt);}
+#define SCAN_WARNING(c, u, v, txt) if (c) {scan_warning (u, v, txt);}
 #define SCOPE(p) ((p)->scope)
 #define SCOPE_ASSIGNED(p) ((p)->scope_assigned)
 #define SEARCH(p) ((p)->search)

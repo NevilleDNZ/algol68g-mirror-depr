@@ -1,23 +1,23 @@
 //! @file a68g-types.h
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
 
 #if !defined (__A68G_TYPES_H__)
 #define __A68G_TYPES_H__
@@ -26,7 +26,13 @@
 
 #define COMPLEX_T double complex
 
+typedef unt char BYTE_T;
+typedef BYTE_T *A68_STRUCT;
+
+typedef char BUFFER[BUFFER_SIZE + 1];
+typedef int CHAR_T;
 typedef int LEAP_T;
+typedef MP_T A68_LONG[DEFAULT_DOUBLE_DIGITS + 2];
 typedef struct A68_ARRAY A68_ARRAY;
 typedef struct A68_BITS A68_BITS;
 typedef struct A68_BOOL A68_BOOL;
@@ -40,6 +46,7 @@ typedef struct A68_HANDLE A68_HANDLE;
 typedef struct A68_INT A68_INT;
 typedef struct A68_LONG_BYTES A68_LONG_BYTES;
 typedef struct A68_PROCEDURE A68_PROCEDURE;
+typedef struct A68_REAL A68_REAL;
 typedef struct A68_REF A68_REF, A68_ROW;
 typedef struct A68_SOUND A68_SOUND;
 typedef struct A68_STREAM A68_STREAM;
@@ -67,13 +74,8 @@ typedef struct TAG_T TAG_T;
 typedef struct TOKEN_T TOKEN_T;
 typedef unt FILE_T, MOOD_T;
 typedef void GPROC (NODE_T *);
-typedef int CHAR_T;
-typedef PROP_T PROP_PROC (NODE_T *);
-typedef struct A68_REAL A68_REAL;
-typedef MP_T A68_LONG[DEFAULT_DOUBLE_DIGITS + 2];
 
-typedef unt char BYTE_T;
-typedef BYTE_T *A68_STRUCT;
+typedef PROP_T PROP_PROC (NODE_T *);
 
 struct A68_REAL
 {
@@ -100,7 +102,6 @@ struct ACTIVATION_RECORD
 #endif
 };
 
-
 struct PROP_T
 {
   PROP_PROC *unit;
@@ -123,11 +124,10 @@ struct DIAGNOSTIC_T
   DIAGNOSTIC_T *next;
 };
 
-
 struct FILES_T
 {
   char *path, *initial_name, *generic_name;
-  struct A68_STREAM binary, diags, library, script, object, source, listing, pretty;
+  struct A68_STREAM binary, diags, plugin, script, object, source, listing, pretty;
 };
 
 struct KEYWORD_T
@@ -148,9 +148,13 @@ struct MODES_T
     *REF_CHAR, *REF_COMPL, *REF_COMPLEX, *REF_FILE, *REF_FORMAT, *REF_INT,
     *REF_LONG_BITS, *REF_LONG_BYTES, *REF_LONG_COMPL, *REF_LONG_COMPLEX,
     *REF_LONG_INT, *REF_LONG_LONG_BITS, *REF_LONG_LONG_COMPL,
-    *REF_LONG_LONG_COMPLEX, *REF_LONG_LONG_INT, *REF_LONG_LONG_REAL,
-    *REF_LONG_REAL, *REF_PIPE, *REF_REAL, *REF_REF_FILE, *REF_ROW_CHAR, *REF_ROW_COMPLEX, *REF_ROW_INT, *REF_ROW_REAL, *REF_ROW_ROW_COMPLEX, *REF_ROW_ROW_REAL, *REF_SOUND, *REF_STRING, *ROW_BITS, *ROW_BOOL, *ROW_CHAR, *ROW_COMPLEX, *ROW_INT, *ROW_LONG_BITS, *ROW_LONG_LONG_BITS, *ROW_REAL, *ROW_ROW_CHAR, *ROW_ROW_COMPLEX, *ROW_ROW_REAL, *ROWS, *ROW_SIMPLIN, *ROW_SIMPLOUT, *ROW_STRING, *SEMA, *SIMPLIN, *SIMPLOUT, *SOUND, *SOUND_DATA, *STRING, *FLEX_ROW_CHAR, *FLEX_ROW_BOOL, *UNDEFINED, *VACUUM,
-    *VOID;
+    *REF_LONG_LONG_COMPLEX, *REF_LONG_LONG_INT, *REF_LONG_LONG_REAL, *REF_LONG_REAL, 
+    *REF_PIPE, *REF_REAL, *REF_REF_FILE, *REF_ROW_CHAR, *REF_ROW_COMPLEX, *REF_ROW_INT, 
+    *REF_ROW_REAL, *REF_ROW_ROW_COMPLEX, *REF_ROW_ROW_REAL, *REF_SOUND, *REF_STRING,
+    *ROW_BITS, *ROW_BOOL, *ROW_CHAR, *ROW_COMPLEX, *ROW_INT, *ROW_LONG_BITS, *ROW_LONG_LONG_BITS, 
+    *ROW_REAL, *ROW_ROW_CHAR, *ROW_ROW_COMPLEX, *ROW_ROW_REAL, *ROWS, *ROW_SIMPLIN, *ROW_SIMPLOUT, 
+    *ROW_STRING, *SEMA, *SIMPLIN, *SIMPLOUT, *SOUND, *SOUND_DATA, *STRING, *FLEX_ROW_CHAR, 
+    *FLEX_ROW_BOOL, *UNDEFINED, *VACUUM, *VOID;
 };
 
 struct OPTIONS_T
@@ -478,32 +482,33 @@ struct A68_FILE
 #define M_CHANNEL (MODE (CHANNEL))
 #define M_CHAR (MODE (CHAR))
 #define M_COLLITEM (MODE (COLLITEM))
-#define M_COMPL (MODE (COMPL))
 #define M_COMPLEX (MODE (COMPLEX))
+#define M_COMPL (MODE (COMPL))
 #define M_C_STRING (MODE (C_STRING))
 #define M_ERROR (MODE (ERROR))
 #define M_FILE (MODE (FILE))
 #define M_FLEX_ROW_BOOL (MODE (FLEX_ROW_BOOL))
 #define M_FLEX_ROW_CHAR (MODE (FLEX_ROW_CHAR))
+#define M_FORMAT (MODE (FORMAT))
 #define M_HEX_NUMBER (MODE (HEX_NUMBER))
 #define M_HIP (MODE (HIP))
 #define M_INT (MODE (INT))
 #define M_LONG_BITS (MODE (LONG_BITS))
 #define M_LONG_BYTES (MODE (LONG_BYTES))
-#define M_LONG_COMPL (MODE (LONG_COMPL))
 #define M_LONG_COMPLEX (MODE (LONG_COMPLEX))
+#define M_LONG_COMPL (MODE (LONG_COMPL))
 #define M_LONG_INT (MODE (LONG_INT))
 #define M_LONG_LONG_BITS (MODE (LONG_LONG_BITS))
-#define M_LONG_LONG_COMPL (MODE (LONG_LONG_COMPL))
 #define M_LONG_LONG_COMPLEX (MODE (LONG_LONG_COMPLEX))
+#define M_LONG_LONG_COMPL (MODE (LONG_LONG_COMPL))
 #define M_LONG_LONG_INT (MODE (LONG_LONG_INT))
 #define M_LONG_LONG_REAL (MODE (LONG_LONG_REAL))
 #define M_LONG_REAL (MODE (LONG_REAL))
 #define M_NIL (MODE (NIL))
 #define M_NUMBER (MODE (NUMBER))
 #define M_PIPE (MODE (PIPE))
-#define M_PROC_REAL_REAL (MODE (PROC_REAL_REAL))
 #define M_PROC_LONG_REAL_LONG_REAL (MODE (PROC_LONG_REAL_LONG_REAL))
+#define M_PROC_REAL_REAL (MODE (PROC_REAL_REAL))
 #define M_PROC_REF_FILE_BOOL (MODE (PROC_REF_FILE_BOOL))
 #define M_PROC_REF_FILE_VOID (MODE (PROC_REF_FILE_VOID))
 #define M_PROC_ROW_CHAR (MODE (PROC_ROW_CHAR))
@@ -514,18 +519,18 @@ struct A68_FILE
 #define M_REF_BOOL (MODE (REF_BOOL))
 #define M_REF_BYTES (MODE (REF_BYTES))
 #define M_REF_CHAR (MODE (REF_CHAR))
-#define M_REF_COMPL (MODE (REF_COMPL))
 #define M_REF_COMPLEX (MODE (REF_COMPLEX))
+#define M_REF_COMPL (MODE (REF_COMPL))
 #define M_REF_FILE (MODE (REF_FILE))
 #define M_REF_FORMAT (MODE (REF_FORMAT))
 #define M_REF_INT (MODE (REF_INT))
 #define M_REF_LONG_BITS (MODE (REF_LONG_BITS))
 #define M_REF_LONG_BYTES (MODE (REF_LONG_BYTES))
-#define M_REF_LONG_COMPL (MODE (REF_LONG_COMPL))
 #define M_REF_LONG_COMPLEX (MODE (REF_LONG_COMPLEX))
+#define M_REF_LONG_COMPL (MODE (REF_LONG_COMPL))
 #define M_REF_LONG_INT (MODE (REF_LONG_INT))
-#define M_REF_LONG_LONG_COMPL (MODE (REF_LONG_LONG_COMPL))
 #define M_REF_LONG_LONG_COMPLEX (MODE (REF_LONG_LONG_COMPLEX))
+#define M_REF_LONG_LONG_COMPL (MODE (REF_LONG_LONG_COMPL))
 #define M_REF_LONG_LONG_INT (MODE (REF_LONG_LONG_INT))
 #define M_REF_LONG_LONG_REAL (MODE (REF_LONG_LONG_REAL))
 #define M_REF_LONG_REAL (MODE (REF_LONG_REAL))
@@ -553,17 +558,16 @@ struct A68_FILE
 #define M_ROW_ROW_REAL (MODE (ROW_ROW_REAL))
 #define M_ROW_SIMPLIN (MODE (ROW_SIMPLIN))
 #define M_ROW_SIMPLOUT (MODE (ROW_SIMPLOUT))
+#define M_ROWS (MODE (ROWS))
 #define M_ROW_STRING (MODE (ROW_STRING))
 #define M_SEMA (MODE (SEMA))
 #define M_SIMPLIN (MODE (SIMPLIN))
 #define M_SIMPLOUT (MODE (SIMPLOUT))
 #define M_SOUND_DATA (MODE (SOUND_DATA))
+#define M_SOUND (MODE (SOUND))
 #define M_STRING (MODE (STRING))
 #define M_UNDEFINED (MODE (UNDEFINED))
 #define M_VACUUM (MODE (VACUUM))
 #define M_VOID (MODE (VOID))
-#define M_FORMAT (MODE (FORMAT))
-#define M_ROWS (MODE (ROWS))
-#define M_SOUND (MODE (SOUND))
 
 #endif

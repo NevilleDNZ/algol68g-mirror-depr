@@ -1,31 +1,34 @@
-//! @file char.c
+//! @file rts-char.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! CHAR, STRING and BYTES routines.
 
 #include "a68g.h"
 #include "a68g-genie.h"
 #include "a68g-prelude.h"
 #include "a68g-mp.h"
 #include "a68g-double.h"
-
-// CHAR, STRING and BYTES operations.
+#include "a68g-transput.h"
 
 // OP (CHAR, CHAR) BOOL.
 
@@ -155,18 +158,17 @@ void genie_add_string (NODE_T * p)
   A68_REF a, b, c, d;
   A68_ARRAY *a_1, *a_2, *a_3;
   A68_TUPLE *t_1, *t_2, *t_3;
-  int l_1, l_2, k, m;
   BYTE_T *b_1, *b_2, *b_3;
 // right part.
   POP_REF (p, &b);
   CHECK_INIT (p, INITIALISED (&b), M_STRING);
   GET_DESCRIPTOR (a_2, t_2, &b);
-  l_2 = ROW_SIZE (t_2);
+  int l_2 = ROW_SIZE (t_2);
 // left part.
   POP_REF (p, &a);
   CHECK_REF (p, a, M_STRING);
   GET_DESCRIPTOR (a_1, t_1, &a);
-  l_1 = ROW_SIZE (t_1);
+  int l_1 = ROW_SIZE (t_1);
 // sum.
   c = heap_generator (p, M_STRING, DESCRIPTOR_SIZE (1));
   d = heap_generator (p, M_STRING, (l_1 + l_2) * SIZE (M_CHAR));
@@ -186,17 +188,17 @@ void genie_add_string (NODE_T * p)
   SPAN (t_3) = 1;
 // add strings.
   b_3 = DEREF (BYTE_T, &ARRAY (a_3));
-  m = 0;
+  int m = 0;
   if (ROW_SIZE (t_1) > 0) {
     b_1 = DEREF (BYTE_T, &ARRAY (a_1));
-    for (k = LWB (t_1); k <= UPB (t_1); k++) {
+    for (int k = LWB (t_1); k <= UPB (t_1); k++) {
       MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_1[INDEX_1_DIM (a_1, t_1, k)], SIZE (M_CHAR));
       m += SIZE (M_CHAR);
     }
   }
   if (ROW_SIZE (t_2) > 0) {
     b_2 = DEREF (BYTE_T, &ARRAY (a_2));
-    for (k = LWB (t_2); k <= UPB (t_2); k++) {
+    for (int k = LWB (t_2); k <= UPB (t_2); k++) {
       MOVE ((BYTE_T *) & b_3[m], (BYTE_T *) & b_2[INDEX_1_DIM (a_2, t_2, k)], SIZE (M_CHAR));
       m += SIZE (M_CHAR);
     }
@@ -208,9 +210,9 @@ void genie_add_string (NODE_T * p)
 
 void genie_times_int_string (NODE_T * p)
 {
-  A68_INT k;
   A68_REF a;
   POP_REF (p, &a);
+  A68_INT k;
   POP_OBJECT (p, &k, A68_INT);
   PRELUDE_ERROR (VALUE (&k) < 0, p, ERROR_INVALID_ARGUMENT, M_INT);
   CHECK_INT_SHORTEN (p, VALUE (&k));
@@ -226,8 +228,8 @@ void genie_times_int_string (NODE_T * p)
 void genie_times_string_int (NODE_T * p)
 {
   A68_INT k;
-  A68_REF a;
   POP_OBJECT (p, &k, A68_INT);
+  A68_REF a;
   POP_REF (p, &a);
   PUSH_VALUE (p, VALUE (&k), A68_INT);
   PUSH_REF (p, a);
@@ -238,22 +240,18 @@ void genie_times_string_int (NODE_T * p)
 
 void genie_times_int_char (NODE_T * p)
 {
-  A68_INT str_size;
-  A68_CHAR a;
-  A68_REF z, row;
-  A68_ARRAY arr;
-  A68_TUPLE tup;
-  BYTE_T *base;
-  int k;
 // Pop operands.
+  A68_CHAR a;
   POP_OBJECT (p, &a, A68_CHAR);
+  A68_INT str_size;
   POP_OBJECT (p, &str_size, A68_INT);
   PRELUDE_ERROR (VALUE (&str_size) < 0, p, ERROR_INVALID_ARGUMENT, M_INT);
   CHECK_INT_SHORTEN (p, VALUE (&str_size));
 // Make new string.
+  A68_REF z, row; A68_ARRAY arr; A68_TUPLE tup;
   NEW_ROW_1D (z, row, arr, tup, M_ROW_CHAR, M_CHAR, (int) (VALUE (&str_size)));
-  base = ADDRESS (&row);
-  for (k = 0; k < VALUE (&str_size); k++) {
+  BYTE_T *base = ADDRESS (&row);
+  for (int k = 0; k < VALUE (&str_size); k++) {
     A68_CHAR ch;
     STATUS (&ch) = INIT_MASK;
     VALUE (&ch) = VALUE (&a);
@@ -304,51 +302,45 @@ void genie_plusto_string (NODE_T * p)
 void genie_timesab_string (NODE_T * p)
 {
   A68_INT k;
-  A68_REF refa, a;
-  int i;
-// INT.
   POP_OBJECT (p, &k, A68_INT);
   PRELUDE_ERROR (VALUE (&k) < 0, p, ERROR_INVALID_ARGUMENT, M_INT);
-// REF STRING.
-  POP_REF (p, &refa);
-  CHECK_REF (p, refa, M_REF_STRING);
-  a = *DEREF (A68_REF, &refa);
+  A68_REF ref;
+  POP_REF (p, &ref);
+  CHECK_REF (p, ref, M_REF_STRING);
+  A68_REF a = *DEREF (A68_REF, &ref);
   CHECK_INIT (p, INITIALISED (&a), M_STRING);
 // Multiplication as repeated addition.
   PUSH_REF (p, empty_string (p));
-  for (i = 1; i <= VALUE (&k); i++) {
+  for (int i = 1; i <= VALUE (&k); i++) {
     PUSH_REF (p, a);
     genie_add_string (p);
   }
 // The stack contains a STRING, promote to REF STRING.
-  POP_REF (p, DEREF (A68_REF, &refa));
-  PUSH_REF (p, refa);
+  POP_REF (p, DEREF (A68_REF, &ref));
+  PUSH_REF (p, ref);
 }
 
 //! @brief Difference between two STRINGs in the stack.
 
 int string_difference (NODE_T * p)
 {
-  A68_REF row1, row2;
-  A68_ARRAY *a_1, *a_2;
-  A68_TUPLE *t_1, *t_2;
-  BYTE_T *b_1, *b_2;
-  int size, s_1, s_2, k, diff;
 // Pop operands.
+  A68_REF row2; A68_ARRAY *a_2; A68_TUPLE *t_2;
   POP_REF (p, &row2);
   CHECK_INIT (p, INITIALISED (&row2), M_STRING);
   GET_DESCRIPTOR (a_2, t_2, &row2);
-  s_2 = ROW_SIZE (t_2);
+  int s_2 = ROW_SIZE (t_2);
+//
+  A68_REF row1; A68_ARRAY *a_1; A68_TUPLE *t_1;
   POP_REF (p, &row1);
   CHECK_INIT (p, INITIALISED (&row1), M_STRING);
   GET_DESCRIPTOR (a_1, t_1, &row1);
-  s_1 = ROW_SIZE (t_1);
-// Get difference.
-  size = (s_1 > s_2 ? s_1 : s_2);
-  diff = 0;
-  b_1 = (s_1 > 0 ? DEREF (BYTE_T, &ARRAY (a_1)) : NO_BYTE);
-  b_2 = (s_2 > 0 ? DEREF (BYTE_T, &ARRAY (a_2)) : NO_BYTE);
-  for (k = 0; k < size && diff == 0; k++) {
+  int s_1 = ROW_SIZE (t_1);
+// Compute string difference.
+  int size = (s_1 > s_2 ? s_1 : s_2), diff = 0;
+  BYTE_T *b_1 = (s_1 > 0 ? DEREF (BYTE_T, &ARRAY (a_1)) : NO_BYTE);
+  BYTE_T *b_2 = (s_2 > 0 ? DEREF (BYTE_T, &ARRAY (a_2)) : NO_BYTE);
+  for (int k = 0; k < size && diff == 0; k++) {
     int a, b;
     if (s_1 > 0 && k < s_1) {
       A68_CHAR *ch = (A68_CHAR *) & b_1[INDEX_1_DIM (a_1, t_1, LWB (t_1) + k)];
@@ -385,8 +377,7 @@ A68_CMP_STRING (genie_eq_string, ==)
 //! @brief OP ELEM = (INT, BYTES) CHAR
      void genie_elem_bytes (NODE_T * p)
 {
-  A68_BYTES j;
-  A68_INT i;
+  A68_BYTES j; A68_INT i;
   POP_OBJECT (p, &j, A68_BYTES);
   POP_OBJECT (p, &i, A68_INT);
   PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, M_INT);
@@ -401,8 +392,7 @@ A68_CMP_STRING (genie_eq_string, ==)
 
 void genie_bytespack (NODE_T * p)
 {
-  A68_REF z;
-  A68_BYTES b;
+  A68_REF z; A68_BYTES b;
   POP_REF (p, &z);
   CHECK_REF (p, z, M_STRING);
   PRELUDE_ERROR (a68_string_size (p, z) > BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, M_STRING);
@@ -495,8 +485,7 @@ void genie_shorten_bytes (NODE_T * p)
 
 void genie_elem_long_bytes (NODE_T * p)
 {
-  A68_LONG_BYTES j;
-  A68_INT i;
+  A68_LONG_BYTES j; A68_INT i;
   POP_OBJECT (p, &j, A68_LONG_BYTES);
   POP_OBJECT (p, &i, A68_INT);
   PRELUDE_ERROR (VALUE (&i) < 1 || VALUE (&i) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, M_INT);
@@ -511,8 +500,7 @@ void genie_elem_long_bytes (NODE_T * p)
 
 void genie_long_bytespack (NODE_T * p)
 {
-  A68_REF z;
-  A68_LONG_BYTES b;
+  A68_REF z; A68_LONG_BYTES b;
   POP_REF (p, &z);
   CHECK_REF (p, z, M_STRING);
   PRELUDE_ERROR (a68_string_size (p, z) > LONG_BYTES_WIDTH, p, ERROR_OUT_OF_BOUNDS, M_STRING);
@@ -573,9 +561,101 @@ int compare_long_bytes (NODE_T * p)
     int k = compare_long_bytes (p);\
     PUSH_VALUE (p, (BOOL_T) (k OP 0), A68_BOOL);\
   }
-A68_CMP_LONG_BYTES (genie_eq_long_bytes, ==)
-  A68_CMP_LONG_BYTES (genie_ne_long_bytes, !=)
-  A68_CMP_LONG_BYTES (genie_lt_long_bytes, <)
-  A68_CMP_LONG_BYTES (genie_gt_long_bytes, >)
-  A68_CMP_LONG_BYTES (genie_le_long_bytes, <=)
-  A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=)
+
+A68_CMP_LONG_BYTES (genie_eq_long_bytes, ==);
+A68_CMP_LONG_BYTES (genie_ne_long_bytes, !=);
+A68_CMP_LONG_BYTES (genie_lt_long_bytes, <);
+A68_CMP_LONG_BYTES (genie_gt_long_bytes, >);
+A68_CMP_LONG_BYTES (genie_le_long_bytes, <=);
+A68_CMP_LONG_BYTES (genie_ge_long_bytes, >=);
+
+//! @brief PROC char in string = (CHAR, REF INT, STRING) BOOL
+
+void genie_char_in_string (NODE_T * p)
+{
+  A68_REF ref_str; A68_ARRAY *arr; A68_TUPLE *tup;
+  POP_REF (p, &ref_str);
+  A68_ROW row = *(A68_REF *) &ref_str;
+  CHECK_INIT (p, INITIALISED (&row), M_ROWS);
+  GET_DESCRIPTOR (arr, tup, &row);
+  A68_REF ref_pos; A68_INT pos;
+  POP_REF (p, &ref_pos);
+  A68_CHAR c;
+  POP_OBJECT (p, &c, A68_CHAR);
+  reset_transput_buffer (PATTERN_BUFFER);
+  add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_str);
+  int len = get_transput_buffer_index (PATTERN_BUFFER);
+  char *q = get_transput_buffer (PATTERN_BUFFER);
+  char ch = (char) VALUE (&c);
+  for (int k = 0; k < len; k++) {
+    if (q[k] == ch) {
+      STATUS (&pos) = INIT_MASK;
+      VALUE (&pos) = k + LOWER_BOUND (tup);
+      *DEREF (A68_INT, &ref_pos) = pos;
+      PUSH_VALUE (p, A68_TRUE, A68_BOOL);
+      return;
+    }
+  }
+  PUSH_VALUE (p, A68_FALSE, A68_BOOL);
+}
+
+//! @brief PROC last char in string = (CHAR, REF INT, STRING) BOOL
+
+void genie_last_char_in_string (NODE_T * p)
+{
+  A68_REF ref_str; A68_ARRAY *arr; A68_TUPLE *tup;
+  POP_REF (p, &ref_str);
+  A68_ROW row = *(A68_REF *) &ref_str;
+  CHECK_INIT (p, INITIALISED (&row), M_ROWS);
+  GET_DESCRIPTOR (arr, tup, &row);
+  A68_REF ref_pos; A68_INT pos;
+  POP_REF (p, &ref_pos);
+  A68_CHAR c;
+  POP_OBJECT (p, &c, A68_CHAR);
+  reset_transput_buffer (PATTERN_BUFFER);
+  add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_str);
+  int len = get_transput_buffer_index (PATTERN_BUFFER);
+  char *q = get_transput_buffer (PATTERN_BUFFER);
+  char ch = (char) VALUE (&c);
+  for (int k = len - 1; k >= 0; k--) {
+    if (q[k] == ch) {
+      STATUS (&pos) = INIT_MASK;
+      VALUE (&pos) = k + LOWER_BOUND (tup);
+      *DEREF (A68_INT, &ref_pos) = pos;
+      PUSH_VALUE (p, A68_TRUE, A68_BOOL);
+      return;
+    }
+  }
+  PUSH_VALUE (p, A68_FALSE, A68_BOOL);
+}
+
+//! @brief PROC string in string = (STRING, REF INT, STRING) BOOL
+
+void genie_string_in_string (NODE_T * p)
+{
+  A68_REF ref_pos, ref_str, ref_pat; A68_ARRAY *arr; A68_TUPLE *tup;
+  POP_REF (p, &ref_str);
+  A68_ROW row = *(A68_REF *) &ref_str;
+  CHECK_INIT (p, INITIALISED (&row), M_ROWS);
+  GET_DESCRIPTOR (arr, tup, &row);
+  POP_REF (p, &ref_pos);
+  POP_REF (p, &ref_pat);
+  reset_transput_buffer (PATTERN_BUFFER);
+  reset_transput_buffer (STRING_BUFFER);
+  add_a_string_transput_buffer (p, PATTERN_BUFFER, (BYTE_T *) & ref_pat);
+  add_a_string_transput_buffer (p, STRING_BUFFER, (BYTE_T *) & ref_str);
+  char *q = strstr (get_transput_buffer (STRING_BUFFER), get_transput_buffer (PATTERN_BUFFER));
+  if (q != NO_TEXT) {
+    if (!IS_NIL (ref_pos)) {
+      A68_INT pos;
+      STATUS (&pos) = INIT_MASK;
+// ANSI standard leaves pointer difference undefined.
+      VALUE (&pos) = LOWER_BOUND (tup) + (int) get_transput_buffer_index (STRING_BUFFER) - (int) strlen (q);
+      *DEREF (A68_INT, &ref_pos) = pos;
+    }
+    PUSH_VALUE (p, A68_TRUE, A68_BOOL);
+  } else {
+    PUSH_VALUE (p, A68_FALSE, A68_BOOL);
+  }
+}
+

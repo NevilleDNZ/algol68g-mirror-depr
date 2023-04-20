@@ -1,23 +1,27 @@
-//! @file conversion.c
+//! @file a68g-conversion.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Conversion tables for IEEE platforms.
 
 #include "a68g.h"
 #include "a68g-prelude.h"
@@ -32,6 +36,8 @@
 // A list of 10 ^ 2 ^ n for conversion purposes on IEEE 754 platforms.
 
 #if (A68_LEVEL >= 3)
+
+#include "a68g-quad.h"
 
 //! @brief 10 ** expo
 
@@ -62,6 +68,40 @@ DOUBLE_T ten_up_double (int expo)
     }
   }
   return neg_expo ? 1.0q / dbl_expo : dbl_expo;
+}
+
+//! @brief ten_up_quad_real
+
+QUAD_T ten_up_quad_real (int n)
+{
+  QUAD_T s = QUAD_REAL_TEN, t;
+  unsigned k, m;
+  t = QUAD_REAL_ONE;
+  if (n < 0) {
+    m = -n;
+    if ((sigerr_quad_real (real_cmp_quad_real (&s, &QUAD_REAL_ZERO) == 0, QUAD_REAL_EBADEXP, "pwr_quad_real"))) {
+      return QUAD_REAL_ZERO;
+    }
+    s = div_quad_real (QUAD_REAL_ONE, s);
+  } else {
+    m = n;
+  }
+  if (m != 0) {
+    k = 1;
+    while (1) {
+      if (k & m) {
+        t = mul_quad_real (s, t);
+      }
+      if ((k <<= 1) <= m) {
+        s = mul_quad_real (s, s);
+      } else {
+        break;
+      }
+    }
+  } else {
+    sigerr_quad_real (real_cmp_quad_real (&s, &QUAD_REAL_ZERO) == 0, QUAD_REAL_EBADEXP, "pwr_quad_real");
+  }
+  return t;
 }
 
 #endif

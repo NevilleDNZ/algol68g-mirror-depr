@@ -1,31 +1,36 @@
-//! @file compiler-tables.c
+//! @file plugin-tables.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Plugin compiler tables.
 
 #include "a68g.h"
 #include "a68g-prelude.h"
+#include "a68g-prelude-gsl.h"
 #include "a68g-genie.h"
 #include "a68g-listing.h"
 #include "a68g-mp.h"
 #include "a68g-optimiser.h"
-#include "a68g-compiler.h"
+#include "a68g-plugin.h"
 #include "a68g-parser.h"
 #include "a68g-transput.h"
 
@@ -310,6 +315,9 @@ TRANSLATION constants[] = {
   {genie_null_char, "NULL_CHAR"},
   {genie_small_real, "REAL_EPSILON"},
   {genie_pi, "A68_PI"},
+
+#if defined (HAVE_GSL)
+
   {genie_cgs_acre, "GSL_CONST_CGSM_ACRE"},
   {genie_cgs_angstrom, "GSL_CONST_CGSM_ANGSTROM"},
   {genie_cgs_astronomical_unit, "GSL_CONST_CGSM_ASTRONOMICAL_UNIT"},
@@ -522,6 +530,9 @@ TRANSLATION constants[] = {
   {genie_num_yotta, "GSL_CONST_NUM_YOTTA"},
   {genie_num_zepto, "GSL_CONST_NUM_ZEPTO"},
   {genie_num_zetta, "GSL_CONST_NUM_ZETTA"},
+
+#endif
+
   {NO_GPROC, NO_TEXT}
 };
 

@@ -1,23 +1,27 @@
 //! @file prelude-gsl.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Standard prelude definitions from GSL.
 
 #include "a68g.h"
 #include "a68g-optimiser.h"
@@ -212,15 +216,25 @@ void stand_gsl_sf (void)
 void stand_gsl_linear_algebra (void)
 {
   MOID_T *m;
+// Vector and matrix pretty print.
+  m = a68_proc (M_VOID, M_ROW_REAL, M_INT, NO_MOID);
+  a68_idf (A68_EXT, "printvector", m, genie_print_vector);
+  m = a68_proc (M_VOID, M_ROW_ROW_REAL, M_INT, NO_MOID);
+  a68_idf (A68_EXT, "printmatrix", m, genie_print_matrix);
 // Vector and matrix monadic.
   m = a68_proc (M_ROW_REAL, M_ROW_REAL, NO_MOID);
   a68_op (A68_EXT, "+", m, genie_idle);
   a68_op (A68_EXT, "-", m, genie_vector_minus);
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_REAL, NO_MOID);
+  a68_op (A68_EXT, "CV", m, genie_vector_col);
+  a68_op (A68_EXT, "RV", m, genie_vector_row);
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, NO_MOID);
   a68_op (A68_EXT, "+", m, genie_idle);
   a68_op (A68_EXT, "-", m, genie_matrix_minus);
   a68_op (A68_EXT, "T", m, genie_matrix_transpose);
   a68_op (A68_EXT, "INV", m, genie_matrix_inv);
+  a68_op (A68_EXT, "PINV", m, genie_matrix_pinv);
+  a68_op (A68_EXT, "MEAN", m, genie_matrix_column_mean);
   m = a68_proc (M_REAL, M_ROW_ROW_REAL, NO_MOID);
   a68_op (A68_EXT, "DET", m, genie_matrix_det);
   a68_op (A68_EXT, "TRACE", m, genie_matrix_trace);
@@ -253,6 +267,10 @@ void stand_gsl_linear_algebra (void)
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, NO_MOID);
   a68_op (A68_EXT, "+", m, genie_matrix_add);
   a68_op (A68_EXT, "-", m, genie_matrix_sub);
+  a68_op (A68_EXT, "BEFORE", m, genie_matrix_hcat);
+  a68_op (A68_EXT, "ABOVE", m, genie_matrix_vcat);
+  a68_prio ("BEFORE", 3);
+  a68_prio ("ABOVE", 3);
   m = a68_proc (M_REF_ROW_ROW_REAL, M_REF_ROW_ROW_REAL, M_ROW_ROW_REAL, NO_MOID);
   a68_op (A68_EXT, "+:=", m, genie_matrix_plusab);
   a68_op (A68_EXT, "PLUSAB", m, genie_matrix_plusab);
@@ -341,6 +359,8 @@ void stand_gsl_linear_algebra (void)
   a68_op (A68_EXT, "*", m, genie_vector_complex_dot);
   m = a68_proc (M_REAL, M_ROW_REAL, NO_MOID);
   a68_op (A68_EXT, "NORM", m, genie_vector_norm);
+  m = a68_proc (M_REAL, M_ROW_ROW_REAL, NO_MOID);
+  a68_op (A68_EXT, "NORM", m, genie_matrix_norm);
   m = a68_proc (M_REAL, M_ROW_COMPLEX, NO_MOID);
   a68_op (A68_EXT, "NORM", m, genie_vector_complex_norm);
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_REAL, M_ROW_REAL, NO_MOID);
@@ -348,6 +368,21 @@ void stand_gsl_linear_algebra (void)
   m = a68_proc (M_ROW_ROW_COMPLEX, M_ROW_COMPLEX, M_ROW_COMPLEX, NO_MOID);
   a68_op (A68_EXT, "DYAD", m, genie_vector_complex_dyad);
   a68_prio ("DYAD", 3);
+// Principle component analysis.
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_REAL, NO_MOID);
+  a68_idf (A68_EXT, "pcacv", m, genie_matrix_pca_cv);
+  a68_idf (A68_EXT, "pcasvd", m, genie_matrix_pca_svd);
+// Partial Least Squares analysis.
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_INT, M_REF_ROW_REAL, NO_MOID);
+  a68_idf (A68_EXT, "pls1", m, genie_matrix_pls1);
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REAL, M_REF_ROW_REAL, NO_MOID);
+  a68_idf (A68_EXT, "pls1lim", m, genie_matrix_pls1_lim);
+// Routine left columns, a GSL alternative to trimming columns.
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_INT, NO_MOID);
+  a68_idf (A68_EXT, "leftcolumns", m, genie_left_columns);
+// Moore-Penrose pseudo inverse.
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REAL, NO_MOID);
+  a68_idf (A68_EXT, "pseudoinv", m, genie_matrix_pinv_lim);
 // LU decomposition.
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_INT, M_REF_INT, NO_MOID);
   a68_idf (A68_EXT, "ludecomp", m, genie_matrix_lu);
@@ -366,10 +401,9 @@ void stand_gsl_linear_algebra (void)
   m = a68_proc (M_ROW_COMPLEX, M_ROW_ROW_COMPLEX, M_ROW_ROW_COMPLEX, M_ROW_INT, M_ROW_COMPLEX, NO_MOID);
   a68_idf (A68_EXT, "complexlusolve", m, genie_matrix_complex_lu_solve);
 // SVD decomposition.
-  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_ROW_REAL, M_REF_ROW_REAL, NO_MOID);
-  a68_idf (A68_EXT, "svdecomp", m, genie_matrix_svd);
+  m = a68_proc (M_VOID, M_ROW_ROW_REAL, M_REF_ROW_ROW_REAL, M_REF_ROW_REAL, M_REF_ROW_ROW_REAL, NO_MOID);
   a68_idf (A68_EXT, "svddecomp", m, genie_matrix_svd);
-  m = a68_proc (M_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_REAL, M_ROW_REAL, NO_MOID);
+  m = a68_proc (M_ROW_REAL, M_ROW_ROW_REAL, M_ROW_REAL, M_ROW_ROW_REAL, M_ROW_REAL, NO_MOID);
   a68_idf (A68_EXT, "svdsolve", m, genie_matrix_svd_solve);
 // QR decomposition.
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_REAL, NO_MOID);
@@ -601,12 +635,9 @@ void stand_gsl_constants (void)
   a68_idf (A68_EXT, "numyocto", M_REAL, genie_num_yocto);
 }
 
-void stand_gsl (void)
+void stand_gsl_fft_laplace (void)
 {
   MOID_T *m;
-  stand_gsl_sf ();
-  stand_gsl_linear_algebra ();
-  stand_gsl_constants ();
 // FFT.
   m = a68_proc (M_ROW_INT, M_INT, NO_MOID);
   a68_idf (A68_EXT, "primefactors", m, genie_prime_factors);
@@ -622,6 +653,14 @@ void stand_gsl (void)
 // Laplace.
   m = a68_proc (M_REAL, A68_MCACHE (proc_real_real), M_REAL, M_REF_REAL, NO_MOID);
   a68_idf (A68_EXT, "laplace", m, genie_laplace);
+}
+
+void stand_gsl (void)
+{
+  stand_gsl_sf ();
+  stand_gsl_linear_algebra ();
+  stand_gsl_constants ();
+  stand_gsl_fft_laplace ();
 }
 
 #endif

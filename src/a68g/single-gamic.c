@@ -1,26 +1,30 @@
 //! @file single-gamic.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! REAL generalised incomplete gamma function.
 
 // Generalised incomplete gamma code in this file was downloaded from 
-//   http://helios.mi.parisdescartes.fr/~rabergel/
+//   [http://helios.mi.parisdescartes.fr/~rabergel/]
 // and adapted for Algol 68 Genie.
 //
 // Reference:
@@ -51,7 +55,7 @@
 // details.
 //
 // You should have received a copy of the GNU General Public License along with
-// this program.  If not, see <http://www.gnu.org/licenses/>.
+// this program.  If not, see [http://www.gnu.org/licenses/].
 
 // References
 //
@@ -63,7 +67,7 @@
 //
 //   F. W. J. Olver, D. W. Lozier, R. F. Boisvert, and C. W. Clark
 //   (Eds.). 2010. NIST Handbook of Mathematical Functions. Cambridge University
-//   Press. (see online version at [[http://dlmf.nist.gov/]])
+//   Press. (see online version at [http://dlmf.nist.gov/])
 //
 //   W. H. Press, S. A. Teukolsky, W. T. Vetterling, and
 //   B. P. Flannery. 1992. Numerical recipes in C: the art of scientific
@@ -186,9 +190,6 @@ void G_ibp (REAL_T * Gibp, REAL_T p, REAL_T x)
 
 void G_cfrac_upper (REAL_T * Gcfrac, REAL_T p, REAL_T x)
 {
-  REAL_T c, d, del, f, an, bn;
-  INT_T i, n;
-  BOOL_T t;
 // Special case
   if (a68_isinf (x)) {
     *Gcfrac = 0;
@@ -197,9 +198,10 @@ void G_cfrac_upper (REAL_T * Gcfrac, REAL_T p, REAL_T x)
 // Evaluate the continued fraction using Modified Lentz's method. However,
 // as detailed in the paper, perform manually the first pass (n=1), of the
 // initial Modified Lentz's method.
-  an = 1;
-  bn = x + 1 - p;
-  t = bn != 0;
+  REAL_T an = 1, bn = x + 1 - p;
+  REAL_T c, d, del, f;
+  BOOL_T t = (bn != 0);
+  INT_T i, n;
   if (t) {
 // b{1} is non-zero
     f = an / bn;
@@ -327,7 +329,6 @@ void romberg_estimate (REAL_T * rho, REAL_T * sigma, REAL_T x, REAL_T y, REAL_T 
 
 void deltagammainc (REAL_T * rho, REAL_T * sigma, REAL_T x, REAL_T y, REAL_T mu, REAL_T p)
 {
-  REAL_T mA, mB, mx, my, nA, nB, nx, ny;
 // Particular cases
   if (a68_isinf (x) && a68_isinf (y)) {
     *rho = 0;
@@ -344,6 +345,7 @@ void deltagammainc (REAL_T * rho, REAL_T * sigma, REAL_T x, REAL_T y, REAL_T mu,
     return;
   }
 // Initialization
+  REAL_T mA, mB, mx, my, nA, nB, nx, ny;
   G_func (&mx, p, mu * x);
   nx = (a68_isinf (x) ? a68_neginf () : -mu * x + p * a68_ln (x));
   G_func (&my, p, mu * y);

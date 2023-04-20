@@ -1,23 +1,27 @@
 //! @file mp-gamma.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! [LONG] LONG REAL error, gamma and beta functions.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -36,7 +40,7 @@ MP_T *erf_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
   } else {
     ADDR_T pop_sp = A68_SP;
 // Note we need double precision!
-    int gdigs = FUN_DIGITS (2 * digs), k = 1, sign;
+    int gdigs = FUN_DIGITS (2 * digs), sign;
     BOOL_T go_on = A68_TRUE;
     MP_T *y_g = nil_mp (p, gdigs);
     MP_T *z_g = len_mp (p, x, digs, gdigs);
@@ -57,7 +61,7 @@ MP_T *erf_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
       (void) mul_mp (p, y_g, z_g, z_g, gdigs);
       SET_MP_ONE (s_g, gdigs);
       SET_MP_ONE (t_g, gdigs);
-      for (k = 1; go_on; k++) {
+      for (unt k = 1; go_on; k++) {
         (void) mul_mp (p, t_g, y_g, t_g, gdigs);
         (void) div_mp_digit (p, t_g, t_g, (MP_T) k, gdigs);
         (void) div_mp_digit (p, u_g, t_g, (MP_T) (2 * k + 1), gdigs);
@@ -103,16 +107,16 @@ MP_T *inverf_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
 // in your entire calculation, not just in this routine.
 // Calculate an initial Newton-Raphson estimate while at it.
 #if (A68_LEVEL >= 3)
-  DOUBLE_T y = ABS (mp_to_real_16 (p, x, digs));
+  DOUBLE_T y = ABS (mp_to_double_real (p, x, digs));
   if (y < erfq (5.0q)) {
-    y = inverf_real_16 (y);
+    y = inverf_double_real (y);
     gdigs = FUN_DIGITS (digs);
   } else {
     y = 5.0q;
     gdigs = FUN_DIGITS (2 * digs);
   }
   MP_T *z_g = nil_mp (p, gdigs);
-  (void) real_16_to_mp (p, z_g, y, gdigs);
+  (void) double_real_to_mp (p, z_g, y, gdigs);
 #else
   REAL_T y = ABS (mp_to_real (p, x, digs));
   if (y < erf (4.0)) {
@@ -215,8 +219,7 @@ void mp_gamma_table (NODE_T *p, int digs)
     MP_T *hlf = nil_mp (p, gdigs);
     MP_T *fac = lit_mp (p, 1, 0, gdigs);
     SET_MP_HALF (hlf, gdigs);
-    int k;
-    for (k = 1; k < b; k++) {
+    for (unt k = 1; k < b; k++) {
       set_mp (dk, k, 0, gdigs);
       (void) sub_mp (p, ak, db, dk, gdigs);
       (void) sub_mp (p, dz, dk, hlf, gdigs);
@@ -241,8 +244,7 @@ MP_T *mp_spouge_sum (NODE_T *p, MP_T *sum, MP_T *x_g, int gdigs)
   MP_T *dz = nil_mp (p, gdigs);
   (void) move_mp (sum, A68_MP (mp_gam_ck)[0], gdigs);
 // Sum small to large to preserve precision.
-  int k;
-  for (k = a - 1; k > 0; k--) {
+  for (int k = a - 1; k > 0; k--) {
     set_mp (da, k, 0, gdigs);
     (void) add_mp (p, dz, x_g, da, gdigs);
     (void) div_mp (p, dz, A68_MP (mp_gam_ck)[k], dz, gdigs);
@@ -433,7 +435,7 @@ MP_T *beta_inc_mp (NODE_T * p, MP_T * z, MP_T * s, MP_T *t, MP_T *x, int digs)
   MP_T *u = lit_mp (p, 1, 0, gdigs);
   MP_T *v = nil_mp (p, gdigs);
   MP_T *w = nil_mp (p, gdigs);
-  for (INT_T N = 0; cont && N < lim; N++) {
+  for (unt N = 0; cont && N < lim; N++) {
     if (N == 0) {
       SET_MP_ONE (T, gdigs);
     } else if (N % 2 == 0) {

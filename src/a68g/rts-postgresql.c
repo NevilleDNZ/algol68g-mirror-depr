@@ -1,23 +1,27 @@
-//! @file postgresql.c
+//! @file rts-postgresql.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! PostgreSQL libpq interface. 
 
 // PostgreSQL libpq interface based on initial work by Jaap Boender. 
 // Wraps "connection" and "result" objects in a FILE variable to support 
@@ -489,7 +493,7 @@ char *pq_edit (char *str)
   if (str == NULL) {
     return "";
   } else {
-    static char edt[BUFFER_SIZE];
+    static BUFFER edt;
     char *q;
     int newlines = 0, len = (int) strlen (str);
     BOOL_T suppress_blank = A68_FALSE;
@@ -549,7 +553,7 @@ void genie_pq_errormessage (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    char str[BUFFER_SIZE];
+    BUFFER str;
     int upb;
     if (PQerrorMessage (CONNECTION (file)) != NULL) {
       bufcpy (str, pq_edit (PQerrorMessage (CONNECTION (file))), BUFFER_SIZE);
@@ -587,7 +591,7 @@ void genie_pq_resulterrormessage (NODE_T * p)
     return;
   }
   if (!IS_NIL (STRING (file))) {
-    char str[BUFFER_SIZE];
+    BUFFER str;
     int upb;
     if (PQresultErrorMessage (RESULT (file)) != NULL) {
       bufcpy (str, pq_edit (PQresultErrorMessage (RESULT (file))), BUFFER_SIZE);

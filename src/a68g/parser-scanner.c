@@ -1,23 +1,27 @@
-//! @file scanner.c
+//! @file parser-scanner.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis 
+//!
+//! Context-dependent Algol 68 tokeniser.
 
 #include "a68g.h"
 #include "a68g-parser.h"
@@ -60,6 +64,54 @@ void restore_state (LINE_T ** ref_l, char **ref_s, char *ch)
   *ref_l = SCAN_STATE_L (&A68_JOB);
   *ref_s = SCAN_STATE_S (&A68_JOB);
   *ch = SCAN_STATE_C (&A68_JOB);
+}
+
+//! @brief New_source_line.
+
+LINE_T *new_source_line (void)
+{
+  LINE_T *z = (LINE_T *) get_fixed_heap_space ((size_t) SIZE_ALIGNED (LINE_T));
+  MARKER (z)[0] = NULL_CHAR;
+  STRING (z) = NO_TEXT;
+  FILENAME (z) = NO_TEXT;
+  DIAGNOSTICS (z) = NO_DIAGNOSTIC;
+  NUMBER (z) = 0;
+  PRINT_STATUS (z) = 0;
+  LIST (z) = A68_TRUE;
+  NEXT (z) = NO_LINE;
+  PREVIOUS (z) = NO_LINE;
+  return z;
+}
+
+//! @brief Append a source line to the internal source file.
+
+void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char *filename)
+{
+  LINE_T *z = new_source_line ();
+// Allow shell command in first line, f.i. "#!/usr/share/bin/a68g".
+  if (*line_num == 1) {
+    if (strlen (str) >= 2 && strncmp (str, "#!", 2) == 0) {
+      ABEND (strstr (str, "run-script") != NO_TEXT, ERROR_SHELL_SCRIPT, __func__);
+      (*line_num)++;
+      return;
+    }
+  }
+// Link line into the chain.
+  STRING (z) = new_fixed_string (str);
+  FILENAME (z) = filename;
+  NUMBER (z) = (*line_num)++;
+  PRINT_STATUS (z) = NOT_PRINTED;
+  LIST (z) = A68_TRUE;
+  DIAGNOSTICS (z) = NO_DIAGNOSTIC;
+  NEXT (z) = NO_LINE;
+  PREVIOUS (z) = *ref_l;
+  if (TOP_LINE (&A68_JOB) == NO_LINE) {
+    TOP_LINE (&A68_JOB) = z;
+  }
+  if (*ref_l != NO_LINE) {
+    NEXT (*ref_l) = z;
+  }
+  *ref_l = z;
 }
 
 // Scanner, tokenises the source code.
@@ -353,6 +405,11 @@ void include_files (LINE_T * top)
 // The file gets inserted before the line containing the pragmat. In this way
 // correct line numbers are preserved which helps diagnostics. A file that has
 // been included will not be included a second time - it will be ignored. 
+// A rigorous fail-safe, but there is no mechanism to prevent recursive includes 
+// in A68 source code. User reports do not indicate sophisticated use of INCLUDE, 
+// so this is fine for now.
+// TODO - some day we might need `app', analogous to `cpp'.
+//
   BOOL_T make_pass = A68_TRUE;
   while (make_pass) {
     LINE_T *s, *t, *u = top;
@@ -369,7 +426,8 @@ void include_files (LINE_T * top)
         FILE_T fd;
         int n, linum, fsize, k, bytes_read, fnwid;
         char *fbuf, delim;
-        char fnb[BUFFER_SIZE], *fn;
+        BUFFER fnb;
+        char *fn;
 // Skip to filename.
         while (IS_ALPHA (v[0])) {
           v++;
@@ -405,8 +463,13 @@ void include_files (LINE_T * top)
         SCAN_ERROR (!skip_pragmat (&u, &v, pr_lim, A68_TRUE), start_l, start_c, ERROR_UNTERMINATED_PRAGMAT);
         SCAN_ERROR (n == 0, start_l, start_c, ERROR_INCORRECT_FILENAME);
 // Make the name relative to the position of the source file (C preprocessor standard).
-        fn = a68_relpath (FILE_PATH (&A68_JOB), a68_dirname (fnb), a68_basename (fnb));
-        if (errno == 0 && fn != NO_TEXT) {
+        if (FILENAME (u) != NO_TEXT) {
+          fn = a68_relpath (a68_dirname (FILENAME (u)), a68_dirname (fnb), a68_basename (fnb));
+        } else {
+          fn = a68_relpath (FILE_PATH (&A68_JOB), a68_dirname (fnb), a68_basename (fnb));
+        }
+// Do not check errno, since errno may be undefined here after a successful call.
+        if (fn != NO_TEXT) {
           bufcpy (fnb, fn, BUFFER_SIZE);
         } else {
           char err[PATH_MAX + 1];
@@ -418,12 +481,13 @@ void include_files (LINE_T * top)
         fnwid = (int) strlen (fnb) + 1;
         fn = (char *) get_fixed_heap_space ((size_t) fnwid);
         bufcpy (fn, fnb, fnwid);
-// Recursive include? Then ignore the file.
+// Ignore the file when included more than once.
         for (t = top; t != NO_LINE; t = NEXT (t)) {
           if (strcmp (FILENAME (t), fn) == 0) {
-            goto search_next_pragmat;   // Eeek!
+            goto search_next_pragmat;
           }
         }
+        t = NO_LINE;
 // Access the file.
         errno = 0;
         fd = open (fn, O_RDONLY | O_BINARY);
@@ -483,37 +547,6 @@ void include_files (LINE_T * top)
   }
 }
 
-//! @brief Append a source line to the internal source file.
-
-void append_source_line (char *str, LINE_T ** ref_l, int *line_num, char *filename)
-{
-  LINE_T *z = new_source_line ();
-// Allow shell command in first line, f.i. "#!/usr/share/bin/a68g".
-  if (*line_num == 1) {
-    if (strlen (str) >= 2 && strncmp (str, "#!", 2) == 0) {
-      ABEND (strstr (str, "run-script") != NO_TEXT, ERROR_SHELL_SCRIPT, __func__);
-      (*line_num)++;
-      return;
-    }
-  }
-// Link line into the chain.
-  STRING (z) = new_fixed_string (str);
-  FILENAME (z) = filename;
-  NUMBER (z) = (*line_num)++;
-  PRINT_STATUS (z) = NOT_PRINTED;
-  LIST (z) = A68_TRUE;
-  DIAGNOSTICS (z) = NO_DIAGNOSTIC;
-  NEXT (z) = NO_LINE;
-  PREVIOUS (z) = *ref_l;
-  if (TOP_LINE (&A68_JOB) == NO_LINE) {
-    TOP_LINE (&A68_JOB) = z;
-  }
-  if (*ref_l != NO_LINE) {
-    NEXT (*ref_l) = z;
-  }
-  *ref_l = z;
-}
-
 //! @brief Size of source file.
 
 int get_source_size (void)
@@ -543,7 +576,7 @@ BOOL_T read_script_file (void)
   int k, n, num;
   unt len;
   BOOL_T file_end = A68_FALSE;
-  char filename[BUFFER_SIZE], linenum[BUFFER_SIZE];
+  BUFFER filename, linenum;
   char ch, *fn, *line;
   char *buffer = (char *) get_temp_heap_space ((unt) (8 + A68_PARSER (source_file_size)));
   FILE_T source = FILE_SOURCE_FD (&A68_JOB);

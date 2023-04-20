@@ -4,6 +4,9 @@
 /* Define this if OpenBSD was detected */
 /* #undef BUILD_BSD */
 
+/* Define this if CYGWIN was detected */
+/* #undef BUILD_CYGWIN */
+
 /* Define this if HAIKU was detected */
 /* #undef BUILD_HAIKU */
 
@@ -11,7 +14,7 @@
 #define BUILD_LINUX 1
 
 /* Define this if a good pthread installation was detected */
-#define BUILD_PARALLEL_CLAUSE 1
+/* #undef BUILD_PARALLEL_CLAUSE */
 
 /* Name of C compiler detected */
 #define C_COMPILER "gcc"
@@ -25,6 +28,9 @@
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
 
+/* Define to 1 if you have the `basename' function. */
+#define HAVE_BASENAME 1
+
 /* Define to 1 if you have the <complex.h> header file. */
 #define HAVE_COMPLEX_H 1
 
@@ -35,20 +41,20 @@
 #define HAVE_CTYPE_H 1
 
 /* Define this if curses was detected */
-#define HAVE_CURSES 1
+/* #undef HAVE_CURSES */
 
 /* Define to 1 if you have the <curses.h> header file. */
-#define HAVE_CURSES_H 1
+/* #undef HAVE_CURSES_H */
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #define HAVE_DIRENT_H 1
 
 /* Define this if a good DL installation was detected */
-#define HAVE_DL 1
+/* #undef HAVE_DL */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
+/* #undef HAVE_DLFCN_H */
 
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
@@ -84,49 +90,55 @@
 /* #undef HAVE_GNU_MPFR */
 
 /* Define this if a good GNU plotutils installation was detected */
-#define HAVE_GNU_PLOTUTILS 1
+/* #undef HAVE_GNU_PLOTUTILS */
 
 /* Define this if a good GNU GSL installation was detected */
-#define HAVE_GSL 1
+/* #undef HAVE_GSL */
 
 /* Define to 1 if you have the <gsl/gsl_blas.h> header file. */
-#define HAVE_GSL_GSL_BLAS_H 1
+/* #undef HAVE_GSL_GSL_BLAS_H */
 
 /* Define to 1 if you have the <gsl/gsl_complex.h> header file. */
-#define HAVE_GSL_GSL_COMPLEX_H 1
+/* #undef HAVE_GSL_GSL_COMPLEX_H */
 
 /* Define to 1 if you have the <gsl/gsl_complex_math.h> header file. */
-#define HAVE_GSL_GSL_COMPLEX_MATH_H 1
+/* #undef HAVE_GSL_GSL_COMPLEX_MATH_H */
+
+/* Define to 1 if you have the <gsl/gsl_eigen.h> header file. */
+/* #undef HAVE_GSL_GSL_EIGEN_H */
 
 /* Define to 1 if you have the <gsl/gsl_errno.h> header file. */
-#define HAVE_GSL_GSL_ERRNO_H 1
+/* #undef HAVE_GSL_GSL_ERRNO_H */
 
 /* Define to 1 if you have the <gsl/gsl_fft_complex.h> header file. */
-#define HAVE_GSL_GSL_FFT_COMPLEX_H 1
+/* #undef HAVE_GSL_GSL_FFT_COMPLEX_H */
 
 /* Define to 1 if you have the <gsl/gsl_integration.h> header file. */
-#define HAVE_GSL_GSL_INTEGRATION_H 1
+/* #undef HAVE_GSL_GSL_INTEGRATION_H */
 
 /* Define to 1 if you have the <gsl/gsl_linalg.h> header file. */
-#define HAVE_GSL_GSL_LINALG_H 1
+/* #undef HAVE_GSL_GSL_LINALG_H */
 
 /* Define to 1 if you have the <gsl/gsl_math.h> header file. */
-#define HAVE_GSL_GSL_MATH_H 1
+/* #undef HAVE_GSL_GSL_MATH_H */
 
 /* Define to 1 if you have the <gsl/gsl_matrix.h> header file. */
-#define HAVE_GSL_GSL_MATRIX_H 1
+/* #undef HAVE_GSL_GSL_MATRIX_H */
 
 /* Define to 1 if you have the <gsl/gsl_permutation.h> header file. */
-#define HAVE_GSL_GSL_PERMUTATION_H 1
+/* #undef HAVE_GSL_GSL_PERMUTATION_H */
 
 /* Define to 1 if you have the <gsl/gsl_sf.h> header file. */
-#define HAVE_GSL_GSL_SF_H 1
+/* #undef HAVE_GSL_GSL_SF_H */
+
+/* Define to 1 if you have the <gsl/gsl_statistics.h> header file. */
+/* #undef HAVE_GSL_GSL_STATISTICS_H */
 
 /* Define to 1 if you have the <gsl/gsl_vector.h> header file. */
-#define HAVE_GSL_GSL_VECTOR_H 1
+/* #undef HAVE_GSL_GSL_VECTOR_H */
 
 /* Define to 1 if you have the <gsl/gsl_version.h> header file. */
-#define HAVE_GSL_GSL_VERSION_H 1
+/* #undef HAVE_GSL_GSL_VERSION_H */
 
 /* Define this if IEEE_754 compliant */
 #define HAVE_IEEE_754 1
@@ -143,53 +155,56 @@
 /* Define if isnan() is available */
 #define HAVE_ISNAN 1
 
+/* Define to 1 if you have the <libgen.h> header file. */
+#define HAVE_LIBGEN_H 1
+
 /* Define to 1 if you have the `gmp' library (-lgmp). */
-#define HAVE_LIBGMP 1
+/* #undef HAVE_LIBGMP */
 
 /* Define to 1 if you have the `gsl' library (-lgsl). */
-#define HAVE_LIBGSL 1
+/* #undef HAVE_LIBGSL */
 
 /* Define to 1 if you have the `gslcblas' library (-lgslcblas). */
-#define HAVE_LIBGSLCBLAS 1
+/* #undef HAVE_LIBGSLCBLAS */
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
 
 /* Define to 1 if you have the `mpfr' library (-lmpfr). */
-#define HAVE_LIBMPFR 1
+/* #undef HAVE_LIBMPFR */
 
 /* Define to 1 if you have the `ncurses' library (-lncurses). */
-#define HAVE_LIBNCURSES 1
+/* #undef HAVE_LIBNCURSES */
 
 /* Define to 1 if you have the `plot' library (-lplot). */
-#define HAVE_LIBPLOT 1
+/* #undef HAVE_LIBPLOT */
 
 /* Define to 1 if you have the `pq' library (-lpq). */
-#define HAVE_LIBPQ 1
+/* #undef HAVE_LIBPQ */
 
 /* Define to 1 if you have the <libpq-fe.h> header file. */
-#define HAVE_LIBPQ_FE_H 1
+/* #undef HAVE_LIBPQ_FE_H */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-#define HAVE_LIBPTHREAD 1
+/* #undef HAVE_LIBPTHREAD */
 
 /* Define to 1 if you have the `quadmath' library (-lquadmath). */
-#define HAVE_LIBQUADMATH 1
+/* #undef HAVE_LIBQUADMATH */
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-#define HAVE_LIBREADLINE 1
+/* #undef HAVE_LIBREADLINE */
 
 /* Define to 1 if you have the `Rmath' library (-lRmath). */
-#define HAVE_LIBRMATH 1
+/* #undef HAVE_LIBRMATH */
 
 /* Define to 1 if you have the `root' library (-lroot). */
 /* #undef HAVE_LIBROOT */
 
 /* Define to 1 if you have the `tic' library (-ltic). */
-#define HAVE_LIBTIC 1
+/* #undef HAVE_LIBTIC */
 
 /* Define to 1 if you have the `tinfo' library (-ltinfo). */
-#define HAVE_LIBTINFO 1
+/* #undef HAVE_LIBTINFO */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -198,13 +213,13 @@
 #define HAVE_LONGJMP 1
 
 /* Define this if a good INT*8/REAL*10/REAL*16 installation was detected */
-#define HAVE_LONG_TYPES 1
+/* #undef HAVE_LONG_TYPES */
 
 /* Define to 1 if you have the `malloc' function. */
 #define HAVE_MALLOC 1
 
 /* Define this if a good mathlib installation was detected */
-#define HAVE_MATHLIB 1
+/* #undef HAVE_MATHLIB */
 
 /* Define to 1 if you have the <math.h> header file. */
 #define HAVE_MATH_H 1
@@ -222,7 +237,7 @@
 #define HAVE_MEMSET 1
 
 /* Define to 1 if you have the <mpfr.h> header file. */
-#define HAVE_MPFR_H 1
+/* #undef HAVE_MPFR_H */
 
 /* Define to 1 if you have the <ncurses/curses.h> header file. */
 /* #undef HAVE_NCURSES_CURSES_H */
@@ -240,43 +255,43 @@
 /* #undef HAVE_OPT_LOCAL_PGSQL_INCLUDE */
 
 /* Define this as PIC option */
-#define HAVE_PIC "-fPIC"
+/* #undef HAVE_PIC */
 
 /* Define to 1 if you have the <plot.h> header file. */
-#define HAVE_PLOT_H 1
+/* #undef HAVE_PLOT_H */
 
 /* Define to 1 if you have the `posix_memalign' function. */
 #define HAVE_POSIX_MEMALIGN 1
 
 /* Define this if a good PostgreSQL installation was detected */
-#define HAVE_POSTGRESQL 1
+/* #undef HAVE_POSTGRESQL */
 
 /* Define to 1 if you have the `printf' function. */
 #define HAVE_PRINTF 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
-#define HAVE_PTHREAD_H 1
+/* #undef HAVE_PTHREAD_H */
 
 /* Define this if a good quadmath installation was detected */
-#define HAVE_QUADMATH 1
+/* #undef HAVE_QUADMATH */
 
 /* Define to 1 if you have the <quadmath.h> header file. */
-#define HAVE_QUADMATH_H 1
+/* #undef HAVE_QUADMATH_H */
 
 /* Define this if readline was detected */
-#define HAVE_READLINE 1
+/* #undef HAVE_READLINE */
 
 /* Define to 1 if you have the <readline/history.h> header file. */
-#define HAVE_READLINE_HISTORY_H 1
+/* #undef HAVE_READLINE_HISTORY_H */
 
 /* Define to 1 if you have the <readline/readline.h> header file. */
-#define HAVE_READLINE_READLINE_H 1
+/* #undef HAVE_READLINE_READLINE_H */
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
 
 /* Define to 1 if you have the <Rmath.h> header file. */
-#define HAVE_RMATH_H 1
+/* #undef HAVE_RMATH_H */
 
 /* Define to 1 if you have the `setjmp' function. */
 #define HAVE_SETJMP 1
@@ -395,7 +410,7 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 3.1.0"
+#define PACKAGE_STRING "algol68g 3.1.9"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
@@ -404,13 +419,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.1.0"
+#define PACKAGE_VERSION "3.1.9"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.1.0"
+#define VERSION "3.1.9"
 
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__

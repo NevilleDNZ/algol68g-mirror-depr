@@ -1,23 +1,27 @@
-//! @file mp-constant.c
+//! @file mp-pi.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! [LONG] LONG REAL value of pi by AGM.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -31,9 +35,11 @@ MP_T *mp_pi (NODE_T * p, MP_T * api, int mod, int digs)
 {
   int gdigs = FUN_DIGITS (digs);
   if (gdigs > A68_MP (mp_pi_size)) {
+//
 // No luck with the kept value, hence we generate a longer "pi".
 // Calculate "pi" using the Borwein & Borwein AGM algorithm.
-// This AGM doubles the numbers of digs every iteration.
+// This AGM doubles the numbers of digits every iteration.
+//
     a68_free (A68_MP (mp_pi));
     a68_free (A68_MP (mp_half_pi));
     a68_free (A68_MP (mp_two_pi));

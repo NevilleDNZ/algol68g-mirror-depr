@@ -1,34 +1,39 @@
 //! @file a68g.c
 //! @author J. Marcel van der Veer
-//
+//!
 //! @section Copyright
-//
-// This file is part of Algol68G - an Algol 68 compiler-interpreter.
-// Copyright 2001-2022 J. Marcel van der Veer <algol68g@xs4all.nl>.
-//
+//!
+//! This file is part of Algol68G - an Algol 68 compiler-interpreter.
+//! Copyright 2001-2023 J. Marcel van der Veer [algol68g@xs4all.nl].
+//!
 //! @section License
-//
-// This program is free software; you can redistribute it and/or modify it 
-// under the terms of the GNU General Public License as published by the 
-// Free Software Foundation; either version 3 of the License, or 
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but 
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-// more details. You should have received a copy of the GNU General Public 
-// License along with this program. If not, see <http://www.gnu.org/licenses/>.
+//!
+//! This program is free software; you can redistribute it and/or modify it 
+//! under the terms of the GNU General Public License as published by the 
+//! Free Software Foundation; either version 3 of the License, or 
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful, but 
+//! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+//! or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+//! more details. You should have received a copy of the GNU General Public 
+//! License along with this program. If not, see [http://www.gnu.org/licenses/].
+
+//! @section Synopsis
+//!
+//! Algol 68 Genie main driver.
 
 #include "a68g.h"
-#include "a68g-prelude.h"
-#include "a68g-mp.h"
 #include "a68g-genie.h"
-#include "a68g-prelude-mathlib.h"
-#include "a68g-postulates.h"
-#include "a68g-parser.h"
-#include "a68g-options.h"
-#include "a68g-optimiser.h"
 #include "a68g-listing.h"
+#include "a68g-mp.h"
+#include "a68g-optimiser.h"
+#include "a68g-options.h"
+#include "a68g-parser.h"
+#include "a68g-postulates.h"
+#include "a68g-prelude.h"
+#include "a68g-prelude-mathlib.h"
+#include "a68g-quad.h"
 
 #if defined (HAVE_MATHLIB)
 #include <Rmath.h>
@@ -72,7 +77,7 @@ void state_license (FILE_T f)
   }
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Algol 68 Genie %s\n", PACKAGE_VERSION) >= 0);
   WRITE (f, A68 (output_line));
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Copyright 2001-2022 %s.\n", PACKAGE_BUGREPORT) >= 0);
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Copyright 2001-2023 %s.\n", PACKAGE_BUGREPORT) >= 0);
   WRITE (f, A68 (output_line));
   PR ("");
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "This is free software covered by the GNU General Public License.\n") >= 0);
@@ -106,19 +111,16 @@ void state_version (FILE_T f)
   WRITE (f, A68 (output_line));
   WRITELN (f, "");
 #endif
-//ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Algol 68 Genie version %d\n", A68_LEVEL) >= 0);
-//WRITE (f, A68 (output_line));
 #if (A68_LEVEL >= 3)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With hardware support for long modes\n") >= 0);
   WRITE (f, A68 (output_line));
 #endif
-#if defined (BUILD_A68_COMPILER)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With compilation support\n") >= 0);
+#if defined (BUILD_A68_COMPILER) && defined (C_COMPILER)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With plugin-compilation support (back-end is %s)\n", C_COMPILER) >= 0);
   WRITE (f, A68 (output_line));
-#if defined (C_COMPILER)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "     C compiler is %s\n", C_COMPILER) >= 0);
+#elif defined (BUILD_A68_COMPILER)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With plugin-compilation support\n") >= 0);
   WRITE (f, A68 (output_line));
-#endif
 #endif
 #if defined (BUILD_PARALLEL_CLAUSE)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With parallel-clause support\n") >= 0);
@@ -166,6 +168,12 @@ void state_version (FILE_T f)
   }
 #endif
 #endif
+#if defined (HPA_VERSION)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "HPA version %s\n", HPA_VERSION) >= 0);
+  WRITE (f, A68 (output_line));
+#endif
+ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Build %d.%d.%d.%d.%d %s\n", A68_LEVEL, (int) sizeof (INT_T), (int) sizeof (REAL_T), (int) sizeof (MP_INT_T), (int) sizeof (MP_REAL_T), __DATE__) >= 0);
+WRITE (f, A68 (output_line));
 #undef PR
 }
 
@@ -219,9 +227,8 @@ BOOL_T strip_extension (char *ext)
 
 void open_with_extensions (void)
 {
-  int k;
   FILE_SOURCE_FD (&A68_JOB) = -1;
-  for (k = 0; k < EXTENSIONS && FILE_SOURCE_FD (&A68_JOB) == -1; k++) {
+  for (int k = 0; k < EXTENSIONS && FILE_SOURCE_FD (&A68_JOB) == -1; k++) {
     int len;
     char *fn = NULL;
     if (extensions[k] == NO_TEXT) {
@@ -236,14 +243,13 @@ void open_with_extensions (void)
     }
     FILE_SOURCE_FD (&A68_JOB) = open (fn, O_RDONLY | O_BINARY);
     if (FILE_SOURCE_FD (&A68_JOB) != -1) {
-      int l;
       BOOL_T cont = A68_TRUE;
       a68_free (FILE_SOURCE_NAME (&A68_JOB));
       a68_free (FILE_GENERIC_NAME (&A68_JOB));
       FILE_SOURCE_NAME (&A68_JOB) = new_string (fn, NO_TEXT);
       FILE_GENERIC_NAME (&A68_JOB) = new_string (a68_basename (fn), NO_TEXT);
       FILE_PATH (&A68_JOB) = new_string (a68_dirname (fn), NO_TEXT);
-      for (l = 0; l < EXTENSIONS && cont; l++) {
+      for (int l = 0; l < EXTENSIONS && cont; l++) {
         if (strip_extension (extensions[l])) {
           cont = A68_FALSE;
         }
@@ -307,8 +313,8 @@ void compiler_interpreter (void)
   SCAN_ERROR (FILE_INITIAL_NAME (&A68_JOB) == NO_TEXT, NO_LINE, NO_TEXT, ERROR_NO_SOURCE_FILE);
   FILE_BINARY_OPENED (&A68_JOB) = A68_FALSE;
   FILE_BINARY_WRITEMOOD (&A68_JOB) = A68_TRUE;
-  FILE_LIBRARY_OPENED (&A68_JOB) = A68_FALSE;
-  FILE_LIBRARY_WRITEMOOD (&A68_JOB) = A68_TRUE;
+  FILE_PLUGIN_OPENED (&A68_JOB) = A68_FALSE;
+  FILE_PLUGIN_WRITEMOOD (&A68_JOB) = A68_TRUE;
   FILE_LISTING_OPENED (&A68_JOB) = A68_FALSE;
   FILE_LISTING_WRITEMOOD (&A68_JOB) = A68_TRUE;
   FILE_OBJECT_OPENED (&A68_JOB) = A68_FALSE;
@@ -348,15 +354,15 @@ void compiler_interpreter (void)
   bufcpy (FILE_OBJECT_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
   bufcat (FILE_OBJECT_NAME (&A68_JOB), OBJECT_EXTENSION, len);
 // Binary.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (LIBRARY_EXTENSION);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (PLUGIN_EXTENSION);
   FILE_BINARY_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
   bufcpy (FILE_BINARY_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
   bufcat (FILE_BINARY_NAME (&A68_JOB), BINARY_EXTENSION, len);
 // Library file.
-  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (LIBRARY_EXTENSION);
-  FILE_LIBRARY_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
-  bufcpy (FILE_LIBRARY_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
-  bufcat (FILE_LIBRARY_NAME (&A68_JOB), LIBRARY_EXTENSION, len);
+  len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (PLUGIN_EXTENSION);
+  FILE_PLUGIN_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
+  bufcpy (FILE_PLUGIN_NAME (&A68_JOB), FILE_GENERIC_NAME (&A68_JOB), len);
+  bufcat (FILE_PLUGIN_NAME (&A68_JOB), PLUGIN_EXTENSION, len);
 // Listing file.
   len = 1 + (int) strlen (FILE_GENERIC_NAME (&A68_JOB)) + (int) strlen (LISTING_EXTENSION);
   FILE_LISTING_NAME (&A68_JOB) = (char *) get_heap_space ((size_t) len);
@@ -417,7 +423,7 @@ void compiler_interpreter (void)
 #if defined (BUILD_A68_COMPILER)
 // Only compile C if the A68 compiler found no errors (constant folder for instance).
   if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_OPT_LEVEL (&A68_JOB) > 0 && !OPTION_RUN_SCRIPT (&A68_JOB)) {
-    char cmd[BUFFER_SIZE], options[BUFFER_SIZE];
+    BUFFER cmd, options;
     if (OPTION_RERUN (&A68_JOB) == A68_FALSE) {
       announce_phase ("optimiser (code compiler)");
       errno = 0;
@@ -437,7 +443,7 @@ void compiler_interpreter (void)
 #endif
       ASSERT (snprintf (cmd, SNPRINTF_SIZE, "%s -I%s %s -c -o \"%s\" \"%s\"", C_COMPILER, INCLUDEDIR, options, FILE_BINARY_NAME (&A68_JOB), FILE_OBJECT_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
-      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", FILE_LIBRARY_NAME (&A68_JOB), FILE_BINARY_NAME (&A68_JOB)) >= 0);
+      ASSERT (snprintf (cmd, SNPRINTF_SIZE, "ld -export-dynamic -shared -o \"%s\" \"%s\"", FILE_PLUGIN_NAME (&A68_JOB), FILE_BINARY_NAME (&A68_JOB)) >= 0);
       ABEND (system (cmd) != 0, ERROR_ACTION, cmd);
       a68_rm (FILE_BINARY_NAME (&A68_JOB));
     }
@@ -462,7 +468,7 @@ void compiler_interpreter (void)
 //
   if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_COMPILE (&A68_JOB) == A68_FALSE && (OPTION_CHECK_ONLY (&A68_JOB) ? OPTION_RUN (&A68_JOB) : A68_TRUE)) {
 #if defined (BUILD_A68_COMPILER)
-    void *compile_lib;
+    void *compile_plugin;
 #endif
     A68 (close_tty_on_exit) = A68_FALSE;        // Assuming no runtime errors a priori
 #if defined (BUILD_A68_COMPILER)
@@ -475,34 +481,39 @@ void compiler_interpreter (void)
     }
 #if defined (BUILD_A68_COMPILER)
     if (OPTION_OPT_LEVEL (&A68_JOB) > 0) {
-      char libname[BUFFER_SIZE];
-      void *a68_lib;
+      char plugin_name[BUFFER_SIZE];
+      void *a68_plugin;
       struct stat srcstat, objstat;
       int ret;
       announce_phase ("dynamic linker");
-      ASSERT (snprintf (libname, SNPRINTF_SIZE, "%s", FILE_LIBRARY_NAME (&A68_JOB)) >= 0);
+      ASSERT (snprintf (plugin_name, SNPRINTF_SIZE, "%s", FILE_PLUGIN_NAME (&A68_JOB)) >= 0);
+// Correction when pwd is outside LD_PLUGIN_PATH.
+// The DL cannot be loaded if it is.
+      if (strcmp (plugin_name, a68_basename (plugin_name)) == 0) {
+        ASSERT (snprintf (plugin_name, SNPRINTF_SIZE, "./%s", FILE_PLUGIN_NAME (&A68_JOB)) >= 0);
+      }
 // Check whether we are doing something rash.
       ret = stat (FILE_SOURCE_NAME (&A68_JOB), &srcstat);
       ABEND (ret != 0, ERROR_ACTION, FILE_SOURCE_NAME (&A68_JOB));
-      ret = stat (libname, &objstat);
-      ABEND (ret != 0, ERROR_ACTION, libname);
+      ret = stat (plugin_name, &objstat);
+      ABEND (ret != 0, ERROR_ACTION, plugin_name);
       if (OPTION_RERUN (&A68_JOB)) {
-        ABEND (ST_MTIME (&srcstat) > ST_MTIME (&objstat), "library outdates source", "cannot RERUN");
+        ABEND (ST_MTIME (&srcstat) > ST_MTIME (&objstat), "plugin outdates source", "cannot RERUN");
       }
 // First load a68g itself so compiler code can resolve a68g symbols.
-      a68_lib = dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
-      ABEND (a68_lib == NULL, ERROR_RESOLVE, dlerror ());
+      a68_plugin = dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
+      ABEND (a68_plugin == NULL, ERROR_CANNOT_OPEN_PLUGIN, dlerror ());
 // Then load compiler code.
-      compile_lib = dlopen (libname, RTLD_NOW | RTLD_GLOBAL);
-      ABEND (compile_lib == NULL, ERROR_RESOLVE, dlerror ());
+      compile_plugin = dlopen (plugin_name, RTLD_NOW | RTLD_GLOBAL);
+      ABEND (compile_plugin == NULL, ERROR_CANNOT_OPEN_PLUGIN, dlerror ());
     } else {
-      compile_lib = NULL;
+      compile_plugin = NULL;
     }
     announce_phase ("genie");
-    genie (compile_lib);
-// Unload compiler library.
+    genie (compile_plugin);
+// Unload compiler plugin.
     if (OPTION_OPT_LEVEL (&A68_JOB) > 0) {
-      int ret = dlclose (compile_lib);
+      int ret = dlclose (compile_plugin);
       ABEND (ret != 0, ERROR_ACTION, dlerror ());
     }
 #else
@@ -552,27 +563,27 @@ void compiler_interpreter (void)
     if (emitted) {
       a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
-    a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
+    a68_rm (FILE_PLUGIN_NAME (&A68_JOB));
   }
   if (OPTION_RUN_SCRIPT (&A68_JOB) && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
       a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
     a68_rm (FILE_SOURCE_NAME (&A68_JOB));
-    a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
+    a68_rm (FILE_PLUGIN_NAME (&A68_JOB));
   } else if (OPTION_COMPILE (&A68_JOB)) {
     build_script ();
     if (!OPTION_KEEP (&A68_JOB)) {
       if (emitted) {
         a68_rm (FILE_OBJECT_NAME (&A68_JOB));
       }
-      a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
+      a68_rm (FILE_PLUGIN_NAME (&A68_JOB));
     }
   } else if (OPTION_OPT_LEVEL (&A68_JOB) == OPTIMISE_0 && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
       a68_rm (FILE_OBJECT_NAME (&A68_JOB));
     }
-    a68_rm (FILE_LIBRARY_NAME (&A68_JOB));
+    a68_rm (FILE_PLUGIN_NAME (&A68_JOB));
   } else if (OPTION_OPT_LEVEL (&A68_JOB) > OPTIMISE_0 && !OPTION_KEEP (&A68_JOB)) {
     if (emitted) {
       a68_rm (FILE_OBJECT_NAME (&A68_JOB));
@@ -621,7 +632,7 @@ void a68_exit (int code)
   a68_free (FILE_SOURCE_NAME (&A68_JOB));
   a68_free (FILE_LISTING_NAME (&A68_JOB));
   a68_free (FILE_OBJECT_NAME (&A68_JOB));
-  a68_free (FILE_LIBRARY_NAME (&A68_JOB));
+  a68_free (FILE_PLUGIN_NAME (&A68_JOB));
   a68_free (FILE_BINARY_NAME (&A68_JOB));
   a68_free (FILE_PRETTY_NAME (&A68_JOB));
   a68_free (FILE_SCRIPT_NAME (&A68_JOB));
@@ -651,8 +662,7 @@ int main (int argc, char *argv[])
   FILE_DIAGS_FD (&A68_JOB) = -1;
 // Get command name and discard path.
   bufcpy (A68 (a68_cmd_name), argv[0], BUFFER_SIZE);
-  int k;
-  for (k = (int) strlen (A68 (a68_cmd_name)) - 1; k >= 0; k--) {
+  for (int k = (int) strlen (A68 (a68_cmd_name)) - 1; k >= 0; k--) {
 #if defined (BUILD_WIN32)
     char delim = '\\';
 #else
@@ -700,7 +710,7 @@ int main (int argc, char *argv[])
     FILE_SOURCE_NAME (&A68_JOB) = NO_TEXT;
     FILE_LISTING_NAME (&A68_JOB) = NO_TEXT;
     FILE_OBJECT_NAME (&A68_JOB) = NO_TEXT;
-    FILE_LIBRARY_NAME (&A68_JOB) = NO_TEXT;
+    FILE_PLUGIN_NAME (&A68_JOB) = NO_TEXT;
     FILE_BINARY_NAME (&A68_JOB) = NO_TEXT;
     FILE_PRETTY_NAME (&A68_JOB) = NO_TEXT;
     FILE_SCRIPT_NAME (&A68_JOB) = NO_TEXT;
@@ -713,9 +723,8 @@ int main (int argc, char *argv[])
       online_help (STDOUT_FILENO);
       a68_exit (EXIT_FAILURE);
     }
-    int argcc;
-    for (argcc = 1; argcc < argc; argcc++) {
-      add_option_list (&(OPTION_LIST (&A68_JOB)), argv[argcc], NO_LINE);
+    for (int k = 1; k < argc; k++) {
+      add_option_list (&(OPTION_LIST (&A68_JOB)), argv[k], NO_LINE);
     }
     if (!set_options (OPTION_LIST (&A68_JOB), A68_TRUE)) {
       a68_exit (EXIT_FAILURE);
