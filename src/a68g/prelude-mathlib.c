@@ -86,6 +86,8 @@ void stand_mathlib (void)
   m = a68_proc (M_REAL, M_REAL, M_REAL, M_REAL, M_REAL, M_BOOL, NO_MOID);
   a68_idf (A68_EXT, "rdnf", m, genie_R_dnf_real);
   a68_idf (A68_EXT, "rdhyper", m, genie_R_dhyper_real);
+  m = a68_proc (M_REAL, M_REAL, M_REAL, M_REAL, NO_MOID);
+  a68_idf (A68_EXT, "rrhyper", m, genie_R_rhyper_real);
   m = a68_proc (M_REAL, M_REAL, M_REAL, M_BOOL, M_BOOL, NO_MOID);
   a68_idf (A68_EXT, "rpt", m, genie_R_pt_real);
   a68_idf (A68_EXT, "rqt", m, genie_R_qt_real);
@@ -129,6 +131,16 @@ void stand_mathlib (void)
   a68_idf (A68_EXT, "rqnf", m, genie_R_qnf_real);
   a68_idf (A68_EXT, "rphyper", m, genie_R_phyper_real);
   a68_idf (A68_EXT, "rqhyper", m, genie_R_qhyper_real);
+//
+  m = a68_proc (M_REAL, M_REAL, M_REAL, M_BOOL, NO_MOID);
+  a68_idf (A68_EXT, "rdsignrank", m, genie_R_dsignrank_real);
+  a68_idf (A68_EXT, "rdwilcox", m, genie_R_dwilcox_real);
+//
+  m = a68_proc (M_REAL, M_REAL, M_REAL, M_BOOL, M_BOOL, NO_MOID);
+  a68_idf (A68_EXT, "rpsignrank", m, genie_R_psignrank_real);
+  a68_idf (A68_EXT, "rqsignrank", m, genie_R_qsignrank_real);
+  a68_idf (A68_EXT, "rpwilcox", m, genie_R_pwilcox_real);
+  a68_idf (A68_EXT, "rqwilcox", m, genie_R_qwilcox_real);
 }
 
 #endif

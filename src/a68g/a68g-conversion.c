@@ -37,8 +37,6 @@
 
 #if (A68_LEVEL >= 3)
 
-#include "a68g-quad.h"
-
 //! @brief 10 ** expo
 
 static DOUBLE_T pow_10_double[] = {
@@ -68,40 +66,6 @@ DOUBLE_T ten_up_double (int expo)
     }
   }
   return neg_expo ? 1.0q / dbl_expo : dbl_expo;
-}
-
-//! @brief ten_up_quad_real
-
-QUAD_T ten_up_quad_real (int n)
-{
-  QUAD_T s = QUAD_REAL_TEN, t;
-  unsigned k, m;
-  t = QUAD_REAL_ONE;
-  if (n < 0) {
-    m = -n;
-    if ((sigerr_quad_real (real_cmp_quad_real (&s, &QUAD_REAL_ZERO) == 0, QUAD_REAL_EBADEXP, "pwr_quad_real"))) {
-      return QUAD_REAL_ZERO;
-    }
-    s = div_quad_real (QUAD_REAL_ONE, s);
-  } else {
-    m = n;
-  }
-  if (m != 0) {
-    k = 1;
-    while (1) {
-      if (k & m) {
-        t = mul_quad_real (s, t);
-      }
-      if ((k <<= 1) <= m) {
-        s = mul_quad_real (s, s);
-      } else {
-        break;
-      }
-    }
-  } else {
-    sigerr_quad_real (real_cmp_quad_real (&s, &QUAD_REAL_ZERO) == 0, QUAD_REAL_EBADEXP, "pwr_quad_real");
-  }
-  return t;
 }
 
 #endif

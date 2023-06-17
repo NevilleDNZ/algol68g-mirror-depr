@@ -1221,15 +1221,15 @@ void write_real_pattern (NODE_T * p, MOID_T * mode, MOID_T * root, BYTE_T * item
 #if (A68_LEVEL >= 3)
       DOUBLE_NUM_T x = VALUE ((A68_DOUBLE *) item);
       if (mode == M_LONG_INT) {
-        x = double_int_to_double_real (p, x);
+        x = double_int_to_double (p, x);
       }
       CHECK_DOUBLE_REAL (p, x.f);
       exp_value = 0;
-      sign = sign_double_real (x);
+      sign = sign_double (x);
       if (sign_mould != NO_NODE) {
         put_sign_to_integral (sign_mould, sign);
       }
-      x.f = fabsq (x.f);
+      x.f = fabs_double (x.f);
       if (expo_mould != NO_NODE) {
         standardise_double (&(x.f), stag_digits, frac_digits, &exp_value);
       }

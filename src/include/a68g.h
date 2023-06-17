@@ -40,11 +40,7 @@
 // Build switches depending on platform.
 
 #if ((defined (BUILD_LINUX) || defined (BUILD_BSD)) && defined (HAVE_DL))
-#  if defined (HAVE_QUADMATH)
-#    define BUILD_A68_COMPILER
-#  else
-#    undef BUILD_A68_COMPILER
-#  endif
+#  define BUILD_A68_COMPILER
 #else
 #  undef BUILD_A68_COMPILER
 #endif
@@ -61,10 +57,6 @@
 
 // REAL_T should be a REAL*8 for external libs.
 typedef double REAL_T; 
-
-#if (A68_LEVEL >= 3)
-#  include <quadmath.h>
-#endif
 
 // Can we access the internet?
 #if defined (BUILD_WIN32)
@@ -171,9 +163,10 @@ extern void state_version (FILE_T);
 
 // Below from R mathlib
 
-extern void GetRNGstate(void);
-extern void PutRNGstate(void);
-extern REAL_T a68_unif_rand(void);
-extern REAL_T R_unif_index(REAL_T);
+extern void GetRNGstate (void);
+extern void PutRNGstate (void);
+extern REAL_T a68_unif_rand (void);
+extern REAL_T a68_gauss_rand (void);
+extern REAL_T R_unif_index (REAL_T);
 
 #endif

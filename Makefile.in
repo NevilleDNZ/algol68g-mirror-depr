@@ -145,7 +145,6 @@ am_a68g_OBJECTS = ./src/a68g/a68g-a68g-apropos.$(OBJEXT) \
 	./src/a68g/a68g-mp-math.$(OBJEXT) \
 	./src/a68g/a68g-mp-mpfr.$(OBJEXT) \
 	./src/a68g/a68g-mp-pi.$(OBJEXT) \
-	./src/a68g/a68g-mp-quad.$(OBJEXT) \
 	./src/a68g/a68g-parser-bottom-up.$(OBJEXT) \
 	./src/a68g/a68g-parser-brackets.$(OBJEXT) \
 	./src/a68g/a68g-parser.$(OBJEXT) \
@@ -171,8 +170,6 @@ am_a68g_OBJECTS = ./src/a68g/a68g-a68g-apropos.$(OBJEXT) \
 	./src/a68g/a68g-prelude.$(OBJEXT) \
 	./src/a68g/a68g-prelude-gsl.$(OBJEXT) \
 	./src/a68g/a68g-prelude-mathlib.$(OBJEXT) \
-	./src/a68g/a68g-quad.$(OBJEXT) \
-	./src/a68g/a68g-quad-conversion.$(OBJEXT) \
 	./src/a68g/a68g-rts-bool.$(OBJEXT) \
 	./src/a68g/a68g-rts-char.$(OBJEXT) \
 	./src/a68g/a68g-rts-curses.$(OBJEXT) \
@@ -187,6 +184,7 @@ am_a68g_OBJECTS = ./src/a68g/a68g-a68g-apropos.$(OBJEXT) \
 	./src/a68g/a68g-rts-sounds.$(OBJEXT) \
 	./src/a68g/a68g-rts-transput.$(OBJEXT) \
 	./src/a68g/a68g-rts-unformatted.$(OBJEXT) \
+	./src/a68g/a68g-single-blas.$(OBJEXT) \
 	./src/a68g/a68g-single.$(OBJEXT) \
 	./src/a68g/a68g-single-decomposition.$(OBJEXT) \
 	./src/a68g/a68g-single-fft.$(OBJEXT) \
@@ -257,7 +255,6 @@ am__depfiles_remade = ./src/a68g/$(DEPDIR)/a68g-a68g-apropos.Po \
 	./src/a68g/$(DEPDIR)/a68g-mp-math.Po \
 	./src/a68g/$(DEPDIR)/a68g-mp-mpfr.Po \
 	./src/a68g/$(DEPDIR)/a68g-mp-pi.Po \
-	./src/a68g/$(DEPDIR)/a68g-mp-quad.Po \
 	./src/a68g/$(DEPDIR)/a68g-mp.Po \
 	./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Po \
 	./src/a68g/$(DEPDIR)/a68g-parser-brackets.Po \
@@ -284,8 +281,6 @@ am__depfiles_remade = ./src/a68g/$(DEPDIR)/a68g-a68g-apropos.Po \
 	./src/a68g/$(DEPDIR)/a68g-prelude-gsl.Po \
 	./src/a68g/$(DEPDIR)/a68g-prelude-mathlib.Po \
 	./src/a68g/$(DEPDIR)/a68g-prelude.Po \
-	./src/a68g/$(DEPDIR)/a68g-quad-conversion.Po \
-	./src/a68g/$(DEPDIR)/a68g-quad.Po \
 	./src/a68g/$(DEPDIR)/a68g-rts-bool.Po \
 	./src/a68g/$(DEPDIR)/a68g-rts-char.Po \
 	./src/a68g/$(DEPDIR)/a68g-rts-curses.Po \
@@ -300,6 +295,7 @@ am__depfiles_remade = ./src/a68g/$(DEPDIR)/a68g-a68g-apropos.Po \
 	./src/a68g/$(DEPDIR)/a68g-rts-sounds.Po \
 	./src/a68g/$(DEPDIR)/a68g-rts-transput.Po \
 	./src/a68g/$(DEPDIR)/a68g-rts-unformatted.Po \
+	./src/a68g/$(DEPDIR)/a68g-single-blas.Po \
 	./src/a68g/$(DEPDIR)/a68g-single-decomposition.Po \
 	./src/a68g/$(DEPDIR)/a68g-single-fft.Po \
 	./src/a68g/$(DEPDIR)/a68g-single-gamic.Po \
@@ -581,7 +577,6 @@ a68g_SOURCES = \
 ./src/a68g/mp-math.c \
 ./src/a68g/mp-mpfr.c \
 ./src/a68g/mp-pi.c \
-./src/a68g/mp-quad.c \
 ./src/a68g/parser-bottom-up.c \
 ./src/a68g/parser-brackets.c \
 ./src/a68g/parser.c \
@@ -607,8 +602,6 @@ a68g_SOURCES = \
 ./src/a68g/prelude.c \
 ./src/a68g/prelude-gsl.c \
 ./src/a68g/prelude-mathlib.c \
-./src/a68g/quad.c \
-./src/a68g/quad-conversion.c \
 ./src/a68g/rts-bool.c \
 ./src/a68g/rts-char.c \
 ./src/a68g/rts-curses.c \
@@ -623,6 +616,7 @@ a68g_SOURCES = \
 ./src/a68g/rts-sounds.c \
 ./src/a68g/rts-transput.c \
 ./src/a68g/rts-unformatted.c \
+./src/a68g/single-blas.c \
 ./src/a68g/single.c \
 ./src/a68g/single-decomposition.c \
 ./src/a68g/single-fft.c \
@@ -669,7 +663,6 @@ a68g_SOURCES = \
 ./src/include/a68g-prelude-gsl.h \
 ./src/include/a68g-prelude.h \
 ./src/include/a68g-prelude-mathlib.h \
-./src/include/a68g-quad.h \
 ./src/include/a68g-stack.h \
 ./src/include/a68g-stddef.h \
 ./src/include/a68g-torrix.h \
@@ -709,7 +702,6 @@ pkginclude_HEADERS = \
 ./src/include/a68g-prelude-gsl.h \
 ./src/include/a68g-prelude.h \
 ./src/include/a68g-prelude-mathlib.h \
-./src/include/a68g-quad.h \
 ./src/include/a68g-stack.h \
 ./src/include/a68g-stddef.h \
 ./src/include/a68g-torrix.h \
@@ -720,30 +712,31 @@ a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 a68g_CPPFLAGS = -I$(top_srcdir)/src/include
 TESTS_ENVIRONMENT = ./a68g
 TESTS = \
-	test-set/01-chaos.a68\
-	test-set/02-decision.a68\
-	test-set/03-digits.a68\
-	test-set/04-end-of-time.a68\
-	test-set/05-fft.a68\
-	test-set/06-fibonacci-grammar.a68\
-	test-set/07-formula-manipulation.a68\
-	test-set/08-gammainc.a68\
-	test-set/09-guldens.a68\
-	test-set/10-hamming.a68\
-	test-set/11-hilbert.a68\
-	test-set/12-lisp.a68\
-	test-set/13-mandelbrot.a68\
-	test-set/14-mastermind.a68\
-	test-set/15-math.a68\
-	test-set/16-matrix.a68\
-	test-set/17-procedures.a68\
-	test-set/18-pseudo-switch.a68\
-	test-set/19-queens.a68\
-	test-set/20-quicksort.a68\
-	test-set/21-rationals.a68\
-	test-set/22-semana-santa.a68\
-	test-set/23-tukey.a68\
-	test-set/24-whetstones.a68
+	test-set/01-ackermann.a68\
+	test-set/02-chaos.a68\
+	test-set/03-decision.a68\
+	test-set/04-digits.a68\
+	test-set/05-end-of-time.a68\
+	test-set/06-fft.a68\
+	test-set/07-fibonacci-grammar.a68\
+	test-set/08-formula-manipulation.a68\
+	test-set/09-gammainc.a68\
+	test-set/10-guldens.a68\
+	test-set/11-hamming.a68\
+	test-set/12-hilbert.a68\
+	test-set/13-lisp.a68\
+	test-set/14-mandelbrot.a68\
+	test-set/15-mastermind.a68\
+	test-set/16-math.a68\
+	test-set/17-matrix.a68\
+	test-set/18-procedures.a68\
+	test-set/19-pseudo-switch.a68\
+	test-set/20-queens.a68\
+	test-set/21-quicksort.a68\
+	test-set/22-rationals.a68\
+	test-set/23-semana-santa.a68\
+	test-set/24-tukey.a68\
+	test-set/25-whetstones.a68
 
 @EXPORT_DYNAMIC_FALSE@a68g_LDFLAGS = 
 @EXPORT_DYNAMIC_TRUE@a68g_LDFLAGS = -Wl,--export-dynamic
@@ -927,8 +920,6 @@ src/a68g/$(DEPDIR)/$(am__dirstamp):
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-mp-pi.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
-./src/a68g/a68g-mp-quad.$(OBJEXT): src/a68g/$(am__dirstamp) \
-	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-parser-bottom-up.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-parser-brackets.$(OBJEXT): src/a68g/$(am__dirstamp) \
@@ -979,10 +970,6 @@ src/a68g/$(DEPDIR)/$(am__dirstamp):
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-prelude-mathlib.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
-./src/a68g/a68g-quad.$(OBJEXT): src/a68g/$(am__dirstamp) \
-	src/a68g/$(DEPDIR)/$(am__dirstamp)
-./src/a68g/a68g-quad-conversion.$(OBJEXT): src/a68g/$(am__dirstamp) \
-	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-rts-bool.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-rts-char.$(OBJEXT): src/a68g/$(am__dirstamp) \
@@ -1010,6 +997,8 @@ src/a68g/$(DEPDIR)/$(am__dirstamp):
 ./src/a68g/a68g-rts-transput.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-rts-unformatted.$(OBJEXT): src/a68g/$(am__dirstamp) \
+	src/a68g/$(DEPDIR)/$(am__dirstamp)
+./src/a68g/a68g-single-blas.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
 ./src/a68g/a68g-single.$(OBJEXT): src/a68g/$(am__dirstamp) \
 	src/a68g/$(DEPDIR)/$(am__dirstamp)
@@ -1089,7 +1078,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-mp-math.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-mp-mpfr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-mp-pi.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-mp-quad.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-mp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-parser-brackets.Po@am__quote@ # am--include-marker
@@ -1116,8 +1104,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-prelude-gsl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-prelude-mathlib.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-prelude.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-quad-conversion.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-quad.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-rts-bool.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-rts-char.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-rts-curses.Po@am__quote@ # am--include-marker
@@ -1132,6 +1118,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-rts-sounds.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-rts-transput.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-rts-unformatted.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-single-blas.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-single-decomposition.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-single-fft.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./src/a68g/$(DEPDIR)/a68g-single-gamic.Po@am__quote@ # am--include-marker
@@ -1688,20 +1675,6 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-mp-pi.obj `if test -f './src/a68g/mp-pi.c'; then $(CYGPATH_W) './src/a68g/mp-pi.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/mp-pi.c'; fi`
 
-./src/a68g/a68g-mp-quad.o: ./src/a68g/mp-quad.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-mp-quad.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-mp-quad.Tpo -c -o ./src/a68g/a68g-mp-quad.o `test -f './src/a68g/mp-quad.c' || echo '$(srcdir)/'`./src/a68g/mp-quad.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-mp-quad.Tpo ./src/a68g/$(DEPDIR)/a68g-mp-quad.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/mp-quad.c' object='./src/a68g/a68g-mp-quad.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-mp-quad.o `test -f './src/a68g/mp-quad.c' || echo '$(srcdir)/'`./src/a68g/mp-quad.c
-
-./src/a68g/a68g-mp-quad.obj: ./src/a68g/mp-quad.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-mp-quad.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-mp-quad.Tpo -c -o ./src/a68g/a68g-mp-quad.obj `if test -f './src/a68g/mp-quad.c'; then $(CYGPATH_W) './src/a68g/mp-quad.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/mp-quad.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-mp-quad.Tpo ./src/a68g/$(DEPDIR)/a68g-mp-quad.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/mp-quad.c' object='./src/a68g/a68g-mp-quad.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-mp-quad.obj `if test -f './src/a68g/mp-quad.c'; then $(CYGPATH_W) './src/a68g/mp-quad.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/mp-quad.c'; fi`
-
 ./src/a68g/a68g-parser-bottom-up.o: ./src/a68g/parser-bottom-up.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-parser-bottom-up.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Tpo -c -o ./src/a68g/a68g-parser-bottom-up.o `test -f './src/a68g/parser-bottom-up.c' || echo '$(srcdir)/'`./src/a68g/parser-bottom-up.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Tpo ./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Po
@@ -2052,34 +2025,6 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-prelude-mathlib.obj `if test -f './src/a68g/prelude-mathlib.c'; then $(CYGPATH_W) './src/a68g/prelude-mathlib.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/prelude-mathlib.c'; fi`
 
-./src/a68g/a68g-quad.o: ./src/a68g/quad.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-quad.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-quad.Tpo -c -o ./src/a68g/a68g-quad.o `test -f './src/a68g/quad.c' || echo '$(srcdir)/'`./src/a68g/quad.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-quad.Tpo ./src/a68g/$(DEPDIR)/a68g-quad.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/quad.c' object='./src/a68g/a68g-quad.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-quad.o `test -f './src/a68g/quad.c' || echo '$(srcdir)/'`./src/a68g/quad.c
-
-./src/a68g/a68g-quad.obj: ./src/a68g/quad.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-quad.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-quad.Tpo -c -o ./src/a68g/a68g-quad.obj `if test -f './src/a68g/quad.c'; then $(CYGPATH_W) './src/a68g/quad.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/quad.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-quad.Tpo ./src/a68g/$(DEPDIR)/a68g-quad.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/quad.c' object='./src/a68g/a68g-quad.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-quad.obj `if test -f './src/a68g/quad.c'; then $(CYGPATH_W) './src/a68g/quad.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/quad.c'; fi`
-
-./src/a68g/a68g-quad-conversion.o: ./src/a68g/quad-conversion.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-quad-conversion.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Tpo -c -o ./src/a68g/a68g-quad-conversion.o `test -f './src/a68g/quad-conversion.c' || echo '$(srcdir)/'`./src/a68g/quad-conversion.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Tpo ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/quad-conversion.c' object='./src/a68g/a68g-quad-conversion.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-quad-conversion.o `test -f './src/a68g/quad-conversion.c' || echo '$(srcdir)/'`./src/a68g/quad-conversion.c
-
-./src/a68g/a68g-quad-conversion.obj: ./src/a68g/quad-conversion.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-quad-conversion.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Tpo -c -o ./src/a68g/a68g-quad-conversion.obj `if test -f './src/a68g/quad-conversion.c'; then $(CYGPATH_W) './src/a68g/quad-conversion.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/quad-conversion.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Tpo ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/quad-conversion.c' object='./src/a68g/a68g-quad-conversion.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-quad-conversion.obj `if test -f './src/a68g/quad-conversion.c'; then $(CYGPATH_W) './src/a68g/quad-conversion.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/quad-conversion.c'; fi`
-
 ./src/a68g/a68g-rts-bool.o: ./src/a68g/rts-bool.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-rts-bool.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-rts-bool.Tpo -c -o ./src/a68g/a68g-rts-bool.o `test -f './src/a68g/rts-bool.c' || echo '$(srcdir)/'`./src/a68g/rts-bool.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-rts-bool.Tpo ./src/a68g/$(DEPDIR)/a68g-rts-bool.Po
@@ -2275,6 +2220,20 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/rts-unformatted.c' object='./src/a68g/a68g-rts-unformatted.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-rts-unformatted.obj `if test -f './src/a68g/rts-unformatted.c'; then $(CYGPATH_W) './src/a68g/rts-unformatted.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/rts-unformatted.c'; fi`
+
+./src/a68g/a68g-single-blas.o: ./src/a68g/single-blas.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-single-blas.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-single-blas.Tpo -c -o ./src/a68g/a68g-single-blas.o `test -f './src/a68g/single-blas.c' || echo '$(srcdir)/'`./src/a68g/single-blas.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-single-blas.Tpo ./src/a68g/$(DEPDIR)/a68g-single-blas.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/single-blas.c' object='./src/a68g/a68g-single-blas.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-single-blas.o `test -f './src/a68g/single-blas.c' || echo '$(srcdir)/'`./src/a68g/single-blas.c
+
+./src/a68g/a68g-single-blas.obj: ./src/a68g/single-blas.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-single-blas.obj -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-single-blas.Tpo -c -o ./src/a68g/a68g-single-blas.obj `if test -f './src/a68g/single-blas.c'; then $(CYGPATH_W) './src/a68g/single-blas.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/single-blas.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ./src/a68g/$(DEPDIR)/a68g-single-blas.Tpo ./src/a68g/$(DEPDIR)/a68g-single-blas.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./src/a68g/single-blas.c' object='./src/a68g/a68g-single-blas.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -c -o ./src/a68g/a68g-single-blas.obj `if test -f './src/a68g/single-blas.c'; then $(CYGPATH_W) './src/a68g/single-blas.c'; else $(CYGPATH_W) '$(srcdir)/./src/a68g/single-blas.c'; fi`
 
 ./src/a68g/a68g-single.o: ./src/a68g/single.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(a68g_CPPFLAGS) $(CPPFLAGS) $(a68g_CFLAGS) $(CFLAGS) -MT ./src/a68g/a68g-single.o -MD -MP -MF ./src/a68g/$(DEPDIR)/a68g-single.Tpo -c -o ./src/a68g/a68g-single.o `test -f './src/a68g/single.c' || echo '$(srcdir)/'`./src/a68g/single.c
@@ -2977,7 +2936,6 @@ distclean: distclean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-math.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-mpfr.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-pi.Po
-	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-quad.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-parser-brackets.Po
@@ -3004,8 +2962,6 @@ distclean: distclean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-prelude-gsl.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-prelude-mathlib.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-prelude.Po
-	-rm -f ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Po
-	-rm -f ./src/a68g/$(DEPDIR)/a68g-quad.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-bool.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-char.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-curses.Po
@@ -3020,6 +2976,7 @@ distclean: distclean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-sounds.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-transput.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-unformatted.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-blas.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-decomposition.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-fft.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-gamic.Po
@@ -3118,7 +3075,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-math.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-mpfr.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-pi.Po
-	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp-quad.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-mp.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-parser-bottom-up.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-parser-brackets.Po
@@ -3145,8 +3101,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-prelude-gsl.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-prelude-mathlib.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-prelude.Po
-	-rm -f ./src/a68g/$(DEPDIR)/a68g-quad-conversion.Po
-	-rm -f ./src/a68g/$(DEPDIR)/a68g-quad.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-bool.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-char.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-curses.Po
@@ -3161,6 +3115,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-sounds.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-transput.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-rts-unformatted.Po
+	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-blas.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-decomposition.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-fft.Po
 	-rm -f ./src/a68g/$(DEPDIR)/a68g-single-gamic.Po

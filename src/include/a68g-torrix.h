@@ -44,8 +44,6 @@
     torrix_error_handler (txt, "", 0, _rc_);\
   }}
 
-extern NODE_T *torrix_error_node;
-
 extern A68_ROW matrix_to_row (NODE_T *, gsl_matrix *);
 extern A68_ROW vector_to_row (NODE_T *, gsl_vector *);
 extern gsl_matrix_complex *pop_matrix_complex (NODE_T *, BOOL_T);
@@ -69,6 +67,18 @@ extern void push_vector_complex (NODE_T *, gsl_vector_complex *);
 extern void push_vector (NODE_T *, gsl_vector *);
 extern void torrix_error_handler (const char *, const char *, int, int);
 extern void torrix_test_error (int);
+
+// BLAS support
+
+#define T ((CBLAS_TRANSPOSE_t) CblasTrans)
+#define I ((CBLAS_TRANSPOSE_t) CblasNoTrans)
+
+extern void a68_vector_free (gsl_vector *);
+extern void a68_matrix_free (gsl_matrix *);
+extern void a68_dgemm (CBLAS_TRANSPOSE_t, CBLAS_TRANSPOSE_t,
+                       double, gsl_matrix *, gsl_matrix *, double, gsl_matrix **);
+extern gsl_matrix *mat_before_ab (NODE_T *, gsl_matrix *, gsl_matrix *);
+extern gsl_matrix *mat_over_ab (NODE_T *, gsl_matrix *, gsl_matrix *);
 
 #endif
 

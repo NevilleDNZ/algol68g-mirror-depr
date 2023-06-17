@@ -66,6 +66,8 @@ void read_rc_options (void)
 {
   FILE *f;
   BUFFER name, new_name;
+  BUFCLR (name);
+  BUFCLR (new_name);
   ASSERT (snprintf (name, SNPRINTF_SIZE, ".%src", A68 (a68_cmd_name)) >= 0);
   f = a68_fopen (name, "r", new_name);
   if (f != NO_FILE) {
@@ -513,13 +515,6 @@ BOOL_T set_options (OPTION_LIST_T * i, BOOL_T cmd_line)
 #if !defined (HAVE_MATHLIB)
               io_close_tty_line ();
               WRITE (STDOUT_FILENO, "R mathlib required - exiting graciously");
-              a68_exit (EXIT_SUCCESS);
-#endif
-            }
-            if (eq (q, "quadmath")) {
-#if !defined (HAVE_QUADMATH)
-              io_close_tty_line ();
-              WRITE (STDOUT_FILENO, "quadmath required - exiting graciously");
               a68_exit (EXIT_SUCCESS);
 #endif
             }

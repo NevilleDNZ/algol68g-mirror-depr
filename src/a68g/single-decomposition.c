@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! REAL LU, QR and Choleski decomposition.
+//! REAL GSL LU, QR and Choleski decomposition.
 
 #include "a68g.h"
 #include "a68g-torrix.h"
@@ -33,7 +33,6 @@
 void genie_matrix_lu (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   A68_REF ref_signum;
   POP_REF (p, &ref_signum);
   CHECK_REF (p, ref_signum, M_REF_INT);
@@ -62,7 +61,6 @@ void genie_matrix_lu (NODE_T * p)
 void genie_matrix_lu_det (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   A68_INT signum;
   POP_OBJECT (p, &signum, A68_INT);
   gsl_matrix *lu = pop_matrix (p, A68_TRUE);
@@ -76,7 +74,6 @@ void genie_matrix_lu_det (NODE_T * p)
 void genie_matrix_lu_inv (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_permutation *q = pop_permutation (p, A68_TRUE);
   gsl_matrix *lu = pop_matrix (p, A68_TRUE);
   gsl_matrix *inv = gsl_matrix_calloc (SIZE1 (lu), SIZE2 (lu));
@@ -93,7 +90,6 @@ void genie_matrix_lu_inv (NODE_T * p)
 void genie_matrix_lu_solve (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_vector *b = pop_vector (p, A68_TRUE);
   gsl_permutation *q = pop_permutation (p, A68_TRUE);
   gsl_matrix *lu = pop_matrix (p, A68_TRUE);
@@ -122,7 +118,6 @@ void genie_matrix_complex_lu (NODE_T * p)
   gsl_matrix_complex *u;
   int sign;
   A68_INT signum;
-  torrix_error_node = p;
   POP_REF (p, &ref_signum);
   CHECK_REF (p, ref_signum, M_REF_INT);
   POP_REF (p, &ref_q);
@@ -150,7 +145,6 @@ void genie_matrix_complex_lu_det (NODE_T * p)
   gsl_matrix_complex *lu;
   A68_INT signum;
   gsl_complex det;
-  torrix_error_node = p;
   POP_OBJECT (p, &signum, A68_INT);
   lu = pop_matrix_complex (p, A68_TRUE);
   det = gsl_linalg_complex_LU_det (lu, VALUE (&signum));
@@ -167,7 +161,6 @@ void genie_matrix_complex_lu_inv (NODE_T * p)
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
   gsl_permutation *q;
   gsl_matrix_complex *lu, *inv;
-  torrix_error_node = p;
   q = pop_permutation (p, A68_TRUE);
   lu = pop_matrix_complex (p, A68_TRUE);
   inv = gsl_matrix_complex_calloc (SIZE1 (lu), SIZE2 (lu));
@@ -184,7 +177,6 @@ void genie_matrix_complex_lu_inv (NODE_T * p)
 void genie_matrix_complex_lu_solve (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_vector_complex *b = pop_vector_complex (p, A68_TRUE);
   gsl_permutation *q = pop_permutation (p, A68_TRUE);
   gsl_matrix_complex *lu = pop_matrix_complex (p, A68_TRUE);
@@ -208,7 +200,6 @@ void genie_matrix_complex_lu_solve (NODE_T * p)
 void genie_matrix_qr (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   A68_REF ref_t;
   POP_REF (p, &ref_t);
   CHECK_REF (p, ref_t, M_REF_ROW_REAL);
@@ -229,7 +220,6 @@ void genie_matrix_qr (NODE_T * p)
 void genie_matrix_qr_solve (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_vector *b = pop_vector (p, A68_TRUE);
   gsl_vector *t = pop_vector (p, A68_TRUE);
   gsl_matrix *q = pop_matrix (p, A68_TRUE);
@@ -248,7 +238,6 @@ void genie_matrix_qr_solve (NODE_T * p)
 void genie_matrix_qr_ls_solve (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_vector *b = pop_vector (p, A68_TRUE);
   gsl_vector *t = pop_vector (p, A68_TRUE);
   gsl_matrix *q = pop_matrix (p, A68_TRUE);
@@ -269,7 +258,6 @@ void genie_matrix_qr_ls_solve (NODE_T * p)
 void genie_matrix_ch (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_matrix *a = pop_matrix (p, A68_TRUE);
   ASSERT_GSL (gsl_linalg_cholesky_decomp (a));
   push_matrix (p, a);
@@ -284,7 +272,6 @@ void genie_matrix_ch_solve (NODE_T * p)
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
   gsl_matrix *c;
   gsl_vector *b, *x;
-  torrix_error_node = p;
   b = pop_vector (p, A68_TRUE);
   c = pop_matrix (p, A68_TRUE);
   x = gsl_vector_calloc (SIZE (b));

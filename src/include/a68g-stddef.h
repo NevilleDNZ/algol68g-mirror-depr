@@ -50,7 +50,7 @@
 #if (A68_LEVEL >= 3)
 
 #define REAL_WIDTH (REAL_DIG)
-#define MAX_REAL_double_real_EXPO 4932
+#define MAX_REAL_double_EXPO 4932
 #define A68_MAX_INT (LLONG_MAX)
 #define A68_MAX_BITS (ULLONG_MAX)
 #define LONG_WIDTH (2 * INT_WIDTH + 1)

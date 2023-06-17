@@ -16,9 +16,6 @@
 /* Define this if a good pthread installation was detected */
 /* #undef BUILD_PARALLEL_CLAUSE */
 
-/* Name of C compiler detected */
-#define C_COMPILER "gcc"
-
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 #define GWINSZ_IN_SYS_IOCTL 1
 
@@ -83,8 +80,8 @@
 /* Define to 1 if you have the `free' function. */
 #define HAVE_FREE 1
 
-/* Define this if GCC was detected */
-#define HAVE_GCC 1
+/* Define this if GNU C library is detected. */
+#define HAVE_GNU_C_LIB 1
 
 /* Define this if a recent GNU MPFR installation was detected */
 /* #undef HAVE_GNU_MPFR */
@@ -128,8 +125,14 @@
 /* Define to 1 if you have the <gsl/gsl_permutation.h> header file. */
 /* #undef HAVE_GSL_GSL_PERMUTATION_H */
 
+/* Define to 1 if you have the <gsl/gsl_sf_ellint.h> header file. */
+/* #undef HAVE_GSL_GSL_SF_ELLINT_H */
+
 /* Define to 1 if you have the <gsl/gsl_sf.h> header file. */
 /* #undef HAVE_GSL_GSL_SF_H */
+
+/* Define to 1 if you have the <gsl/gsl_sf_hermite.h> header file. */
+/* #undef HAVE_GSL_GSL_SF_HERMITE_H */
 
 /* Define to 1 if you have the <gsl/gsl_statistics.h> header file. */
 /* #undef HAVE_GSL_GSL_STATISTICS_H */
@@ -224,6 +227,9 @@
 /* Define to 1 if you have the <math.h> header file. */
 #define HAVE_MATH_H 1
 
+/* Define this if math.h includes POSIX's signgam. */
+#define HAVE_MATH_H_SIGNGAM 1
+
 /* Define to 1 if you have the `memcpy' function. */
 #define HAVE_MEMCPY 1
 
@@ -255,7 +261,7 @@
 /* #undef HAVE_OPT_LOCAL_PGSQL_INCLUDE */
 
 /* Define this as PIC option */
-/* #undef HAVE_PIC */
+#define HAVE_PIC "-fPIC"
 
 /* Define to 1 if you have the <plot.h> header file. */
 /* #undef HAVE_PLOT_H */
@@ -386,7 +392,7 @@
 /* #undef HAVE_UNTESTED */
 
 /* Define this if /usr/include/postgresql was detected */
-/* #undef HAVE_USR_INCLUDE_POSTGRESQL */
+#define HAVE_USR_INCLUDE_POSTGRESQL 1
 
 /* Define this if /usr/local/pgsql/include was detected */
 /* #undef HAVE_USR_LOCAL_PGSQL_INCLUDE */
@@ -410,7 +416,7 @@
 #define PACKAGE_NAME "algol68g"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "algol68g 3.1.9"
+#define PACKAGE_STRING "algol68g 3.2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "algol68g"
@@ -419,13 +425,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.1.9"
+#define PACKAGE_VERSION "3.2.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.1.9"
+#define VERSION "3.2.0"
 
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__

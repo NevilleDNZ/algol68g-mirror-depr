@@ -164,7 +164,7 @@ MP_T *G_cfrac_lower_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int digs)
     (void) mul_mp (q, f, f, del, digs);
 //  n++;
     (void) plus_one_mp (q, n, n, digs);
-//  while ((fabsq (del - 1) >= EPS) && (n < ITMAX));
+//  while ((fabs_double (del - 1) >= EPS) && (n < ITMAX));
     (void) minus_one_mp (q, trm, del, digs);
     (void) abs_mp (q, trm, trm, digs);
     (void) ge_mp (q, &ge, trm, eps, digs);
@@ -270,7 +270,7 @@ MP_T *G_cfrac_upper_mp (NODE_T *q, MP_T * Gcfrac, MP_T *p, MP_T *x, int digs)
     (void) plus_one_mp (q, i, i, digs);
 //  n++;
     (void) plus_one_mp (q, n, n, digs);
-//  while ((fabsq (del - 1) >= EPS) && (n < ITMAX));
+//  while ((fabs_double (del - 1) >= EPS) && (n < ITMAX));
     (void) minus_one_mp (q, trm, del, digs);
     (void) abs_mp (q, trm, trm, digs);
     (void) ge_mp (q, &ge, trm, eps, digs);
@@ -298,7 +298,7 @@ MP_T *G_ibp_mp (NODE_T *q, MP_T * Gibp, MP_T *p, MP_T *x, int digs)
   ADDR_T pop_sp = A68_SP;
   MP_T *trm = nil_mp (q, digs), *trn = nil_mp (q, digs);
   MP_T *eps = EPS (q, digs);
-// t = fabsq (x);
+// t = fabs_double (x);
   MP_T *t = nil_mp (q, digs);
   (void) abs_mp (q, x, x, digs);
 // tt = 1 / (t * t);
@@ -340,14 +340,14 @@ MP_T *G_ibp_mp (NODE_T *q, MP_T * Gibp, MP_T *p, MP_T *x, int digs)
     (void) add_mp (q, s, s, del, digs);
 //  l++;
     (void) plus_one_mp (q, l, l, digs);
-//  stop = fabsq (del) < fabsq (s) * EPS;
+//  stop = fabs_double (del) < fabs_double (s) * EPS;
     (void) abs_mp (q, trm, del, digs);
     (void) abs_mp (q, trn, s, digs);
     (void) mul_mp (q, trn, trn, eps, digs);
     A68_BOOL lt;
     (void) lt_mp (q, &lt, trm, trn, digs);
     stop = VALUE (&lt);
-//while ((l < floorq ((p - 2) / 2)) && !stop);
+//while ((l < floor_double ((p - 2) / 2)) && !stop);
     (void) sub_mp (q, trm, p, two, digs);
     (void) half_mp (q, trm, trm, digs);
     (void) floor_mp (q, trm, trm, digs);
@@ -360,7 +360,7 @@ MP_T *G_ibp_mp (NODE_T *q, MP_T * Gibp, MP_T *p, MP_T *x, int digs)
     (void) mul_mp (q, trm, d, trm, digs);
     (void) add_mp (q, s, s, trm, digs);
   }
-// Gibp = ((odd ? -1 : 1) * expq (-t + lgammaq (p) - (p - 1) * logq (t)) + s) / t;
+// Gibp = ((odd ? -1 : 1) * exp_double (-t + lgammaq (p) - (p - 1) * log_double (t)) + s) / t;
   (void) ln_mp (q, trn, t, digs);
   (void) minus_one_mp (q, trm, p, digs);
   (void) mul_mp (q, trm, trm, trn, digs);
@@ -669,7 +669,7 @@ void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu,
   if (VALUE (&lt)) {
 //  mA = 1;
     set_mp (mA, 1, 0, digs);
-//  nA = lgammaq (p) - p * logq (mu);
+//  nA = lgammaq (p) - p * log_double (mu);
     MP_T *lgam = nil_mp (q, digs);
     MP_T *lnmu = nil_mp (q, digs);
     (void) lngamma_mp (q, lgam, p, digs);
@@ -688,7 +688,7 @@ void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu,
     } else {
       (void) move_mp (nB, ny, digs);
     }
-//  mB = mx * expq (nx - nB) + my * expq (ny - nB);
+//  mB = mx * exp_double (nx - nB) + my * exp_double (ny - nB);
     (void) sub_mp (q, trm, nx, nB, digs);
     (void) exp_mp (q, trm, trm, digs);
     (void) mul_mp (q, mB, mx, trm, digs);
@@ -706,7 +706,7 @@ void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu,
   (void) move_mp (nB, nx, digs);
   compute:
 // Compute (rho,sigma) such that rho*exp (sigma) = A-B
-// 1. rho = mA - mB * expq (nB - nA);
+// 1. rho = mA - mB * exp_double (nB - nA);
   (void) sub_mp (q, trm, nB, nA, digs);
   (void) exp_mp (q, trm, trm, digs);
   (void) mul_mp (q, trm, mB, trm, digs);
@@ -714,7 +714,7 @@ void Dgamic_mp (NODE_T *q, MP_T * rho, MP_T * sigma, MP_T *x, MP_T *y, MP_T *mu,
 // 2. sigma = nA;
   (void) move_mp (sigma, nA, digs);
 // If the difference involved a significant loss of precision, compute Romberg estimate.
-// if (!isinfq (y) && ((*rho) / mA < TOL_DIFF)) {
+// if (!isinf_double (y) && ((*rho) / mA < TOL_DIFF)) {
   (void) div_mp (q, trm, rho, mA, digs);
   (void) lt_mp (q, &lt, trm, TOL_DIFF (q, digs), digs);
   if (!PLUS_INF_MP (y) && VALUE (&lt)) {

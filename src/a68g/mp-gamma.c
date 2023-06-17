@@ -107,16 +107,16 @@ MP_T *inverf_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
 // in your entire calculation, not just in this routine.
 // Calculate an initial Newton-Raphson estimate while at it.
 #if (A68_LEVEL >= 3)
-  DOUBLE_T y = ABS (mp_to_double_real (p, x, digs));
-  if (y < erfq (5.0q)) {
-    y = inverf_double_real (y);
+  DOUBLE_T y = ABS (mp_to_double (p, x, digs));
+  if (y < erf_double (5.0q)) {
+    y = inverf_double (y);
     gdigs = FUN_DIGITS (digs);
   } else {
     y = 5.0q;
     gdigs = FUN_DIGITS (2 * digs);
   }
   MP_T *z_g = nil_mp (p, gdigs);
-  (void) double_real_to_mp (p, z_g, y, gdigs);
+  (void) double_to_mp (p, z_g, y, gdigs);
 #else
   REAL_T y = ABS (mp_to_real (p, x, digs));
   if (y < erf (4.0)) {

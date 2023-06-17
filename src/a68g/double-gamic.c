@@ -85,7 +85,6 @@
 #include "a68g-lib.h"
 #include "a68g-mp.h"
 #include "a68g-prelude.h"
-#include "a68g-quad.h"
 
 #define DPMIN FLT128_MIN        // Number near the smallest representable double-point number
 #define EPS FLT128_EPSILON      // Machine epsilon
@@ -143,7 +142,7 @@ void double_G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
     f *= del;
     n++;
   }
-  while ((fabsq (del - 1.0q) >= EPS) && (n < ITMAX));
+  while ((fabs_double (del - 1.0q) >= EPS) && (n < ITMAX));
   *Gcfrac = f;
 }
 
@@ -157,7 +156,7 @@ void double_G_cfrac_lower (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
 void double_G_ibp (DOUBLE_T * Gibp, DOUBLE_T p, DOUBLE_T x)
 {
   BOOL_T odd = (INT_T) (p) % 2 != 0;
-  DOUBLE_T t = fabsq (x), del;
+  DOUBLE_T t = fabs_double (x), del;
   DOUBLE_T tt = 1.0q / (t * t), c = 1.0q / t, d = (p - 1.0q);
   DOUBLE_T s = c * (t - d);
   INT_T l = 0;
@@ -168,13 +167,13 @@ void double_G_ibp (DOUBLE_T * Gibp, DOUBLE_T p, DOUBLE_T x)
     del = c * (t - d);
     s += del;
     l++;
-    stop = fabsq (del) < fabsq (s) * EPS;
+    stop = fabs_double (del) < fabs_double (s) * EPS;
   }
-  while ((l < floorq ((p - 2.0q) / 2.0q)) && !stop);
+  while ((l < floor_double ((p - 2.0q) / 2.0q)) && !stop);
   if (odd && !stop) {
     s += d * c / t;
   }
-  *Gibp = ((odd ? -1.0q : 1.0q) * expq (-t + lgammaq (p) - (p - 1.0q) * logq (t)) + s) / t;
+  *Gibp = ((odd ? -1.0q : 1.0q) * exp_double (-t + lgamma_double (p) - (p - 1.0q) * log_double (t)) + s) / t;
 }
 
 //! @brief compute the G-function in the domain x > p using a
@@ -188,7 +187,7 @@ void double_G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
   DOUBLE_T c, d, del, f, an, bn;
   INT_T i, n;
 // Special case
-  if (isinfq (x)) {
+  if (isinf_double (x)) {
     *Gcfrac = 0.0q;
     return;
   }
@@ -231,7 +230,7 @@ void double_G_cfrac_upper (DOUBLE_T * Gcfrac, DOUBLE_T p, DOUBLE_T x)
     i++;
     n++;
   }
-  while ((fabsq (del - 1.0q) >= EPS) && (n < ITMAX));
+  while ((fabs_double (del - 1.0q) >= EPS) && (n < ITMAX));
   *Gcfrac = t ? f : 1.0q / f;
 }
 
@@ -261,13 +260,12 @@ void double_G_func (DOUBLE_T * G, DOUBLE_T p, DOUBLE_T x)
 void double_romberg_iterations (DOUBLE_T * R, DOUBLE_T sigma, INT_T n, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p, DOUBLE_T h, DOUBLE_T pow2)
 {
   INT_T adr0_prev = ((n - 1) * n) / 2, adr0 = (n * (n + 1)) / 2;
-  QUAD_T sum = QUAD_REAL_ZERO;
+  DOUBLE_T sum = 0.0q;
   for (INT_T j = 1; j <= pow2; j++) {
     DOUBLE_T xx = x + ((y - x) * (2.0q * j - 1.0q)) / (2.0q * pow2);
-    QUAD_T f = double_real_to_quad_real (expq (-mu * xx + (p - 1.0q) * logq (xx) - sigma));
-    sum = _add_quad_real_ (sum, f);
+    sum += exp_double (-mu * xx + (p - 1.0q) * log_double (xx) - sigma);
   }
-  R[adr0] = 0.5q * R[adr0_prev] + h * quad_real_to_double_real (sum);
+  R[adr0] = 0.5q * R[adr0_prev] + h * sum;
   DOUBLE_T pow4 = 4.0q;
   for (INT_T m = 1; m <= n; m++) {
     R[adr0 + m] = (pow4 * R[adr0 + (m - 1)] - R[adr0_prev + (m - 1)]) / (pow4 - 1.0q);
@@ -283,8 +281,8 @@ void double_romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUB
   DOUBLE_T *R = (DOUBLE_T *) get_heap_space (((NITERMAX_ROMBERG + 1) * (NITERMAX_ROMBERG + 2)) / 2 * sizeof (DOUBLE_T));
   ASSERT (R != NULL);
 // Initialization (n=1)
-  *sigma = -mu * y + (p - 1.0q) * logq (y);
-  R[0] = 0.5q * (y - x) * (expq (-mu * x + (p - 1.0q) * logq (x) - (*sigma)) + 1.0q);
+  *sigma = -mu * y + (p - 1.0q) * log_double (y);
+  R[0] = 0.5q * (y - x) * (exp_double (-mu * x + (p - 1.0q) * log_double (x) - (*sigma)) + 1.0q);
 // Loop for n > 0
   DOUBLE_T relneeded = EPS / TOL_ROMBERG;
   INT_T adr0 = 0;
@@ -298,7 +296,7 @@ void double_romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUB
       h /= 2.0q;
       pow2 *= 2.0q;
       adr0 = (n * (n + 1)) / 2;
-      relerr = fabsq ((R[adr0 + n] - R[adr0 + n - 1]) / R[adr0 + n]);
+      relerr = fabs_double ((R[adr0 + n] - R[adr0 + n - 1]) / R[adr0 + n]);
       n++;
     } while (n <= NITERMAX_ROMBERG && relerr > relneeded);
   }
@@ -322,11 +320,11 @@ void double_romberg_estimate (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUB
 //
 //   p is a real number > 0, p must be an integer when mu < 0.
 
-void deltagammainc_double_real (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p)
+void deltagammainc_double (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DOUBLE_T y, DOUBLE_T mu, DOUBLE_T p)
 {
   DOUBLE_T mA, mB, mx, my, nA, nB, nx, ny;
 // Particular cases
-  if (isinfq (x) && isinfq (y)) {
+  if (isinf_double (x) && isinf_double (y)) {
     *rho = 0.0q;
     *sigma = a68_dneginf ();
     return;
@@ -335,16 +333,16 @@ void deltagammainc_double_real (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DO
     *sigma = a68_dneginf ();
     return;
   }
-  if (x == 0.0q && isinfq (y)) {
+  if (x == 0.0q && isinf_double (y)) {
     *rho = 1.0q;
-    (*sigma) = lgammaq (p) - p * logq (mu);
+    (*sigma) = lgamma_double (p) - p * log_double (mu);
     return;
   }
 // Initialization
   double_G_func (&mx, p, mu * x);
-  nx = (isinfq (x) ? a68_dneginf () : -mu * x + p * logq (x));
+  nx = (isinf_double (x) ? a68_dneginf () : -mu * x + p * log_double (x));
   double_G_func (&my, p, mu * y);
-  ny = (isinfq (y) ? a68_dneginf () : -mu * y + p * logq (y));
+  ny = (isinf_double (y) ? a68_dneginf () : -mu * y + p * log_double (y));
 
 // Compute (mA,nA) and (mB,nB) such as I_{x,y}^{mu,p} can be
 // approximated by the difference A-B, where A >= B >= 0, A = mA*exp (nA) an 
@@ -365,9 +363,9 @@ void deltagammainc_double_real (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DO
       nB = ny;
     } else if (p < double_plim (mu * y)) {
       mA = 1.0q;
-      nA = lgammaq (p) - p * logq (mu);
+      nA = lgamma_double (p) - p * log_double (mu);
       nB = fmax (nx, ny);
-      mB = mx * expq (nx - nB) + my * expq (ny - nB);
+      mB = mx * exp_double (nx - nB) + my * exp_double (ny - nB);
     } else {
       mA = my;
       nA = ny;
@@ -376,10 +374,10 @@ void deltagammainc_double_real (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DO
     }
   }
 // Compute (rho,sigma) such that rho*exp (sigma) = A-B
-  *rho = mA - mB * expq (nB - nA);
+  *rho = mA - mB * exp_double (nB - nA);
   *sigma = nA;
 // If the difference involved a significant loss of precision, compute Romberg estimate.
-  if (!isinfq (y) && ((*rho) / mA < TOL_DIFF)) {
+  if (!isinf_double (y) && ((*rho) / mA < TOL_DIFF)) {
     double_romberg_estimate (rho, sigma, x, y, mu, p);
   }
 }
@@ -388,7 +386,7 @@ void deltagammainc_double_real (DOUBLE_T * rho, DOUBLE_T * sigma, DOUBLE_T x, DO
 
 //! @brief PROC long gamma inc g = (LONG REAL p, x, y, mu) LONG REAL
 
-void genie_gamma_inc_g_double_real (NODE_T * n)
+void genie_gamma_inc_g_double (NODE_T * n)
 {
   A68_LONG_REAL x, y, mu, p;
   POP_OBJECT (n, &mu, A68_LONG_REAL);
@@ -396,25 +394,25 @@ void genie_gamma_inc_g_double_real (NODE_T * n)
   POP_OBJECT (n, &x, A68_LONG_REAL);
   POP_OBJECT (n, &p, A68_LONG_REAL);
   DOUBLE_T rho, sigma;
-  deltagammainc_double_real (&rho, &sigma, VALUE (&x).f, VALUE (&y).f, VALUE (&mu).f, VALUE (&p).f);
-  PUSH_VALUE (n, dble (rho * expq (sigma)), A68_LONG_REAL);
+  deltagammainc_double (&rho, &sigma, VALUE (&x).f, VALUE (&y).f, VALUE (&mu).f, VALUE (&p).f);
+  PUSH_VALUE (n, dble (rho * exp_double (sigma)), A68_LONG_REAL);
 }
 
 //! @brief PROC long gamma inc f = (LONG REAL p, x) LONG REAL
 
-void genie_gamma_inc_f_double_real (NODE_T * n)
+void genie_gamma_inc_f_double (NODE_T * n)
 {
   A68_LONG_REAL x, p;
   POP_OBJECT (n, &x, A68_LONG_REAL);
   POP_OBJECT (n, &p, A68_LONG_REAL);
   DOUBLE_T rho, sigma;
-  deltagammainc_double_real (&rho, &sigma, VALUE (&x).f, a68_dposinf (), 1.0q, VALUE (&p).f);
-  PUSH_VALUE (n, dble (rho * expq (sigma)), A68_LONG_REAL);
+  deltagammainc_double (&rho, &sigma, VALUE (&x).f, a68_dposinf (), 1.0q, VALUE (&p).f);
+  PUSH_VALUE (n, dble (rho * exp_double (sigma)), A68_LONG_REAL);
 }
 
 //! @brief PROC long gamma inc gf = (LONG REAL p, x) LONG REAL
 
-void genie_gamma_inc_gf_double_real (NODE_T * q)
+void genie_gamma_inc_gf_double (NODE_T * q)
 {
 // if x <= p: G(p,x) = exp (x-p*ln (|x|)) * integral over [0,|x|] of s^{p-1} * exp (-sign (x)*s) ds
 // otherwise: G(p,x) = exp (x-p*ln (x)) * integral over [x,inf] of s^{p-1} * exp (-s) ds
@@ -428,12 +426,12 @@ void genie_gamma_inc_gf_double_real (NODE_T * q)
 
 //! @brief PROC long gamma inc = (LONG REAL p, x) LONG REAL
 
-void genie_gamma_inc_h_double_real (NODE_T * n)
+void genie_gamma_inc_h_double (NODE_T * n)
 {
 #if (A68_LEVEL >= 3) && defined (HAVE_GNU_MPFR)
-  genie_gamma_inc_double_real_mpfr (n);
+  genie_gamma_inc_double_mpfr (n);
 #else
-  genie_gamma_inc_f_double_real (n);
+  genie_gamma_inc_f_double (n);
 #endif
 }
 

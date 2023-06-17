@@ -1,0 +1,29 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+# The Ackermann function is a classic recursive example in computer science. #
+
+PROC ackermann = (INT m, n) INT:
+     IF m = 0
+     THEN n + 1
+     ELIF n = 0
+     THEN ackermann (m - 1, 1)
+     ELSE ackermann (m - 1, ackermann (m, n - 1))
+     FI;
+
+FOR m TO 3 
+DO FOR n TO 6 
+   DO print ((whole (m, 0), blank, whole (n, 0), blank, whole (ackermann (m, n), 0), newline))
+   OD
+OD

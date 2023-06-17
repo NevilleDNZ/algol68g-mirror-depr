@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! REAL routines using GSL.
+//! REAL GSL routines.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -36,7 +36,6 @@
 
 #define PROC_RR_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x;\
   int status;\
   POP_OPERAND_ADDRESS (p, x, A68_REAL);\
@@ -47,7 +46,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x;\
   gsl_sf_result y;\
   int status;\
@@ -60,7 +58,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R_DBL(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x;\
   gsl_sf_result y;\
   int status;\
@@ -73,7 +70,6 @@ void g (NODE_T *p) {\
 
 #define PROC_I_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_INT s;\
   gsl_sf_result y;\
   int status;\
@@ -86,7 +82,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x, *y;\
   gsl_sf_result r;\
   int status;\
@@ -99,7 +94,6 @@ void g (NODE_T *p) {\
 
 #define PROC_I_R_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_INT s;\
   A68_REAL x;\
   gsl_sf_result r;\
@@ -114,7 +108,6 @@ void g (NODE_T *p) {\
 
 #define PROC_I_R_R_REVERSED(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_INT s;\
   A68_REAL x;\
   gsl_sf_result r;\
@@ -129,7 +122,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R_R_DBL(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x, *y;\
   gsl_sf_result r;\
   int status;\
@@ -142,7 +134,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R_R_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x, *y, *z;\
   gsl_sf_result r;\
   int status;\
@@ -156,7 +147,6 @@ void g (NODE_T *p) {\
 
 #define PROC_I_R_R_R(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_INT s;\
   A68_REAL x, y;\
   gsl_sf_result r;\
@@ -172,7 +162,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R_R_R_DBL(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x, *y, *z;\
   gsl_sf_result r;\
   int status;\
@@ -186,7 +175,6 @@ void g (NODE_T *p) {\
 
 #define PROC_R_R_R_R_R_DBL(p, g, f)\
 void g (NODE_T *p) {\
-  A68 (f_entry) = p;\
   A68_REAL *x, *y, *z, *rho;\
   gsl_sf_result r;\
   int status;\

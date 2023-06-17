@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! GNU R math library interface. 
+//! REAL GNU R math routines. 
 
 #include "a68g.h"
 
@@ -65,7 +65,6 @@ void genie_R_pentagamma_real (NODE_T * p)
 
 void genie_R_psigamma_real (NODE_T * p)
 {
-  A68 (f_entry) = p;
   A68_REAL *x, *s;
   POP_OPERAND_ADDRESSES (p, x, s, A68_REAL);
   errno = 0;
@@ -76,7 +75,6 @@ void genie_R_psigamma_real (NODE_T * p)
 #define D_3(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_BOOL give_log;\
   A68_REAL a, b;\
   POP_OBJECT (p, &give_log, A68_BOOL);\
@@ -91,7 +89,6 @@ void a68_fun (NODE_T * p)\
 #define D_4(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_BOOL give_log;\
   A68_REAL a, b, c;\
   POP_OBJECT (p, &give_log, A68_BOOL);\
@@ -107,7 +104,6 @@ void a68_fun (NODE_T * p)\
 #define D_5(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_BOOL give_log;\
   A68_REAL a, b, c, d;\
   POP_OBJECT (p, &give_log, A68_BOOL);\
@@ -124,7 +120,6 @@ void a68_fun (NODE_T * p)\
 #define PQ_4(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_BOOL lower_tail, log_p;\
   A68_REAL x, a;\
   POP_OBJECT (p, &log_p, A68_BOOL);\
@@ -141,7 +136,6 @@ void a68_fun (NODE_T * p)\
 #define PQ_5(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_BOOL lower_tail, log_p;\
   A68_REAL x, a, b;\
   POP_OBJECT (p, &log_p, A68_BOOL);\
@@ -159,7 +153,6 @@ void a68_fun (NODE_T * p)\
 #define PQ_6(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_BOOL lower_tail, log_p;\
   A68_REAL x, a, b, c;\
   POP_OBJECT (p, &log_p, A68_BOOL);\
@@ -178,7 +171,6 @@ void a68_fun (NODE_T * p)\
 #define R_1(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_REAL a;\
   POP_OBJECT (p, &a, A68_REAL);\
   errno = 0;\
@@ -189,7 +181,6 @@ void a68_fun (NODE_T * p)\
 #define R_2(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_REAL a, b;\
   POP_OBJECT (p, &b, A68_REAL);\
   POP_OBJECT (p, &a, A68_REAL);\
@@ -201,7 +192,6 @@ void a68_fun (NODE_T * p)\
 #define R_3(a68_fun, R_fun)\
 void a68_fun (NODE_T * p)\
 {\
-  A68 (f_entry) = p;\
   A68_REAL a, b, c;\
   POP_OBJECT (p, &c, A68_REAL);\
   POP_OBJECT (p, &b, A68_REAL);\
@@ -218,7 +208,7 @@ void a68_fun (NODE_T * p)\
 // Chi squared
 
 //! @brief PROC dchisq = (REAL x, df, BOOL give log) REAL
-//! @brief PROC pchisq = (REAL x, df, BOOL lower tail, log p) REAL
+//! @brief PROC pchisq = (REAL x, df, BOOL lower tail, give log) REAL
 //! @brief PROC qchisq = (REAL p, df, BOOL lower tail, log p) REAL
 //! @brief PROC rchisq = (REAL df) REAL
 
@@ -230,7 +220,7 @@ R_1 (genie_R_rchisq_real, rchisq);
 // Exponential
 
 //! @brief PROC dexp = (REAL x, scale, BOOL give log) REAL
-//! @brief PROC pexp = (REAL x, scale, BOOL lower tail, log p) REAL
+//! @brief PROC pexp = (REAL x, scale, BOOL lower tail, give log) REAL
 //! @brief PROC qexp = (REAL p, scale, BOOL lower tail, log p) REAL
 //! @brief PROC rexp = (REAL scale) REAL
 
@@ -242,7 +232,7 @@ R_1 (genie_R_rexp_real, rexp);
 // Geometric
 
 //! @brief PROC dgeom = (REAL x, p, BOOL give log) REAL
-//! @brief PROC pgeom = (REAL x, p, BOOL lower tail, log p) REAL
+//! @brief PROC pgeom = (REAL x, p, BOOL lower tail, give log) REAL
 //! @brief PROC qgeom = (REAL p, p, BOOL lower tail, log p) REAL
 //! @brief PROC rgeom = (REAL p) REAL
 
@@ -254,7 +244,7 @@ R_1 (genie_R_rgeom_real, rgeom);
 // Poisson 
 
 //! @brief PROC dpois = (REAL x, lambda, BOOL give log) REAL
-//! @brief PROC ppois = (REAL x, lambda, BOOL lower tail, log p) REAL
+//! @brief PROC ppois = (REAL x, lambda, BOOL lower tail, give log) REAL
 //! @brief PROC qpois = (REAL p, lambda, BOOL lower tail, log p) REAL
 //! @brief PROC rpois = (REAL lambda) REAL
 
@@ -266,7 +256,7 @@ R_1 (genie_R_rpois_real, rpois);
 // Student
 
 //! @brief PROC dt = (REAL x, n, BOOL give log) REAL
-//! @brief PROC pt = (REAL x, n, BOOL lower tail, log p) REAL
+//! @brief PROC pt = (REAL x, n, BOOL lower tail, give log) REAL
 //! @brief PROC qt = (REAL p, n, BOOL lower tail, log p) REAL
 //! @brief PROC rt = (REAL n) REAL
 
@@ -278,9 +268,9 @@ R_1 (genie_R_rt_real, rt);
 // Beta
 
 //! @brief PROC dbeta = (REAL x, a, b, BOOL give log) REAL
-//! @brief PROC pbeta = (REAL x, a, b, BOOL lower tail, log p) REAL
+//! @brief PROC pbeta = (REAL x, a, b, BOOL lower tail, give log) REAL
 //! @brief PROC qbeta = (REAL p, a, b, BOOL lower tail, log p) REAL
-//! @brief PROC rbeta = (REAL p, a, b) REAL
+//! @brief PROC rbeta = (REAL a, b) REAL
 
 D_4 (genie_R_dbeta_real, dbeta);
 PQ_5 (genie_R_pbeta_real, pbeta);
@@ -290,9 +280,9 @@ R_2 (genie_R_rbeta_real, rbeta);
 // Binomial
 
 //! @brief PROC dbinom = (REAL x, n, p, BOOL give log) REAL
-//! @brief PROC pbinom = (REAL x, n, p, BOOL lower tail, log p) REAL
+//! @brief PROC pbinom = (REAL x, n, p, BOOL lower tail, give log) REAL
 //! @brief PROC qbinom = (REAL p, n, p, BOOL lower tail, log p) REAL
-//! @brief PROC rbinom = (REAL p, n, p) REAL
+//! @brief PROC rbinom = (REAL n, p) REAL
 
 D_4 (genie_R_dbinom_real, dbinom);
 PQ_5 (genie_R_pbinom_real, pbinom);
@@ -302,20 +292,21 @@ R_2 (genie_R_rbinom_real, rbinom);
 // Chi squared, non central
 
 //! @brief PROC dnchisq = (REAL x, df, ncp, BOOL give log) REAL
-//! @brief PROC pnchisq = (REAL x, df, ncp, BOOL lower tail, log p) REAL
+//! @brief PROC pnchisq = (REAL x, df, ncp, BOOL lower tail, give log) REAL
 //! @brief PROC qnchisq = (REAL p, df, ncp, BOOL lower tail, log p) REAL
-//! @brief PROC rnchisq = (REAL p, df, ncp) REAL
+//! @brief PROC rnchisq = (REAL df, ncp) REAL
 
 D_4 (genie_R_dnchisq_real, dnchisq);
 PQ_5 (genie_R_pnchisq_real, pnchisq);
 PQ_5 (genie_R_qnchisq_real, qnchisq);
+R_2 (genie_R_rnchisq_real, rnchisq);
 
 // Cauchy
 
 //! @brief PROC dcauchy = (REAL x, location, scale, BOOL give log) REAL
-//! @brief PROC pcauchy = (REAL x, location, scale, BOOL lower tail, log p) REAL
+//! @brief PROC pcauchy = (REAL x, location, scale, BOOL lower tail, give log) REAL
 //! @brief PROC qcauchy = (REAL p, location, scale, BOOL lower tail, log p) REAL
-//! @brief PROC rcauchy = (REAL p, location, scale) REAL
+//! @brief PROC rcauchy = (REAL location, scale) REAL
 
 D_4 (genie_R_dcauchy_real, dcauchy);
 PQ_5 (genie_R_pcauchy_real, pcauchy);
@@ -325,9 +316,9 @@ R_2 (genie_R_rcauchy_real, rcauchy);
 // F
 
 //! @brief PROC df = (REAL x, n1, n2, BOOL give log) REAL
-//! @brief PROC pf = (REAL x, n1, n2, BOOL lower tail, log p) REAL
+//! @brief PROC pf = (REAL x, n1, n2, BOOL lower tail, give log) REAL
 //! @brief PROC qf = (REAL p, n1, n2, BOOL lower tail, log p) REAL
-//! @brief PROC rf = (REAL p, n1, n2) REAL
+//! @brief PROC rf = (REAL n1, n2) REAL
 
 D_4 (genie_R_df_real, df);
 PQ_5 (genie_R_pf_real, pf);
@@ -337,9 +328,9 @@ R_2 (genie_R_rf_real, rf);
 // Logistic
 
 //! @brief PROC dlogis = (REAL x, location, scale, BOOL give log) REAL
-//! @brief PROC plogis = (REAL x, location, scale, BOOL lower tail, log p) REAL
+//! @brief PROC plogis = (REAL x, location, scale, BOOL lower tail, give log) REAL
 //! @brief PROC qlogis = (REAL p, location, scale, BOOL lower tail, log p) REAL
-//! @brief PROC rlogis = (REAL p, location, scale) REAL
+//! @brief PROC rlogis = (REAL location, scale) REAL
 
 D_4 (genie_R_dlogis_real, dlogis);
 PQ_5 (genie_R_plogis_real, plogis);
@@ -349,9 +340,9 @@ R_2 (genie_R_rlogis_real, rlogis);
 // Log-normal
 
 //! @brief PROC dlnorm = (REAL x, logmu, logsd, BOOL give log) REAL
-//! @brief PROC plnorm = (REAL x, logmu, logsd, BOOL lower tail, log p) REAL
+//! @brief PROC plnorm = (REAL x, logmu, logsd, BOOL lower tail, give log) REAL
 //! @brief PROC qlnorm = (REAL p, logmu, logsd, BOOL lower tail, log p) REAL
-//! @brief PROC rlnorm = (REAL p, logmu, logsd) REAL
+//! @brief PROC rlnorm = (REAL logmu, logsd) REAL
 
 D_4 (genie_R_dlnorm_real, dlnorm);
 PQ_5 (genie_R_plnorm_real, plnorm);
@@ -361,9 +352,9 @@ R_2 (genie_R_rlnorm_real, rlnorm);
 // Negative binomial
 
 //! @brief PROC dnbinom = (REAL x, size, prob, BOOL give log) REAL
-//! @brief PROC pnbinom = (REAL x, size, prob, BOOL lower tail, log p) REAL
+//! @brief PROC pnbinom = (REAL x, size, prob, BOOL lower tail, give log) REAL
 //! @brief PROC qnbinom = (REAL p, size, prob, BOOL lower tail, log p) REAL
-//! @brief PROC rnbinom = (REAL p, size, prob) REAL
+//! @brief PROC rnbinom = (REAL size, prob) REAL
 
 D_4 (genie_R_dnbinom_real, dnbinom);
 PQ_5 (genie_R_pnbinom_real, pnbinom);
@@ -373,7 +364,7 @@ R_2 (genie_R_rnbinom_real, rnbinom);
 // t, non-central
 
 //! @brief PROC dnt = (REAL x, df, delta, BOOL give log) REAL
-//! @brief PROC pnt = (REAL x, df, delta, BOOL lower tail, log p) REAL
+//! @brief PROC pnt = (REAL x, df, delta, BOOL lower tail, give log) REAL
 //! @brief PROC qnt = (REAL p, df, delta, BOOL lower tail, log p) REAL
 
 D_4 (genie_R_dnt_real, dnt);
@@ -383,9 +374,9 @@ PQ_5 (genie_R_qnt_real, qnt);
 // Normal
 
 //! @brief PROC dnorm = (REAL x, mu, sigma, BOOL give log) REAL
-//! @brief PROC pnorm = (REAL x, mu, sigma, BOOL lower tail, log p) REAL
+//! @brief PROC pnorm = (REAL x, mu, sigma, BOOL lower tail, give log) REAL
 //! @brief PROC qnorm = (REAL p, mu, sigma, BOOL lower tail, log p) REAL
-//! @brief PROC rnorm = (REAL p, mu, sigma) REAL
+//! @brief PROC rnorm = (REAL mu, sigma) REAL
 
 D_4 (genie_R_dnorm_real, dnorm);
 PQ_5 (genie_R_pnorm_real, pnorm);
@@ -395,9 +386,9 @@ R_2 (genie_R_rnorm_real, rnorm);
 // Uniform
 
 //! @brief PROC dunif = (REAL x, a, b, BOOL give log) REAL
-//! @brief PROC punif = (REAL x, a, b, BOOL lower tail, log p) REAL
+//! @brief PROC punif = (REAL x, a, b, BOOL lower tail, give log) REAL
 //! @brief PROC qunif = (REAL p, a, b, BOOL lower tail, log p) REAL
-//! @brief PROC runif = (REAL p, a, b) REAL
+//! @brief PROC runif = (REAL a, b) REAL
 
 D_4 (genie_R_dunif_real, dunif);
 PQ_5 (genie_R_punif_real, punif);
@@ -407,9 +398,9 @@ R_2 (genie_R_runif_real, runif);
 // Weibull
 
 //! @brief PROC dweibull = (REAL x, shape, scale, BOOL give log) REAL
-//! @brief PROC pweibull = (REAL x, shape, scale, BOOL lower tail, log p) REAL
+//! @brief PROC pweibull = (REAL x, shape, scale, BOOL lower tail, give log) REAL
 //! @brief PROC qweibull = (REAL p, shape, scale, BOOL lower tail, log p) REAL
-//! @brief PROC rweibull = (REAL p, shape, scale) REAL
+//! @brief PROC rweibull = (REAL shape, scale) REAL
 
 D_4 (genie_R_dweibull_real, dweibull);
 PQ_5 (genie_R_pweibull_real, pweibull);
@@ -419,7 +410,7 @@ R_2 (genie_R_rweibull_real, rweibull);
 // F, non central
 
 //! @brief PROC dnf = (REAL x, n1, n2, ncp, BOOL give log) REAL
-//! @brief PROC pnf = (REAL x, n1, n2, ncp, BOOL lower tail, log p) REAL
+//! @brief PROC pnf = (REAL x, n1, n2, ncp, BOOL lower tail, give log) REAL
 //! @brief PROC qnf = (REAL p, n1, n2, ncp, BOOL lower tail, log p) REAL
 
 D_5 (genie_R_dnf_real, dnf);
@@ -429,9 +420,9 @@ PQ_6 (genie_R_qnf_real, qnf);
 // Hyper geometric
 
 //! @brief PROC dhyper = (REAL x, nr, nb, n, BOOL give log) REAL
-//! @brief PROC phyper = (REAL x, nr, nb, n, BOOL lower tail, log p) REAL
+//! @brief PROC phyper = (REAL x, nr, nb, n, BOOL lower tail, give log) REAL
 //! @brief PROC qhyper = (REAL p, nr, nb, n, BOOL lower tail, log p) REAL
-//! @brief PROC rhyper = (REAL x, nr, nb, n, BOOL give log) REAL
+//! @brief PROC rhyper = (REAL nr, nb, n) REAL
 
 D_5 (genie_R_dhyper_real, dhyper);
 PQ_6 (genie_R_phyper_real, phyper);
@@ -440,7 +431,7 @@ R_3 (genie_R_rhyper_real, rhyper);
 
 // Tukey
 
-//! @brief PROC ptukey = (REAL x, groups, df, treatments, BOOL lower tail, log p) REAL
+//! @brief PROC ptukey = (REAL x, groups, df, treatments, BOOL lower tail, give log) REAL
 //! @brief PROC qtukey = (REAL p, groups, df, treatments, BOOL lower tail, log p) REAL
 
 PQ_6 (genie_R_ptukey_real, ptukey);
@@ -449,13 +440,12 @@ PQ_6 (genie_R_qtukey_real, qtukey);
 // Wilcoxon
 
 //! @brief PROC dwilcox = (REAL x, m, n, BOOL give log) REAL
-//! @brief PROC pwilcox = (REAL x, m, n, BOOL lower tail, log p) REAL
+//! @brief PROC pwilcox = (REAL x, m, n, BOOL lower tail, give log) REAL
 //! @brief PROC qwilcox = (REAL p, m, n, BOOL lower tail, log p) REAL
-//! @brief PROC rwilcox = (REAL p, m, n) REAL
+//! @brief PROC rwilcox = (REAL m, n) REAL
 
-void genie_R_dwilcox (NODE_T * p)
+void genie_R_dwilcox_real (NODE_T * p)
 {
-  A68 (f_entry) = p;
   A68_BOOL give_log;
   A68_REAL a, b, c;
   extern void wilcox_free (void);
@@ -469,9 +459,8 @@ void genie_R_dwilcox (NODE_T * p)
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
 
-void genie_R_pwilcox (NODE_T * p)
+void genie_R_pwilcox_real (NODE_T * p)
 {
-  A68 (f_entry) = p;
   A68_BOOL lower_tail, log_p;
   A68_REAL x, a, b;
   extern void wilcox_free (void);
@@ -486,7 +475,7 @@ void genie_R_pwilcox (NODE_T * p)
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
 
-void genie_R_qwilcox (NODE_T * p)
+void genie_R_qwilcox_real (NODE_T * p)
 {
   A68_BOOL lower_tail, log_p;
   A68_REAL x, a, b;
@@ -507,11 +496,11 @@ R_2 (genie_R_rwilcox_real, rwilcox);
 // Wilcoxon sign rank
 
 //! @brief PROC dsignrank = (REAL x, n, BOOL give log) REAL
-//! @brief PROC psignrank = (REAL x, n, BOOL lower tail, log p) REAL
+//! @brief PROC psignrank = (REAL x, n, BOOL lower tail, give log) REAL
 //! @brief PROC qsignrank = (REAL p, n, BOOL lower tail, log p) REAL
-//! @brief PROC rsignrank = (REAL p, n) REAL
+//! @brief PROC rsignrank = (REAL n) REAL
 
-void genie_R_dsignrank (NODE_T * p)
+void genie_R_dsignrank_real (NODE_T * p)
 {
   A68_BOOL give_log;
   A68_REAL a, b;
@@ -525,7 +514,7 @@ void genie_R_dsignrank (NODE_T * p)
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
 
-void genie_R_psignrank (NODE_T * p)
+void genie_R_psignrank_real (NODE_T * p)
 {
   A68_BOOL lower_tail, log_p;
   A68_REAL x, a;
@@ -540,7 +529,7 @@ void genie_R_psignrank (NODE_T * p)
   PRELUDE_ERROR (errno != 0, p, ERROR_MATH_EXCEPTION, NO_TEXT);
 }
 
-void genie_R_qsignrank (NODE_T * p)
+void genie_R_qsignrank_real (NODE_T * p)
 {
   A68_BOOL lower_tail, log_p;
   A68_REAL x, a;

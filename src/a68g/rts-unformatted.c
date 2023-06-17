@@ -493,7 +493,7 @@ BOOL_T genie_string_to_value_internal (NODE_T * p, MOID_T * m, char *a, BYTE_T *
     A68_LONG_REAL *z = (A68_LONG_REAL *) item;
     char *end;
 //  VALUE (z).f = strtoflt128 (a, &end);
-    VALUE (z).f = string_to_double_real (a, &end);
+    VALUE (z).f = string_to_double (a, &end);
     MATH_RTE (p, errno != 0, M_LONG_REAL, ERROR_MATH);
     if (end[0] == NULL_CHAR && errno == 0) {
       STATUS (z) = INIT_MASK;
@@ -1986,7 +1986,7 @@ char *sub_fixed_double (NODE_T * p, DOUBLE_T x, int width, int after, int precis
   int before = 0;
 // Not according RR - argument reduction to avoid long division loop.
   if (z >= 1.0e10q) {          // Arbitrary, log10 must be worthwhile.
-    before = (int) floorq (log10q (z)) - 1;
+    before = (int) floor_double (log10_double (z)) - 1;
     z /= ten_up_double (before);
   }
 // Follow RR again.

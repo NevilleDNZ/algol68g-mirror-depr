@@ -581,16 +581,6 @@ MP_T *floor_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
   return z;
 }
 
-BOOL_T is_int_mp (NODE_T *p, MP_T *z, int digs)
-{
-  ADDR_T pop_sp = A68_SP;
-  MP_T *y = nil_mp (p, digs);
-  trunc_mp (p, y, z, digs);
-  BOOL_T tst = same_mp (p, y, z, digs);
-  A68_SP = pop_sp;
-  return tst;
-}
-
 //! @brief Shorten and round.
 
 MP_T *shorten_mp (NODE_T * p, MP_T * z, int digs, MP_T * x, int digs_x)

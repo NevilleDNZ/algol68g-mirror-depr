@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! Physical constants from GSL.
+//! REAL GSL physical constants.
 
 #include "a68g.h"
 #include "a68g-genie.h"

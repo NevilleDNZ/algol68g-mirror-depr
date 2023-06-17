@@ -1,4 +1,7 @@
-Version 3.1.1-3.1.9, January/April 2023
+Version 3.2.0, June 2023
+* Enable CLANG as (optional) back-end plugin compiler, as alternative for GCC.
+
+Version 3.1.1-3.1.9, January/May 2023
 * Fix configuration bug preventing building on Cygwin.
 * Fix undefined errno upon succesful relpath call on some systems.
 * Distribution update.
@@ -174,19 +177,19 @@ Version 2.0.0, September 2010
 * Improve diagnostics.
 * Update documentation.
 * Regression fixes:
-1. Zero-suppression sometimes failed in formatted transput.
-2. The default draw fill style was 1, not 0 as stated in the manual.
+  1. Zero-suppression sometimes failed in formatted transput.
+  2. The default draw fill style was 1, not 0 as stated in the manual.
 
 Version 1.18.0, August 2009
 * Regression fixes:
-1. Rowing failed for some flexible rows.
-2. Generator failed for some structures.
-3. Garbage collector could crash under rare circumstances.
-4. Some flexible mode declarations were not accepted.
-5. Some modes were incorrectly marked as equivalent.
-6. Unnecessary size limitations in some matrix operations.
-7. Build error on Mac OS X.
-8. Alignment error on AMD64.
+  1. Rowing failed for some flexible rows.
+  2. Generator failed for some structures.
+  3. Garbage collector could crash under rare circumstances.
+  4. Some flexible mode declarations were not accepted.
+  5. Some modes were incorrectly marked as equivalent.
+  6. Unnecessary size limitations in some matrix operations.
+  7. Build error on Mac OS X.
+  8. Alignment error on AMD64.
 * Add field-selections as an alternative to selections.
 * Add NEW as alternative to HEAP.
 * More efficient use of memory during compilation.
@@ -200,17 +203,17 @@ Version 1.17.0, May 2009
 * Add C-style placeholders in formats.
 * Add warnings when tags hide declarations with larger reach.
 * Regression fixes:
-1. The while-part range was not visible from deeper ranges in case 
-   a loop-clause was the sole unit of a routine-text.
-2. SKIP did not generate a value for some modes.
+  1. The while-part range was not visible from deeper ranges in case 
+     a loop-clause was the sole unit of a routine-text.
+  2. SKIP did not generate a value for some modes.
 * Lint-free source code.
 * Documentation updates.
 
 Version 1.16.0, April 2009
 * Regression fixes.
 * Documentation updates:
-1. Add Revised Report to the LaTeX documentation.
-2. Discontinues HTML translation of the Revised Report.
+  1. Add Revised Report to the LaTeX documentation.
+  2. Discontinues HTML translation of the Revised Report.
 
 Version 1.15.1, January 2009
 * Add Laplace transform.

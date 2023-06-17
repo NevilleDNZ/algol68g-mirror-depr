@@ -26,10 +26,37 @@
 #if ! defined (__A68G_PLATFORM_H__)
 #define __A68G_PLATFORM_H__
 
-#if defined (BUILD_WIN32)
-#include "a68g-config.win32.h"
+#if defined (__MINGW32__)
+#  if ! defined (BUILD_WIN32)
+#    define BUILD_WIN32
+#  endif
+#  include "a68g-config.win32.h"
+#  if ! defined (HAVE_GCC)
+#    define HAVE_GCC
+#  endif
+#  undef C_COMPILER
+#  undef HAVE_CLANG
+#elif defined (__clang__)
+#  include "a68g-config.h"
+#  if ! defined (HAVE_CLANG)
+#    define HAVE_CLANG
+#  endif
+#  if ! defined (C_COMPILER)
+#    define C_COMPILER "clang"
+#  endif
+#  undef HAVE_GCC
+#  undef HAVE_GNU_MPFR
+#elif defined (__GNUC__)
+#  include "a68g-config.h"
+#  if ! defined (HAVE_GCC)
+#    define HAVE_GCC
+#  endif
+#  if ! defined (C_COMPILER)
+#    define C_COMPILER "gcc"
+#  endif
+#  undef HAVE_CLANG
 #else
-#include "a68g-config.h"
+#  error "a68g: abend: a68g requires either gcc or clang"
 #endif
 
 // Decide on A68G "LEVEL".
@@ -38,9 +65,9 @@
 // LEVEL 2 builds generic A68G with INT*4 and REAL*8 data types.
 // LEVEL 1 is reserved for (possible) restrictive builds.
 
-#if defined (BUILD_WIN32) && defined (HAVE_QUADMATH)
+#if defined (BUILD_WIN32)
 #  define A68_LEVEL 3
-#elif defined (HAVE_LONG_TYPES) && defined (HAVE_QUADMATH)
+#elif defined (HAVE_LONG_TYPES)
 #  define A68_LEVEL 3
 #else
 #  define A68_LEVEL 2

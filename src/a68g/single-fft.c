@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! REAL, COMPLEX fast fourier transform.
+//! REAL, COMPLEX GSL fast fourier transform.
 
 #include "a68g.h"
 #include "a68g-genie.h"
@@ -61,7 +61,6 @@ REAL_T *pop_array_real (NODE_T * p, int *len)
   int inc, iindex, k;
   BYTE_T *base;
   REAL_T *v;
-  A68 (f_entry) = p;
 // Pop arguments.
   POP_REF (p, &desc);
   CHECK_REF (p, desc, M_ROW_REAL);
@@ -93,7 +92,6 @@ void push_array_real (NODE_T * p, REAL_T * v, int len)
   A68_TUPLE tup;
   int inc, iindex, k;
   BYTE_T *base;
-  A68 (f_entry) = p;
   NEW_ROW_1D (desc, row, arr, tup, M_ROW_REAL, M_REAL, len);
   base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
@@ -117,7 +115,6 @@ REAL_T *pop_array_complex (NODE_T * p, int *len)
   int inc, iindex, k;
   BYTE_T *base;
   REAL_T *v;
-  A68 (f_entry) = p;
 // Pop arguments.
   POP_REF (p, &desc);
   CHECK_REF (p, desc, M_ROW_COMPLEX);
@@ -151,7 +148,6 @@ void push_array_complex (NODE_T * p, REAL_T * v, int len)
   A68_TUPLE tup;
   int inc, iindex, k;
   BYTE_T *base;
-  A68 (f_entry) = p;
   NEW_ROW_1D (desc, row, arr, tup, M_ROW_COMPLEX, M_COMPLEX, len);
   base = DEREF (BYTE_T, &ARRAY (&arr));
   iindex = VECTOR_OFFSET (&arr, &tup);
@@ -180,7 +176,6 @@ void genie_prime_factors (NODE_T * p)
   int len, inc, iindex, k;
   BYTE_T *base;
   gsl_fft_complex_wavetable *wt;
-  A68 (f_entry) = p;
   POP_OBJECT (p, &n, A68_INT);
   CHECK_INIT (p, INITIALISED (&n), M_INT);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) (VALUE (&n)));
@@ -208,7 +203,6 @@ void genie_fft_complex_forward (NODE_T * p)
   REAL_T *data;
   gsl_fft_complex_wavetable *wt;
   gsl_fft_complex_workspace *ws;
-  A68 (f_entry) = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
@@ -233,7 +227,6 @@ void genie_fft_complex_backward (NODE_T * p)
   REAL_T *data;
   gsl_fft_complex_wavetable *wt;
   gsl_fft_complex_workspace *ws;
-  A68 (f_entry) = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
@@ -258,7 +251,6 @@ void genie_fft_complex_inverse (NODE_T * p)
   REAL_T *data;
   gsl_fft_complex_wavetable *wt;
   gsl_fft_complex_workspace *ws;
-  A68 (f_entry) = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
@@ -283,7 +275,6 @@ void genie_fft_forward (NODE_T * p)
   REAL_T *data;
   gsl_fft_complex_wavetable *wt;
   gsl_fft_complex_workspace *ws;
-  A68 (f_entry) = p;
   data = pop_array_real (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
@@ -308,7 +299,6 @@ void genie_fft_backward (NODE_T * p)
   REAL_T *data;
   gsl_fft_complex_wavetable *wt;
   gsl_fft_complex_workspace *ws;
-  A68 (f_entry) = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) len);
@@ -333,7 +323,6 @@ void genie_fft_inverse (NODE_T * p)
   REAL_T *data;
   gsl_fft_complex_wavetable *wt;
   gsl_fft_complex_workspace *ws;
-  A68 (f_entry) = p;
   data = pop_array_complex (p, &len);
   fft_test_error (len == 0 ? GSL_EDOM : GSL_SUCCESS);
   wt = gsl_fft_complex_wavetable_alloc ((size_t) len);

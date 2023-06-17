@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! REAL matrix SVD decomposition using GSL.
+//! REAL GSL matrix SVD decomposition.
 
 #include "a68g.h"
 #include "a68g-torrix.h"
@@ -33,7 +33,6 @@
 void genie_matrix_svd (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
 //
   A68_REF ref_u, ref_s, ref_v;
   POP_REF (p, &ref_v);
@@ -91,7 +90,6 @@ void genie_matrix_svd (NODE_T * p)
 void genie_matrix_svd_solve (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_vector *b = pop_vector (p, A68_TRUE);
   gsl_matrix *v = pop_matrix (p, A68_TRUE);
   gsl_vector *s = pop_vector (p, A68_TRUE);

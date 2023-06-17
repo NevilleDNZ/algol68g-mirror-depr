@@ -95,7 +95,7 @@ MP_T *mpfr_to_mp (NODE_T * p, MP_T * z, mpfr_t * x, int digits)
 // a = ABS (x);
   mpfr_set (u, *x, DEFAULT);
   mpfr_abs (u, u, DEFAULT);
-// expo = (int) log10q (a);
+// expo = (int) log10_double (a);
   mpfr_log10 (v, u, DEFAULT);
   INT_T expo = mpfr_get_si (v, DEFAULT);
 // v /= ten_up_double (expo);
@@ -288,7 +288,6 @@ void genie_mpfr_inverf_mp (NODE_T * _p_)
   REAL_T x0;
   mpfr_t a, b, u, y;
   MP_T *z = (MP_T *) STACK_OFFSET (-size);
-  A68 (f_entry) = _p_;
   mpfr_inits2 (MPFR_MP_BITS, a, b, u, y, NO_MPFR);
   mp_to_mpfr (_p_, z, &y, digits);
   x0 = a68_inverf (mp_to_real (_p_, z, digits));
@@ -364,7 +363,7 @@ void genie_gamma_inc_real_mpfr (NODE_T * p)
   mpfr_clears (ss, xx, NO_MPFR);
 }
 
-void genie_gamma_inc_double_real_mpfr (NODE_T * p)
+void genie_gamma_inc_double_mpfr (NODE_T * p)
 {
   A68_LONG_REAL x, s;
   mpfr_t xx, ss;

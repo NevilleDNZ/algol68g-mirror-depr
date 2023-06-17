@@ -31,8 +31,7 @@
 
 // Next part is a "stand-alone" version of GNU Scientific Library (GSL)
 // random number generator "taus113", based on GSL file "rng/taus113.c".
-
-// rng/taus113.c
+// 
 // Copyright (C) 2002 Atakan Gurkan
 // Based on the file taus.c which has the notice
 // Copyright (C) 1996, 1997, 1998, 1999, 2000, 2007 James Theiler, Brian Gough
@@ -91,7 +90,7 @@
 #define MASK 0xffffffffUL
 
 unt taus113_get (void *vstate);
-double taus113_get_double (void *vstate);
+REAL_T taus113_get_double (void *vstate);
 void taus113_set (void *state, unt long int s);
 
 typedef struct
@@ -117,7 +116,7 @@ unt taus113_get (void *vstate)
   return (state->z1 ^ state->z2 ^ state->z3 ^ state->z4);
 }
 
-double taus113_get_double (void *vstate)
+REAL_T taus113_get_double (void *vstate)
 {
   return taus113_get (vstate) / 4294967296.0;
 }
@@ -171,6 +170,18 @@ REAL_T a68_unif_rand (void)
 {
 // In [0, 1>
   return taus113_get_double (&rng_state);
+}
+
+REAL_T a68_gauss_rand (void) 
+{
+// Marsaglia polar method instead of Box-Muller transform.
+  REAL_T s;
+  do {
+     REAL_T v1 = 2 * a68_unif_rand () - 1;
+     REAL_T v2 = 2 * a68_unif_rand () - 1;
+     s = v1 * v1 + v2 * v2;
+  } while (s >= 1 || s == 0); // A fraction (1-pi/4) is rejected.
+  return sqrt (-2 * log (s) / s);
 }
 
 static char *state_file = ".Random.seed";

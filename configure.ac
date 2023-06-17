@@ -1,5 +1,5 @@
 #
-# Algol 68 Genie 3.1.9, configure.ac
+# Algol 68 Genie 3.2.0, configure.ac
 #
 # To configure a68g for the widest range of platforms, issue: 
 #   ./configure --enable-generic
@@ -8,7 +8,7 @@
 #   sudo apt install libncurses-dev libreadline-dev libmpfr libgmp libgsl-dev r-mathlib libplot-dev libghc-postgresql-libpq-dev
 #
 
-AC_INIT([algol68g], [3.1.9], [Marcel van der Veer <algol68g@xs4all.nl>])
+AC_INIT([algol68g], [3.2.0], [Marcel van der Veer <algol68g@xs4all.nl>])
 AC_PREREQ([2.60])
 
 # Check whether compiler supports $1 as a command-line option. 
@@ -195,7 +195,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 bsd_include_dirs=no
-enable_haiku=no
+
 AC_MSG_CHECKING([platform])
 case "$host" in
 #
@@ -223,7 +223,6 @@ case "$host" in
 *86-*-*darwin* | *86_64-*-*darwin*) 
   AC_DEFINE(BUILD_BSD, 1, [Define this if DARWIN was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant]) 
-  AC_MSG_WARN([configuring interpreter-only])
   AC_MSG_RESULT([mac os x])
   ;;
 #
@@ -232,7 +231,6 @@ case "$host" in
 *86-*-freebsd* | *86_64-*-freebsd*) 
   AC_DEFINE(BUILD_BSD, 1, [Define this if FreeBSD was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant]) 
-  AC_MSG_WARN([configuring interpreter-only])
   AC_MSG_RESULT([freebsd])
   ;;
 #
@@ -242,6 +240,7 @@ case "$host" in
   AC_DEFINE(BUILD_BSD, 1, [Define this if NetBSD was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant]) 
   AC_MSG_WARN([configuring interpreter-only])
+  enable_compiler=no
   AC_MSG_RESULT([netbsd])
   ;;
 #
@@ -251,14 +250,18 @@ case "$host" in
   AC_DEFINE(BUILD_BSD, 1, [Define this if OpenBSD was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant]) 
   bsd_include_dirs=yes
+  enable_compiler=no
   AC_MSG_RESULT([openbsd])
   ;;
 #
 # Haiku.
 #
 *86-*-haiku* | *86_64-*-haiku*) 
+  AC_DEFINE(HAVE_UNTESTED, 1, [Define this if untested OS was detected]) 
+  AC_MSG_WARN([untested platform])
   AC_DEFINE(BUILD_HAIKU, 1, [Define this if HAIKU was detected]) 
   AC_DEFINE(HAVE_IEEE_754, 1, [Define this if IEEE_754 compliant]) 
+  enable_stable=yes
   AC_MSG_RESULT([haiku])
   ;;
 #
@@ -266,9 +269,9 @@ case "$host" in
 #
 *)
   AC_DEFINE(HAVE_UNTESTED, 1, [Define this if untested OS was detected]) 
-  AC_MSG_WARN([configuring interpreter-only on untested platform])
+  AC_MSG_WARN([untested platform])
   AC_MSG_RESULT([interpreter-only])
-  enable_compiler=no
+  enable_stable=yes
   ;;
 esac
 
@@ -276,11 +279,12 @@ esac
 # Extra options.
 #
 
+AC_ARG_ENABLE(clang, [AS_HELP_STRING([--enable-clang], [prefer clang over gcc if both are installed (default is "no")])], , enable_clang=no) 
 AC_ARG_ENABLE(stable, [AS_HELP_STRING([--enable-stable], [conservative build without optional libraries (default is "no")])], , enable_stable=no) 
 AC_ARG_ENABLE(core, [AS_HELP_STRING([--enable-core], [build without optional libraries or plugin compiler (default is "no")])], , enable_core=no) 
-AC_ARG_ENABLE(generic, [AS_HELP_STRING([--enable-generic], [build for legacy 32 bit systems (default is "no")])], , enable_generic=no) 
+AC_ARG_ENABLE(generic, [AS_HELP_STRING([--enable-generic], [build for non-GNU systems (default is "no")])], , enable_generic=no) 
 AC_ARG_ENABLE(compiler, [AS_HELP_STRING([--enable-compiler], [enable plugin compiler (default is "yes")])], , enable_compiler=yes) 
-AC_ARG_ENABLE(quadmath, [AS_HELP_STRING([--enable-quadmath], [if available, enable GCC quadmath library (default is "yes")])], , enable_quadmath=yes) 
+AC_ARG_ENABLE(quadmath, [AS_HELP_STRING([--enable-quadmath], [if available, enable GCC quadmath library (default is "yes")])], , enable_quadmath=yes)
 AC_ARG_ENABLE(mathlib, [AS_HELP_STRING([--enable-mathlib], [if available, enable R mathlib library (default is "yes")])], , enable_mathlib=yes) 
 AC_ARG_ENABLE(curses, [AS_HELP_STRING([--enable-curses], [if available, enable curses library (default is "yes")])], , enable_curses=yes) 
 AC_ARG_ENABLE(gsl, [AS_HELP_STRING([--enable-gsl], [if available, enable GNU scientific library (default is "yes")])], , enable_gsl=yes) 
@@ -293,26 +297,6 @@ AC_ARG_ENABLE(standard-types, [AS_HELP_STRING([--enable-standard-types], [enable
 AC_ARG_ENABLE(long-types, [AS_HELP_STRING([--enable-long-types], [if available, enable int*8 and real*10, real*16 modes (default is "yes")])], , enable_long_types=yes) 
 AC_ARG_ENABLE(pic, [AS_HELP_STRING([--enable-pic=option], [if using gcc, enable option to generate PIC (default is "-fPIC")])], , enable_pic="-fPIC") 
 AC_ARG_ENABLE(arch, [AS_HELP_STRING([--enable-arch=cpu], [if using gcc, enable emitting architecture-tuned assembly code (default is "no")])], , enable_arch=no) 
-
-if test "x$enable_stable" = "xyes"; then
-  enable_generic=yes
-  enable_core=yes
-fi
-
-if test "x$enable_generic" = "xyes"; then
-  enable_standard_types=yes
-  enable_long_types=no
-fi
-
-if test "x$enable_core" = "xyes"; then
-  enable_compiler=no
-  enable_gsl=no
-  enable_mathlib=no
-  enable_parallel=no
-  enable_plotutils=no
-  enable_readline=no
-  enable_curses=no
-fi
 
 AC_CHECK_PROG(a68g_exists, a68g, "yes", "no")
 AC_CHECK_PROG(sed_exists, sed, "yes", "no")
@@ -345,14 +329,17 @@ AC_PROG_INSTALL
 
 AC_MSG_NOTICE([C compiler...])
 AC_LANG(C)
-AC_PROG_CC([gcc clang])
 
-if test "x$GCC" != "xyes"; then
-  a68g_ac_compiler=no
-  AC_MSG_WARN([gcc is the preferred C compiler])
+if test "x$enable_clang" = "xyes"; then
+  a68g_compilers="clang gcc"
 else
-  AC_DEFINE(HAVE_GCC, 1, [Define this if GCC was detected]) 
-  AC_DEFINE_UNQUOTED(C_COMPILER, "$CC", [Name of C compiler detected])
+  a68g_compilers="gcc clang"
+fi
+
+AC_PROG_CC([$a68g_compilers])
+if test "x$GCC" != "xyes"; then
+  AC_MSG_ERROR([no gcc compatible C compiler])
+else
 # On rhel8 "rpmbuild" sneaks in -pie and -fPIE, so a68g also needs to pass through.
 # On Suse15 the header files for pgsql and R have their own directories.
   COPTFLAGS="-g -O2 -Wall -I /usr/include/pgsql -I /usr/lib64/R/include"
@@ -497,6 +484,48 @@ __mode_t dummy;
 )
 
 #
+# Test on glibc
+#
+
+AC_MSG_CHECKING([GNU C library])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([], [(void) gnu_get_libc_version();])],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_GNU_C_LIB, 1, [Define this if GNU C library is detected.])
+  ],
+  [AC_MSG_RESULT(no)
+   enable_generic=yes
+  ],
+  [AC_MSG_RESULT(assuming no)
+   enable_generic=yes
+  ]
+)
+
+#
+# We know about the platform now.
+#
+
+if test "x$enable_stable" = "xyes"; then
+  enable_generic=yes
+  enable_core=yes
+fi
+
+if test "x$enable_generic" = "xyes"; then
+  enable_standard_types=yes
+  enable_long_types=no
+fi
+
+if test "x$enable_core" = "xyes"; then
+  enable_compiler=no
+  enable_gsl=no
+  enable_mathlib=no
+  enable_parallel=no
+  enable_plotutils=no
+  enable_readline=no
+  enable_curses=no
+  enable_postgresql=no
+fi
+
+#
 # Extra include directories.
 #
 
@@ -566,6 +595,17 @@ AC_MSG_NOTICE([standard header files...])
 
 AC_CHECK_HEADERS([math.h])
 AC_CHECK_LIB([m], [cos])
+
+AC_MSG_CHECKING([whether math.h has signam])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <math.h>], [return signgam;])],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_MATH_H_SIGNGAM, 1, [Define this if math.h includes POSIX's signgam.])
+  ],
+  [AC_MSG_RESULT(no)
+  ],
+  [AC_MSG_RESULT(assuming no)
+  ]
+)
 
 AC_HEADER_STDC
 AC_HEADER_ASSERT
@@ -684,27 +724,36 @@ if test "x$enable_long_types" = "xyes"; then
     [AC_MSG_RESULT(no)
      enable_long_types=no],
   [])
-  AC_MSG_CHECKING([80-bit __float80 is available])
-  AC_RUN_IFELSE([AC_LANG_PROGRAM([], [return sizeof (__float80) != 16;])],
+  AC_MSG_CHECKING([80-bit long double is available])
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([], [return sizeof (long double) != 16;])],
     [AC_MSG_RESULT(yes)],
     [AC_MSG_RESULT(no)
      enable_long_types=no],
   [])
-  AC_MSG_CHECKING([80-bit __float80 has 64-bit mantissa])
+  AC_MSG_CHECKING([80-bit long double has 64-bit mantissa])
   AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <float.h>], [return LDBL_MANT_DIG != 64;])],
     [AC_MSG_RESULT(yes)],
     [AC_MSG_RESULT(no)
      enable_long_types=no],
   [])
-  AC_MSG_CHECKING([128-bit __float128 is available])
+  AC_MSG_CHECKING([long double complex is available])
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([typedef _Complex float __attribute__((mode(XC))) __complex80;], [return sizeof (__complex80) != 32;])],
+    [AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)
+     enable_long_types=no],
+  [])
+  AC_MSG_CHECKING([__float128 is available])
   AC_RUN_IFELSE([AC_LANG_PROGRAM([], [return sizeof (__float128) != 16;])],
     [AC_MSG_RESULT(yes)],
     [AC_MSG_RESULT(no)
      enable_long_types=no],
   [])
-  if test "x$enable_long_types" = "xyes"; then
-    AC_DEFINE(HAVE_LONG_TYPES, 1, [Define this if a good INT*8/REAL*10/REAL*16 installation was detected]) 
-  fi
+  AC_MSG_CHECKING([__complex128 is available])
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([typedef _Complex float __attribute__((mode(TC))) __complex128;], [return sizeof (__complex128) != 32;])],
+    [AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)
+     enable_long_types=no],
+  [])
 fi
 
 if test "x$enable_long_types" = "xyes"; then
@@ -713,12 +762,15 @@ if test "x$enable_long_types" = "xyes"; then
     AC_CHECK_HEADERS([quadmath.h], [], [enable_quadmath=no], [])
     AC_CHECK_LIB([quadmath], [lgammaq], [], [enable_quadmath=no])
     if test "x$enable_quadmath" = "xyes"; then
-      AC_DEFINE(HAVE_QUADMATH, 1, [Define this if a good quadmath installation was detected]) 
+      AC_DEFINE(HAVE_QUADMATH, 1, [Define this if a good quadmath installation was detected])
+    else
+      enable_long_types=no
     fi
   fi
 else
   AC_MSG_NOTICE([quadmath ignored for this system])
   enable_quadmath=no
+  enable_long_types=no
 fi
 
 if test "x$enable_long_types" = "xyes"; then
@@ -726,21 +778,32 @@ if test "x$enable_long_types" = "xyes"; then
     AC_MSG_NOTICE([GNU MPFR...])
     AC_CHECK_LIB([gmp], [__gmpz_init], [], [enable_mpfr=no])
     if test "x$enable_mpfr" = "xyes"; then
-      AC_CHECK_HEADERS([mpfr.h])
-      if test "x$enable_mpfr" = "xyes"; then
-        AC_CHECK_LIB([mpfr], [mpfr_gamma], [], [enable_mpfr=no])
-        AC_CHECK_LIB([mpfr], [mpfr_gamma_inc], [], [enable_mpfr=no])
-        AC_CHECK_LIB([mpfr], [mpfr_get_float128], [], [enable_mpfr=no])
-        AC_CHECK_LIB([mpfr], [mpfr_set_float128], [], [enable_mpfr=no])
+      if test "x$CC" = "xclang"; then
+        AC_MSG_NOTICE([GNU MPFR ignored for $CC])
+        enable_mpfr=no
+      else
+        AC_CHECK_HEADERS([mpfr.h])
         if test "x$enable_mpfr" = "xyes"; then
-          AC_DEFINE(HAVE_GNU_MPFR, 1, [Define this if a recent GNU MPFR installation was detected])
+          AC_CHECK_LIB([mpfr], [mpfr_gamma], [], [enable_mpfr=no])
+          AC_CHECK_LIB([mpfr], [mpfr_gamma_inc], [], [enable_mpfr=no])
+          AC_CHECK_LIB([mpfr], [mpfr_get_float128], [], [enable_mpfr=no])
+          AC_CHECK_LIB([mpfr], [mpfr_set_float128], [], [enable_mpfr=no])
+          if test "x$enable_mpfr" = "xyes"; then
+            AC_DEFINE(HAVE_GNU_MPFR, 1, [Define this if a recent GNU MPFR installation was detected])
+          fi
         fi
       fi
     fi
   fi
 else
-  AC_MSG_NOTICE([GNU MPFR ignored for this system])
+  AC_MSG_NOTICE([GNU MPFR ignored])
   enable_mpfr=no
+fi
+
+if test "x$enable_long_types" = "xyes"; then
+  if test "x$enable_long_types" = "xyes"; then
+    AC_DEFINE(HAVE_LONG_TYPES, 1, [Define this if a good INT*8/REAL*10/REAL*16 installation was detected]) 
+  fi
 fi
 
 if test "x$enable_parallel" = "xyes"; then
@@ -770,7 +833,7 @@ if test "x$enable_gsl" = "xyes"; then
   if test "x$enable_gsl" = "xyes"; then
     AC_CHECK_LIB([gslcblas], [cblas_dgemm], [], [enable_gsl=no])
     AC_CHECK_LIB([gsl], [gsl_blas_ddot], [], [enable_gsl=no])
-    AC_CHECK_HEADERS([gsl/gsl_blas.h gsl/gsl_complex.h gsl/gsl_complex_math.h gsl/gsl_eigen.h gsl/gsl_errno.h gsl/gsl_fft_complex.h gsl/gsl_integration.h gsl/gsl_linalg.h gsl/gsl_math.h gsl/gsl_matrix.h gsl/gsl_permutation.h gsl/gsl_sf.h gsl/gsl_statistics.h gsl/gsl_vector.h gsl/gsl_version.h], [], [enable_gsl=no], [])
+    AC_CHECK_HEADERS([gsl/gsl_blas.h gsl/gsl_complex.h gsl/gsl_complex_math.h gsl/gsl_eigen.h gsl/gsl_errno.h gsl/gsl_fft_complex.h gsl/gsl_integration.h gsl/gsl_linalg.h gsl/gsl_math.h gsl/gsl_matrix.h gsl/gsl_permutation.h gsl/gsl_sf.h gsl/gsl_sf_ellint.h gsl/gsl_sf_hermite.h gsl/gsl_statistics.h gsl/gsl_vector.h gsl/gsl_version.h], [], [enable_gsl=no], [])
   fi
   if test "x$enable_gsl" = "xyes"; then
     AC_DEFINE(HAVE_GSL, 1, [Define this if a good GNU GSL installation was detected])
@@ -857,15 +920,11 @@ AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 AC_MSG_NOTICE([])
 AC_MSG_NOTICE([AC_PACKAGE_NAME-AC_PACKAGE_VERSION by Marcel van der Veer <algol68g@xs4all.nl>])
-if test "x$a68g_exists" = "xyes"; then
-  AC_MSG_NOTICE([AC_PACKAGE_NAME already exists on this system])
-fi
 AC_MSG_NOTICE([])
-if test "x$enable_quadmath" = "xyes"; then
-  if test "x$enable_long_types" = "xyes"; then
-    AC_MSG_NOTICE([building with hardware support for long modes])
-    AC_MSG_NOTICE([building with quadmath])
-  fi
+AC_MSG_NOTICE([C compiler is $CC])
+AC_MSG_NOTICE([])
+if test "x$enable_long_types" = "xyes"; then
+  AC_MSG_NOTICE([building with hardware support for long modes])
 fi
 if test "x$enable_parallel" = "xyes"; then
   AC_MSG_NOTICE([building with parallel clause])
@@ -899,9 +958,7 @@ else
   AC_MSG_NOTICE([building interpreter-only])
 fi
 AC_MSG_NOTICE([])
-# if test "x$GCC" = "xyes"; then
-#   if test "x$enable_quadmath" = "xno"; then
-#     AC_MSG_NOTICE([consider installing libquadmath-devel and reconfiguring])
-#   fi
-# fi
 AC_MSG_NOTICE([now type 'make' optionally followed by 'make check' or 'make install'])
+if test "x$a68g_exists" = "xyes"; then
+  AC_MSG_NOTICE([since a68g is already installed, 'make install' is recommended])
+fi

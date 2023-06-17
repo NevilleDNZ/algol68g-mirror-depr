@@ -21,7 +21,7 @@
 
 //! @section Synopsis
 //!
-//! REAL laplace routines.
+//! REAL GSL laplace routines.
 
 #include "a68g.h"
 #include "a68g-genie.h"

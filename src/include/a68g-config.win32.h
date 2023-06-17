@@ -31,12 +31,13 @@
 
 #define HAVE_GSL
 #define HAVE_GNU_PLOTUTILS
-#define HAVE_QUADMATH
 #define HAVE_MATHLIB
+#define HAVE_QUADMATH
 
 #undef HAVE_GNU_MPFR
 #undef HAVE_CURSES
 
+#define HAVE_QUADMATH_H
 #define HAVE_REGEX_H
 
 #if defined (HAVE_GSL)
@@ -119,11 +120,11 @@
 #define PACKAGE_BUGREPORT "Marcel van der Veer <algol68g@xs4all.nl>"
 
 // Define to the full name and version of this package.
-#define PACKAGE_STRING "algol68g 3.1.9"
+#define PACKAGE_STRING "algol68g 3.2.0"
 
 // Define to the version of this package.
-#define PACKAGE_VERSION "3.1.9"
+#define PACKAGE_VERSION "3.2.0"
 
 // Version number of package
-#define VERSION "3.1.9"
+#define VERSION "3.2.0"
 

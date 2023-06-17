@@ -656,7 +656,6 @@ void write_fun_prelude (NODE_T * p, FILE_T out, char *fn)
   indent (out, "PROP_T self;\n");
   indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "UNIT (&self) = %s;\n", fn));
   indentf (out, snprintf (A68 (edit_line), SNPRINTF_SIZE, "SOURCE (&self) = _NODE_ (%d);\n", NUMBER (p)));
-  indent (out, "A68 (f_entry) = p;\n");
   A68_OPT (cse_pointer) = 0;
 }
 

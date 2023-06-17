@@ -83,6 +83,10 @@
 #include <fcntl.h>
 #endif
 
+#if defined (HAVE_FENV_H)
+#include <fenv.h>
+#endif
+
 #if defined (HAVE_FLOAT_H)
 #include <float.h>
 #endif
@@ -114,12 +118,12 @@
 #include <plot.h>
 #endif
 
-// #if defined (HAVE_QUADMATH_H)
-// #include <quadmath.h>
-// #endif
-
 #if defined (HAVE_PTHREAD_H)
 #include <pthread.h>
+#endif
+
+#if defined (HAVE_QUADMATH_H)
+#include <quadmath.h>
 #endif
 
 #if defined (HAVE_SETJMP_H)
@@ -132,6 +136,10 @@
 
 #if defined (HAVE_STDARG_H)
 #include <stdarg.h>
+#endif
+
+#if defined (HAVE_STDBOOL_H)
+#include <stdbool.h>
 #endif
 
 #if defined (HAVE_STDDEF_H)
@@ -224,6 +232,18 @@
 
 #if defined (HAVE_GSL_GSL_INTEGRATION_H)
 #include <gsl/gsl_integration.h>
+#endif
+
+#if defined (HAVE_GSL_GSL_SF_H)
+#include <gsl/gsl_sf.h>
+#endif
+
+#if defined (HAVE_GSL_GSL_SF_ELLINT_H)
+#include <gsl/gsl_sf_ellint.h>
+#endif
+
+#if defined (HAVE_GSL_GSL_SF_HERMITE_H)
+#include <gsl/gsl_sf_hermite.h>
 #endif
 
 #if defined (HAVE_GSL_GSL_LINALG_H)

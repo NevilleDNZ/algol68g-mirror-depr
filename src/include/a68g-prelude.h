@@ -56,8 +56,8 @@ void n (NODE_T * p) {\
 #if (A68_LEVEL >= 3)
 extern GPROC genie_lt_bits;
 extern GPROC genie_gt_bits;
-extern DOUBLE_T mp_to_double_real (NODE_T *, MP_T *, int);
-extern MP_T *double_real_to_mp (NODE_T *, MP_T *, DOUBLE_T, int);
+extern DOUBLE_T mp_to_double (NODE_T *, MP_T *, int);
+extern MP_T *double_to_mp (NODE_T *, MP_T *, DOUBLE_T, int);
 #endif
 
 extern A68_REF c_string_to_row_char (NODE_T *, char *, int);

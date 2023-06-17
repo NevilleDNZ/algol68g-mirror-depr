@@ -133,12 +133,10 @@
 
 #define EXECUTE_UNIT_2(p, dest) {\
   PROP_T *_prop_ = &GPROP (p);\
-  A68 (f_entry) = p;\
   dest = (*(UNIT (_prop_))) (SOURCE (_prop_));}
 
 #define EXECUTE_UNIT(p) {\
   PROP_T *_prop_ = &GPROP (p);\
-  A68 (f_entry) = p;\
   (void) (*(UNIT (_prop_))) (SOURCE (_prop_));}
 
 #define EXECUTE_UNIT_TRACE(p) {\
@@ -189,7 +187,6 @@
 // Macros.
 
 #define C_FUNCTION(p, f)\
-  A68 (f_entry) = p;\
   A68_REAL *x;\
   POP_OPERAND_ADDRESS (p, x, A68_REAL);\
   errno = 0;\
@@ -197,7 +194,6 @@
   MATH_RTE (p, errno != 0, M_REAL, NO_TEXT);
 
 #define OWN_FUNCTION(p, f)\
-  A68 (f_entry) = p;\
   A68_REAL *x;\
   POP_OPERAND_ADDRESS (p, x, A68_REAL);\
   errno = 0;\
