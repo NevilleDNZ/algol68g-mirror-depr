@@ -27,42 +27,30 @@
 
 #if defined (HAVE_GSL)
 
+#include "a68g-double.h"
 #include "a68g-genie.h"
-#include "a68g-prelude.h"
 #include "a68g-prelude-gsl.h"
+#include "a68g-prelude.h"
 #include "a68g-torrix.h"
 
 //! Print REAL vector and matrix using GSL.
 
 #define FMT "%12.4g"
-#define COLS 6
 
 void print_vector (gsl_vector *A, unt w)
 {
   unt N = SIZE (A);
   fprintf (stdout, "[%d]\n", N);
   if (w <= 0 || N <= 2 * w) {
-    for (unt i = 0, k = 0; i < N; i++, k++) {
-      if (k > 0 && k % COLS == 0) {
-        fprintf (stdout, "\n");
-        k = 0;
-      }
+    for (unt i = 0; i < N; i++) {
       fprintf (stdout, FMT, gsl_vector_get (A, i));
     }
   } else {
-    for (unt i = 0, k = 0; i < w; i++, k++) {
-      if (k > 0 && k % COLS == 0) {
-        fprintf (stdout, "\n");
-        k = 0;
-      }
+    for (unt i = 0; i < w; i++) {
       fprintf (stdout, FMT, gsl_vector_get (A, i));
     }
     fprintf (stdout, " ... ");
-    for (unt i = N - w, k = 0; i < N; i++, k++) {
-      if (k > 0 && k % COLS == 0) {
-        fprintf (stdout, "\n");
-        k = 0;
-      }
+    for (unt i = N - w; i < N; i++) {
       fprintf (stdout, FMT, gsl_vector_get (A, i));
     }
   }
@@ -73,27 +61,15 @@ void print_row (gsl_matrix *A, unt m, unt w)
 {
   unt N = SIZE2 (A);
   if (w <= 0 || N <= 2 * w) {
-    for (unt i = 0, k = 0; i < N; i++, k++) {
-      if (k > 0 && k % COLS == 0) {
-        fprintf (stdout, "\n");
-        k = 0;
-      }
+    for (unt i = 0; i < N; i++) {
       fprintf (stdout, FMT, gsl_matrix_get (A, m, i));
     }
   } else {
-    for (unt i = 0, k = 0; i < w; i++, k++) {
-      if (k > 0 && k % COLS == 0) {
-        fprintf (stdout, "\n");
-        k = 0;
-      }
+    for (unt i = 0; i < w; i++) {
       fprintf (stdout, FMT, gsl_matrix_get (A, m, i));
     }
     fprintf (stdout, " ... ");
-    for (unt i = N - w, k = 0; i < N; i++, k++) {
-      if (k > 0 && k % COLS == 0) {
-        fprintf (stdout, "\n");
-        k = 0;
-      }
+    for (unt i = N - w; i < N; i++) {
       fprintf (stdout, FMT, gsl_matrix_get (A, m, i));
     }
   }
@@ -206,7 +182,7 @@ REAL_T matrix_norm (gsl_matrix *a)
       sum += z * z;
     }
   }
-  return ((REAL_T) sqrtq (sum));
+  return ((REAL_T) sqrt_double (sum));
 #else
   REAL_T sum = 0.0;
   unt M = SIZE1 (a), N = SIZE2 (a);
@@ -223,7 +199,6 @@ REAL_T matrix_norm (gsl_matrix *a)
 void genie_matrix_norm (NODE_T * p)
 {
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_matrix *a = pop_matrix (p, A68_TRUE);
   PUSH_VALUE (p, matrix_norm (a), A68_REAL);
   gsl_matrix_free (a);
@@ -263,7 +238,6 @@ void genie_matrix_hcat (NODE_T *p)
 {
 // Yield [u v].
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_matrix *v = pop_matrix (p, A68_TRUE);
   gsl_matrix *u = pop_matrix (p, A68_TRUE);
   gsl_matrix *w = matrix_hcat (p, u, v);
@@ -307,7 +281,6 @@ void genie_matrix_vcat (NODE_T *p)
 {
 // Yield [u; v].
   gsl_error_handler_t *save_handler = gsl_set_error_handler (torrix_error_handler);
-  torrix_error_node = p;
   gsl_matrix *v = pop_matrix (p, A68_TRUE);
   gsl_matrix *u = pop_matrix (p, A68_TRUE);
   gsl_matrix *w = matrix_vcat (p, u, v);
@@ -316,6 +289,26 @@ void genie_matrix_vcat (NODE_T *p)
   gsl_matrix_free (v);
   gsl_matrix_free (w);
   (void) gsl_set_error_handler (save_handler);
+}
+
+gsl_matrix *mat_before_ab (NODE_T *p, gsl_matrix *u, gsl_matrix *v)
+{
+// Form A := A BEFORE B.
+  gsl_matrix *w = matrix_hcat (p, u, v);
+  if (u != NO_REAL_MATRIX) {
+    a68_matrix_free (u); // Deallocate A, otherwise caller leaks memory.
+  }
+  return w;
+}
+
+gsl_matrix *mat_over_ab (NODE_T *p, gsl_matrix *u, gsl_matrix *v)
+{
+// Form A := A OVER B.
+  gsl_matrix *w = matrix_vcat (p, u, v);
+  if (u != NO_REAL_MATRIX) {
+    a68_matrix_free (u); // Deallocate A, otherwise caller leaks memory.
+  }
+  return w;
 }
 
 #endif

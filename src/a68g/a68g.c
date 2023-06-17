@@ -33,7 +33,6 @@
 #include "a68g-postulates.h"
 #include "a68g-prelude.h"
 #include "a68g-prelude-mathlib.h"
-#include "a68g-quad.h"
 
 #if defined (HAVE_MATHLIB)
 #include <Rmath.h>
@@ -115,15 +114,20 @@ void state_version (FILE_T f)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With hardware support for long modes\n") >= 0);
   WRITE (f, A68 (output_line));
 #endif
-#if defined (BUILD_A68_COMPILER) && defined (C_COMPILER)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With plugin-compilation support (back-end is %s)\n", C_COMPILER) >= 0);
-  WRITE (f, A68 (output_line));
-#elif defined (BUILD_A68_COMPILER)
+#if defined (BUILD_A68_COMPILER)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With plugin-compilation support\n") >= 0);
   WRITE (f, A68 (output_line));
 #endif
 #if defined (BUILD_PARALLEL_CLAUSE)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With parallel-clause support\n") >= 0);
+  WRITE (f, A68 (output_line));
+#endif
+#if defined (HAVE_POSTGRESQL)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With PostgreSQL support\n") >= 0);
+  WRITE (f, A68 (output_line));
+#endif
+#if defined (BUILD_HTTP)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With TCP/IP support\n") >= 0);
   WRITE (f, A68 (output_line));
 #endif
 #if defined (HAVE_GNU_MPFR)
@@ -148,14 +152,6 @@ void state_version (FILE_T f)
   ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With curses %s\n", NCURSES_VERSION) >= 0);
   WRITE (f, A68 (output_line));
 #endif
-#if defined (BUILD_HTTP)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With TCP/IP support\n") >= 0);
-  WRITE (f, A68 (output_line));
-#endif
-#if defined (HAVE_POSTGRESQL)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "With PostgreSQL support\n") >= 0);
-  WRITE (f, A68 (output_line));
-#endif
 #if defined (_CS_GNU_LIBC_VERSION) && defined (BUILD_UNIX)
   if (confstr (_CS_GNU_LIBC_VERSION, A68 (input_line), BUFFER_SIZE) > (size_t) 0) {
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "GNU libc version %s\n", A68 (input_line)) >= 0);
@@ -168,12 +164,16 @@ void state_version (FILE_T f)
   }
 #endif
 #endif
-#if defined (HPA_VERSION)
-  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "HPA version %s\n", HPA_VERSION) >= 0);
-  WRITE (f, A68 (output_line));
+
+#define RSIZE(n) (unt) (sizeof (n) / sizeof (int))
+#if defined (BUILD_A68_COMPILER) && defined (C_COMPILER)
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Build level %d.%x%x%x%x %s %s\n", A68_LEVEL, RSIZE (INT_T), RSIZE (REAL_T), RSIZE (MP_INT_T), RSIZE (MP_REAL_T), C_COMPILER, __DATE__) >= 0);
+#else
+  ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Build level %d.%x%x%x%x %s\n", A68_LEVEL, RSIZE (INT_T), RSIZE (REAL_T), RSIZE (MP_INT_T), RSIZE (MP_REAL_T), __DATE__) >= 0);
 #endif
-ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "Build %d.%d.%d.%d.%d %s\n", A68_LEVEL, (int) sizeof (INT_T), (int) sizeof (REAL_T), (int) sizeof (MP_INT_T), (int) sizeof (MP_REAL_T), __DATE__) >= 0);
+#undef RSIZE
 WRITE (f, A68 (output_line));
+
 #undef PR
 }
 
@@ -424,6 +424,8 @@ void compiler_interpreter (void)
 // Only compile C if the A68 compiler found no errors (constant folder for instance).
   if (ERROR_COUNT (&A68_JOB) == 0 && OPTION_OPT_LEVEL (&A68_JOB) > 0 && !OPTION_RUN_SCRIPT (&A68_JOB)) {
     BUFFER cmd, options;
+    BUFCLR (cmd);
+    BUFCLR (options);
     if (OPTION_RERUN (&A68_JOB) == A68_FALSE) {
       announce_phase ("optimiser (code compiler)");
       errno = 0;

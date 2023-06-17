@@ -835,7 +835,10 @@ void genie_call_procedure (NODE_T * p, MOID_T * pr_mode, MOID_T * pproc, MOID_T 
   if (pmap != M_VOID && pr_mode != pmap) {
     genie_partial_call (p, pr_mode, pproc, pmap, *z, pop_sp, pop_fp);
   } else if (STATUS (z) & STANDENV_PROC_MASK) {
+    NODE_T *save_f_entry = A68 (f_entry);
+    A68 (f_entry) = p;
     (void) ((*(PROCEDURE (&(BODY (z))))) (p));
+    A68 (f_entry) = save_f_entry;
   } else if (STATUS (z) & SKIP_PROCEDURE_MASK) {
     A68_SP = pop_sp;
     genie_push_undefined (p, SUB ((MOID (z))));
@@ -900,6 +903,8 @@ void genie_call_event_routine (NODE_T * p, MOID_T * m, A68_PROCEDURE * proc, ADD
 
 PROP_T genie_call_standenv_quick (NODE_T * p)
 {
+  NODE_T *save_f_entry = A68 (f_entry);
+  A68 (f_entry) = p;
   NODE_T *pr = SUB (p), *q = SEQUENCE (p);
   TAG_T *proc = TAX (SOURCE (&GPROP (pr)));
 // Get arguments.
@@ -908,6 +913,7 @@ PROP_T genie_call_standenv_quick (NODE_T * p)
     STACK_DNS (p, MOID (q), A68_FP);
   }
   (void) ((*(PROCEDURE (proc))) (p));
+  A68 (f_entry) = save_f_entry;
   return GPROP (p);
 }
 
@@ -1612,7 +1618,7 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
   } else if (u == M_CHAR) {
     PUSH_VALUE (p, (char) (32 + 96 * a68_unif_rand ()), A68_CHAR);
   } else if (u == M_BITS) {
-    PUSH_VALUE (p, (UNSIGNED_T) (a68_unif_rand () * A68_MAX_BITS), A68_BITS);
+    PUSH_VALUE (p, (UNSIGNED_T) (a68_unif_rand () * (double) A68_MAX_BITS), A68_BITS);
   } else if (u == M_COMPLEX) {
     PUSH_COMPLEX (p, a68_unif_rand (), a68_unif_rand ());
   } else if (u == M_BYTES) {
@@ -1631,7 +1637,7 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
 #endif
   } else if (u == M_LONG_REAL) {
 #if (A68_LEVEL >= 3)
-    genie_next_random_double_real (p);
+    genie_next_random_double (p);
 #else
     (void) nil_mp (p, DIGITS (u));
 #endif
@@ -1651,8 +1657,8 @@ void genie_push_undefined (NODE_T * p, MOID_T * u)
     (void) nil_mp (p, DIGITS (u));
   } else if (u == M_LONG_COMPLEX) {
 #if (A68_LEVEL >= 3)
-    genie_next_random_double_real (p);
-    genie_next_random_double_real (p);
+    genie_next_random_double (p);
+    genie_next_random_double (p);
 #else
     (void) nil_mp (p, DIGITSC (u));
     (void) nil_mp (p, DIGITSC (u));

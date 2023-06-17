@@ -368,15 +368,19 @@ void stand_gsl_linear_algebra (void)
   m = a68_proc (M_ROW_ROW_COMPLEX, M_ROW_COMPLEX, M_ROW_COMPLEX, NO_MOID);
   a68_op (A68_EXT, "DYAD", m, genie_vector_complex_dyad);
   a68_prio ("DYAD", 3);
-// Principle component analysis.
+// Principle Component Analysis.
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_REAL, NO_MOID);
   a68_idf (A68_EXT, "pcacv", m, genie_matrix_pca_cv);
   a68_idf (A68_EXT, "pcasvd", m, genie_matrix_pca_svd);
-// Partial Least Squares analysis.
-  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_INT, M_REF_ROW_REAL, NO_MOID);
+// Total Least Square regression.
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_REAL, NO_MOID);
+  a68_idf (A68_EXT, "ols", m, genie_matrix_ols);
+  a68_idf (A68_EXT, "tls", m, genie_matrix_tls);
+// Partial Least Squares regression.
+  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REF_ROW_REAL, M_INT, M_REAL, NO_MOID);
+  a68_idf (A68_EXT, "pcr", m, genie_matrix_pcr);
   a68_idf (A68_EXT, "pls1", m, genie_matrix_pls1);
-  m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_REAL, M_REF_ROW_REAL, NO_MOID);
-  a68_idf (A68_EXT, "pls1lim", m, genie_matrix_pls1_lim);
+  a68_idf (A68_EXT, "pls2", m, genie_matrix_pls2);
 // Routine left columns, a GSL alternative to trimming columns.
   m = a68_proc (M_ROW_ROW_REAL, M_ROW_ROW_REAL, M_INT, NO_MOID);
   a68_idf (A68_EXT, "leftcolumns", m, genie_left_columns);

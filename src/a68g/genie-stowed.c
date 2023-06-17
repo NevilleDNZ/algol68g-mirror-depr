@@ -109,6 +109,7 @@ void print_internal_index (FILE_T f, A68_TUPLE * tup, int dim)
   for (int k = 0; k < dim; k++) {
     A68_TUPLE *ref = &tup[k];
     BUFFER buf;
+    BUFCLR (buf);
     ASSERT (snprintf (buf, SNPRINTF_SIZE, A68_LD, K (ref)) >= 0);
     WRITE (f, buf);
     if (k < dim - 1) {

@@ -40,6 +40,7 @@ void build_script (void)
   FILE_T script, source;
   LINE_T *sl;
   BUFFER cmd;
+  BUFCLR (cmd);
   char *strop;
 #if !defined (BUILD_A68_COMPILER)
   return;
@@ -108,6 +109,7 @@ void build_script (void)
 void load_script (void)
 {
   int k; FILE_T script; BUFFER cmd; char ch;
+  BUFCLR (cmd);
 #if !defined (BUILD_A68_COMPILER)
   return;
 #endif

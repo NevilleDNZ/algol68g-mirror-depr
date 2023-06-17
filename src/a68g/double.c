@@ -34,7 +34,6 @@
 #include "a68g-double.h"
 #include "a68g-lib.h"
 #include "a68g-numbers.h"
-#include "a68g-quad.h"
 
 // 128-bit REAL*16 stuff.
 
@@ -340,13 +339,13 @@ DOUBLE_T a68_double_hypot (DOUBLE_T x, DOUBLE_T y)
     return max;
   } else {
     DOUBLE_T u = min / max;
-    return max * sqrtq (1.0q + u * u);
+    return max * sqrt_double (1.0q + u * u);
   }
 }
 
 // Conversions.
 
-DOUBLE_NUM_T double_int_to_double_real (NODE_T * p, DOUBLE_NUM_T z)
+DOUBLE_NUM_T double_int_to_double (NODE_T * p, DOUBLE_NUM_T z)
 {
   DOUBLE_NUM_T w, radix;
   DOUBLE_T weight;
@@ -370,12 +369,12 @@ DOUBLE_NUM_T double_int_to_double_real (NODE_T * p, DOUBLE_NUM_T z)
   return w;
 }
 
-DOUBLE_NUM_T double_real_to_double_int (NODE_T * p, DOUBLE_NUM_T z)
+DOUBLE_NUM_T double_to_double_int (NODE_T * p, DOUBLE_NUM_T z)
 {
 // This routines looks a lot like "strtol". 
   DOUBLE_NUM_T sum, weight, radix;
   BOOL_T negative = (BOOL_T) (z.f < 0);
-  z.f = fabsq (truncq (z.f));
+  z.f = fabs_double (trunc_double (z.f));
   if (z.f > CONST_2_UP_112_Q) {
     errno = EDOM;
     MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
@@ -385,7 +384,7 @@ DOUBLE_NUM_T double_real_to_double_int (NODE_T * p, DOUBLE_NUM_T z)
   set_lw (radix, RADIX);
   while (z.f > 0) {
     DOUBLE_NUM_T term, digit, quot, rest;
-    quot.f = truncq (z.f / RADIX_Q);
+    quot.f = trunc_double (z.f / RADIX_Q);
     rest.f = z.f - quot.f * RADIX_Q;
     z.f = quot.f;
     set_lw (digit, (INT_T) (rest.f));
@@ -538,16 +537,16 @@ BOOL_T convert_radix_double (NODE_T * p, DOUBLE_NUM_T z, int radix, int width)
 
 //! @brief OP LENG = (LONG INT) LONG REAL
 
-void genie_widen_double_int_to_double_real (NODE_T * p)
+void genie_widen_double_int_to_double (NODE_T * p)
 {
   A68_DOUBLE *z = (A68_DOUBLE *) STACK_TOP;
   EXECUTE_UNIT (SUB (p));
-  VALUE (z) = double_int_to_double_real (p, VALUE (z));
+  VALUE (z) = double_int_to_double (p, VALUE (z));
 }
 
 //! @brief OP LENG = (REAL) LONG REAL
 
-DOUBLE_NUM_T dble_double_real (NODE_T * p, REAL_T z)
+DOUBLE_NUM_T dble_double (NODE_T * p, REAL_T z)
 {
 // Quick and dirty, only works with 64-bit INT_T.
   BOOL_T nega = (z < 0.0);
@@ -558,7 +557,7 @@ DOUBLE_NUM_T dble_double_real (NODE_T * p, REAL_T z)
   u *= ten_up (REAL_DIG);
   expo -= REAL_DIG;
   set_lw (w, (INT_T) u);
-  w = double_int_to_double_real (p, w);
+  w = double_int_to_double (p, w);
   w.f *= ten_up_double (expo);
   if (nega) {
     w.f = -w.f;
@@ -568,16 +567,16 @@ DOUBLE_NUM_T dble_double_real (NODE_T * p, REAL_T z)
 
 //! @brief OP LENG = (REAL) LONG REAL
 
-void genie_lengthen_real_to_double_real (NODE_T * p)
+void genie_lengthen_real_to_double (NODE_T * p)
 {
   A68_REAL z;
   POP_OBJECT (p, &z, A68_REAL);
-  PUSH_VALUE (p, dble_double_real (p, VALUE (&z)), A68_LONG_REAL);
+  PUSH_VALUE (p, dble_double (p, VALUE (&z)), A68_LONG_REAL);
 }
 
 //! @brief OP SHORTEN = (LONG REAL) REAL
 
-void genie_shorten_double_real_to_real (NODE_T * p)
+void genie_shorten_double_to_real (NODE_T * p)
 {
   A68_LONG_REAL z;
   REAL_T w;
@@ -651,7 +650,7 @@ DOUBLE_NUM_T mp_to_double_int (NODE_T * p, MP_T * z, int digs)
 
 //! @brief Convert real to multi-precison number.
 
-MP_T *double_real_to_mp (NODE_T * p, MP_T * z, DOUBLE_T x, int digs)
+MP_T *double_to_mp (NODE_T * p, MP_T * z, DOUBLE_T x, int digs)
 {
   int j, k, sign_x, sum, weight;
   SET_MP_ZERO (z, digs);
@@ -659,13 +658,13 @@ MP_T *double_real_to_mp (NODE_T * p, MP_T * z, DOUBLE_T x, int digs)
     return z;
   }
 // Small integers can be done better by int_to_mp.
-  if (ABS (x) < MP_RADIX && truncq (x) == x) {
-    return int_to_mp (p, z, (int) truncq (x), digs);
+  if (ABS (x) < MP_RADIX && trunc_double (x) == x) {
+    return int_to_mp (p, z, (int) trunc_double (x), digs);
   }
   sign_x = SIGN (x);
 // Scale to [0, 0.1>.
   DOUBLE_T a = ABS (x);
-  INT_T expo = (int) log10q (a);
+  INT_T expo = (int) log10_double (a);
   a /= ten_up_double (expo);
   expo--;
   if (a >= 1.0q) {
@@ -677,7 +676,7 @@ MP_T *double_real_to_mp (NODE_T * p, MP_T * z, DOUBLE_T x, int digs)
   weight = (MP_RADIX / 10);
   for (k = 0, j = 1; a != 0.0q && j <= digs && k < DOUBLE_DIGITS; k++) {
     DOUBLE_T u = a * 10.0q;
-    DOUBLE_T v = floorq (u);
+    DOUBLE_T v = floor_double (u);
     a = u - v;
     sum += weight * (int) v;
     weight /= 10;
@@ -700,7 +699,7 @@ MP_T *double_real_to_mp (NODE_T * p, MP_T * z, DOUBLE_T x, int digs)
 
 //! @brief Convert multi-precision number to real.
 
-DOUBLE_T mp_to_double_real (NODE_T * p, MP_T * z, int digs)
+DOUBLE_T mp_to_double (NODE_T * p, MP_T * z, int digs)
 {
 // This routine looks a lot like "strtod".
   if (MP_EXPONENT (z) * (MP_T) LOG_MP_RADIX <= (MP_T) DOUBLE_MIN_10_EXP) {
@@ -723,39 +722,39 @@ DOUBLE_T mp_to_double_real (NODE_T * p, MP_T * z, int digs)
   }
 }
 
-DOUBLE_T inverf_double_real (DOUBLE_T z)
+DOUBLE_T inverf_double (DOUBLE_T z)
 {
-  if (fabsq (z) >= 1.0q) {
+  if (fabs_double (z) >= 1.0q) {
     errno = EDOM;
     return z;
   } else {
 // Newton-Raphson.
-    DOUBLE_T f = sqrtq (M_PIq) / 2, g, x = z;
+    DOUBLE_T f = sqrt_double (M_PIq) / 2, g, x = z;
     int its = 10;
     x = dble (a68_inverf ((REAL_T) x)).f;
     do {
       g = x;
-      x -= f * (erfq (x) - z) / expq (-(x * x));
-    } while (its-- > 0 && errno == 0 && fabsq (x - g) > (3 * FLT128_EPSILON));
+      x -= f * (erf_double (x) - z) / exp_double (-(x * x));
+    } while (its-- > 0 && errno == 0 && fabs_double (x - g) > (3 * FLT128_EPSILON));
     return x;
   }
 }
 
 //! @brief OP LENG = (LONG REAL) LONG LONG REAL
 
-void genie_lengthen_double_real_to_mp (NODE_T * p)
+void genie_lengthen_double_to_mp (NODE_T * p)
 {
   int digs = DIGITS (M_LONG_LONG_REAL);
   A68_LONG_REAL x;
   POP_OBJECT (p, &x, A68_LONG_REAL);
   MP_T *z = nil_mp (p, digs);
-  (void) double_real_to_mp (p, z, VALUE (&x).f, digs);
+  (void) double_to_mp (p, z, VALUE (&x).f, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
 //! @brief OP SHORTEN = (LONG LONG REAL) LONG REAL
 
-void genie_shorten_mp_to_double_real (NODE_T * p)
+void genie_shorten_mp_to_double (NODE_T * p)
 {
   MOID_T *mode = LHS_MODE (p);
   int digs = DIGITS (mode), size = SIZE (mode);
@@ -764,7 +763,7 @@ void genie_shorten_mp_to_double_real (NODE_T * p)
   DECREMENT_STACK_POINTER (p, size);
   z = (MP_T *) STACK_TOP;
   MP_STATUS (z) = (MP_T) INIT_MASK;
-  d.f = mp_to_double_real (p, z, digs);
+  d.f = mp_to_double (p, z, digs);
   PUSH_VALUE (p, d, A68_LONG_REAL);
 }
 
@@ -777,8 +776,8 @@ void genie_shorten_long_mp_complex_to_double_compl (NODE_T * p)
   MP_T *a = (MP_T *) STACK_OFFSET (-2 * size);
   DECREMENT_STACK_POINTER (p, 2 * size);
   DOUBLE_NUM_T u, v;
-  u.f = mp_to_double_real (p, a, digs);
-  v.f = mp_to_double_real (p, b, digs);
+  u.f = mp_to_double (p, a, digs);
+  v.f = mp_to_double (p, b, digs);
   PUSH_VALUE (p, u, A68_LONG_REAL);
   PUSH_VALUE (p, v, A68_LONG_REAL);
 }
@@ -948,7 +947,7 @@ void genie_minus_double_int (NODE_T * p)
 
 //! @brief OP ROUND = (LONG REAL) LONG INT
 
-void genie_round_double_real (NODE_T * p)
+void genie_round_double (NODE_T * p)
 {
   A68_LONG_REAL x;
   DOUBLE_NUM_T u;
@@ -959,19 +958,19 @@ void genie_round_double_real (NODE_T * p)
   } else {
     u.f = u.f + 0.5q;
   }
-  PUSH_VALUE (p, double_real_to_double_int (p, u), A68_LONG_INT);
+  PUSH_VALUE (p, double_to_double_int (p, u), A68_LONG_INT);
 }
 
 //! @brief OP ENTIER = (LONG REAL) LONG INT
 
-void genie_entier_double_real (NODE_T * p)
+void genie_entier_double (NODE_T * p)
 {
   A68_LONG_REAL x;
   DOUBLE_NUM_T u;
   POP_OBJECT (p, &x, A68_LONG_REAL);
   u = VALUE (&x);
-  u.f = floorq (u.f);
-  PUSH_VALUE (p, double_real_to_double_int (p, u), A68_LONG_INT);
+  u.f = floor_double (u.f);
+  PUSH_VALUE (p, double_to_double_int (p, u), A68_LONG_INT);
 }
 
 //! @brief OP + = (LONG INT, LONG INT) LONG INT
@@ -1035,8 +1034,8 @@ void genie_div_double_int (NODE_T * p)
   POP_OBJECT (p, &j, A68_LONG_INT);
   POP_OBJECT (p, &i, A68_LONG_INT);
   PRELUDE_ERROR (D_ZERO (VALUE (&j)), p, ERROR_DIVISION_BY_ZERO, M_LONG_INT);
-  v = double_int_to_double_real (p, VALUE (&j));
-  u = double_int_to_double_real (p, VALUE (&i));
+  v = double_int_to_double (p, VALUE (&j));
+  u = double_int_to_double (p, VALUE (&i));
   w.f = u.f / v.f;
   PUSH_VALUE (p, w, A68_LONG_REAL);
 }
@@ -1070,7 +1069,7 @@ void genie_pow_double_int_int (NODE_T * p)
 
 //! @brief OP - = (LONG REAL) LONG REAL
 
-void genie_minus_double_real (NODE_T * p)
+void genie_minus_double (NODE_T * p)
 {
   A68_LONG_REAL *u;
   POP_OPERAND_ADDRESS (p, u, A68_LONG_REAL);
@@ -1079,25 +1078,25 @@ void genie_minus_double_real (NODE_T * p)
 
 //! @brief OP ABS = (LONG REAL) LONG REAL
 
-void genie_abs_double_real (NODE_T * p)
+void genie_abs_double (NODE_T * p)
 {
   A68_LONG_REAL *u;
   POP_OPERAND_ADDRESS (p, u, A68_LONG_REAL);
-  VALUE (u).f = fabsq (VALUE (u).f);
+  VALUE (u).f = fabs_double (VALUE (u).f);
 }
 
 //! @brief OP SIGN = (LONG REAL) INT
 
-void genie_sign_double_real (NODE_T * p)
+void genie_sign_double (NODE_T * p)
 {
   A68_LONG_REAL u;
   POP_OBJECT (p, &u, A68_LONG_REAL);
-  PUSH_VALUE (p, sign_double_real (VALUE (&u)), A68_INT);
+  PUSH_VALUE (p, sign_double (VALUE (&u)), A68_INT);
 }
 
 //! @brief OP ** = (LONG REAL, INT) INT
 
-void genie_pow_double_real_int (NODE_T * p)
+void genie_pow_double_int (NODE_T * p)
 {
   A68_LONG_REAL z;
   A68_INT j;
@@ -1136,7 +1135,7 @@ void genie_pow_double_real_int (NODE_T * p)
 
 //! @brief OP ** = (LONG REAL, LONG REAL) LONG REAL
 
-void genie_pow_double_real (NODE_T * p)
+void genie_pow_double (NODE_T * p)
 {
   A68_LONG_REAL x, y;
   DOUBLE_T z = 0.0q;
@@ -1152,7 +1151,7 @@ void genie_pow_double_real (NODE_T * p)
       z = (VALUE (&y).f == 0.0q ? 1.0q : 0.0q);
     }
   } else {
-    z = expq (VALUE (&y).f * logq (VALUE (&x).f));
+    z = exp_double (VALUE (&y).f * log_double (VALUE (&x).f));
     MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
   }
   PUSH_VALUE (p, dble (z), A68_LONG_REAL);
@@ -1160,7 +1159,7 @@ void genie_pow_double_real (NODE_T * p)
 
 //! @brief OP + = (LONG REAL, LONG REAL) LONG REAL
 
-void genie_add_double_real (NODE_T * p)
+void genie_add_double (NODE_T * p)
 {
   A68_LONG_REAL u, v;
   DOUBLE_NUM_T w;
@@ -1173,7 +1172,7 @@ void genie_add_double_real (NODE_T * p)
 
 //! @brief OP - = (LONG REAL, LONG REAL) LONG REAL
 
-void genie_sub_double_real (NODE_T * p)
+void genie_sub_double (NODE_T * p)
 {
   A68_LONG_REAL u, v;
   DOUBLE_NUM_T w;
@@ -1186,7 +1185,7 @@ void genie_sub_double_real (NODE_T * p)
 
 //! @brief OP * = (LONG REAL, LONG REAL) LONG REAL
 
-void genie_mul_double_real (NODE_T * p)
+void genie_mul_double (NODE_T * p)
 {
   A68_LONG_REAL u, v;
   DOUBLE_NUM_T w;
@@ -1199,7 +1198,7 @@ void genie_mul_double_real (NODE_T * p)
 
 //! @brief OP / = (LONG REAL, LONG REAL) LONG REAL
 
-void genie_over_double_real (NODE_T * p)
+void genie_over_double (NODE_T * p)
 {
   A68_LONG_REAL u, v;
   DOUBLE_NUM_T w;
@@ -1247,30 +1246,30 @@ void genie_modab_double_int (NODE_T * p)
 
 //! @brief OP +:= = (REF LONG REAL, LONG REAL) REF LONG REAL
 
-void genie_plusab_double_real (NODE_T * p)
+void genie_plusab_double (NODE_T * p)
 {
-  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_add_double_real);
+  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_add_double);
 }
 
 //! @brief OP -:= = (REF LONG REAL, LONG REAL) REF LONG REAL
 
-void genie_minusab_double_real (NODE_T * p)
+void genie_minusab_double (NODE_T * p)
 {
-  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_sub_double_real);
+  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_sub_double);
 }
 
 //! @brief OP *:= = (REF LONG REAL, LONG REAL) REF LONG REAL
 
-void genie_timesab_double_real (NODE_T * p)
+void genie_timesab_double (NODE_T * p)
 {
-  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_mul_double_real);
+  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_mul_double);
 }
 
 //! @brief OP /:= = (REF LONG REAL, LONG REAL) REF LONG REAL
 
-void genie_divab_double_real (NODE_T * p)
+void genie_divab_double (NODE_T * p)
 {
-  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_over_double_real);
+  genie_f_and_becomes (p, M_REF_LONG_REAL, genie_over_double);
 }
 
 // OP (LONG INT, LONG INT) BOOL.
@@ -1298,12 +1297,12 @@ void n (NODE_T * p) {\
   POP_OBJECT (p, &i, A68_LONG_REAL);\
   PUSH_VALUE (p, (BOOL_T) (VALUE (&i).f OP VALUE (&j).f), A68_BOOL);\
   }
-  A68_CMP_REAL (genie_eq_double_real, ==)
-  A68_CMP_REAL (genie_ne_double_real, !=)
-  A68_CMP_REAL (genie_lt_double_real, <)
-  A68_CMP_REAL (genie_gt_double_real, >)
-  A68_CMP_REAL (genie_le_double_real, <=)
-  A68_CMP_REAL (genie_ge_double_real, >=)
+  A68_CMP_REAL (genie_eq_double, ==)
+  A68_CMP_REAL (genie_ne_double, !=)
+  A68_CMP_REAL (genie_lt_double, <)
+  A68_CMP_REAL (genie_gt_double, >)
+  A68_CMP_REAL (genie_le_double, <=)
+  A68_CMP_REAL (genie_ge_double, >=)
 //! @brief OP NOT = (LONG BITS) LONG BITS
      void genie_not_double_bits (NODE_T * p)
 {
@@ -1730,10 +1729,10 @@ void genie_lengthen_double_compl_to_long_mp_complex (NODE_T * p)
   POP_OBJECT (p, &im, A68_LONG_REAL);
   POP_OBJECT (p, &re, A68_LONG_REAL);
   MP_T *z = nil_mp (p, digs);
-  (void) double_real_to_mp (p, z, VALUE (&re).f, digs);
+  (void) double_to_mp (p, z, VALUE (&re).f, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
   z = nil_mp (p, digs);
-  (void) double_real_to_mp (p, z, VALUE (&im).f, digs);
+  (void) double_to_mp (p, z, VALUE (&im).f, digs);
   MP_STATUS (z) = (MP_T) INIT_MASK;
 }
 
@@ -1744,8 +1743,8 @@ void genie_i_int_double_compl (NODE_T * p)
   A68_LONG_INT re, im;
   POP_OBJECT (p, &im, A68_LONG_INT);
   POP_OBJECT (p, &re, A68_LONG_INT);
-  PUSH_VALUE (p, double_int_to_double_real (p, VALUE (&re)), A68_LONG_REAL);
-  PUSH_VALUE (p, double_int_to_double_real (p, VALUE (&im)), A68_LONG_REAL);
+  PUSH_VALUE (p, double_int_to_double (p, VALUE (&re)), A68_LONG_REAL);
+  PUSH_VALUE (p, double_int_to_double (p, VALUE (&im)), A68_LONG_REAL);
 }
 
 //! @brief OP RE = (LONG COMPLEX) LONG REAL
@@ -1794,7 +1793,7 @@ void genie_arg_double_compl (NODE_T * p)
   A68_LONG_REAL re, im;
   POP_LONG_COMPLEX (p, &re, &im);
   PRELUDE_ERROR (VALUE (&re).f == 0.0q && VALUE (&im).f == 0.0q, p, ERROR_INVALID_ARGUMENT, M_LONG_COMPLEX);
-  PUSH_VALUE (p, dble (atan2q (VALUE (&im).f, VALUE (&re).f)), A68_LONG_REAL);
+  PUSH_VALUE (p, dble (atan2_double (VALUE (&im).f, VALUE (&re).f)), A68_LONG_REAL);
 }
 
 //! @brief OP CONJ = (LONG COMPLEX) LONG COMPLEX
@@ -1972,9 +1971,9 @@ void genie_lengthen_complex_to_double_compl (NODE_T * p)
 {
   A68_REAL i;
   POP_OBJECT (p, &i, A68_REAL);
-  genie_lengthen_real_to_double_real (p);
+  genie_lengthen_real_to_double (p);
   PUSH_OBJECT (p, i, A68_REAL);
-  genie_lengthen_real_to_double_real (p);
+  genie_lengthen_real_to_double (p);
 }
 
 // Functions
@@ -1988,49 +1987,49 @@ void name (NODE_T * p) {\
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);\
 }
 
-CD_FUNCTION (genie_acos_double_real, acosq);
-CD_FUNCTION (genie_acosh_double_real, acoshq);
-CD_FUNCTION (genie_asinh_double_real, asinhq);
-CD_FUNCTION (genie_atanh_double_real, atanhq);
-CD_FUNCTION (genie_asin_double_real, asinq);
-CD_FUNCTION (genie_atan_double_real, atanq);
-CD_FUNCTION (genie_cosh_double_real, coshq);
-CD_FUNCTION (genie_cos_double_real, cosq);
-CD_FUNCTION (genie_curt_double_real, cbrtq);
-CD_FUNCTION (genie_exp_double_real, expq);
-CD_FUNCTION (genie_ln_double_real, logq);
-CD_FUNCTION (genie_log_double_real, log10q);
-CD_FUNCTION (genie_sinh_double_real, sinhq);
-CD_FUNCTION (genie_sin_double_real, sinq);
-CD_FUNCTION (genie_sqrt_double_real, sqrtq);
-CD_FUNCTION (genie_tanh_double_real, tanhq);
-CD_FUNCTION (genie_tan_double_real, tanq);
-CD_FUNCTION (genie_erf_double_real, erfq);
-CD_FUNCTION (genie_erfc_double_real, erfcq);
-CD_FUNCTION (genie_lngamma_double_real, lgammaq);
-CD_FUNCTION (genie_gamma_double_real, tgammaq);
-CD_FUNCTION (genie_csc_double_real, csc_double_real);
-CD_FUNCTION (genie_acsc_double_real, acsc_double_real);
-CD_FUNCTION (genie_sec_double_real, sec_double_real);
-CD_FUNCTION (genie_asec_double_real, asec_double_real);
-CD_FUNCTION (genie_cot_double_real, cot_double_real);
-CD_FUNCTION (genie_acot_double_real, acot_double_real);
-CD_FUNCTION (genie_sindg_double_real, sindg_double_real);
-CD_FUNCTION (genie_cosdg_double_real, cosdg_double_real);
-CD_FUNCTION (genie_tandg_double_real, tandg_double_real);
-CD_FUNCTION (genie_asindg_double_real, asindg_double_real);
-CD_FUNCTION (genie_acosdg_double_real, acosdg_double_real);
-CD_FUNCTION (genie_atandg_double_real, atandg_double_real);
-CD_FUNCTION (genie_cotdg_double_real, cotdg_double_real);
-CD_FUNCTION (genie_acotdg_double_real, acotdg_double_real);
-CD_FUNCTION (genie_sinpi_double_real, sinpi_double_real);
-CD_FUNCTION (genie_cospi_double_real, cospi_double_real);
-CD_FUNCTION (genie_tanpi_double_real, tanpi_double_real);
-CD_FUNCTION (genie_cotpi_double_real, cotpi_double_real);
+CD_FUNCTION (genie_acos_double, acos_double);
+CD_FUNCTION (genie_acosh_double, acosh_double);
+CD_FUNCTION (genie_asinh_double, asinh_double);
+CD_FUNCTION (genie_atanh_double, atanh_double);
+CD_FUNCTION (genie_asin_double, asin_double);
+CD_FUNCTION (genie_atan_double, atan_double);
+CD_FUNCTION (genie_cosh_double, cosh_double);
+CD_FUNCTION (genie_cos_double, cos_double);
+CD_FUNCTION (genie_curt_double, cbrt_double);
+CD_FUNCTION (genie_exp_double, exp_double);
+CD_FUNCTION (genie_ln_double, log_double);
+CD_FUNCTION (genie_log_double, log10_double);
+CD_FUNCTION (genie_sinh_double, sinh_double);
+CD_FUNCTION (genie_sin_double, sin_double);
+CD_FUNCTION (genie_sqrt_double, sqrt_double);
+CD_FUNCTION (genie_tanh_double, tanh_double);
+CD_FUNCTION (genie_tan_double, tan_double);
+CD_FUNCTION (genie_erf_double, erf_double);
+CD_FUNCTION (genie_erfc_double, erfc_double);
+CD_FUNCTION (genie_lngamma_double, lgamma_double);
+CD_FUNCTION (genie_gamma_double, tgamma_double);
+CD_FUNCTION (genie_csc_double, csc_double);
+CD_FUNCTION (genie_acsc_double, acsc_double);
+CD_FUNCTION (genie_sec_double, sec_double);
+CD_FUNCTION (genie_asec_double, asec_double);
+CD_FUNCTION (genie_cot_double, cot_double);
+CD_FUNCTION (genie_acot_double, acot_double);
+CD_FUNCTION (genie_sindg_double, sindg_double);
+CD_FUNCTION (genie_cosdg_double, cosdg_double);
+CD_FUNCTION (genie_tandg_double, tandg_double);
+CD_FUNCTION (genie_asindg_double, asindg_double);
+CD_FUNCTION (genie_acosdg_double, acosdg_double);
+CD_FUNCTION (genie_atandg_double, atandg_double);
+CD_FUNCTION (genie_cotdg_double, cotdg_double);
+CD_FUNCTION (genie_acotdg_double, acotdg_double);
+CD_FUNCTION (genie_sinpi_double, sinpi_double);
+CD_FUNCTION (genie_cospi_double, cospi_double);
+CD_FUNCTION (genie_tanpi_double, tanpi_double);
+CD_FUNCTION (genie_cotpi_double, cotpi_double);
 
 //! @brief PROC long arctan2 = (LONG REAL) LONG REAL
 
-void genie_atan2_double_real (NODE_T * p)
+void genie_atan2_double (NODE_T * p)
 {
   A68_LONG_REAL x, y;
   POP_OBJECT (p, &y, A68_LONG_REAL);
@@ -2044,7 +2043,7 @@ void genie_atan2_double_real (NODE_T * p)
 
 //! @brief PROC long arctan2dg = (LONG REAL) LONG REAL
 
-void genie_atan2dg_double_real (NODE_T * p)
+void genie_atan2dg_double (NODE_T * p)
 {
   A68_LONG_REAL x, y;
   POP_OBJECT (p, &y, A68_LONG_REAL);
@@ -2058,15 +2057,14 @@ void genie_atan2dg_double_real (NODE_T * p)
 
 //! @brief PROC (LONG REAL) LONG REAL inverf
 
-void genie_inverf_double_real (NODE_T * _p_)
+void genie_inverf_double (NODE_T * _p_)
 {
   A68_LONG_REAL x;
   DOUBLE_T y, z;
-  A68 (f_entry) = _p_;
   POP_OBJECT (_p_, &x, A68_LONG_REAL);
   errno = 0;
   y = VALUE (&x).f;
-  z = inverf_double_real (y);
+  z = inverf_double (y);
   MATH_RTE (_p_, errno != 0, M_LONG_REAL, NO_TEXT);
   CHECK_DOUBLE_REAL (_p_, z);
   PUSH_VALUE (_p_, dble (z), A68_LONG_REAL);
@@ -2074,16 +2072,13 @@ void genie_inverf_double_real (NODE_T * _p_)
 
 //! @brief PROC (LONG REAL) LONG REAL inverfc
 
-void genie_inverfc_double_real (NODE_T * p)
+void genie_inverfc_double (NODE_T * p)
 {
   A68_LONG_REAL *u;
   POP_OPERAND_ADDRESS (p, u, A68_LONG_REAL);
   VALUE (u).f = 1.0q - (VALUE (u).f);
-  genie_inverf_double_real (p);
+  genie_inverf_double (p);
 }
-
-#define _re_ (VALUE (&re).f)
-#define _im_ (VALUE (&im).f)
 
 #define CD_C_FUNCTION(p, g)\
   A68_LONG_REAL re, im;\
@@ -2093,125 +2088,122 @@ void genie_inverfc_double_real (NODE_T * p)
   errno = 0;\
   z = VALUE (&re).f + VALUE (&im).f * _Complex_I;\
   z = g (z);\
-  PUSH_VALUE (p, dble ((DOUBLE_T) crealq (z)), A68_LONG_REAL);\
-  PUSH_VALUE (p, dble ((DOUBLE_T) cimagq (z)), A68_LONG_REAL);\
+  PUSH_VALUE (p, dble ((DOUBLE_T) creal_double (z)), A68_LONG_REAL);\
+  PUSH_VALUE (p, dble ((DOUBLE_T) cimag_double (z)), A68_LONG_REAL);\
   MATH_RTE (p, errno != 0, M_COMPLEX, NO_TEXT);
 
 //! @brief PROC long csqrt = (LONG COMPLEX) LONG COMPLEX
 
 void genie_sqrt_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, csqrtq);
+  CD_C_FUNCTION (p, csqrt_double);
 }
 
 //! @brief PROC long csin = (LONG COMPLEX) LONG COMPLEX
 
 void genie_sin_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, csinq);
+  CD_C_FUNCTION (p, csin_double);
 }
 
 //! @brief PROC long ccos = (LONG COMPLEX) LONG COMPLEX
 
 void genie_cos_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, ccosq);
+  CD_C_FUNCTION (p, ccos_double);
 }
 
 //! @brief PROC long ctan = (LONG COMPLEX) LONG COMPLEX
 
 void genie_tan_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, ctanq);
+  CD_C_FUNCTION (p, ctan_double);
 }
 
 //! @brief PROC long casin = (LONG COMPLEX) LONG COMPLEX
 
 void genie_asin_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, casinq);
+  CD_C_FUNCTION (p, casin_double);
 }
 
 //! @brief PROC long cacos = (LONG COMPLEX) LONG COMPLEX
 
 void genie_acos_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, cacosq);
+  CD_C_FUNCTION (p, cacos_double);
 }
 
 //! @brief PROC long catan = (LONG COMPLEX) LONG COMPLEX
 
 void genie_atan_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, catanq);
+  CD_C_FUNCTION (p, catan_double);
 }
 
 //! @brief PROC long cexp = (LONG COMPLEX) LONG COMPLEX
 
 void genie_exp_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, cexpq);
+  CD_C_FUNCTION (p, cexp_double);
 }
 
 //! @brief PROC long cln = (LONG COMPLEX) LONG COMPLEX
 
 void genie_ln_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, clogq);
+  CD_C_FUNCTION (p, clog_double);
 }
 
 //! @brief PROC long csinh = (LONG COMPLEX) LONG COMPLEX
 
 void genie_sinh_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, csinhq);
+  CD_C_FUNCTION (p, csinh_double);
 }
 
 //! @brief PROC long ccosh = (LONG COMPLEX) LONG COMPLEX
 
 void genie_cosh_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, ccoshq);
+  CD_C_FUNCTION (p, ccosh_double);
 }
 
 //! @brief PROC long ctanh = (LONG COMPLEX) LONG COMPLEX
 
 void genie_tanh_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, ctanhq);
+  CD_C_FUNCTION (p, ctanh_double);
 }
 
 //! @brief PROC long casinh = (LONG COMPLEX) LONG COMPLEX
 
 void genie_asinh_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, casinhq);
+  CD_C_FUNCTION (p, casinh_double);
 }
 
 //! @brief PROC long cacosh = (LONG COMPLEX) LONG COMPLEX
 
 void genie_acosh_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, cacoshq);
+  CD_C_FUNCTION (p, cacosh_double);
 }
 
 //! @brief PROC long catanh = (LONG COMPLEX) LONG COMPLEX
 
 void genie_atanh_double_compl (NODE_T * p)
 {
-  CD_C_FUNCTION (p, catanhq);
+  CD_C_FUNCTION (p, catanh_double);
 }
-
-#undef _re_
-#undef _im_
 
 //! @brief PROC next long random = LONG REAL
 
-void genie_next_random_double_real (NODE_T * p)
+void genie_next_random_double (NODE_T * p)
 {
 // This is 'real width' digits only.
   genie_next_random (p);
-  genie_lengthen_real_to_double_real (p);
+  genie_lengthen_real_to_double (p);
 }
 
 #define CALL(g, x, y) {\
@@ -2227,7 +2219,7 @@ void genie_next_random_double_real (NODE_T * p)
 
 //! @brief Transform string into real-16.
 
-DOUBLE_T string_to_double_real (char *s, char **end)
+DOUBLE_T string_to_double (char *s, char **end)
 {
   int i, dot = -1, pos = 0, pow = 0, expo;
   DOUBLE_T sum, W, y[FLT128_DIG];
@@ -2279,7 +2271,7 @@ DOUBLE_T string_to_double_real (char *s, char **end)
   } else {
     expo += pow - 1;
   }
-  while (sum != 0.0q && fabsq (sum) < 1.0q) {
+  while (sum != 0.0q && fabs_double (sum) < 1.0q) {
     sum *= 10.0q;
     expo -= 1;
   }
@@ -2291,47 +2283,47 @@ DOUBLE_T string_to_double_real (char *s, char **end)
   }
 }
 
-void genie_beta_inc_cf_double_real (NODE_T * p)
+void genie_beta_inc_cf_double (NODE_T * p)
 {
   A68_LONG_REAL x, s, t;
   POP_OBJECT (p, &x, A68_LONG_REAL);
   POP_OBJECT (p, &t, A68_LONG_REAL);
   POP_OBJECT (p, &s, A68_LONG_REAL);
   errno = 0;
-  PUSH_VALUE (p, dble (a68_beta_inc_double_real (VALUE (&s).f, VALUE (&t).f, VALUE (&x).f)), A68_LONG_REAL);
+  PUSH_VALUE (p, dble (a68_beta_inc_double (VALUE (&s).f, VALUE (&t).f, VALUE (&x).f)), A68_LONG_REAL);
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
 }
 
-void genie_beta_double_real (NODE_T * p)
+void genie_beta_double (NODE_T * p)
 {
   A68_LONG_REAL a, b;
   POP_OBJECT (p, &b, A68_LONG_REAL);
   POP_OBJECT (p, &a, A68_LONG_REAL);
   errno = 0;
-  PUSH_VALUE (p, dble (expq (lgammaq (VALUE (&a).f) + lgammaq (VALUE (&b).f) - lgammaq (VALUE (&a).f + VALUE (&b).f))), A68_LONG_REAL);
+  PUSH_VALUE (p, dble (exp_double (lgamma_double (VALUE (&a).f) + lgamma_double (VALUE (&b).f) - lgamma_double (VALUE (&a).f + VALUE (&b).f))), A68_LONG_REAL);
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
 }
 
-void genie_ln_beta_double_real (NODE_T * p)
+void genie_ln_beta_double (NODE_T * p)
 {
   A68_LONG_REAL a, b;
   POP_OBJECT (p, &b, A68_LONG_REAL);
   POP_OBJECT (p, &a, A68_LONG_REAL);
   errno = 0;
-  PUSH_VALUE (p, dble (lgammaq (VALUE (&a).f) + lgammaq (VALUE (&b).f) - lgammaq (VALUE (&a).f + VALUE (&b).f)), A68_LONG_REAL);
+  PUSH_VALUE (p, dble (lgamma_double (VALUE (&a).f) + lgamma_double (VALUE (&b).f) - lgamma_double (VALUE (&a).f + VALUE (&b).f)), A68_LONG_REAL);
   MATH_RTE (p, errno != 0, M_LONG_REAL, NO_TEXT);
 }
 
 // LONG REAL infinity
 
-void genie_infinity_double_real (NODE_T * p)
+void genie_infinity_double (NODE_T * p)
 {
   PUSH_VALUE (p, dble (a68_posinf ()), A68_LONG_REAL);
 }
 
 // LONG REAL minus infinity
 
-void genie_minus_infinity_double_real (NODE_T * p)
+void genie_minus_infinity_double (NODE_T * p)
 {
   PUSH_VALUE (p, dble (a68_dneginf ()), A68_LONG_REAL);
 }

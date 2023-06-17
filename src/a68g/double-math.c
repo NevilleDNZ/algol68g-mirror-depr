@@ -38,7 +38,7 @@
 
 #if (A68_LEVEL >= 3)
 
-DOUBLE_T a68_beta_inc_double_real (DOUBLE_T s, DOUBLE_T t, DOUBLE_T x)
+DOUBLE_T a68_beta_inc_double (DOUBLE_T s, DOUBLE_T t, DOUBLE_T x)
 {
 // Incomplete beta function I{x}(s, t).
 // Continued fraction, see dlmf.nist.gov/8.17; Lentz's algorithm.
@@ -50,7 +50,7 @@ DOUBLE_T a68_beta_inc_double_real (DOUBLE_T s, DOUBLE_T t, DOUBLE_T x)
 // Rapid convergence when x <= (s+1)/(s+t+2) or else recursion.
     if (x > (s + 1.0q) / (s + t + 2.0q)) {
 // B{x}(s, t) = 1 - B{1-x}(t, s)
-      return 1.0q - a68_beta_inc_double_real (s, t, 1.0q - x);
+      return 1.0q - a68_beta_inc_double (s, t, 1.0q - x);
     }
 // Lentz's algorithm for continued fraction.
     DOUBLE_T W = 1.0q, F = 1.0q, c = 1.0q, d = 0.0q;
@@ -77,107 +77,107 @@ DOUBLE_T a68_beta_inc_double_real (DOUBLE_T s, DOUBLE_T t, DOUBLE_T x)
       }
     }
 // I{x}(s,t)=x^s(1-x)^t / s / B(s,t) F
-    DOUBLE_T beta = expq (lgammaq (s) + lgammaq (t) - lgammaq (s + t));
-    return powq (x, s) * powq (1.0q - x, t) / s / beta * (F - 1.0q);
+    DOUBLE_T beta = exp_double (lgamma_double (s) + lgamma_double (t) - lgamma_double (s + t));
+    return pow_double (x, s) * pow_double (1.0q - x, t) / s / beta * (F - 1.0q);
   }
 }
 
 //! @brief PROC (LONG REAL) LONG REAL csc
 
-DOUBLE_T csc_double_real (DOUBLE_T x)
+DOUBLE_T csc_double (DOUBLE_T x)
 {
-  DOUBLE_T z = sinq (x);
+  DOUBLE_T z = sin_double (x);
   A68_OVERFLOW (z == 0.0q);
   return 1.0q / z;
 }
 
 //! @brief PROC (LONG REAL) LONG REAL acsc
 
-DOUBLE_T acsc_double_real (DOUBLE_T x)
+DOUBLE_T acsc_double (DOUBLE_T x)
 {
   A68_OVERFLOW (x == 0.0q);
-  return asinq (1.0q / x);
+  return asin_double (1.0q / x);
 }
 
 //! @brief PROC (LONG REAL) LONG REAL sec
 
-DOUBLE_T sec_double_real (DOUBLE_T x)
+DOUBLE_T sec_double (DOUBLE_T x)
 {
-  DOUBLE_T z = cosq (x);
+  DOUBLE_T z = cos_double (x);
   A68_OVERFLOW (z == 0.0q);
   return 1.0q / z;
 }
 
 //! @brief PROC (LONG REAL) LONG REAL asec
 
-DOUBLE_T asec_double_real (DOUBLE_T x)
+DOUBLE_T asec_double (DOUBLE_T x)
 {
   A68_OVERFLOW (x == 0.0q);
-  return acosq (1.0q / x);
+  return acos_double (1.0q / x);
 }
 
 //! @brief PROC (LONG REAL) LONG REAL cot
 
-DOUBLE_T cot_double_real (DOUBLE_T x)
+DOUBLE_T cot_double (DOUBLE_T x)
 {
-  DOUBLE_T z = sinq (x);
+  DOUBLE_T z = sin_double (x);
   A68_OVERFLOW (z == 0.0q);
-  return cosq (x) / z;
+  return cos_double (x) / z;
 }
 
 //! @brief PROC (LONG REAL) LONG REAL acot
 
-DOUBLE_T acot_double_real (DOUBLE_T x)
+DOUBLE_T acot_double (DOUBLE_T x)
 {
   A68_OVERFLOW (x == 0.0q);
-  return atanq (1 / x);
+  return atan_double (1 / x);
 }
 
 //! brief PROC (LONG REAL) LONG REAL sindg
 
-DOUBLE_T sindg_double_real (DOUBLE_T x)
+DOUBLE_T sindg_double (DOUBLE_T x)
 {
-  return sinq (x * CONST_PI_OVER_180_Q);
+  return sin_double (x * CONST_PI_OVER_180_Q);
 }
 
 //! brief PROC (LONG REAL) LONG REAL cosdg
 
-DOUBLE_T cosdg_double_real (DOUBLE_T x)
+DOUBLE_T cosdg_double (DOUBLE_T x)
 {
-  return cosq (x * CONST_PI_OVER_180_Q);
+  return cos_double (x * CONST_PI_OVER_180_Q);
 }
 
 //! brief PROC (LONG REAL) LONG REAL tandg
 
-DOUBLE_T tandg_double_real (DOUBLE_T x)
+DOUBLE_T tandg_double (DOUBLE_T x)
 {
-  return tanq (x * CONST_PI_OVER_180_Q);
+  return tan_double (x * CONST_PI_OVER_180_Q);
 }
 
 //! brief PROC (LONG REAL) LONG REAL asindg
 
-DOUBLE_T asindg_double_real (DOUBLE_T x)
+DOUBLE_T asindg_double (DOUBLE_T x)
 {
-  return asinq (x) * CONST_180_OVER_PI_Q;
+  return asin_double (x) * CONST_180_OVER_PI_Q;
 }
 
 //! brief PROC (LONG REAL) LONG REAL acosdg
 
-DOUBLE_T acosdg_double_real (DOUBLE_T x)
+DOUBLE_T acosdg_double (DOUBLE_T x)
 {
-  return acosq (x) * CONST_180_OVER_PI_Q;
+  return acos_double (x) * CONST_180_OVER_PI_Q;
 }
 
 //! brief PROC (LONG REAL) LONG REAL atandg
 
-DOUBLE_T atandg_double_real (DOUBLE_T x)
+DOUBLE_T atandg_double (DOUBLE_T x)
 {
-  return atanq (x) * CONST_180_OVER_PI_Q;
+  return atan_double (x) * CONST_180_OVER_PI_Q;
 }
 
 // PROC (LONG REAL) LONG REAL cotdg
 
-DOUBLE_T cotdg_double_real (DOUBLE_T x)
+DOUBLE_T cotdg_double (DOUBLE_T x)
 {
   DOUBLE_T z = a68_sindg (x);
   A68_OVERFLOW (z == 0);
@@ -186,7 +186,7 @@ DOUBLE_T cotdg_double_real (DOUBLE_T x)
 
 // PROC (LONG REAL) LONG REAL acotdg
 
-DOUBLE_T acotdg_double_real (DOUBLE_T z)
+DOUBLE_T acotdg_double (DOUBLE_T z)
 {
   A68_OVERFLOW (z == 0);
   return a68_atandg (1 / z);
@@ -194,9 +194,9 @@ DOUBLE_T acotdg_double_real (DOUBLE_T z)
 
 // @brief PROC (LONG REAL) LONG REAL sinpi
 
-DOUBLE_T sinpi_double_real (DOUBLE_T x)
+DOUBLE_T sinpi_double (DOUBLE_T x)
 {
-  x = fmodq (x, 2.0q);
+  x = fmod_double (x, 2.0q);
   if (x <= -1.0q) {
     x += 2.0q;
   } else if (x > 1.0q) {
@@ -211,15 +211,15 @@ DOUBLE_T sinpi_double_real (DOUBLE_T x)
   if (x == -0.5q) {
     return -1.0q;
   } else {
-    return sinq (CONST_PI_Q * x);
+    return sin_double (CONST_PI_Q * x);
   }
 }
 
 // @brief PROC (LONG REAL) LONG REAL cospi
 
-DOUBLE_T cospi_double_real (DOUBLE_T x)
+DOUBLE_T cospi_double (DOUBLE_T x)
 {
-  x = fmodq (fabsq (x), 2.0q);
+  x = fmod_double (fabs_double (x), 2.0q);
 // x in [0, 2>.
   if (x == 0.5q || x == 1.5q) {
     return 0.0q;
@@ -228,15 +228,15 @@ DOUBLE_T cospi_double_real (DOUBLE_T x)
   } else if (x == 1.0q) {
     return -1.0q;
   } else {
-    return cosq (CONST_PI_Q * x);
+    return cos_double (CONST_PI_Q * x);
   }
 }
 
 // @brief PROC (LONG REAL) LONG REAL tanpi
 
-DOUBLE_T tanpi_double_real (DOUBLE_T x)
+DOUBLE_T tanpi_double (DOUBLE_T x)
 {
-  x = fmodq (x, 1.0q);
+  x = fmod_double (x, 1.0q);
   if (x <= -0.5q) {
     x += 1.0q;
   } else if (x > 0.5q) {
@@ -251,15 +251,15 @@ DOUBLE_T tanpi_double_real (DOUBLE_T x)
   } else if (x == 0.25q) {
     return 1.0q;
   } else {
-    return sinpi_double_real (x) / cospi_double_real (x);
+    return sinpi_double (x) / cospi_double (x);
   }
 }
 
 // @brief PROC (LONG REAL) LONG REAL cotpi
 
-DOUBLE_T cotpi_double_real (DOUBLE_T x)
+DOUBLE_T cotpi_double (DOUBLE_T x)
 {
-  x = fmodq (x, 1.0q);
+  x = fmod_double (x, 1.0q);
   if (x <= -0.5q) {
     x += 1.0q;
   } else if (x > 0.5q) {
@@ -274,7 +274,7 @@ DOUBLE_T cotpi_double_real (DOUBLE_T x)
   } else if (x == 0.5q) {
     return 0.0q;
   } else {
-    return cospi_double_real (x) / sinpi_double_real (x);
+    return cospi_double (x) / sinpi_double (x);
   }
 }
 

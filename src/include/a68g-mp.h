@@ -250,7 +250,6 @@ enum {MP_SQRT_PI, MP_PI, MP_LN_PI, MP_SQRT_TWO_PI, MP_TWO_PI, MP_HALF_PI, MP_180
 // External multi-precision procedures
 
 extern BOOL_T check_mp_int (MP_T *, MOID_T *);
-extern BOOL_T is_int_mp (NODE_T *p, MP_T *z, int digits);
 extern BOOL_T same_mp (NODE_T *, MP_T *, MP_T *, int);
 extern int long_mp_digits (void);
 extern INT_T mp_to_int (NODE_T *, MP_T *, int);
@@ -542,7 +541,7 @@ extern GPROC genie_ln_beta_mpfr;
 extern GPROC genie_beta_mpfr;
 extern GPROC genie_gamma_inc_mpfr;
 extern GPROC genie_gamma_inc_real_mpfr;
-extern GPROC genie_gamma_inc_double_real_mpfr;
+extern GPROC genie_gamma_inc_double_mpfr;
 extern GPROC genie_gamma_mpfr;
 extern GPROC genie_lngamma_mpfr;
 extern GPROC genie_mpfr_erfc_mp;

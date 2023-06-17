@@ -24,10 +24,11 @@
 //! [LONG] LONG REAL math functions.
 
 #include "a68g.h"
-#include "a68g-genie.h"
-#include "a68g-prelude.h"
+
 #include "a68g-double.h"
+#include "a68g-genie.h"
 #include "a68g-mp.h"
+#include "a68g-prelude.h"
 
 //! @brief Test on |"z"| > 0.001 for argument reduction in "sin" and "exp".
 
@@ -78,8 +79,8 @@ MP_T *sqrt_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
   } else {
 // Argument is in range. Estimate the root as double.
 #if (A68_LEVEL >= 3)
-    DOUBLE_T x_d = mp_to_double_real (p, x_g, gdigs);
-    (void) double_real_to_mp (p, z_g, sqrtq (x_d), gdigs);
+    DOUBLE_T x_d = mp_to_double (p, x_g, gdigs);
+    (void) double_to_mp (p, z_g, sqrt_double (x_d), gdigs);
 #else
     REAL_T x_d = mp_to_real (p, x_g, gdigs);
     (void) real_to_mp (p, z_g, sqrt (x_d), gdigs);
@@ -137,8 +138,8 @@ MP_T *curt_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
 // Argument is in range. Estimate the root as double.
     int decimals;
 #if (A68_LEVEL >= 3)
-    DOUBLE_T x_d = mp_to_double_real (p, x_g, gdigs);
-    (void) double_real_to_mp (p, z_g, cbrtq (x_d), gdigs);
+    DOUBLE_T x_d = mp_to_double (p, x_g, gdigs);
+    (void) double_to_mp (p, z_g, cbrt_double (x_d), gdigs);
 #else
     REAL_T x_d = mp_to_real (p, x_g, gdigs);
     (void) real_to_mp (p, z_g, cbrt (x_d), gdigs);
@@ -445,7 +446,7 @@ MP_T *ln_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
     MP_T *tmp = nil_mp (p, gdigs);
 // Construct an estimate.
 #if (A68_LEVEL >= 3)
-    (void) double_real_to_mp (p, z_g, logq (mp_to_double_real (p, x_g, gdigs)), gdigs);
+    (void) double_to_mp (p, z_g, log_double (mp_to_double (p, x_g, gdigs)), gdigs);
 #else
     (void) real_to_mp (p, z_g, log (mp_to_real (p, x_g, gdigs)), gdigs);
 #endif
@@ -939,7 +940,7 @@ MP_T *atan_mp (NODE_T * p, MP_T * z, MP_T * x, int digs)
     MP_T *cns = nil_mp (p, gdigs);
 // Construct an estimate.
 #if (A68_LEVEL >= 3)
-    (void) double_real_to_mp (p, z_g, atanq (mp_to_double_real (p, x_g, gdigs)), gdigs);
+    (void) double_to_mp (p, z_g, atan_double (mp_to_double (p, x_g, gdigs)), gdigs);
 #else
     (void) real_to_mp (p, z_g, atan (mp_to_real (p, x_g, gdigs)), gdigs);
 #endif

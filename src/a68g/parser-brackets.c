@@ -35,12 +35,13 @@
 void bracket_check_error (char *txt, int n, char *bra, char *ket)
 {
   if (n != 0) {
-    BUFFER b;
-    ASSERT (snprintf (b, SNPRINTF_SIZE, "\"%s\" without matching \"%s\"", (n > 0 ? bra : ket), (n > 0 ? ket : bra)) >= 0);
+    BUFFER buf;
+    BUFCLR (buf);
+    ASSERT (snprintf (buf, SNPRINTF_SIZE, "\"%s\" without matching \"%s\"", (n > 0 ? bra : ket), (n > 0 ? ket : bra)) >= 0);
     if (strlen (txt) > 0) {
       bufcat (txt, " and ", BUFFER_SIZE);
     }
-    bufcat (txt, b, BUFFER_SIZE);
+    bufcat (txt, buf, BUFFER_SIZE);
   }
 }
 

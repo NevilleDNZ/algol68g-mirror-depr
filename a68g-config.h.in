@@ -15,9 +15,6 @@
 /* Define this if a good pthread installation was detected */
 #undef BUILD_PARALLEL_CLAUSE
 
-/* Name of C compiler detected */
-#undef C_COMPILER
-
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 #undef GWINSZ_IN_SYS_IOCTL
 
@@ -82,8 +79,8 @@
 /* Define to 1 if you have the `free' function. */
 #undef HAVE_FREE
 
-/* Define this if GCC was detected */
-#undef HAVE_GCC
+/* Define this if GNU C library is detected. */
+#undef HAVE_GNU_C_LIB
 
 /* Define this if a recent GNU MPFR installation was detected */
 #undef HAVE_GNU_MPFR
@@ -127,8 +124,14 @@
 /* Define to 1 if you have the <gsl/gsl_permutation.h> header file. */
 #undef HAVE_GSL_GSL_PERMUTATION_H
 
+/* Define to 1 if you have the <gsl/gsl_sf_ellint.h> header file. */
+#undef HAVE_GSL_GSL_SF_ELLINT_H
+
 /* Define to 1 if you have the <gsl/gsl_sf.h> header file. */
 #undef HAVE_GSL_GSL_SF_H
+
+/* Define to 1 if you have the <gsl/gsl_sf_hermite.h> header file. */
+#undef HAVE_GSL_GSL_SF_HERMITE_H
 
 /* Define to 1 if you have the <gsl/gsl_statistics.h> header file. */
 #undef HAVE_GSL_GSL_STATISTICS_H
@@ -222,6 +225,9 @@
 
 /* Define to 1 if you have the <math.h> header file. */
 #undef HAVE_MATH_H
+
+/* Define this if math.h includes POSIX's signgam. */
+#undef HAVE_MATH_H_SIGNGAM
 
 /* Define to 1 if you have the `memcpy' function. */
 #undef HAVE_MEMCPY

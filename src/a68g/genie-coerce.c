@@ -114,7 +114,7 @@ PROP_T genie_widen (NODE_T * p)
     make_constant_widening (p, M_LONG_LONG_INT, &self);
   } else if (COERCE_FROM_TO (p, M_LONG_INT, M_LONG_REAL)) {
 #if (A68_LEVEL >= 3)
-    (void) genie_widen_double_int_to_double_real (p);
+    (void) genie_widen_double_int_to_double (p);
 #else
 // 1-1 mapping.
     EXECUTE_UNIT (SUB (p));
@@ -129,7 +129,7 @@ PROP_T genie_widen (NODE_T * p)
   else if (COERCE_FROM_TO (p, M_REAL, M_LONG_REAL)) {
     EXECUTE_UNIT (SUB (p));
 #if (A68_LEVEL >= 3)
-    genie_lengthen_real_to_double_real (p);
+    genie_lengthen_real_to_double (p);
 #else
     genie_lengthen_real_to_mp (p);
 #endif
@@ -137,7 +137,7 @@ PROP_T genie_widen (NODE_T * p)
   } else if (COERCE_FROM_TO (p, M_LONG_REAL, M_LONG_LONG_REAL)) {
     EXECUTE_UNIT (SUB (p));
 #if (A68_LEVEL >= 3)
-    genie_lengthen_double_real_to_mp (p);
+    genie_lengthen_double_to_mp (p);
 #else
     genie_lengthen_mp_to_long_mp (p);
 #endif

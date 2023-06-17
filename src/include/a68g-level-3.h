@@ -64,7 +64,7 @@ extern void standardise_double (DOUBLE_T *, int, int, int *);
 extern DOUBLE_T ten_up_double (int);
 extern BOOL_T convert_radix_double (NODE_T *, DOUBLE_NUM_T, int, int);
 
-typedef __float80 MP_REAL_T;
+typedef long double MP_REAL_T;
 typedef INT_T MP_INT_T;
 typedef UNSIGNED_T MP_BITS_T;
 typedef INT_T MP_T;

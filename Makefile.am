@@ -36,7 +36,6 @@ a68g_SOURCES = \
 ./src/a68g/mp-math.c \
 ./src/a68g/mp-mpfr.c \
 ./src/a68g/mp-pi.c \
-./src/a68g/mp-quad.c \
 ./src/a68g/parser-bottom-up.c \
 ./src/a68g/parser-brackets.c \
 ./src/a68g/parser.c \
@@ -62,8 +61,6 @@ a68g_SOURCES = \
 ./src/a68g/prelude.c \
 ./src/a68g/prelude-gsl.c \
 ./src/a68g/prelude-mathlib.c \
-./src/a68g/quad.c \
-./src/a68g/quad-conversion.c \
 ./src/a68g/rts-bool.c \
 ./src/a68g/rts-char.c \
 ./src/a68g/rts-curses.c \
@@ -78,6 +75,7 @@ a68g_SOURCES = \
 ./src/a68g/rts-sounds.c \
 ./src/a68g/rts-transput.c \
 ./src/a68g/rts-unformatted.c \
+./src/a68g/single-blas.c \
 ./src/a68g/single.c \
 ./src/a68g/single-decomposition.c \
 ./src/a68g/single-fft.c \
@@ -124,7 +122,6 @@ a68g_SOURCES = \
 ./src/include/a68g-prelude-gsl.h \
 ./src/include/a68g-prelude.h \
 ./src/include/a68g-prelude-mathlib.h \
-./src/include/a68g-quad.h \
 ./src/include/a68g-stack.h \
 ./src/include/a68g-stddef.h \
 ./src/include/a68g-torrix.h \
@@ -163,7 +160,6 @@ pkginclude_HEADERS = \
 ./src/include/a68g-prelude-gsl.h \
 ./src/include/a68g-prelude.h \
 ./src/include/a68g-prelude-mathlib.h \
-./src/include/a68g-quad.h \
 ./src/include/a68g-stack.h \
 ./src/include/a68g-stddef.h \
 ./src/include/a68g-torrix.h \
@@ -174,30 +170,31 @@ a68g_CFLAGS = -DBINDIR='"$(bindir)"' -DINCLUDEDIR='"$(includedir)"'
 a68g_CPPFLAGS = -I$(top_srcdir)/src/include
 TESTS_ENVIRONMENT=./a68g
 TESTS=\
-	test-set/01-chaos.a68\
-	test-set/02-decision.a68\
-	test-set/03-digits.a68\
-	test-set/04-end-of-time.a68\
-	test-set/05-fft.a68\
-	test-set/06-fibonacci-grammar.a68\
-	test-set/07-formula-manipulation.a68\
-	test-set/08-gammainc.a68\
-	test-set/09-guldens.a68\
-	test-set/10-hamming.a68\
-	test-set/11-hilbert.a68\
-	test-set/12-lisp.a68\
-	test-set/13-mandelbrot.a68\
-	test-set/14-mastermind.a68\
-	test-set/15-math.a68\
-	test-set/16-matrix.a68\
-	test-set/17-procedures.a68\
-	test-set/18-pseudo-switch.a68\
-	test-set/19-queens.a68\
-	test-set/20-quicksort.a68\
-	test-set/21-rationals.a68\
-	test-set/22-semana-santa.a68\
-	test-set/23-tukey.a68\
-	test-set/24-whetstones.a68
+	test-set/01-ackermann.a68\
+	test-set/02-chaos.a68\
+	test-set/03-decision.a68\
+	test-set/04-digits.a68\
+	test-set/05-end-of-time.a68\
+	test-set/06-fft.a68\
+	test-set/07-fibonacci-grammar.a68\
+	test-set/08-formula-manipulation.a68\
+	test-set/09-gammainc.a68\
+	test-set/10-guldens.a68\
+	test-set/11-hamming.a68\
+	test-set/12-hilbert.a68\
+	test-set/13-lisp.a68\
+	test-set/14-mandelbrot.a68\
+	test-set/15-mastermind.a68\
+	test-set/16-math.a68\
+	test-set/17-matrix.a68\
+	test-set/18-procedures.a68\
+	test-set/19-pseudo-switch.a68\
+	test-set/20-queens.a68\
+	test-set/21-quicksort.a68\
+	test-set/22-rationals.a68\
+	test-set/23-semana-santa.a68\
+	test-set/24-tukey.a68\
+	test-set/25-whetstones.a68
 if EXPORT_DYNAMIC
 a68g_LDFLAGS = -Wl,--export-dynamic
 else
