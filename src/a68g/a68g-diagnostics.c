@@ -130,7 +130,7 @@ void abend (char *reason, char *info, char *file, int line)
   }
   bufcat (A68 (output_line), "\n", BUFFER_SIZE);
   io_close_tty_line ();
-  pretty_diag (STDOUT_FILENO, A68 (output_line));
+  pretty_diag (STDERR_FILENO, A68 (output_line));
   a68_exit (EXIT_FAILURE);
 }
 
@@ -368,7 +368,7 @@ void diagnostics_to_terminal (LINE_T * p, int what)
         }
       }
       if (z) {
-        write_source_line (STDOUT_FILENO, p, NO_NODE, what);
+        write_source_line (STDERR_FILENO, p, NO_NODE, what);
       }
     }
   }
@@ -450,7 +450,7 @@ void write_diagnostic (int sev, char *b)
     ASSERT (snprintf (A68 (output_line), SNPRINTF_SIZE, "%s: %s: %s.", A68 (a68_cmd_name), st, b) >= 0);
   }
   io_close_tty_line ();
-  pretty_diag (STDOUT_FILENO, A68 (output_line));
+  pretty_diag (STDERR_FILENO, A68 (output_line));
 }
 
 //! @brief Add diagnostic to source line.
