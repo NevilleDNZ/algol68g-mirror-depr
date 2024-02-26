@@ -1,0 +1,23 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+PR need gsl PR
+
+[, ] REAL a = ((1, 0, 0, 0, 0), (0, 2, 0, 0, 0), (0, 0, 3, 0, 0), (0, 0, 0, 4, 0), (0, 0, 0, 0, 5));
+
+print matrix (a, 0);
+print matrix (INV a, 0);
+print matrix (PINV a, 0);
+print matrix (pseudo inv (a, 0.5), 0);
+SKIP

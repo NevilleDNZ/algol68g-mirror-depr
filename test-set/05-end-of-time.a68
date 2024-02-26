@@ -1,0 +1,44 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+PR echo "This test will take a long time ... " PR
+
+# The legends of "The towers of Hanoi" or "Tower of Brahma" (both being
+  modern fiction) state that when a stack of 100 disks has been moved 
+  disk-by-disk from one stack to a second using a third (under condition that 
+  a disk never sits on a smaller one), the end of time will have come. For 
+  labouring monks, that amounts to order 10^22 years. Let's see how long the 
+  universe has left when a modern computer moves the disks.
+#
+
+BOOL good := FALSE;
+
+FOR i FROM 25
+WHILE NOT good
+DO PROC move = (INT n, u, v, w) VOID:
+     IF n = 1
+     THEN moves +:= 1
+     ELSE move (n - 1, u, w, v);
+          moves +:= 1;
+          move (n - 1, w, v, u)
+     FI;
+
+   INT moves := 0;
+   REAL clock = cpu time;
+   move (i, 1, 2, 3);
+   REAL diff = cpu time - clock;
+   IF good := diff > 10
+   THEN printf (($l"disks: "g(0)", moves per second: "h(1)l$, i,  moves / diff))
+   FI
+OD

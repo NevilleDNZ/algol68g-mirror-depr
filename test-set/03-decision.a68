@@ -1,0 +1,97 @@
+#
+a dog
+no
+a cat
+meow
+yes
+yes
+no
+no
+a fish
+swim
+yes
+yes
+no
+yes
+yes
+no
+#
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+
+CO Paradigm for building decision trees in Algol 68.
+   We wrote programs like this for ALGOL68C on TOPS-20 and VM/CMS.
+CO
+
+BEGIN # Q&A game #
+
+      VOID (open (standin, program idf, standin channel));
+      read (new line);
+
+      CELL library := get answer("give an initial answer");
+      
+      WHILE guess object(library);
+            put question("again")
+      DO SKIP
+      OD;
+
+      # Data structure #
+
+      MODE CELL = UNION (STRING, FORK), 
+           FORK = STRUCT (STRING text, REF CELL has, hasnt);
+
+      OP TEXT  = (FORK d) STRING: text OF d,
+         HAS   = (FORK d) REF CELL: has OF d,
+         HASNT = (FORK d) REF CELL: hasnt OF d;
+
+      PROC new fork = (STRING text, CELL has, hasnt) FORK:
+           (HEAP STRING := text, HEAP CELL := has, HEAP CELL := hasnt);
+
+      # Guessing and extending library #
+
+      PROC guess object = (REF CELL sub lib) VOID: # How to guess an object #
+           CASE sub lib
+           IN (STRING s): (put question("is it " + s) | SKIP | sub lib := learn(s)),
+              (FORK d):   guess object((put question("does it " + TEXT d) | HAS d | HASNT d))
+           ESAC;
+
+      PROC learn = (STRING guess) CELL: # Introduce new cell in tree #
+           IF STRING answer = get answer("what is the answer"),
+                     question = get answer("what distinguishes " + answer);
+              put question("does '" + question + "' apply to '" + answer + "'")
+           THEN new fork(question, answer, guess)
+           ELSE new fork(question, guess, answer)
+           FI;
+
+      # Interaction #
+
+      PROC get answer = (STRING prompt) STRING:
+           BEGIN STRING s; 
+                 printf(($g"?"l$, prompt)); 
+                 readf(($gl$, s)); 
+                 printf(($"> "gl$, s)); 
+                 s
+           END;
+                
+      PROC put question = (STRING question) BOOL:
+           IF STRING s = get answer(question);
+              UPB s > 0
+           THEN s[1] = "y" ORF s[1] = "Y"
+           ELSE put question (question)
+           FI;
+
+      SKIP
+
+END

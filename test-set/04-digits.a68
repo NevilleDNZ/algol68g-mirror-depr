@@ -1,0 +1,35 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+
+PR precision=5000 PR
+
+[999] BOOL b;
+FOR k TO 999
+DO b[k] := FALSE
+OD;
+STRING z = fixed (1 / LONG LONG 998001, 0, 5000);
+INT k := 5;
+TO 998
+WHILE k + 2 < UPB z
+DO STRING t = z[k : k + 2];
+   INT n = (ABS t[1] - ABS "0") * 100 + (ABS t[2] - ABS "0") * 10 + (ABS t[3] - ABS "0");
+   b[n] := TRUE;
+   k +:= 3
+OD;
+FOR k TO 999
+DO IF ~ b[k] 
+   THEN print ((whole (k, 0), " is not in the series", new line))
+   FI
+OD

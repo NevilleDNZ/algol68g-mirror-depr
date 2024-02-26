@@ -1,0 +1,56 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+printf (($"Fechas de la Semana Santa"$));
+FOR a FROM 2001 TO 2100
+DO # Domingo de Pascua - algoritmo de J.M. Oudin [1940] # 
+   INT c = a % 100, n = a %* 19;
+   INT k := (c - 17) % 25;
+   INT i := (c - c % 4 - (c - k) % 3 + 19 * n + 15) %* 30;
+   i -:= (i % 28) * (1 - (i % 28) * (29 % (i + 1)) * ((21 - n) % 11));
+   INT j := (a + a % 4 + i + 2 - c + c % 4) %* 7;
+   INT l = i - j;
+   INT m := 3 + (l + 40) % 44, d := l + 28 - 31 * (m % 4);
+
+   PROC pon fecha = (STRING festivo, INT a, m, d) VOID:
+        BEGIN PROC dia de la semana = (INT a0, m0, d0) INT:
+                   # Algoritmo de Zeller [1887]. #
+                   BEGIN INT a := a0, m := m0, d := d0, c;
+                         (m <= 2 | m +:= 12; a -:= 1);
+                         c := a OVER 100; a %*:= 100;
+                         1 + (d + ((m + 1) * 26) OVER 10 + a + a OVER 4 + c OVER 4 - 2 * c) %* 7
+                   END;
+
+              print f (($3xg" "
+                 c("Sab", "Dom", "Lun", "Mar", "Mie", "Jue", "Vie")z-dx
+                 c("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")$,
+                 festivo, dia de la semana(a, m, d), d, m))
+        END;
+
+   PROC bisiesto = (INT a) BOOL: a %* 4 = 0 AND a %* 400 /= 0;
+
+   PROC ultimo = (INT a, m) INT: (m | 31, (bisiesto (a) | 28 | 29), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+
+   PROC regresar = (INT dias) VOID:
+        TO dias DO (d > 1 | d -:= 1 | m -:= 1; d := ultimo (a, m)) OD;
+
+   PROC avanzar = (INT dias) VOID:
+        TO dias DO d +:= 1; (d > ultimo (a, m) | d := 1; m +:= 1) OD; 
+
+   printf (($l4d$, a));
+   regresar (7); pon fecha ("Domingo de Ramos", a, m, d);
+   avanzar (7); pon fecha ("Domingo de Pascua", a, m, d)
+OD;
+newline (stand out)
+

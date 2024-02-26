@@ -1,0 +1,58 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+# Plot (part of) the Mandelbrot set, that are points z[0] in the complex plane
+  for which the sequence z[n+1] := z[n] ** 2 + z[0] (n >= 0) is bounded.
+#
+
+PR need plotutils PR
+
+INT pix = 300, max iter = 256, REAL zoom = 0.33 / pix;
+[-pix : pix, -pix : pix] INT plane;
+COMPL ctr = 0.05 I 0.75 # center of set #;
+
+# Compute the length of an orbit. #
+PROC iterate = (COMPL z0) INT:
+  BEGIN COMPL z := z0, INT iter := 1;
+        WHILE (iter +:= 1) < max iter # not converged # AND ABS z < 2 # not diverged #
+        DO z := z * z + z0
+        OD;
+        iter
+  END;
+
+# Compute set and find maximum orbit length. #     
+INT max col := 0;
+FOR x FROM -pix TO pix
+DO FOR y FROM -pix TO pix
+   DO COMPL z0 = ctr + (x * zoom) I (y * zoom);
+      IF (plane [x, y] := iterate (z0)) < max iter
+      THEN (plane [x, y] > max col | max col := plane [x, y])
+      FI
+   OD
+OD;
+
+# Make a plot. #
+FILE plot;
+INT num pix = 2 * pix + 1;
+open (plot, "mandelbrot.gif", stand draw channel);
+make device (plot, "gif", whole (num pix, 0) + "x" + whole (num pix, 0));
+FOR x FROM -pix TO pix
+DO FOR y FROM -pix TO pix
+   DO INT col = (plane [x, y] > max col | max col | plane [x, y]);
+      REAL c = sqrt (1- col / max col); # sqrt to enhance contrast #
+      draw colour (plot, c, c, c);
+      draw point (plot, (x + pix) / (num pix - 1), (y + pix) / (num pix  - 1))
+   OD
+OD;
+close (plot)

@@ -1,0 +1,50 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+#
+Partial parametrisation.
+#
+
+BEGIN # Raising a routine to a power #
+      MODE FUN = PROC (LONG LONG REAL) LONG LONG REAL;
+      PROC pow = (FUN f, INT n, LONG LONG REAL x) LONG LONG REAL: f (x) ** n;
+      OP ** = (FUN f, INT n) FUN: pow (f, n, );
+      # Example: sin (3 x) = 3 sin (x) - 4 sin ** 3 (x), from DeMoivre's theorem  #
+      LONG LONG REAL x = long long pi / 4;
+      print ((long long sin (3 * x), new line, 3 *  long long sin (x) - 4 * (long long sin ** 3) (x), new line));
+END;
+
+# Simple backtracking.
+  How many ways are there to split 5 euros in
+  2 euro, 1 euro, 50 ct, 20 ct, 10 ct, 5 ct?
+#
+
+BEGIN [] INT values = (5, 10, 20, 50, 100, 200);
+      
+      PROC count = (INT rest, max) INT:
+         IF rest = 0
+         THEN 1 # Just right, combination found #
+         ELIF rest < 0
+         THEN 0 # Invalid, subtracted too much #
+         ELSE INT combinations := 0;
+              FOR i TO UPB values
+              WHILE values[i] <= max
+              DO combinations +:= count (rest - values[i], values[i])
+              OD;
+              combinations
+         FI;
+      
+      INT amount = 500 # cts #;
+      print (("Number of ways to split ", whole (amount, 0), " into coins: ", whole (count (amount, amount), 0), new line))
+END

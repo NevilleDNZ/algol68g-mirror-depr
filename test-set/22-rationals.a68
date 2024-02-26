@@ -1,0 +1,88 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+COMMENT
+
+Find rational approximation to a given real number.
+After an algorithm of David Eppstein.
+
+Based on the theory of continued fractions:
+
+   IF x = a1 + 1/(a2 + 1/(a3 + 1/(a4 + ...)))
+   THEN the best approximation is found by truncating this series
+        (with some adjustments in the last term).
+
+Note the fraction can be recovered as the first column of the matrix
+
+  ( a1 1 ) ( a2 1 ) ( a3 1 ) ...
+  ( 1  0 ) ( 1  0 ) ( 1  0 )
+
+Instead of keeping the sequence of continued fraction terms,
+we just keep the last partial product of these matrices.
+
+COMMENT
+
+PROC show = (LONG LONG REAL nom, den, val) VOID:
+     print ((new line, 3 * blank, whole(nom, 0), " / ", whole(den, 0), new line, 
+             3 * blank, "  = ", fixed (nom / den, 0, long real width), 
+             3 * blank, " +- ", fixed (nom / den - val, 0, long real width)));
+
+PROC approx = (LONG LONG REAL val, LONG LONG INT max den) VOID:
+     BEGIN [0 .. 1][0 .. 1] LONG LONG REAL m;
+           LONG LONG REAL x := val;
+           LONG LONG INT ai;
+        
+           # initialize matrix #
+           m[0][0] := m[1][1] := 1;
+           m[0][1] := m[1][0] := 0;
+
+           # loop finding terms until denom gets too large #
+
+           WHILE m[1][0] * (ai := ENTIER x) + m[1][1] <= max den
+           DO LONG LONG INT t := ENTIER (m[0][0] * ai + m[0][1]);
+              m[0][1] := m[0][0];
+              m[0][0] := t;
+              t := ENTIER (m[1][0] * ai + m[1][1]);
+              m[1][1] := m[1][0];
+              m[1][0] := t;
+              x := 1 / (x - ai)
+           OD;
+
+           # now remaining x is between 0 and 1 / ai
+             approx as either 0 or 1 / m where m is max that will fit in max den
+             first try zero #
+
+           show (m[0][0], m[1][0], val);
+
+           # now try other possibility #
+
+           ai := ENTIER ((maxden - m[1][1]) / m[1][0]);
+           m[0][0] := m[0][0] * ai + m[0][1];
+           m[1][0] := m[1][0] * ai + m[1][1];
+
+           show (m[0][0], m[1][0], val);
+           new line (stand out)
+     END;
+
+PROC fractional = (LONG REAL val) VOID:
+     BEGIN print (("Rational approximations for ", fixed (val, 0, long real width)));
+           approx (val, 1000);
+           approx (val, max int OVER 10);
+           approx (val, long max int OVER 10)
+     END;
+
+fractional (long pi);
+fractional (long sqrt (2));
+new line (stand out)
+

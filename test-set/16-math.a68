@@ -1,0 +1,131 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+BEGIN MODE FLOAT = LONG REAL;
+      INT samples = 10 000;
+      
+      PROC check = (STRING txt, FLOAT lwb, upb, PROC (FLOAT) FLOAT f, f inv) VOID:
+           BEGIN BOOL ok := TRUE;
+                 print ((newline, txt, space));
+                 TO samples
+                 DO FLOAT x;
+                    WHILE x := lwb + (upb - lwb) * long next random;
+                          NOT (x > lwb AND x < upb)
+                    DO ~
+                    OD;
+                    FLOAT y = f inv (f (x));
+                    IF y ~= 0 ANDF ABS (x / y - 1) > 1e-6
+                    THEN print (("Error at x=", x," f(x)=", y, new line));
+                         ok := FALSE
+                    FI
+                 OD;
+                 printf (($x":-"b(")","(")$, ok))
+           END;
+      
+      FLOAT real max = 1e9;
+      check ("long sqrt", 0, real max, long sqrt, (FLOAT x) FLOAT: x * x);
+      check ("long cbrt", - real max / 3, real max / 3, long cbrt, (FLOAT x) FLOAT: x * x * x);
+      check ("long sin ", - long pi / 2, long pi / 2, long sin, long arcsin);
+      check ("long cos ", 0, long pi, long cos, long arccos);
+      check ("long tan ", - long pi / 2, long pi / 2, long tan, long arctan);
+      check ("long asin", - 1, 1, long arcsin, long sin);
+      check ("long acos", - 1, 1, long arccos, long cos);
+      check ("long atan", - real max, real max, long arctan, long tan);
+      check ("long ln  ", small real, real max, long ln, long exp);
+      check ("long erf ", -3, 3, long erf, long inverf)
+END;
+
+BEGIN MODE FLOAT = LONG LONG REAL;
+      INT samples = 5 000;
+      
+      PROC check = (STRING txt, FLOAT lwb, upb, PROC (FLOAT) FLOAT f, f inv) VOID:
+           BEGIN BOOL ok := TRUE;
+                 print ((newline, txt, space));
+                 TO samples
+                 DO FLOAT x;
+                    WHILE x := lwb + (upb - lwb) * long long next random;
+                          NOT (x > lwb AND x < upb)
+                    DO ~
+                    OD;
+                    FLOAT y = f inv (f (x));
+                    IF y ~= 0 ANDF ABS (x / y - 1) > 1e-6
+                    THEN print (("Error at x=", x," f(x)=", y, new line));
+                         ok := FALSE
+                    FI
+                 OD;
+                 printf (($x":-"b(")","(")$, ok))
+           END;
+      
+      FLOAT real max = 1e9;
+      check ("long long sqrt", 0, real max, long long sqrt, (FLOAT x) FLOAT: x * x);
+      check ("long long cbrt", - real max / 3, real max / 3, long long cbrt, (FLOAT x) FLOAT: x * x * x);
+      check ("long long sin ", - long long pi / 2, long long pi / 2, long long sin, long long arcsin);
+      check ("long long cos ", 0, long long pi, long long cos, long long arccos);
+      check ("long long tan ", - long long pi / 2, long long pi / 2, long long tan, long long arctan);
+      check ("long long asin", - 1, 1, long long arcsin, long long sin);
+      check ("long long acos", - 1, 1, long long arccos, long long cos);
+      check ("long long atan", - real max, real max, long long arctan, long long tan);
+      check ("long long ln  ", small real, real max, long long ln, long long exp);
+      check ("long long erf ", -3, 3, long long erf, long long inverf)
+END;
+
+BEGIN MODE PERPLEX = LONG COMPLEX;
+      INT samples = 10 000;
+      
+      PROC check = (STRING txt, PERPLEX lwb, upb, PROC (PERPLEX) PERPLEX f, f inv) VOID:
+           BEGIN BOOL ok := TRUE;
+                 print ((newline, txt, space));
+                 TO samples
+                 DO PERPLEX x := (RE lwb + (RE upb - RE lwb) * long next random) I (IM lwb + (IM upb - IM lwb) * long next random);
+                    PERPLEX y = f inv (f (x));
+                    IF ABS x ~= 0 ANDF ABS (x - y) / ABS x > 1e-6
+                    THEN print (("Error at x=", x," f(x)=", y, new line));
+                         ok := FALSE
+                    FI
+                 OD;
+                 printf (($x":-"b(")","(")$, ok))
+           END;
+      
+      DOUBLE real max = 1e9;
+      check ("long complex sqrt", small real I small real, real max I real max, long complex sqrt, (PERPLEX x) PERPLEX: x * x);
+      check ("long complex sin ", 0, 0.5 I 0.5, long complex sin, long complex arcsin);
+      check ("long complex cos ", 0, 0.5 I -0.5, long complex cos, long complex arccos);
+      check ("long complex tan ", 0, 0.5 I 0.5, long complex tan, long complex arctan);
+      check ("long complex ln  ", small real I small real, real max I real max, long complex ln, long complex exp)
+END;
+
+BEGIN MODE PERPLEX = LONG LONG COMPLEX;
+      INT samples = 5 000;
+      
+      PROC check = (STRING txt, PERPLEX lwb, upb, PROC (PERPLEX) PERPLEX f, f inv) VOID:
+           BEGIN BOOL ok := TRUE;
+                 print ((newline, txt, space));
+                 TO samples
+                 DO PERPLEX x := (RE lwb + (RE upb - RE lwb) * long long next random) I (IM lwb + (IM upb - IM lwb) * long long next random);
+                    PERPLEX y = f inv (f (x));
+                    IF ABS x ~= 0 ANDF ABS (x - y) / ABS x > 1e-6
+                    THEN print (("Error at x=", x," f(x)=", y, new line));
+                         ok := FALSE
+                    FI
+                 OD;
+                 printf (($x":-"b(")","(")$, ok))
+           END;
+      
+      DOUBLE real max = 1e9;
+      check ("long long complex sqrt", small real I small real, real max I real max, long long complex sqrt, (PERPLEX x) PERPLEX: x * x);
+      check ("long long complex sin ", 0, 0.5 I 0.5, long long complex sin, long long complex arcsin);
+      check ("long long complex cos ", 0, 0.5 I -0.5, long long complex cos, long long complex arccos);
+      check ("long long complex tan ", 0, 0.5 I 0.5, long long complex tan, long long complex arctan);
+      check ("long long complex ln  ", small real I small real, real max I real max, long long complex ln, long long complex exp)
+END

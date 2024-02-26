@@ -1,0 +1,45 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+CO 
+
+The following is derived from
+C.H. Lindsey, A History of Algol 68
+ACM Sigplan Notices, Volume 28, No. 3 March 1993
+
+CO
+
+  PR echo "Jumps as row of PROC VOID ... " PR
+
+# ... But worse! Van Wijngaarden was now able to exhibit his pride and joy -
+  his pseudo-switch [R8.2.7.2]. #
+
+  [] PROC VOID switch = (e1, e2, e3);
+
+# ... or even ... #
+
+  LOC [1 : 3] PROC VOID zwitch := (e1, e2, e3);
+  zwitch[2] := e3;
+
+# ... To my shame, I must admit that this still works, 
+  although implementations tend not to support it. #
+
+  switch[2];
+
+  print("Can't be here");
+
+  e3: e2: e1: print ("Jumped correctly");
+  newline (standout)
+
+# A68G supports it! -- MvdV #

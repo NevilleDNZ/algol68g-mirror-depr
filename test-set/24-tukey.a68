@@ -1,0 +1,35 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+PR need mathlib PR
+
+PROC table = (REAL alpha) VOID:
+  BEGIN printf (($"Confidence = ", d.dddl$, 1 - alpha));
+        print ("  ");
+        FOR k FROM 2 TO 10
+        DO printf (($x6zd$, k))
+        OD;
+        print (new line);
+        FOR df FROM 2 TO 20
+        DO print (whole (df, -2));
+           FOR k FROM 2 TO 10
+           DO printf (($xzzd.ddd$, r qtukey (alpha, 1, k, df, TRUE, FALSE)))
+           OD;
+           print (new line)
+        OD
+  END;
+
+table (0.9);
+print (new line);
+table (0.95)

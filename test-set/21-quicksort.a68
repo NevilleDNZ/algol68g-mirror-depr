@@ -1,0 +1,50 @@
+COMMENT
+
+This program is part of the Algol 68 Genie test set.
+
+A small selection of the Algol 68 Genie regression test set is distributed 
+with Algol 68 Genie. The purpose of those programs is to perform some checks 
+to judge whether A68G behaves as expected.
+None of these programs should end ungraciously with for instance an 
+addressing fault.
+
+COMMENT
+
+PR quiet regression PR
+
+BEGIN MODE TREE = REF NODE,
+           NODE = STRUCT (INT k, TREE s, l);
+    
+      TREE empty = NIL,
+      PROC tree = (INT k) TREE: HEAP NODE := (k, NIL, NIL);
+    
+      OP PRINT = (TREE t) VOID:
+         IF t ISNT empty
+         THEN PRINT s OF t;
+              print ((whole (k OF t, 0), " "));
+              PRINT l OF t
+         FI;
+    
+      OP +:= = (REF TREE t, INT k) VOID:
+         IF t IS empty
+         THEN t := tree (k)
+         ELSE (k < k OF t | s OF t | l OF t) +:= k
+         FI;
+    
+      TREE list := empty;
+    
+      list +:= 128;
+      list +:= 16;
+      list +:= 1;
+      list +:= 512;
+      list +:= 4;
+      list +:= 64;
+      list +:= 8;
+      list +:= 2;
+      list +:= 256;
+      list +:= 32;
+    
+      PRINT list;
+    
+      new line (standout)
+END
